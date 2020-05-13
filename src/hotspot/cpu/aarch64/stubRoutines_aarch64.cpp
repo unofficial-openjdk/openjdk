@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -56,6 +56,7 @@ address StubRoutines::aarch64::_string_indexof_linear_ll = NULL;
 address StubRoutines::aarch64::_string_indexof_linear_uu = NULL;
 address StubRoutines::aarch64::_string_indexof_linear_ul = NULL;
 address StubRoutines::aarch64::_large_byte_array_inflate = NULL;
+address StubRoutines::aarch64::_method_entry_barrier = NULL;
 bool StubRoutines::aarch64::_completed = false;
 
 /**
@@ -285,6 +286,11 @@ juint StubRoutines::aarch64::_crc_table[] ATTRIBUTE_ALIGNED(4096) =
     0xED78D502UL, 0x62EDAE7DUL,         // byte swap
     0x02D578EDUL, 0x7DAEED62UL,         // word swap
     0xD502ED78UL, 0xAE7D62EDUL,         // byte swap of word swap
+};
+
+// Accumulation coefficients for adler32 upper 16 bits
+jubyte StubRoutines::aarch64::_adler_table[] __attribute__ ((aligned(64))) = {
+    16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
 };
 
 juint StubRoutines::aarch64::_npio2_hw[] __attribute__ ((aligned(64))) = {

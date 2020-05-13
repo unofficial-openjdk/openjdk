@@ -31,10 +31,12 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketAddress;
 import java.net.SocketOption;
+import java.net.SocketTimeoutException;
 import java.net.StandardSocketOptions;
 import java.nio.channels.AlreadyBoundException;
 import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.IllegalBlockingModeException;
 import java.nio.channels.NotYetBoundException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
@@ -58,7 +60,7 @@ class ServerSocketChannelImpl
     implements SelChImpl
 {
     // Used to make native close and configure calls
-    private static NativeDispatcher nd;
+    private static final NativeDispatcher nd = new SocketDispatcher();
 
     // Our file descriptor
     private final FileDescriptor fd;
@@ -76,8 +78,7 @@ class ServerSocketChannelImpl
     // Channel state, increases monotonically
     private static final int ST_INUSE = 0;
     private static final int ST_CLOSING = 1;
-    private static final int ST_KILLPENDING = 2;
-    private static final int ST_KILLED = 3;
+    private static final int ST_CLOSED = 2;
     private int state;
 
     // ID of native thread currently blocked in this channel, for signalling
@@ -95,9 +96,9 @@ class ServerSocketChannelImpl
     // -- End of fields protected by stateLock
 
 
-    ServerSocketChannelImpl(SelectorProvider sp) throws IOException {
+    ServerSocketChannelImpl(SelectorProvider sp) {
         super(sp);
-        this.fd =  Net.serverSocket(true);
+        this.fd = Net.serverSocket(true);
         this.fdVal = IOUtil.fdVal(fd);
     }
 
@@ -146,6 +147,9 @@ class ServerSocketChannelImpl
         Objects.requireNonNull(name);
         if (!supportedOptions().contains(name))
             throw new UnsupportedOperationException("'" + name + "' not supported");
+        if (!name.type().isInstance(value))
+            throw new IllegalArgumentException("Invalid value '" + value + "'");
+
         synchronized (stateLock) {
             ensureOpen();
 
@@ -250,9 +254,8 @@ class ServerSocketChannelImpl
         if (blocking) {
             synchronized (stateLock) {
                 thread = 0;
-                // notify any thread waiting in implCloseSelectableChannel
                 if (state == ST_CLOSING) {
-                    stateLock.notifyAll();
+                    tryFinishClose();
                 }
             }
             end(completed);
@@ -261,46 +264,104 @@ class ServerSocketChannelImpl
 
     @Override
     public SocketChannel accept() throws IOException {
+        int n = 0;
+        FileDescriptor newfd = new FileDescriptor();
+        InetSocketAddress[] isaa = new InetSocketAddress[1];
+
         acceptLock.lock();
         try {
-            int n = 0;
-            FileDescriptor newfd = new FileDescriptor();
-            InetSocketAddress[] isaa = new InetSocketAddress[1];
-
             boolean blocking = isBlocking();
             try {
                 begin(blocking);
-                do {
-                    n = accept(this.fd, newfd, isaa);
-                } while (n == IOStatus.INTERRUPTED && isOpen());
+                n = Net.accept(this.fd, newfd, isaa);
+                if (blocking) {
+                    while (IOStatus.okayToRetry(n) && isOpen()) {
+                        park(Net.POLLIN);
+                        n = Net.accept(this.fd, newfd, isaa);
+                    }
+                }
             } finally {
                 end(blocking, n > 0);
                 assert IOStatus.check(n);
             }
+        } finally {
+            acceptLock.unlock();
+        }
 
-            if (n < 1)
-                return null;
+        if (n > 0) {
+            return finishAccept(newfd, isaa[0]);
+        } else {
+            return null;
+        }
+    }
 
+    /**
+     * Accepts a new connection with a given timeout. This method requires the
+     * channel to be configured in blocking mode.
+     *
+     * @apiNote This method is for use by the socket adaptor.
+     *
+     * @param nanos the timeout, in nanoseconds
+     * @throws IllegalBlockingModeException if the channel is configured non-blocking
+     * @throws SocketTimeoutException if the timeout expires
+     */
+    SocketChannel blockingAccept(long nanos) throws IOException {
+        int n = 0;
+        FileDescriptor newfd = new FileDescriptor();
+        InetSocketAddress[] isaa = new InetSocketAddress[1];
+
+        acceptLock.lock();
+        try {
+            // check that channel is configured blocking
+            if (!isBlocking())
+                throw new IllegalBlockingModeException();
+
+            try {
+                begin(true);
+                // change socket to non-blocking
+                lockedConfigureBlocking(false);
+                try {
+                    long startNanos = System.nanoTime();
+                    n = Net.accept(fd, newfd, isaa);
+                    while (n == IOStatus.UNAVAILABLE && isOpen()) {
+                        long remainingNanos = nanos - (System.nanoTime() - startNanos);
+                        if (remainingNanos <= 0) {
+                            throw new SocketTimeoutException("Accept timed out");
+                        }
+                        park(Net.POLLIN, remainingNanos);
+                        n = Net.accept(fd, newfd, isaa);
+                    }
+                } finally {
+                    // restore socket to blocking mode (if channel is open)
+                    tryLockedConfigureBlocking(true);
+                }
+            } finally {
+                end(true, n > 0);
+            }
+        } finally {
+            acceptLock.unlock();
+        }
+
+        assert n > 0;
+        return finishAccept(newfd, isaa[0]);
+    }
+
+    private SocketChannel finishAccept(FileDescriptor newfd, InetSocketAddress isa)
+        throws IOException
+    {
+        try {
             // newly accepted socket is initially in blocking mode
             IOUtil.configureBlocking(newfd, true);
-
-            InetSocketAddress isa = isaa[0];
-            SocketChannel sc = new SocketChannelImpl(provider(), newfd, isa);
 
             // check permitted to accept connections from the remote address
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
-                try {
-                    sm.checkAccept(isa.getAddress().getHostAddress(), isa.getPort());
-                } catch (SecurityException x) {
-                    sc.close();
-                    throw x;
-                }
+                sm.checkAccept(isa.getAddress().getHostAddress(), isa.getPort());
             }
-            return sc;
-
-        } finally {
-            acceptLock.unlock();
+            return new SocketChannelImpl(provider(), newfd, isa);
+        } catch (Exception e) {
+            nd.close(newfd);
+            throw e;
         }
     }
 
@@ -308,88 +369,128 @@ class ServerSocketChannelImpl
     protected void implConfigureBlocking(boolean block) throws IOException {
         acceptLock.lock();
         try {
-            synchronized (stateLock) {
-                ensureOpen();
-                IOUtil.configureBlocking(fd, block);
-            }
+            lockedConfigureBlocking(block);
         } finally {
             acceptLock.unlock();
         }
     }
 
     /**
-     * Invoked by implCloseChannel to close the channel.
-     *
-     * This method waits for outstanding I/O operations to complete. When in
-     * blocking mode, the socket is pre-closed and the threads in blocking I/O
-     * operations are signalled to ensure that the outstanding I/O operations
-     * complete quickly.
-     *
-     * The socket is closed by this method when it is not registered with a
-     * Selector. Note that a channel configured blocking may be registered with
-     * a Selector. This arises when a key is canceled and the channel configured
-     * to blocking mode before the key is flushed from the Selector.
+     * Adjust the blocking. acceptLock must already be held.
      */
-    @Override
-    protected void implCloseSelectableChannel() throws IOException {
-        assert !isOpen();
+    private void lockedConfigureBlocking(boolean block) throws IOException {
+        assert acceptLock.isHeldByCurrentThread();
+        synchronized (stateLock) {
+            ensureOpen();
+            IOUtil.configureBlocking(fd, block);
+        }
+    }
 
-        boolean interrupted = false;
-        boolean blocking;
+    /**
+     * Adjusts the blocking mode if the channel is open. acceptLock must already
+     * be held.
+     *
+     * @return {@code true} if the blocking mode was adjusted, {@code false} if
+     *         the blocking mode was not adjusted because the channel is closed
+     */
+    private boolean tryLockedConfigureBlocking(boolean block) throws IOException {
+        assert acceptLock.isHeldByCurrentThread();
+        synchronized (stateLock) {
+            if (isOpen()) {
+                IOUtil.configureBlocking(fd, block);
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
 
-        // set state to ST_CLOSING
+    /**
+     * Closes the socket if there are no accept in progress and the channel is
+     * not registered with a Selector.
+     */
+    private boolean tryClose() throws IOException {
+        assert Thread.holdsLock(stateLock) && state == ST_CLOSING;
+        if ((thread == 0) && !isRegistered()) {
+            state = ST_CLOSED;
+            nd.close(fd);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Invokes tryClose to attempt to close the socket.
+     *
+     * This method is used for deferred closing by I/O and Selector operations.
+     */
+    private void tryFinishClose() {
+        try {
+            tryClose();
+        } catch (IOException ignore) { }
+    }
+
+    /**
+     * Closes this channel when configured in blocking mode.
+     *
+     * If there is an accept in progress then the socket is pre-closed and the
+     * accept thread is signalled, in which case the final close is deferred
+     * until the accept aborts.
+     */
+    private void implCloseBlockingMode() throws IOException {
         synchronized (stateLock) {
             assert state < ST_CLOSING;
             state = ST_CLOSING;
-            blocking = isBlocking();
-        }
-
-        // wait for any outstanding accept to complete
-        if (blocking) {
-            synchronized (stateLock) {
-                assert state == ST_CLOSING;
+            if (!tryClose()) {
                 long th = thread;
                 if (th != 0) {
                     nd.preClose(fd);
                     NativeThread.signal(th);
-
-                    // wait for accept operation to end
-                    while (thread != 0) {
-                        try {
-                            stateLock.wait();
-                        } catch (InterruptedException e) {
-                            interrupted = true;
-                        }
-                    }
                 }
             }
-        } else {
-            // non-blocking mode: wait for accept to complete
-            acceptLock.lock();
-            acceptLock.unlock();
         }
+    }
 
-        // set state to ST_KILLPENDING
+    /**
+     * Closes this channel when configured in non-blocking mode.
+     *
+     * If the channel is registered with a Selector then the close is deferred
+     * until the channel is flushed from all Selectors.
+     */
+    private void implCloseNonBlockingMode() throws IOException {
         synchronized (stateLock) {
-            assert state == ST_CLOSING;
-            state = ST_KILLPENDING;
+            assert state < ST_CLOSING;
+            state = ST_CLOSING;
         }
+        // wait for any accept to complete before trying to close
+        acceptLock.lock();
+        acceptLock.unlock();
+        synchronized (stateLock) {
+            if (state == ST_CLOSING) {
+                tryClose();
+            }
+        }
+    }
 
-        // close socket if not registered with Selector
-        if (!isRegistered())
-            kill();
-
-        // restore interrupt status
-        if (interrupted)
-            Thread.currentThread().interrupt();
+    /**
+     * Invoked by implCloseChannel to close the channel.
+     */
+    @Override
+    protected void implCloseSelectableChannel() throws IOException {
+        assert !isOpen();
+        if (isBlocking()) {
+            implCloseBlockingMode();
+        } else {
+            implCloseNonBlockingMode();
+        }
     }
 
     @Override
-    public void kill() throws IOException {
+    public void kill() {
         synchronized (stateLock) {
-            if (state == ST_KILLPENDING) {
-                state = ST_KILLED;
-                nd.close(fd);
+            if (state == ST_CLOSING) {
+                tryFinishClose();
             }
         }
     }
@@ -409,28 +510,6 @@ class ServerSocketChannelImpl
     InetSocketAddress localAddress() {
         synchronized (stateLock) {
             return localAddress;
-        }
-    }
-
-    /**
-     * Poll this channel's socket for a new connection up to the given timeout.
-     * @return {@code true} if there is a connection to accept
-     */
-    boolean pollAccept(long timeout) throws IOException {
-        assert Thread.holdsLock(blockingLock()) && isBlocking();
-        acceptLock.lock();
-        try {
-            boolean polled = false;
-            try {
-                begin(true);
-                int events = Net.poll(fd, Net.POLLIN, timeout);
-                polled = (events != 0);
-            } finally {
-                end(true, polled);
-            }
-            return polled;
-        } finally {
-            acceptLock.unlock();
         }
     }
 
@@ -508,38 +587,4 @@ class ServerSocketChannelImpl
         sb.append(']');
         return sb.toString();
     }
-
-    /**
-     * Accept a connection on a socket.
-     *
-     * @implNote Wrap native call to allow instrumentation.
-     */
-    private int accept(FileDescriptor ssfd,
-                       FileDescriptor newfd,
-                       InetSocketAddress[] isaa)
-        throws IOException
-    {
-        return accept0(ssfd, newfd, isaa);
-    }
-
-    // -- Native methods --
-
-    // Accepts a new connection, setting the given file descriptor to refer to
-    // the new socket and setting isaa[0] to the socket's remote address.
-    // Returns 1 on success, or IOStatus.UNAVAILABLE (if non-blocking and no
-    // connections are pending) or IOStatus.INTERRUPTED.
-    //
-    private native int accept0(FileDescriptor ssfd,
-                               FileDescriptor newfd,
-                               InetSocketAddress[] isaa)
-        throws IOException;
-
-    private static native void initIDs();
-
-    static {
-        IOUtil.load();
-        initIDs();
-        nd = new SocketDispatcher();
-    }
-
 }

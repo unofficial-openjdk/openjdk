@@ -60,8 +60,11 @@ public class VirtualMachineImpl extends HotSpotVirtualMachine {
         int pid;
         try {
             pid = Integer.parseInt(vmid);
+            if (pid < 1) {
+                throw new NumberFormatException();
+            }
         } catch (NumberFormatException x) {
-            throw new AttachNotSupportedException("Invalid process identifier");
+            throw new AttachNotSupportedException("Invalid process identifier: " + vmid);
         }
 
         // Opens the door file to the target VM. If the file is not
@@ -126,7 +129,7 @@ public class VirtualMachineImpl extends HotSpotVirtualMachine {
      * Execute the given command in the target VM.
      */
     InputStream execute(String cmd, Object ... args) throws AgentLoadException, IOException {
-        assert args.length <= 4;                // includes null
+        assert args.length <= 3;                // includes null
 
         // first check that we are still attached
         int door;
@@ -204,8 +207,12 @@ public class VirtualMachineImpl extends HotSpotVirtualMachine {
             return VirtualMachineImpl.read(s, bs, off, len);
         }
 
-        public void close() throws IOException {
-            VirtualMachineImpl.close(s);
+        public synchronized void close() throws IOException {
+            if (s != -1) {
+                int toClose = s;
+                s = -1;
+                VirtualMachineImpl.close(toClose);
+            }
         }
     }
 

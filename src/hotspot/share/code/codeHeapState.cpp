@@ -27,6 +27,7 @@
 #include "code/codeHeapState.hpp"
 #include "compiler/compileBroker.hpp"
 #include "runtime/sweeper.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 // -------------------------
 // |  General Description  |
@@ -124,7 +125,7 @@
     size_t     _nlockedflush = 0;                             \
     size_t     _nflush_bytes = 0;                             \
     size_t         _capacity = _capa;                         \
-    bufferedStream   _sstobj = bufferedStream(_capa);         \
+    bufferedStream   _sstobj(_capa);                          \
     bufferedStream*  _sstbuf = &_sstobj;                      \
     outputStream*    _outbuf = _outst;                        \
     bufferedStream*   _anyst = &_sstobj; /* any stream. Use this to just print - no buffer flush.  */
@@ -530,7 +531,7 @@ void CodeHeapState::discard(outputStream* out, CodeHeap* heap) {
   }
 }
 
-void CodeHeapState::aggregate(outputStream* out, CodeHeap* heap, const char* granularity_request) {
+void CodeHeapState::aggregate(outputStream* out, CodeHeap* heap, size_t granularity) {
   unsigned int nBlocks_free    = 0;
   unsigned int nBlocks_used    = 0;
   unsigned int nBlocks_zomb    = 0;
@@ -612,7 +613,8 @@ void CodeHeapState::aggregate(outputStream* out, CodeHeap* heap, const char* gra
   //   Finally, we adjust the granularity such that each granule covers at most 64k-1 segments.
   //   This is necessary to prevent an unsigned short overflow while accumulating space information.
   //
-  size_t granularity = strtol(granularity_request, NULL, 0);
+  assert(granularity > 0, "granularity should be positive.");
+
   if (granularity > size) {
     granularity = size;
   }

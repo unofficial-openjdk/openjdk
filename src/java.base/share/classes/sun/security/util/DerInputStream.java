@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,11 +27,12 @@ package sun.security.util;
 
 import java.io.InputStream;
 import java.io.IOException;
-import java.io.EOFException;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.Vector;
-import java.math.BigInteger;
-import java.io.DataInputStream;
+
+import static java.nio.charset.StandardCharsets.*;
 
 /**
  * A DER input stream, used for parsing ASN.1 DER-encoded data such as
@@ -130,7 +131,12 @@ public class DerInputStream {
                 System.arraycopy(data, offset, inData, 0, len);
 
                 DerIndefLenConverter derIn = new DerIndefLenConverter();
-                buffer = new DerInputBuffer(derIn.convert(inData), allowBER);
+                byte[] result = derIn.convertBytes(inData);
+                if (result == null) {
+                    throw new IOException("not all indef len BER resolved");
+                } else {
+                    buffer = new DerInputBuffer(result, allowBER);
+                }
             }
         } else {
             buffer = new DerInputBuffer(data, offset, len, allowBER);
@@ -389,16 +395,9 @@ public class DerInputStream {
 
         if (len == -1) {
            // indefinite length encoding found
-           int readLen = buffer.available();
-           int offset = 2;     // for tag and length bytes
-           byte[] indefData = new byte[readLen + offset];
-           indefData[0] = tag;
-           indefData[1] = lenByte;
-           DataInputStream dis = new DataInputStream(buffer);
-           dis.readFully(indefData, offset, readLen);
-           dis.close();
-           DerIndefLenConverter derIn = new DerIndefLenConverter();
-           buffer = new DerInputBuffer(derIn.convert(indefData), buffer.allowBER);
+           buffer = new DerInputBuffer(
+                   DerIndefLenConverter.convertStream(buffer, lenByte, tag),
+                   buffer.allowBER);
 
            if (tag != buffer.read())
                 throw new IOException("Indefinite length encoding" +
@@ -461,7 +460,7 @@ public class DerInputStream {
      * Read a string that was encoded as a UTF8String DER value.
      */
     public String getUTF8String() throws IOException {
-        return readString(DerValue.tag_UTF8String, "UTF-8", "UTF8");
+        return readString(DerValue.tag_UTF8String, "UTF-8", UTF_8);
     }
 
     /**
@@ -469,7 +468,7 @@ public class DerInputStream {
      */
     public String getPrintableString() throws IOException {
         return readString(DerValue.tag_PrintableString, "Printable",
-                          "ASCII");
+                          US_ASCII);
     }
 
     /**
@@ -479,22 +478,21 @@ public class DerInputStream {
         /*
          * Works for common characters between T61 and ASCII.
          */
-        return readString(DerValue.tag_T61String, "T61", "ISO-8859-1");
+        return readString(DerValue.tag_T61String, "T61", ISO_8859_1);
     }
 
     /**
-     * Read a string that was encoded as a IA5tring DER value.
+     * Read a string that was encoded as a IA5String DER value.
      */
     public String getIA5String() throws IOException {
-        return readString(DerValue.tag_IA5String, "IA5", "ASCII");
+        return readString(DerValue.tag_IA5String, "IA5", US_ASCII);
     }
 
     /**
      * Read a string that was encoded as a BMPString DER value.
      */
     public String getBMPString() throws IOException {
-        return readString(DerValue.tag_BMPString, "BMP",
-                          "UnicodeBigUnmarked");
+        return readString(DerValue.tag_BMPString, "BMP", UTF_16BE);
     }
 
     /**
@@ -502,7 +500,7 @@ public class DerInputStream {
      */
     public String getGeneralString() throws IOException {
         return readString(DerValue.tag_GeneralString, "General",
-                          "ASCII");
+                          US_ASCII);
     }
 
     /**
@@ -514,7 +512,7 @@ public class DerInputStream {
      * correspond to the stringTag above.
      */
     private String readString(byte stringTag, String stringName,
-                              String enc) throws IOException {
+                              Charset charset) throws IOException {
 
         if (buffer.read() != stringTag)
             throw new IOException("DER input not a " +
@@ -526,7 +524,7 @@ public class DerInputStream {
             throw new IOException("Short read of DER " +
                                   stringName + " string");
 
-        return new String(retval, enc);
+        return new String(retval, charset);
     }
 
     /**

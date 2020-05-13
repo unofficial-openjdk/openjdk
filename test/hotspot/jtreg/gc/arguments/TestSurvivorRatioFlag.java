@@ -89,7 +89,7 @@ public class TestSurvivorRatioFlag {
                 Integer.toString(ratio)
         );
 
-        ProcessBuilder procBuilder = ProcessTools.createJavaProcessBuilder(vmOptions.toArray(new String[vmOptions.size()]));
+        ProcessBuilder procBuilder = GCArguments.createJavaProcessBuilder(vmOptions);
         OutputAnalyzer analyzer = new OutputAnalyzer(procBuilder.start());
         analyzer.shouldHaveExitValue(0);
     }
@@ -126,7 +126,6 @@ public class TestSurvivorRatioFlag {
             GCTypes.YoungGCType type = GCTypes.YoungGCType.getYoungGCType();
             switch (type) {
                 case DefNew:
-                case ParNew:
                     verifyDefNewSurvivorRatio(expectedRatio);
                     break;
                 case PSNew:

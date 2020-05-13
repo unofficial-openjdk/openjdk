@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@
 static bool zero_page_read_protected() { return true; }
 
 class Linux {
+  friend class CgroupSubsystem;
   friend class os;
   friend class OSContainer;
   friend class TestReserveMemorySpecial;
@@ -38,8 +39,6 @@ class Linux {
   static bool libjsig_is_loaded;        // libjsig that interposes sigaction(),
                                         // __sigaction(), signal() is loaded
   static struct sigaction *(*get_signal_action)(int);
-  static struct sigaction *get_preinstalled_handler(int);
-  static void save_preinstalled_handler(int, struct sigaction&);
 
   static void check_signal_handler(int sig);
 
@@ -57,20 +56,10 @@ class Linux {
   static GrowableArray<int>* _cpu_to_node;
   static GrowableArray<int>* _nindex_to_node;
 
-  // 0x00000000 = uninitialized,
-  // 0x01000000 = kernel version unknown,
-  // otherwise a 32-bit number:
-  // Ox00AABBCC
-  // AA, Major Version
-  // BB, Minor Version
-  // CC, Fix   Version
-  static uint32_t _os_version;
-
  protected:
 
   static julong _physical_memory;
   static pthread_t _main_thread;
-  static Mutex* _createThread_lock;
   static int _page_size;
 
   static julong available_memory();
@@ -110,13 +99,24 @@ class Linux {
 
   static void print_full_memory_info(outputStream* st);
   static void print_container_info(outputStream* st);
-  static void print_virtualization_info(outputStream* st);
+  static void print_steal_info(outputStream* st);
   static void print_distro_info(outputStream* st);
   static void print_libversion_info(outputStream* st);
   static void print_proc_sys_info(outputStream* st);
   static void print_ld_preload_file(outputStream* st);
+  static void print_uptime_info(outputStream* st);
 
  public:
+  struct CPUPerfTicks {
+    uint64_t used;
+    uint64_t usedKernel;
+    uint64_t total;
+    uint64_t steal;
+    bool     has_steal_ticks;
+  };
+
+  // which_logical_cpu=-1 returns accumulated ticks for all cpus.
+  static bool get_tick_information(CPUPerfTicks* pticks, int which_logical_cpu);
   static bool _stack_is_executable;
   static void *dlopen_helper(const char *name, char *ebuf, int ebuflen);
   static void *dll_load_in_vmthread(const char *name, char *ebuf, int ebuflen);
@@ -128,8 +128,6 @@ class Linux {
   // returns kernel thread id (similar to LWP id on Solaris), which can be
   // used to access /proc
   static pid_t gettid();
-  static void set_createThread_lock(Mutex* lk)                      { _createThread_lock = lk; }
-  static Mutex* createThread_lock(void)                             { return _createThread_lock; }
   static void hotspot_sigmask(Thread* thread);
 
   static address   initial_thread_stack_bottom(void)                { return _initial_thread_stack_bottom; }
@@ -188,7 +186,6 @@ class Linux {
 
   // Stack overflow handling
   static bool manually_expand_stack(JavaThread * t, address addr);
-  static int max_register_window_saves_before_flushing();
 
   // fast POSIX clocks support
   static void fast_thread_clock_init(void);
@@ -202,10 +199,6 @@ class Linux {
   }
 
   static jlong fast_thread_cpu_time(clockid_t clockid);
-
-  static void initialize_os_info();
-  static bool os_version_is_known();
-  static uint32_t os_version();
 
   // Stack repair handling
 
@@ -225,7 +218,8 @@ class Linux {
   typedef void (*numa_interleave_memory_v2_func_t)(void *start, size_t size, struct bitmask* mask);
   typedef struct bitmask* (*numa_get_membind_func_t)(void);
   typedef struct bitmask* (*numa_get_interleave_mask_func_t)(void);
-
+  typedef long (*numa_move_pages_func_t)(int pid, unsigned long count, void **pages, const int *nodes, int *status, int flags);
+  typedef void (*numa_set_preferred_func_t)(int node);
   typedef void (*numa_set_bind_policy_func_t)(int policy);
   typedef int (*numa_bitmask_isbitset_func_t)(struct bitmask *bmp, unsigned int n);
   typedef int (*numa_distance_func_t)(int node1, int node2);
@@ -243,6 +237,8 @@ class Linux {
   static numa_distance_func_t _numa_distance;
   static numa_get_membind_func_t _numa_get_membind;
   static numa_get_interleave_mask_func_t _numa_get_interleave_mask;
+  static numa_move_pages_func_t _numa_move_pages;
+  static numa_set_preferred_func_t _numa_set_preferred;
   static unsigned long* _numa_all_nodes;
   static struct bitmask* _numa_all_nodes_ptr;
   static struct bitmask* _numa_nodes_ptr;
@@ -262,6 +258,8 @@ class Linux {
   static void set_numa_distance(numa_distance_func_t func) { _numa_distance = func; }
   static void set_numa_get_membind(numa_get_membind_func_t func) { _numa_get_membind = func; }
   static void set_numa_get_interleave_mask(numa_get_interleave_mask_func_t func) { _numa_get_interleave_mask = func; }
+  static void set_numa_move_pages(numa_move_pages_func_t func) { _numa_move_pages = func; }
+  static void set_numa_set_preferred(numa_set_preferred_func_t func) { _numa_set_preferred = func; }
   static void set_numa_all_nodes(unsigned long* ptr) { _numa_all_nodes = ptr; }
   static void set_numa_all_nodes_ptr(struct bitmask **ptr) { _numa_all_nodes_ptr = (ptr == NULL ? NULL : *ptr); }
   static void set_numa_nodes_ptr(struct bitmask **ptr) { _numa_nodes_ptr = (ptr == NULL ? NULL : *ptr); }
@@ -319,6 +317,11 @@ class Linux {
       _numa_interleave_memory(start, size, _numa_all_nodes);
     }
   }
+  static void numa_set_preferred(int node) {
+    if (_numa_set_preferred != NULL) {
+      _numa_set_preferred(node);
+    }
+  }
   static void numa_set_bind_policy(int policy) {
     if (_numa_set_bind_policy != NULL) {
       _numa_set_bind_policy(policy);
@@ -326,6 +329,9 @@ class Linux {
   }
   static int numa_distance(int node1, int node2) {
     return _numa_distance != NULL ? _numa_distance(node1, node2) : -1;
+  }
+  static long numa_move_pages(int pid, unsigned long count, void **pages, const int *nodes, int *status, int flags) {
+    return _numa_move_pages != NULL ? _numa_move_pages(pid, count, pages, nodes, status, flags) : -1;
   }
   static int get_node_by_cpu(int cpu_id);
   static int get_existing_num_nodes();
@@ -392,6 +398,10 @@ class Linux {
     } else {
       return false;
     }
+  }
+
+  static const GrowableArray<int>* numa_nindex_to_node() {
+    return _nindex_to_node;
   }
 };
 

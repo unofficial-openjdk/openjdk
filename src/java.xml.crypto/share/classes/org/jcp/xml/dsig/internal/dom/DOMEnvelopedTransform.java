@@ -21,10 +21,10 @@
  * under the License.
  */
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * $Id: DOMEnvelopedTransform.java 1788465 2017-03-24 15:10:51Z coheigea $
+ * $Id: DOMEnvelopedTransform.java 1854026 2019-02-21 09:30:01Z coheigea $
  */
 package org.jcp.xml.dsig.internal.dom;
 
@@ -38,7 +38,6 @@ import javax.xml.crypto.dsig.spec.TransformParameterSpec;
  */
 public final class DOMEnvelopedTransform extends ApacheTransform {
 
-    @Override
     public void init(TransformParameterSpec params)
         throws InvalidAlgorithmParameterException {
         if (params != null) {

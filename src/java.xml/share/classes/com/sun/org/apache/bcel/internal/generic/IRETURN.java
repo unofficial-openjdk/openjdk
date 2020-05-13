@@ -25,7 +25,6 @@ package com.sun.org.apache.bcel.internal.generic;
  * IRETURN -  Return int from method
  * <PRE>Stack: ..., value -&gt; &lt;empty&gt;</PRE>
  *
- * @version $Id: IRETURN.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public class IRETURN extends ReturnInstruction {
 

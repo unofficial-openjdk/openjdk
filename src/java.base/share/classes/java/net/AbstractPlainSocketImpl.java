@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,13 +30,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import sun.net.ConnectionResetException;
 import sun.net.NetHooks;
+import sun.net.PlatformSocketImpl;
 import sun.net.ResourceManager;
+import sun.net.ext.ExtendedSocketOptions;
+import sun.net.util.IPAddressUtil;
 import sun.net.util.SocketExceptions;
 
 /**
@@ -46,7 +53,7 @@ import sun.net.util.SocketExceptions;
  *
  * @author  Steven B. Byrne
  */
-abstract class AbstractPlainSocketImpl extends SocketImpl {
+abstract class AbstractPlainSocketImpl extends SocketImpl implements PlatformSocketImpl {
     /* instance variable for SO_TIMEOUT */
     int timeout;   // timeout in millisec
     // traffic class
@@ -70,21 +77,24 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
     /* indicates connection reset state */
     private volatile boolean connectionReset;
 
+    /* indicates whether impl is bound  */
+    boolean isBound;
+
+    /* indicates whether impl is connected  */
+    volatile boolean isConnected;
+
    /* whether this Socket is a stream (TCP) socket or not (UDP)
     */
     protected boolean stream;
+
+    /* whether this is a server or not */
+    final boolean isServer;
 
     /**
      * Load net library into runtime.
      */
     static {
-        java.security.AccessController.doPrivileged(
-            new java.security.PrivilegedAction<>() {
-                public Void run() {
-                    System.loadLibrary("net");
-                    return null;
-                }
-            });
+        jdk.internal.loader.BootLoader.loadLibrary("net");
     }
 
     private static volatile boolean checkedReusePort;
@@ -101,24 +111,8 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
         return isReusePortAvailable;
     }
 
-    /**
-     * Returns a set of SocketOptions supported by this impl and by this impl's
-     * socket (Socket or ServerSocket)
-     *
-     * @return a Set of SocketOptions
-     */
-    @Override
-    protected Set<SocketOption<?>> supportedOptions() {
-        Set<SocketOption<?>> options;
-        if (isReusePortAvailable()) {
-            options = new HashSet<>();
-            options.addAll(super.supportedOptions());
-            options.add(StandardSocketOptions.SO_REUSEPORT);
-            options = Collections.unmodifiableSet(options);
-        } else {
-            options = super.supportedOptions();
-        }
-        return options;
+    AbstractPlainSocketImpl(boolean isServer) {
+        this.isServer = isServer;
     }
 
     /**
@@ -133,7 +127,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
             fd = new FileDescriptor();
             try {
                 socketCreate(false);
-                SocketCleanable.register(fd);
+                SocketCleanable.register(fd, false);
             } catch (IOException ioe) {
                 ResourceManager.afterUdpClose();
                 fd = null;
@@ -142,12 +136,8 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
         } else {
             fd = new FileDescriptor();
             socketCreate(true);
-            SocketCleanable.register(fd);
+            SocketCleanable.register(fd, true);
         }
-        if (socket != null)
-            socket.setCreated();
-        if (serverSocket != null)
-            serverSocket.setCreated();
     }
 
     /**
@@ -162,8 +152,12 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
         boolean connected = false;
         try {
             InetAddress address = InetAddress.getByName(host);
-            this.port = port;
+            // recording this.address as supplied by caller before calling connect
             this.address = address;
+            this.port = port;
+            if (address.isLinkLocalAddress()) {
+                address = IPAddressUtil.toScopedAddress(address);
+            }
 
             connectToAddress(address, port, timeout);
             connected = true;
@@ -176,6 +170,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
                        it will be passed up the call stack */
                 }
             }
+            isConnected = connected;
         }
     }
 
@@ -186,11 +181,16 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
      * @param port the specified port
      */
     protected void connect(InetAddress address, int port) throws IOException {
-        this.port = port;
+        // recording this.address as supplied by caller before calling connect
         this.address = address;
+        this.port = port;
+        if (address.isLinkLocalAddress()) {
+            address = IPAddressUtil.toScopedAddress(address);
+        }
 
         try {
             connectToAddress(address, port, timeout);
+            isConnected = true;
             return;
         } catch (IOException e) {
             // everything failed
@@ -218,10 +218,14 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
             InetSocketAddress addr = (InetSocketAddress) address;
             if (addr.isUnresolved())
                 throw new UnknownHostException(addr.getHostName());
+            // recording this.address as supplied by caller before calling connect
+            InetAddress ia = addr.getAddress();
+            this.address = ia;
             this.port = addr.getPort();
-            this.address = addr.getAddress();
-
-            connectToAddress(this.address, port, timeout);
+            if (ia.isLinkLocalAddress()) {
+                ia = IPAddressUtil.toScopedAddress(ia);
+            }
+            connectToAddress(ia, port, timeout);
             connected = true;
         } finally {
             if (!connected) {
@@ -232,6 +236,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
                        it will be passed up the call stack */
                 }
             }
+            isConnected = connected;
         }
     }
 
@@ -381,6 +386,129 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
         }
     }
 
+    static final ExtendedSocketOptions extendedOptions =
+            ExtendedSocketOptions.getInstance();
+
+    private static final Set<SocketOption<?>> clientSocketOptions = clientSocketOptions();
+    private static final Set<SocketOption<?>> serverSocketOptions = serverSocketOptions();
+
+    private static Set<SocketOption<?>> clientSocketOptions() {
+        HashSet<SocketOption<?>> options = new HashSet<>();
+        options.add(StandardSocketOptions.SO_KEEPALIVE);
+        options.add(StandardSocketOptions.SO_SNDBUF);
+        options.add(StandardSocketOptions.SO_RCVBUF);
+        options.add(StandardSocketOptions.SO_REUSEADDR);
+        options.add(StandardSocketOptions.SO_LINGER);
+        options.add(StandardSocketOptions.IP_TOS);
+        options.add(StandardSocketOptions.TCP_NODELAY);
+        if (isReusePortAvailable())
+            options.add(StandardSocketOptions.SO_REUSEPORT);
+        options.addAll(ExtendedSocketOptions.clientSocketOptions());
+        return Collections.unmodifiableSet(options);
+    }
+
+    private static Set<SocketOption<?>> serverSocketOptions() {
+        HashSet<SocketOption<?>> options = new HashSet<>();
+        options.add(StandardSocketOptions.SO_RCVBUF);
+        options.add(StandardSocketOptions.SO_REUSEADDR);
+        options.add(StandardSocketOptions.IP_TOS);
+        if (isReusePortAvailable())
+            options.add(StandardSocketOptions.SO_REUSEPORT);
+        options.addAll(ExtendedSocketOptions.serverSocketOptions());
+        return Collections.unmodifiableSet(options);
+    }
+
+    @Override
+    protected Set<SocketOption<?>> supportedOptions() {
+        if (isServer)
+            return serverSocketOptions;
+        else
+            return clientSocketOptions;
+    }
+
+    @Override
+    protected <T> void setOption(SocketOption<T> name, T value) throws IOException {
+        Objects.requireNonNull(name);
+        if (!supportedOptions().contains(name))
+            throw new UnsupportedOperationException("'" + name + "' not supported");
+
+        if (!name.type().isInstance(value))
+            throw new IllegalArgumentException("Invalid value '" + value + "'");
+
+        if (isClosedOrPending())
+            throw new SocketException("Socket closed");
+
+        if (name == StandardSocketOptions.SO_KEEPALIVE) {
+            setOption(SocketOptions.SO_KEEPALIVE, value);
+        } else if (name == StandardSocketOptions.SO_SNDBUF) {
+            if (((Integer)value).intValue() < 0)
+                throw new IllegalArgumentException("Invalid send buffer size:" + value);
+            setOption(SocketOptions.SO_SNDBUF, value);
+        } else if (name == StandardSocketOptions.SO_RCVBUF) {
+            if (((Integer)value).intValue() < 0)
+                throw new IllegalArgumentException("Invalid recv buffer size:" + value);
+            setOption(SocketOptions.SO_RCVBUF, value);
+        } else if (name == StandardSocketOptions.SO_REUSEADDR) {
+            setOption(SocketOptions.SO_REUSEADDR, value);
+        } else if (name == StandardSocketOptions.SO_REUSEPORT) {
+            setOption(SocketOptions.SO_REUSEPORT, value);
+        } else if (name == StandardSocketOptions.SO_LINGER ) {
+            if (((Integer)value).intValue() < 0)
+                setOption(SocketOptions.SO_LINGER, false);
+            else
+                setOption(SocketOptions.SO_LINGER, value);
+        } else if (name == StandardSocketOptions.IP_TOS) {
+            int i = ((Integer)value).intValue();
+            if (i < 0 || i > 255)
+                throw new IllegalArgumentException("Invalid IP_TOS value: " + value);
+            setOption(SocketOptions.IP_TOS, value);
+        } else if (name == StandardSocketOptions.TCP_NODELAY) {
+            setOption(SocketOptions.TCP_NODELAY, value);
+        } else if (extendedOptions.isOptionSupported(name)) {
+            extendedOptions.setOption(fd, name, value);
+        } else {
+            throw new AssertionError("unknown option: " + name);
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected <T> T getOption(SocketOption<T> name) throws IOException {
+        Objects.requireNonNull(name);
+        if (!supportedOptions().contains(name))
+            throw new UnsupportedOperationException("'" + name + "' not supported");
+
+        if (isClosedOrPending())
+            throw new SocketException("Socket closed");
+
+        if (name == StandardSocketOptions.SO_KEEPALIVE) {
+            return (T)getOption(SocketOptions.SO_KEEPALIVE);
+        } else if (name == StandardSocketOptions.SO_SNDBUF) {
+            return (T)getOption(SocketOptions.SO_SNDBUF);
+        } else if (name == StandardSocketOptions.SO_RCVBUF) {
+            return (T)getOption(SocketOptions.SO_RCVBUF);
+        } else if (name == StandardSocketOptions.SO_REUSEADDR) {
+            return (T)getOption(SocketOptions.SO_REUSEADDR);
+        } else if (name == StandardSocketOptions.SO_REUSEPORT) {
+            return (T)getOption(SocketOptions.SO_REUSEPORT);
+        } else if (name == StandardSocketOptions.SO_LINGER) {
+            Object value = getOption(SocketOptions.SO_LINGER);
+            if (value instanceof Boolean) {
+                assert ((Boolean)value).booleanValue() == false;
+                value = -1;
+            }
+            return (T)value;
+        } else if (name == StandardSocketOptions.IP_TOS) {
+            return (T)getOption(SocketOptions.IP_TOS);
+        } else if (name == StandardSocketOptions.TCP_NODELAY) {
+            return (T)getOption(SocketOptions.TCP_NODELAY);
+        } else if (extendedOptions.isOptionSupported(name)) {
+            return (T) extendedOptions.getOption(fd, name);
+        } else {
+            throw new AssertionError("unknown option: " + name);
+        }
+    }
+
     /**
      * The workhorse of the connection operation.  Tries several times to
      * establish a connection to the given <host, port>.  If unsuccessful,
@@ -389,7 +517,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
 
     synchronized void doConnect(InetAddress address, int port, int timeout) throws IOException {
         synchronized (fdLock) {
-            if (!closePending && (socket == null || !socket.isBound())) {
+            if (!closePending && !isBound) {
                 NetHooks.beforeTcpConnect(fd, address, port);
             }
         }
@@ -402,14 +530,6 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
                     if (closePending) {
                         throw new SocketException ("Socket closed");
                     }
-                }
-                // If we have a ref. to the Socket, then sets the flags
-                // created, bound & connected to true.
-                // This is normally done in Socket.connect() but some
-                // subclasses of Socket may call impl.connect() directly!
-                if (socket != null) {
-                    socket.setBound();
-                    socket.setConnected();
                 }
             } finally {
                 releaseFD();
@@ -429,15 +549,15 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
         throws IOException
     {
        synchronized (fdLock) {
-            if (!closePending && (socket == null || !socket.isBound())) {
+            if (!closePending && !isBound) {
                 NetHooks.beforeTcpBind(fd, address, lport);
             }
         }
+        if (address.isLinkLocalAddress()) {
+            address = IPAddressUtil.toScopedAddress(address);
+        }
         socketBind(address, lport);
-        if (socket != null)
-            socket.setBound();
-        if (serverSocket != null)
-            serverSocket.setBound();
+        isBound = true;
     }
 
     /**
@@ -450,15 +570,17 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
 
     /**
      * Accepts connections.
-     * @param s the connection
+     * @param si the socket impl
      */
-    protected void accept(SocketImpl s) throws IOException {
+    protected void accept(SocketImpl si) throws IOException {
+        si.fd = new FileDescriptor();
         acquireFD();
         try {
-            socketAccept(s);
+            socketAccept(si);
         } finally {
             releaseFD();
         }
+        SocketCleanable.register(si.fd, true);
     }
 
     /**
@@ -470,8 +592,14 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
                 throw new IOException("Socket Closed");
             if (shut_rd)
                 throw new IOException("Socket input is shutdown");
-            if (socketInputStream == null)
-                socketInputStream = new SocketInputStream(this);
+            if (socketInputStream == null) {
+                PrivilegedExceptionAction<SocketInputStream> pa = () -> new SocketInputStream(this);
+                try {
+                    socketInputStream = AccessController.doPrivileged(pa);
+                } catch (PrivilegedActionException e) {
+                    throw (IOException) e.getCause();
+                }
+            }
         }
         return socketInputStream;
     }
@@ -489,8 +617,14 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
                 throw new IOException("Socket Closed");
             if (shut_wr)
                 throw new IOException("Socket output is shutdown");
-            if (socketOutputStream == null)
-                socketOutputStream = new SocketOutputStream(this);
+            if (socketOutputStream == null) {
+                PrivilegedExceptionAction<SocketOutputStream> pa = () -> new SocketOutputStream(this);
+                try {
+                    socketOutputStream = AccessController.doPrivileged(pa);
+                } catch (PrivilegedActionException e) {
+                    throw (IOException) e.getCause();
+                }
+            }
         }
         return socketOutputStream;
     }
@@ -549,9 +683,6 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
     protected void close() throws IOException {
         synchronized(fdLock) {
             if (fd != null) {
-                if (!stream) {
-                    ResourceManager.afterUdpClose();
-                }
                 if (fdUseCount == 0) {
                     if (closePending) {
                         return;
@@ -589,14 +720,9 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
         }
     }
 
-    void reset() throws IOException {
-        if (fd != null) {
-            socketClose();
-        }
-        fd = null;
-        super.reset();
+    void reset() {
+        throw new InternalError("should not get here");
     }
-
 
     /**
      * Shutdown read-half of the socket connection;
@@ -711,10 +837,16 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
      */
     protected void socketClose() throws IOException {
         SocketCleanable.unregister(fd);
-        socketClose0(false);
+        try {
+            socketClose0(false);
+        } finally {
+            if (!stream) {
+                ResourceManager.afterUdpClose();
+            }
+        }
     }
 
-    abstract void socketCreate(boolean isServer) throws IOException;
+    abstract void socketCreate(boolean stream) throws IOException;
     abstract void socketConnect(InetAddress address, int port, int timeout)
         throws IOException;
     abstract void socketBind(InetAddress address, int port)

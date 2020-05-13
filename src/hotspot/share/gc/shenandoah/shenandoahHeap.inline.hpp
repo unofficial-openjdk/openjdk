@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2015, 2019, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2015, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -30,8 +31,8 @@
 #include "gc/shared/suspendibleThreadSet.hpp"
 #include "gc/shenandoah/shenandoahAsserts.hpp"
 #include "gc/shenandoah/shenandoahBarrierSet.inline.hpp"
-#include "gc/shenandoah/shenandoahBrooksPointer.inline.hpp"
 #include "gc/shenandoah/shenandoahCollectionSet.inline.hpp"
+#include "gc/shenandoah/shenandoahForwarding.inline.hpp"
 #include "gc/shenandoah/shenandoahWorkGroup.hpp"
 #include "gc/shenandoah/shenandoahHeap.hpp"
 #include "gc/shenandoah/shenandoahHeapRegionSet.inline.hpp"
@@ -39,6 +40,7 @@
 #include "gc/shenandoah/shenandoahControlThread.hpp"
 #include "gc/shenandoah/shenandoahMarkingContext.inline.hpp"
 #include "gc/shenandoah/shenandoahThreadLocalData.hpp"
+#include "oops/compressedOops.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/prefetch.inline.hpp"
@@ -46,20 +48,13 @@
 #include "utilities/copy.hpp"
 #include "utilities/globalDefinitions.hpp"
 
-template <class T>
-void ShenandoahUpdateRefsClosure::do_oop_work(T* p) {
-  T o = RawAccess<>::oop_load(p);
-  if (!CompressedOops::is_null(o)) {
-    oop obj = CompressedOops::decode_not_null(o);
-    _heap->update_with_forwarded_not_null(p, obj);
-  }
+inline ShenandoahHeap* ShenandoahHeap::heap() {
+  assert(_heap != NULL, "Heap is not initialized yet");
+  return _heap;
 }
 
-void ShenandoahUpdateRefsClosure::do_oop(oop* p)       { do_oop_work(p); }
-void ShenandoahUpdateRefsClosure::do_oop(narrowOop* p) { do_oop_work(p); }
-
 inline ShenandoahHeapRegion* ShenandoahRegionIterator::next() {
-  size_t new_index = Atomic::add((size_t) 1, &_index);
+  size_t new_index = Atomic::add(&_index, (size_t) 1);
   // get_region() provides the bounds-check and returns NULL on OOB.
   return _heap->get_region(new_index - 1);
 }
@@ -123,11 +118,11 @@ inline oop ShenandoahHeap::evac_update_with_forwarded(T* p) {
     oop heap_oop = CompressedOops::decode_not_null(o);
     if (in_collection_set(heap_oop)) {
       oop forwarded_oop = ShenandoahBarrierSet::resolve_forwarded_not_null(heap_oop);
-      if (oopDesc::equals_raw(forwarded_oop, heap_oop)) {
+      if (forwarded_oop == heap_oop) {
         forwarded_oop = evacuate_object(heap_oop, Thread::current());
       }
-      oop prev = atomic_compare_exchange_oop(forwarded_oop, p, heap_oop);
-      if (oopDesc::equals_raw(prev, heap_oop)) {
+      oop prev = cas_oop(forwarded_oop, p, heap_oop);
+      if (prev == heap_oop) {
         return forwarded_oop;
       } else {
         return NULL;
@@ -139,14 +134,22 @@ inline oop ShenandoahHeap::evac_update_with_forwarded(T* p) {
   }
 }
 
-inline oop ShenandoahHeap::atomic_compare_exchange_oop(oop n, oop* addr, oop c) {
-  return (oop) Atomic::cmpxchg(n, addr, c);
+inline oop ShenandoahHeap::cas_oop(oop n, oop* addr, oop c) {
+  assert(is_aligned(addr, HeapWordSize), "Address should be aligned: " PTR_FORMAT, p2i(addr));
+  return (oop) Atomic::cmpxchg(addr, c, n);
 }
 
-inline oop ShenandoahHeap::atomic_compare_exchange_oop(oop n, narrowOop* addr, oop c) {
+inline oop ShenandoahHeap::cas_oop(oop n, narrowOop* addr, narrowOop c) {
+  assert(is_aligned(addr, sizeof(narrowOop)), "Address should be aligned: " PTR_FORMAT, p2i(addr));
+  narrowOop val = CompressedOops::encode(n);
+  return CompressedOops::decode((narrowOop) Atomic::cmpxchg(addr, c, val));
+}
+
+inline oop ShenandoahHeap::cas_oop(oop n, narrowOop* addr, oop c) {
+  assert(is_aligned(addr, sizeof(narrowOop)), "Address should be aligned: " PTR_FORMAT, p2i(addr));
   narrowOop cmp = CompressedOops::encode(c);
   narrowOop val = CompressedOops::encode(n);
-  return CompressedOops::decode((narrowOop) Atomic::cmpxchg(val, addr, cmp));
+  return CompressedOops::decode((narrowOop) Atomic::cmpxchg(addr, cmp, val));
 }
 
 template <class T>
@@ -156,30 +159,35 @@ inline oop ShenandoahHeap::maybe_update_with_forwarded_not_null(T* p, oop heap_o
 
   if (in_collection_set(heap_oop)) {
     oop forwarded_oop = ShenandoahBarrierSet::resolve_forwarded_not_null(heap_oop);
-    if (oopDesc::equals_raw(forwarded_oop, heap_oop)) {
+    if (forwarded_oop == heap_oop) {
       // E.g. during evacuation.
       return forwarded_oop;
     }
 
     shenandoah_assert_forwarded_except(p, heap_oop, is_full_gc_in_progress() || is_degenerated_gc_in_progress());
+    shenandoah_assert_not_forwarded(p, forwarded_oop);
     shenandoah_assert_not_in_cset_except(p, forwarded_oop, cancelled_gc());
 
     // If this fails, another thread wrote to p before us, it will be logged in SATB and the
     // reference be updated later.
-    oop result = atomic_compare_exchange_oop(forwarded_oop, p, heap_oop);
+    oop witness = cas_oop(forwarded_oop, p, heap_oop);
 
-    if (oopDesc::equals_raw(result, heap_oop)) { // CAS successful.
-      return forwarded_oop;
+    if (witness != heap_oop) {
+      // CAS failed, someone had beat us to it. Normally, we would return the failure witness,
+      // because that would be the proper write of to-space object, enforced by strong barriers.
+      // However, there is a corner case with arraycopy. It can happen that a Java thread
+      // beats us with an arraycopy, which first copies the array, which potentially contains
+      // from-space refs, and only afterwards updates all from-space refs to to-space refs,
+      // which leaves a short window where the new array elements can be from-space.
+      // In this case, we can just resolve the result again. As we resolve, we need to consider
+      // the contended write might have been NULL.
+      oop result = ShenandoahBarrierSet::resolve_forwarded(witness);
+      shenandoah_assert_not_forwarded_except(p, result, (result == NULL));
+      shenandoah_assert_not_in_cset_except(p, result, (result == NULL) || cancelled_gc());
+      return result;
     } else {
-      // Note: we used to assert the following here. This doesn't work because sometimes, during
-      // marking/updating-refs, it can happen that a Java thread beats us with an arraycopy,
-      // which first copies the array, which potentially contains from-space refs, and only afterwards
-      // updates all from-space refs to to-space refs, which leaves a short window where the new array
-      // elements can be from-space.
-      // assert(CompressedOops::is_null(result) ||
-      //        oopDesc::equals_raw(result, ShenandoahBarrierSet::resolve_oop_static_not_null(result)),
-      //       "expect not forwarded");
-      return NULL;
+      // Success! We have updated with known to-space copy. We have already asserted it is sane.
+      return forwarded_oop;
     }
   } else {
     shenandoah_assert_not_forwarded(p, heap_oop);
@@ -245,51 +253,46 @@ inline oop ShenandoahHeap::evacuate_object(oop p, Thread* thread) {
 
   assert(ShenandoahThreadLocalData::is_evac_allowed(thread), "must be enclosed in oom-evac scope");
 
-  size_t size_no_fwdptr = (size_t) p->size();
-  size_t size_with_fwdptr = size_no_fwdptr + ShenandoahBrooksPointer::word_size();
+  size_t size = p->size();
 
   assert(!heap_region_containing(p)->is_humongous(), "never evacuate humongous objects");
 
   bool alloc_from_gclab = true;
-  HeapWord* filler = NULL;
+  HeapWord* copy = NULL;
 
 #ifdef ASSERT
   if (ShenandoahOOMDuringEvacALot &&
       (os::random() & 1) == 0) { // Simulate OOM every ~2nd slow-path call
-        filler = NULL;
+        copy = NULL;
   } else {
 #endif
     if (UseTLAB) {
-      filler = allocate_from_gclab(thread, size_with_fwdptr);
+      copy = allocate_from_gclab(thread, size);
     }
-    if (filler == NULL) {
-      ShenandoahAllocRequest req = ShenandoahAllocRequest::for_shared_gc(size_with_fwdptr);
-      filler = allocate_memory(req);
+    if (copy == NULL) {
+      ShenandoahAllocRequest req = ShenandoahAllocRequest::for_shared_gc(size);
+      copy = allocate_memory(req);
       alloc_from_gclab = false;
     }
 #ifdef ASSERT
   }
 #endif
 
-  if (filler == NULL) {
-    control_thread()->handle_alloc_failure_evac(size_with_fwdptr);
+  if (copy == NULL) {
+    control_thread()->handle_alloc_failure_evac(size);
 
     _oom_evac_handler.handle_out_of_memory_during_evacuation();
 
     return ShenandoahBarrierSet::resolve_forwarded(p);
   }
 
-  // Copy the object and initialize its forwarding ptr:
-  HeapWord* copy = filler + ShenandoahBrooksPointer::word_size();
-  oop copy_val = oop(copy);
-
-  Copy::aligned_disjoint_words((HeapWord*) p, copy, size_no_fwdptr);
-  ShenandoahBrooksPointer::initialize(oop(copy));
+  // Copy the object:
+  Copy::aligned_disjoint_words(cast_from_oop<HeapWord*>(p), copy, size);
 
   // Try to install the new forwarding pointer.
-  oop result = ShenandoahBrooksPointer::try_update_forwardee(p, copy_val);
-
-  if (oopDesc::equals_raw(result, p)) {
+  oop copy_val = oop(copy);
+  oop result = ShenandoahForwarding::try_update_forwardee(p, copy_val);
+  if (result == copy_val) {
     // Successfully evacuated. Our copy is now the public one!
     shenandoah_assert_correct(NULL, copy_val);
     return copy_val;
@@ -306,11 +309,11 @@ inline oop ShenandoahHeap::evacuate_object(oop p, Thread* thread) {
     // have to explicitly overwrite the copy with the filler object. With that overwrite,
     // we have to keep the fwdptr initialized and pointing to our (stale) copy.
     if (alloc_from_gclab) {
-      ShenandoahThreadLocalData::gclab(thread)->undo_allocation(filler, size_with_fwdptr);
+      ShenandoahThreadLocalData::gclab(thread)->undo_allocation(copy, size);
     } else {
-      fill_with_object(copy, size_no_fwdptr);
+      fill_with_object(copy, size);
+      shenandoah_assert_correct(NULL, copy_val);
     }
-    shenandoah_assert_correct(NULL, copy_val);
     shenandoah_assert_correct(NULL, result);
     return result;
   }
@@ -325,13 +328,14 @@ inline bool ShenandoahHeap::requires_marking(const void* entry) const {
   return !_marking_context->is_marked(obj);
 }
 
-template <class T>
-inline bool ShenandoahHeap::in_collection_set(T p) const {
-  HeapWord* obj = (HeapWord*) p;
+inline bool ShenandoahHeap::in_collection_set(oop p) const {
   assert(collection_set() != NULL, "Sanity");
-  assert(is_in(obj), "should be in heap");
+  return collection_set()->is_in(p);
+}
 
-  return collection_set()->is_in(obj);
+inline bool ShenandoahHeap::in_collection_set_loc(void* p) const {
+  assert(collection_set() != NULL, "Sanity");
+  return collection_set()->is_in_loc(p);
 }
 
 inline bool ShenandoahHeap::is_stable() const {
@@ -339,15 +343,11 @@ inline bool ShenandoahHeap::is_stable() const {
 }
 
 inline bool ShenandoahHeap::is_idle() const {
-  return _gc_state.is_unset(MARKING | EVACUATION | UPDATEREFS | TRAVERSAL);
+  return _gc_state.is_unset(MARKING | EVACUATION | UPDATEREFS);
 }
 
 inline bool ShenandoahHeap::is_concurrent_mark_in_progress() const {
   return _gc_state.is_set(MARKING);
-}
-
-inline bool ShenandoahHeap::is_concurrent_traversal_in_progress() const {
-  return _gc_state.is_set(TRAVERSAL);
 }
 
 inline bool ShenandoahHeap::is_evacuation_in_progress() const {
@@ -374,6 +374,18 @@ inline bool ShenandoahHeap::is_update_refs_in_progress() const {
   return _gc_state.is_set(UPDATEREFS);
 }
 
+inline bool ShenandoahHeap::is_stw_gc_in_progress() const {
+  return is_full_gc_in_progress() || is_degenerated_gc_in_progress();
+}
+
+inline bool ShenandoahHeap::is_concurrent_strong_root_in_progress() const {
+  return _concurrent_strong_root_in_progress.is_set();
+}
+
+inline bool ShenandoahHeap::is_concurrent_weak_root_in_progress() const {
+  return _concurrent_weak_root_in_progress.is_set();
+}
+
 template<class T>
 inline void ShenandoahHeap::marked_object_iterate(ShenandoahHeapRegion* region, T* cl) {
   marked_object_iterate(region, cl, region->top());
@@ -381,7 +393,6 @@ inline void ShenandoahHeap::marked_object_iterate(ShenandoahHeapRegion* region, 
 
 template<class T>
 inline void ShenandoahHeap::marked_object_iterate(ShenandoahHeapRegion* region, T* cl, HeapWord* limit) {
-  assert(ShenandoahBrooksPointer::word_offset() < 0, "skip_delta calculation below assumes the forwarding ptr is before obj");
   assert(! region->is_humongous_continuation(), "no humongous continuation regions here");
 
   ShenandoahMarkingContext* const ctx = complete_marking_context();
@@ -390,10 +401,9 @@ inline void ShenandoahHeap::marked_object_iterate(ShenandoahHeapRegion* region, 
   MarkBitMap* mark_bit_map = ctx->mark_bit_map();
   HeapWord* tams = ctx->top_at_mark_start(region);
 
-  size_t skip_bitmap_delta = ShenandoahBrooksPointer::word_size() + 1;
-  size_t skip_objsize_delta = ShenandoahBrooksPointer::word_size() /* + actual obj.size() below */;
-  HeapWord* start = region->bottom() + ShenandoahBrooksPointer::word_size();
-  HeapWord* end = MIN2(tams + ShenandoahBrooksPointer::word_size(), region->end());
+  size_t skip_bitmap_delta = 1;
+  HeapWord* start = region->bottom();
+  HeapWord* end = MIN2(tams, region->end());
 
   // Step 1. Scan below the TAMS based on bitmap data.
   HeapWord* limit_bitmap = MIN2(limit, tams);
@@ -423,7 +433,7 @@ inline void ShenandoahHeap::marked_object_iterate(ShenandoahHeapRegion* region, 
     do {
       avail = 0;
       for (int c = 0; (c < dist) && (cb < limit_bitmap); c++) {
-        Prefetch::read(cb, ShenandoahBrooksPointer::byte_offset());
+        Prefetch::read(cb, oopDesc::mark_offset_in_bytes());
         slots[avail++] = cb;
         cb += skip_bitmap_delta;
         if (cb < limit_bitmap) {
@@ -458,16 +468,16 @@ inline void ShenandoahHeap::marked_object_iterate(ShenandoahHeapRegion* region, 
   // Step 2. Accurate size-based traversal, happens past the TAMS.
   // This restarts the scan at TAMS, which makes sure we traverse all objects,
   // regardless of what happened at Step 1.
-  HeapWord* cs = tams + ShenandoahBrooksPointer::word_size();
+  HeapWord* cs = tams;
   while (cs < limit) {
-    assert (cs > tams,  "only objects past TAMS here: "   PTR_FORMAT " (" PTR_FORMAT ")", p2i(cs), p2i(tams));
+    assert (cs >= tams, "only objects past TAMS here: "   PTR_FORMAT " (" PTR_FORMAT ")", p2i(cs), p2i(tams));
     assert (cs < limit, "only objects below limit here: " PTR_FORMAT " (" PTR_FORMAT ")", p2i(cs), p2i(limit));
     oop obj = oop(cs);
     assert(oopDesc::is_oop(obj), "sanity");
     assert(ctx->is_marked(obj), "object expected to be marked");
     int size = obj->size();
     cl->do_object(obj);
-    cs += size + skip_objsize_delta;
+    cs += size;
   }
 }
 

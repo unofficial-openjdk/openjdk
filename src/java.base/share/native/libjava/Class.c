@@ -35,6 +35,7 @@
 #include "jni.h"
 #include "jni_util.h"
 #include "jvm.h"
+#include "check_classname.h"
 #include "java_lang_Class.h"
 
 /* defined in libverify.so/verify.dll (src file common/check_format.c) */
@@ -50,6 +51,7 @@ extern jboolean VerifyFixClassname(char *utf_name);
 #define CTR "Ljava/lang/reflect/Constructor;"
 #define PD  "Ljava/security/ProtectionDomain;"
 #define BA  "[B"
+#define RC  "Ljava/lang/reflect/RecordComponent;"
 
 static JNINativeMethod methods[] = {
     {"initClassName",    "()" STR,          (void *)&JVM_InitClassName},
@@ -59,6 +61,7 @@ static JNINativeMethod methods[] = {
     {"getSigners",       "()[" OBJ,         (void *)&JVM_GetClassSigners},
     {"setSigners",       "([" OBJ ")V",     (void *)&JVM_SetClassSigners},
     {"isArray",          "()Z",             (void *)&JVM_IsArrayClass},
+    {"isHidden",         "()Z",             (void *)&JVM_IsHiddenClass},
     {"isPrimitive",      "()Z",             (void *)&JVM_IsPrimitiveClass},
     {"getModifiers",     "()I",             (void *)&JVM_GetClassModifiers},
     {"getDeclaredFields0","(Z)[" FLD,       (void *)&JVM_GetClassDeclaredFields},
@@ -76,6 +79,8 @@ static JNINativeMethod methods[] = {
     {"getRawTypeAnnotations", "()" BA,      (void *)&JVM_GetClassTypeAnnotations},
     {"getNestHost0",         "()" CLS,      (void *)&JVM_GetNestHost},
     {"getNestMembers0",      "()[" CLS,     (void *)&JVM_GetNestMembers},
+    {"getRecordComponents0", "()[" RC,      (void *)&JVM_GetRecordComponents},
+    {"isRecord0",            "()Z",         (void *)&JVM_IsRecord},
 };
 
 #undef OBJ
@@ -122,14 +127,14 @@ Java_java_lang_Class_forName0(JNIEnv *env, jclass this, jstring classname,
     }
     (*env)->GetStringUTFRegion(env, classname, 0, unicode_len, clname);
 
-    if (VerifyFixClassname(clname) == JNI_TRUE) {
+    if (verifyFixClassname(clname) == JNI_TRUE) {
         /* slashes present in clname, use name b4 translation for exception */
         (*env)->GetStringUTFRegion(env, classname, 0, unicode_len, clname);
         JNU_ThrowClassNotFoundException(env, clname);
         goto done;
     }
 
-    if (!VerifyClassname(clname, JNI_TRUE)) {  /* expects slashed name */
+    if (!verifyClassname(clname, JNI_TRUE)) {  /* expects slashed name */
         JNU_ThrowClassNotFoundException(env, clname);
         goto done;
     }

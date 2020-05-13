@@ -26,6 +26,8 @@
 #define SHARE_SERVICES_ATTACHLISTENER_HPP
 
 #include "memory/allocation.hpp"
+#include "metaprogramming/isRegisteredEnum.hpp"
+#include "runtime/atomic.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/macros.hpp"
@@ -49,6 +51,14 @@ struct AttachOperationFunctionInfo {
   AttachOperationFunction func;
 };
 
+enum AttachListenerState {
+  AL_NOT_INITIALIZED,
+  AL_INITIALIZING,
+  AL_INITIALIZED
+};
+
+template<> struct IsRegisteredEnum<AttachListenerState> : public TrueType {};
+
 class AttachListener: AllStatic {
  public:
   static void vm_start() NOT_SERVICES_RETURN;
@@ -57,6 +67,9 @@ class AttachListener: AllStatic {
 
   // invoke to perform clean-up tasks when all clients detach
   static void detachall() NOT_SERVICES_RETURN;
+
+  // check unix domain socket file on filesystem
+  static bool check_socket_file() NOT_SERVICES_RETURN_(false);
 
   // indicates if the Attach Listener needs to be created at startup
   static bool init_at_startup() NOT_SERVICES_RETURN_(false);
@@ -67,12 +80,31 @@ class AttachListener: AllStatic {
 #if !INCLUDE_SERVICES
   static bool is_attach_supported()             { return false; }
 #else
+
  private:
-  static volatile bool _initialized;
+  static volatile AttachListenerState _state;
 
  public:
-  static bool is_initialized()                  { return _initialized; }
-  static void set_initialized()                 { _initialized = true; }
+  static void set_state(AttachListenerState new_state) {
+    Atomic::store(&_state, new_state);
+  }
+
+  static AttachListenerState get_state() {
+    return Atomic::load(&_state);
+  }
+
+  static AttachListenerState transit_state(AttachListenerState new_state,
+                                           AttachListenerState cmp_state) {
+    return Atomic::cmpxchg(&_state, cmp_state, new_state);
+  }
+
+  static bool is_initialized() {
+    return Atomic::load(&_state) == AL_INITIALIZED;
+  }
+
+  static void set_initialized() {
+    Atomic::store(&_state, AL_INITIALIZED);
+  }
 
   // indicates if this VM supports attach-on-demand
   static bool is_attach_supported()             { return !DisableAttachMechanism; }
@@ -106,7 +138,7 @@ class AttachOperation: public CHeapObj<mtInternal> {
   enum {
     name_length_max = 16,       // maximum length of  name
     arg_length_max = 1024,      // maximum length of argument
-    arg_count_max = 4           // maximum number of arguments
+    arg_count_max = 3           // maximum number of arguments
   };
 
   // name of special operation that can be enqueued when all
@@ -121,7 +153,7 @@ class AttachOperation: public CHeapObj<mtInternal> {
   const char* name() const                      { return _name; }
 
   // set the operation name
-  void set_name(char* name) {
+  void set_name(const char* name) {
     assert(strlen(name) <= name_length_max, "exceeds maximum name length");
     size_t len = MIN2(strlen(name), (size_t)name_length_max);
     memcpy(_name, name, len);
@@ -148,7 +180,7 @@ class AttachOperation: public CHeapObj<mtInternal> {
   }
 
   // create an operation of a given name
-  AttachOperation(char* name) {
+  AttachOperation(const char* name) {
     set_name(name);
     for (int i=0; i<arg_count_max; i++) {
       set_arg(i, NULL);

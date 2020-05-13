@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,13 +28,20 @@
 #include "gc/g1/g1Allocator.hpp"
 #include "gc/g1/g1AllocRegion.inline.hpp"
 #include "gc/shared/plab.inline.hpp"
+#include "memory/universe.hpp"
 
-inline MutatorAllocRegion* G1Allocator::mutator_alloc_region() {
-  return &_mutator_alloc_region;
+inline uint G1Allocator::current_node_index() const {
+  return _numa->index_of_current_thread();
 }
 
-inline SurvivorGCAllocRegion* G1Allocator::survivor_gc_alloc_region() {
-  return &_survivor_gc_alloc_region;
+inline MutatorAllocRegion* G1Allocator::mutator_alloc_region(uint node_index) {
+  assert(node_index < _num_alloc_regions, "Invalid index: %u", node_index);
+  return &_mutator_alloc_regions[node_index];
+}
+
+inline SurvivorGCAllocRegion* G1Allocator::survivor_gc_alloc_region(uint node_index) {
+  assert(node_index < _num_alloc_regions, "Invalid index: %u", node_index);
+  return &_survivor_gc_alloc_regions[node_index];
 }
 
 inline OldGCAllocRegion* G1Allocator::old_gc_alloc_region() {
@@ -44,35 +51,60 @@ inline OldGCAllocRegion* G1Allocator::old_gc_alloc_region() {
 inline HeapWord* G1Allocator::attempt_allocation(size_t min_word_size,
                                                  size_t desired_word_size,
                                                  size_t* actual_word_size) {
-  HeapWord* result = mutator_alloc_region()->attempt_retained_allocation(min_word_size, desired_word_size, actual_word_size);
+  uint node_index = current_node_index();
+  HeapWord* result = mutator_alloc_region(node_index)->attempt_retained_allocation(min_word_size, desired_word_size, actual_word_size);
   if (result != NULL) {
     return result;
   }
-  return mutator_alloc_region()->attempt_allocation(min_word_size, desired_word_size, actual_word_size);
+  return mutator_alloc_region(node_index)->attempt_allocation(min_word_size, desired_word_size, actual_word_size);
 }
 
 inline HeapWord* G1Allocator::attempt_allocation_locked(size_t word_size) {
-  HeapWord* result = mutator_alloc_region()->attempt_allocation_locked(word_size);
-  assert(result != NULL || mutator_alloc_region()->get() == NULL,
-         "Must not have a mutator alloc region if there is no memory, but is " PTR_FORMAT, p2i(mutator_alloc_region()->get()));
+  uint node_index = current_node_index();
+  HeapWord* result = mutator_alloc_region(node_index)->attempt_allocation_locked(word_size);
+  assert(result != NULL || mutator_alloc_region(node_index)->get() == NULL,
+         "Must not have a mutator alloc region if there is no memory, but is " PTR_FORMAT, p2i(mutator_alloc_region(node_index)->get()));
   return result;
 }
 
 inline HeapWord* G1Allocator::attempt_allocation_force(size_t word_size) {
-  return mutator_alloc_region()->attempt_allocation_force(word_size);
+  uint node_index = current_node_index();
+  return mutator_alloc_region(node_index)->attempt_allocation_force(word_size);
 }
 
-inline PLAB* G1PLABAllocator::alloc_buffer(InCSetState dest) {
+inline PLAB* G1PLABAllocator::alloc_buffer(G1HeapRegionAttr dest, uint node_index) const {
   assert(dest.is_valid(),
-         "Allocation buffer index out of bounds: " CSETSTATE_FORMAT, dest.value());
-  assert(_alloc_buffers[dest.value()] != NULL,
-         "Allocation buffer is NULL: " CSETSTATE_FORMAT, dest.value());
-  return _alloc_buffers[dest.value()];
+         "Allocation buffer index out of bounds: %s", dest.get_type_str());
+  assert(_alloc_buffers[dest.type()] != NULL,
+         "Allocation buffer is NULL: %s", dest.get_type_str());
+  return alloc_buffer(dest.type(), node_index);
 }
 
-inline HeapWord* G1PLABAllocator::plab_allocate(InCSetState dest,
-                                                size_t word_sz) {
-  PLAB* buffer = alloc_buffer(dest);
+inline PLAB* G1PLABAllocator::alloc_buffer(region_type_t dest, uint node_index) const {
+  assert(dest < G1HeapRegionAttr::Num,
+         "Allocation buffer index out of bounds: %u", dest);
+
+  if (dest == G1HeapRegionAttr::Young) {
+    assert(node_index < alloc_buffers_length(dest),
+           "Allocation buffer index out of bounds: %u, %u", dest, node_index);
+    return _alloc_buffers[dest][node_index];
+  } else {
+    return _alloc_buffers[dest][0];
+  }
+}
+
+inline uint G1PLABAllocator::alloc_buffers_length(region_type_t dest) const {
+  if (dest == G1HeapRegionAttr::Young) {
+    return _allocator->num_nodes();
+  } else {
+    return 1;
+  }
+}
+
+inline HeapWord* G1PLABAllocator::plab_allocate(G1HeapRegionAttr dest,
+                                                size_t word_sz,
+                                                uint node_index) {
+  PLAB* buffer = alloc_buffer(dest, node_index);
   if (_survivor_alignment_bytes == 0 || !dest.is_young()) {
     return buffer->allocate(word_sz);
   } else {
@@ -80,14 +112,15 @@ inline HeapWord* G1PLABAllocator::plab_allocate(InCSetState dest,
   }
 }
 
-inline HeapWord* G1PLABAllocator::allocate(InCSetState dest,
+inline HeapWord* G1PLABAllocator::allocate(G1HeapRegionAttr dest,
                                            size_t word_sz,
-                                           bool* refill_failed) {
-  HeapWord* const obj = plab_allocate(dest, word_sz);
+                                           bool* refill_failed,
+                                           uint node_index) {
+  HeapWord* const obj = plab_allocate(dest, word_sz, node_index);
   if (obj != NULL) {
     return obj;
   }
-  return allocate_direct_or_new_plab(dest, word_sz, refill_failed);
+  return allocate_direct_or_new_plab(dest, word_sz, refill_failed, node_index);
 }
 
 // Create the maps which is used to identify archive objects.
@@ -98,12 +131,9 @@ inline void G1ArchiveAllocator::enable_archive_object_check() {
 
   _archive_check_enabled = true;
   size_t length = G1CollectedHeap::heap()->max_reserved_capacity();
-  _closed_archive_region_map.initialize((HeapWord*)Universe::heap()->base(),
-                                        (HeapWord*)Universe::heap()->base() + length,
-                                        HeapRegion::GrainBytes);
-  _open_archive_region_map.initialize((HeapWord*)Universe::heap()->base(),
-                                      (HeapWord*)Universe::heap()->base() + length,
-                                      HeapRegion::GrainBytes);
+  _archive_region_map.initialize(G1CollectedHeap::heap()->base(),
+                                 G1CollectedHeap::heap()->base() + length,
+                                 HeapRegion::GrainBytes);
 }
 
 // Set the regions containing the specified address range as archive.
@@ -113,36 +143,26 @@ inline void G1ArchiveAllocator::set_range_archive(MemRegion range, bool open) {
                      open ? "open" : "closed",
                      p2i(range.start()),
                      p2i(range.last()));
-  if (open) {
-    _open_archive_region_map.set_by_address(range, true);
-  } else {
-    _closed_archive_region_map.set_by_address(range, true);
-  }
+  uint8_t const value = open ? G1ArchiveRegionMap::OpenArchive : G1ArchiveRegionMap::ClosedArchive;
+  _archive_region_map.set_by_address(range, value);
 }
 
 // Clear the archive regions map containing the specified address range.
-inline void G1ArchiveAllocator::clear_range_archive(MemRegion range, bool open) {
+inline void G1ArchiveAllocator::clear_range_archive(MemRegion range) {
   assert(_archive_check_enabled, "archive range check not enabled");
-  log_info(gc, cds)("Clear %s archive regions in map: [" PTR_FORMAT ", " PTR_FORMAT "]",
-                    open ? "open" : "closed",
+  log_info(gc, cds)("Clear archive regions in map: [" PTR_FORMAT ", " PTR_FORMAT "]",
                     p2i(range.start()),
                     p2i(range.last()));
-  if (open) {
-    _open_archive_region_map.set_by_address(range, false);
-  } else {
-    _closed_archive_region_map.set_by_address(range, false);
-  }
+  _archive_region_map.set_by_address(range, G1ArchiveRegionMap::NoArchive);
 }
 
 // Check if an object is in a closed archive region using the _archive_region_map.
 inline bool G1ArchiveAllocator::in_closed_archive_range(oop object) {
-  // This is the out-of-line part of is_closed_archive_object test, done separately
-  // to avoid additional performance impact when the check is not enabled.
-  return _closed_archive_region_map.get_by_address((HeapWord*)object);
+  return _archive_region_map.get_by_address(cast_from_oop<HeapWord*>(object)) == G1ArchiveRegionMap::ClosedArchive;
 }
 
 inline bool G1ArchiveAllocator::in_open_archive_range(oop object) {
-  return _open_archive_region_map.get_by_address((HeapWord*)object);
+  return _archive_region_map.get_by_address(cast_from_oop<HeapWord*>(object)) == G1ArchiveRegionMap::OpenArchive;
 }
 
 // Check if archive object checking is enabled, to avoid calling in_open/closed_archive_range
@@ -160,8 +180,8 @@ inline bool G1ArchiveAllocator::is_open_archive_object(oop object) {
 }
 
 inline bool G1ArchiveAllocator::is_archived_object(oop object) {
-  return (archive_check_enabled() && (in_closed_archive_range(object) ||
-                                      in_open_archive_range(object)));
+  return archive_check_enabled() &&
+         (_archive_region_map.get_by_address(cast_from_oop<HeapWord*>(object)) != G1ArchiveRegionMap::NoArchive);
 }
 
 #endif // SHARE_GC_G1_G1ALLOCATOR_INLINE_HPP

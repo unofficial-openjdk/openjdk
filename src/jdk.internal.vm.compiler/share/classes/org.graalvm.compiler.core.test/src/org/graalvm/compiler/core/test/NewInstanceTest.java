@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,8 +76,7 @@ public class NewInstanceTest extends GraalCompilerTest {
         StructuredGraph graph = new StructuredGraph.Builder(options, getDebugContext(options, null, javaMethod), AllowAssumptions.YES).method(javaMethod).build();
 
         GraphBuilderConfiguration conf = GraphBuilderConfiguration.getSnippetDefault(getDefaultGraphBuilderPlugins()).withUnresolvedIsError(false);
-        new GraphBuilderPhase.Instance(getMetaAccess(), getProviders().getStampProvider(), getProviders().getConstantReflection(), getProviders().getConstantFieldProvider(), conf,
-                        OptimisticOptimizations.ALL, null).apply(graph);
+        new GraphBuilderPhase.Instance(getProviders(), conf, OptimisticOptimizations.ALL, null).apply(graph);
         return graph;
     }
 

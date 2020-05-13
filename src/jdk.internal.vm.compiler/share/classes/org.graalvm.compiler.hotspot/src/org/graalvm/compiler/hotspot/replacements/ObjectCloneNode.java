@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,7 +89,7 @@ public final class ObjectCloneNode extends BasicObjectCloneNode {
                     StructuredGraph snippetGraph = null;
                     DebugContext debug = getDebug();
                     try (DebugContext.Scope s = debug.scope("ArrayCloneSnippet", snippetMethod)) {
-                        snippetGraph = replacements.getSnippet(snippetMethod, null, graph().trackNodeSourcePosition(), this.getNodeSourcePosition());
+                        snippetGraph = replacements.getSnippet(snippetMethod, null, null, graph().trackNodeSourcePosition(), this.getNodeSourcePosition(), debug.getOptions());
                     } catch (Throwable e) {
                         throw debug.handle(e);
                     }
@@ -123,4 +123,5 @@ public final class ObjectCloneNode extends BasicObjectCloneNode {
         assert getConcreteType(stamp(NodeView.DEFAULT)) == null;
         return null;
     }
+
 }

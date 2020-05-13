@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package gc.g1;
 
 import jdk.test.lib.Asserts;
 import jdk.test.lib.Platform;
+import jdk.test.lib.Utils;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import jtreg.SkippedException;
@@ -38,10 +39,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import jdk.internal.misc.Unsafe; // for ADDRESS_SIZE
 import sun.hotspot.WhiteBox;
 
 public class TestShrinkAuxiliaryData {
+    private static final Random RNG = Utils.getRandomInstance();
 
     private static final int REGION_SIZE = 1024 * 1024;
 
@@ -99,10 +102,7 @@ public class TestShrinkAuxiliaryData {
     }
 
     private void performTest(List<String> opts) throws Exception {
-        ProcessBuilder pb
-                = ProcessTools.createJavaProcessBuilder(true,
-                        opts.toArray(new String[opts.size()])
-                );
+        ProcessBuilder pb = ProcessTools.createTestJvm(opts);
 
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
         System.out.println(output.getStdout());
@@ -213,7 +213,7 @@ public class TestShrinkAuxiliaryData {
 
             public void mutate() {
                 if (!payload.isEmpty() && payload.get(0).length > 0) {
-                    payload.get(0)[0] = (byte) (Math.random() * Byte.MAX_VALUE);
+                    payload.get(0)[0] = (byte) (RNG.nextDouble() * Byte.MAX_VALUE);
                 }
             }
         }
@@ -294,12 +294,12 @@ public class TestShrinkAuxiliaryData {
                 for (int i = 0; i < NUM_LINKS; i++) {
                     int regionToLink;
                     do {
-                        regionToLink = (int) (Math.random() * REGIONS_TO_ALLOCATE);
+                        regionToLink = (int) (RNG.nextDouble() * REGIONS_TO_ALLOCATE);
                     } while (regionToLink == regionNumber);
 
                     // get random garbage object from random region
                     garbage.get(ig).addRef(garbage.get(regionToLink
-                            * NUM_OBJECTS_PER_REGION + (int) (Math.random()
+                            * NUM_OBJECTS_PER_REGION + (int) (RNG.nextDouble()
                             * NUM_OBJECTS_PER_REGION)));
                 }
             }

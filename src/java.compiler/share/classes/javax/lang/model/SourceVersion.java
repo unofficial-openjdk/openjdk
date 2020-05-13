@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,8 +58,11 @@ public enum SourceVersion {
      *   9: modules, small cleanups to 1.7 and 1.8 changes
      *  10: local-variable type inference (var)
      *  11: local-variable syntax for lambda parameters
-     *  12: TBD
-     *  13: TBD
+     *  12: no changes (switch expressions in preview)
+     *  13: no changes (switch expressions and text blocks in preview)
+     *  14: switch expressions (pattern matching and records in
+     *      preview, text blocks in preview again)
+     *  15: TBD
      */
 
     /**
@@ -192,7 +195,25 @@ public enum SourceVersion {
      *
      * @since 13
      */
-     RELEASE_13;
+     RELEASE_13,
+
+    /**
+     * The version recognized by the Java Platform, Standard Edition
+     * 14.
+     *
+     * Additions in this release include switch expressions.
+     *
+     * @since 14
+     */
+    RELEASE_14,
+
+    /**
+     * The version recognized by the Java Platform, Standard Edition
+     * 15.
+     *
+     * @since 15
+     */
+     RELEASE_15;
 
     // Note that when adding constants for newer releases, the
     // behavior of latest() and latestSupported() must be updated too.
@@ -203,42 +224,44 @@ public enum SourceVersion {
      * @return the latest source version that can be modeled
      */
     public static SourceVersion latest() {
-        return RELEASE_13;
+        return RELEASE_15;
     }
 
     private static final SourceVersion latestSupported = getLatestSupported();
 
+    /*
+     * The integer version to enum constant mapping implemented by
+     * this method assumes the JEP 322: "Time-Based Release
+     * Versioning" scheme is in effect. This scheme began in JDK
+     * 10. If the JDK versioning scheme is revised, this method may
+     * need to be updated accordingly.
+     */
     private static SourceVersion getLatestSupported() {
-        try {
-            String specVersion = System.getProperty("java.specification.version");
-
-            switch (specVersion) {
-                case "13":
-                    return RELEASE_13;
-                case "12":
-                    return RELEASE_12;
-                case "11":
-                    return RELEASE_11;
-                case "10":
-                    return RELEASE_10;
-                case "9":
-                    return RELEASE_9;
-                case "1.8":
-                    return RELEASE_8;
-                case "1.7":
-                    return RELEASE_7;
-                case "1.6":
-                    return RELEASE_6;
-            }
-        } catch (SecurityException se) {}
-
-        return RELEASE_5;
+        int intVersion = Runtime.version().feature();
+        return (intVersion >= 11) ?
+            valueOf("RELEASE_" + Math.min(15, intVersion)):
+            RELEASE_10;
     }
 
     /**
      * Returns the latest source version fully supported by the
-     * current execution environment.  {@code RELEASE_5} or later must
+     * current execution environment.  {@code RELEASE_9} or later must
      * be returned.
+     *
+     * @apiNote This method is included alongside {@link latest} to
+     * allow identification of situations where the language model API
+     * is running on a platform version different than the latest
+     * version modeled by the API. One way that sort of situation can
+     * occur is if an IDE or similar tool is using the API to model
+     * source version <i>N</i> while running on platform version
+     * (<i>N</i>&nbsp;-&nbsp;1). Running in this configuration is
+     * supported by the API. Running an API on platform versions
+     * earlier than (<i>N</i>&nbsp;-&nbsp;1) or later than <i>N</i>
+     * may or may not work as an implementation detail. If an
+     * annotation processor was generating code to run under the
+     * current execution environment, the processor should only use
+     * platform features up to the {@code latestSupported} release,
+     * which may be earlier than the {@code latest} release.
      *
      * @return the latest source version that is fully supported
      */
@@ -255,8 +278,8 @@ public enum SourceVersion {
      * followed only by characters for which {@link
      * Character#isJavaIdentifierPart(int)} returns {@code true}.
      * This pattern matches regular identifiers, keywords, restricted
-     * keywords, and the literals {@code "true"}, {@code "false"},
-     * {@code "null"}, and {@code "var"}.
+     * keywords, restricted identifiers and the literals {@code "true"},
+     * {@code "false"}, {@code "null"}.
      *
      * The method returns {@code false} for all other strings.
      *
@@ -264,6 +287,8 @@ public enum SourceVersion {
      * @return {@code true} if this string is a
      * syntactically valid identifier or keyword, {@code false}
      * otherwise.
+     *
+     * @jls 3.8 Identifiers
      */
     public static boolean isIdentifier(CharSequence name) {
         String id = name.toString();
@@ -288,12 +313,19 @@ public enum SourceVersion {
 
     /**
      * Returns whether or not {@code name} is a syntactically valid
-     * qualified name in the latest source version.  Unlike {@link
-     * #isIdentifier isIdentifier}, this method returns {@code false}
-     * for keywords, boolean literals, and the null literal.
+     * qualified name in the latest source version.
+     *
+     * Syntactically, a qualified name is a sequence of identifiers
+     * separated by period characters ("{@code .}"). This method
+     * splits the input string into period-separated segments and
+     * applies checks to each segment in turn.
+     *
+     * Unlike {@link #isIdentifier isIdentifier}, this method returns
+     * {@code false} for keywords, boolean literals, and the null
+     * literal in any segment.
      *
      * This method returns {@code true} for <i>restricted
-     * keywords</i> and {@code "var"}.
+     * keywords</i> and <i>restricted identifiers</i>.
      *
      * @param name the string to check
      * @return {@code true} if this string is a
@@ -307,12 +339,19 @@ public enum SourceVersion {
 
     /**
      * Returns whether or not {@code name} is a syntactically valid
-     * qualified name in the given source version.  Unlike {@link
-     * #isIdentifier isIdentifier}, this method returns {@code false}
-     * for keywords, boolean literals, and the null literal.
+     * qualified name in the given source version.
+     *
+     * Syntactically, a qualified name is a sequence of identifiers
+     * separated by period characters ("{@code .}"). This method
+     * splits the input string into period-separated segments and
+     * applies checks to each segment in turn.
+     *
+     * Unlike {@link #isIdentifier isIdentifier}, this method returns
+     * {@code false} for keywords, boolean literals, and the null
+     * literal in any segment.
      *
      * This method returns {@code true} for <i>restricted
-     * keywords</i> and {@code "var"}.
+     * keywords</i> and <i>restricted identifiers</i>.
      *
      * @param name the string to check
      * @param version the version to use
@@ -336,7 +375,7 @@ public enum SourceVersion {
      * Returns whether or not {@code s} is a keyword, boolean literal,
      * or null literal in the latest source version.
      * This method returns {@code false} for <i>restricted
-     * keywords</i> and {@code "var"}.
+     * keywords</i> and <i>restricted identifiers</i>.
      *
      * @param s the string to check
      * @return {@code true} if {@code s} is a keyword, or boolean
@@ -353,7 +392,7 @@ public enum SourceVersion {
      * Returns whether or not {@code s} is a keyword, boolean literal,
      * or null literal in the given source version.
      * This method returns {@code false} for <i>restricted
-     * keywords</i> and {@code "var"}.
+     * keywords</i> and <i>restricted identifiers</i>.
      *
      * @param s the string to check
      * @param version the version to use

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -604,9 +604,12 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
     public static class SimpleEntry<K,V>
         implements Entry<K,V>, java.io.Serializable
     {
+        @java.io.Serial
         private static final long serialVersionUID = -8499721149061103585L;
 
+        @SuppressWarnings("serial") // Conditionally serializable
         private final K key;
+        @SuppressWarnings("serial") // Conditionally serializable
         private V value;
 
         /**
@@ -734,9 +737,12 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
     public static class SimpleImmutableEntry<K,V>
         implements Entry<K,V>, java.io.Serializable
     {
+        @java.io.Serial
         private static final long serialVersionUID = 7138329143949025153L;
 
+        @SuppressWarnings("serial") // Not statically typed as Serializable
         private final K key;
+        @SuppressWarnings("serial") // Not statically typed as Serializable
         private final V value;
 
         /**

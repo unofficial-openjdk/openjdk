@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,11 +28,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.graalvm.compiler.asm.Label;
 import org.graalvm.compiler.core.common.cfg.AbstractBlockBase;
 import org.graalvm.compiler.core.common.cfg.AbstractControlFlowGraph;
 import org.graalvm.compiler.core.common.cfg.BlockMap;
 import org.graalvm.compiler.debug.DebugContext;
 import org.graalvm.compiler.lir.StandardOp.BlockEndOp;
+import org.graalvm.compiler.lir.StandardOp.LabelHoldingOp;
 import org.graalvm.compiler.lir.StandardOp.LabelOp;
 import org.graalvm.compiler.lir.gen.LIRGenerator;
 import org.graalvm.compiler.options.OptionValues;
@@ -70,7 +72,11 @@ public final class LIR extends LIRGenerator.VariableProvider {
     /**
      * Creates a new LIR instance for the specified compilation.
      */
-    public LIR(AbstractControlFlowGraph<?> cfg, AbstractBlockBase<?>[] linearScanOrder, AbstractBlockBase<?>[] codeEmittingOrder, OptionValues options, DebugContext debug) {
+    public LIR(AbstractControlFlowGraph<?> cfg,
+                    AbstractBlockBase<?>[] linearScanOrder,
+                    AbstractBlockBase<?>[] codeEmittingOrder,
+                    OptionValues options,
+                    DebugContext debug) {
         this.cfg = cfg;
         this.codeEmittingOrder = codeEmittingOrder;
         this.linearScanOrder = linearScanOrder;
@@ -233,8 +239,11 @@ public final class LIR extends LIRGenerator.VariableProvider {
                 continue;
             }
             for (LIRInstruction inst : lirInstructions.get(block)) {
-                if (inst instanceof LabelOp) {
-                    ((LabelOp) inst).getLabel().reset();
+                if (inst instanceof LabelHoldingOp) {
+                    Label label = ((LabelHoldingOp) inst).getLabel();
+                    if (label != null) {
+                        label.reset();
+                    }
                 }
             }
         }

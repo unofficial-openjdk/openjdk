@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2018, SAP.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -102,13 +102,13 @@ protected:
       _spaces[i].lock = new Mutex(Monitor::native, "gtest-MetaspaceAllocationTest-lock", false, Monitor::_safepoint_check_never);
       ASSERT_TRUE(_spaces[i].lock != NULL);
     }
-    // Let every ~10th space be an unsafe anonymous one to test different allocation patterns.
+    // Let every ~10th space be a short-lived one to test different allocation patterns.
     const Metaspace::MetaspaceType msType = (os::random() % 100 < 10) ?
-      Metaspace::UnsafeAnonymousMetaspaceType : Metaspace::StandardMetaspaceType;
+      Metaspace::ClassMirrorHolderMetaspaceType : Metaspace::StandardMetaspaceType;
     {
       // Pull lock during space creation, since this is what happens in the VM too
       // (see ClassLoaderData::metaspace_non_null(), which we mimick here).
-      MutexLockerEx ml(_spaces[i].lock,  Mutex::_no_safepoint_check_flag);
+      MutexLocker ml(_spaces[i].lock,  Mutex::_no_safepoint_check_flag);
       _spaces[i].space = new ClassLoaderMetaspace(_spaces[i].lock, msType);
     }
     _spaces[i].allocated = 0;

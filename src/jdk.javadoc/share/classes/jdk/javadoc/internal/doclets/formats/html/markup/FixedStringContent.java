@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,37 +47,9 @@ public class FixedStringContent extends Content {
      * @param content content for the object
      */
     public FixedStringContent(CharSequence content) {
-        string = needEscape(content)
-                ? escape(content)
-                : content.toString();
+        string = Entity.escapeHtmlChars(content);
     }
 
-    /**
-     * This method is not supported by the class.
-     *
-     * @param content content that needs to be added
-     * @throws UnsupportedOperationException always
-     */
-    @Override
-    public void addContent(Content content) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Adds content for the StringContent object.  The method escapes
-     * HTML characters for the string content that is added.
-     *
-     * @param strContent string content to be added
-     * @throws UnsupportedOperationException always
-     */
-    @Override
-    public void addContent(CharSequence strContent) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean isEmpty() {
         return string.isEmpty();
@@ -88,46 +60,15 @@ public class FixedStringContent extends Content {
         return RawHtml.charCount(string);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String toString() {
         return string;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean write(Writer out, boolean atNewline) throws IOException {
         out.write(string);
         return string.endsWith(DocletConstants.NL);
-    }
-
-    private boolean needEscape(CharSequence cs) {
-        for (int i = 0; i < cs.length(); i++) {
-            switch (cs.charAt(i)) {
-                case '<':
-                case '>':
-                case '&':
-                    return true;
-            }
-        }
-        return false;
-    }
-    private String escape(CharSequence s) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char ch = s.charAt(i);
-            switch (ch) {
-                case '<': sb.append("&lt;");  break;
-                case '>': sb.append("&gt;");  break;
-                case '&': sb.append("&amp;"); break;
-                default:  sb.append(ch);      break;
-            }
-        }
-        return sb.toString();
     }
 
 }

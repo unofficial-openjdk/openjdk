@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,21 @@
 
 package jdk.javadoc.internal.doclets.toolkit.builders;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeMirror;
 
+import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
 import jdk.javadoc.internal.doclets.toolkit.ClassWriter;
+import jdk.javadoc.internal.doclets.toolkit.CommentUtils;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.DocFilesHandler;
 import jdk.javadoc.internal.doclets.toolkit.DocletException;
@@ -42,9 +53,6 @@ import jdk.javadoc.internal.doclets.toolkit.util.Utils;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
- * @author Bhavesh Patel (Modified)
  */
 public class ClassBuilder extends AbstractBuilder {
 
@@ -57,16 +65,6 @@ public class ClassBuilder extends AbstractBuilder {
      * The doclet specific writer.
      */
     private final ClassWriter writer;
-
-    /**
-     * Keep track of whether or not this typeElement is an interface.
-     */
-    private final boolean isInterface;
-
-    /**
-     * Keep track of whether or not this typeElement is an enum.
-     */
-    private final boolean isEnum;
 
     /**
      * The content tree for the class documentation.
@@ -87,16 +85,14 @@ public class ClassBuilder extends AbstractBuilder {
         this.typeElement = typeElement;
         this.writer = writer;
         this.utils = configuration.utils;
-        if (utils.isInterface(typeElement)) {
-            isInterface = true;
-            isEnum = false;
-        } else if (utils.isEnum(typeElement)) {
-            isInterface = false;
-            isEnum = true;
-            utils.setEnumDocumentation(typeElement);
-        } else {
-            isInterface = false;
-            isEnum = false;
+        switch (typeElement.getKind()) {
+            case ENUM:
+                setEnumDocumentation(typeElement);
+                break;
+
+            case RECORD:
+                setRecordDocumentation(typeElement);
+                break;
         }
     }
 
@@ -112,30 +108,38 @@ public class ClassBuilder extends AbstractBuilder {
         return new ClassBuilder(context, typeElement, writer);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void build() throws DocletException {
-        buildClassDoc(contentTree);
+        buildClassDoc();
     }
 
      /**
       * Handles the {@literal <TypeElement>} tag.
       *
-      * @param contentTree the content tree to which the documentation will be added
       * @throws DocletException if there is a problem while building the documentation
       */
-     protected void buildClassDoc(Content contentTree) throws DocletException {
+     protected void buildClassDoc() throws DocletException {
         String key;
-        if (isInterface) {
-            key = "doclet.Interface";
-        } else if (isEnum) {
-            key = "doclet.Enum";
-        } else {
-            key = "doclet.Class";
-        }
-        contentTree = writer.getHeader(resources.getText(key) + " "
+         switch (typeElement.getKind()) {
+             case INTERFACE:
+                 key = "doclet.Interface";
+                 break;
+             case ENUM:
+                 key = "doclet.Enum";
+                 break;
+             case RECORD:
+                 key = "doclet.Record";
+                 break;
+             case ANNOTATION_TYPE:
+                 key = "doclet.AnnotationType";
+                 break;
+             case CLASS:
+                 key = "doclet.Class";
+                 break;
+             default:
+                 throw new IllegalStateException(typeElement.getKind() + " " + typeElement);
+         }
+        Content contentTree = writer.getHeader(resources.getText(key) + " "
                 + utils.getSimpleName(typeElement));
         Content classContentTree = writer.getClassContentHeader();
 
@@ -144,8 +148,8 @@ public class ClassBuilder extends AbstractBuilder {
         buildMemberSummary(classContentTree);
         buildMemberDetails(classContentTree);
 
-        writer.addClassContentTree(contentTree, classContentTree);
-        writer.addFooter(contentTree);
+        writer.addClassContentTree(classContentTree);
+        writer.addFooter();
         writer.printDocument(contentTree);
         copyDocFiles();
     }
@@ -166,9 +170,8 @@ public class ClassBuilder extends AbstractBuilder {
      * @throws DocletException if there is a problem while building the documentation
      */
     protected void buildClassInfo(Content classContentTree) throws DocletException {
-        Content classInfoTree = writer.getClassInfoTreeHeader();
-
-        buildTypeParamInfo(classInfoTree);
+        Content classInfoTree = new ContentBuilder();
+        buildParamInfo(classInfoTree);
         buildSuperInterfacesInfo(classInfoTree);
         buildImplementedInterfacesInfo(classInfoTree);
         buildSubClassInfo(classInfoTree);
@@ -181,16 +184,16 @@ public class ClassBuilder extends AbstractBuilder {
         buildClassDescription(classInfoTree);
         buildClassTagInfo(classInfoTree);
 
-        classContentTree.addContent(writer.getClassInfo(classInfoTree));
+        classContentTree.add(writer.getClassInfo(classInfoTree));
     }
 
     /**
-     * Build the type parameters of this class.
+     * Build the type parameters and state components of this class.
      *
      * @param classInfoTree the content tree to which the documentation will be added
      */
-    protected void buildTypeParamInfo(Content classInfoTree) {
-        writer.addTypeParamInfo(classInfoTree);
+    protected void buildParamInfo(Content classInfoTree) {
+        writer.addParamInfo(classInfoTree);
     }
 
     /**
@@ -320,9 +323,9 @@ public class ClassBuilder extends AbstractBuilder {
      * @throws DocletException if there is a problem while building the documentation
      */
     protected void buildMemberSummary(Content classContentTree) throws DocletException {
-        Content memberSummaryTree = writer.getMemberTreeHeader();
-        builderFactory.getMemberSummaryBuilder(writer).build(memberSummaryTree);
-        classContentTree.addContent(writer.getMemberSummaryTree(memberSummaryTree));
+        Content summariesList = writer.getSummariesList();
+        builderFactory.getMemberSummaryBuilder(writer).build(summariesList);
+        classContentTree.add(writer.getMemberSummaryTree(summariesList));
     }
 
     /**
@@ -332,64 +335,180 @@ public class ClassBuilder extends AbstractBuilder {
      * @throws DocletException if there is a problem while building the documentation
      */
     protected void buildMemberDetails(Content classContentTree) throws DocletException {
-        Content memberDetailsTree = writer.getMemberTreeHeader();
+        Content detailsList = writer.getDetailsList();
 
-        buildEnumConstantsDetails(memberDetailsTree);
-        buildPropertyDetails(memberDetailsTree);
-        buildFieldDetails(memberDetailsTree);
-        buildConstructorDetails(memberDetailsTree);
-        buildMethodDetails(memberDetailsTree);
+        buildEnumConstantsDetails(detailsList);
+        buildPropertyDetails(detailsList);
+        buildFieldDetails(detailsList);
+        buildConstructorDetails(detailsList);
+        buildAnnotationTypeRequiredMemberDetails(detailsList);
+        buildAnnotationTypeOptionalMemberDetails(detailsList);
+        buildMethodDetails(detailsList);
 
-        classContentTree.addContent(writer.getMemberDetailsTree(memberDetailsTree));
+        classContentTree.add(writer.getMemberDetailsTree(detailsList));
     }
 
     /**
      * Build the enum constants documentation.
      *
-     * @param memberDetailsTree the content tree to which the documentation will be added
+     * @param detailsList the content tree to which the documentation will be added
      * @throws DocletException if there is a problem while building the documentation
      */
-    protected void buildEnumConstantsDetails(Content memberDetailsTree) throws DocletException {
-        builderFactory.getEnumConstantsBuilder(writer).build(memberDetailsTree);
+    protected void buildEnumConstantsDetails(Content detailsList) throws DocletException {
+        builderFactory.getEnumConstantsBuilder(writer).build(detailsList);
     }
 
     /**
      * Build the field documentation.
      *
-     * @param memberDetailsTree the content tree to which the documentation will be added
+     * @param detailsList the content tree to which the documentation will be added
      * @throws DocletException if there is a problem while building the documentation
      */
-    protected void buildFieldDetails(Content memberDetailsTree) throws DocletException {
-        builderFactory.getFieldBuilder(writer).build(memberDetailsTree);
+    protected void buildFieldDetails(Content detailsList) throws DocletException {
+        builderFactory.getFieldBuilder(writer).build(detailsList);
     }
 
     /**
      * Build the property documentation.
      *
-     * @param memberDetailsTree the content tree to which the documentation will be added
+     * @param detailsList the content tree to which the documentation will be added
      * @throws DocletException if there is a problem while building the documentation
      */
-    public void buildPropertyDetails( Content memberDetailsTree) throws DocletException {
-        builderFactory.getPropertyBuilder(writer).build(memberDetailsTree);
+    public void buildPropertyDetails( Content detailsList) throws DocletException {
+        builderFactory.getPropertyBuilder(writer).build(detailsList);
     }
 
     /**
      * Build the constructor documentation.
      *
-     * @param memberDetailsTree the content tree to which the documentation will be added
+     * @param detailsList the content tree to which the documentation will be added
      * @throws DocletException if there is a problem while building the documentation
      */
-    protected void buildConstructorDetails(Content memberDetailsTree) throws DocletException {
-        builderFactory.getConstructorBuilder(writer).build(memberDetailsTree);
+    protected void buildConstructorDetails(Content detailsList) throws DocletException {
+        builderFactory.getConstructorBuilder(writer).build(detailsList);
     }
 
     /**
      * Build the method documentation.
      *
-     * @param memberDetailsTree the content tree to which the documentation will be added
+     * @param detailsList the content tree to which the documentation will be added
      * @throws DocletException if there is a problem while building the documentation
      */
-    protected void buildMethodDetails(Content memberDetailsTree) throws DocletException {
-        builderFactory.getMethodBuilder(writer).build(memberDetailsTree);
+    protected void buildMethodDetails(Content detailsList) throws DocletException {
+        builderFactory.getMethodBuilder(writer).build(detailsList);
+    }
+
+    /**
+     * Build the annotation type optional member documentation.
+     *
+     * @param memberDetailsTree the content tree to which the documentation will be added
+     * @throws DocletException if there is a problem building the documentation
+     */
+    protected void buildAnnotationTypeOptionalMemberDetails(Content memberDetailsTree)
+            throws DocletException {
+        builderFactory.getAnnotationTypeOptionalMemberBuilder(writer).build(memberDetailsTree);
+    }
+
+    /**
+     * Build the annotation type required member documentation.
+     *
+     * @param memberDetailsTree the content tree to which the documentation will be added
+     * @throws DocletException if there is a problem building the documentation
+     */
+    protected void buildAnnotationTypeRequiredMemberDetails(Content memberDetailsTree)
+            throws DocletException {
+        builderFactory.getAnnotationTypeRequiredMemberBuilder(writer).build(memberDetailsTree);
+    }
+
+    /**
+     * The documentation for values() and valueOf() in Enums are set by the
+     * doclet only iff the user or overridden methods are missing.
+     * @param elem the enum element
+     */
+    private void setEnumDocumentation(TypeElement elem) {
+        CommentUtils cmtUtils = configuration.cmtUtils;
+        for (ExecutableElement ee : utils.getMethods(elem)) {
+            if (!utils.getFullBody(ee).isEmpty()) // ignore if already set
+                continue;
+            Name name = ee.getSimpleName();
+            if (name.contentEquals("values") && ee.getParameters().isEmpty()) {
+                utils.removeCommentHelper(ee); // purge previous entry
+                cmtUtils.setEnumValuesTree(ee);
+            } else if (name.contentEquals("valueOf") && ee.getParameters().size() == 1) {
+                // TODO: check parameter type
+                utils.removeCommentHelper(ee); // purge previous entry
+                cmtUtils.setEnumValueOfTree(ee);
+            }
+        }
+    }
+
+    /**
+     * Sets the documentation as needed for the mandated parts of a record type.
+     * This includes the canonical constructor, methods like {@code equals},
+     * {@code hashCode}, {@code toString}, the accessor methods, and the underlying
+     * field.
+     * @param elem the record element
+     */
+
+    @SuppressWarnings("preview")
+    private void setRecordDocumentation(TypeElement elem) {
+        CommentUtils cmtUtils = configuration.cmtUtils;
+        Set<Name> componentNames = elem.getRecordComponents().stream()
+                .map(Element::getSimpleName)
+                .collect(Collectors.toSet());
+
+        for (ExecutableElement ee : utils.getConstructors(elem)) {
+            if (utils.isCanonicalRecordConstructor(ee)) {
+                if (utils.getFullBody(ee).isEmpty()) {
+                    utils.removeCommentHelper(ee); // purge previous entry
+                    cmtUtils.setRecordConstructorTree(ee);
+                }
+                // only one canonical constructor; no need to keep looking
+                break;
+            }
+        }
+
+        for (VariableElement ve : utils.getFields(elem)) {
+            // The fields for the record component cannot be declared by the
+            // user and so cannot have any pre-existing comment.
+            Name name = ve.getSimpleName();
+            if (componentNames.contains(name)) {
+                utils.removeCommentHelper(ve); // purge previous entry
+                cmtUtils.setRecordFieldTree(ve);
+            }
+        }
+
+        TypeMirror objectType = utils.getObjectType();
+
+        for (ExecutableElement ee : utils.getMethods(elem)) {
+            if (!utils.getFullBody(ee).isEmpty()) {
+                continue;
+            }
+
+            Name name = ee.getSimpleName();
+            List<? extends VariableElement> params = ee.getParameters();
+            if (name.contentEquals("equals")) {
+                if (params.size() == 1 && utils.typeUtils.isSameType(params.get(0).asType(), objectType)) {
+                    utils.removeCommentHelper(ee); // purge previous entry
+                    cmtUtils.setRecordEqualsTree(ee);
+                }
+            } else if (name.contentEquals("hashCode")) {
+                if (params.isEmpty()) {
+                    utils.removeCommentHelper(ee); // purge previous entry
+                    cmtUtils.setRecordHashCodeTree(ee);
+                }
+            } else if (name.contentEquals("toString")) {
+                if (params.isEmpty()) {
+                    utils.removeCommentHelper(ee); // purge previous entry
+                    cmtUtils.setRecordToStringTree(ee);
+                }
+            } else if (componentNames.contains(name)) {
+                if (params.isEmpty()) {
+                    utils.removeCommentHelper(ee); // purge previous entry
+                    cmtUtils.setRecordAccessorTree(ee);
+                }
+            }
+        }
+
     }
 }

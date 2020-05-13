@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,13 +55,23 @@ void RTMLockingCounters::init() {
   }
 }
 
+const char* RTMLockingCounters::_abortX_desc[ABORT_STATUS_LIMIT] = {
+  "abort instruction   ",
+  "may succeed on retry",
+  "thread conflict     ",
+  "buffer overflow     ",
+  "debug or trap hit   ",
+  "maximum nested depth"
+};
+
 //------------------------------print_on-------------------------------
-void RTMLockingCounters::print_on(outputStream* st) {
+void RTMLockingCounters::print_on(outputStream* st) const {
   tty->print_cr("# rtm locks total (estimated): " UINTX_FORMAT, _total_count * RTMTotalCountIncrRate);
-  tty->print_cr("# rtm lock aborts  : " UINTX_FORMAT, _abort_count);
+  tty->print_cr("# rtm lock aborts (total): " UINTX_FORMAT, _abort_count);
   for (int i = 0; i < ABORT_STATUS_LIMIT; i++) {
-    tty->print_cr("# rtm lock aborts %d: " UINTX_FORMAT, i, _abortX_count[i]);
+    tty->print_cr("# rtm lock aborts %d (%s): " UINTX_FORMAT, i, _abortX_desc[i], _abortX_count[i]);
   }
 }
+void RTMLockingCounters::print() const { print_on(tty); }
 
 #endif

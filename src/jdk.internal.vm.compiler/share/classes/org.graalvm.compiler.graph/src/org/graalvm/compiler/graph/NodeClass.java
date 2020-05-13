@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@ import static org.graalvm.compiler.graph.Edges.translateInto;
 import static org.graalvm.compiler.graph.Graph.isModificationCountsEnabled;
 import static org.graalvm.compiler.graph.InputEdges.translateInto;
 import static org.graalvm.compiler.graph.Node.WithAllEdges;
-import static org.graalvm.compiler.graph.UnsafeAccess.UNSAFE;
+import static org.graalvm.compiler.serviceprovider.GraalUnsafeAccess.getUnsafe;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -71,6 +71,8 @@ import org.graalvm.compiler.nodeinfo.NodeInfo;
 import org.graalvm.compiler.nodeinfo.NodeSize;
 import org.graalvm.compiler.nodeinfo.Verbosity;
 
+import sun.misc.Unsafe;
+
 /**
  * Metadata for every {@link Node} type. The metadata includes:
  * <ul>
@@ -81,6 +83,7 @@ import org.graalvm.compiler.nodeinfo.Verbosity;
  */
 public final class NodeClass<T> extends FieldIntrospection<T> {
 
+    private static final Unsafe UNSAFE = getUnsafe();
     // Timers for creation of a NodeClass instance
     private static final TimerKey Init_FieldScanning = DebugContext.timer("NodeClass.Init.FieldScanning");
     private static final TimerKey Init_FieldScanningInner = DebugContext.timer("NodeClass.Init.FieldScanning.Inner");
@@ -123,14 +126,14 @@ public final class NodeClass<T> extends FieldIntrospection<T> {
             field.setAccessible(true);
             return (NodeClass<T>) field.get(null);
         } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Could not load Graal NodeClass TYPE field for " + clazz, e);
         }
     }
 
     public static <T> NodeClass<T> get(Class<T> clazz) {
         int numTries = 0;
         while (true) {
-            boolean shouldBeInitializedBefore = UnsafeAccess.UNSAFE.shouldBeInitialized(clazz);
+            boolean shouldBeInitializedBefore = UNSAFE.shouldBeInitialized(clazz);
 
             NodeClass<T> result = getUnchecked(clazz);
             if (result != null || clazz == NODE_CLASS) {
@@ -143,13 +146,13 @@ public final class NodeClass<T> extends FieldIntrospection<T> {
              * information without failing gates.
              */
             numTries++;
-            boolean shouldBeInitializedAfter = UnsafeAccess.UNSAFE.shouldBeInitialized(clazz);
+            boolean shouldBeInitializedAfter = UNSAFE.shouldBeInitialized(clazz);
             String msg = "GR-9537 Reflective field access of TYPE field returned null. This is probably a bug in HotSpot class initialization. " +
                             " clazz: " + clazz.getTypeName() + ", numTries: " + numTries +
                             ", shouldBeInitializedBefore: " + shouldBeInitializedBefore + ", shouldBeInitializedAfter: " + shouldBeInitializedAfter;
             if (numTries <= 100) {
                 TTY.println(msg);
-                UnsafeAccess.UNSAFE.ensureClassInitialized(clazz);
+                UNSAFE.ensureClassInitialized(clazz);
             } else {
                 throw GraalError.shouldNotReachHere(msg);
             }
@@ -228,7 +231,7 @@ public final class NodeClass<T> extends FieldIntrospection<T> {
             inputsIteration = computeIterationMask(inputs.type(), inputs.getDirectCount(), inputs.getOffsets());
         }
         try (DebugCloseable t1 = Init_Data.start(debug)) {
-            data = new Fields(fs.data);
+            data = Fields.create(fs.data);
         }
 
         isLeafNode = inputs.getCount() + successors.getCount() == 0;
@@ -305,6 +308,17 @@ public final class NodeClass<T> extends FieldIntrospection<T> {
             assert size != null;
             debug.log("Node cost for node of type __| %s |_, cycles:%s,size:%s", clazz, cycles, size);
         }
+        assert verifyMemoryEdgeInvariant(fs) : "Nodes participating in the memory graph should have at most 1 optional memory input.";
+    }
+
+    private static boolean verifyMemoryEdgeInvariant(NodeFieldsScanner fs) {
+        int optionalMemoryInputs = 0;
+        for (InputInfo info : fs.inputs) {
+            if (info.optional && info.inputType == InputType.Memory) {
+                optionalMemoryInputs++;
+            }
+        }
+        return optionalMemoryInputs <= 1;
     }
 
     private final NodeCycles cycles;
@@ -738,6 +752,7 @@ public final class NodeClass<T> extends FieldIntrospection<T> {
             } else {
                 Object objectA = data.getObject(a, i);
                 Object objectB = data.getObject(b, i);
+                assert !isLambda(objectA) || !isLambda(objectB) : "lambdas are not permitted in fields of " + this.toString();
                 if (objectA != objectB) {
                     if (objectA != null && objectB != null) {
                         if (!deepEquals0(objectA, objectB)) {
@@ -750,6 +765,11 @@ public final class NodeClass<T> extends FieldIntrospection<T> {
             }
         }
         return true;
+    }
+
+    private static boolean isLambda(Object obj) {
+        // This needs to be consistent with InnerClassLambdaMetafactory constructor.
+        return obj != null && obj.getClass().getSimpleName().contains("$$Lambda$");
     }
 
     public boolean isValid(Position pos, NodeClass<?> from, Edges fromEdges) {
@@ -1214,8 +1234,8 @@ public final class NodeClass<T> extends FieldIntrospection<T> {
                     return false;
                 }
             } else {
-                Object v1 = Edges.getNodeListUnsafe(node, offset);
-                Object v2 = Edges.getNodeListUnsafe(other, offset);
+                NodeList<Node> v1 = Edges.getNodeListUnsafe(node, offset);
+                NodeList<Node> v2 = Edges.getNodeListUnsafe(other, offset);
                 if (!Objects.equals(v1, v2)) {
                     return false;
                 }

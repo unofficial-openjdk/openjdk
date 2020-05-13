@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,10 @@
 
 #include "precompiled.hpp"
 #include "gc/shared/collectedHeap.hpp"
+#include "memory/universe.hpp"
+#include "oops/compressedOops.hpp"
 #include "opto/machnode.hpp"
+#include "opto/output.hpp"
 #include "opto/regalloc.hpp"
 #include "utilities/vmError.hpp"
 
@@ -93,7 +96,7 @@ uint MachOper::hash() const {
 
 //------------------------------cmp--------------------------------------------
 // Print any per-operand special info
-uint MachOper::cmp( const MachOper &oper ) const {
+bool MachOper::cmp( const MachOper &oper ) const {
   ShouldNotCallThis();
   return opcode() == oper.opcode();
 }
@@ -106,7 +109,7 @@ uint labelOper::hash() const {
 
 //------------------------------cmp--------------------------------------------
 // Print any per-operand special info
-uint labelOper::cmp( const MachOper &oper ) const {
+bool labelOper::cmp( const MachOper &oper ) const {
   return (opcode() == oper.opcode()) && (_label == oper.label());
 }
 
@@ -118,7 +121,7 @@ uint methodOper::hash() const {
 
 //------------------------------cmp--------------------------------------------
 // Print any per-operand special info
-uint methodOper::cmp( const MachOper &oper ) const {
+bool methodOper::cmp( const MachOper &oper ) const {
   return (opcode() == oper.opcode()) && (_method == oper.method());
 }
 
@@ -152,7 +155,7 @@ uint MachNode::size(PhaseRegAlloc *ra_) const {
 uint MachNode::emit_size(PhaseRegAlloc *ra_) const {
   // Emit into a trash buffer and count bytes emitted.
   assert(ra_ == ra_->C->regalloc(), "sanity");
-  return ra_->C->scratch_emit_size(this);
+  return ra_->C->output()->scratch_emit_size(this);
 }
 
 
@@ -167,15 +170,15 @@ uint MachNode::hash() const {
 }
 
 //-----------------------------cmp---------------------------------------------
-uint MachNode::cmp( const Node &node ) const {
+bool MachNode::cmp( const Node &node ) const {
   MachNode& n = *((Node&)node).as_Mach();
   uint no = num_opnds();
-  if( no != n.num_opnds() ) return 0;
-  if( rule() != n.rule() ) return 0;
+  if( no != n.num_opnds() ) return false;
+  if( rule() != n.rule() ) return false;
   for( uint i=0; i<no; i++ )    // All operands must match
     if( !_opnds[i]->cmp( *n._opnds[i] ) )
-      return 0;                 // mis-matched operands
-  return 1;                     // match
+      return false;             // mis-matched operands
+  return true;                  // match
 }
 
 // Return an equivalent instruction using memory for cisc_operand position
@@ -346,7 +349,7 @@ const class TypePtr *MachNode::adr_type() const {
       return TypePtr::BOTTOM;
     }
     // %%% make offset be intptr_t
-    assert(!Universe::heap()->is_in_reserved(cast_to_oop(offset)), "must be a raw ptr");
+    assert(!Universe::heap()->is_in(cast_to_oop(offset)), "must be a raw ptr");
     return TypeRawPtr::BOTTOM;
   }
 
@@ -354,11 +357,11 @@ const class TypePtr *MachNode::adr_type() const {
   if (base == NodeSentinel)  return TypePtr::BOTTOM;
 
   const Type* t = base->bottom_type();
-  if (t->isa_narrowoop() && Universe::narrow_oop_shift() == 0) {
+  if (t->isa_narrowoop() && CompressedOops::shift() == 0) {
     // 32-bit unscaled narrow oop can be the base of any address expression
     t = t->make_ptr();
   }
-  if (t->isa_narrowklass() && Universe::narrow_klass_shift() == 0) {
+  if (t->isa_narrowklass() && CompressedKlassPointers::shift() == 0) {
     // 32-bit unscaled narrow oop can be the base of any address expression
     t = t->make_ptr();
   }
@@ -385,10 +388,10 @@ const class TypePtr *MachNode::adr_type() const {
 
 
 //-----------------------------operand_index---------------------------------
-int MachNode::operand_index( uint operand ) const {
-  if( operand < 1 )  return -1;
+int MachNode::operand_index(uint operand) const {
+  if (operand < 1)  return -1;
   assert(operand < num_opnds(), "oob");
-  if( _opnds[operand]->num_edges() == 0 )  return -1;
+  if (_opnds[operand]->num_edges() == 0)  return -1;
 
   uint skipped   = oper_input_base(); // Sum of leaves skipped so far
   for (uint opcnt = 1; opcnt < operand; opcnt++) {
@@ -408,6 +411,20 @@ int MachNode::operand_index(const MachOper *oper) const {
   }
   if (_opnds[opcnt] != oper) return -1;
   return skipped;
+}
+
+int MachNode::operand_index(Node* def) const {
+  uint skipped = oper_input_base(); // Sum of leaves skipped so far
+  for (uint opcnt = 1; opcnt < num_opnds(); opcnt++) {
+    uint num_edges = _opnds[opcnt]->num_edges(); // leaves for operand
+    for (uint i = 0; i < num_edges; i++) {
+      if (in(skipped + i) == def) {
+        return opcnt;
+      }
+    }
+    skipped += num_edges;
+  }
+  return -1;
 }
 
 //------------------------------peephole---------------------------------------
@@ -525,13 +542,13 @@ void MachTypeNode::dump_spec(outputStream *st) const {
 int MachConstantNode::constant_offset() {
   // Bind the offset lazily.
   if (_constant.offset() == -1) {
-    Compile::ConstantTable& constant_table = Compile::current()->constant_table();
+    ConstantTable& constant_table = Compile::current()->output()->constant_table();
     int offset = constant_table.find_offset(_constant);
     // If called from Compile::scratch_emit_size return the
     // pre-calculated offset.
     // NOTE: If the AD file does some table base offset optimizations
     // later the AD file needs to take care of this fact.
-    if (Compile::current()->in_scratch_emit_size()) {
+    if (Compile::current()->output()->in_scratch_emit_size()) {
       return constant_table.calculate_table_base_offset() + offset;
     }
     _constant.set_offset(constant_table.table_base_offset() + offset);
@@ -637,8 +654,7 @@ const RegMask &MachSafePointNode::in_RegMask( uint idx ) const {
   // _in_rms array of RegMasks.
   if( idx < TypeFunc::Parms ) return _in_rms[idx];
 
-  if (SafePointNode::needs_polling_address_input() &&
-      idx == TypeFunc::Parms &&
+  if (idx == TypeFunc::Parms &&
       ideal_Opcode() == Op_SafePoint) {
     return MachNode::in_RegMask(idx);
   }
@@ -651,7 +667,7 @@ const RegMask &MachSafePointNode::in_RegMask( uint idx ) const {
 
 //=============================================================================
 
-uint MachCallNode::cmp( const Node &n ) const
+bool MachCallNode::cmp( const Node &n ) const
 { return _tf == ((MachCallNode&)n)._tf; }
 const Type *MachCallNode::bottom_type() const { return tf()->range(); }
 const Type* MachCallNode::Value(PhaseGVN* phase) const { return tf()->range(); }
@@ -707,7 +723,7 @@ const RegMask &MachCallNode::in_RegMask(uint idx) const {
 
 //=============================================================================
 uint MachCallJavaNode::size_of() const { return sizeof(*this); }
-uint MachCallJavaNode::cmp( const Node &n ) const {
+bool MachCallJavaNode::cmp( const Node &n ) const {
   MachCallJavaNode &call = (MachCallJavaNode&)n;
   return MachCallNode::cmp(call) && _method->equals(call._method) &&
          _override_symbolic_info == call._override_symbolic_info;
@@ -745,7 +761,7 @@ const RegMask &MachCallJavaNode::in_RegMask(uint idx) const {
 
 //=============================================================================
 uint MachCallStaticJavaNode::size_of() const { return sizeof(*this); }
-uint MachCallStaticJavaNode::cmp( const Node &n ) const {
+bool MachCallStaticJavaNode::cmp( const Node &n ) const {
   MachCallStaticJavaNode &call = (MachCallStaticJavaNode&)n;
   return MachCallJavaNode::cmp(call) && _name == call._name;
 }
@@ -791,7 +807,7 @@ void MachCallDynamicJavaNode::dump_spec(outputStream *st) const {
 #endif
 //=============================================================================
 uint MachCallRuntimeNode::size_of() const { return sizeof(*this); }
-uint MachCallRuntimeNode::cmp( const Node &n ) const {
+bool MachCallRuntimeNode::cmp( const Node &n ) const {
   MachCallRuntimeNode &call = (MachCallRuntimeNode&)n;
   return MachCallNode::cmp(call) && !strcmp(_name,call._name);
 }

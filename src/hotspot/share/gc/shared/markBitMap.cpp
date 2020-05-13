@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "gc/shared/markBitMap.inline.hpp"
+#include "memory/universe.hpp"
 #include "memory/virtualspace.hpp"
 
 void MarkBitMap::print_on_error(outputStream* st, const char* prefix) const {
@@ -61,7 +62,7 @@ void MarkBitMap::do_clear(MemRegion mr, bool large) {
 
 #ifdef ASSERT
 void MarkBitMap::check_mark(HeapWord* addr) {
-  assert(Universe::heap()->is_in_reserved(addr),
+  assert(Universe::heap()->is_in(addr),
          "Trying to access bitmap " PTR_FORMAT " for address " PTR_FORMAT " not in the heap.",
          p2i(this), p2i(addr));
 }

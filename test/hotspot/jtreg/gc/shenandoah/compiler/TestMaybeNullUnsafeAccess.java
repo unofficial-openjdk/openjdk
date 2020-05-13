@@ -25,10 +25,15 @@
  * @test TestMaybeNullUnsafeAccess
  * @summary cast before unsafe access moved in dominating null check null path causes crash
  * @key gc
- * @requires vm.gc.Shenandoah
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
  * @modules java.base/jdk.internal.misc:+open
  *
- * @run main/othervm -XX:-UseOnStackReplacement -XX:-BackgroundCompilation -XX:-TieredCompilation TestMaybeNullUnsafeAccess
+ * @run main/othervm -XX:-UseOnStackReplacement -XX:-BackgroundCompilation -XX:-TieredCompilation
+ *                   TestMaybeNullUnsafeAccess
+ *
+ * @run main/othervm -XX:-UseOnStackReplacement -XX:-BackgroundCompilation -XX:-TieredCompilation
+ *                   -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC
+ *                   TestMaybeNullUnsafeAccess
  *
  */
 

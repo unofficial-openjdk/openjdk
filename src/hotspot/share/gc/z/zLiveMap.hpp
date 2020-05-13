@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,13 +35,13 @@ class ZLiveMap {
 private:
   static const size_t nsegments = 64;
 
-  volatile uint32_t _seqnum;              // Mark sequence number
-  volatile uint32_t _live_objects;        // Number of live objects
-  volatile size_t   _live_bytes;          // Number of live bytes
-  BitMap::bm_word_t _segment_live_bits;   // Segment live bits
-  BitMap::bm_word_t _segment_claim_bits;  // Segment claim bits
-  ZBitMap           _bitmap;              // Mark bitmap
-  const size_t      _shift;               // Segment shift
+  volatile uint32_t _seqnum;
+  volatile uint32_t _live_objects;
+  volatile size_t   _live_bytes;
+  BitMap::bm_word_t _segment_live_bits;
+  BitMap::bm_word_t _segment_claim_bits;
+  ZBitMap           _bitmap;
+  size_t            _segment_shift;
 
   const BitMapView segment_live_bits() const;
   const BitMapView segment_claim_bits() const;
@@ -55,7 +55,7 @@ private:
   BitMap::idx_t segment_end(BitMap::idx_t segment) const;
 
   bool is_segment_live(BitMap::idx_t segment) const;
-  bool set_segment_live_atomic(BitMap::idx_t segment);
+  bool set_segment_live(BitMap::idx_t segment);
 
   BitMap::idx_t first_live_segment() const;
   BitMap::idx_t next_live_segment(BitMap::idx_t segment) const;
@@ -72,6 +72,7 @@ public:
   ZLiveMap(uint32_t size);
 
   void reset();
+  void resize(uint32_t size);
 
   bool is_marked() const;
 
@@ -79,9 +80,9 @@ public:
   size_t live_bytes() const;
 
   bool get(size_t index) const;
-  bool set_atomic(size_t index, bool finalizable, bool& inc_live);
+  bool set(size_t index, bool finalizable, bool& inc_live);
 
-  void inc_live_atomic(uint32_t objects, size_t bytes);
+  void inc_live(uint32_t objects, size_t bytes);
 
   void iterate(ObjectClosure* cl, uintptr_t page_start, size_t page_object_alignment_shift);
 };

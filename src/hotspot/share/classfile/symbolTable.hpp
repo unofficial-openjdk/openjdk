@@ -28,8 +28,7 @@
 #include "memory/allocation.hpp"
 #include "memory/padded.hpp"
 #include "oops/symbol.hpp"
-#include "utilities/concurrentHashTable.hpp"
-#include "utilities/hashtable.hpp"
+#include "utilities/tableStatistics.hpp"
 
 class JavaThread;
 
@@ -43,7 +42,7 @@ class JavaThread;
 // it becomes "managed" by TempNewSymbol instances. As a handle class, TempNewSymbol
 // needs to maintain proper reference counting in context of copy semantics.
 //
-// In SymbolTable, new_symbol() and lookup() will create a Symbol* if not already in the
+// In SymbolTable, new_symbol() will create a Symbol* if not already in the
 // symbol table and add to the symbol's reference count.
 // probe() and lookup_only() will increment the refcount if symbol is found.
 class TempNewSymbol : public StackObj {
@@ -90,87 +89,71 @@ class CompactHashtableWriter;
 class SerializeClosure;
 
 class SymbolTableConfig;
-typedef ConcurrentHashTable<Symbol*,
-                              SymbolTableConfig, mtSymbol> SymbolTableHash;
-
 class SymbolTableCreateEntry;
 
-class SymbolTable : public CHeapObj<mtSymbol> {
+class constantPoolHandle;
+class SymbolClosure;
+
+class SymbolTable : public AllStatic {
   friend class VMStructs;
   friend class Symbol;
   friend class ClassFileParser;
   friend class SymbolTableConfig;
   friend class SymbolTableCreateEntry;
 
-private:
-  static void delete_symbol(Symbol* sym);
-  void grow(JavaThread* jt);
-  void clean_dead_entries(JavaThread* jt);
+ private:
+  static volatile bool _has_work;
 
-  // The symbol table
-  static SymbolTable* _the_table;
-  static volatile bool _lookup_shared_first;
-  static volatile bool _alt_hash;
-
-  // For statistics
-  volatile size_t _symbols_removed;
-  volatile size_t _symbols_counted;
-
-  SymbolTableHash* _local_table;
-  size_t _current_size;
-  volatile bool _has_work;
   // Set if one bucket is out of balance due to hash algorithm deficiency
-  volatile bool _needs_rehashing;
+  static volatile bool _needs_rehashing;
 
-  volatile size_t _items_count;
-  volatile bool   _has_items_to_clean;
+  static void delete_symbol(Symbol* sym);
+  static void grow(JavaThread* jt);
+  static void clean_dead_entries(JavaThread* jt);
 
-  double get_load_factor() const;
+  static double get_load_factor();
 
-  void check_concurrent_work();
+  static void check_concurrent_work();
 
   static void item_added();
   static void item_removed();
 
   // For cleaning
-  void reset_has_items_to_clean();
-  void mark_has_items_to_clean();
-  bool has_items_to_clean() const;
+  static void reset_has_items_to_clean();
+  static void mark_has_items_to_clean();
+  static bool has_items_to_clean();
 
-  SymbolTable();
+  static Symbol* allocate_symbol(const char* name, int len, bool c_heap); // Assumes no characters larger than 0x7F
+  static Symbol* do_lookup(const char* name, int len, uintx hash);
+  static Symbol* do_add_if_needed(const char* name, int len, uintx hash, bool heap);
 
-  Symbol* allocate_symbol(const char* name, int len, bool c_heap, TRAPS); // Assumes no characters larger than 0x7F
-  Symbol* do_lookup(const char* name, int len, uintx hash);
-  Symbol* do_add_if_needed(const char* name, int len, uintx hash, bool heap, TRAPS);
+  // lookup only, won't add. Also calculate hash. Used by the ClassfileParser.
+  static Symbol* lookup_only(const char* name, int len, unsigned int& hash);
+  static Symbol* lookup_only_unicode(const jchar* name, int len, unsigned int& hash);
 
   // Adding elements
   static void new_symbols(ClassLoaderData* loader_data,
                           const constantPoolHandle& cp, int names_count,
                           const char** name, int* lengths,
-                          int* cp_indices, unsigned int* hashValues,
-                          TRAPS);
+                          int* cp_indices, unsigned int* hashValues);
 
-  static Symbol* lookup_shared(const char* name, int len, unsigned int hash);
-  Symbol* lookup_dynamic(const char* name, int len, unsigned int hash);
-  Symbol* lookup_common(const char* name, int len, unsigned int hash);
+  static Symbol* lookup_shared(const char* name, int len, unsigned int hash) NOT_CDS_RETURN_(NULL);
+  static Symbol* lookup_dynamic(const char* name, int len, unsigned int hash);
+  static Symbol* lookup_common(const char* name, int len, unsigned int hash);
 
   // Arena for permanent symbols (null class loader) that are never unloaded
   static Arena*  _arena;
   static Arena* arena() { return _arena; }  // called for statistics
 
-  static void initialize_symbols(int arena_alloc_size = 0);
+  static void print_table_statistics(outputStream* st, const char* table_name);
 
-  void concurrent_work(JavaThread* jt);
-  void print_table_statistics(outputStream* st, const char* table_name);
-
-  void try_rehash_table();
-  bool do_rehash();
-  inline void update_needs_rehash(bool rehash);
+  static void try_rehash_table();
+  static bool do_rehash();
 
 public:
   // The symbol table
-  static SymbolTable* the_table() { return _the_table; }
-  size_t table_size();
+  static size_t table_size();
+  static TableStatistics get_table_statistics();
 
   enum {
     symbol_alloc_batch_size = 8,
@@ -178,25 +161,13 @@ public:
     symbol_alloc_arena_size = 360*K // TODO (revisit)
   };
 
-  static void create_table() {
-    assert(_the_table == NULL, "One symbol table allowed.");
-    _the_table = new SymbolTable();
-    initialize_symbols(symbol_alloc_arena_size);
-  }
+  static void create_table();
 
   static void do_concurrent_work(JavaThread* jt);
-  static bool has_work() { return the_table()->_has_work; }
+  static bool has_work() { return _has_work; }
   static void trigger_cleanup();
 
   // Probing
-  static Symbol* lookup(const char* name, int len, TRAPS);
-  // lookup only, won't add. Also calculate hash.
-  static Symbol* lookup_only(const char* name, int len, unsigned int& hash);
-  // adds new symbol if not found
-  static Symbol* lookup(const Symbol* sym, int begin, int end, TRAPS);
-  // jchar (UTF16) version of lookups
-  static Symbol* lookup_unicode(const jchar* name, int len, TRAPS);
-  static Symbol* lookup_only_unicode(const jchar* name, int len, unsigned int& hash);
   // Needed for preloading classes in signatures when compiling.
   // Returns the symbol is already present in symbol table, otherwise
   // NULL.  NO ALLOCATION IS GUARANTEED!
@@ -209,25 +180,27 @@ public:
     return lookup_only_unicode(name, len, ignore_hash);
   }
 
-  // Symbol creation
-  static Symbol* new_symbol(const char* utf8_buffer, int length, TRAPS) {
-    assert(utf8_buffer != NULL, "just checking");
-    return lookup(utf8_buffer, length, THREAD);
+  // Symbol lookup and create if not found.
+  // jchar (UTF16) version of lookup
+  static Symbol* new_symbol(const jchar* name, int len);
+  // char (UTF8) versions
+  static Symbol* new_symbol(const Symbol* sym, int begin, int end);
+  static Symbol* new_symbol(const char* utf8_buffer, int length);
+  static Symbol* new_symbol(const char* name) {
+    return new_symbol(name, (int)strlen(name));
   }
-  static Symbol* new_symbol(const char* name, TRAPS) {
-    return new_symbol(name, (int)strlen(name), THREAD);
-  }
-  static Symbol* new_symbol(const Symbol* sym, int begin, int end, TRAPS) {
-    assert(begin <= end && end <= sym->utf8_length(), "just checking");
-    return lookup(sym, begin, end, THREAD);
-  }
+
   // Create a symbol in the arena for symbols that are not deleted
-  static Symbol* new_permanent_symbol(const char* name, TRAPS);
+  static Symbol* new_permanent_symbol(const char* name);
 
   // Rehash the string table if it gets out of balance
   static void rehash_table();
-  static bool needs_rehashing()
-    { return SymbolTable::the_table()->_needs_rehashing; }
+  static bool needs_rehashing() { return _needs_rehashing; }
+  static inline void update_needs_rehash(bool rehash) {
+    if (rehash) {
+      _needs_rehashing = true;
+    }
+  }
 
   // Heap dumper and CDS
   static void symbols_do(SymbolClosure *cl);
@@ -236,15 +209,16 @@ public:
 private:
   static void copy_shared_symbol_table(CompactHashtableWriter* ch_table);
 public:
-  static void write_to_archive() NOT_CDS_RETURN;
-  static void serialize_shared_table_header(SerializeClosure* soc) NOT_CDS_RETURN;
+  static size_t estimate_size_for_archive() NOT_CDS_RETURN_(0);
+  static void write_to_archive(bool is_static_archive = true) NOT_CDS_RETURN;
+  static void serialize_shared_table_header(SerializeClosure* soc,
+                                            bool is_static_archive = true) NOT_CDS_RETURN;
   static void metaspace_pointers_do(MetaspaceClosure* it);
 
   // Jcmd
   static void dump(outputStream* st, bool verbose=false);
   // Debugging
   static void verify();
-  static void read(const char* filename, TRAPS);
 
   // Histogram
   static void print_histogram() PRODUCT_RETURN;

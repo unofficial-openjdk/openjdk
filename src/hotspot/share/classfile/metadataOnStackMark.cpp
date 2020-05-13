@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@
 #include "services/threadService.hpp"
 #include "utilities/chunkedList.hpp"
 #if INCLUDE_JVMCI
-#include "jvmci/jvmciRuntime.hpp"
+#include "jvmci/jvmci.hpp"
 #endif
 
 MetadataOnStackBuffer* MetadataOnStackMark::_used_buffers = NULL;
@@ -42,26 +42,37 @@ MetadataOnStackBuffer* MetadataOnStackMark::_free_buffers = NULL;
 MetadataOnStackBuffer* MetadataOnStackMark::_current_buffer = NULL;
 NOT_PRODUCT(bool MetadataOnStackMark::_is_active = false;)
 
+class MetadataOnStackClosure : public MetadataClosure {
+  void do_metadata(Metadata* m) { Metadata::mark_on_stack(m); }
+};
+
 // Walk metadata on the stack and mark it so that redefinition doesn't delete
 // it.  Class unloading only deletes in-error class files, methods created by
 // the relocator and dummy constant pools.  None of these appear anywhere except
 // in metadata Handles.
-MetadataOnStackMark::MetadataOnStackMark(bool redefinition_walk) {
+MetadataOnStackMark::MetadataOnStackMark(bool walk_all_metadata, bool redefinition_walk) {
   assert(SafepointSynchronize::is_at_safepoint(), "sanity check");
   assert(_used_buffers == NULL, "sanity check");
   assert(!_is_active, "MetadataOnStackMarks do not nest");
+  assert(!redefinition_walk || walk_all_metadata,
+         "walk_all_metadata must be true for redefinition_walk");
   NOT_PRODUCT(_is_active = true;)
 
   Threads::metadata_handles_do(Metadata::mark_on_stack);
 
-  if (redefinition_walk) {
-    Threads::metadata_do(Metadata::mark_on_stack);
-    CodeCache::metadata_do(Metadata::mark_on_stack);
+  if (walk_all_metadata) {
+    MetadataOnStackClosure md_on_stack;
+    Threads::metadata_do(&md_on_stack);
+    if (redefinition_walk) {
+      // We have to walk the whole code cache during redefinition.
+      CodeCache::metadata_do(&md_on_stack);
+    } else {
+      CodeCache::old_nmethods_do(&md_on_stack);
+    }
     CompileBroker::mark_on_stack();
-    JvmtiCurrentBreakpoints::metadata_do(Metadata::mark_on_stack);
     ThreadService::metadata_do(Metadata::mark_on_stack);
 #if INCLUDE_JVMCI
-    JVMCIRuntime::metadata_do(Metadata::mark_on_stack);
+    JVMCI::metadata_do(Metadata::mark_on_stack);
 #endif
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,7 @@
 
 package jdk.jfr.consumer;
 
-import java.util.List;
-
-import jdk.jfr.ValueDescriptor;
-import jdk.jfr.internal.Type;
+import jdk.jfr.internal.consumer.ObjectContext;
 
 /**
  * A recorded Java class loader.
@@ -36,27 +33,17 @@ import jdk.jfr.internal.Type;
  * @since 9
  */
 public final class RecordedClassLoader extends RecordedObject {
-
-    static ObjectFactory<RecordedClassLoader> createFactory(Type type, TimeConverter timeConverter) {
-        return new ObjectFactory<RecordedClassLoader>(type) {
-            @Override
-            RecordedClassLoader createTyped(List<ValueDescriptor> desc, long id, Object[] object) {
-                return new RecordedClassLoader(desc, id, object, timeConverter);
-            }
-        };
-    }
-
     private final long uniqueId;
 
     // package private
-    private RecordedClassLoader(List<ValueDescriptor> descriptors, long id, Object[] values, TimeConverter timeConverter) {
-        super(descriptors, values, timeConverter);
+    RecordedClassLoader(ObjectContext objectContext, long id, Object[] values) {
+        super(objectContext, values);
         this.uniqueId = id;
     }
 
     /**
      * Returns the class of the class loader.
-     * <P>
+     * <p>
      * If the bootstrap class loader is represented as {@code null} in the Java
      * Virtual Machine (JVM), then {@code null} is also the return value of this
      * method.

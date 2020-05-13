@@ -59,9 +59,8 @@ public class ClhsdbPrintStatics {
                     "Abstract_VM_Version::_vm_major_version",
                     "ClassLoaderDataGraph::_head",
                     "JNIHandles::_weak_global_handles", "PerfMemory::_top",
-                    "ObjectSynchronizer::gBlockList",
-                    "java_lang_Class::_oop_size_offset",
-                    "CodeCache::_scavenge_root_nmethods"));
+                    "ObjectSynchronizer::g_block_list",
+                    "java_lang_Class::_oop_size_offset"));
             expStrMap.put("printstatics SystemDictionary", List.of(
                     "Static fields of SystemDictionary",
                     "SystemDictionary::Class_klass_knum",
@@ -69,8 +68,7 @@ public class ClhsdbPrintStatics {
                     "SystemDictionary::Object_klass_knum"));
             expStrMap.put("printstatics Threads", List.of(
                     "Static fields of Threads",
-                    "_number_of_threads", "_number_of_non_daemon_threads",
-                    "JavaThread\\* Threads"));
+                    "_number_of_threads", "_number_of_non_daemon_threads"));
             expStrMap.put("printstatics Universe", List.of(
                     "Static fields of Universe",
                     "uintptr_t Universe::_verify_oop_mask",

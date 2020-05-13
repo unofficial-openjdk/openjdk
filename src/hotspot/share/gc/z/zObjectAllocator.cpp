@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,11 +25,13 @@
 #include "gc/z/zCollectedHeap.hpp"
 #include "gc/z/zGlobals.hpp"
 #include "gc/z/zHeap.inline.hpp"
+#include "gc/z/zHeuristics.hpp"
 #include "gc/z/zObjectAllocator.hpp"
 #include "gc/z/zPage.inline.hpp"
 #include "gc/z/zStat.hpp"
-#include "gc/z/zThread.hpp"
+#include "gc/z/zThread.inline.hpp"
 #include "gc/z/zUtils.inline.hpp"
+#include "gc/z/zValue.inline.hpp"
 #include "logging/log.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/safepoint.hpp"
@@ -41,21 +43,37 @@
 static const ZStatCounter ZCounterUndoObjectAllocationSucceeded("Memory", "Undo Object Allocation Succeeded", ZStatUnitOpsPerSecond);
 static const ZStatCounter ZCounterUndoObjectAllocationFailed("Memory", "Undo Object Allocation Failed", ZStatUnitOpsPerSecond);
 
-ZObjectAllocator::ZObjectAllocator(uint nworkers) :
-    _nworkers(nworkers),
+ZObjectAllocator::ZObjectAllocator() :
+    _use_per_cpu_shared_small_pages(ZHeuristics::use_per_cpu_shared_small_pages()),
     _used(0),
+    _undone(0),
     _shared_medium_page(NULL),
     _shared_small_page(NULL),
     _worker_small_page(NULL) {}
+
+ZPage** ZObjectAllocator::shared_small_page_addr() {
+  return _use_per_cpu_shared_small_pages ? _shared_small_page.addr() : _shared_small_page.addr(0);
+}
+
+ZPage* const* ZObjectAllocator::shared_small_page_addr() const {
+  return _use_per_cpu_shared_small_pages ? _shared_small_page.addr() : _shared_small_page.addr(0);
+}
 
 ZPage* ZObjectAllocator::alloc_page(uint8_t type, size_t size, ZAllocationFlags flags) {
   ZPage* const page = ZHeap::heap()->alloc_page(type, size, flags);
   if (page != NULL) {
     // Increment used bytes
-    Atomic::add(size, _used.addr());
+    Atomic::add(_used.addr(), size);
   }
 
   return page;
+}
+
+void ZObjectAllocator::undo_alloc_page(ZPage* page) {
+  // Increment undone bytes
+  Atomic::add(_undone.addr(), page->size());
+
+  ZHeap::heap()->undo_alloc_page(page);
 }
 
 uintptr_t ZObjectAllocator::alloc_object_in_shared_page(ZPage** shared_page,
@@ -64,7 +82,7 @@ uintptr_t ZObjectAllocator::alloc_object_in_shared_page(ZPage** shared_page,
                                                         size_t size,
                                                         ZAllocationFlags flags) {
   uintptr_t addr = 0;
-  ZPage* page = *shared_page;
+  ZPage* page = Atomic::load_acquire(shared_page);
 
   if (page != NULL) {
     addr = page->alloc_object_atomic(size);
@@ -79,7 +97,7 @@ uintptr_t ZObjectAllocator::alloc_object_in_shared_page(ZPage** shared_page,
 
     retry:
       // Install new page
-      ZPage* const prev_page = Atomic::cmpxchg(new_page, shared_page, page);
+      ZPage* const prev_page = Atomic::cmpxchg(shared_page, page, new_page);
       if (prev_page != page) {
         if (prev_page == NULL) {
           // Previous page was retired, retry installing the new page
@@ -99,7 +117,7 @@ uintptr_t ZObjectAllocator::alloc_object_in_shared_page(ZPage** shared_page,
         addr = prev_addr;
 
         // Undo new page allocation
-        ZHeap::heap()->undo_alloc_page(new_page);
+        undo_alloc_page(new_page);
       }
     }
   }
@@ -113,7 +131,7 @@ uintptr_t ZObjectAllocator::alloc_large_object(size_t size, ZAllocationFlags fla
   uintptr_t addr = 0;
 
   // Allocate new large page
-  const size_t page_size = align_up(size, ZPageSizeMin);
+  const size_t page_size = align_up(size, ZGranuleSize);
   ZPage* const page = alloc_page(ZPageTypeLarge, page_size, flags);
   if (page != NULL) {
     // Allocate the object
@@ -134,7 +152,7 @@ uintptr_t ZObjectAllocator::alloc_small_object_from_nonworker(size_t size, ZAllo
   // Non-worker small page allocation can never use the reserve
   flags.set_no_reserve();
 
-  return alloc_object_in_shared_page(_shared_small_page.addr(), ZPageTypeSmall, ZPageSizeSmall, size, flags);
+  return alloc_object_in_shared_page(shared_small_page_addr(), ZPageTypeSmall, ZPageSizeSmall, size, flags);
 }
 
 uintptr_t ZObjectAllocator::alloc_small_object_from_worker(size_t size, ZAllocationFlags flags) {
@@ -186,10 +204,6 @@ uintptr_t ZObjectAllocator::alloc_object(size_t size) {
   ZAllocationFlags flags;
   flags.set_no_reserve();
 
-  if (!ZStallOnOutOfMemory) {
-    flags.set_non_blocking();
-  }
-
   return alloc_object(size, flags);
 }
 
@@ -212,7 +226,7 @@ bool ZObjectAllocator::undo_alloc_large_object(ZPage* page) {
   assert(page->type() == ZPageTypeLarge, "Invalid page type");
 
   // Undo page allocation
-  ZHeap::heap()->undo_alloc_page(page);
+  undo_alloc_page(page);
   return true;
 }
 
@@ -272,19 +286,25 @@ void ZObjectAllocator::undo_alloc_object_for_relocation(ZPage* page, uintptr_t a
 
 size_t ZObjectAllocator::used() const {
   size_t total_used = 0;
+  size_t total_undone = 0;
 
-  ZPerCPUConstIterator<size_t> iter(&_used);
-  for (const size_t* cpu_used; iter.next(&cpu_used);) {
+  ZPerCPUConstIterator<size_t> iter_used(&_used);
+  for (const size_t* cpu_used; iter_used.next(&cpu_used);) {
     total_used += *cpu_used;
   }
 
-  return total_used;
+  ZPerCPUConstIterator<size_t> iter_undone(&_undone);
+  for (const size_t* cpu_undone; iter_undone.next(&cpu_undone);) {
+    total_undone += *cpu_undone;
+  }
+
+  return total_used - total_undone;
 }
 
 size_t ZObjectAllocator::remaining() const {
   assert(ZThread::is_java(), "Should be a Java thread");
 
-  ZPage* page = _shared_small_page.get();
+  const ZPage* const page = Atomic::load_acquire(shared_small_page_addr());
   if (page != NULL) {
     return page->remaining();
   }
@@ -295,8 +315,9 @@ size_t ZObjectAllocator::remaining() const {
 void ZObjectAllocator::retire_pages() {
   assert(SafepointSynchronize::is_at_safepoint(), "Should be at safepoint");
 
-  // Reset used
+  // Reset used and undone bytes
   _used.set_all(0);
+  _undone.set_all(0);
 
   // Reset allocation pages
   _shared_medium_page.set(NULL);

@@ -27,6 +27,7 @@
 #include "asm/macroAssembler.inline.hpp"
 #include "gc/shared/barrierSetAssembler.hpp"
 #include "interpreter/interp_masm.hpp"
+#include "oops/compressedOops.hpp"
 
 #define __ masm->
 
@@ -79,7 +80,7 @@ void BarrierSetAssembler::store_at(MacroAssembler* masm, DecoratorSet decorators
     if (UseCompressedOops && in_heap) {
       if (val == noreg) {
         __ clear_mem(addr, 4);
-      } else if (Universe::narrow_oop_mode() == Universe::UnscaledNarrowOop) {
+      } else if (CompressedOops::mode() == CompressedOops::UnscaledNarrowOop) {
         __ z_st(val, addr);
       } else {
         Register tmp = (tmp1 != Z_R1) ? tmp1 : tmp2; // Avoid tmp == Z_R1 (see oop_encoder).
@@ -107,6 +108,12 @@ void BarrierSetAssembler::resolve_jobject(MacroAssembler* masm, Register value, 
   __ z_nill(value, ~JNIHandles::weak_tag_mask);
   __ z_lg(value, 0, value); // Resolve (untagged) jobject.
 
-  __ verify_oop(value);
+  __ verify_oop(value, FILE_AND_LINE);
   __ bind(Ldone);
+}
+
+void BarrierSetAssembler::try_resolve_jobject_in_native(MacroAssembler* masm, Register jni_env,
+                                                        Register obj, Register tmp, Label& slowpath) {
+  __ z_nill(obj, ~JNIHandles::weak_tag_mask);
+  __ z_lg(obj, 0, obj); // Resolve (untagged) jobject.
 }

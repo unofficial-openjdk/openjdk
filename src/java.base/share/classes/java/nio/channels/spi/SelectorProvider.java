@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,15 +26,18 @@
 package java.nio.channels.spi;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.ProtocolFamily;
-import java.nio.channels.*;
+import java.nio.channels.Channel;
+import java.nio.channels.DatagramChannel;
+import java.nio.channels.Pipe;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 import java.util.ServiceConfigurationError;
-import sun.security.action.GetPropertyAction;
-
 
 /**
  * Service-provider class for selectors and selectable channels.
@@ -68,9 +71,6 @@ import sun.security.action.GetPropertyAction;
 
 public abstract class SelectorProvider {
 
-    private static final Object lock = new Object();
-    private static SelectorProvider provider = null;
-
     private static Void checkPermission() {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null)
@@ -90,45 +90,53 @@ public abstract class SelectorProvider {
         this(checkPermission());
     }
 
-    private static boolean loadProviderFromProperty() {
-        String cn = System.getProperty("java.nio.channels.spi.SelectorProvider");
-        if (cn == null)
-            return false;
-        try {
-            @SuppressWarnings("deprecation")
-            Object tmp = Class.forName(cn, true,
-                                       ClassLoader.getSystemClassLoader()).newInstance();
-            provider = (SelectorProvider)tmp;
-            return true;
-        } catch (ClassNotFoundException x) {
-            throw new ServiceConfigurationError(null, x);
-        } catch (IllegalAccessException x) {
-            throw new ServiceConfigurationError(null, x);
-        } catch (InstantiationException x) {
-            throw new ServiceConfigurationError(null, x);
-        } catch (SecurityException x) {
-            throw new ServiceConfigurationError(null, x);
+    private static class Holder {
+        static final SelectorProvider INSTANCE = provider();
+
+        static SelectorProvider provider() {
+            PrivilegedAction<SelectorProvider> pa = () -> {
+                SelectorProvider sp;
+                if ((sp = loadProviderFromProperty()) != null)
+                    return sp;
+                if ((sp = loadProviderAsService()) != null)
+                    return sp;
+                return sun.nio.ch.DefaultSelectorProvider.get();
+            };
+            return AccessController.doPrivileged(pa);
         }
-    }
 
-    private static boolean loadProviderAsService() {
-
-        ServiceLoader<SelectorProvider> sl =
-            ServiceLoader.load(SelectorProvider.class,
-                               ClassLoader.getSystemClassLoader());
-        Iterator<SelectorProvider> i = sl.iterator();
-        for (;;) {
+        private static SelectorProvider loadProviderFromProperty() {
+            String cn = System.getProperty("java.nio.channels.spi.SelectorProvider");
+            if (cn == null)
+                return null;
             try {
-                if (!i.hasNext())
-                    return false;
-                provider = i.next();
-                return true;
-            } catch (ServiceConfigurationError sce) {
-                if (sce.getCause() instanceof SecurityException) {
-                    // Ignore the security exception, try the next provider
-                    continue;
+                Class<?> clazz = Class.forName(cn, true, ClassLoader.getSystemClassLoader());
+                return (SelectorProvider) clazz.getConstructor().newInstance();
+            } catch (ClassNotFoundException |
+                    NoSuchMethodException |
+                    IllegalAccessException |
+                    InvocationTargetException |
+                    InstantiationException |
+                    SecurityException x) {
+                throw new ServiceConfigurationError(null, x);
+            }
+        }
+
+        private static SelectorProvider loadProviderAsService() {
+            ServiceLoader<SelectorProvider> sl =
+                ServiceLoader.load(SelectorProvider.class,
+                                   ClassLoader.getSystemClassLoader());
+            Iterator<SelectorProvider> i = sl.iterator();
+            for (;;) {
+                try {
+                    return i.hasNext() ? i.next() : null;
+                } catch (ServiceConfigurationError sce) {
+                    if (sce.getCause() instanceof SecurityException) {
+                        // Ignore the security exception, try the next provider
+                        continue;
+                    }
+                    throw sce;
                 }
-                throw sce;
             }
         }
     }
@@ -143,10 +151,10 @@ public abstract class SelectorProvider {
      * <ol>
      *
      *   <li><p> If the system property
-     *   {@code java.nio.channels.spi.SelectorProvider} is defined then it is
-     *   taken to be the fully-qualified name of a concrete provider class.
-     *   The class is loaded and instantiated; if this process fails then an
-     *   unspecified error is thrown.  </p></li>
+     *   {@systemProperty java.nio.channels.spi.SelectorProvider} is defined
+     *   then it is taken to be the fully-qualified name of a concrete provider
+     *   class. The class is loaded and instantiated; if this process fails then
+     *   an unspecified error is thrown.  </p></li>
      *
      *   <li><p> If a provider class has been installed in a jar file that is
      *   visible to the system class loader, and that jar file contains a
@@ -169,21 +177,7 @@ public abstract class SelectorProvider {
      * @return  The system-wide default selector provider
      */
     public static SelectorProvider provider() {
-        synchronized (lock) {
-            if (provider != null)
-                return provider;
-            return AccessController.doPrivileged(
-                new PrivilegedAction<>() {
-                    public SelectorProvider run() {
-                            if (loadProviderFromProperty())
-                                return provider;
-                            if (loadProviderAsService())
-                                return provider;
-                            provider = sun.nio.ch.DefaultSelectorProvider.create();
-                            return provider;
-                        }
-                    });
-        }
+        return Holder.INSTANCE;
     }
 
     /**
@@ -317,8 +311,8 @@ public abstract class SelectorProvider {
      *
      * @since 1.5
      */
-   public Channel inheritedChannel() throws IOException {
+    public Channel inheritedChannel() throws IOException {
         return null;
-   }
+    }
 
 }

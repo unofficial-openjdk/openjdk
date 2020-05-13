@@ -44,7 +44,8 @@ class RegisterImpl: public AbstractRegisterImpl {
   enum {
     number_of_registers         =   32,
     number_of_byte_registers      = 32,
-    number_of_registers_for_jvmci = 34   // Including SP and ZR.
+    number_of_registers_for_jvmci = 34,  // Including SP and ZR.
+    max_slots_per_register = 2
   };
 
   // derived registers, offsets, and addresses
@@ -127,7 +128,10 @@ inline FloatRegister as_FloatRegister(int encoding) {
 class FloatRegisterImpl: public AbstractRegisterImpl {
  public:
   enum {
-    number_of_registers = 32
+    number_of_registers = 32,
+    max_slots_per_register = 4,
+    save_slots_per_register = 2,
+    extra_save_slots_per_register = max_slots_per_register - save_slots_per_register
   };
 
   // construction
@@ -136,7 +140,7 @@ class FloatRegisterImpl: public AbstractRegisterImpl {
   VMReg as_VMReg();
 
   // derived registers, offsets, and addresses
-  FloatRegister successor() const                          { return as_FloatRegister(encoding() + 1); }
+  FloatRegister successor() const                          { return as_FloatRegister((encoding() + 1) % 32); }
 
   // accessors
   int   encoding() const                          { assert(is_valid(), "invalid register"); return (intptr_t)this; }
@@ -193,8 +197,8 @@ class ConcreteRegisterImpl : public AbstractRegisterImpl {
   // There is no requirement that any ordering here matches any ordering c2 gives
   // it's optoregs.
 
-    number_of_registers = (2 * RegisterImpl::number_of_registers +
-                           4 * FloatRegisterImpl::number_of_registers +
+    number_of_registers = (RegisterImpl::max_slots_per_register * RegisterImpl::number_of_registers +
+                           FloatRegisterImpl::max_slots_per_register * FloatRegisterImpl::number_of_registers +
                            1) // flags
   };
 
@@ -227,6 +231,11 @@ public:
 
   RegSet &operator+=(const RegSet aSet) {
     *this = *this + aSet;
+    return *this;
+  }
+
+  RegSet &operator-=(const RegSet aSet) {
+    *this = *this - aSet;
     return *this;
   }
 

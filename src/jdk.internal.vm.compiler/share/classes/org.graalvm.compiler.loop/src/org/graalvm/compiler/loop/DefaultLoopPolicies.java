@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,36 +26,33 @@ package org.graalvm.compiler.loop;
 
 import static org.graalvm.compiler.core.common.GraalOptions.LoopMaxUnswitch;
 import static org.graalvm.compiler.core.common.GraalOptions.MaximumDesiredSize;
-import static org.graalvm.compiler.core.common.GraalOptions.MinimumPeelProbability;
+import static org.graalvm.compiler.core.common.GraalOptions.MinimumPeelFrequency;
 
 import java.util.List;
 
 import org.graalvm.compiler.core.common.util.UnsignedLong;
 import org.graalvm.compiler.debug.CounterKey;
 import org.graalvm.compiler.debug.DebugContext;
+import org.graalvm.compiler.debug.GraalError;
 import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.graph.NodeBitMap;
 import org.graalvm.compiler.nodes.AbstractBeginNode;
 import org.graalvm.compiler.nodes.ControlSplitNode;
-import org.graalvm.compiler.nodes.DeoptimizeNode;
-import org.graalvm.compiler.nodes.FixedNode;
-import org.graalvm.compiler.nodes.FixedWithNextNode;
 import org.graalvm.compiler.nodes.InvokeNode;
 import org.graalvm.compiler.nodes.LoopBeginNode;
 import org.graalvm.compiler.nodes.MergeNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.VirtualState;
 import org.graalvm.compiler.nodes.VirtualState.VirtualClosure;
+import org.graalvm.compiler.nodes.calc.CompareNode;
 import org.graalvm.compiler.nodes.cfg.Block;
 import org.graalvm.compiler.nodes.cfg.ControlFlowGraph;
 import org.graalvm.compiler.nodes.debug.ControlFlowAnchorNode;
-import org.graalvm.compiler.nodes.java.TypeSwitchNode;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.options.Option;
 import org.graalvm.compiler.options.OptionKey;
 import org.graalvm.compiler.options.OptionType;
 import org.graalvm.compiler.options.OptionValues;
-
-import jdk.vm.ci.meta.MetaAccessProvider;
 
 public class DefaultLoopPolicies implements LoopPolicies {
 
@@ -64,30 +61,50 @@ public class DefaultLoopPolicies implements LoopPolicies {
         @Option(help = "", type = OptionType.Expert) public static final OptionKey<Integer> LoopUnswitchTrivial = new OptionKey<>(10);
         @Option(help = "", type = OptionType.Expert) public static final OptionKey<Double> LoopUnswitchFrequencyBoost = new OptionKey<>(10.0);
 
-        @Option(help = "", type = OptionType.Expert) public static final OptionKey<Integer> FullUnrollMaxNodes = new OptionKey<>(300);
+        @Option(help = "", type = OptionType.Expert) public static final OptionKey<Integer> FullUnrollMaxNodes = new OptionKey<>(400);
+        @Option(help = "", type = OptionType.Expert) public static final OptionKey<Integer> FullUnrollConstantCompareBoost = new OptionKey<>(15);
         @Option(help = "", type = OptionType.Expert) public static final OptionKey<Integer> FullUnrollMaxIterations = new OptionKey<>(600);
-        @Option(help = "", type = OptionType.Expert) public static final OptionKey<Integer> ExactFullUnrollMaxNodes = new OptionKey<>(1200);
+        @Option(help = "", type = OptionType.Expert) public static final OptionKey<Integer> ExactFullUnrollMaxNodes = new OptionKey<>(800);
         @Option(help = "", type = OptionType.Expert) public static final OptionKey<Integer> ExactPartialUnrollMaxNodes = new OptionKey<>(200);
 
         @Option(help = "", type = OptionType.Expert) public static final OptionKey<Integer> UnrollMaxIterations = new OptionKey<>(16);
     }
 
     @Override
-    public boolean shouldPeel(LoopEx loop, ControlFlowGraph cfg, MetaAccessProvider metaAccess) {
+    public boolean shouldPeel(LoopEx loop, ControlFlowGraph cfg, CoreProviders providers) {
         LoopBeginNode loopBegin = loop.loopBegin();
         double entryProbability = cfg.blockFor(loopBegin.forwardEnd()).getRelativeFrequency();
-        OptionValues options = cfg.graph.getOptions();
-        if (entryProbability > MinimumPeelProbability.getValue(options) && loop.size() + loopBegin.graph().getNodeCount() < MaximumDesiredSize.getValue(options)) {
-            // check whether we're allowed to peel this loop
-            return loop.canDuplicateLoop();
-        } else {
+        StructuredGraph graph = cfg.graph;
+        OptionValues options = graph.getOptions();
+
+        if (entryProbability < MinimumPeelFrequency.getValue(options)) {
             return false;
         }
+
+        if (loop.parent() != null) {
+            if (loop.size() > loop.parent().size() >> 1) {
+                // This loops make up more than half of the parent loop in terms of number of nodes.
+                // There is a risk that this loop unproportionally increases parent loop body size.
+                return false;
+            }
+        }
+
+        if (loop.loop().getChildren().size() > 0) {
+            // This loop has child loops. Loop peeling could explode graph size.
+            return false;
+        }
+
+        if (loop.size() + graph.getNodeCount() > MaximumDesiredSize.getValue(options)) {
+            // We are out of budget for peeling.
+            return false;
+        }
+
+        return true;
     }
 
     @Override
     public boolean shouldFullUnroll(LoopEx loop) {
-        if (!loop.isCounted() || !loop.counted().isConstantMaxTripCount()) {
+        if (!loop.isCounted() || !loop.counted().isConstantMaxTripCount() || !loop.counted().counterNeverOverflows()) {
             return false;
         }
         OptionValues options = loop.entryPoint().getOptions();
@@ -96,9 +113,27 @@ public class DefaultLoopPolicies implements LoopPolicies {
         if (maxTrips.equals(0)) {
             return loop.canDuplicateLoop();
         }
-        int maxNodes = (counted.isExactTripCount() && counted.isConstantExactTripCount()) ? Options.ExactFullUnrollMaxNodes.getValue(options) : Options.FullUnrollMaxNodes.getValue(options);
-        maxNodes = Math.min(maxNodes, Math.max(0, MaximumDesiredSize.getValue(options) - loop.loopBegin().graph().getNodeCount()));
-        int size = Math.max(1, loop.size() - 1 - loop.loopBegin().phis().count());
+        if (maxTrips.isGreaterThan(Options.FullUnrollMaxIterations.getValue(options))) {
+            return false;
+        }
+        int globalMax = MaximumDesiredSize.getValue(options) - loop.loopBegin().graph().getNodeCount();
+        if (globalMax <= 0) {
+            return false;
+        }
+        int maxNodes = counted.isExactTripCount() ? Options.ExactFullUnrollMaxNodes.getValue(options) : Options.FullUnrollMaxNodes.getValue(options);
+        for (Node usage : counted.getCounter().valueNode().usages()) {
+            if (usage instanceof CompareNode) {
+                CompareNode compare = (CompareNode) usage;
+                if (compare.getY().isConstant()) {
+                    maxNodes += Options.FullUnrollConstantCompareBoost.getValue(options);
+                }
+            }
+        }
+        maxNodes = Math.min(maxNodes, globalMax);
+        int size = loop.inside().nodes().count();
+        size -= 2; // remove the counted if and its non-exit begin
+        size -= loop.loopBegin().loopEnds().count();
+        GraalError.guarantee(size >= 0, "Wrong size");
         /* @formatter:off
          * The check below should not throw ArithmeticException because:
          * maxTrips is guaranteed to be >= 1 by the check above
@@ -107,7 +142,7 @@ public class DefaultLoopPolicies implements LoopPolicies {
          *   - 1 <= size <= Integer.MAX_VALUE
          * @formatter:on
          */
-        if (maxTrips.isLessOrEqualTo(Options.FullUnrollMaxIterations.getValue(options)) && maxTrips.minus(1).times(size).isLessOrEqualTo(maxNodes)) {
+        if (maxTrips.minus(1).times(size).isLessOrEqualTo(maxNodes)) {
             // check whether we're allowed to unroll this loop
             return loop.canDuplicateLoop();
         } else {
@@ -168,7 +203,7 @@ public class DefaultLoopPolicies implements LoopPolicies {
             return false;
         }
         OptionValues options = loop.entryPoint().getOptions();
-        return loopBegin.unswitches() <= LoopMaxUnswitch.getValue(options);
+        return loopBegin.unswitches() < LoopMaxUnswitch.getValue(options);
     }
 
     private static final class CountingClosure implements VirtualClosure {
@@ -217,19 +252,9 @@ public class DefaultLoopPolicies implements LoopPolicies {
         int loopTotal = loop.size() - loop.loopBegin().phis().count() - stateNodesCount.count - 1;
         int actualDiff = (loopTotal - inBranchTotal);
         ControlSplitNode firstSplit = controlSplits.get(0);
-        if (firstSplit instanceof TypeSwitchNode) {
-            int copies = firstSplit.successors().count() - 1;
-            for (Node succ : firstSplit.successors()) {
-                FixedNode current = (FixedNode) succ;
-                while (current instanceof FixedWithNextNode) {
-                    current = ((FixedWithNextNode) current).next();
-                }
-                if (current instanceof DeoptimizeNode) {
-                    copies--;
-                }
-            }
-            actualDiff = actualDiff * copies;
-        }
+
+        int copies = firstSplit.successors().count() - 1;
+        actualDiff = actualDiff * copies;
 
         debug.log("shouldUnswitch(%s, %s) : delta=%d (%.2f%% inside of branches), max=%d, f=%.2f, phis=%d -> %b", loop, controlSplits, actualDiff, (double) (inBranchTotal) / loopTotal * 100, maxDiff,
                         loopFrequency, phis, actualDiff <= maxDiff);
@@ -240,5 +265,4 @@ public class DefaultLoopPolicies implements LoopPolicies {
             return false;
         }
     }
-
 }

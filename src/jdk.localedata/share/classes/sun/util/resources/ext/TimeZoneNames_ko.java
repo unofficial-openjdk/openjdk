@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -252,6 +252,9 @@ public final class TimeZoneNames_ko extends TimeZoneNamesBundle {
         String WET[] = new String[] {"\uc11c\uc720\ub7fd \uc2dc\uac04", "WET",
                                      "\uc11c\uc720\ub7fd \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "WEST",
                                      "\uC11C\uBD80 \uC720\uB7FD \uD45C\uC900\uC2DC", "WET"};
+        String WGT[] = new String[] {"\uc11c\ubd80 \uadf8\ub9b0\ub79c\ub4dc \uc2dc\uac04", "WGT",
+                                     "\uc11c\ubd80 \uadf8\ub9b0\ub79c\ub4dc \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "WGST",
+                                     "\uC11C\uBD80 \uADF8\uB9B0\uB780\uB4DC \uD45C\uC900\uC2DC", "WGT"};
         String WIT[] = new String[] {"\uc11c\uc778\ub3c4\ub124\uc2dc\uc544 \uc2dc\uac04", "WIB",
                                      "\uc11c\uc778\ub3c4\ub124\uc2dc\uc544 \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "WIST",
                                      "\uC11C\uBD80 \uC778\uB3C4\uB124\uC2DC\uC544 \uD45C\uC900\uC2DC", "WIB"};
@@ -371,7 +374,7 @@ public final class TimeZoneNames_ko extends TimeZoneNamesBundle {
             {"Africa/Nouakchott", GMT},
             {"Africa/Ouagadougou", GMT},
             {"Africa/Porto-Novo", WAT},
-            {"Africa/Sao_Tome", WAT},
+            {"Africa/Sao_Tome", GMT},
             {"Africa/Timbuktu", GMT},
             {"Africa/Tripoli", EET},
             {"Africa/Tunis", CET},
@@ -430,7 +433,7 @@ public final class TimeZoneNames_ko extends TimeZoneNamesBundle {
             {"America/Cuiaba", AMT},
             {"America/Curacao", AST},
             {"America/Danmarkshavn", GMT},
-            {"America/Dawson", PST},
+            {"America/Dawson", MST},
             {"America/Dawson_Creek", MST},
             {"America/Detroit", EST},
             {"America/Dominica", AST},
@@ -442,9 +445,7 @@ public final class TimeZoneNames_ko extends TimeZoneNamesBundle {
             {"America/Fort_Wayne", EST},
             {"America/Fortaleza", BRT},
             {"America/Glace_Bay", AST},
-            {"America/Godthab", new String[] {"\uc11c\ubd80 \uadf8\ub9b0\ub79c\ub4dc \uc2dc\uac04", "WGT",
-                                              "\uc11c\ubd80 \uadf8\ub9b0\ub79c\ub4dc \uc77c\uad11\uc808\uc57d\uc2dc\uac04", "WGST",
-                                              "\uC11C\uBD80 \uADF8\uB9B0\uB780\uB4DC \uD45C\uC900\uC2DC", "WGT"}},
+            {"America/Godthab", WGT},
             {"America/Goose_Bay", AST},
             {"America/Grand_Turk", EST},
             {"America/Grenada", AST},
@@ -512,6 +513,7 @@ public final class TimeZoneNames_ko extends TimeZoneNamesBundle {
             {"America/North_Dakota/Beulah", CST},
             {"America/North_Dakota/Center", CST},
             {"America/North_Dakota/New_Salem", CST},
+            {"America/Nuuk", WGT},
             {"America/Ojinaga", MST},
             {"America/Panama", EST},
             {"America/Pangnirtung", EST},
@@ -551,7 +553,7 @@ public final class TimeZoneNames_ko extends TimeZoneNamesBundle {
             {"America/Tortola", AST},
             {"America/Vancouver", PST},
             {"America/Virgin", AST},
-            {"America/Whitehorse", PST},
+            {"America/Whitehorse", MST},
             {"America/Winnipeg", CST},
             {"America/Yakutat", AKST},
             {"America/Yellowknife", MST},
@@ -782,7 +784,7 @@ public final class TimeZoneNames_ko extends TimeZoneNamesBundle {
             {"Canada/Mountain", MST},
             {"Canada/Newfoundland", NST},
             {"Canada/Pacific", PST},
-            {"Canada/Yukon", PST},
+            {"Canada/Yukon", MST},
             {"Canada/Saskatchewan", CST},
             {"CAT", CAT},
             {"CET", CET},

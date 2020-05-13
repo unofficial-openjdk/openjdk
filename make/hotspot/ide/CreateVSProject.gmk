@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ default: all
 include $(SPEC)
 include MakeBase.gmk
 include JavaCompilation.gmk
-include SetupJavaCompilers.gmk
+include Execute.gmk
 
 ifeq ($(call isTargetOs, windows), true)
   # The next part is a bit hacky. We include the CompileJvm.gmk to be
@@ -96,10 +96,11 @@ ifeq ($(call isTargetOs, windows), true)
   TOOLS_OUTPUTDIR := $(HOTSPOT_OUTPUTDIR)/support/tools_classes
 
   $(eval $(call SetupJavaCompilation, BUILD_PROJECT_CREATOR, \
-      SETUP := GENERATE_OLDBYTECODE, \
-      ADD_JAVAC_FLAGS := -Xlint:-auxiliaryclass, \
+      TARGET_RELEASE := $(TARGET_RELEASE_BOOTJDK), \
+      DISABLED_WARNINGS := auxiliaryclass deprecation rawtypes unchecked cast options, \
       SRC := $(TOPDIR)/make/hotspot/src/classes, \
       BIN := $(TOOLS_OUTPUTDIR), \
+      JAVAC_FLAGS := -XDstringConcat=inline, \
   ))
 
   TARGETS += $(BUILD_PROJECT_CREATOR)
@@ -144,14 +145,16 @@ ifeq ($(call isTargetOs, windows), true)
   VCPROJ_VARDEPS_FILE := $(call DependOnVariable, VCPROJ_VARDEPS, \
     $(VCPROJ_FILE).vardeps)
 
-  $(VCPROJ_FILE): $(BUILD_PROJECT_CREATOR) $(VCPROJ_VARDEPS_FILE)
-	$(call MakeDir, $(@D))
-	$(call ExecuteWithLog, $@, \
-	    $(PROJECT_CREATOR_TOOL) $(PROJECT_CREATOR_CLASS) \
-	    $(PROJECT_CREATOR_ARGS) -projectFileName $(call FixPath, $@)) \
-	    $(LOG_INFO)
+  $(eval $(call SetupExecute, vcproj_file, \
+      INFO := Generating Visual Studio project file, \
+      DEPS := $(BUILD_PROJECT_CREATOR) $(VCPROJ_VARDEPS_FILE), \
+      OUTPUT_FILE := $(VCPROJ_FILE), \
+      COMMAND := $(PROJECT_CREATOR_TOOL) $(PROJECT_CREATOR_CLASS) \
+          $(PROJECT_CREATOR_ARGS) -projectFileName $(call FixPath, $(VCPROJ_FILE)) \
+          $(LOG_INFO), \
+  ))
 
-  TARGETS += $(VCPROJ_FILE)
+  TARGETS += $(vcproj_file_TARGET)
 
   all: $(TARGETS)
 

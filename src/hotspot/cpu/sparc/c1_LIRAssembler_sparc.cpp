@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,9 +31,8 @@
 #include "c1/c1_ValueStack.hpp"
 #include "ci/ciArrayKlass.hpp"
 #include "ci/ciInstance.hpp"
-#include "gc/shared/barrierSet.hpp"
-#include "gc/shared/cardTableBarrierSet.hpp"
 #include "gc/shared/collectedHeap.hpp"
+#include "memory/universe.hpp"
 #include "nativeInst_sparc.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "runtime/frame.inline.hpp"
@@ -41,6 +40,7 @@
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/safepointMechanism.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 #define __ _masm->
 
@@ -106,8 +106,8 @@ bool LIR_Assembler::is_single_instruction(LIR_Op* op) {
       }
 
       if (UseCompressedOops) {
-        if (dst->is_address() && !dst->is_stack() && (dst->type() == T_OBJECT || dst->type() == T_ARRAY)) return false;
-        if (src->is_address() && !src->is_stack() && (src->type() == T_OBJECT || src->type() == T_ARRAY)) return false;
+        if (dst->is_address() && !dst->is_stack() && is_reference_type(dst->type())) return false;
+        if (src->is_address() && !src->is_stack() && is_reference_type(src->type())) return false;
       }
 
       if (UseCompressedClassPointers) {
@@ -171,6 +171,9 @@ int LIR_Assembler::check_icache() {
   return offset;
 }
 
+void LIR_Assembler::clinit_barrier(ciMethod* method) {
+  ShouldNotReachHere(); // not implemented
+}
 
 void LIR_Assembler::osr_entry() {
   // On-stack-replacement entry sequence (interpreter frame layout described in interpreter_sparc.cpp):
@@ -405,7 +408,7 @@ void LIR_Assembler::jobject2reg(jobject o, Register reg) {
 #ifdef ASSERT
     {
       ThreadInVMfromNative tiv(JavaThread::current());
-      assert(Universe::heap()->is_in_reserved(JNIHandles::resolve(o)), "should be real oop");
+      assert(Universe::heap()->is_in(JNIHandles::resolve(o)), "should be real oop");
     }
 #endif
     int oop_index = __ oop_recorder()->find_index(o);
@@ -724,7 +727,7 @@ int LIR_Assembler::store(LIR_Opr from_reg, Register base, int offset, BasicType 
     __ set(offset, O7);
     store_offset = store(from_reg, base, O7, type, wide);
   } else {
-    if (type == T_ARRAY || type == T_OBJECT) {
+    if (is_reference_type(type)) {
       __ verify_oop(from_reg->as_register());
     }
     store_offset = code_offset();
@@ -785,7 +788,7 @@ int LIR_Assembler::store(LIR_Opr from_reg, Register base, int offset, BasicType 
 
 
 int LIR_Assembler::store(LIR_Opr from_reg, Register base, Register disp, BasicType type, bool wide) {
-  if (type == T_ARRAY || type == T_OBJECT) {
+  if (is_reference_type(type)) {
     __ verify_oop(from_reg->as_register());
   }
   int store_offset = code_offset();
@@ -885,7 +888,7 @@ int LIR_Assembler::load(Register base, int offset, LIR_Opr to_reg, BasicType typ
         }
       default      : ShouldNotReachHere();
     }
-    if (type == T_ARRAY || type == T_OBJECT) {
+    if (is_reference_type(type)) {
       __ verify_oop(to_reg->as_register());
     }
   }
@@ -920,7 +923,7 @@ int LIR_Assembler::load(Register base, Register disp, LIR_Opr to_reg, BasicType 
       break;
     default      : ShouldNotReachHere();
   }
-  if (type == T_ARRAY || type == T_OBJECT) {
+  if (is_reference_type(type)) {
     __ verify_oop(to_reg->as_register());
   }
   return load_offset;
@@ -1355,7 +1358,7 @@ void LIR_Assembler::reg2reg(LIR_Opr from_reg, LIR_Opr to_reg) {
   } else {
     ShouldNotReachHere();
   }
-  if (to_reg->type() == T_OBJECT || to_reg->type() == T_ARRAY) {
+  if (is_reference_type(to_reg->type())) {
     __ verify_oop(to_reg->as_register());
   }
 }
@@ -1425,11 +1428,7 @@ void LIR_Assembler::return_op(LIR_Opr result) {
   if (StackReservedPages > 0 && compilation()->has_reserved_stack_access()) {
     __ reserved_stack_check();
   }
-  if (SafepointMechanism::uses_thread_local_poll()) {
-    __ ld_ptr(Address(G2_thread, Thread::polling_page_offset()), L0);
-  } else {
-    __ set((intptr_t)os::get_polling_page(), L0);
-  }
+  __ ld_ptr(Address(G2_thread, Thread::polling_page_offset()), L0);
   __ relocate(relocInfo::poll_return_type);
   __ ld_ptr(L0, 0, G0);
   __ ret();
@@ -1438,11 +1437,7 @@ void LIR_Assembler::return_op(LIR_Opr result) {
 
 
 int LIR_Assembler::safepoint_poll(LIR_Opr tmp, CodeEmitInfo* info) {
-  if (SafepointMechanism::uses_thread_local_poll()) {
-    __ ld_ptr(Address(G2_thread, Thread::polling_page_offset()), tmp->as_register());
-  } else {
-    __ set((intptr_t)os::get_polling_page(), tmp->as_register());
-  }
+  __ ld_ptr(Address(G2_thread, Thread::polling_page_offset()), tmp->as_register());
   if (info != NULL) {
     add_debug_info_for_branch(info);
   }
@@ -1503,6 +1498,18 @@ void LIR_Assembler::comp_op(LIR_Condition condition, LIR_Opr opr1, LIR_Opr opr2,
             } else {
               jobject2reg(con, O7);
               __ cmp(opr1->as_register(), O7);
+            }
+          }
+          break;
+
+        case T_METADATA:
+          // We only need, for now, comparison with NULL for metadata.
+          { assert(condition == lir_cond_equal || condition == lir_cond_notEqual, "oops");
+            Metadata* m = opr2->as_constant_ptr()->as_metadata();
+            if (m == NULL) {
+              __ cmp(opr1->as_register(), 0);
+            } else {
+              ShouldNotReachHere();
             }
           }
           break;
@@ -1717,12 +1724,6 @@ void LIR_Assembler::arith_op(LIR_Code code, LIR_Opr left, LIR_Opr right, LIR_Opr
     }
   }
 }
-
-
-void LIR_Assembler::fpop() {
-  // do nothing
-}
-
 
 void LIR_Assembler::intrinsic_op(LIR_Code code, LIR_Opr value, LIR_Opr thread, LIR_Opr dest, LIR_Op* op) {
   switch (code) {
@@ -2291,8 +2292,8 @@ void LIR_Assembler::emit_alloc_array(LIR_OpAllocArray* op) {
 
   __ signx(op->len()->as_register());
   if (UseSlowPath ||
-      (!UseFastNewObjectArray && (op->type() == T_OBJECT || op->type() == T_ARRAY)) ||
-      (!UseFastNewTypeArray   && (op->type() != T_OBJECT && op->type() != T_ARRAY))) {
+      (!UseFastNewObjectArray && is_reference_type(op->type())) ||
+      (!UseFastNewTypeArray   && !is_reference_type(op->type()))) {
     __ br(Assembler::always, false, Assembler::pt, *op->stub()->entry());
     __ delayed()->nop();
   } else {
@@ -2643,16 +2644,6 @@ void LIR_Assembler::emit_compare_and_swap(LIR_OpCompareAndSwap* op) {
     Unimplemented();
   }
 }
-
-void LIR_Assembler::set_24bit_FPU() {
-  Unimplemented();
-}
-
-
-void LIR_Assembler::reset_FPU() {
-  Unimplemented();
-}
-
 
 void LIR_Assembler::breakpoint() {
   __ breakpoint_trap();
@@ -3041,19 +3032,6 @@ void LIR_Assembler::negate(LIR_Opr left, LIR_Opr dest, LIR_Opr tmp) {
     Register Rhi = left->as_register_hi();
     __ sub(G0, Rlow, dest->as_register_lo());
   }
-}
-
-
-void LIR_Assembler::fxch(int i) {
-  Unimplemented();
-}
-
-void LIR_Assembler::fld(int i) {
-  Unimplemented();
-}
-
-void LIR_Assembler::ffree(int i) {
-  Unimplemented();
 }
 
 void LIR_Assembler::rt_call(LIR_Opr result, address dest,

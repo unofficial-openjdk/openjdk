@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,10 @@ package java.io;
  *      descriptor read from the stream
  * <LI> The class contains unknown datatypes
  * <LI> The class does not have an accessible no-arg constructor
+ * <LI> The ObjectStreamClass of an enum constant does not represent
+ *      an enum type
+ * <LI> Other conditions given in the <cite>Java Object Serialization
+ *      Specification</cite>
  * </UL>
  *
  * @author  unascribed
@@ -40,6 +44,7 @@ package java.io;
  */
 public class InvalidClassException extends ObjectStreamException {
 
+    @java.io.Serial
     private static final long serialVersionUID = -4333316296251054416L;
 
     /**

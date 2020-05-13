@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,19 +36,19 @@ package java.lang;
  * @author  unascribed
  * @since   1.0
  */
-public
-class NoSuchFieldError extends IncompatibleClassChangeError {
+public class NoSuchFieldError extends IncompatibleClassChangeError {
+    @java.io.Serial
     private static final long serialVersionUID = -3456430195886129035L;
 
     /**
-     * Constructs a <code>NoSuchFieldError</code> with no detail message.
+     * Constructs a {@code NoSuchFieldError} with no detail message.
      */
     public NoSuchFieldError() {
         super();
     }
 
     /**
-     * Constructs a <code>NoSuchFieldError</code> with the specified
+     * Constructs a {@code NoSuchFieldError} with the specified
      * detail message.
      *
      * @param   s   the detail message.

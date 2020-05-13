@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,8 @@ import sun.jvm.hotspot.debugger.*;
 import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.types.*;
 import sun.jvm.hotspot.utilities.*;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
 // A ConstantPool is an oop containing class constants
 // as described in the class file
@@ -90,6 +92,10 @@ public class ConstantPool extends Metadata implements ClassConstants {
     poolHolder  = new MetadataField(type.getAddressField("_pool_holder"), 0);
     length      = new CIntField(type.getCIntegerField("_length"), 0);
     resolved_klasses = type.getAddressField("_resolved_klasses");
+    majorVersion         = new CIntField(type.getCIntegerField("_major_version"), 0);
+    minorVersion         = new CIntField(type.getCIntegerField("_minor_version"), 0);
+    sourceFileNameIndex  = new CIntField(type.getCIntegerField("_source_file_name_index"), 0);
+    genericSignatureIndex = new CIntField(type.getCIntegerField("_generic_signature_index"), 0);
     headerSize  = type.getSize();
     elementSize = 0;
     // fetch constants:
@@ -110,6 +116,10 @@ public class ConstantPool extends Metadata implements ClassConstants {
   private static AddressField resolved_klasses;
   private static MetadataField poolHolder;
   private static CIntField length; // number of elements in oop
+  private static CIntField majorVersion;
+  private static CIntField minorVersion;
+  private static CIntField genericSignatureIndex;
+  private static CIntField sourceFileNameIndex;
 
   private static long headerSize;
   private static long elementSize;
@@ -129,6 +139,20 @@ public class ConstantPool extends Metadata implements ClassConstants {
   public Oop               getResolvedReferences() {
     return getCache().getResolvedReferences();
   }
+  public long      majorVersion()           { return majorVersion.getValue(this); }
+  public long      minorVersion()           { return minorVersion.getValue(this); }
+
+  public Symbol    getGenericSignature()    {
+    long index = genericSignatureIndex.getValue(this);
+    if (index != 0) {
+      return getSymbolAt(index);
+    } else {
+      return null;
+    }
+  }
+
+  public Symbol    getSourceFileName()      { return getSymbolAt(sourceFileNameIndex.getValue(this)); }
+
   public KlassArray        getResolvedKlasses() {
     return new KlassArray(resolved_klasses.getValue(getAddress()));
   }
@@ -539,7 +563,7 @@ public class ConstantPool extends Metadata implements ClassConstants {
 
   public void writeBytes(OutputStream os) throws IOException {
           // Map between any modified UTF-8 and it's constant pool index.
-          Map utf8ToIndex = new HashMap();
+          Map<String, Short> utf8ToIndex = new HashMap<>();
       DataOutputStream dos = new DataOutputStream(os);
       U1Array tags = getTags();
       int len = (int)getLength();
@@ -551,7 +575,7 @@ public class ConstantPool extends Metadata implements ClassConstants {
           int cpConstType = tags.at(ci);
           if(cpConstType == JVM_CONSTANT_Utf8) {
               Symbol sym = getSymbolAt(ci);
-              utf8ToIndex.put(sym.asString(), new Short((short) ci));
+              utf8ToIndex.put(sym.asString(), (short) ci);
           }
           else if(cpConstType == JVM_CONSTANT_Long ||
                   cpConstType == JVM_CONSTANT_Double) {

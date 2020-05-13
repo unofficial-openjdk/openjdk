@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import java.util.Arrays;
  * Defined by <a href="http://www.ietf.org/rfc/rfc2373.txt">
  * <i>RFC&nbsp;2373: IP Version 6 Addressing Architecture</i></a>.
  *
- * <h3> <a id="format">Textual representation of IP addresses</a> </h3>
+ * <h2> <a id="format">Textual representation of IP addresses</a> </h2>
  *
  * Textual representation of IPv6 address used as input to methods
  * takes one of the following forms:
@@ -116,7 +116,7 @@ import java.util.Arrays;
  * form because it is unambiguous when used in combination with other
  * textual data.
  *
- * <h4> Special IPv6 address </h4>
+ * <h3> Special IPv6 address </h3>
  *
  * <blockquote>
  * <table class="borderless">
@@ -135,7 +135,7 @@ import java.util.Arrays;
  *         address.</td></tr>
  * </table></blockquote>
  *
- * <h4><a id="scoped">Textual representation of IPv6 scoped addresses</a></h4>
+ * <h3><a id="scoped">Textual representation of IPv6 scoped addresses</a></h3>
  *
  * <p> The textual representation of IPv6 addresses as described above can be
  * extended to specify IPv6 scoped addresses. This extension to the basic
@@ -175,11 +175,6 @@ import java.util.Arrays;
 public final
 class Inet6Address extends InetAddress {
     static final int INADDRSZ = 16;
-
-    /*
-     * cached scope_id - for link-local address use only.
-     */
-    private transient int cached_scope_id;  // 0
 
     private class Inet6AddressHolder {
 
@@ -368,6 +363,7 @@ class Inet6Address extends InetAddress {
 
     private final transient Inet6AddressHolder holder6;
 
+    @java.io.Serial
     private static final long serialVersionUID = 6880410070516793377L;
 
     // Perform native initialization
@@ -567,7 +563,7 @@ class Inet6Address extends InetAddress {
      * @serialField scope_ifname_set boolean
      * @serialField ifname String
      */
-
+    @java.io.Serial
     private static final ObjectStreamField[] serialPersistentFields = {
          new ObjectStreamField("ipaddress", byte[].class),
          new ObjectStreamField("scope_id", int.class),
@@ -586,6 +582,7 @@ class Inet6Address extends InetAddress {
      * including the scope information, only if the
      * scoped interface name is valid on this system
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream s)
         throws IOException, ClassNotFoundException {
         NetworkInterface scope_ifname = null;
@@ -649,6 +646,7 @@ class Inet6Address extends InetAddress {
      * scope_ifname field as a String, rather than a NetworkInterface
      * which is not serializable
      */
+    @java.io.Serial
     private synchronized void writeObject(ObjectOutputStream s)
         throws IOException
     {
@@ -795,6 +793,7 @@ class Inet6Address extends InetAddress {
     public boolean isMCOrgLocal() {
         return holder6.isMCOrgLocal();
     }
+
     /**
      * Returns the raw IP address of this {@code InetAddress} object. The result
      * is in network byte order: the highest order byte of the address is in
@@ -808,6 +807,13 @@ class Inet6Address extends InetAddress {
     }
 
     /**
+     * Returns a reference to the byte[] with the IPv6 address.
+     */
+    byte[] addressBytes() {
+        return holder6.ipaddress;
+    }
+
+    /**
      * Returns the numeric scopeId, if this instance is associated with
      * an interface. If no scoped_id is set, the returned value is zero.
      *
@@ -816,7 +822,7 @@ class Inet6Address extends InetAddress {
      * @since 1.5
      */
      public int getScopeId() {
-        return holder6.scope_id;
+         return holder6.scope_id;
      }
 
     /**
@@ -827,7 +833,7 @@ class Inet6Address extends InetAddress {
      * @since 1.5
      */
      public NetworkInterface getScopedInterface() {
-        return holder6.scope_ifname;
+         return holder6.scope_ifname;
      }
 
     /**

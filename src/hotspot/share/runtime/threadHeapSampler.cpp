@@ -24,8 +24,8 @@
  */
 
 #include "precompiled.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/handles.inline.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/threadHeapSampler.hpp"
 
@@ -121,11 +121,6 @@ void ThreadHeapSampler::pick_next_sample(size_t overflowed_bytes) {
   }
 
   pick_next_geometric_sample();
-
-  // Try to correct sample size by removing extra space from last allocation.
-  if (overflowed_bytes > 0 && _bytes_until_sample > overflowed_bytes) {
-    _bytes_until_sample -= overflowed_bytes;
-  }
 }
 
 void ThreadHeapSampler::check_for_sampling(oop obj, size_t allocation_size, size_t bytes_since_allocation) {
@@ -144,9 +139,9 @@ void ThreadHeapSampler::check_for_sampling(oop obj, size_t allocation_size, size
 }
 
 int ThreadHeapSampler::get_sampling_interval() {
-  return OrderAccess::load_acquire(&_sampling_interval);
+  return Atomic::load_acquire(&_sampling_interval);
 }
 
 void ThreadHeapSampler::set_sampling_interval(int sampling_interval) {
-  OrderAccess::release_store(&_sampling_interval, sampling_interval);
+  Atomic::release_store(&_sampling_interval, sampling_interval);
 }

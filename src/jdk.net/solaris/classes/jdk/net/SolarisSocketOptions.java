@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import jdk.net.ExtendedSocketOptions.PlatformSocketOptions;
 
+@SuppressWarnings("removal")
 class SolarisSocketOptions extends PlatformSocketOptions {
 
     public SolarisSocketOptions() { }
@@ -45,12 +46,16 @@ class SolarisSocketOptions extends PlatformSocketOptions {
     private static native void init();
 
     static {
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-            public Void run() {
-                System.loadLibrary("extnet");
-                return null;
-            }
-        });
+        if (System.getSecurityManager() == null) {
+            System.loadLibrary("extnet");
+        } else {
+            AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                public Void run() {
+                    System.loadLibrary("extnet");
+                    return null;
+                }
+            });
+        }
         init();
     }
 }

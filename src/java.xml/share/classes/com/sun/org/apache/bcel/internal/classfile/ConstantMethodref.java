@@ -29,7 +29,6 @@ import com.sun.org.apache.bcel.internal.Const;
 /**
  * This class represents a constant pool reference to a method.
  *
- * @version $Id: ConstantMethodref.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public final class ConstantMethodref extends ConstantCP {
 

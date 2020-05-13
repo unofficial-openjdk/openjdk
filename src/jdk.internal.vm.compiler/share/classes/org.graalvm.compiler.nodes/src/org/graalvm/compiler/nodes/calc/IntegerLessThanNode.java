@@ -50,6 +50,7 @@ import jdk.vm.ci.meta.ConstantReflectionProvider;
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.meta.PrimitiveConstant;
+import jdk.vm.ci.meta.TriState;
 
 @NodeInfo(shortName = "<")
 public final class IntegerLessThanNode extends IntegerLowerThanNode {
@@ -113,7 +114,7 @@ public final class IntegerLessThanNode extends IntegerLowerThanNode {
 
         @Override
         protected LogicNode optimizeNormalizeCompare(ConstantReflectionProvider constantReflection, MetaAccessProvider metaAccess, OptionValues options, Integer smallestCompareWidth,
-                        Constant constant, NormalizeCompareNode normalizeNode, boolean mirrored, NodeView view) {
+                        Constant constant, AbstractNormalizeCompareNode normalizeNode, boolean mirrored, NodeView view) {
             PrimitiveConstant primitive = (PrimitiveConstant) constant;
             /* @formatter:off
              * a NC b < c  (not mirrored)
@@ -135,25 +136,14 @@ public final class IntegerLessThanNode extends IntegerLowerThanNode {
              *  We can handle mirroring by swapping a & b and negating the constant.
              *  @formatter:on
              */
-            ValueNode a = mirrored ? normalizeNode.getY() : normalizeNode.getX();
-            ValueNode b = mirrored ? normalizeNode.getX() : normalizeNode.getY();
             long cst = mirrored ? -primitive.asLong() : primitive.asLong();
 
             if (cst == 0) {
-                if (normalizeNode.getX().getStackKind() == JavaKind.Double || normalizeNode.getX().getStackKind() == JavaKind.Float) {
-                    return FloatLessThanNode.create(constantReflection, metaAccess, options, smallestCompareWidth, a, b, mirrored ^ normalizeNode.isUnorderedLess, view);
-                } else {
-                    return IntegerLessThanNode.create(constantReflection, metaAccess, options, smallestCompareWidth, a, b, view);
-                }
+                return normalizeNode.createLowerComparison(mirrored, constantReflection, metaAccess, options, smallestCompareWidth, view);
             } else if (cst == 1) {
                 // a <= b <=> !(a > b)
-                LogicNode compare;
-                if (normalizeNode.getX().getStackKind() == JavaKind.Double || normalizeNode.getX().getStackKind() == JavaKind.Float) {
-                    // since we negate, we have to reverse the unordered result
-                    compare = FloatLessThanNode.create(constantReflection, metaAccess, options, smallestCompareWidth, b, a, mirrored == normalizeNode.isUnorderedLess, view);
-                } else {
-                    compare = IntegerLessThanNode.create(constantReflection, metaAccess, options, smallestCompareWidth, b, a, view);
-                }
+                // since we negate, we have to reverse the unordered result
+                LogicNode compare = normalizeNode.createLowerComparison(!mirrored, constantReflection, metaAccess, options, smallestCompareWidth, view);
                 return LogicNegationNode.create(compare);
             } else if (cst <= -1) {
                 return LogicConstantNode.contradiction();
@@ -225,7 +215,6 @@ public final class IntegerLessThanNode extends IntegerLowerThanNode {
                             }
                         }
                     }
-
                 }
             }
 
@@ -295,5 +284,30 @@ public final class IntegerLessThanNode extends IntegerLowerThanNode {
         protected IntegerStamp forInteger(int bits, long min, long max) {
             return StampFactory.forInteger(bits, cast(min, bits), cast(max, bits));
         }
+    }
+
+    @Override
+    public TriState implies(boolean thisNegated, LogicNode other) {
+        if (!thisNegated) {
+            if (other instanceof IntegerLessThanNode) {
+                ValueNode otherX = ((IntegerLessThanNode) other).getX();
+                ValueNode otherY = ((IntegerLessThanNode) other).getY();
+                // x < y => !y < x
+                if (getX() == otherY && getY() == otherX) {
+                    return TriState.FALSE;
+                }
+            }
+
+            // x < y => !x == y
+            // x < y => !y == x
+            if (other instanceof IntegerEqualsNode) {
+                ValueNode otherX = ((IntegerEqualsNode) other).getX();
+                ValueNode otherY = ((IntegerEqualsNode) other).getY();
+                if ((getX() == otherX && getY() == otherY) || (getX() == otherY && getY() == otherX)) {
+                    return TriState.FALSE;
+                }
+            }
+        }
+        return super.implies(thisNegated, other);
     }
 }

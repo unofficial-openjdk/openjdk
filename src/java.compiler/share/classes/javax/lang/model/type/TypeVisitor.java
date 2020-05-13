@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 package javax.lang.model.type;
 
 import javax.lang.model.element.*;
+import javax.lang.model.util.*;
 
 /**
  * A visitor of types, in the style of the
@@ -40,29 +41,70 @@ import javax.lang.model.element.*;
  * is {@code null}; see documentation of the implementing class for
  * details.
  *
- * <p> <b>WARNING:</b> It is possible that methods will be added to
- * this interface to accommodate new, currently unknown, language
+ * @apiNote
+ * <strong>WARNING:</strong> It is possible that methods will be added
+ * to this interface to accommodate new, currently unknown, language
  * structures added to future versions of the Java&trade; programming
- * language.  Therefore, visitor classes directly implementing this
- * interface may be source incompatible with future versions of the
- * platform.  To avoid this source incompatibility, visitor
- * implementations are encouraged to instead extend the appropriate
- * abstract visitor class that implements this interface.  However, an
- * API should generally use this visitor interface as the type for
- * parameters, return type, etc. rather than one of the abstract
- * classes.
+ * language.
  *
- * <p>Note that methods to accommodate new language constructs could
- * be added in a source <em>compatible</em> way if they were added as
- * <em>default methods</em>.  However, default methods are only
- * available on Java SE 8 and higher releases and the {@code
- * javax.lang.model.*} packages bundled in Java SE 8 were required to
- * also be runnable on Java SE 7.  Therefore, default methods
- * were <em>not</em> used when extending {@code javax.lang.model.*}
- * to cover Java SE 8 language features.  However, default methods
- * are used in subsequent revisions of the {@code javax.lang.model.*}
- * packages that are only required to run on Java SE 8 and higher
- * platform versions.
+ * Such additions have already occurred to support language features
+ * added after this API was introduced.
+ *
+ * Visitor classes directly implementing this interface may be source
+ * incompatible with future versions of the platform.  To avoid this
+ * source incompatibility, visitor implementations are encouraged to
+ * instead extend the appropriate abstract visitor class that
+ * implements this interface.  However, an API should generally use
+ * this visitor interface as the type for parameters, return type,
+ * etc. rather than one of the abstract classes.
+ *
+ * <p>Methods to accommodate new language constructs are expected to
+ * be added as default methods to provide strong source
+ * compatibility. The implementations of the default methods will in
+ * turn call {@link visitUnknown visitUnknown}, behavior that will be
+ * overridden in concrete visitors supporting the source version with
+ * the new language construct.
+ *
+ * <p>There are several families of classes implementing this visitor
+ * interface in the {@linkplain javax.lang.model.util util
+ * package}. The families follow a naming pattern along the lines of
+ * {@code FooVisitor}<i>N</i> where <i>N</i> indicates the
+ * {@linkplain javax.lang.model.SourceVersion source version} the
+ * visitor is appropriate for.
+ *
+ * In particular, a {@code FooVisitor}<i>N</i> is expected to handle
+ * all language constructs present in source version <i>N</i>. If
+ * there are no new language constructs added in version
+ * <i>N</i>&nbsp;+&nbsp;1 (or subsequent releases), {@code
+ * FooVisitor}<i>N</i> may also handle that later source version; in
+ * that case, the {@link
+ * javax.annotation.processing.SupportedSourceVersion
+ * SupportedSourceVersion} annotation on the {@code
+ * FooVisitor}<i>N</i> class will indicate a later version.
+ *
+ * When visiting a type representing a language construct
+ * introduced <strong>after</strong> source version <i>N</i>, a {@code
+ * FooVisitor}<i>N</i> will throw an {@link UnknownTypeException}
+ * unless that behavior is overridden.
+ *
+ * <p>When choosing which member of a visitor family to subclass,
+ * subclassing the most recent one increases the range of source
+ * versions covered. When choosing which visitor family to subclass,
+ * consider their built-in capabilities:
+ *
+ * <ul>
+ *
+ * <li>{@link AbstractTypeVisitor6 AbstractTypeVisitor}s:
+ * Skeletal visitor implementations.
+ *
+ * <li>{@link SimpleTypeVisitor6 SimpleTypeVisitor}s: Support
+ * default actions and a default return value.
+ *
+ * <li>{@link TypeKindVisitor6 TypeKindVisitor}s: Visit methods
+ * provided on a {@linkplain TypeMirror#getKind per-kind} granularity
+ * as some categories of types can have more than one kind.
+ *
+ * </ul>
  *
  * @param <R> the return type of this visitor's methods.  Use {@link
  *            Void} for visitors that do not need to return results.

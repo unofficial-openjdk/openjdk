@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -32,10 +32,15 @@ AC_DEFUN([BPERF_CHECK_CORES],
   if test -f /proc/cpuinfo; then
     # Looks like a Linux (or cygwin) system
     NUM_CORES=`cat /proc/cpuinfo  | grep -c processor`
-    FOUND_CORES=yes
+    if test "$NUM_CORES" -eq "0"; then
+      NUM_CORES=`cat /proc/cpuinfo  | grep -c ^CPU`
+    fi
+    if test "$NUM_CORES" -ne "0"; then
+      FOUND_CORES=yes
+    fi
   elif test -x /usr/sbin/psrinfo; then
     # Looks like a Solaris system
-    NUM_CORES=`LC_MESSAGES=C /usr/sbin/psrinfo -v | grep -c on-line`
+    NUM_CORES=`/usr/sbin/psrinfo -v | grep -c on-line`
     FOUND_CORES=yes
   elif test -x /usr/sbin/sysctl; then
     # Looks like a MacOSX system
@@ -167,36 +172,38 @@ AC_DEFUN_ONCE([BPERF_SETUP_TEST_JOBS],
 
 AC_DEFUN([BPERF_SETUP_CCACHE],
 [
-  AC_ARG_ENABLE([ccache],
-      [AS_HELP_STRING([--enable-ccache],
-      [enable using ccache to speed up recompilations @<:@disabled@:>@])])
+  # Check if ccache is available
+  CCACHE_AVAILABLE=true
 
-  CCACHE_STATUS=
-  AC_MSG_CHECKING([is ccache enabled])
-  if test "x$enable_ccache" = xyes; then
-    if test "x$TOOLCHAIN_TYPE" = "xgcc" -o "x$TOOLCHAIN_TYPE" = "xclang"; then
-      AC_MSG_RESULT([yes])
-      OLD_PATH="$PATH"
-      if test "x$TOOLCHAIN_PATH" != x; then
-        PATH=$TOOLCHAIN_PATH:$PATH
-      fi
-      BASIC_REQUIRE_PROGS(CCACHE, ccache)
-      PATH="$OLD_PATH"
-      CCACHE_VERSION=[`$CCACHE --version | head -n1 | $SED 's/[A-Za-z ]*//'`]
-      CCACHE_STATUS="Active ($CCACHE_VERSION)"
-    else
-      AC_MSG_RESULT([no])
-      AC_MSG_WARN([ccache is not supported with toolchain type $TOOLCHAIN_TYPE])
-    fi
-  elif test "x$enable_ccache" = xno; then
-    AC_MSG_RESULT([no, explicitly disabled])
-    CCACHE_STATUS="Disabled"
-  elif test "x$enable_ccache" = x; then
-    AC_MSG_RESULT([no])
-  else
-    AC_MSG_RESULT([unknown])
-    AC_MSG_ERROR([--enable-ccache does not accept any parameters])
+  OLD_PATH="$PATH"
+  if test "x$TOOLCHAIN_PATH" != x; then
+    PATH=$TOOLCHAIN_PATH:$PATH
   fi
+  UTIL_PATH_PROGS(CCACHE, ccache)
+  PATH="$OLD_PATH"
+
+  AC_MSG_CHECKING([if ccache is available])
+  if test "x$TOOLCHAIN_TYPE" != "xgcc" && test "x$TOOLCHAIN_TYPE" != "xclang"; then
+    AC_MSG_RESULT([no, not supported for toolchain type $TOOLCHAIN_TYPE])
+    CCACHE_AVAILABLE=false
+  elif test "x$CCACHE" = "x"; then
+    AC_MSG_RESULT([no, ccache binary missing or not executable])
+    CCACHE_AVAILABLE=false
+  else
+    AC_MSG_RESULT([yes])
+  fi
+
+  CCACHE_STATUS=""
+  UTIL_ARG_ENABLE(NAME: ccache, DEFAULT: false, AVAILABLE: $CCACHE_AVAILABLE,
+      DESC: [enable using ccache to speed up recompilations],
+      CHECKING_MSG: [if ccache is enabled],
+      IF_ENABLED: [
+        CCACHE_VERSION=[`$CCACHE --version | head -n1 | $SED 's/[A-Za-z ]*//'`]
+        CCACHE_STATUS="Active ($CCACHE_VERSION)"
+      ],
+      IF_DISABLED: [
+        CCACHE=""
+      ])
   AC_SUBST(CCACHE)
 
   AC_ARG_WITH([ccache-dir],
@@ -284,16 +291,16 @@ AC_DEFUN([BPERF_RUN_ICECC_CREATE_ENV],
 #
 AC_DEFUN([BPERF_SETUP_ICECC],
 [
-  AC_ARG_ENABLE([icecc], [AS_HELP_STRING([--enable-icecc],
-      [enable distribted compilation of native code using icecc/icecream @<:@disabled@:>@])])
+  UTIL_ARG_ENABLE(NAME: icecc, DEFAULT: false, RESULT: ENABLE_ICECC,
+      DESC: [enable distributed compilation of native code using icecc/icecream])
 
-  if test "x${enable_icecc}" = "xyes"; then
-    BASIC_REQUIRE_PROGS(ICECC_CMD, icecc)
+  if test "x$ENABLE_ICECC" = "xtrue"; then
+    UTIL_REQUIRE_PROGS(ICECC_CMD, icecc)
     old_path="$PATH"
 
     # Look for icecc-create-env in some known places
     PATH="$PATH:/usr/lib/icecc:/usr/lib64/icecc"
-    BASIC_REQUIRE_PROGS(ICECC_CREATE_ENV, icecc-create-env)
+    UTIL_REQUIRE_PROGS(ICECC_CREATE_ENV, icecc-create-env)
     # Use icecc-create-env to create a minimal compilation environment that can
     # be sent to the other hosts in the icecream cluster.
     icecc_create_env_log="${CONFIGURESUPPORT_OUTPUTDIR}/icecc/icecc_create_env.log"
@@ -308,7 +315,7 @@ AC_DEFUN([BPERF_SETUP_ICECC],
     elif test "x$TOOLCHAIN_TYPE" = "xclang"; then
       # For clang, the icecc compilerwrapper is needed. It usually resides next
       # to icecc-create-env.
-      BASIC_REQUIRE_PROGS(ICECC_WRAPPER, compilerwrapper)
+      UTIL_REQUIRE_PROGS(ICECC_WRAPPER, compilerwrapper)
       BPERF_RUN_ICECC_CREATE_ENV([--clang ${CC} ${ICECC_WRAPPER}], ${icecc_create_env_log})
     else
       AC_MSG_ERROR([Can only create icecc compiler packages for toolchain types gcc and clang])
@@ -349,127 +356,53 @@ AC_DEFUN([BPERF_SETUP_ICECC],
     else
       BUILD_ICECC="${ICECC}"
     fi
-    AC_SUBST(ICECC)
-    AC_SUBST(BUILD_ICECC)
   fi
+
+  AC_SUBST(ICECC)
+  AC_SUBST(BUILD_ICECC)
 ])
 
 AC_DEFUN_ONCE([BPERF_SETUP_PRECOMPILED_HEADERS],
 [
-
-  ###############################################################################
-  #
-  # Can the C/C++ compiler use precompiled headers?
-  #
-  AC_ARG_ENABLE([precompiled-headers], [AS_HELP_STRING([--disable-precompiled-headers],
-      [disable using precompiled headers when compiling C++ @<:@enabled@:>@])],
-      [ENABLE_PRECOMPH=${enable_precompiled_headers}], [ENABLE_PRECOMPH=yes])
-
-  USE_PRECOMPILED_HEADER=true
-  AC_MSG_CHECKING([If precompiled header is enabled])
-  if test "x$ENABLE_PRECOMPH" = xno; then
-    AC_MSG_RESULT([no, forced])
-    USE_PRECOMPILED_HEADER=false
-  elif test "x$ICECC" != "x"; then
+  # Are precompiled headers available?
+  PRECOMPILED_HEADERS_AVAILABLE=true
+  AC_MSG_CHECKING([if precompiled headers are available])
+  if test "x$ICECC" != "x"; then
     AC_MSG_RESULT([no, does not work effectively with icecc])
-    USE_PRECOMPILED_HEADER=false
+    PRECOMPILED_HEADERS_AVAILABLE=false
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     AC_MSG_RESULT([no, does not work with Solaris Studio])
-    USE_PRECOMPILED_HEADER=false
+    PRECOMPILED_HEADERS_AVAILABLE=false
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
     AC_MSG_RESULT([no, does not work with xlc])
-    USE_PRECOMPILED_HEADER=false
+    PRECOMPILED_HEADERS_AVAILABLE=false
+  elif test "x$TOOLCHAIN_TYPE" = xgcc; then
+    # Check that the compiler actually supports precomp headers.
+    echo "int alfa();" > conftest.h
+    $CXX -x c++-header conftest.h -o conftest.hpp.gch 2>&AS_MESSAGE_LOG_FD >&AS_MESSAGE_LOG_FD
+    if test ! -f conftest.hpp.gch; then
+      PRECOMPILED_HEADERS_AVAILABLE=false
+      AC_MSG_RESULT([no, gcc fails to compile properly with -x c++-header])
+    else
+      AC_MSG_RESULT([yes])
+    fi
+    $RM conftest.h conftest.hpp.gch
   else
     AC_MSG_RESULT([yes])
   fi
 
-  if test "x$ENABLE_PRECOMPH" = xyes; then
-    # Check that the compiler actually supports precomp headers.
-    if test "x$TOOLCHAIN_TYPE" = xgcc; then
-      AC_MSG_CHECKING([that precompiled headers work])
-      echo "int alfa();" > conftest.h
-      $CXX -x c++-header conftest.h -o conftest.hpp.gch 2>&AS_MESSAGE_LOG_FD >&AS_MESSAGE_LOG_FD
-      if test ! -f conftest.hpp.gch; then
-        USE_PRECOMPILED_HEADER=false
-        AC_MSG_RESULT([no])
-      else
-        AC_MSG_RESULT([yes])
-      fi
-      $RM conftest.h conftest.hpp.gch
-    fi
-  fi
-
+  UTIL_ARG_ENABLE(NAME: precompiled-headers, DEFAULT: auto,
+      RESULT: USE_PRECOMPILED_HEADER, AVAILABLE: $PRECOMPILED_HEADERS_AVAILABLE,
+      DESC: [enable using precompiled headers when compiling C++])
   AC_SUBST(USE_PRECOMPILED_HEADER)
 ])
 
 
-AC_DEFUN_ONCE([BPERF_SETUP_SMART_JAVAC],
+AC_DEFUN_ONCE([BPERF_SETUP_JAVAC_SERVER],
 [
-  AC_ARG_WITH(sjavac-server-java, [AS_HELP_STRING([--with-sjavac-server-java],
-      [use this java binary for running the sjavac background server @<:@Boot JDK java@:>@])])
-
-  if test "x$with_sjavac_server_java" != x; then
-    SJAVAC_SERVER_JAVA="$with_sjavac_server_java"
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -version 2>&1 | grep " version \""`
-    if test "x$FOUND_VERSION" = x; then
-      AC_MSG_ERROR([Could not execute server java: $SJAVAC_SERVER_JAVA])
-    fi
-  else
-    SJAVAC_SERVER_JAVA="$JAVA"
-  fi
-  AC_SUBST(SJAVAC_SERVER_JAVA)
-
-  if test "$MEMORY_SIZE" -gt "3000"; then
-    if "$JAVA" -version 2>&1 | $GREP -q "64-Bit"; then
-      JVM_64BIT=true
-    fi
-  fi
-
-  MX_VALUE=`expr $MEMORY_SIZE / 2`
-  if test "$JVM_64BIT" = true; then
-    # Set ms lower than mx since more than one instance of the server might
-    # get launched at the same time before they figure out which instance won.
-    MS_VALUE=512
-    if test "$MX_VALUE" -gt "2048"; then
-      MX_VALUE=2048
-    fi
-  else
-    MS_VALUE=256
-    if test "$MX_VALUE" -gt "1500"; then
-      MX_VALUE=1500
-    fi
-  fi
-  if test "$MX_VALUE" -lt "512"; then
-    MX_VALUE=512
-  fi
-  ADD_JVM_ARG_IF_OK([-Xms${MS_VALUE}M -Xmx${MX_VALUE}M],SJAVAC_SERVER_JAVA_FLAGS,[$SJAVAC_SERVER_JAVA])
-  AC_SUBST(SJAVAC_SERVER_JAVA_FLAGS)
-
-  AC_ARG_ENABLE([sjavac], [AS_HELP_STRING([--enable-sjavac],
-      [use sjavac to do fast incremental compiles @<:@disabled@:>@])],
-      [ENABLE_SJAVAC="${enableval}"], [ENABLE_SJAVAC="no"])
-  if test "x$JVM_ARG_OK" = "xfalse"; then
-    AC_MSG_WARN([Could not set -Xms${MS_VALUE}M -Xmx${MX_VALUE}M, disabling sjavac])
-    ENABLE_SJAVAC="no"
-  fi
-  AC_MSG_CHECKING([whether to use sjavac])
-  AC_MSG_RESULT([$ENABLE_SJAVAC])
-  AC_SUBST(ENABLE_SJAVAC)
-
-  AC_ARG_ENABLE([javac-server], [AS_HELP_STRING([--disable-javac-server],
-      [disable javac server @<:@enabled@:>@])],
-      [ENABLE_JAVAC_SERVER="${enableval}"], [ENABLE_JAVAC_SERVER="yes"])
-  if test "x$JVM_ARG_OK" = "xfalse"; then
-    AC_MSG_WARN([Could not set -Xms${MS_VALUE}M -Xmx${MX_VALUE}M, disabling javac server])
-    ENABLE_JAVAC_SERVER="no"
-  fi
-  AC_MSG_CHECKING([whether to use javac server])
-  AC_MSG_RESULT([$ENABLE_JAVAC_SERVER])
+  UTIL_ARG_ENABLE(NAME: javac-server, DEFAULT: true,
+      RESULT: ENABLE_JAVAC_SERVER,
+      DESC: [enable javac server],
+      CHECKING_MSG: [whether to use javac server])
   AC_SUBST(ENABLE_JAVAC_SERVER)
-
-  if test "x$ENABLE_JAVAC_SERVER" = "xyes" || test "x$ENABLE_SJAVAC" = "xyes"; then
-    # When using a server javac, the small client instances do not need much
-    # resources.
-    JAVA_FLAGS_JAVAC="$JAVA_FLAGS_SMALL"
-  fi
 ])

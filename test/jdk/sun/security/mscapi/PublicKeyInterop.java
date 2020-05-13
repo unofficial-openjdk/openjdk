@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @bug 6888925 8180570
+ * @bug 6888925 8180570 8237804
  * @summary SunMSCAPI's Cipher can't use RSA public keys obtained from other sources.
  * @requires os.family == "windows"
  * @library /test/lib
@@ -35,7 +35,7 @@ import java.util.*;
 import javax.crypto.*;
 
 import jdk.test.lib.SecurityTools;
-import sun.security.util.HexDumpEncoder;
+import jdk.test.lib.hexdump.HexPrinter;
 
 /*
  * Confirm interoperability of RSA public keys between SunMSCAPI and SunJCE
@@ -45,6 +45,7 @@ public class PublicKeyInterop {
 
     public static void main(String[] arg) throws Exception {
 
+        cleanup();
         SecurityTools.keytool("-genkeypair",
                 "-storetype", "Windows-My",
                 "-keyalg", "RSA",
@@ -55,10 +56,18 @@ public class PublicKeyInterop {
         try {
             run();
         } finally {
+            cleanup();
+        }
+    }
+
+    private static void cleanup() {
+        try {
             KeyStore ks = KeyStore.getInstance("Windows-MY");
             ks.load(null, null);
             ks.deleteEntry("6888925");
             ks.store(null, null);
+        } catch (Exception e) {
+            System.out.println("No such entry.");
         }
     }
 
@@ -75,29 +84,29 @@ public class PublicKeyInterop {
         System.out.println();
 
         byte[] plain = new byte[] {0x01, 0x02, 0x03, 0x04, 0x05};
-        HexDumpEncoder hde = new HexDumpEncoder();
-        System.out.println("Plaintext:\n" + hde.encode(plain) + "\n");
+        HexPrinter hp = HexPrinter.simple();
+        System.out.println("Plaintext:\n" + hp.toString(plain) + "\n");
 
         Cipher rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         rsa.init(Cipher.ENCRYPT_MODE, myPuKey);
         byte[] encrypted = rsa.doFinal(plain);
         System.out.println("Encrypted plaintext using RSA Cipher from " +
             rsa.getProvider().getName() + " JCE provider\n");
-        System.out.println(hde.encode(encrypted) + "\n");
+        System.out.println(hp.toString(encrypted) + "\n");
 
         Cipher rsa2 = Cipher.getInstance("RSA/ECB/PKCS1Padding", "SunMSCAPI");
         rsa2.init(Cipher.ENCRYPT_MODE, myPuKey);
         byte[] encrypted2 = rsa2.doFinal(plain);
         System.out.println("Encrypted plaintext using RSA Cipher from " +
             rsa2.getProvider().getName() + " JCE provider\n");
-        System.out.println(hde.encode(encrypted2) + "\n");
+        System.out.println(hp.toString(encrypted2) + "\n");
 
         Cipher rsa3 = Cipher.getInstance("RSA/ECB/PKCS1Padding", "SunMSCAPI");
         rsa3.init(Cipher.DECRYPT_MODE, myPrKey);
         byte[] decrypted = rsa3.doFinal(encrypted);
         System.out.println("Decrypted first ciphertext using RSA Cipher from " +
             rsa3.getProvider().getName() + " JCE provider\n");
-        System.out.println(hde.encode(decrypted) + "\n");
+        System.out.println(hp.toString(decrypted) + "\n");
         if (! Arrays.equals(plain, decrypted)) {
             throw new Exception("First decrypted ciphertext does not match " +
                 "original plaintext");
@@ -106,7 +115,7 @@ public class PublicKeyInterop {
         decrypted = rsa3.doFinal(encrypted2);
         System.out.println("Decrypted second ciphertext using RSA Cipher from "
             + rsa3.getProvider().getName() + " JCE provider\n");
-        System.out.println(hde.encode(decrypted) + "\n");
+        System.out.println(hp.toString(decrypted) + "\n");
         if (! Arrays.equals(plain, decrypted)) {
             throw new Exception("Second decrypted ciphertext does not match " +
                 "original plaintext");

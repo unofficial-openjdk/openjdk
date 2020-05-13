@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,17 @@ import jtreg.SkippedException;
  * @summary Test clhsdb Jstack command
  * @requires vm.hasSA
  * @library /test/lib
- * @run main/othervm/timeout=480 ClhsdbJstack
+ * @run main/othervm/timeout=480 ClhsdbJstack true
+ */
+
+/**
+ * @test
+ * @bug 8190198
+ * @requires vm.compMode != "Xcomp"
+ * @summary Test clhsdb Jstack command
+ * @requires vm.hasSA
+ * @library /test/lib
+ * @run main/othervm/timeout=480 ClhsdbJstack false
  */
 
 public class ClhsdbJstack {
@@ -43,7 +53,7 @@ public class ClhsdbJstack {
         LingeredApp theApp = null;
         try {
             ClhsdbLauncher test = new ClhsdbLauncher();
-            theApp = withXcomp ? LingeredApp.startApp(List.of("-Xcomp"))
+            theApp = withXcomp ? LingeredApp.startApp("-Xcomp")
                                : LingeredApp.startApp();
             System.out.print("Started LingeredApp ");
             if (withXcomp) {
@@ -74,9 +84,9 @@ public class ClhsdbJstack {
     }
 
     public static void main(String[] args) throws Exception {
+        boolean xComp = Boolean.parseBoolean(args[0]);
         System.out.println("Starting ClhsdbJstack test");
-        testJstack(false);
-        testJstack(true);
+        testJstack(xComp);
         System.out.println("Test PASSED");
     }
 }

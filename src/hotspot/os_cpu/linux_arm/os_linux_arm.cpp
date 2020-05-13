@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@
 #include "runtime/javaCalls.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/osThread.hpp"
+#include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/timer.hpp"
@@ -248,11 +249,13 @@ frame os::current_frame() {
 
 extern "C" address check_vfp_fault_instr;
 extern "C" address check_vfp3_32_fault_instr;
+extern "C" address check_simd_fault_instr;
+extern "C" address check_mp_ext_fault_instr;
 
 address check_vfp_fault_instr = NULL;
 address check_vfp3_32_fault_instr = NULL;
-extern "C" address check_simd_fault_instr;
 address check_simd_fault_instr = NULL;
+address check_mp_ext_fault_instr = NULL;
 
 // Utility functions
 
@@ -271,7 +274,8 @@ extern "C" int JVM_handle_linux_signal(int sig, siginfo_t* info,
   if (sig == SIGILL &&
       ((info->si_addr == (caddr_t)check_simd_fault_instr)
        || info->si_addr == (caddr_t)check_vfp_fault_instr
-       || info->si_addr == (caddr_t)check_vfp3_32_fault_instr)) {
+       || info->si_addr == (caddr_t)check_vfp3_32_fault_instr
+       || info->si_addr == (caddr_t)check_mp_ext_fault_instr)) {
     // skip faulty instruction + instruction that sets return value to
     // success and set return value to failure.
     os::Linux::ucontext_set_pc(uc, (address)info->si_addr + 8);
@@ -298,8 +302,9 @@ extern "C" int JVM_handle_linux_signal(int sig, siginfo_t* info,
 
 #ifdef CAN_SHOW_REGISTERS_ON_ASSERT
   if ((sig == SIGSEGV || sig == SIGBUS) && info != NULL && info->si_addr == g_assert_poison) {
-    handle_assert_poison_fault(ucVoid, info->si_addr);
-    return 1;
+    if (handle_assert_poison_fault(ucVoid, info->si_addr)) {
+      return 1;
+    }
   }
 #endif
 
@@ -332,8 +337,7 @@ extern "C" int JVM_handle_linux_signal(int sig, siginfo_t* info,
         return 1;
       }
       // check if fault address is within thread stack
-      if (addr < thread->stack_base() &&
-          addr >= thread->stack_base() - thread->stack_size()) {
+      if (thread->is_in_full_stack(addr)) {
         // stack overflow
         if (thread->in_stack_yellow_reserved_zone(addr)) {
           thread->disable_stack_yellow_reserved_zone();
@@ -373,7 +377,7 @@ extern "C" int JVM_handle_linux_signal(int sig, siginfo_t* info,
       // Java thread running in Java code => find exception handler if any
       // a fault inside compiled code, the interpreter, or a stub
 
-      if (sig == SIGSEGV && os::is_poll_address((address)info->si_addr)) {
+      if (sig == SIGSEGV && SafepointMechanism::is_poll_address((address)info->si_addr)) {
         stub = SharedRuntime::get_poll_stub(pc);
       } else if (sig == SIGBUS) {
         // BugId 4454115: A read from a MappedByteBuffer can fault
@@ -381,7 +385,7 @@ extern "C" int JVM_handle_linux_signal(int sig, siginfo_t* info,
         // Do not crash the VM in such a case.
         CodeBlob* cb = CodeCache::find_blob_unsafe(pc);
         CompiledMethod* nm = (cb != NULL) ? cb->as_compiled_method_or_null() : NULL;
-        if (nm != NULL && nm->has_unsafe_access()) {
+        if ((nm != NULL && nm->has_unsafe_access()) || (thread->doing_unsafe_access() && UnsafeCopyMemory::contains_pc(pc))) {
           unsafe_access = true;
         }
       } else if (sig == SIGSEGV &&
@@ -395,7 +399,8 @@ extern "C" int JVM_handle_linux_signal(int sig, siginfo_t* info,
         // Zombie
         stub = SharedRuntime::get_handle_wrong_method_stub();
       }
-    } else if (thread->thread_state() == _thread_in_vm &&
+    } else if ((thread->thread_state() == _thread_in_vm ||
+                thread->thread_state() == _thread_in_native) &&
                sig == SIGBUS && thread->doing_unsafe_access()) {
         unsafe_access = true;
     }
@@ -415,6 +420,9 @@ extern "C" int JVM_handle_linux_signal(int sig, siginfo_t* info,
     // any other suitable exception reason,
     // so assume it is an unsafe access.
     address next_pc = pc + Assembler::InstructionSize;
+    if (UnsafeCopyMemory::contains_pc(pc)) {
+      next_pc = UnsafeCopyMemory::page_error_continue_pc(pc);
+    }
 #ifdef __thumb__
     if (uc->uc_mcontext.arm_cpsr & PSR_T_BIT) {
       next_pc = (address)((intptr_t)next_pc | 0x1);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@
 #include "memory/metaspace/metaspaceCommon.hpp"
 #include "memory/metaspace/virtualSpaceList.hpp"
 #include "memory/metaspace/virtualSpaceNode.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/orderAccess.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/safepoint.hpp"
@@ -92,12 +93,12 @@ void VirtualSpaceList::purge(ChunkManager* chunk_manager) {
   assert_lock_strong(MetaspaceExpand_lock);
   // Don't use a VirtualSpaceListIterator because this
   // list is being changed and a straightforward use of an iterator is not safe.
-  VirtualSpaceNode* purged_vsl = NULL;
   VirtualSpaceNode* prev_vsl = virtual_space_list();
   VirtualSpaceNode* next_vsl = prev_vsl;
+  int num_purged_nodes = 0;
   while (next_vsl != NULL) {
     VirtualSpaceNode* vsl = next_vsl;
-    DEBUG_ONLY(vsl->verify_container_count();)
+    DEBUG_ONLY(vsl->verify(false);)
     next_vsl = vsl->next();
     // Don't free the current virtual space since it will likely
     // be needed soon.
@@ -118,20 +119,17 @@ void VirtualSpaceList::purge(ChunkManager* chunk_manager) {
       dec_reserved_words(vsl->reserved_words());
       dec_committed_words(vsl->committed_words());
       dec_virtual_space_count();
-      purged_vsl = vsl;
       delete vsl;
+      num_purged_nodes ++;
     } else {
       prev_vsl = vsl;
     }
   }
+
+  // Verify list
 #ifdef ASSERT
-  if (purged_vsl != NULL) {
-    // List should be stable enough to use an iterator here.
-    VirtualSpaceListIterator iter(virtual_space_list());
-    while (iter.repeat()) {
-      VirtualSpaceNode* vsl = iter.get_next();
-      assert(vsl != purged_vsl, "Purge of vsl failed");
-    }
+  if (num_purged_nodes > 0) {
+    verify(false);
   }
 #endif
 }
@@ -143,11 +141,13 @@ void VirtualSpaceList::purge(ChunkManager* chunk_manager) {
 VirtualSpaceNode* VirtualSpaceList::find_enclosing_space(const void* ptr) {
   // List should be stable enough to use an iterator here because removing virtual
   // space nodes is only allowed at a safepoint.
-  VirtualSpaceListIterator iter(virtual_space_list());
-  while (iter.repeat()) {
-    VirtualSpaceNode* vsn = iter.get_next();
-    if (vsn->contains(ptr)) {
-      return vsn;
+  if (is_within_envelope((address)ptr)) {
+    VirtualSpaceListIterator iter(virtual_space_list());
+    while (iter.repeat()) {
+      VirtualSpaceNode* vsn = iter.get_next();
+      if (vsn->contains(ptr)) {
+        return vsn;
+      }
     }
   }
   return NULL;
@@ -170,9 +170,10 @@ VirtualSpaceList::VirtualSpaceList(size_t word_size) :
                                    _is_class(false),
                                    _reserved_words(0),
                                    _committed_words(0),
-                                   _virtual_space_count(0) {
-  MutexLockerEx cl(MetaspaceExpand_lock,
-                   Mutex::_no_safepoint_check_flag);
+                                   _virtual_space_count(0),
+                                   _envelope_lo((address)max_uintx),
+                                   _envelope_hi(NULL) {
+  MutexLocker cl(MetaspaceExpand_lock, Mutex::_no_safepoint_check_flag);
   create_new_virtual_space(word_size);
 }
 
@@ -182,12 +183,16 @@ VirtualSpaceList::VirtualSpaceList(ReservedSpace rs) :
                                    _is_class(true),
                                    _reserved_words(0),
                                    _committed_words(0),
-                                   _virtual_space_count(0) {
-  MutexLockerEx cl(MetaspaceExpand_lock,
-                   Mutex::_no_safepoint_check_flag);
+                                   _virtual_space_count(0),
+                                   _envelope_lo((address)max_uintx),
+                                   _envelope_hi(NULL) {
+  MutexLocker cl(MetaspaceExpand_lock, Mutex::_no_safepoint_check_flag);
   VirtualSpaceNode* class_entry = new VirtualSpaceNode(is_class(), rs);
   bool succeeded = class_entry->initialize();
   if (succeeded) {
+    expand_envelope_to_include_node(class_entry);
+    // ensure lock-free iteration sees fully initialized node
+    OrderAccess::storestore();
     link_vs(class_entry);
   }
 }
@@ -224,12 +229,16 @@ bool VirtualSpaceList::create_new_virtual_space(size_t vs_word_size) {
   } else {
     assert(new_entry->reserved_words() == vs_word_size,
         "Reserved memory size differs from requested memory size");
+    expand_envelope_to_include_node(new_entry);
     // ensure lock-free iteration sees fully initialized node
     OrderAccess::storestore();
     link_vs(new_entry);
     DEBUG_ONLY(Atomic::inc(&g_internal_statistics.num_vsnodes_created));
     return true;
   }
+
+  DEBUG_ONLY(verify(false);)
+
 }
 
 void VirtualSpaceList::link_vs(VirtualSpaceNode* new_entry) {
@@ -399,5 +408,40 @@ void VirtualSpaceList::print_map(outputStream* st) const {
   }
 }
 
-} // namespace metaspace
+// Given a node, expand range such that it includes the node.
+void VirtualSpaceList::expand_envelope_to_include_node(const VirtualSpaceNode* node) {
+  _envelope_lo = MIN2(_envelope_lo, (address)node->low_boundary());
+  _envelope_hi = MAX2(_envelope_hi, (address)node->high_boundary());
+}
 
+
+#ifdef ASSERT
+void VirtualSpaceList::verify(bool slow) {
+  VirtualSpaceNode* list = virtual_space_list();
+  VirtualSpaceListIterator iter(list);
+  size_t reserved = 0;
+  size_t committed = 0;
+  size_t node_count = 0;
+  while (iter.repeat()) {
+    VirtualSpaceNode* node = iter.get_next();
+    if (slow) {
+      node->verify(true);
+    }
+    // Check that the node resides fully within our envelope.
+    assert((address)node->low_boundary() >= _envelope_lo && (address)node->high_boundary() <= _envelope_hi,
+           "Node " SIZE_FORMAT " [" PTR_FORMAT ", " PTR_FORMAT ") outside envelope [" PTR_FORMAT ", " PTR_FORMAT ").",
+           node_count, p2i(node->low_boundary()), p2i(node->high_boundary()), p2i(_envelope_lo), p2i(_envelope_hi));
+    reserved += node->reserved_words();
+    committed += node->committed_words();
+    node_count ++;
+  }
+  assert(reserved == reserved_words() && committed == committed_words() && node_count == _virtual_space_count,
+      "Mismatch: reserved real: " SIZE_FORMAT " expected: " SIZE_FORMAT
+      ", committed real: " SIZE_FORMAT " expected: " SIZE_FORMAT
+      ", node count real: " SIZE_FORMAT " expected: " SIZE_FORMAT ".",
+      reserved, reserved_words(), committed, committed_words(),
+      node_count, _virtual_space_count);
+}
+#endif // ASSERT
+
+} // namespace metaspace

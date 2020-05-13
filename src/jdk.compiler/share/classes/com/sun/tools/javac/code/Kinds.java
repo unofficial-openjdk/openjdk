@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,7 +71,7 @@ public class Kinds {
         HIDDEN(Category.RESOLUTION_TARGET),                            // not overloaded   non-target
         STATICERR(Category.RESOLUTION_TARGET),                         // overloaded?      target
         MISSING_ENCL(Category.RESOLUTION),                             // not overloaded   non-target
-        BAD_VAR(Category.RESOLUTION),                                  // not overloaded   non-target
+        BAD_RESTRICTED_TYPE(Category.RESOLUTION),                      // not overloaded   non-target
         ABSENT_VAR(Category.RESOLUTION_TARGET, KindName.VAR),          // not overloaded   non-target
         WRONG_MTHS(Category.RESOLUTION_TARGET, KindName.METHOD),       // overloaded       target
         WRONG_MTH(Category.RESOLUTION_TARGET, KindName.METHOD),        // not overloaded   target
@@ -235,7 +235,9 @@ public class Kinds {
         STATIC_INIT("kindname.static.init"),
         INSTANCE_INIT("kindname.instance.init"),
         PACKAGE("kindname.package"),
-        MODULE("kindname.module");
+        MODULE("kindname.module"),
+        RECORD_COMPONENT("kindname.record.component"),
+        RECORD("kindname.record");
 
         private final String name;
 
@@ -279,19 +281,25 @@ public class Kinds {
         case CLASS:
             return KindName.CLASS;
 
+        case RECORD:
+            return KindName.RECORD;
+
         case INTERFACE:
             return KindName.INTERFACE;
 
         case TYPE_PARAMETER:
             return KindName.TYPEVAR;
 
+        case BINDING_VARIABLE:
         case ENUM_CONSTANT:
-        case FIELD:
         case PARAMETER:
         case LOCAL_VARIABLE:
         case EXCEPTION_PARAMETER:
         case RESOURCE_VARIABLE:
             return KindName.VAR;
+
+        case FIELD:
+            return ((sym.flags_field & RECORD) != 0) ? KindName.RECORD_COMPONENT : KindName.VAR;
 
         case CONSTRUCTOR:
             return KindName.CONSTRUCTOR;

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -39,7 +40,7 @@ private:
   enum PrivateConstants {
     ValBuckets = 512,
     MagBuckets = 24,
-    MagMinimum = -12,
+    MagMinimum = -12
   };
   int** _hdr;
 

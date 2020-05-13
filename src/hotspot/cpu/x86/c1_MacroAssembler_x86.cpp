@@ -31,7 +31,7 @@
 #include "gc/shared/collectedHeap.hpp"
 #include "interpreter/interpreter.hpp"
 #include "oops/arrayOop.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
 #include "runtime/basicLock.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/os.hpp"
@@ -61,7 +61,7 @@ int C1_MacroAssembler::lock_object(Register hdr, Register obj, Register disp_hdr
   // Load object header
   movptr(hdr, Address(obj, hdr_offset));
   // and mark it as unlocked
-  orptr(hdr, markOopDesc::unlocked_value);
+  orptr(hdr, markWord::unlocked_value);
   // save unlocked object header into the displaced header location on the stack
   movptr(Address(disp_hdr, 0), hdr);
   // test if object header is still the same (i.e. unlocked), and if so, store the
@@ -156,7 +156,7 @@ void C1_MacroAssembler::initialize_header(Register obj, Register klass, Register
     movptr(Address(obj, oopDesc::mark_offset_in_bytes()), t1);
   } else {
     // This assumes that all prototype bits fit in an int32_t
-    movptr(Address(obj, oopDesc::mark_offset_in_bytes ()), (int32_t)(intptr_t)markOopDesc::prototype());
+    movptr(Address(obj, oopDesc::mark_offset_in_bytes ()), (int32_t)(intptr_t)markWord::prototype().value());
   }
 #ifdef _LP64
   if (UseCompressedClassPointers) { // Take care not to kill klass
@@ -325,12 +325,12 @@ void C1_MacroAssembler::build_frame(int frame_size_in_bytes, int bang_size_in_by
   if (PreserveFramePointer) {
     mov(rbp, rsp);
   }
-#ifdef TIERED
-  // c2 leaves fpu stack dirty. Clean it on entry
+#if !defined(_LP64) && defined(TIERED)
   if (UseSSE < 2 ) {
+    // c2 leaves fpu stack dirty. Clean it on entry
     empty_FPU_stack();
   }
-#endif // TIERED
+#endif // !_LP64 && TIERED
   decrement(rsp, frame_size_in_bytes); // does not emit code for frame_size == 0
 
   BarrierSetAssembler* bs = BarrierSet::barrier_set()->barrier_set_assembler();
@@ -357,7 +357,7 @@ void C1_MacroAssembler::verified_entry() {
   }
   if (C1Breakpoint)int3();
   // build frame
-  verify_FPU(0, "method_entry");
+  IA32_ONLY( verify_FPU(0, "method_entry"); )
 }
 
 void C1_MacroAssembler::load_parameter(int offset_in_words, Register reg) {

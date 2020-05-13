@@ -947,11 +947,9 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
             if ((d.width > (i.left + i.right + caretMargin)) && (d.height > (i.top + i.bottom))) {
                 rootView.setSize(d.width - i.left - i.right -
                         caretMargin, d.height - i.top - i.bottom);
-            }
-            else if (!rootViewInitialized && (d.width <= 0 || d.height <= 0)) {
+            } else if (d.width == 0 && d.height == 0) {
                 // Probably haven't been layed out yet, force some sort of
                 // initial sizing.
-                rootViewInitialized = true;
                 rootView.setSize(Integer.MAX_VALUE, Integer.MAX_VALUE);
             }
             d.width = (int) Math.min((long) rootView.getPreferredSpan(View.X_AXIS) +
@@ -1403,7 +1401,6 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
     private static final Position.Bias[] discardBias = new Position.Bias[1];
     private DefaultCaret dropCaret;
     private int caretMargin;
-    private boolean rootViewInitialized;
 
     /**
      * Root view that acts as a gateway between the component

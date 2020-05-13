@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,9 @@ public class JVMOptionsUtils {
     /* Java option which print options with ranges */
     private static final String PRINT_FLAGS_RANGES = "-XX:+PrintFlagsRanges";
 
+    private static final String UNLOCK_FLAG1 = "-XX:+UnlockDiagnosticVMOptions";
+    private static final String UNLOCK_FLAG2 = "-XX:+UnlockExperimentalVMOptions";
+
     /* StringBuilder to accumulate failed message */
     private static final StringBuilder finalFailedMessage = new StringBuilder();
 
@@ -64,8 +67,6 @@ public class JVMOptionsUtils {
             VMType = "-client";
         } else if (Platform.isMinimal()) {
             VMType = "-minimal";
-        } else if (Platform.isGraal()) {
-            VMType = "-graal";
         } else {
             VMType = null;
         }
@@ -76,9 +77,6 @@ public class JVMOptionsUtils {
 
         for (GarbageCollectorMXBean gcMxBean : gcMxBeans) {
             switch (gcMxBean.getName()) {
-                case "ConcurrentMarkSweep":
-                    GCType = "-XX:+UseConcMarkSweepGC";
-                    break;
                 case "MarkSweepCompact":
                     GCType = "-XX:+UseSerialGC";
                     break;
@@ -183,12 +181,12 @@ public class JVMOptionsUtils {
             option.addPrepend("-XX:+UseG1GC");
         }
 
-        if (name.startsWith("CMS")) {
-            option.addPrepend("-XX:+UseConcMarkSweepGC");
-        }
-
         if (name.startsWith("NUMA")) {
             option.addPrepend("-XX:+UseNUMA");
+        }
+
+        if (name.contains("JVMCI")) {
+            option.addPrepend("-XX:+EnableJVMCI");
         }
 
         switch (name) {
@@ -204,18 +202,6 @@ public class JVMOptionsUtils {
             case "MaxMetaspaceFreeRatio":
                 option.addPrepend("-XX:MinMetaspaceFreeRatio=0");
                 break;
-            case "CMSOldPLABMin":
-                option.addPrepend("-XX:CMSOldPLABMax=" + option.getMax());
-                break;
-            case "CMSOldPLABMax":
-                option.addPrepend("-XX:CMSOldPLABMin=" + option.getMin());
-                break;
-            case "CMSPrecleanNumerator":
-                option.addPrepend("-XX:CMSPrecleanDenominator=" + option.getMax());
-                break;
-            case "CMSPrecleanDenominator":
-                option.addPrepend("-XX:CMSPrecleanNumerator=" + ((new Integer(option.getMin())) - 1));
-                break;
             case "G1RefProcDrainInterval":
                 option.addPrepend("-XX:+ExplicitGCInvokesConcurrent");
                 break;
@@ -224,9 +210,6 @@ public class JVMOptionsUtils {
                 break;
             case "NUMAInterleaveGranularity":
                 option.addPrepend("-XX:+UseNUMAInterleaving");
-                break;
-            case "CPUForCMSThread":
-                option.addPrepend("-XX:+BindCMSThreadToCPU");
                 break;
             case "VerifyGCStartAt":
                 option.addPrepend("-XX:+VerifyBeforeGC");
@@ -243,6 +226,12 @@ public class JVMOptionsUtils {
                 break;
             case "TLABWasteIncrement":
                 option.addPrepend("-XX:+UseParallelGC");
+                break;
+            case "BootstrapJVMCI":
+            case "PrintBootstrap":
+            case "JVMCIThreads":
+            case "JVMCIHostThreads":
+                option.addPrepend("-XX:+UseJVMCICompiler");
                 break;
             default:
                 /* Do nothing */
@@ -458,7 +447,7 @@ public class JVMOptionsUtils {
      * @throws Exception if a new process can not be created or an error
      * occurred while reading the data
      */
-    public static Map<String, JVMOption> getOptionsAsMap(boolean withRanges, Predicate<String> acceptOrigin,
+    private static Map<String, JVMOption> getOptionsAsMap(boolean withRanges, Predicate<String> acceptOrigin,
             String... additionalArgs) throws Exception {
         Map<String, JVMOption> result;
         Process p;
@@ -475,10 +464,12 @@ public class JVMOptionsUtils {
         if (GCType != null) {
             runJava.add(GCType);
         }
+        runJava.add(UNLOCK_FLAG1);
+        runJava.add(UNLOCK_FLAG2);
         runJava.add(PRINT_FLAGS_RANGES);
         runJava.add("-version");
 
-        p = ProcessTools.createJavaProcessBuilder(runJava.toArray(new String[0])).start();
+        p = ProcessTools.createJavaProcessBuilder(runJava).start();
 
         result = getJVMOptions(new InputStreamReader(p.getInputStream()), withRanges, acceptOrigin);
 

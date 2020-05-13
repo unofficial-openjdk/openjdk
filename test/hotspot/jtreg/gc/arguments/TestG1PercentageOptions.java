@@ -30,6 +30,7 @@ package gc.arguments;
  * @requires vm.gc.G1
  * @summary Test argument processing of various percentage options
  * @library /test/lib
+ * @library /
  * @modules java.base/jdk.internal.misc
  *          java.management
  * @run driver gc.arguments.TestG1PercentageOptions
@@ -64,8 +65,8 @@ public class TestG1PercentageOptions {
     };
 
     private static void check(String flag, boolean is_valid) throws Exception {
-        String[] flags = new String[] { "-XX:+UseG1GC", flag, "-version" };
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(flags);
+        ProcessBuilder pb = GCArguments.createJavaProcessBuilder(
+                "-XX:+UseG1GC", flag, "-version");
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
         if (is_valid) {
             output.shouldHaveExitValue(0);

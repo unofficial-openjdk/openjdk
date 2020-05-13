@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,9 @@
 
 #include "gc/z/zAddress.hpp"
 #include "gc/z/zGlobals.hpp"
+#include "utilities/globalDefinitions.hpp"
 #include "utilities/macros.hpp"
-#include OS_CPU_HEADER_INLINE(gc/z/zAddress)
+#include "utilities/powerOfTwo.hpp"
 
 inline bool ZAddress::is_null(uintptr_t value) {
   return value == 0;
@@ -70,6 +71,10 @@ inline bool ZAddress::is_marked(uintptr_t value) {
   return value & ZAddressMetadataMarked;
 }
 
+inline bool ZAddress::is_marked_or_null(uintptr_t value) {
+  return is_marked(value) || is_null(value);
+}
+
 inline bool ZAddress::is_finalizable(uintptr_t value) {
   return value & ZAddressMetadataFinalizable;
 }
@@ -82,12 +87,22 @@ inline bool ZAddress::is_remapped(uintptr_t value) {
   return value & ZAddressMetadataRemapped;
 }
 
+inline bool ZAddress::is_in(uintptr_t value) {
+  // Check that exactly one non-offset bit is set
+  if (!is_power_of_2(value & ~ZAddressOffsetMask)) {
+    return false;
+  }
+
+  // Check that one of the non-finalizable metadata is set
+  return value & (ZAddressMetadataMask & ~ZAddressMetadataFinalizable);
+}
+
 inline uintptr_t ZAddress::offset(uintptr_t value) {
   return value & ZAddressOffsetMask;
 }
 
 inline uintptr_t ZAddress::good(uintptr_t value) {
-  return address(offset(value) | ZAddressGoodMask);
+  return offset(value) | ZAddressGoodMask;
 }
 
 inline uintptr_t ZAddress::good_or_null(uintptr_t value) {
@@ -95,23 +110,23 @@ inline uintptr_t ZAddress::good_or_null(uintptr_t value) {
 }
 
 inline uintptr_t ZAddress::finalizable_good(uintptr_t value) {
-  return address(offset(value) | ZAddressMetadataFinalizable | ZAddressGoodMask);
+  return offset(value) | ZAddressMetadataFinalizable | ZAddressGoodMask;
 }
 
 inline uintptr_t ZAddress::marked(uintptr_t value) {
-  return address(offset(value) | ZAddressMetadataMarked);
+  return offset(value) | ZAddressMetadataMarked;
 }
 
 inline uintptr_t ZAddress::marked0(uintptr_t value) {
-  return address(offset(value) | ZAddressMetadataMarked0);
+  return offset(value) | ZAddressMetadataMarked0;
 }
 
 inline uintptr_t ZAddress::marked1(uintptr_t value) {
-  return address(offset(value) | ZAddressMetadataMarked1);
+  return offset(value) | ZAddressMetadataMarked1;
 }
 
 inline uintptr_t ZAddress::remapped(uintptr_t value) {
-  return address(offset(value) | ZAddressMetadataRemapped);
+  return offset(value) | ZAddressMetadataRemapped;
 }
 
 inline uintptr_t ZAddress::remapped_or_null(uintptr_t value) {

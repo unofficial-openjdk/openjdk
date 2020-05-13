@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import org.graalvm.compiler.graph.spi.Simplifiable;
 import org.graalvm.compiler.graph.spi.SimplifierTool;
 import org.graalvm.compiler.nodeinfo.NodeInfo;
 import org.graalvm.compiler.nodes.ConstantNode;
+import org.graalvm.compiler.nodes.DeoptimizeNode;
 import org.graalvm.compiler.nodes.FixedGuardNode;
 import org.graalvm.compiler.nodes.FixedWithNextNode;
 import org.graalvm.compiler.nodes.LogicNode;
@@ -128,7 +129,11 @@ public class LoadIndexedNode extends AccessIndexedNode implements Virtualizable,
             int idx = indexValue.isConstant() ? indexValue.asJavaConstant().asInt() : -1;
             if (idx >= 0 && idx < virtual.entryCount()) {
                 ValueNode entry = tool.getEntry(virtual, idx);
-                if (stamp.isCompatible(entry.stamp(NodeView.DEFAULT))) {
+                if (virtual.isVirtualByteArrayAccess(elementKind())) {
+                    if (virtual.canVirtualizeLargeByteArrayUnsafeRead(entry, idx, elementKind(), tool)) {
+                        tool.replaceWith(VirtualArrayNode.virtualizeByteArrayRead(entry, elementKind(), stamp));
+                    }
+                } else if (stamp.isCompatible(entry.stamp(NodeView.DEFAULT))) {
                     tool.replaceWith(entry);
                 } else {
                     assert stamp(NodeView.DEFAULT).getStackKind() == JavaKind.Int && (entry.stamp(NodeView.DEFAULT).getStackKind() == JavaKind.Long || entry.getStackKind() == JavaKind.Double ||
@@ -140,6 +145,9 @@ public class LoadIndexedNode extends AccessIndexedNode implements Virtualizable,
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
+        if (array().isNullConstant()) {
+            return new DeoptimizeNode(DeoptimizationAction.InvalidateReprofile, DeoptimizationReason.NullCheckException);
+        }
         ValueNode constant = tryConstantFold(array(), index(), tool.getMetaAccess(), tool.getConstantReflection());
         if (constant != null) {
             return constant;

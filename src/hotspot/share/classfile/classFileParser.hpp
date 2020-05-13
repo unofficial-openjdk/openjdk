@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
 #include "memory/referenceType.hpp"
 #include "oops/annotations.hpp"
 #include "oops/constantPool.hpp"
+#include "oops/instanceKlass.hpp"
 #include "oops/typeArrayOop.hpp"
 #include "utilities/accessFlags.hpp"
 
@@ -36,25 +37,57 @@ template <typename T>
 class Array;
 class ClassFileStream;
 class ClassLoaderData;
+class ClassLoadInfo;
+class ClassInstanceInfo;
 class CompressedLineNumberWriteStream;
 class ConstMethod;
 class FieldInfo;
 template <typename T>
 class GrowableArray;
 class InstanceKlass;
+class RecordComponent;
 class Symbol;
 class TempNewSymbol;
+class FieldLayoutBuilder;
+
+// Utility to collect and compact oop maps during layout
+class OopMapBlocksBuilder : public ResourceObj {
+ public:
+  OopMapBlock* _nonstatic_oop_maps;
+  unsigned int _nonstatic_oop_map_count;
+  unsigned int _max_nonstatic_oop_maps;
+
+  OopMapBlocksBuilder(unsigned int  max_blocks);
+  OopMapBlock* last_oop_map() const;
+  void initialize_inherited_blocks(OopMapBlock* blocks, unsigned int nof_blocks);
+  void add(int offset, int count);
+  void copy(OopMapBlock* dst);
+  void compact();
+  void print_on(outputStream* st) const;
+  void print_value_on(outputStream* st) const;
+};
+
+// Values needed for oopmap and InstanceKlass creation
+class FieldLayoutInfo : public ResourceObj {
+ public:
+  OopMapBlocksBuilder* oop_map_blocks;
+  int _instance_size;
+  int _nonstatic_field_size;
+  int _static_field_size;
+  bool  _has_nonstatic_fields;
+};
 
 // Parser for for .class files
 //
 // The bytes describing the class file structure is read from a Stream object
 
 class ClassFileParser {
+  friend class FieldLayoutBuilder;
+  friend class FieldLayout;
 
- class ClassAnnotationCollector;
- class FieldAllocationCount;
- class FieldAnnotationCollector;
- class FieldLayoutInfo;
+  class ClassAnnotationCollector;
+  class FieldAllocationCount;
+  class FieldAnnotationCollector;
 
  public:
   // The ClassFileParser has an associated "publicity" level
@@ -68,8 +101,7 @@ class ClassFileParser {
   //
   enum Publicity {
     INTERNAL,
-    BROADCAST,
-    NOF_PUBLICITY_LEVELS
+    BROADCAST
   };
 
   enum { LegalClass, LegalField, LegalMethod }; // used to verify unqualified names
@@ -79,11 +111,12 @@ class ClassFileParser {
   typedef void unsafe_u2;
 
   const ClassFileStream* _stream; // Actual input stream
-  const Symbol* _requested_name;
   Symbol* _class_name;
   mutable ClassLoaderData* _loader_data;
   const InstanceKlass* _unsafe_anonymous_host;
   GrowableArray<Handle>* _cp_patches; // overrides for CP entries
+  const bool _is_hidden;
+  const bool _can_access_vm_annotations;
   int _num_patched_klasses;
   int _max_num_patched_klasses;
   int _orig_cp_size;
@@ -99,11 +132,12 @@ class ClassFileParser {
   Array<u2>* _inner_classes;
   Array<u2>* _nest_members;
   u2 _nest_host;
+  Array<RecordComponent*>* _record_components;
   Array<InstanceKlass*>* _local_interfaces;
   Array<InstanceKlass*>* _transitive_interfaces;
   Annotations* _combined_annotations;
-  AnnotationArray* _annotations;
-  AnnotationArray* _type_annotations;
+  AnnotationArray* _class_annotations;
+  AnnotationArray* _class_type_annotations;
   Array<AnnotationArray*>* _fields_annotations;
   Array<AnnotationArray*>* _fields_type_annotations;
   InstanceKlass* _klass;  // InstanceKlass* once created.
@@ -160,6 +194,7 @@ class ClassFileParser {
   bool _has_nonstatic_concrete_methods;
   bool _declares_nonstatic_concrete_methods;
   bool _has_final_method;
+  bool _has_contended_fields;
 
   // precomputed flags
   bool _has_finalizer;
@@ -169,6 +204,8 @@ class ClassFileParser {
 
   void parse_stream(const ClassFileStream* const stream, TRAPS);
 
+  void mangle_hidden_class_name(InstanceKlass* const ik);
+
   void post_process_parsed_stream(const ClassFileStream* const stream,
                                   ConstantPool* cp,
                                   TRAPS);
@@ -176,7 +213,9 @@ class ClassFileParser {
   void prepend_host_package_name(const InstanceKlass* unsafe_anonymous_host, TRAPS);
   void fix_unsafe_anonymous_class_name(TRAPS);
 
-  void fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_CFLH, TRAPS);
+  void fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_CFLH,
+                           const ClassInstanceInfo& cl_inst_info, TRAPS);
+
   void set_klass(InstanceKlass* instance);
 
   void set_class_bad_constant_seen(short bad_constant);
@@ -270,14 +309,6 @@ class ClassFileParser {
                                             u4 method_attribute_length,
                                             TRAPS);
 
-  void parse_type_array(u2 array_length,
-                        u4 code_length,
-                        u4* const u1_index,
-                        u4* const u2_index,
-                        u1* const u1_array,
-                        u2* const u2_array,
-                        TRAPS);
-
   // Classfile attribute parsing
   u2 parse_generic_signature_attribute(const ClassFileStream* const cfs, TRAPS);
   void parse_classfile_sourcefile_attribute(const ClassFileStream* const cfs, TRAPS);
@@ -295,6 +326,13 @@ class ClassFileParser {
   u2 parse_classfile_nest_members_attribute(const ClassFileStream* const cfs,
                                             const u1* const nest_members_attribute_start,
                                             TRAPS);
+
+  u2 parse_classfile_record_attribute(const ClassFileStream* const cfs,
+                                      const ConstantPool* cp,
+                                      const u1* const record_attribute_start,
+                                      TRAPS);
+
+  bool supports_records();
 
   void parse_classfile_attributes(const ClassFileStream* const cfs,
                                   ConstantPool* cp,
@@ -496,21 +534,19 @@ class ClassFileParser {
                      FieldLayoutInfo* info,
                      TRAPS);
 
-   void update_class_name(Symbol* new_name);
+  void update_class_name(Symbol* new_name);
 
  public:
   ClassFileParser(ClassFileStream* stream,
                   Symbol* name,
                   ClassLoaderData* loader_data,
-                  Handle protection_domain,
-                  const InstanceKlass* unsafe_anonymous_host,
-                  GrowableArray<Handle>* cp_patches,
+                  const ClassLoadInfo* cl_info,
                   Publicity pub_level,
                   TRAPS);
 
   ~ClassFileParser();
 
-  InstanceKlass* create_instance_klass(bool cf_changed_in_CFLH, TRAPS);
+  InstanceKlass* create_instance_klass(bool cf_changed_in_CFLH, const ClassInstanceInfo& cl_inst_info, TRAPS);
 
   const ClassFileStream* clone_stream() const;
 
@@ -524,9 +560,9 @@ class ClassFileParser {
   int itable_size() const { return _itable_size; }
 
   u2 this_class_index() const { return _this_class_index; }
-  u2 super_class_index() const { return _super_class_index; }
 
   bool is_unsafe_anonymous() const { return _unsafe_anonymous_host != NULL; }
+  bool is_hidden() const { return _is_hidden; }
   bool is_interface() const { return _access_flags.is_interface(); }
 
   const InstanceKlass* unsafe_anonymous_host() const { return _unsafe_anonymous_host; }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,18 +24,20 @@
 
 package org.graalvm.compiler.replacements.test;
 
+import static org.junit.Assume.assumeFalse;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.graalvm.compiler.core.test.GraalCompilerTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import jdk.vm.ci.aarch64.AArch64;
 
 @RunWith(value = Parameterized.class)
 public abstract class StringIndexOfTestBase extends GraalCompilerTest {
-    @Parameterized.Parameter(value = 0) public String sourceString;
-    @Parameterized.Parameter(value = 1) public String constantString;
 
     @Parameterized.Parameters(name = "{0},{1}")
     public static Collection<Object[]> data() {
@@ -44,6 +46,25 @@ public abstract class StringIndexOfTestBase extends GraalCompilerTest {
         String[] utf16targets = new String[]{"grga " + ((char) 0x10D) + "varak", "grga", ((char) 0x10D) + "varak"};
         addTargets(tests, targets);
         addTargets(tests, utf16targets);
+
+        // Check long targets
+        // Checkstyle: stop
+        String lipsum = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata ";
+        // Checkstyle: resume
+        String lipsumUTF16 = lipsum + ((char) 0x10D);
+        int[] subStringLengths = {7, 8, 15, 16, 31, 32, 63, 64};
+        for (int len : subStringLengths) {
+            String target = lipsum.substring(50, 50 + len);
+            tests.add(new Object[]{lipsum, target});
+            tests.add(new Object[]{lipsum, target + "X"});
+            tests.add(new Object[]{lipsumUTF16, target});
+            tests.add(new Object[]{lipsumUTF16, target + "X"});
+            tests.add(new Object[]{lipsumUTF16, target + ((char) 0x10D)});
+        }
+        tests.add(new Object[]{
+                        "\u0100\u0101\u0102\u0103\u0104\u0105\u0106\u0107\u00f9\u00fa\u00fb\u00fc\u00fd\u00fe\u00ff\u0108\u0109\u010a\u010b\u010c",
+                        "\u00f9\u00fa\u00fb\u00fc\u00fd\u00fe\u00ff"});
+
         return tests;
     }
 
@@ -67,6 +88,14 @@ public abstract class StringIndexOfTestBase extends GraalCompilerTest {
                 tests.add(new Object[]{s.substring(0, s.length() - 1) + s, s});
             }
         }
+    }
+
+    protected final String sourceString;
+    protected final String constantString;
+
+    public StringIndexOfTestBase(String sourceString, String constantString) {
+        this.sourceString = sourceString;
+        this.constantString = constantString;
     }
 
     public int testStringIndexOf(String a, String b) {
@@ -99,6 +128,7 @@ public abstract class StringIndexOfTestBase extends GraalCompilerTest {
 
     @Test
     public void testStringBuilderIndexOfConstant() {
+        assumeFalse("Disabled on AArch64 due to issues on AArch64; see GR-13100 or JDK-8215792", getTarget().arch instanceof AArch64);
         /*
          * Put a copy of the target string in the space after the current string to detect cases
          * where we search too far.
@@ -111,6 +141,7 @@ public abstract class StringIndexOfTestBase extends GraalCompilerTest {
 
     @Test
     public void testStringBuilderIndexOfConstantOffset() {
+        assumeFalse("Disabled on AArch64 due to issues on AArch64; see GR-13100 or JDK-8215792", getTarget().arch instanceof AArch64);
         /*
          * Put a copy of the target string in the space after the current string to detect cases
          * where we search too far.

@@ -77,7 +77,9 @@ import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import jdk.internal.util.ArraysSupport;
 import sun.nio.ch.FileChannelImpl;
+import sun.nio.cs.UTF_8;
 import sun.nio.fs.AbstractFileSystemProvider;
 
 /**
@@ -2943,7 +2945,7 @@ public final class Files {
      * @since 1.8
      */
     public static BufferedReader newBufferedReader(Path path) throws IOException {
-        return newBufferedReader(path, StandardCharsets.UTF_8);
+        return newBufferedReader(path, UTF_8.INSTANCE);
     }
 
     /**
@@ -3035,7 +3037,7 @@ public final class Files {
     public static BufferedWriter newBufferedWriter(Path path, OpenOption... options)
         throws IOException
     {
-        return newBufferedWriter(path, StandardCharsets.UTF_8, options);
+        return newBufferedWriter(path, UTF_8.INSTANCE, options);
     }
 
     /**
@@ -3196,14 +3198,6 @@ public final class Files {
         }
     }
 
-    /**
-     * The maximum size of array to allocate.
-     * Some VMs reserve some header words in an array.
-     * Attempts to allocate larger arrays may result in
-     * OutOfMemoryError: Requested array size exceeds VM limit
-     */
-    private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
-
     private static final jdk.internal.access.JavaLangAccess JLA =
             jdk.internal.access.SharedSecrets.getJavaLangAccess();
 
@@ -3240,13 +3234,10 @@ public final class Files {
                 break;
 
             // one more byte was read; need to allocate a larger buffer
-            if (capacity <= MAX_BUFFER_SIZE - capacity) {
-                capacity = Math.max(capacity << 1, BUFFER_SIZE);
-            } else {
-                if (capacity == MAX_BUFFER_SIZE)
-                    throw new OutOfMemoryError("Required array size too large");
-                capacity = MAX_BUFFER_SIZE;
-            }
+            capacity = Math.max(ArraysSupport.newLength(capacity,
+                                                        1,       /* minimum growth */
+                                                        capacity /* preferred growth */),
+                                BUFFER_SIZE);
             buf = Arrays.copyOf(buf, capacity);
             buf[nread++] = (byte)n;
         }
@@ -3283,7 +3274,7 @@ public final class Files {
             if (sbc instanceof FileChannelImpl)
                 ((FileChannelImpl) sbc).setUninterruptible();
             long size = sbc.size();
-            if (size > (long) MAX_BUFFER_SIZE)
+            if (size > (long) Integer.MAX_VALUE)
                 throw new OutOfMemoryError("Required array size too large");
             return read(in, (int)size);
         }
@@ -3315,7 +3306,7 @@ public final class Files {
      * @since 11
      */
     public static String readString(Path path) throws IOException {
-        return readString(path, StandardCharsets.UTF_8);
+        return readString(path, UTF_8.INSTANCE);
     }
 
     /**
@@ -3357,6 +3348,8 @@ public final class Files {
         Objects.requireNonNull(cs);
 
         byte[] ba = readAllBytes(path);
+        if (path.getClass().getModule() != Object.class.getModule())
+            ba = ba.clone();
         return JLA.newStringNoRepl(ba, cs);
     }
 
@@ -3440,7 +3433,7 @@ public final class Files {
      * @since 1.8
      */
     public static List<String> readAllLines(Path path) throws IOException {
-        return readAllLines(path, StandardCharsets.UTF_8);
+        return readAllLines(path, UTF_8.INSTANCE);
     }
 
     /**
@@ -3560,8 +3553,8 @@ public final class Files {
         // ensure lines is not null before opening file
         Objects.requireNonNull(lines);
         CharsetEncoder encoder = cs.newEncoder();
-        OutputStream out = newOutputStream(path, options);
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, encoder))) {
+        try (OutputStream out = newOutputStream(path, options);
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, encoder))) {
             for (CharSequence line: lines) {
                 writer.append(line);
                 writer.newLine();
@@ -3611,7 +3604,7 @@ public final class Files {
                              OpenOption... options)
         throws IOException
     {
-        return write(path, lines, StandardCharsets.UTF_8, options);
+        return write(path, lines, UTF_8.INSTANCE, options);
     }
 
     /**
@@ -3651,7 +3644,7 @@ public final class Files {
     public static Path writeString(Path path, CharSequence csq, OpenOption... options)
             throws IOException
     {
-        return writeString(path, csq, StandardCharsets.UTF_8, options);
+        return writeString(path, csq, UTF_8.INSTANCE, options);
     }
 
     /**
@@ -4198,6 +4191,6 @@ public final class Files {
      * @since 1.8
      */
     public static Stream<String> lines(Path path) throws IOException {
-        return lines(path, StandardCharsets.UTF_8);
+        return lines(path, UTF_8.INSTANCE);
     }
 }

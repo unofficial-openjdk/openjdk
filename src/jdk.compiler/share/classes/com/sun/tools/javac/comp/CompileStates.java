@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,9 +59,10 @@ public class CompileStates extends HashMap<Env<AttrContext>, CompileStates.Compi
         ATTR(4),
         FLOW(5),
         TRANSTYPES(6),
-        UNLAMBDA(7),
-        LOWER(8),
-        GENERATE(9);
+        TRANSPATTERNS(7),
+        UNLAMBDA(8),
+        LOWER(9),
+        GENERATE(10);
 
         CompileState(int value) {
             this.value = value;
@@ -77,7 +78,7 @@ public class CompileStates extends HashMap<Env<AttrContext>, CompileStates.Compi
 
     private static final long serialVersionUID = 1812267524140424433L;
 
-    protected Context context;
+    protected transient Context context;
 
     public CompileStates(Context context) {
         this.context = context;

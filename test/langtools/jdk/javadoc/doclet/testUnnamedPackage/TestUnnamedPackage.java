@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
  * @bug      4904075 4774450 5015144 8043698 8196201 8203791 8184205
  * @summary  Reference unnamed package as "Unnamed", not empty string.
  *           Generate a package summary for the unnamed package.
- * @author   jamieh
  * @library  ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build    javadoc.tester.*
@@ -50,7 +49,8 @@ public class TestUnnamedPackage extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOutput("package-summary.html", true,
-                "<h1 title=\"Package\" class=\"title\">Package&nbsp;&lt;Unnamed&gt;</h1>",
+                """
+                    <h1 title="Package" class="title">Package&nbsp;&lt;Unnamed&gt;</h1>""",
                 "This is a package comment for the unnamed package.",
                 "This is a class in the unnamed package.");
 
@@ -58,57 +58,70 @@ public class TestUnnamedPackage extends JavadocTester {
                 "<title>&lt;Unnamed&gt;</title>");
 
         checkOutput("package-tree.html", true,
-                "<h1 class=\"title\">Hierarchy For Package &lt;Unnamed&gt;</h1>");
+                """
+                    <h1 class="title">Hierarchy For Package &lt;Unnamed&gt;</h1>""");
 
         checkOutput("index-all.html", true,
-                "title=\"class in &lt;Unnamed&gt;\"");
+                """
+                    title="class in &lt;Unnamed&gt;\"""");
 
         checkOutput("C.html", true,
                 "<a href=\"package-summary.html\">");
 
         checkOutput("allclasses-index.html", true,
-                "<div class=\"typeSummary\">\n<table>\n"
-                + "<caption><span>Class Summary</span><span class=\"tabEnd\">&nbsp;</span></caption>\n"
-                + "<tr>\n"
-                + "<th class=\"colFirst\" scope=\"col\">Class</th>\n"
-                + "<th class=\"colLast\" scope=\"col\">Description</th>\n"
-                + "</tr>\n"
-                + "<tbody>\n"
-                + "<tr class=\"altColor\" id=\"i0\">\n"
-                + "<td class=\"colFirst\"><a href=\"C.html\" title=\"class in &lt;Unnamed&gt;\">C</a></td>\n"
-                + "<th class=\"colLast\" scope=\"row\">\n"
-                + "<div class=\"block\">This is a class in the unnamed package.</div>\n"
-                + "</th>\n"
-                + "</tr>\n"
-                + "</tbody>\n"
-                + "</table>");
+                """
+                    <div class="type-summary" id="all-classes-table">
+                    <table class="summary-table">
+                    <caption><span>Class Summary</span></caption>
+                    <thead>
+                    <tr>
+                    <th class="col-first" scope="col">Class</th>
+                    <th class="col-last" scope="col">Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr class="alt-color" id="i0">
+                    <td class="col-first"><a href="C.html" title="class in &lt;Unnamed&gt;">C</a></td>
+                    <th class="col-last" scope="row">
+                    <div class="block">This is a class in the unnamed package.</div>
+                    </th>
+                    </tr>
+                    </tbody>
+                    </table>""");
 
         checkOutput("allpackages-index.html", true,
-                "<div class=\"packagesSummary\">\n<table>\n"
-                + "<caption><span>Package Summary</span><span class=\"tabEnd\">&nbsp;</span></caption>\n"
-                + "<tr>\n"
-                + "<th class=\"colFirst\" scope=\"col\">Package</th>\n"
-                + "<th class=\"colLast\" scope=\"col\">Description</th>\n"
-                + "</tr>\n"
-                + "<tbody>\n"
-                + "<tr class=\"altColor\">\n"
-                + "<th class=\"colFirst\" scope=\"row\"><a href=\"package-summary.html\">&lt;Unnamed&gt;</a></th>\n"
-                + "<td class=\"colLast\">\n"
-                + "<div class=\"block\">This is a package comment for the unnamed package.</div>\n"
-                + "</td>\n"
-                + "</tr>\n"
-                + "</tbody>\n"
-                + "</table>");
+                """
+                    <div class="packages-summary">
+                    <table class="summary-table">
+                    <caption><span>Package Summary</span></caption>
+                    <thead>
+                    <tr>
+                    <th class="col-first" scope="col">Package</th>
+                    <th class="col-last" scope="col">Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr class="alt-color">
+                    <th class="col-first" scope="row"><a href="package-summary.html">&lt;Unnamed&gt;</a></th>
+                    <td class="col-last">
+                    <div class="block">This is a package comment for the unnamed package.</div>
+                    </td>
+                    </tr>
+                    </tbody>
+                    </table>""");
 
         checkOutput("type-search-index.js", true,
-                "{\"l\":\"All Classes\",\"url\":\"allclasses-index.html\"}");
+                """
+                    {"l":"All Classes","u":"allclasses-index.html"}""");
 
         checkOutput("package-search-index.js", true,
-                "{\"l\":\"All Packages\",\"url\":\"allpackages-index.html\"}");
+                """
+                    {"l":"All Packages","u":"allpackages-index.html"}""");
 
         checkOutput("index-all.html", true,
-                "<br><a href=\"allclasses-index.html\">All&nbsp;Classes</a>&nbsp;"
-                + "<a href=\"allpackages-index.html\">All&nbsp;Packages</a>");
+                """
+                    <br><a href="allclasses-index.html">All&nbsp;Classes</a><span class="vertical-se\
+                    parator">|</span><a href="allpackages-index.html">All&nbsp;Packages</a>""");
 
         checkOutput(Output.OUT, false,
                 "BadSource");

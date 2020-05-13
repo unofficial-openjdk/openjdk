@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,7 +62,7 @@ public class StringReader extends Reader {
      * @return     The character read, or -1 if the end of the stream has been
      *             reached
      *
-     * @exception  IOException  If an I/O error occurs
+     * @throws     IOException  If an I/O error occurs
      */
     public int read() throws IOException {
         synchronized (lock) {
@@ -83,8 +83,8 @@ public class StringReader extends Reader {
      * @return     The number of characters read, or -1 if the end of the
      *             stream has been reached
      *
-     * @exception  IOException  If an I/O error occurs
-     * @exception  IndexOutOfBoundsException {@inheritDoc}
+     * @throws     IOException  If an I/O error occurs
+     * @throws     IndexOutOfBoundsException {@inheritDoc}
      */
     public int read(char cbuf[], int off, int len) throws IOException {
         synchronized (lock) {
@@ -108,9 +108,9 @@ public class StringReader extends Reader {
      * Skips the specified number of characters in the stream. Returns
      * the number of characters that were skipped.
      *
-     * <p>The <code>ns</code> parameter may be negative, even though the
-     * <code>skip</code> method of the {@link Reader} superclass throws
-     * an exception in this case. Negative values of <code>ns</code> cause the
+     * <p>The {@code ns} parameter may be negative, even though the
+     * {@code skip} method of the {@link Reader} superclass throws
+     * an exception in this case. Negative values of {@code ns} cause the
      * stream to skip backwards. Negative return values indicate a skip
      * backwards. It is not possible to skip backwards past the beginning of
      * the string.
@@ -118,7 +118,7 @@ public class StringReader extends Reader {
      * <p>If the entire string has been read or skipped, then this method has
      * no effect and always returns 0.
      *
-     * @exception  IOException  If an I/O error occurs
+     * @throws     IOException  If an I/O error occurs
      */
     public long skip(long ns) throws IOException {
         synchronized (lock) {
@@ -138,7 +138,7 @@ public class StringReader extends Reader {
      *
      * @return True if the next read() is guaranteed not to block for input
      *
-     * @exception  IOException  If the stream is closed
+     * @throws     IOException  If the stream is closed
      */
     public boolean ready() throws IOException {
         synchronized (lock) {
@@ -164,8 +164,8 @@ public class StringReader extends Reader {
      *                         is no actual limit, so this argument must not
      *                         be negative, but is otherwise ignored.
      *
-     * @exception  IllegalArgumentException  If {@code readAheadLimit < 0}
-     * @exception  IOException  If an I/O error occurs
+     * @throws     IllegalArgumentException  If {@code readAheadLimit < 0}
+     * @throws     IOException  If an I/O error occurs
      */
     public void mark(int readAheadLimit) throws IOException {
         if (readAheadLimit < 0){
@@ -181,7 +181,7 @@ public class StringReader extends Reader {
      * Resets the stream to the most recent mark, or to the beginning of the
      * string if it has never been marked.
      *
-     * @exception  IOException  If an I/O error occurs
+     * @throws     IOException  If an I/O error occurs
      */
     public void reset() throws IOException {
         synchronized (lock) {

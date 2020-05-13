@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
  */
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -74,6 +74,7 @@ import javax.xml.transform.stream.StreamSource;
 import jdk.xml.internal.JdkXmlFeatures;
 import jdk.xml.internal.JdkXmlUtils;
 import jdk.xml.internal.SecuritySupport;
+import jdk.xml.internal.TransformErrorListener;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLFilter;
@@ -84,10 +85,10 @@ import org.xml.sax.XMLReader;
  * @author G. Todd Miller
  * @author Morten Jorgensen
  * @author Santiago Pericas-Geertsen
- * @LastModified: July 2018
+ * @LastModified: Aug 2019
  */
 public class TransformerFactoryImpl
-    extends SAXTransformerFactory implements SourceLoader, ErrorListener
+    extends SAXTransformerFactory implements SourceLoader
 {
     // Public constants for attributes supported by the XSLTC TransformerFactory.
     public final static String TRANSLET_NAME = "translet-name";
@@ -102,10 +103,18 @@ public class TransformerFactoryImpl
     public final static String INDENT_NUMBER = "indent-number";
 
     /**
+     * Default error listener
+     */
+    private final ErrorListener _defaultListener = new TransformErrorListener();
+
+    /**
      * This error listener is used only for this factory and is not passed to
      * the Templates or Transformer objects that we create.
      */
-    private ErrorListener _errorListener = this;
+    private ErrorListener _errorListener = _defaultListener;
+
+    // flag indicating whether there's an user's ErrorListener
+    private boolean _hasUserErrListener;
 
     /**
      * This URIResolver is passed to all created Templates and Transformers
@@ -297,6 +306,7 @@ public class TransformerFactoryImpl
                                         "TransformerFactory");
             throw new IllegalArgumentException(err.toString());
         }
+        _hasUserErrListener = true;
         _errorListener = listener;
     }
 
@@ -946,7 +956,7 @@ public class TransformerFactoryImpl
         }
 
         // Create and initialize a stylesheet compiler
-        final XSLTC xsltc = new XSLTC(_xmlFeatures);
+        final XSLTC xsltc = new XSLTC(_xmlFeatures, _hasUserErrListener);
         if (_debug) xsltc.setDebug(true);
         if (_enableInlining)
                 xsltc.setTemplateInlining(true);
@@ -1104,7 +1114,7 @@ public class TransformerFactoryImpl
         // through the factory instance
         buildCatalogFeatures();
         final TemplatesHandlerImpl handler =
-            new TemplatesHandlerImpl(_indentNumber, this);
+            new TemplatesHandlerImpl(_indentNumber, this, _hasUserErrListener);
         if (_uriResolver != null) {
             handler.setURIResolver(_uriResolver);
         }
@@ -1215,90 +1225,6 @@ public class TransformerFactoryImpl
                 }
             }
             throw e1;
-        }
-    }
-
-    /**
-     * Receive notification of a recoverable error.
-     * The transformer must continue to provide normal parsing events after
-     * invoking this method. It should still be possible for the application
-     * to process the document through to the end.
-     *
-     * @param e The warning information encapsulated in a transformer
-     * exception.
-     * @throws TransformerException if the application chooses to discontinue
-     * the transformation (always does in our case).
-     */
-    @Override
-    public void error(TransformerException e)
-        throws TransformerException
-    {
-        Throwable wrapped = e.getException();
-        if (wrapped != null) {
-            System.err.println(new ErrorMsg(ErrorMsg.ERROR_PLUS_WRAPPED_MSG,
-                                            e.getMessageAndLocation(),
-                                            wrapped.getMessage()));
-        } else {
-            System.err.println(new ErrorMsg(ErrorMsg.ERROR_MSG,
-                                            e.getMessageAndLocation()));
-        }
-        throw e;
-    }
-
-    /**
-     * Receive notification of a non-recoverable error.
-     * The application must assume that the transformation cannot continue
-     * after the Transformer has invoked this method, and should continue
-     * (if at all) only to collect addition error messages. In fact,
-     * Transformers are free to stop reporting events once this method has
-     * been invoked.
-     *
-     * @param e warning information encapsulated in a transformer
-     * exception.
-     * @throws TransformerException if the application chooses to discontinue
-     * the transformation (always does in our case).
-     */
-    @Override
-    public void fatalError(TransformerException e)
-        throws TransformerException
-    {
-        Throwable wrapped = e.getException();
-        if (wrapped != null) {
-            System.err.println(new ErrorMsg(ErrorMsg.FATAL_ERR_PLUS_WRAPPED_MSG,
-                                            e.getMessageAndLocation(),
-                                            wrapped.getMessage()));
-        } else {
-            System.err.println(new ErrorMsg(ErrorMsg.FATAL_ERR_MSG,
-                                            e.getMessageAndLocation()));
-        }
-        throw e;
-    }
-
-    /**
-     * Receive notification of a warning.
-     * Transformers can use this method to report conditions that are not
-     * errors or fatal errors. The default behaviour is to take no action.
-     * After invoking this method, the Transformer must continue with the
-     * transformation. It should still be possible for the application to
-     * process the document through to the end.
-     *
-     * @param e The warning information encapsulated in a transformer
-     * exception.
-     * @throws TransformerException if the application chooses to discontinue
-     * the transformation (never does in our case).
-     */
-    @Override
-    public void warning(TransformerException e)
-        throws TransformerException
-    {
-        Throwable wrapped = e.getException();
-        if (wrapped != null) {
-            System.err.println(new ErrorMsg(ErrorMsg.WARNING_PLUS_WRAPPED_MSG,
-                                            e.getMessageAndLocation(),
-                                            wrapped.getMessage()));
-        } else {
-            System.err.println(new ErrorMsg(ErrorMsg.WARNING_MSG,
-                                            e.getMessageAndLocation()));
         }
     }
 

@@ -161,6 +161,7 @@
 <p>Even for 32-bit builds, it is recommended to use a 64-bit build machine, and instead create a 32-bit target using <code>--with-target-bits=32</code>.</p>
 <h3 id="building-on-sparc">Building on sparc</h3>
 <p>At a minimum, a machine with 4 cores is advisable, as well as 4 GB of RAM. (The more cores to use, the more memory you need.) At least 8 GB of free disk space is required.</p>
+<p>Note: The sparc port is deprecated.</p>
 <h3 id="building-on-aarch64">Building on aarch64</h3>
 <p>At a minimum, a machine with 8 cores is advisable, as well as 8 GB of RAM. (The more cores to use, the more memory you need.) At least 6 GB of free disk space is required.</p>
 <p>If you do not have access to sufficiently powerful hardware, it is also possible to use <a href="#cross-compiling">cross-compiling</a>.</p>
@@ -180,15 +181,15 @@
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Linux</td>
-<td style="text-align: left;">Oracle Enterprise Linux 6.4 / 7.1 (using kernel 3.8.13)</td>
+<td style="text-align: left;">Oracle Enterprise Linux 6.4 / 7.6</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Solaris</td>
-<td style="text-align: left;">Solaris 11.1 SRU 21.4.1 / 11.2 SRU 5.5</td>
+<td style="text-align: left;">Solaris 11.3 SRU 20</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">macOS</td>
-<td style="text-align: left;">Mac OS X 10.9 (Mavericks) / 10.10 (Yosemite)</td>
+<td style="text-align: left;">Mac OS X 10.13 (High Sierra)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Windows</td>
@@ -196,7 +197,7 @@
 </tr>
 </tbody>
 </table>
-<p>The double version numbers for Linux, Solaris and macOS is due to the hybrid model used at Oracle, where header files and external libraries from an older version are used when building on a more modern version of the OS.</p>
+<p>The double version numbers for Linux and Solaris are due to the hybrid model used at Oracle, where header files and external libraries from an older version are used when building on a more modern version of the OS.</p>
 <p>The Build Group has a wiki page with <a href="https://wiki.openjdk.java.net/display/Build/Supported+Build+Platforms">Supported Build Platforms</a>. From time to time, this is updated by contributors to list successes or failures of building on different platforms.</p>
 <h3 id="windows">Windows</h3>
 <p>Windows XP is not a supported platform, but all newer Windows should be able to build the JDK.</p>
@@ -225,6 +226,7 @@
 <h3 id="solaris">Solaris</h3>
 <p>See <code>make/devkit/solaris11.1-package-list.txt</code> for a list of recommended packages to install when building on Solaris. The versions specified in this list is the versions used by the daily builds at Oracle, and is likely to work properly.</p>
 <p>Older versions of Solaris shipped a broken version of <code>objcopy</code>. At least version 2.21.1 is needed, which is provided by Solaris 11 Update 1. Objcopy is needed if you want to have external debug symbols. Please make sure you are using at least version 2.21.1 of objcopy, or that you disable external debug symbols.</p>
+<p>Note: The Solaris port is deprecated.</p>
 <h3 id="macos">macOS</h3>
 <p>Apple is using a quite aggressive scheme of pushing OS updates, and coupling these updates with required updates of Xcode. Unfortunately, this makes it difficult for a project such as the JDK to keep pace with a continuously updated machine running macOS. See the section on <a href="#apple-xcode">Apple Xcode</a> on some strategies to deal with this.</p>
 <p>It is recommended that you use at least Mac OS X 10.13 (High Sierra). At the time of writing, the JDK has been successfully compiled on macOS 10.12 (Sierra).</p>
@@ -237,7 +239,7 @@
 <p>For rpm-based distributions (Fedora, Red Hat, etc), try this:</p>
 <pre><code>sudo yum groupinstall &quot;Development Tools&quot;</code></pre>
 <h3 id="aix">AIX</h3>
-<p>The regular builds by SAP is using AIX version 7.1, but AIX 5.3 is also supported. See the <a href="http://cr.openjdk.java.net/~simonis/ppc-aix-port">OpenJDK PowerPC Port Status Page</a> for details.</p>
+<p>Please consult the AIX section of the <a href="https://wiki.openjdk.java.net/display/Build/Supported+Build+Platforms">Supported Build Platforms</a> OpenJDK Build Wiki page for details about which versions of AIX are supported.</p>
 <h2 id="native-compiler-toolchain-requirements">Native Compiler (Toolchain) Requirements</h2>
 <p>Large portions of the JDK consists of native code, that needs to be compiled to be able to run on the target platform. In theory, toolchain and operating system should be independent factors, but in practice there's more or less a one-to-one correlation between target operating system and toolchain.</p>
 <table>
@@ -281,25 +283,26 @@
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Linux</td>
-<td style="text-align: left;">gcc 7.3.0</td>
+<td style="text-align: left;">gcc 9.2.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">macOS</td>
-<td style="text-align: left;">Apple Xcode 9.4 (using clang 9.1.0)</td>
+<td style="text-align: left;">Apple Xcode 10.1 (using clang 10.0.0)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Solaris</td>
-<td style="text-align: left;">Oracle Solaris Studio 12.4 (with compiler version 5.13)</td>
+<td style="text-align: left;">Oracle Solaris Studio 12.6 (with compiler version 5.15)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Windows</td>
-<td style="text-align: left;">Microsoft Visual Studio 2017 update 15.5.5</td>
+<td style="text-align: left;">Microsoft Visual Studio 2019 update 16.5.3</td>
 </tr>
 </tbody>
 </table>
+<p>All compilers are expected to be able to compile to the C99 language standard, as some C99 features are used in the source code. Microsoft Visual Studio doesn't fully support C99 so in practice shared code is limited to using C99 features that it does support.</p>
 <h3 id="gcc">gcc</h3>
-<p>The minimum accepted version of gcc is 4.8. Older versions will generate a warning by <code>configure</code> and are unlikely to work.</p>
-<p>The JDK is currently known to be able to compile with at least version 7.4 of gcc.</p>
+<p>The minimum accepted version of gcc is 5.0. Older versions will generate a warning by <code>configure</code> and are unlikely to work.</p>
+<p>The JDK is currently known to be able to compile with at least version 9.2 of gcc.</p>
 <p>In general, any version between these two should be usable.</p>
 <h3 id="clang">clang</h3>
 <p>The minimum accepted version of clang is 3.2. Older versions will not be accepted by <code>configure</code>.</p>
@@ -369,12 +372,11 @@ cc: Sun C 5.13 SunOS_i386 2014/10/20
 $ CC -V
 CC: Sun C++ 5.13 SunOS_i386 151846-10 2015/10/30</code></pre>
 <h3 id="microsoft-visual-studio">Microsoft Visual Studio</h3>
-<p>The minimum accepted version of Visual Studio is 2010. Older versions will not be accepted by <code>configure</code>. The maximum accepted version of Visual Studio is 2017. Versions older than 2017 are unlikely to continue working for long.</p>
+<p>The minimum accepted version of Visual Studio is 2010. Older versions will not be accepted by <code>configure</code>. The maximum accepted version of Visual Studio is 2019. Versions older than 2017 are unlikely to continue working for long.</p>
 <p>If you have multiple versions of Visual Studio installed, <code>configure</code> will by default pick the latest. You can request a specific version to be used by setting <code>--with-toolchain-version</code>, e.g. <code>--with-toolchain-version=2015</code>.</p>
 <p>If you get <code>LINK: fatal error LNK1123: failure during conversion to COFF: file invalid</code> when building using Visual Studio 2010, you have encountered <a href="http://support.microsoft.com/kb/2757355">KB2757355</a>, a bug triggered by a specific installation order. However, the solution suggested by the KB article does not always resolve the problem. See <a href="https://stackoverflow.com/questions/10888391">this stackoverflow discussion</a> for other suggestions.</p>
 <h3 id="ibm-xl-cc">IBM XL C/C++</h3>
-<p>The regular builds by SAP is using version 12.1, described as <code>IBM XL C/C++ for AIX, V12.1 (5765-J02, 5725-C72) Version: 12.01.0000.0017</code>.</p>
-<p>See the <a href="http://cr.openjdk.java.net/~simonis/ppc-aix-port">OpenJDK PowerPC Port Status Page</a> for details.</p>
+<p>Please consult the AIX section of the <a href="https://wiki.openjdk.java.net/display/Build/Supported+Build+Platforms">Supported Build Platforms</a> OpenJDK Build Wiki page for details about which versions of XLC are supported.</p>
 <h2 id="boot-jdk-requirements">Boot JDK Requirements</h2>
 <p>Paradoxically, building the JDK requires a pre-existing JDK. This is called the &quot;boot JDK&quot;. The boot JDK does not, however, have to be a JDK built directly from the source code available in the OpenJDK Community. If you are porting the JDK to a new platform, chances are that there already exists another JDK for that platform that is usable as boot JDK.</p>
 <p>The rule of thumb is that the boot JDK for building JDK major version <em>N</em> should be a JDK of major version <em>N-1</em>, so for building JDK 9 a JDK 8 would be suitable as boot JDK. However, the JDK should be able to &quot;build itself&quot;, so an up-to-date build of the current JDK source is an acceptable alternative. If you are following the <em>N-1</em> rule, make sure you've got the latest update version, since JDK 8 GA might not be able to build JDK 9 on all platforms.</p>
@@ -385,10 +387,10 @@ CC: Sun C++ 5.13 SunOS_i386 151846-10 2015/10/30</code></pre>
 <p>On Linux you can also get a JDK from the Linux distribution. On apt-based distros (like Debian and Ubuntu), <code>sudo apt-get install openjdk-&lt;VERSION&gt;-jdk</code> is typically enough to install a JDK &lt;VERSION&gt;. On rpm-based distros (like Fedora and Red Hat), try <code>sudo yum install java-&lt;VERSION&gt;-openjdk-devel</code>.</p>
 <h2 id="external-library-requirements">External Library Requirements</h2>
 <p>Different platforms require different external libraries. In general, libraries are not optional - that is, they are either required or not used.</p>
-<p>If a required library is not detected by <code>configure</code>, you need to provide the path to it. There are two forms of the <code>configure</code> arguments to point to an external library: <code>--with-&lt;LIB&gt;=&lt;path&gt;</code> or <code>--with-&lt;LIB&gt;-include=&lt;path to include&gt; --with-&lt;LIB&gt;-lib=&lt;path to lib&gt;</code>. The first variant is more concise, but require the include files an library files to reside in a default hierarchy under this directory. In most cases, it works fine.</p>
+<p>If a required library is not detected by <code>configure</code>, you need to provide the path to it. There are two forms of the <code>configure</code> arguments to point to an external library: <code>--with-&lt;LIB&gt;=&lt;path&gt;</code> or <code>--with-&lt;LIB&gt;-include=&lt;path to include&gt; --with-&lt;LIB&gt;-lib=&lt;path to lib&gt;</code>. The first variant is more concise, but require the include files and library files to reside in a default hierarchy under this directory. In most cases, it works fine.</p>
 <p>As a fallback, the second version allows you to point to the include directory and the lib directory separately.</p>
 <h3 id="freetype">FreeType</h3>
-<p>FreeType2 from <a href="http://www.freetype.org/">The FreeType Project</a> is not required on any platform. The exception is on Unix-based platforms when configuring such that the build artifacts will reference a system installed library, rather than bundling the JDK’s own copy.</p>
+<p>FreeType2 from <a href="http://www.freetype.org/">The FreeType Project</a> is not required on any platform. The exception is on Unix-based platforms when configuring such that the build artifacts will reference a system installed library, rather than bundling the JDK's own copy.</p>
 <ul>
 <li>To install on an apt-based Linux, try running <code>sudo apt-get install libfreetype6-dev</code>.</li>
 <li>To install on an rpm-based Linux, try running <code>sudo yum install freetype-devel</code>.</li>
@@ -449,7 +451,7 @@ CC: Sun C++ 5.13 SunOS_i386 151846-10 2015/10/30</code></pre>
 <p>To build the JDK, you need a &quot;configuration&quot;, which consists of a directory where to store the build output, coupled with information about the platform, the specific build machine, and choices that affect how the JDK is built.</p>
 <p>The configuration is created by the <code>configure</code> script. The basic invocation of the <code>configure</code> script looks like this:</p>
 <pre><code>bash configure [options]</code></pre>
-<p>This will create an output directory containing the configuration and setup an area for the build result. This directory typically looks like <code>build/linux-x64-normal-server-release</code>, but the actual name depends on your specific configuration. (It can also be set directly, see <a href="#using-multiple-configurations">Using Multiple Configurations</a>). This directory is referred to as <code>$BUILD</code> in this documentation.</p>
+<p>This will create an output directory containing the configuration and setup an area for the build result. This directory typically looks like <code>build/linux-x64-server-release</code>, but the actual name depends on your specific configuration. (It can also be set directly, see <a href="#using-multiple-configurations">Using Multiple Configurations</a>). This directory is referred to as <code>$BUILD</code> in this documentation.</p>
 <p><code>configure</code> will try to figure out what system you are running on and where all necessary build components are. If you have all prerequisites for building installed, it should find everything. If it fails to detect any component automatically, it will exit and inform you about the problem.</p>
 <p>Some command line examples:</p>
 <ul>
@@ -471,7 +473,7 @@ CC: Sun C++ 5.13 SunOS_i386 151846-10 2015/10/30</code></pre>
 <li><code>--with-version-string=&lt;string&gt;</code> - Specify the version string this build will be identified with.</li>
 <li><code>--with-version-&lt;part&gt;=&lt;value&gt;</code> - A group of options, where <code>&lt;part&gt;</code> can be any of <code>pre</code>, <code>opt</code>, <code>build</code>, <code>major</code>, <code>minor</code>, <code>security</code> or <code>patch</code>. Use these options to modify just the corresponding part of the version string from the default, or the value provided by <code>--with-version-string</code>.</li>
 <li><code>--with-jvm-variants=&lt;variant&gt;[,&lt;variant&gt;...]</code> - Build the specified variant (or variants) of Hotspot. Valid variants are: <code>server</code>, <code>client</code>, <code>minimal</code>, <code>core</code>, <code>zero</code>, <code>custom</code>. Note that not all variants are possible to combine in a single build.</li>
-<li><code>--with-jvm-features=&lt;feature&gt;[,&lt;feature&gt;...]</code> - Use the specified JVM features when building Hotspot. The list of features will be enabled on top of the default list. For the <code>custom</code> JVM variant, this default list is empty. A complete list of available JVM features can be found using <code>bash configure --help</code>.</li>
+<li><code>--enable-jvm-feature-&lt;feature&gt;</code> or <code>--disable-jvm-feature-&lt;feature&gt;</code> - Include (or exclude) <code>&lt;feature&gt;</code> as a JVM feature in Hotspot. You can also specify a list of features to be enabled, separated by space or comma, as <code>--with-jvm-features=&lt;feature&gt;[,&lt;feature&gt;...]</code>. If you prefix <code>&lt;feature&gt;</code> with a <code>-</code>, it will be disabled. These options will modify the default list of features for the JVM variant(s) you are building. For the <code>custom</code> JVM variant, the default list is empty. A complete list of valid JVM features can be found using <code>bash configure --help</code>.</li>
 <li><code>--with-target-bits=&lt;bits&gt;</code> - Create a target binary suitable for running on a <code>&lt;bits&gt;</code> platform. Use this to create 32-bit output on a 64-bit build platform, instead of doing a full cross-compile. (This is known as a <em>reduced</em> build.)</li>
 </ul>
 <p>On Linux, BSD and AIX, it is possible to override where Java by default searches for runtime/JNI libraries. This can be useful in situations where there is a special shared directory for system JNI libraries. This setting can in turn be overriden at runtime by setting the <code>java.library.path</code> property.</p>
@@ -498,7 +500,7 @@ CC: Sun C++ 5.13 SunOS_i386 151846-10 2015/10/30</code></pre>
 <li><code>--with-libffi=&lt;path&gt;</code> - Set the path to <a href="#libffi">libffi</a></li>
 <li><code>--with-jtreg=&lt;path&gt;</code> - Set the path to JTReg. See <a href="#running-tests">Running Tests</a></li>
 </ul>
-<p>Certain third-party libraries used by the JDK (libjpeg, giflib, libpng, lcms and zlib) are included in the JDK repository. The default behavior of the JDK build is to use this version of these libraries, but they might be replaced by an external version. To do so, specify <code>system</code> as the <code>&lt;source&gt;</code> option in these arguments. (The default is <code>bundled</code>).</p>
+<p>Certain third-party libraries used by the JDK (libjpeg, giflib, libpng, lcms and zlib) are included in the JDK repository. The default behavior of the JDK build is to use the included (&quot;bundled&quot;) versions of libjpeg, giflib, libpng and lcms. For zlib, the system lib (if present) is used except on Windows and AIX. However the bundled libraries may be replaced by an external version. To do so, specify <code>system</code> as the <code>&lt;source&gt;</code> option in these arguments. (The default is <code>bundled</code>).</p>
 <ul>
 <li><code>--with-libjpeg=&lt;source&gt;</code> - Use the specified source for libjpeg</li>
 <li><code>--with-giflib=&lt;source&gt;</code> - Use the specified source for giflib</li>
@@ -534,7 +536,7 @@ CC: Sun C++ 5.13 SunOS_i386 151846-10 2015/10/30</code></pre>
 <li><code>dist-clean</code> - Remove all files, including configuration</li>
 </ul>
 <p>Run <code>make help</code> to get an up-to-date list of important make targets and make control variables.</p>
-<p>It is possible to build just a single module, a single phase, or a single phase of a single module, by creating make targets according to these followin patterns. A phase can be either of <code>gensrc</code>, <code>gendata</code>, <code>copy</code>, <code>java</code>, <code>launchers</code>, <code>libs</code> or <code>rmic</code>. See <a href="#using-fine-grained-make-targets">Using Fine-Grained Make Targets</a> for more details about this functionality.</p>
+<p>It is possible to build just a single module, a single phase, or a single phase of a single module, by creating make targets according to these followin patterns. A phase can be either of <code>gensrc</code>, <code>gendata</code>, <code>copy</code>, <code>java</code>, <code>launchers</code>, or <code>libs</code>. See <a href="#using-fine-grained-make-targets">Using Fine-Grained Make Targets</a> for more details about this functionality.</p>
 <ul>
 <li><code>&lt;phase&gt;</code> - Build the specified phase and everything it depends on</li>
 <li><code>&lt;module&gt;</code> - Build the specified module and everything it depends on</li>
@@ -572,10 +574,11 @@ CC: Sun C++ 5.13 SunOS_i386 151846-10 2015/10/30</code></pre>
 <li><code>CONF_CHECK</code></li>
 <li><code>COMPARE_BUILD</code></li>
 <li><code>JDK_FILTER</code></li>
+<li><code>SPEC_FILTER</code></li>
 </ul>
 <h2 id="running-tests">Running Tests</h2>
 <p>Most of the JDK tests are using the <a href="http://openjdk.java.net/jtreg">JTReg</a> test framework. Make sure that your configuration knows where to find your installation of JTReg. If this is not picked up automatically, use the <code>--with-jtreg=&lt;path to jtreg home&gt;</code> option to point to the JTReg framework. Note that this option should point to the JTReg home, i.e. the top directory, containing <code>lib/jtreg.jar</code> etc.</p>
-<p>The <a href="https://wiki.openjdk.java.net/display/Adoption">Adoption Group</a> provides recent builds of jtreg <a href="https://adopt-openjdk.ci.cloudbees.com/job/jtreg/lastSuccessfulBuild/artifact">here</a>. Download the latest <code>.tar.gz</code> file, unpack it, and point <code>--with-jtreg</code> to the <code>jtreg</code> directory that you just unpacked.</p>
+<p>The <a href="https://wiki.openjdk.java.net/display/Adoption">Adoption Group</a> provides recent builds of jtreg <a href="https://ci.adoptopenjdk.net/view/Dependencies/job/jtreg/lastSuccessfulBuild/artifact">here</a>. Download the latest <code>.tar.gz</code> file, unpack it, and point <code>--with-jtreg</code> to the <code>jtreg</code> directory that you just unpacked.</p>
 <p>To execute the most basic tests (tier 1), use:</p>
 <pre><code>make run-test-tier1</code></pre>
 <p>For more details on how to run tests, please see the <a href="testing.html">Testing the JDK</a> document.</p>
@@ -636,11 +639,6 @@ x86_64-linux-gnu-to-ppc64le-linux-gnu</code></pre>
 <p>You will need two copies of your toolchain, one which generates output that can run on the target system (the normal, or <em>target</em>, toolchain), and one that generates output that can run on the build system (the <em>build</em> toolchain). Note that cross-compiling is only supported for gcc at the time being. The gcc standard is to prefix cross-compiling toolchains with the target denominator. If you follow this standard, <code>configure</code> is likely to pick up the toolchain correctly.</p>
 <p>The <em>build</em> toolchain will be autodetected just the same way the normal <em>build</em>/<em>target</em> toolchain will be autodetected when not cross-compiling. If this is not what you want, or if the autodetection fails, you can specify a devkit containing the <em>build</em> toolchain using <code>--with-build-devkit</code> to <code>configure</code>, or by giving <code>BUILD_CC</code> and <code>BUILD_CXX</code> arguments.</p>
 <p>It is often helpful to locate the cross-compilation tools, headers and libraries in a separate directory, outside the normal path, and point out that directory to <code>configure</code>. Do this by setting the sysroot (<code>--with-sysroot</code>) and appending the directory when searching for cross-compilations tools (<code>--with-toolchain-path</code>). As a compact form, you can also use <code>--with-devkit</code> to point to a single directory, if it is correctly setup. (See <code>basics.m4</code> for details.)</p>
-<p>If you are unsure what toolchain and versions to use, these have been proved working at the time of writing:</p>
-<ul>
-<li><a href="https://releases.linaro.org/archive/13.11/components/toolchain/binaries/gcc-linaro-aarch64-linux-gnu-4.8-2013.11_linux.tar.xz">aarch64</a></li>
-<li><a href="https://launchpad.net/linaro-toolchain-unsupported/trunk/2012.09/+download/gcc-linaro-arm-linux-gnueabihf-raspbian-2012.09-20120921_linux.tar.bz2">arm 32-bit hardware floating point</a></li>
-</ul>
 <h3 id="native-libraries">Native Libraries</h3>
 <p>You will need copies of external native libraries for the <em>target</em> system, present on the <em>build</em> machine while building.</p>
 <p>Take care not to replace the <em>build</em> system's version of these libraries by mistake, since that can render the <em>build</em> machine unusable.</p>
@@ -931,7 +929,6 @@ sudo mv /tmp/configure /usr/local/bin</code></pre>
 <li><code>java</code> (Compile Java code)</li>
 <li><code>launchers</code> (Compile native executables)</li>
 <li><code>libs</code> (Compile native libraries)</li>
-<li><code>rmic</code> (Run the <code>rmic</code> tool)</li>
 </ul>
 <p>You can build only a single phase for a module by using the notation <code>$MODULE-$PHASE</code>. For instance, to build the <code>gensrc</code> phase for <code>java.base</code>, use <code>make java.base-gensrc</code>.</p>
 <p>Note that some phases may depend on others, e.g. <code>java</code> depends on <code>gensrc</code> (if present). Make will build all needed prerequisites before building the requested phase.</p>

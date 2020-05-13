@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,6 @@ OSThread::OSThread(OSThreadStartFunc start_proc, void* start_parm) {
   pd_initialize();
   set_start_proc(start_proc);
   set_start_parm(start_parm);
-  set_interrupted(false);
 }
 
 OSThread::~OSThread() {
@@ -53,3 +52,5 @@ void OSThread::print_on(outputStream *st) const {
     default:                      st->print("unknown state %d", _state); break;
   }
 }
+
+void OSThread::print() const { print_on(tty); }

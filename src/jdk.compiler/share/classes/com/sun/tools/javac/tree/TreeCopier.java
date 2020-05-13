@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
 package com.sun.tools.javac.tree;
 
 import com.sun.source.tree.*;
-import com.sun.source.tree.Tree.Kind;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.DefinedBy;
 import com.sun.tools.javac.util.DefinedBy.Api;
@@ -140,8 +139,14 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     @DefinedBy(Api.COMPILER_TREE)
     public JCTree visitBreak(BreakTree node, P p) {
         JCBreak t = (JCBreak) node;
+        return M.at(t.pos).Break(t.label);
+    }
+
+    @DefinedBy(Api.COMPILER_TREE)
+    public JCTree visitYield(YieldTree node, P p) {
+        JCYield t = (JCYield) node;
         JCExpression value = copy(t.value, p);
-        return M.at(t.pos).Break(value);
+        return M.at(t.pos).Yield(value);
     }
 
     @DefinedBy(Api.COMPILER_TREE)
@@ -373,7 +378,6 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     }
 
     @DefinedBy(Api.COMPILER_TREE)
-    @SuppressWarnings("removal")
     public JCTree visitSwitchExpression(SwitchExpressionTree node, P p) {
         JCSwitchExpression t = (JCSwitchExpression) node;
         JCExpression selector = copy(t.selector, p);
@@ -476,8 +480,15 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     public JCTree visitInstanceOf(InstanceOfTree node, P p) {
         JCInstanceOf t = (JCInstanceOf) node;
         JCExpression expr = copy(t.expr, p);
-        JCTree clazz = copy(t.clazz, p);
-        return M.at(t.pos).TypeTest(expr, clazz);
+        JCTree pattern = copy(t.pattern, p);
+        return M.at(t.pos).TypeTest(expr, pattern);
+    }
+
+    @DefinedBy(Api.COMPILER_TREE)
+    public JCTree visitBindingPattern(BindingPatternTree node, P p) {
+        JCBindingPattern t = (JCBindingPattern) node;
+        JCTree vartype = copy(t.vartype, p);
+        return M.at(t.pos).BindingPattern(t.name, vartype);
     }
 
     @DefinedBy(Api.COMPILER_TREE)

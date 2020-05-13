@@ -51,7 +51,8 @@ import java.io.IOException;
  *                   renewable(8),
  *                   initial(9),
  *                   pre-authent(10),
- *                   hw-authent(11)
+ *                   hw-authent(11),
+ *                   enc-pa-rep(15)
  *                  }
  */
 public class TicketFlags extends KerberosFlags {
@@ -66,6 +67,7 @@ public class TicketFlags extends KerberosFlags {
         }
     }
 
+    // Warning: called by NativeCreds.c and nativeccache.c
     public TicketFlags(int size, byte[] data) throws Asn1Exception {
         super(size, data);
         if ((size > data.length * BITS_PER_UNIT) || (size > Krb5.TKT_OPTS_MAX + 1))
@@ -177,6 +179,9 @@ public class TicketFlags extends KerberosFlags {
                     break;
                 case 11:
                     sb.append("HW-AUTHENT;");
+                    break;
+                case 15:
+                    sb.append("ENC-PA-REP;");
                     break;
                 }
             }

@@ -97,13 +97,12 @@ void compiledVFrame::update_stack(BasicType type, int index, jvalue value) {
 void compiledVFrame::update_monitor(int index, MonitorInfo* val) {
   assert(index >= 0, "out of bounds");
   jvalue value;
-  value.l = (jobject) val->owner();
+  value.l = cast_from_oop<jobject>(val->owner());
   update_deferred_value(T_OBJECT, index + method()->max_locals() + method()->max_stack(), value);
 }
 
 void compiledVFrame::update_deferred_value(BasicType type, int index, jvalue value) {
-  assert(fr().is_deoptimized_frame() || thread()->must_deopt_id() == fr().id(),
-         "frame must be scheduled for deoptimization");
+  assert(fr().is_deoptimized_frame(), "frame must be scheduled for deoptimization");
   GrowableArray<jvmtiDeferredLocalVariableSet*>* deferred = thread()->deferred_locals();
   jvmtiDeferredLocalVariableSet* locals = NULL;
   if (deferred != NULL ) {

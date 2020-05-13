@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "asm/codeBuffer.hpp"
+#include "code/oopRecorder.inline.hpp"
 #include "compiler/disassembler.hpp"
 #include "oops/methodData.hpp"
 #include "oops/oop.inline.hpp"
@@ -31,6 +32,7 @@
 #include "runtime/safepointVerifiers.hpp"
 #include "utilities/align.hpp"
 #include "utilities/copy.hpp"
+#include "utilities/powerOfTwo.hpp"
 #include "utilities/xmlstream.hpp"
 
 // The structure of a CodeSection:
@@ -85,7 +87,8 @@ typedef CodeBuffer::csize_t csize_t;  // file-local definition
 // External buffer, in a predefined CodeBlob.
 // Important: The code_start must be taken exactly, and not realigned.
 CodeBuffer::CodeBuffer(CodeBlob* blob) {
-  initialize_misc("static buffer");
+  // Provide code buffer with meaningful name
+  initialize_misc(blob->name());
   initialize(blob->content_begin(), blob->content_size());
   verify_section_allocation();
 }
@@ -1029,28 +1032,14 @@ void CodeBuffer::log_section_sizes(const char* name) {
 
 #ifndef PRODUCT
 
-void CodeSection::dump() {
-  address ptr = start();
-  for (csize_t step; ptr < end(); ptr += step) {
-    step = end() - ptr;
-    if (step > jintSize * 4)  step = jintSize * 4;
-    tty->print(INTPTR_FORMAT ": ", p2i(ptr));
-    while (step > 0) {
-      tty->print(" " PTR32_FORMAT, *(jint*)ptr);
-      ptr += jintSize;
-    }
-    tty->cr();
-  }
-}
-
-
 void CodeSection::decode() {
   Disassembler::decode(start(), end());
 }
 
-
 void CodeBuffer::block_comment(intptr_t offset, const char * comment) {
-  _code_strings.add_comment(offset, comment);
+  if (_collect_comments) {
+    _code_strings.add_comment(offset, comment);
+  }
 }
 
 const char* CodeBuffer::code_string(const char* str) {
@@ -1062,10 +1051,11 @@ class CodeString: public CHeapObj<mtCode> {
   friend class CodeStrings;
   const char * _string;
   CodeString*  _next;
+  CodeString*  _prev;
   intptr_t     _offset;
 
   ~CodeString() {
-    assert(_next == NULL, "wrong interface for freeing list");
+    assert(_next == NULL && _prev == NULL, "wrong interface for freeing list");
     os::free((void*)_string);
   }
 
@@ -1073,7 +1063,7 @@ class CodeString: public CHeapObj<mtCode> {
 
  public:
   CodeString(const char * string, intptr_t offset = -1)
-    : _next(NULL), _offset(offset) {
+    : _next(NULL), _prev(NULL), _offset(offset) {
     _string = os::strdup(string, mtCode);
   }
 
@@ -1081,7 +1071,12 @@ class CodeString: public CHeapObj<mtCode> {
   intptr_t     offset() const { assert(_offset >= 0, "offset for non comment?"); return _offset;  }
   CodeString* next()    const { return _next; }
 
-  void set_next(CodeString* next) { _next = next; }
+  void set_next(CodeString* next) {
+    _next = next;
+    if (next != NULL) {
+      next->_prev = this;
+    }
+  }
 
   CodeString* first_comment() {
     if (is_comment()) {
@@ -1109,12 +1104,9 @@ CodeString* CodeStrings::find(intptr_t offset) const {
 
 // Convenience for add_comment.
 CodeString* CodeStrings::find_last(intptr_t offset) const {
-  CodeString* a = find(offset);
-  if (a != NULL) {
-    CodeString* c = NULL;
-    while (((c = a->next_comment()) != NULL) && (c->offset() == offset)) {
-      a = c;
-    }
+  CodeString* a = _strings_last;
+  while (a != NULL && !(a->is_comment() && a->offset() == offset)) {
+    a = a->_prev;
   }
   return a;
 }
@@ -1133,12 +1125,16 @@ void CodeStrings::add_comment(intptr_t offset, const char * comment) {
     c->set_next(_strings);
     _strings = c;
   }
+  if (c->next() == NULL) {
+    _strings_last = c;
+  }
 }
 
 void CodeStrings::assign(CodeStrings& other) {
   other.check_valid();
   assert(is_null(), "Cannot assign onto non-empty CodeStrings");
   _strings = other._strings;
+  _strings_last = other._strings_last;
 #ifdef ASSERT
   _defunct = false;
 #endif
@@ -1154,8 +1150,11 @@ void CodeStrings::copy(CodeStrings& other) {
   assert(is_null(), "Cannot copy onto non-empty CodeStrings");
   CodeString* n = other._strings;
   CodeString** ps = &_strings;
+  CodeString* prev = NULL;
   while (n != NULL) {
     *ps = new CodeString(n->string(),n->offset());
+    (*ps)->_prev = prev;
+    prev = *ps;
     ps = &((*ps)->_next);
     n = n->next();
   }
@@ -1163,15 +1162,23 @@ void CodeStrings::copy(CodeStrings& other) {
 
 const char* CodeStrings::_prefix = " ;; ";  // default: can be changed via set_prefix
 
+// Check if any block comments are pending for the given offset.
+bool CodeStrings::has_block_comment(intptr_t offset) const {
+  if (_strings == NULL) return false;
+  CodeString* c = find(offset);
+  return c != NULL;
+}
+
 void CodeStrings::print_block_comment(outputStream* stream, intptr_t offset) const {
-    check_valid();
-    if (_strings != NULL) {
+  check_valid();
+  if (_strings != NULL) {
     CodeString* c = find(offset);
     while (c && c->offset() == offset) {
       stream->bol();
       stream->print("%s", _prefix);
       // Don't interpret as format strings since it could contain %
-      stream->print_raw_cr(c->string());
+      stream->print_raw(c->string());
+      stream->bol(); // advance to next line only if string didn't contain a cr() at the end.
       c = c->next_comment();
     }
   }
@@ -1184,6 +1191,10 @@ void CodeStrings::free() {
     // unlink the node from the list saving a pointer to the next
     CodeString* p = n->next();
     n->set_next(NULL);
+    if (p != NULL) {
+      assert(p->_prev == n, "missing prev link");
+      p->_prev = NULL;
+    }
     delete n;
     n = p;
   }
@@ -1194,6 +1205,9 @@ const char* CodeStrings::add_string(const char * string) {
   check_valid();
   CodeString* s = new CodeString(string);
   s->set_next(_strings);
+  if (_strings == NULL) {
+    _strings_last = s;
+  }
   _strings = s;
   assert(s->string() != NULL, "should have a string");
   return s->string();
@@ -1201,29 +1215,9 @@ const char* CodeStrings::add_string(const char * string) {
 
 void CodeBuffer::decode() {
   ttyLocker ttyl;
-  Disassembler::decode(decode_begin(), insts_end());
+  Disassembler::decode(decode_begin(), insts_end(), tty);
   _decode_begin = insts_end();
 }
-
-
-void CodeBuffer::skip_decode() {
-  _decode_begin = insts_end();
-}
-
-
-void CodeBuffer::decode_all() {
-  ttyLocker ttyl;
-  for (int n = 0; n < (int)SECT_LIMIT; n++) {
-    // dump contents of each section
-    CodeSection* cs = code_section(n);
-    tty->print_cr("! %s:", code_section_name(n));
-    if (cs != consts())
-      cs->decode();
-    else
-      cs->dump();
-  }
-}
-
 
 void CodeSection::print(const char* name) {
   csize_t locs_size = locs_end() - locs_start();
@@ -1250,6 +1244,12 @@ void CodeBuffer::print() {
     CodeSection* cs = code_section(n);
     cs->print(code_section_name(n));
   }
+}
+
+// Directly disassemble code buffer.
+void CodeBuffer::decode(address start, address end) {
+  ttyLocker ttyl;
+  Disassembler::decode(this, start, end, tty);
 }
 
 #endif // PRODUCT

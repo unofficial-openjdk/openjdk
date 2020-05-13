@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
 #include "jfr/recorder/service/jfrOptionSet.hpp"
 #include "jfr/recorder/stacktrace/jfrStackTraceRepository.hpp"
 #include "jfr/support/jfrThreadId.hpp"
+#include "jfr/support/jfrThreadLocal.hpp"
 #include "jfr/utilities/jfrTime.hpp"
 #include "logging/log.hpp"
 #include "runtime/frame.inline.hpp"
@@ -338,6 +339,7 @@ class JfrThreadSampler : public NonJavaThread {
  protected:
   virtual void post_run();
  public:
+  virtual char* name() const { return (char*)"JFR Thread Sampler"; }
   void run();
   static Monitor* transition_block() { return JfrThreadSampler_lock; }
   static void on_javathread_suspend(JavaThread* thread);
@@ -347,19 +349,24 @@ static void clear_transition_block(JavaThread* jt) {
   jt->clear_trace_flag();
   JfrThreadLocal* const tl = jt->jfr_thread_local();
   if (tl->is_trace_block()) {
-    MutexLockerEx ml(JfrThreadSampler::transition_block(), Mutex::_no_safepoint_check_flag);
+    MutexLocker ml(JfrThreadSampler::transition_block(), Mutex::_no_safepoint_check_flag);
     JfrThreadSampler::transition_block()->notify_all();
   }
 }
 
+static bool is_excluded(JavaThread* thread) {
+  assert(thread != NULL, "invariant");
+  return thread->is_hidden_from_external_view() || thread->in_deopt_handler() || thread->jfr_thread_local()->is_excluded();
+}
+
 bool JfrThreadSampleClosure::do_sample_thread(JavaThread* thread, JfrStackFrame* frames, u4 max_frames, JfrSampleType type) {
   assert(Threads_lock->owned_by_self(), "Holding the thread table lock.");
-  if (thread->is_hidden_from_external_view() || thread->in_deopt_handler()) {
+  if (is_excluded(thread)) {
     return false;
   }
 
   bool ret = false;
-  thread->set_trace_flag();
+  thread->set_trace_flag();  // Provides StoreLoad, needed to keep read of thread state from floating up.
   if (JAVA_SAMPLE == type) {
     if (thread_state_in_java(thread)) {
       ret = sample_thread_in_java(thread, frames, max_frames);
@@ -395,9 +402,9 @@ void JfrThreadSampler::on_javathread_suspend(JavaThread* thread) {
   JfrThreadLocal* const tl = thread->jfr_thread_local();
   tl->set_trace_block();
   {
-    MutexLockerEx ml(transition_block(), Mutex::_no_safepoint_check_flag);
+    MonitorLocker ml(transition_block(), Mutex::_no_safepoint_check_flag);
     while (thread->is_trace_suspend()) {
-      transition_block()->wait(true);
+      ml.wait();
     }
     tl->clear_trace_block();
   }
@@ -429,7 +436,7 @@ void JfrThreadSampler::start_thread() {
 
 void JfrThreadSampler::enroll() {
   if (_disenrolled) {
-    log_info(jfr)("Enrolling thread sampler");
+    log_trace(jfr)("Enrolling thread sampler");
     _sample.signal();
     _disenrolled = false;
   }
@@ -439,7 +446,7 @@ void JfrThreadSampler::disenroll() {
   if (!_disenrolled) {
     _sample.wait();
     _disenrolled = true;
-    log_info(jfr)("Disenrolling thread sampler");
+    log_trace(jfr)("Disenrolling thread sampler");
   }
 }
 
@@ -462,8 +469,8 @@ void JfrThreadSampler::run() {
       last_native_ms = last_java_ms;
     }
     _sample.signal();
-    jlong java_interval = _interval_java == 0 ? max_jlong : MAX2<jlong>(_interval_java, 10);
-    jlong native_interval = _interval_native == 0 ? max_jlong : MAX2<jlong>(_interval_native, 10);
+    jlong java_interval = _interval_java == 0 ? max_jlong : MAX2<jlong>(_interval_java, 1);
+    jlong native_interval = _interval_native == 0 ? max_jlong : MAX2<jlong>(_interval_native, 1);
 
     jlong now_ms = get_monotonic_ms();
 
@@ -516,7 +523,7 @@ void JfrThreadSampler::task_stacktrace(JfrSampleType type, JavaThread** last_thr
     elapsedTimer sample_time;
     sample_time.start();
     {
-      MonitorLockerEx tlock(Threads_lock, Mutex::_allow_vm_block_flag);
+      MutexLocker tlock(Threads_lock);
       ThreadsListHandle tlh;
       // Resolve a sample session relative start position index into the thread list array.
       // In cases where the last sampled thread is NULL or not-NULL but stale, find_index() returns -1.
@@ -577,12 +584,12 @@ JfrThreadSampling::~JfrThreadSampling() {
 }
 
 static void log(size_t interval_java, size_t interval_native) {
-  log_info(jfr)("Updated thread sampler for java: " SIZE_FORMAT "  ms, native " SIZE_FORMAT " ms", interval_java, interval_native);
+  log_trace(jfr)("Updated thread sampler for java: " SIZE_FORMAT "  ms, native " SIZE_FORMAT " ms", interval_java, interval_native);
 }
 
 void JfrThreadSampling::start_sampler(size_t interval_java, size_t interval_native) {
   assert(_sampler == NULL, "invariant");
-  log_info(jfr)("Enrolling thread sampler");
+  log_trace(jfr)("Enrolling thread sampler");
   _sampler = new JfrThreadSampler(interval_java, interval_native, JfrOptionSet::stackdepth());
   _sampler->start_thread();
   _sampler->enroll();
@@ -602,7 +609,7 @@ void JfrThreadSampling::set_sampling_interval(bool java_interval, size_t period)
   }
   if (interval_java > 0 || interval_native > 0) {
     if (_sampler == NULL) {
-      log_info(jfr)("Creating thread sampler for java:%zu ms, native %zu ms", interval_java, interval_native);
+      log_trace(jfr)("Creating thread sampler for java:%zu ms, native %zu ms", interval_java, interval_native);
       start_sampler(interval_java, interval_native);
     } else {
       _sampler->set_java_interval(interval_java);

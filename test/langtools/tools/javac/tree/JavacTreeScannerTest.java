@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,10 +49,12 @@ import java.lang.reflect.*;
 import java.util.*;
 import javax.tools.*;
 
+import com.sun.source.util.JavacTask;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.util.List;
+import com.sun.tools.javac.util.Pair;
 
 public class JavacTreeScannerTest extends AbstractTreeScannerTest {
     /**
@@ -75,8 +77,8 @@ public class JavacTreeScannerTest extends AbstractTreeScannerTest {
         }
     }
 
-    int test(JCCompilationUnit tree) {
-        return new ScanTester().test(tree);
+    int test(Pair<JavacTask, JCCompilationUnit> taskAndTree) {
+        return new ScanTester().test(taskAndTree.snd);
     }
 
     /**
@@ -100,8 +102,21 @@ public class JavacTreeScannerTest extends AbstractTreeScannerTest {
 
             error(sourcefile, "differences found");
 
-            if (found.size() != expect.size())
+            if (found.size() != expect.size()) {
                 error("Size mismatch; found: " + found.size() + ", expected: " + expect.size());
+                Set<JCTree> notFound = new HashSet<>(expect);
+                notFound.removeAll(found);
+                if (!notFound.isEmpty()) {
+                    System.err.println("found by reflective access to the AST, but not found in the scanner API:");
+                    notFound.forEach(t -> System.err.println(trim(t, 64)));
+                }
+                Set<JCTree> notExpected = new HashSet<>(found);
+                notExpected.removeAll(expect);
+                if (!notExpected.isEmpty()) {
+                    System.err.println("found in the scanner API, but not found by reflective access to the AST:");
+                    notExpected.forEach(t -> System.err.println(trim(t, 64)));
+                }
+            }
 
             Set<JCTree> missing = new HashSet<JCTree>();
             missing.addAll(expect);
@@ -148,6 +163,8 @@ public class JavacTreeScannerTest extends AbstractTreeScannerTest {
                 List<?> list = (List<?>) o;
                 for (Object item: list)
                     reflectiveScan(item);
+            } else if (o instanceof Pair) {
+                return;
             } else
                 error("unexpected item: " + o);
         }

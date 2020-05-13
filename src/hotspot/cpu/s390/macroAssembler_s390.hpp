@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2016, 2018, SAP SE. All rights reserved.
+ * Copyright (c) 2016, 2019, SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -713,6 +713,11 @@ class MacroAssembler: public Assembler {
                            Register temp2_reg,
                            Label&   L_success);
 
+  void clinit_barrier(Register klass,
+                      Register thread,
+                      Label* L_fast_path = NULL,
+                      Label* L_slow_path = NULL);
+
   // Increment a counter at counter_address when the eq condition code is set.
   // Kills registers tmp1_reg and tmp2_reg and preserves the condition code.
   void increment_counter_eq(address counter_address, Register tmp1_reg, Register tmp2_reg);
@@ -823,62 +828,19 @@ class MacroAssembler: public Assembler {
                    Register Rbase = Z_R1, int pow2_offset = -1);
 
   void resolve_oop_handle(Register result);
-  void load_mirror(Register mirror, Register method);
+  void load_mirror_from_const_method(Register mirror, Register const_method);
+  void load_method_holder(Register holder, Register method);
 
   //--------------------------
   //---  Operations on arrays.
   //--------------------------
-  unsigned int Clear_Array(Register cnt_arg, Register base_pointer_arg, Register src_addr, Register src_len);
+  unsigned int Clear_Array(Register cnt_arg, Register base_pointer_arg, Register odd_tmp_reg);
   unsigned int Clear_Array_Const(long cnt, Register base);
-  unsigned int Clear_Array_Const_Big(long cnt, Register base_pointer_arg, Register src_addr, Register src_len);
+  unsigned int Clear_Array_Const_Big(long cnt, Register base_pointer_arg, Register odd_tmp_reg);
   unsigned int CopyRawMemory_AlignedDisjoint(Register src_reg, Register dst_reg,
                                              Register cnt_reg,
                                              Register tmp1_reg, Register tmp2_reg);
 
-  //-------------------------------------------
-  // Special String Intrinsics Implementation.
-  //-------------------------------------------
-  // Intrinsics for CompactStrings
-  //   Restores: src, dst
-  //   Uses:     cnt
-  //   Kills:    tmp, Z_R0, Z_R1.
-  //   Early clobber: result.
-  //   Boolean precise controls accuracy of result value.
-  unsigned int string_compress(Register result, Register src, Register dst, Register cnt,
-                               Register tmp,    bool precise);
-
-  // Inflate byte[] to char[].
-  unsigned int string_inflate_trot(Register src, Register dst, Register cnt, Register tmp);
-
-  // Inflate byte[] to char[].
-  //   Restores: src, dst
-  //   Uses:     cnt
-  //   Kills:    tmp, Z_R0, Z_R1.
-  unsigned int string_inflate(Register src, Register dst, Register cnt, Register tmp);
-
-  // Inflate byte[] to char[], length known at compile time.
-  //   Restores: src, dst
-  //   Kills:    tmp, Z_R0, Z_R1.
-  // Note:
-  //   len is signed int. Counts # characters, not bytes.
-  unsigned int string_inflate_const(Register src, Register dst, Register tmp, int len);
-
-  // Kills src.
-  unsigned int has_negatives(Register result, Register src, Register cnt,
-                             Register odd_reg, Register even_reg, Register tmp);
-
-  unsigned int string_compare(Register str1, Register str2, Register cnt1, Register cnt2,
-                              Register odd_reg, Register even_reg, Register result, int ae);
-
-  unsigned int array_equals(bool is_array_equ, Register ary1, Register ary2, Register limit,
-                            Register odd_reg, Register even_reg, Register result, bool is_byte);
-
-  unsigned int string_indexof(Register result, Register haystack, Register haycnt,
-                              Register needle, Register needlecnt, int needlecntval,
-                              Register odd_reg, Register even_reg, int ae);
-
-  unsigned int string_indexof_char(Register result, Register haystack, Register haycnt,
-                                   Register needle, jchar needleChar, Register odd_reg, Register even_reg, bool is_byte);
 
   // Emit an oop const to the constant pool and set a relocation info
   // with address current_pc. Return the TOC offset of the constant.
@@ -911,13 +873,6 @@ class MacroAssembler: public Assembler {
   static int load_const_from_toc_call_size() { return load_const_from_toc_size() + call_byregister_size(); }
   // Offset is +/- 2**32 -> use long.
   static long get_load_const_from_toc_offset(address a);
-
-
-  void generate_type_profiling(const Register Rdata,
-                               const Register Rreceiver_klass,
-                               const Register Rwanted_receiver_klass,
-                               const Register Rmatching_row,
-                               bool is_virtual_call);
 
   // Bit operations for single register operands.
   inline void lshift(Register r, int places, bool doubl = true);   // <<
@@ -972,8 +927,15 @@ class MacroAssembler: public Assembler {
   // Verify Z_thread contents.
   void verify_thread();
 
+  // Save and restore functions: Exclude Z_R0.
+  void save_volatile_regs(   Register dst, int offset, bool include_fp, bool include_flags);
+  void restore_volatile_regs(Register src, int offset, bool include_fp, bool include_flags);
+
   // Only if +VerifyOops.
+  // Kills Z_R0.
   void verify_oop(Register reg, const char* s = "broken oop");
+  // Kills Z_R0, condition code.
+  void verify_oop_addr(Address addr, const char* msg = "contains broken oop");
 
   // TODO: verify_method and klass metadata (compare against vptr?).
   void _verify_method_ptr(Register reg, const char * msg, const char * file, int line) {}

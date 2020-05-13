@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2016 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,7 +29,6 @@
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterRuntime.hpp"
 #include "memory/allocation.inline.hpp"
-#include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/icache.hpp"
@@ -151,15 +150,15 @@ void InterpreterRuntime::SignatureHandlerGenerator::generate(uint64_t fingerprin
 
 void SignatureHandlerLibrary::pd_set_handler(address handler) {}
 
-IRT_ENTRY(address, InterpreterRuntime::get_signature(JavaThread* thread, Method* method))
+JRT_ENTRY(address, InterpreterRuntime::get_signature(JavaThread* thread, Method* method))
   methodHandle m(thread, method);
   assert(m->is_native(), "sanity check");
   Symbol *s = m->signature();
   return (address) s->base();
-IRT_END
+JRT_END
 
-IRT_ENTRY(address, InterpreterRuntime::get_result_handler(JavaThread* thread, Method* method))
+JRT_ENTRY(address, InterpreterRuntime::get_result_handler(JavaThread* thread, Method* method))
   methodHandle m(thread, method);
   assert(m->is_native(), "sanity check");
   return AbstractInterpreter::result_handler(m->result_type());
-IRT_END
+JRT_END

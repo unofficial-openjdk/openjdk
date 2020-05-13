@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,8 +31,10 @@ import sun.invoke.util.Wrapper;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
+
+import static java.lang.invoke.MethodTypeForm.LF_INVINTERFACE;
+import static java.lang.invoke.MethodTypeForm.LF_INVVIRTUAL;
 
 /**
  * Helper class to assist the GenerateJLIClassesPlugin to get access to
@@ -71,8 +73,19 @@ class GenerateJLIClassesHelper {
         ArrayList<LambdaForm> forms = new ArrayList<>();
         ArrayList<String> names = new ArrayList<>();
         for (int i = 0; i < methodTypes.length; i++) {
-            LambdaForm form = DirectMethodHandle
-                    .makePreparedLambdaForm(methodTypes[i], types[i]);
+            // invokeVirtual and invokeInterface must have a leading Object
+            // parameter, i.e., the receiver
+            if (types[i] == LF_INVVIRTUAL || types[i] == LF_INVINTERFACE) {
+                if (methodTypes[i].parameterCount() < 1 ||
+                        methodTypes[i].parameterType(0) != Object.class) {
+                    throw new InternalError("Invalid method type for " +
+                            (types[i] == LF_INVVIRTUAL ? "invokeVirtual" : "invokeInterface") +
+                            " DMH, needs at least two leading reference arguments: " +
+                            methodTypes[i]);
+                }
+            }
+
+            LambdaForm form = DirectMethodHandle.makePreparedLambdaForm(methodTypes[i], types[i]);
             forms.add(form);
             names.add(form.kind.defaultLambdaName);
         }
@@ -183,24 +196,20 @@ class GenerateJLIClassesHelper {
     private static byte[] generateCodeBytesForLFs(String className,
             String[] names, LambdaForm[] forms) {
 
+
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
         cw.visit(Opcodes.V1_8, Opcodes.ACC_PRIVATE + Opcodes.ACC_FINAL + Opcodes.ACC_SUPER,
                 className, null, InvokerBytecodeGenerator.INVOKER_SUPER_NAME, null);
         cw.visitSource(className.substring(className.lastIndexOf('/') + 1), null);
 
         for (int i = 0; i < forms.length; i++) {
-            addMethod(className, names[i], forms[i],
-                    forms[i].methodType(), cw);
+            InvokerBytecodeGenerator g
+                = new InvokerBytecodeGenerator(className, names[i], forms[i], forms[i].methodType());
+            g.setClassWriter(cw);
+            g.addMethod();
         }
-        return cw.toByteArray();
-    }
 
-    private static void addMethod(String className, String methodName, LambdaForm form,
-            MethodType type, ClassWriter cw) {
-        InvokerBytecodeGenerator g
-                = new InvokerBytecodeGenerator(className, methodName, form, type);
-        g.setClassWriter(cw);
-        g.addMethod();
+        return cw.toByteArray();
     }
 
     private static LambdaForm makeReinvokerFor(MethodType type) {

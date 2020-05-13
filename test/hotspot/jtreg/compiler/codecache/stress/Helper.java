@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,21 +26,18 @@ package compiler.codecache.stress;
 import jdk.test.lib.Asserts;
 import jdk.test.lib.ByteCodeLoader;
 import jdk.test.lib.InfiniteLoop;
-import jdk.test.lib.Utils;
 import sun.hotspot.WhiteBox;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Random;
 import java.util.concurrent.Callable;
 
 public final class Helper {
     public static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
-    public static final Random RNG = Utils.getRandomInstance();
 
     private static final long THRESHOLD = WHITE_BOX.getIntxVMFlag("CompileThreshold");
-    private static final String TEST_CASE_IMPL_CLASS_NAME = "compiler.codecache.stress.Helper$TestCaseImpl";
+    private static final String TEST_CASE_IMPL_CLASS_NAME = "compiler.codecache.stress.TestCaseImpl";
     private static byte[] CLASS_DATA;
     static {
         try {
@@ -109,34 +106,4 @@ public final class Helper {
         int method();
         int expectedValue();
     }
-
-    public static class TestCaseImpl implements TestCase {
-        private static final int RETURN_VALUE = 42;
-        private static final int RECURSION_DEPTH = 10;
-        private volatile int i;
-
-        @Override
-        public Callable<Integer> getCallable() {
-            return () -> {
-                i = 0;
-                return method();
-            };
-        }
-
-        @Override
-        public int method() {
-            ++i;
-            int result = RETURN_VALUE;
-            if (i < RECURSION_DEPTH) {
-                return result + method();
-            }
-            return result;
-        }
-
-        @Override
-        public int expectedValue() {
-            return RETURN_VALUE * RECURSION_DEPTH;
-        }
-    }
-
 }

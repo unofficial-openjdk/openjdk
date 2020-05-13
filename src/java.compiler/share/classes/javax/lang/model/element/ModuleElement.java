@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 package javax.lang.model.element;
 
 import java.util.List;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * Represents a module program element.  Provides access to
@@ -37,6 +38,16 @@ import java.util.List;
  * @spec JPMS
  */
 public interface ModuleElement extends Element, QualifiedNameable {
+    /**
+     * Returns a {@linkplain javax.lang.model.type.NoType pseudo-type}
+     * for this module.
+     * @return a pseudo-type for this module
+     *
+     * @see javax.lang.model.type.NoType
+     * @see javax.lang.model.type.TypeKind#MODULE
+     */
+    @Override
+    TypeMirror asType();
 
     /**
      * Returns the fully qualified name of this module.  For an
@@ -150,6 +161,24 @@ public interface ModuleElement extends Element, QualifiedNameable {
     interface Directive {
         /**
          * Returns the {@code kind} of this directive.
+         * <ul>
+         *
+         * <li> The kind of a {@linkplain RequiresDirective requires
+         * directive} is {@link DirectiveKind#REQUIRES REQUIRES}.
+         *
+         * <li> The kind of an {@linkplain ExportsDirective exports
+         * directive} is {@link DirectiveKind#EXPORTS EXPORTS}.
+         *
+         * <li> The kind of an {@linkplain OpensDirective opens
+         * directive} is {@link DirectiveKind#OPENS OPENS}.
+         *
+         * <li> The kind of a {@linkplain UsesDirective uses
+         * directive} is {@link DirectiveKind#USES USES}.
+         *
+         * <li> The kind of a {@linkplain ProvidesDirective provides
+         * directive} is {@link DirectiveKind#PROVIDES PROVIDES}.
+         *
+         * </ul>
          *
          * @return the kind of this directive
          */

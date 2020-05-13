@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -27,9 +27,9 @@ default: all
 
 include $(SPEC)
 include MakeBase.gmk
+include Execute.gmk
 include Modules.gmk
 
-TOOL_TARGETS :=
 JDK_TARGETS :=
 JRE_TARGETS :=
 
@@ -55,9 +55,6 @@ JDK_MODULES_LIST := $(call CommaList, $(JDK_MODULES))
 BASE_RELEASE_FILE := $(JDK_OUTPUTDIR)/release
 
 JMODS := $(wildcard $(IMAGES_OUTPUTDIR)/jmods/*.jmod)
-
-# Use this file inside the image as target for make rule
-JIMAGE_TARGET_FILE := release
 
 JLINK_ORDER_RESOURCES := **module-info.class
 JLINK_JLI_CLASSES :=
@@ -88,40 +85,64 @@ ifeq ($(JLINK_KEEP_PACKAGED_MODULES), true)
   JLINK_JDK_EXTRA_OPTS := --keep-packaged-modules $(JDK_IMAGE_DIR)/jmods
 endif
 
-$(JDK_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
-    $(call DependOnVariable, JDK_MODULES_LIST) $(BASE_RELEASE_FILE)
-	$(call LogWarn, Creating jdk image)
-	$(RM) -r $(JDK_IMAGE_DIR)
-	$(call ExecuteWithLog, $(SUPPORT_OUTPUTDIR)/images/jdk, \
-	    $(JLINK_TOOL) --add-modules $(JDK_MODULES_LIST) \
-	        $(JLINK_JDK_EXTRA_OPTS) \
-	        --output $(JDK_IMAGE_DIR) \
-	)
-        ifeq ($(BUILD_CDS_ARCHIVE), true)
-	  $(call LogWarn, Creating CDS archive for jdk image)
-	  $(FIXPATH) $(JDK_IMAGE_DIR)/bin/java \
-	      -Xshare:dump -Xmx128M -Xms128M $(LOG_INFO)
-        endif
-	$(TOUCH) $@
+JLINK_DISABLE_WARNINGS := | ( $(GREP) -v -e "WARNING: Using incubator module" || test "$$?" = "1" )
 
-$(JRE_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
-    $(call DependOnVariable, JRE_MODULES_LIST) $(BASE_RELEASE_FILE)
-	$(call LogWarn, Creating legacy jre image)
-	$(RM) -r $(JRE_IMAGE_DIR)
-	$(call ExecuteWithLog, $(SUPPORT_OUTPUTDIR)/images/jre, \
-	    $(JLINK_TOOL) --add-modules $(JRE_MODULES_LIST) \
-	        $(JLINK_JRE_EXTRA_OPTS) \
-	        --output $(JRE_IMAGE_DIR) \
-	)
-        ifeq ($(BUILD_CDS_ARCHIVE), true)
-	  $(call LogWarn, Creating CDS archive for jre image)
-	  $(FIXPATH) $(JRE_IMAGE_DIR)/bin/java \
-	      -Xshare:dump -Xmx128M -Xms128M $(LOG_INFO)
-        endif
-	$(TOUCH) $@
+$(eval $(call SetupExecute, jlink_jdk, \
+    WARN := Creating jdk image, \
+    DEPS := $(JMODS) $(BASE_RELEASE_FILE) \
+        $(call DependOnVariable, JDK_MODULES_LIST), \
+    OUTPUT_DIR := $(JDK_IMAGE_DIR), \
+    SUPPORT_DIR := $(SUPPORT_OUTPUTDIR)/images/jdk, \
+    PRE_COMMAND := $(RM) -r $(JDK_IMAGE_DIR), \
+    COMMAND := $(JLINK_TOOL) --add-modules $(JDK_MODULES_LIST) \
+        $(JLINK_JDK_EXTRA_OPTS) --output $(JDK_IMAGE_DIR) \
+        $(JLINK_DISABLE_WARNINGS), \
+))
 
-TOOL_JRE_TARGETS := $(JRE_IMAGE_DIR)/$(JIMAGE_TARGET_FILE)
-TOOL_JDK_TARGETS := $(JDK_IMAGE_DIR)/$(JIMAGE_TARGET_FILE)
+JLINK_JDK_TARGETS := $(jlink_jdk)
+
+$(eval $(call SetupExecute, jlink_jre, \
+    WARN := Creating legacy jre image, \
+    DEPS := $(JMODS) $(BASE_RELEASE_FILE) \
+        $(call DependOnVariable, JDK_MODULES_LIST), \
+    OUTPUT_DIR := $(JRE_IMAGE_DIR), \
+    SUPPORT_DIR := $(SUPPORT_OUTPUTDIR)/images/jre, \
+    PRE_COMMAND := $(RM) -r $(JRE_IMAGE_DIR), \
+    COMMAND := $(JLINK_TOOL) --add-modules $(JRE_MODULES_LIST) \
+        $(JLINK_JRE_EXTRA_OPTS) --output $(JRE_IMAGE_DIR), \
+))
+
+JLINK_JRE_TARGETS := $(jlink_jre)
+
+ifeq ($(BUILD_CDS_ARCHIVE), true)
+  ifeq ($(OPENJDK_TARGET_OS), windows)
+    CDS_ARCHIVE := bin/server/classes.jsa
+  else
+    CDS_ARCHIVE := lib/server/classes.jsa
+  endif
+
+  $(eval $(call SetupExecute, gen_cds_archive_jdk, \
+      WARN := Creating CDS archive for jdk image, \
+      DEPS := $(jlink_jdk), \
+      OUTPUT_FILE := $(JDK_IMAGE_DIR)/$(CDS_ARCHIVE), \
+      SUPPORT_DIR := $(SUPPORT_OUTPUTDIR)/images/jdk, \
+      COMMAND := $(FIXPATH) $(JDK_IMAGE_DIR)/bin/java -Xshare:dump \
+          -Xmx128M -Xms128M $(LOG_INFO), \
+  ))
+
+  JDK_TARGETS += $(gen_cds_archive_jdk)
+
+  $(eval $(call SetupExecute, gen_cds_archive_jre, \
+      WARN := Creating CDS archive for jre image, \
+      DEPS := $(jlink_jre), \
+      OUTPUT_FILE := $(JRE_IMAGE_DIR)/$(CDS_ARCHIVE), \
+      SUPPORT_DIR := $(SUPPORT_OUTPUTDIR)/images/jre, \
+      COMMAND := $(FIXPATH) $(JRE_IMAGE_DIR)/bin/java -Xshare:dump \
+          -Xmx128M -Xms128M $(LOG_INFO), \
+  ))
+
+  JRE_TARGETS += $(gen_cds_archive_jre)
+endif
 
 ################################################################################
 # src.zip
@@ -165,21 +186,14 @@ endif
 
 ifeq ($(GCOV_ENABLED), true)
 
-  GCOV_FIND_EXPR := -type f -name "*.gcno"
-
-  $(eval $(call SetupCopyFiles,COPY_HOTSPOT_GCOV_GCNO, \
+  $(eval $(call SetupCopyFiles,COPY_GCOV_GCNO, \
       SRC := $(OUTPUTDIR), \
       DEST := $(SYMBOLS_IMAGE_DIR)/gcov, \
-      FILES := $(shell $(FIND) $(HOTSPOT_OUTPUTDIR) $(GCOV_FIND_EXPR))))
+      FILES := $(call FindFiles, $(HOTSPOT_OUTPUTDIR) \
+          $(SUPPORT_OUTPUTDIR)/native, *.gcno) \
+  ))
 
-  SYMBOLS_TARGETS += $(COPY_HOTSPOT_GCOV_GCNO)
-
-  $(eval $(call SetupCopyFiles,COPY_JDK_GCOV_GCNO, \
-      SRC := $(OUTPUTDIR), \
-      DEST := $(SYMBOLS_IMAGE_DIR)/gcov, \
-      FILES := $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/native $(GCOV_FIND_EXPR))))
-
-  SYMBOLS_TARGETS += $(COPY_JDK_GCOV_GCNO)
+  SYMBOLS_TARGETS += $(COPY_GCOV_GCNO)
 
 endif
 
@@ -197,6 +211,7 @@ ifeq ($(call isTargetOs, windows), true)
 else
   LIBS_TARGET_SUBDIR := lib
 endif
+CMDS_TARGET_SUBDIR := bin
 
 # Param 1 - dir to find debuginfo files in
 FindDebuginfoFiles = \
@@ -212,12 +227,15 @@ else
   # On Macosx, if debug symbols have not been zipped, find all files inside *.dSYM
   # dirs.
   ifeq ($(call isTargetOs, macosx), true)
-    $(eval $(call FillCacheFind, \
-        $(SUPPORT_OUTPUTDIR)/modules_cmds $(SUPPORT_OUTPUTDIR)/modules_libs))
+    $(call FillFindCache, \
+        $(SUPPORT_OUTPUTDIR)/modules_libs $(SUPPORT_OUTPUTDIR)/modules_cmds)
     FindDebuginfoFiles = \
-        $(if $(wildcard $1), $(call containing, .dSYM/, $(call CacheFind, $1)))
+        $(if $(wildcard $1), $(call containing, .dSYM/, $(call FindFiles, $1)))
   endif
 endif
+
+FILTERED_PDBS := %jimage.stripped.pdb %jpackage.stripped.pdb %java.stripped.pdb \
+    %jimage.pdb %jpackage.pdb %java.pdb %jimage.map %jpackage.map %java.map
 
 # Param 1 - either JDK or JRE
 SetupCopyDebuginfo = \
@@ -229,6 +247,13 @@ SetupCopyDebuginfo = \
               $(SUPPORT_OUTPUTDIR)/modules_libs/$m), \
       )) \
       $(eval $1_TARGETS += $$(COPY_$1_LIBS_DEBUGINFO_$m)) \
+      $(eval $(call SetupCopyFiles, COPY_$1_CMDS_DEBUGINFO_$m, \
+          SRC := $(SUPPORT_OUTPUTDIR)/modules_cmds/$m, \
+          DEST := $($1_IMAGE_DIR)/$(CMDS_TARGET_SUBDIR), \
+          FILES := $(filter-out $(FILTERED_PDBS), $(call FindDebuginfoFiles, \
+              $(SUPPORT_OUTPUTDIR)/modules_cmds/$m)), \
+      )) \
+      $(eval $1_TARGETS += $$(COPY_$1_CMDS_DEBUGINFO_$m)) \
     )
 
 # No space before argument to avoid having to put $(strip ) everywhere in
@@ -244,11 +269,11 @@ $(eval $(call IncludeCustomExtension, Images-post.gmk))
 
 ################################################################################
 
-$(JRE_TARGETS): $(TOOL_JRE_TARGETS)
-$(JDK_TARGETS): $(TOOL_JDK_TARGETS)
+$(JRE_TARGETS): $(JLINK_JRE_TARGETS)
+$(JDK_TARGETS): $(JLINK_JDK_TARGETS)
 
-jdk: $(TOOL_JDK_TARGETS) $(JDK_TARGETS)
-jre: $(TOOL_JRE_TARGETS) $(JRE_TARGETS)
+jdk: $(JLINK_JDK_TARGETS) $(JDK_TARGETS)
+jre: $(JLINK_JRE_TARGETS) $(JRE_TARGETS)
 symbols: $(SYMBOLS_TARGETS)
 
 all: jdk jre symbols

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,20 +24,24 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import jdk.test.lib.net.IPSupport;
 import static java.util.concurrent.CompletableFuture.*;
 
 /*
  * @test
  * @bug 4344135
+ * @library /test/lib
  * @summary Check that {Socket,ServerSocket,DatagramSocket}.close will
  *          cause any thread blocked on the socket to throw a SocketException.
  * @run main AsyncClose
  * @run main/othervm -Djava.net.preferIPv4Stack=true AsyncClose
+ * @run main/othervm -Djdk.net.usePlainSocketImpl AsyncClose
  */
 
 public class AsyncClose {
 
     public static void main(String args[]) throws Exception {
+        IPSupport.throwSkippedExceptionIfNonOperational();
 
         AsyncCloseTest tests[] = {
             new Socket_getInputStream_read(),

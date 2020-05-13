@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016, 2018, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -24,8 +25,9 @@
 /*
  * @test TestLargeObjectAlignment
  * @summary Shenandoah crashes with -XX:ObjectAlignmentInBytes=16
- * @key gc
- * @requires vm.gc.Shenandoah
+ * @key gc randomness
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled & (vm.bits == "64")
+ * @library /test/lib
  *
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ObjectAlignmentInBytes=16 -Xint                   TestLargeObjectAlignment
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ObjectAlignmentInBytes=16 -XX:-TieredCompilation  TestLargeObjectAlignment
@@ -35,7 +37,8 @@
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
+import jdk.test.lib.Utils;
 
 public class TestLargeObjectAlignment {
 
@@ -49,8 +52,9 @@ public class TestLargeObjectAlignment {
         objects = new Object[SLABS_COUNT];
 
         long start = System.nanoTime();
+        Random rng = Utils.getRandomInstance();
         while (System.nanoTime() - start < TIME_NS) {
-            objects[ThreadLocalRandom.current().nextInt(SLABS_COUNT)] = createSome();
+            objects[rng.nextInt(SLABS_COUNT)] = createSome();
         }
     }
 

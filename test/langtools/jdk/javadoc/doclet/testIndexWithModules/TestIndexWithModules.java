@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8190875
+ * @bug 8190875 8215599
  * @summary modules not listed in overview/index page
  * @library /tools/lib ../../lib
  * @modules
@@ -76,30 +76,31 @@ public class TestIndexWithModules extends JavadocTester {
         checkOrder("index.html",
                 "The overview summary page header",
                 "Modules",
-                "<a href=\"m1/module-summary.html\">m1</a>");
+                """
+                    <a href="m1/module-summary.html">m1</a>""");
 
     }
 
     //multiple modules with frames
     @Test
     public void testIndexWithMultipleModules1(Path base) throws Exception {
-        setAutomaticCheckLinks(false); // @ignore 8217013
         Path out = base.resolve("out");
         javadoc("-d", out.toString(),
                 "--module-source-path", src.toString(),
-                "--module", "m1,m3,m4",
-                "--frames");
+                "--module", "m1,m3,m4");
 
         checkExit(Exit.OK);
 
-        checkOutput("index.html", true,
-                "window.location.replace('overview-summary.html')");
-        checkOrder("overview-summary.html",
+        checkOutput("overview-summary.html", true,
+                "window.location.replace('index.html')");
+        checkOrder("index.html",
                 "Modules",
-                "<a href=\"m1/module-summary.html\">m1</a>",
-                "<a href=\"m3/module-summary.html\">m3</a>",
-                "<a href=\"m4/module-summary.html\">m4</a>");
-        setAutomaticCheckLinks(true); // @ignore 8217013
+                """
+                    <a href="m1/module-summary.html">m1</a>""",
+                """
+                    <a href="m3/module-summary.html">m3</a>""",
+                """
+                    <a href="m4/module-summary.html">m4</a>""");
     }
 
     //multiple modules with out frames
@@ -114,9 +115,12 @@ public class TestIndexWithModules extends JavadocTester {
         checkExit(Exit.OK);
         checkOrder("index.html",
                 "Modules",
-                "<a href=\"m1/module-summary.html\">m1</a>",
-                "<a href=\"m3/module-summary.html\">m3</a>",
-                "<a href=\"m4/module-summary.html\">m4</a>");
+                """
+                    <a href="m1/module-summary.html">m1</a>""",
+                """
+                    <a href="m3/module-summary.html">m3</a>""",
+                """
+                    <a href="m4/module-summary.html">m4</a>""");
     }
 
     @Test
@@ -151,8 +155,10 @@ public class TestIndexWithModules extends JavadocTester {
         checkExit(Exit.OK);
         checkOrder("index.html",
                 "Packages",
-                "<a href=\"P1/package-summary.html\">P1</a>",
-                "<a href=\"P2/package-summary.html\">P2</a>");
+                """
+                    <a href="P1/package-summary.html">P1</a>""",
+                """
+                    <a href="P2/package-summary.html">P2</a>""");
 
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,8 +30,9 @@
 #include "pdh_interface.hpp"
 #include "runtime/os_perf.hpp"
 #include "runtime/os.hpp"
+#include "utilities/globalDefinitions.hpp"
 #include "utilities/macros.hpp"
-#include "vm_version_ext_x86.hpp"
+#include CPU_HEADER(vm_version_ext)
 #include <math.h>
 #include <psapi.h>
 #include <TlHelp32.h>
@@ -96,7 +97,7 @@ static const int min_update_interval_millis = 500;
 */
 typedef struct {
   HQUERY query;
-  s8     lastUpdate; // Last time query was updated (current millis).
+  s8     lastUpdate; // Last time query was updated.
 } UpdateQueryS, *UpdateQueryP;
 
 
@@ -136,7 +137,7 @@ static void pdh_cleanup(HQUERY* const query, HCOUNTER* const counter) {
 }
 
 static CounterQueryP create_counter_query() {
-  CounterQueryP const query = NEW_C_HEAP_ARRAY(CounterQueryS, 1, mtInternal);
+  CounterQueryP const query = NEW_C_HEAP_OBJ(CounterQueryS, mtInternal);
   memset(query, 0, sizeof(CounterQueryS));
   return query;
 }
@@ -144,7 +145,7 @@ static CounterQueryP create_counter_query() {
 static void destroy_counter_query(CounterQueryP query) {
   assert(query != NULL, "invariant");
   pdh_cleanup(&query->query.query, &query->counter);
-  FREE_C_HEAP_ARRAY(CounterQueryS, query);
+  FREE_C_HEAP_OBJ(query);
 }
 
 static MultiCounterQueryP create_multi_counter_query() {
@@ -182,7 +183,7 @@ static void destroy_counter_query(MultiCounterQuerySetP counter_query_set) {
 
 static void destroy_counter_query(ProcessQueryP process_query) {
   destroy_multi_counter_query(&process_query->set);
-  FREE_C_HEAP_ARRAY(ProcessQueryS, process_query);
+  FREE_C_HEAP_OBJ(process_query);
 }
 
 static int open_query(HQUERY* query) {
@@ -194,42 +195,33 @@ static int open_query(QueryP query) {
   return open_query(&query->query);
 }
 
-static int allocate_counters(MultiCounterQueryP query, size_t nofCounters) {
+static void allocate_counters(MultiCounterQueryP query, size_t nofCounters) {
   assert(query != NULL, "invariant");
   assert(!query->initialized, "invariant");
   assert(0 == query->noOfCounters, "invariant");
   assert(query->counters == NULL, "invariant");
-  query->counters = (HCOUNTER*)NEW_C_HEAP_ARRAY(char, nofCounters * sizeof(HCOUNTER), mtInternal);
-  if (query->counters == NULL) {
-    return OS_ERR;
-  }
+  query->counters = NEW_C_HEAP_ARRAY(HCOUNTER, nofCounters, mtInternal);
   memset(query->counters, 0, nofCounters * sizeof(HCOUNTER));
   query->noOfCounters = (int)nofCounters;
-  return OS_OK;
 }
 
-static int allocate_counters(MultiCounterQuerySetP query_set, size_t nofCounters) {
+static void allocate_counters(MultiCounterQuerySetP query_set, size_t nofCounters) {
   assert(query_set != NULL, "invariant");
   assert(!query_set->initialized, "invariant");
   for (int i = 0; i < query_set->size; ++i) {
-    if (allocate_counters(&query_set->queries[i], nofCounters) != OS_OK) {
-      return OS_ERR;
-    }
+    allocate_counters(&query_set->queries[i], nofCounters);
   }
-  return OS_OK;
 }
 
-static int allocate_counters(ProcessQueryP process_query, size_t nofCounters) {
+static void allocate_counters(ProcessQueryP process_query, size_t nofCounters) {
   assert(process_query != NULL, "invariant");
-  return allocate_counters(&process_query->set, nofCounters);
+  allocate_counters(&process_query->set, nofCounters);
 }
 
 static void deallocate_counters(MultiCounterQueryP query) {
-  if (query->counters != NULL) {
-    FREE_C_HEAP_ARRAY(char, query->counters);
-    query->counters = NULL;
-    query->noOfCounters = 0;
-  }
+  FREE_C_HEAP_ARRAY(char, query->counters);
+  query->counters = NULL;
+  query->noOfCounters = 0;
 }
 
 static OSReturn add_counter(UpdateQueryP query, HCOUNTER* counter, const char* path, bool first_sample_on_init) {
@@ -295,8 +287,8 @@ static OSReturn add_process_counter(MultiCounterQueryP query, int slot_index, co
 
 static int collect_query_data(UpdateQueryP update_query) {
   assert(update_query != NULL, "invariant");
-  const s8 now = os::javaTimeMillis();
-  if (now - update_query->lastUpdate > min_update_interval_millis) {
+  const s8 now = os::javaTimeNanos();
+  if (nanos_to_millis(now - update_query->lastUpdate) > min_update_interval_millis) {
     if (PdhDll::PdhCollectQueryData(update_query->query) != ERROR_SUCCESS) {
       return OS_ERR;
     }
@@ -388,7 +380,7 @@ static ProcessQueryP create_process_query() {
   if (OS_ERR == current_process_idx) {
     return NULL;
   }
-  ProcessQueryP const process_query = NEW_C_HEAP_ARRAY(ProcessQueryS, 1, mtInternal);
+  ProcessQueryP const process_query = NEW_C_HEAP_OBJ(ProcessQueryS, mtInternal);
   memset(process_query, 0, sizeof(ProcessQueryS));
   process_query->set.queries = NEW_C_HEAP_ARRAY(MultiCounterQueryS, current_process_idx + 1, mtInternal);
   memset(process_query->set.queries, 0, sizeof(MultiCounterQueryS) * (current_process_idx + 1));
@@ -602,7 +594,7 @@ static OSReturn lookup_name_by_index(DWORD index, char** p_string) {
 static const char* copy_string_to_c_heap(const char* string) {
   assert(string != NULL, "invariant");
   const size_t len = strlen(string);
-  char* const cheap_allocated_string = NEW_C_HEAP_ARRAY(char, len + 1, mtInternal);
+  char* const cheap_allocated_string = NEW_C_HEAP_ARRAY_RETURN_NULL(char, len + 1, mtInternal);
   if (NULL == cheap_allocated_string) {
     return NULL;
   }
@@ -659,14 +651,10 @@ static const char* pdh_process_image_name() {
 }
 
 static void deallocate_pdh_constants() {
-  if (process_image_name != NULL) {
-    FREE_C_HEAP_ARRAY(char, process_image_name);
-    process_image_name = NULL;
-  }
-  if (pdh_IDProcess_counter_fmt != NULL) {
-    FREE_C_HEAP_ARRAY(char, pdh_IDProcess_counter_fmt);
-    pdh_IDProcess_counter_fmt = NULL;
-  }
+  FREE_C_HEAP_ARRAY(char, process_image_name);
+  process_image_name = NULL;
+  FREE_C_HEAP_ARRAY(char, pdh_IDProcess_counter_fmt);
+  pdh_IDProcess_counter_fmt = NULL;
 }
 
 static int allocate_pdh_constants() {
@@ -855,9 +843,7 @@ static int initialize_cpu_query(MultiCounterQueryP cpu_query, DWORD pdh_counter_
   const int logical_cpu_count = number_of_logical_cpus();
   assert(logical_cpu_count >= os::processor_count(), "invariant");
   // we also add another counter for instance "_Total"
-  if (allocate_counters(cpu_query, logical_cpu_count + 1) != OS_OK) {
-    return OS_ERR;
-  }
+  allocate_counters(cpu_query, logical_cpu_count + 1);
   assert(cpu_query->noOfCounters == logical_cpu_count + 1, "invariant");
   return initialize_cpu_query_counters(cpu_query, pdh_counter_idx);
 }
@@ -1023,9 +1009,7 @@ bool CPUPerformanceInterface::CPUPerformance::initialize() {
   if (_process_cpu_load == NULL) {
     return true;
   }
-  if (allocate_counters(_process_cpu_load, 2) != OS_OK) {
-    return true;
-  }
+  allocate_counters(_process_cpu_load, 2);
   if (initialize_process_counter(_process_cpu_load, 0, PDH_PROCESSOR_TIME_IDX) != OS_OK) {
     return true;
   }
@@ -1063,7 +1047,7 @@ CPUPerformanceInterface::CPUPerformanceInterface() {
 
 bool CPUPerformanceInterface::initialize() {
   _impl = new CPUPerformanceInterface::CPUPerformance();
-  return _impl != NULL && _impl->initialize();
+  return _impl->initialize();
 }
 
 CPUPerformanceInterface::~CPUPerformanceInterface() {
@@ -1269,7 +1253,7 @@ SystemProcessInterface::SystemProcesses::SystemProcesses() {
 
 bool SystemProcessInterface::SystemProcesses::initialize() {
   _iterator = new SystemProcessInterface::SystemProcesses::ProcessIterator();
-  return _iterator != NULL && _iterator->initialize();
+  return _iterator->initialize();
 }
 
 SystemProcessInterface::SystemProcesses::~SystemProcesses() {
@@ -1324,7 +1308,7 @@ SystemProcessInterface::SystemProcessInterface() {
 
 bool SystemProcessInterface::initialize() {
   _impl = new SystemProcessInterface::SystemProcesses();
-  return _impl != NULL && _impl->initialize();
+  return _impl->initialize();
 }
 
 SystemProcessInterface::~SystemProcessInterface() {
@@ -1339,9 +1323,6 @@ CPUInformationInterface::CPUInformationInterface() {
 
 bool CPUInformationInterface::initialize() {
   _cpu_info = new CPUInformation();
-  if (NULL == _cpu_info) {
-    return false;
-  }
   _cpu_info->set_number_of_hardware_threads(VM_Version_Ext::number_of_threads());
   _cpu_info->set_number_of_cores(VM_Version_Ext::number_of_cores());
   _cpu_info->set_number_of_sockets(VM_Version_Ext::number_of_sockets());
@@ -1352,16 +1333,10 @@ bool CPUInformationInterface::initialize() {
 
 CPUInformationInterface::~CPUInformationInterface() {
   if (_cpu_info != NULL) {
-    const char* cpu_name = _cpu_info->cpu_name();
-    if (cpu_name != NULL) {
-      FREE_C_HEAP_ARRAY(char, cpu_name);
-      _cpu_info->set_cpu_name(NULL);
-    }
-    const char* cpu_desc = _cpu_info->cpu_description();
-    if (cpu_desc != NULL) {
-      FREE_C_HEAP_ARRAY(char, cpu_desc);
-      _cpu_info->set_cpu_description(NULL);
-    }
+    FREE_C_HEAP_ARRAY(char, _cpu_info->cpu_name());
+    _cpu_info->set_cpu_name(NULL);
+    FREE_C_HEAP_ARRAY(char, _cpu_info->cpu_description());
+    _cpu_info->set_cpu_description(NULL);
     delete _cpu_info;
     _cpu_info = NULL;
   }
@@ -1381,8 +1356,7 @@ class NetworkPerformanceInterface::NetworkPerformance : public CHeapObj<mtIntern
   bool _iphlp_attached;
 
   NetworkPerformance();
-  NetworkPerformance(const NetworkPerformance& rhs); // no impl
-  NetworkPerformance& operator=(const NetworkPerformance& rhs); // no impl
+  NONCOPYABLE(NetworkPerformance);
   bool initialize();
   ~NetworkPerformance();
   int network_utilization(NetworkInterface** network_interfaces) const;
@@ -1443,7 +1417,7 @@ NetworkPerformanceInterface::~NetworkPerformanceInterface() {
 
 bool NetworkPerformanceInterface::initialize() {
   _impl = new NetworkPerformanceInterface::NetworkPerformance();
-  return _impl != NULL && _impl->initialize();
+  return _impl->initialize();
 }
 
 int NetworkPerformanceInterface::network_utilization(NetworkInterface** network_interfaces) const {

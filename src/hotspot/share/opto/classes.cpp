@@ -46,11 +46,9 @@
 #include "opto/opaquenode.hpp"
 #include "opto/rootnode.hpp"
 #include "opto/subnode.hpp"
+#include "opto/subtypenode.hpp"
 #include "opto/vectornode.hpp"
 #include "utilities/macros.hpp"
-#if INCLUDE_ZGC
-#include "gc/z/c2/zBarrierSetC2.hpp"
-#endif
 #if INCLUDE_SHENANDOAHGC
 #include "gc/shenandoah/c2/shenandoahBarrierSetC2.hpp"
 #endif

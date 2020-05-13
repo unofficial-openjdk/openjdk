@@ -163,6 +163,7 @@ typedef void GtkRange;
 typedef void GtkProgressBar;
 typedef void GtkProgress;
 typedef void GtkWidgetPath;
+typedef void GtkPaned;
 
 /* Some real structures */
 typedef struct
@@ -253,6 +254,7 @@ static gchar* (*fp_gtk_check_version)(guint required_major, guint
 static void (*fp_g_free)(gpointer mem);
 static void (*fp_g_object_unref)(gpointer object);
 static GdkWindow *(*fp_gdk_get_default_root_window) (void);
+static int (*fp_gdk_window_get_scale_factor) (GdkWindow *window);
 
 static int (*fp_gdk_pixbuf_get_bits_per_sample)(const GdkPixbuf *pixbuf);
 static guchar *(*fp_gdk_pixbuf_get_pixels)(const GdkPixbuf *pixbuf);
@@ -502,8 +504,7 @@ static GtkWidget* (*fp_gtk_combo_box_entry_new)();
 static GtkWidget* (*fp_gtk_entry_new)();
 static GtkWidget* (*fp_gtk_fixed_new)();
 static GtkWidget* (*fp_gtk_handle_box_new)();
-static GtkWidget* (*fp_gtk_hpaned_new)();
-static GtkWidget* (*fp_gtk_vpaned_new)();
+static GtkWidget* (*fp_gtk_paned_new)(GtkOrientation orientation);
 static GtkWidget* (*fp_gtk_scale_new)(GtkOrientation  orientation,
                                        GtkAdjustment* adjustment);
 static GtkWidget* (*fp_gtk_hscrollbar_new)(GtkAdjustment* adjustment);

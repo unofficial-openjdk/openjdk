@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2016, the original author or authors.
+ * Copyright (c) 2002-2019, the original author or authors.
  *
  * This software is distributable under the BSD license. See the terms of the
  * BSD license in the documentation provided with this software.
  *
- * http://www.opensource.org/licenses/bsd-license.php
+ * https://opensource.org/licenses/BSD-3-Clause
  */
 package jdk.internal.org.jline.utils;
 
@@ -576,8 +576,12 @@ public final class InfoCmp {
                     String key = cap.substring(0, index);
                     String val = cap.substring(index + 1);
                     int iVal;
-                    if (val.startsWith("0x")) {
+                    if ("0".equals(val)) {
+                        iVal = 0;
+                    } else if (val.startsWith("0x")) {
                         iVal = Integer.parseInt(val.substring(2), 16);
+                    } else if (val.startsWith("0")) {
+                        iVal = Integer.parseInt(val.substring(1), 8);
                     } else {
                         iVal = Integer.parseInt(val);
                     }
@@ -613,9 +617,9 @@ public final class InfoCmp {
     }
 
     static {
-        for (String s : Arrays.asList("dumb", "ansi", "xterm", "xterm-256color",
-                                      "windows", "windows-256color", "windows-vtp",
-                                      "screen", "screen-256color")) {
+        for (String s : Arrays.asList("dumb", "dumb-color", "ansi", "xterm", "xterm-256color",
+                "windows", "windows-256color", "windows-conemu", "windows-vtp",
+                "screen", "screen-256color")) {
             setDefaultInfoCmp(s, () -> loadDefaultInfoCmp(s));
         }
     }

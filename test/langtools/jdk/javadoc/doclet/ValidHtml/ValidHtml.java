@@ -28,7 +28,6 @@
  *           Displays unnecessary horizontal scroll bars.
  *           Missing whitespace in DOCTYPE declaration
  *           HTML table tags inserted in wrong place in pakcage use page
- * @author dkramer
  * @library ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build javadoc.tester.*
@@ -51,14 +50,10 @@ public class ValidHtml extends JavadocTester {
                     "-doctitle", "Document Title",
                     "-windowtitle", "Window Title",
                     "-use",
-                    "--frames",
                     "-overview", testSrc("overview.html"),
                     "-sourcepath", testSrc,
                     "p1", "p2");
         checkExit(Exit.OK);
-        // Test for IFRAME element:
-        checkOutput("index.html", true,
-                "<iframe");
         // Test the table elements are in the correct order:
         checkOutput("p1/package-use.html", true,
                 "</td>\n"
@@ -73,8 +68,5 @@ public class ValidHtml extends JavadocTester {
         checkOutput("overview-summary.html", true, doctype);
         checkOutput("p1/package-summary.html", true, doctype);
         checkOutput("p1/C.html", true, doctype);
-        checkOutput("overview-frame.html", true, doctype);
-        checkOutput("allclasses-frame.html", true, doctype);
-        checkOutput("p1/package-frame.html", true, doctype);
     }
 }

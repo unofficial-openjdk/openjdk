@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,24 +25,32 @@
 #include "jvm.h"
 #include "logging/logConfiguration.hpp"
 #include "logging/logDecorations.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/os.inline.hpp"
 #include "runtime/thread.inline.hpp"
 #include "services/management.hpp"
 
-jlong LogDecorations::_vm_start_time_millis = 0;
-const char* LogDecorations::_host_name = "";
+const char* volatile LogDecorations::_host_name = NULL;
 
 LogDecorations::LogDecorations(LogLevelType level, const LogTagSet &tagset, const LogDecorators &decorators)
-    : _level(level), _tagset(tagset), _millis(-1) {
+    : _level(level), _tagset(tagset) {
   create_decorations(decorators);
 }
 
-void LogDecorations::initialize(jlong vm_start_time) {
-  char buffer[1024];
-  if (os::get_host_name(buffer, sizeof(buffer))){
-    _host_name = os::strdup_check_oom(buffer);
+const char* LogDecorations::host_name() {
+  const char* host_name = Atomic::load_acquire(&_host_name);
+  if (host_name == NULL) {
+    char buffer[1024];
+    if (os::get_host_name(buffer, sizeof(buffer))) {
+      host_name = os::strdup_check_oom(buffer);
+      const char* old_value = Atomic::cmpxchg(&_host_name, (const char*)NULL, host_name);
+      if (old_value != NULL) {
+        os::free((void *) host_name);
+        host_name = old_value;
+      }
+    }
   }
-  _vm_start_time_millis = vm_start_time;
+  return host_name;
 }
 
 void LogDecorations::create_decorations(const LogDecorators &decorators) {
@@ -51,16 +59,11 @@ void LogDecorations::create_decorations(const LogDecorators &decorators) {
   if (decorators.is_decorator(LogDecorators::full_name##_decorator)) { \
     _decoration_offset[LogDecorators::full_name##_decorator] = position; \
     position = create_##full_name##_decoration(position) + 1; \
+  } else { \
+    _decoration_offset[LogDecorators::full_name##_decorator] = NULL; \
   }
   DECORATOR_LIST
 #undef DECORATOR
-}
-
-jlong LogDecorations::java_millis() {
-  if (_millis < 0) {
-    _millis = os::javaTimeMillis();
-  }
-  return _millis;
 }
 
 #define ASSERT_AND_RETURN(written, pos) \
@@ -85,13 +88,18 @@ char * LogDecorations::create_uptime_decoration(char* pos) {
 }
 
 char * LogDecorations::create_timemillis_decoration(char* pos) {
-  int written = jio_snprintf(pos, DecorationsBufferSize - (pos - _decorations_buffer), INT64_FORMAT "ms", java_millis());
+  int written = jio_snprintf(pos, DecorationsBufferSize - (pos - _decorations_buffer), INT64_FORMAT "ms", os::javaTimeMillis());
   ASSERT_AND_RETURN(written, pos)
+}
+
+// Small helper for uptime conversion
+static jlong elapsed_time(int unit_multiplier) {
+  return (jlong)(os::elapsedTime() * unit_multiplier);
 }
 
 char * LogDecorations::create_uptimemillis_decoration(char* pos) {
   int written = jio_snprintf(pos, DecorationsBufferSize - (pos - _decorations_buffer),
-                             INT64_FORMAT "ms", java_millis() - _vm_start_time_millis);
+                             INT64_FORMAT "ms", elapsed_time(MILLIUNITS));
   ASSERT_AND_RETURN(written, pos)
 }
 
@@ -101,7 +109,7 @@ char * LogDecorations::create_timenanos_decoration(char* pos) {
 }
 
 char * LogDecorations::create_uptimenanos_decoration(char* pos) {
-  int written = jio_snprintf(pos, DecorationsBufferSize - (pos - _decorations_buffer), INT64_FORMAT "ns", os::elapsed_counter());
+  int written = jio_snprintf(pos, DecorationsBufferSize - (pos - _decorations_buffer), INT64_FORMAT "ns", elapsed_time(NANOUNITS));
   ASSERT_AND_RETURN(written, pos)
 }
 
@@ -128,7 +136,6 @@ char* LogDecorations::create_tags_decoration(char* pos) {
 }
 
 char* LogDecorations::create_hostname_decoration(char* pos) {
-  int written = jio_snprintf(pos, DecorationsBufferSize - (pos - _decorations_buffer), "%s", _host_name);
+  int written = jio_snprintf(pos, DecorationsBufferSize - (pos - _decorations_buffer), "%s", host_name());
   ASSERT_AND_RETURN(written, pos)
 }
-

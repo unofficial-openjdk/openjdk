@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,16 +26,38 @@
 #include "gc/g1/g1CollectedHeap.hpp"
 #include "gc/g1/g1HeapTransition.hpp"
 #include "gc/g1/g1Policy.hpp"
-#include "logging/log.hpp"
+#include "logging/logStream.hpp"
 #include "memory/metaspace.hpp"
 
-G1HeapTransition::Data::Data(G1CollectedHeap* g1_heap) {
-  _eden_length = g1_heap->eden_regions_count();
-  _survivor_length = g1_heap->survivor_regions_count();
-  _old_length = g1_heap->old_regions_count();
-  _archive_length = g1_heap->archive_regions_count();
-  _humongous_length = g1_heap->humongous_regions_count();
-  _metaspace_used_bytes = MetaspaceUtils::used_bytes();
+G1HeapTransition::Data::Data(G1CollectedHeap* g1_heap) :
+  _eden_length(g1_heap->eden_regions_count()),
+  _survivor_length(g1_heap->survivor_regions_count()),
+  _old_length(g1_heap->old_regions_count()),
+  _archive_length(g1_heap->archive_regions_count()),
+  _humongous_length(g1_heap->humongous_regions_count()),
+  _eden_length_per_node(NULL),
+  _survivor_length_per_node(NULL) {
+
+  uint node_count = G1NUMA::numa()->num_active_nodes();
+
+  if (node_count > 1) {
+    LogTarget(Debug, gc, heap, numa) lt;
+
+    if (lt.is_enabled()) {
+      _eden_length_per_node = NEW_C_HEAP_ARRAY(uint, node_count, mtGC);
+      _survivor_length_per_node = NEW_C_HEAP_ARRAY(uint, node_count, mtGC);
+
+      for (uint i = 0; i < node_count; i++) {
+        _eden_length_per_node[i] = g1_heap->eden_regions_count(i);
+        _survivor_length_per_node[i] = g1_heap->survivor_regions_count(i);
+      }
+    }
+  }
+}
+
+G1HeapTransition::Data::~Data() {
+  FREE_C_HEAP_ARRAY(uint, _eden_length_per_node);
+  FREE_C_HEAP_ARRAY(uint, _survivor_length_per_node);
 }
 
 G1HeapTransition::G1HeapTransition(G1CollectedHeap* g1_heap) : _g1_heap(g1_heap), _before(g1_heap) { }
@@ -85,11 +107,39 @@ public:
   }
 };
 
+static void log_regions(const char* msg, size_t before_length, size_t after_length, size_t capacity,
+                        uint* before_per_node_length, uint* after_per_node_length) {
+  LogTarget(Info, gc, heap) lt;
+
+  if (lt.is_enabled()) {
+    LogStream ls(lt);
+
+    ls.print("%s regions: " SIZE_FORMAT "->" SIZE_FORMAT "("  SIZE_FORMAT ")",
+             msg, before_length, after_length, capacity);
+    // Not NULL only if gc+heap+numa at Debug level is enabled.
+    if (before_per_node_length != NULL && after_per_node_length != NULL) {
+      G1NUMA* numa = G1NUMA::numa();
+      uint num_nodes = numa->num_active_nodes();
+      const int* node_ids = numa->node_ids();
+      ls.print(" (");
+      for (uint i = 0; i < num_nodes; i++) {
+        ls.print("%d: %u->%u", node_ids[i], before_per_node_length[i], after_per_node_length[i]);
+        // Skip adding below if it is the last one.
+        if (i != num_nodes - 1) {
+          ls.print(", ");
+        }
+      }
+      ls.print(")");
+    }
+    ls.print_cr("");
+  }
+}
+
 void G1HeapTransition::print() {
   Data after(_g1_heap);
 
-  size_t eden_capacity_length_after_gc = _g1_heap->g1_policy()->young_list_target_length() - after._survivor_length;
-  size_t survivor_capacity_length_before_gc = _g1_heap->g1_policy()->max_survivor_regions();
+  size_t eden_capacity_length_after_gc = _g1_heap->policy()->young_list_target_length() - after._survivor_length;
+  size_t survivor_capacity_length_before_gc = _g1_heap->policy()->max_survivor_regions();
 
   DetailedUsage usage;
   if (log_is_enabled(Trace, gc, heap)) {
@@ -107,12 +157,12 @@ void G1HeapTransition::print() {
         after._humongous_length, usage._humongous_region_count);
   }
 
-  log_info(gc, heap)("Eden regions: " SIZE_FORMAT "->" SIZE_FORMAT "("  SIZE_FORMAT ")",
-                     _before._eden_length, after._eden_length, eden_capacity_length_after_gc);
+  log_regions("Eden", _before._eden_length, after._eden_length, eden_capacity_length_after_gc,
+              _before._eden_length_per_node, after._eden_length_per_node);
   log_trace(gc, heap)(" Used: 0K, Waste: 0K");
 
-  log_info(gc, heap)("Survivor regions: " SIZE_FORMAT "->" SIZE_FORMAT "("  SIZE_FORMAT ")",
-                     _before._survivor_length, after._survivor_length, survivor_capacity_length_before_gc);
+  log_regions("Survivor", _before._survivor_length, after._survivor_length, survivor_capacity_length_before_gc,
+              _before._survivor_length_per_node, after._survivor_length_per_node);
   log_trace(gc, heap)(" Used: " SIZE_FORMAT "K, Waste: " SIZE_FORMAT "K",
       usage._survivor_used / K, ((after._survivor_length * HeapRegion::GrainBytes) - usage._survivor_used) / K);
 
@@ -131,5 +181,5 @@ void G1HeapTransition::print() {
   log_trace(gc, heap)(" Used: " SIZE_FORMAT "K, Waste: " SIZE_FORMAT "K",
       usage._humongous_used / K, ((after._humongous_length * HeapRegion::GrainBytes) - usage._humongous_used) / K);
 
-  MetaspaceUtils::print_metaspace_change(_before._metaspace_used_bytes);
+  MetaspaceUtils::print_metaspace_change(_before._meta_sizes);
 }

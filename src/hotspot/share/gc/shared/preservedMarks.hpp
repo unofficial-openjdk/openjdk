@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,28 +35,28 @@ class WorkGang;
 
 class PreservedMarks {
 private:
-  class OopAndMarkOop {
+  class OopAndMarkWord {
   private:
     oop _o;
-    markOop _m;
+    markWord _m;
 
   public:
-    OopAndMarkOop(oop obj, markOop m) : _o(obj), _m(m) { }
+    OopAndMarkWord(oop obj, markWord m) : _o(obj), _m(m) { }
 
     oop get_oop() { return _o; }
     inline void set_mark() const;
     void set_oop(oop obj) { _o = obj; }
   };
-  typedef Stack<OopAndMarkOop, mtGC> OopAndMarkOopStack;
+  typedef Stack<OopAndMarkWord, mtGC> OopAndMarkWordStack;
 
-  OopAndMarkOopStack _stack;
+  OopAndMarkWordStack _stack;
 
-  inline bool should_preserve_mark(oop obj, markOop m) const;
+  inline bool should_preserve_mark(oop obj, markWord m) const;
 
 public:
   size_t size() const { return _stack.size(); }
-  inline void push(oop obj, markOop m);
-  inline void push_if_necessary(oop obj, markOop m);
+  inline void push(oop obj, markWord m);
+  inline void push_if_necessary(oop obj, markWord m);
   // Iterate over the stack, restore all preserved marks, and
   // reclaim the memory taken up by the stack segments.
   void restore();
@@ -77,24 +77,6 @@ public:
 class RemoveForwardedPointerClosure: public ObjectClosure {
 public:
   virtual void do_object(oop obj);
-};
-
-class RestorePreservedMarksTaskExecutor {
-public:
-  void virtual restore(PreservedMarksSet* preserved_marks_set,
-                       volatile size_t* total_size_addr) = 0;
-};
-
-class SharedRestorePreservedMarksTaskExecutor : public RestorePreservedMarksTaskExecutor {
-private:
-    WorkGang* _workers;
-
-public:
-    SharedRestorePreservedMarksTaskExecutor(WorkGang* workers) : _workers(workers) { }
-
-    void restore(PreservedMarksSet* preserved_marks_set,
-                 volatile size_t* total_size_addr);
-
 };
 
 class PreservedMarksSet : public CHeapObj<mtGC> {
@@ -127,10 +109,9 @@ public:
   void init(uint num);
 
   // Iterate over all stacks, restore all preserved marks, and reclaim
-  // the memory taken up by the stack segments.
-  // Supported executors: SharedRestorePreservedMarksTaskExecutor (Serial, CMS, G1),
-  // PSRestorePreservedMarksTaskExecutor (PS).
-  inline void restore(RestorePreservedMarksTaskExecutor* executor);
+  // the memory taken up by the stack segments using the given WorkGang. If the WorkGang
+  // is NULL, perform the work serially in the current thread.
+  void restore(WorkGang* workers);
 
   // Reclaim stack array.
   void reclaim();

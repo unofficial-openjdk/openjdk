@@ -25,7 +25,6 @@ package com.sun.org.apache.bcel.internal.generic;
  * SALOAD - Load short from array
  * <PRE>Stack: ..., arrayref, index -&gt; ..., value</PRE>
  *
- * @version $Id: SALOAD.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public class SALOAD extends ArrayInstruction implements StackProducer {
 

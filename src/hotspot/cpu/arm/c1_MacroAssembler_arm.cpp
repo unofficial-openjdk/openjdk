@@ -29,12 +29,13 @@
 #include "gc/shared/collectedHeap.hpp"
 #include "interpreter/interpreter.hpp"
 #include "oops/arrayOop.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
 #include "runtime/basicLock.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/os.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 // Note: Rtemp usage is this file should not impact C2 and should be
 // correct as long as it is not implicitly used in lower layers (the
@@ -92,7 +93,7 @@ void C1_MacroAssembler::initialize_header(Register obj, Register klass, Register
   if(UseBiasedLocking && !len->is_valid()) {
     ldr(tmp, Address(klass, Klass::prototype_header_offset()));
   } else {
-    mov(tmp, (intptr_t)markOopDesc::prototype());
+    mov(tmp, (intptr_t)markWord::prototype().value());
   }
 
   str(tmp, Address(obj, oopDesc::mark_offset_in_bytes()));
@@ -219,7 +220,7 @@ int C1_MacroAssembler::lock_object(Register hdr, Register obj,
   ldr(hdr, Address(obj, oopDesc::mark_offset_in_bytes()));
 
   str(obj, Address(disp_hdr, obj_offset));
-  tst(hdr, markOopDesc::unlocked_value);
+  tst(hdr, markWord::unlocked_value);
   b(fast_lock, ne);
 
   // Check for recursive locking

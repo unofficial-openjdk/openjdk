@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 #include "precompiled.hpp"
 #include "jvm.h"
 
+#include "runtime/atomic.hpp"
 #include "runtime/orderAccess.hpp"
 #include "runtime/vmThread.hpp"
 #include "runtime/vmOperations.hpp"
@@ -31,6 +32,7 @@
 #include "services/memReporter.hpp"
 #include "services/mallocTracker.inline.hpp"
 #include "services/memTracker.hpp"
+#include "services/threadStackTracker.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/vmError.hpp"
@@ -92,7 +94,8 @@ NMT_TrackingLevel MemTracker::init_tracking_level() {
 void MemTracker::init() {
   NMT_TrackingLevel level = tracking_level();
   if (level >= NMT_summary) {
-    if (!VirtualMemoryTracker::late_initialize(level)) {
+    if (!VirtualMemoryTracker::late_initialize(level) ||
+        !ThreadStackTracker::late_initialize(level)) {
       shutdown();
       return;
     }
@@ -145,7 +148,7 @@ void Tracker::record(address addr, size_t size) {
 // Shutdown can only be issued via JCmd, and NMT JCmd is serialized by lock
 void MemTracker::shutdown() {
   // We can only shutdown NMT to minimal tracking level if it is ever on.
-  if (tracking_level () > NMT_minimal) {
+  if (tracking_level() > NMT_minimal) {
     transition_to(NMT_minimal);
   }
 }
@@ -164,12 +167,29 @@ bool MemTracker::transition_to(NMT_TrackingLevel level) {
     OrderAccess::fence();
     VirtualMemoryTracker::transition(current_level, level);
     MallocTracker::transition(current_level, level);
+    ThreadStackTracker::transition(current_level, level);
   } else {
     // Upgrading tracking level is not supported and has never been supported.
     // Allocating and deallocating malloc tracking structures is not thread safe and
     // leads to inconsistencies unless a lot coarser locks are added.
   }
   return true;
+}
+
+
+static volatile bool g_final_report_did_run = false;
+void MemTracker::final_report(outputStream* output) {
+  // This function is called during both error reporting and normal VM exit.
+  // However, it should only ever run once.  E.g. if the VM crashes after
+  // printing the final report during normal VM exit, it should not print
+  // the final report again. In addition, it should be guarded from
+  // recursive calls in case NMT reporting itself crashes.
+  if (Atomic::cmpxchg(&g_final_report_did_run, false, true) == false) {
+    NMT_TrackingLevel level = tracking_level();
+    if (level >= NMT_summary) {
+      report(level == NMT_summary, output);
+    }
+  }
 }
 
 void MemTracker::report(bool summary_only, outputStream* output) {
@@ -183,12 +203,9 @@ void MemTracker::report(bool summary_only, outputStream* output) {
       MemDetailReporter rpt(baseline, output);
       rpt.report();
       output->print("Metaspace:");
-      // Metadata reporting requires a safepoint, so avoid it if VM is not in good state.
-      assert(!VMError::fatal_error_in_progress(), "Do not report metadata in error report");
-      VM_PrintMetadata vmop(output, K,
-          MetaspaceUtils::rf_show_loaders |
-          MetaspaceUtils::rf_break_down_by_spacetype);
-      VMThread::execute(&vmop);
+      // The basic metaspace report avoids any locking and should be safe to
+      // be called at any time.
+      MetaspaceUtils::print_basic_report(output, K);
     }
   }
 }

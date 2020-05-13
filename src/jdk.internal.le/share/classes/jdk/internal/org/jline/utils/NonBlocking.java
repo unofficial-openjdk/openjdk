@@ -4,7 +4,7 @@
  * This software is distributable under the BSD license. See the terms of the
  * BSD license in the documentation provided with this software.
  *
- * http://www.opensource.org/licenses/bsd-license.php
+ * https://opensource.org/licenses/BSD-3-Clause
  */
 package jdk.internal.org.jline.utils;
 
@@ -194,6 +194,33 @@ public class NonBlocking {
                 }
             } else {
                 return READ_EXPIRED;
+            }
+        }
+
+        @Override
+        public int readBuffered(char[] b) throws IOException {
+            if (b == null) {
+                throw new NullPointerException();
+            } else if (b.length == 0) {
+                return 0;
+            } else {
+                if (chars.hasRemaining()) {
+                    int r = Math.min(b.length, chars.remaining());
+                    chars.get(b);
+                    return r;
+                } else {
+                    byte[] buf = new byte[b.length];
+                    int l = input.readBuffered(buf);
+                    if (l < 0) {
+                        return l;
+                    } else {
+                        ByteBuffer bytes = ByteBuffer.wrap(buf, 0, l);
+                        CharBuffer chars = CharBuffer.wrap(b);
+                        decoder.decode(bytes, chars, false);
+                        chars.flip();
+                        return chars.remaining();
+                    }
+                }
             }
         }
 

@@ -33,7 +33,7 @@ static bool returns_to_call_stub(address return_pc) { return return_pc == _call_
 
 enum platform_dependent_constants {
   code_size1 = 20000 LP64_ONLY(+10000),         // simply increase if too small (assembler will crash if too small)
-  code_size2 = 35300 LP64_ONLY(+10000)          // simply increase if too small (assembler will crash if too small)
+  code_size2 = 35300 LP64_ONLY(+11400)          // simply increase if too small (assembler will crash if too small)
 };
 
 class x86 {
@@ -55,13 +55,7 @@ class x86 {
   static address _double_sign_mask;
   static address _double_sign_flip;
 
-  static address _method_entry_barrier;
-
  public:
-
-  static address method_entry_barrier() {
-    return _method_entry_barrier;
-  }
 
   static address get_previous_fp_entry() {
     return _get_previous_fp_entry;
@@ -102,6 +96,7 @@ class x86 {
   static address double_sign_flip() {
     return _double_sign_flip;
   }
+
 #else // !LP64
 
  private:
@@ -119,6 +114,8 @@ class x86 {
 
   //shuffle mask for big-endian 128-bit integers
   static address _counter_shuffle_mask_addr;
+
+  static address _method_entry_barrier;
 
   // masks and table for CRC32
   static uint64_t _crc_by128_masks[];
@@ -139,6 +136,13 @@ class x86 {
   //k256 table for sha256
   static juint _k256[];
   static address _k256_adr;
+  static address _vector_short_to_byte_mask;
+  static address _vector_float_sign_mask;
+  static address _vector_float_sign_flip;
+  static address _vector_double_sign_mask;
+  static address _vector_double_sign_flip;
+  static address _vector_byte_perm_mask;
+  static address _vector_long_sign_mask;
 #ifdef _LP64
   static juint _k256_W[];
   static address _k256_W_adr;
@@ -146,6 +150,7 @@ class x86 {
   static address _k512_W_addr;
   // byte flip mask for sha512
   static address _pshuffle_byte_flip_mask_addr_sha512;
+  static address _counter_mask_addr;
   // Masks for base64
   static address _base64_charset;
   static address _bswap_mask;
@@ -212,6 +217,34 @@ class x86 {
   static address upper_word_mask_addr() { return _upper_word_mask_addr; }
   static address shuffle_byte_flip_mask_addr() { return _shuffle_byte_flip_mask_addr; }
   static address k256_addr()      { return _k256_adr; }
+  static address method_entry_barrier() { return _method_entry_barrier; }
+
+  static address vector_short_to_byte_mask() {
+    return _vector_short_to_byte_mask;
+  }
+  static address vector_float_sign_mask() {
+    return _vector_float_sign_mask;
+  }
+
+  static address vector_float_sign_flip() {
+    return _vector_float_sign_flip;
+  }
+
+  static address vector_double_sign_mask() {
+    return _vector_double_sign_mask;
+  }
+
+  static address vector_double_sign_flip() {
+    return _vector_double_sign_flip;
+  }
+
+  static address vector_byte_perm_mask() {
+    return _vector_byte_perm_mask;
+  }
+
+  static address vector_long_sign_mask() {
+    return _vector_long_sign_mask;
+  }
 #ifdef _LP64
   static address k256_W_addr()    { return _k256_W_adr; }
   static address k512_W_addr()    { return _k512_W_addr; }
@@ -223,6 +256,7 @@ class x86 {
   static address base64_right_shift_mask_addr() { return _right_shift_mask; }
   static address base64_left_shift_mask_addr() { return _left_shift_mask; }
   static address base64_and_mask_addr() { return _and_mask; }
+  static address counter_mask_addr() { return _counter_mask_addr; }
 #endif
   static address pshuffle_byte_flip_mask_addr() { return _pshuffle_byte_flip_mask_addr; }
   static void generate_CRC32C_table(bool is_pclmulqdq_supported);

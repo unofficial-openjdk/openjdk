@@ -29,23 +29,16 @@
 
 class G1CollectedHeap;
 class Monitor;
-class JavaThread;
+class Thread;
 
 class G1SATBMarkQueueSet : public SATBMarkQueueSet {
   G1CollectedHeap* _g1h;
 
 public:
-  G1SATBMarkQueueSet();
+  G1SATBMarkQueueSet(BufferNode::Allocator* allocator);
 
-  void initialize(G1CollectedHeap* g1h,
-                  Monitor* cbl_mon,
-                  BufferNode::Allocator* allocator,
-                  size_t process_completed_buffers_threshold,
-                  uint buffer_enqueue_threshold_percentage,
-                  Mutex* lock);
-
-  static void handle_zero_index_for_thread(JavaThread* t);
-  virtual SATBMarkQueue& satb_queue_for_thread(JavaThread* const t) const;
+  static void handle_zero_index_for_thread(Thread* t);
+  virtual SATBMarkQueue& satb_queue_for_thread(Thread* const t) const;
   virtual void filter(SATBMarkQueue* queue);
 };
 

@@ -42,7 +42,7 @@ class ZMark {
 
 private:
   ZWorkers* const     _workers;
-  ZPageTable* const   _pagetable;
+  ZPageTable* const   _page_table;
   ZMarkStackAllocator _allocator;
   ZMarkStripeSet      _stripes;
   ZMarkTerminate      _terminate;
@@ -101,11 +101,11 @@ private:
   void verify_all_stacks_empty() const;
 
 public:
-  ZMark(ZWorkers* workers, ZPageTable* pagetable);
+  ZMark(ZWorkers* workers, ZPageTable* page_table);
 
   bool is_initialized() const;
 
-  template <bool finalizable, bool publish> void mark_object(uintptr_t addr);
+  template <bool follow, bool finalizable, bool publish> void mark_object(uintptr_t addr);
 
   void start();
   void mark(bool initial);

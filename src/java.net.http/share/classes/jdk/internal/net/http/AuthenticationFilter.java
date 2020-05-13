@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,7 @@ import jdk.internal.net.http.common.Utils;
 import static java.net.Authenticator.RequestorType.PROXY;
 import static java.net.Authenticator.RequestorType.SERVER;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Implementation of Http Basic authentication.
@@ -155,8 +156,8 @@ class AuthenticationFilter implements HeaderFilter {
             if (proxyURI != null) {
                 CacheEntry ca = cache.get(proxyURI, true);
                 if (ca != null) {
-                    exchange.proxyauth = new AuthInfo(true, ca.scheme, null, ca);
-                    addBasicCredentials(r, true, ca.value);
+                    exchange.proxyauth = new AuthInfo(true, ca.scheme, null, ca, ca.isUTF8);
+                    addBasicCredentials(r, true, ca.value, ca.isUTF8);
                 }
             }
         }
@@ -165,8 +166,8 @@ class AuthenticationFilter implements HeaderFilter {
         if (exchange.serverauth == null) {
             CacheEntry ca = cache.get(r.uri(), false);
             if (ca != null) {
-                exchange.serverauth = new AuthInfo(true, ca.scheme, null, ca);
-                addBasicCredentials(r, false, ca.value);
+                exchange.serverauth = new AuthInfo(true, ca.scheme, null, ca, ca.isUTF8);
+                addBasicCredentials(r, false, ca.value, ca.isUTF8);
             }
         }
     }
@@ -174,11 +175,13 @@ class AuthenticationFilter implements HeaderFilter {
     // TODO: refactor into per auth scheme class
     private static void addBasicCredentials(HttpRequestImpl r,
                                             boolean proxy,
-                                            PasswordAuthentication pw) {
+                                            PasswordAuthentication pw,
+                                            boolean isUTF8) {
         String hdrname = proxy ? "Proxy-Authorization" : "Authorization";
         StringBuilder sb = new StringBuilder(128);
         sb.append(pw.getUserName()).append(':').append(pw.getPassword());
-        String s = encoder.encodeToString(sb.toString().getBytes(ISO_8859_1));
+        var charset = isUTF8 ? UTF_8 : ISO_8859_1;
+        String s = encoder.encodeToString(sb.toString().getBytes(charset));
         String value = "Basic " + s;
         if (proxy) {
             if (r.isConnect()) {
@@ -203,35 +206,36 @@ class AuthenticationFilter implements HeaderFilter {
         int retries;
         PasswordAuthentication credentials; // used in request
         CacheEntry cacheEntry; // if used
+        final boolean isUTF8; //
 
         AuthInfo(boolean fromcache,
                  String scheme,
-                 PasswordAuthentication credentials) {
+                 PasswordAuthentication credentials, boolean isUTF8) {
             this.fromcache = fromcache;
             this.scheme = scheme;
             this.credentials = credentials;
             this.retries = 1;
+            this.isUTF8 = isUTF8;
         }
 
         AuthInfo(boolean fromcache,
                  String scheme,
                  PasswordAuthentication credentials,
-                 CacheEntry ca) {
-            this(fromcache, scheme, credentials);
+                 CacheEntry ca, boolean isUTF8) {
+            this(fromcache, scheme, credentials, isUTF8);
             assert credentials == null || (ca != null && ca.value == null);
             cacheEntry = ca;
         }
 
-        AuthInfo retryWithCredentials(PasswordAuthentication pw) {
+        AuthInfo retryWithCredentials(PasswordAuthentication pw, boolean isUTF8) {
             // If the info was already in the cache we need to create a new
             // instance with fromCache==false so that it's put back in the
             // cache if authentication succeeds
-            AuthInfo res = fromcache ? new AuthInfo(false, scheme, pw) : this;
+            AuthInfo res = fromcache ? new AuthInfo(false, scheme, pw, isUTF8) : this;
             res.credentials = Objects.requireNonNull(pw);
             res.retries = retries;
             return res;
         }
-
     }
 
     @Override
@@ -241,20 +245,23 @@ class AuthenticationFilter implements HeaderFilter {
         HttpHeaders hdrs = r.headers();
         HttpRequestImpl req = r.request();
 
-        if (status != UNAUTHORIZED && status != PROXY_UNAUTHORIZED) {
-            // check if any authentication succeeded for first time
-            if (exchange.serverauth != null && !exchange.serverauth.fromcache) {
-                AuthInfo au = exchange.serverauth;
-                cache.store(au.scheme, req.uri(), false, au.credentials);
-            }
+        if (status != PROXY_UNAUTHORIZED) {
             if (exchange.proxyauth != null && !exchange.proxyauth.fromcache) {
                 AuthInfo au = exchange.proxyauth;
                 URI proxyURI = getProxyURI(req);
                 if (proxyURI != null) {
-                    cache.store(au.scheme, proxyURI, true, au.credentials);
+                    exchange.proxyauth = null;
+                    cache.store(au.scheme, proxyURI, true, au.credentials, au.isUTF8);
                 }
             }
-            return null;
+            if (status != UNAUTHORIZED) {
+                // check if any authentication succeeded for first time
+                if (exchange.serverauth != null && !exchange.serverauth.fromcache) {
+                    AuthInfo au = exchange.serverauth;
+                    cache.store(au.scheme, req.uri(), false, au.credentials, au.isUTF8);
+                }
+                return null;
+            }
         }
 
         boolean proxy = status == PROXY_UNAUTHORIZED;
@@ -264,11 +271,14 @@ class AuthenticationFilter implements HeaderFilter {
             throw new IOException(authname + " header missing for response code " + status);
         }
         String authval = null;
+        boolean isUTF8 = false;
         for (String aval : authvals) {
             HeaderParser parser = new HeaderParser(aval);
             String scheme = parser.findKey(0);
             if (scheme.equalsIgnoreCase("Basic")) {
                 authval = aval;
+                var charset = parser.findValue("charset");
+                isUTF8 = (charset != null && charset.equalsIgnoreCase("UTF-8"));
                 break;
             }
         }
@@ -302,14 +312,14 @@ class AuthenticationFilter implements HeaderFilter {
                 throw new IOException("No credentials provided");
             }
             // No authentication in request. Get credentials from user
-            au = new AuthInfo(false, "Basic", pw);
+            au = new AuthInfo(false, "Basic", pw, isUTF8);
             if (proxy) {
                 exchange.proxyauth = au;
             } else {
                 exchange.serverauth = au;
             }
             req = HttpRequestImpl.newInstanceForAuthentication(req);
-            addBasicCredentials(req, proxy, pw);
+            addBasicCredentials(req, proxy, pw, isUTF8);
             return req;
         } else if (au.retries > retry_limit) {
             throw new IOException("too many authentication attempts. Limit: " +
@@ -328,14 +338,14 @@ class AuthenticationFilter implements HeaderFilter {
             if (pw == null) {
                 throw new IOException("No credentials provided");
             }
-            au = au.retryWithCredentials(pw);
+            au = au.retryWithCredentials(pw, isUTF8);
             if (proxy) {
                 exchange.proxyauth = au;
             } else {
                 exchange.serverauth = au;
             }
             req = HttpRequestImpl.newInstanceForAuthentication(req);
-            addBasicCredentials(req, proxy, au.credentials);
+            addBasicCredentials(req, proxy, au.credentials, isUTF8);
             au.retries++;
             return req;
         }
@@ -372,10 +382,18 @@ class AuthenticationFilter implements HeaderFilter {
             return null;
         }
 
+        private static boolean equalsIgnoreCase(String s1, String s2) {
+            return s1 == s2 || (s1 != null && s1.equalsIgnoreCase(s2));
+        }
+
         synchronized void remove(String authscheme, URI domain, boolean proxy) {
-            for (CacheEntry entry : entries) {
-                if (entry.equalsKey(domain, proxy)) {
-                    entries.remove(entry);
+            var iterator = entries.iterator();
+            while (iterator.hasNext()) {
+                var entry = iterator.next();
+                if (equalsIgnoreCase(entry.scheme, authscheme)) {
+                    if (entry.equalsKey(domain, proxy)) {
+                        iterator.remove();
+                    }
                 }
             }
         }
@@ -387,9 +405,9 @@ class AuthenticationFilter implements HeaderFilter {
         synchronized void store(String authscheme,
                                 URI domain,
                                 boolean proxy,
-                                PasswordAuthentication value) {
+                                PasswordAuthentication value, boolean isUTF8) {
             remove(authscheme, domain, proxy);
-            entries.add(new CacheEntry(authscheme, domain, proxy, value));
+            entries.add(new CacheEntry(authscheme, domain, proxy, value, isUTF8));
         }
     }
 
@@ -417,15 +435,17 @@ class AuthenticationFilter implements HeaderFilter {
         final String scheme;
         final boolean proxy;
         final PasswordAuthentication value;
+        final boolean isUTF8;
 
         CacheEntry(String authscheme,
                    URI uri,
                    boolean proxy,
-                   PasswordAuthentication value) {
+                   PasswordAuthentication value, boolean isUTF8) {
             this.scheme = authscheme;
             this.root = normalize(uri, true).toString(); // remove extraneous components
             this.proxy = proxy;
             this.value = value;
+            this.isUTF8 = isUTF8;
         }
 
         public PasswordAuthentication value() {

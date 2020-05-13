@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -113,6 +113,14 @@ if [ "x$SPEC" = "x" ] ; then
   echo "FATAL: SPEC is empty" >&2; exit 1
 fi
 
+if [ -d "$TOPLEVEL_DIR/.hg" ] ; then
+    VCS_TYPE="hg4idea"
+fi
+
+if [ -d "$TOPLEVEL_DIR/.git" ] ; then
+    VCS_TYPE="Git"
+fi
+
 ### Replace template variables
 
 NUM_REPLACEMENTS=0
@@ -137,6 +145,7 @@ add_replacement() {
 }
 
 add_replacement "###MODULE_NAMES###" "$MODULE_NAMES"
+add_replacement "###VCS_TYPE###" "$VCS_TYPE"
 SPEC_DIR=`dirname $SPEC`
 if [ "x$CYGPATH" = "x" ]; then
     add_replacement "###BUILD_DIR###" "$SPEC_DIR"
@@ -188,13 +197,15 @@ CP=$ANT_HOME/lib/ant.jar
 rm -rf $CLASSES; mkdir $CLASSES
 
 if [ "x$CYGPATH" = "x" ] ; then ## CYGPATH may be set in env.cfg
-  JAVAC_SOURCE_FILE=$IDEA_OUTPUT/src/idea/JdkIdeaAntLogger.java
+  JAVAC_SOURCE_FILE=$IDEA_OUTPUT/src/idea/IdeaLoggerWrapper.java
+  JAVAC_SOURCE_PATH=$IDEA_OUTPUT/src
   JAVAC_CLASSES=$CLASSES
   JAVAC_CP=$CP
 else
-  JAVAC_SOURCE_FILE=`cygpath -am $IDEA_OUTPUT/src/idea/JdkIdeaAntLogger.java`
+  JAVAC_SOURCE_FILE=`cygpath -am $IDEA_OUTPUT/src/idea/IdeaLoggerWrapper.java`
+  JAVAC_SOURCE_PATH=`cygpath -am $IDEA_OUTPUT/src`
   JAVAC_CLASSES=`cygpath -am $CLASSES`
   JAVAC_CP=`cygpath -am $CP`
 fi
 
-$BOOT_JDK/bin/javac -d $JAVAC_CLASSES -cp $JAVAC_CP $JAVAC_SOURCE_FILE
+$BOOT_JDK/bin/javac -d $JAVAC_CLASSES -sourcepath $JAVAC_SOURCE_PATH -cp $JAVAC_CP $JAVAC_SOURCE_FILE

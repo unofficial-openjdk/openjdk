@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@
 #include "logging/log.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/compiledICHolder.hpp"
+#include "oops/klass.inline.hpp"
 #include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/vframeArray.hpp"
@@ -561,7 +562,7 @@ void AdapterGenerator::gen_c2i_adapter(
 
     if (r_1->is_Register()) {
       Register r = r_1->as_Register()->after_restore();
-      if (sig_bt[i] == T_OBJECT || sig_bt[i] == T_ARRAY) {
+      if (is_reference_type(sig_bt[i])) {
         store_c2i_object(r, base, st_off);
       } else if (sig_bt[i] == T_LONG || sig_bt[i] == T_DOUBLE) {
         store_c2i_long(r, base, st_off, r_2->is_stack());
@@ -1637,8 +1638,7 @@ static void verify_oop_args(MacroAssembler* masm,
   Register temp_reg = G5_method;  // not part of any compiled calling seq
   if (VerifyOops) {
     for (int i = 0; i < method->size_of_parameters(); i++) {
-      if (sig_bt[i] == T_OBJECT ||
-          sig_bt[i] == T_ARRAY) {
+      if (is_reference_type(sig_bt[i])) {
         VMReg r = regs[i].first();
         assert(r->is_valid(), "bad oop arg");
         if (r->is_stack()) {
@@ -1751,7 +1751,8 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                                 int compile_id,
                                                 BasicType* in_sig_bt,
                                                 VMRegPair* in_regs,
-                                                BasicType ret_type) {
+                                                BasicType ret_type,
+                                                address critical_entry) {
   if (method->is_method_handle_intrinsic()) {
     vmIntrinsics::ID iid = method->intrinsic_id();
     intptr_t start = (intptr_t)__ pc();
@@ -1774,7 +1775,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                        (OopMapSet*)NULL);
   }
   bool is_critical_native = true;
-  address native_func = method->critical_native_function();
+  address native_func = critical_entry;
   if (native_func == NULL) {
     native_func = method->native_function();
     is_critical_native = false;
@@ -1832,21 +1833,21 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
     // Read the header and build a mask to get its hash field.  Give up if the object is not unlocked.
     // We depend on hash_mask being at most 32 bits and avoid the use of
     // hash_mask_in_place because it could be larger than 32 bits in a 64-bit
-    // vm: see markOop.hpp.
+    // vm: see markWord.hpp.
     __ ld_ptr(obj_reg, oopDesc::mark_offset_in_bytes(), header);
-    __ sethi(markOopDesc::hash_mask, mask);
-    __ btst(markOopDesc::unlocked_value, header);
+    __ sethi(markWord::hash_mask, mask);
+    __ btst(markWord::unlocked_value, header);
     __ br(Assembler::zero, false, Assembler::pn, slowCase);
     if (UseBiasedLocking) {
       // Check if biased and fall through to runtime if so
       __ delayed()->nop();
-      __ btst(markOopDesc::biased_lock_bit_in_place, header);
+      __ btst(markWord::biased_lock_bit_in_place, header);
       __ br(Assembler::notZero, false, Assembler::pn, slowCase);
     }
-    __ delayed()->or3(mask, markOopDesc::hash_mask & 0x3ff, mask);
+    __ delayed()->or3(mask, markWord::hash_mask & 0x3ff, mask);
 
     // Check for a valid (non-zero) hash code and get its value.
-    __ srlx(header, markOopDesc::hash_shift, hash);
+    __ srlx(header, markWord::hash_shift, hash);
     __ andcc(hash, mask, hash);
     __ br(Assembler::equal, false, Assembler::pn, slowCase);
     __ delayed()->nop();
@@ -1906,28 +1907,16 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
         // Arrays are passed as int, elem* pair
         out_sig_bt[argc++] = T_INT;
         out_sig_bt[argc++] = T_ADDRESS;
-        Symbol* atype = ss.as_symbol(CHECK_NULL);
-        const char* at = atype->as_C_string();
-        if (strlen(at) == 2) {
-          assert(at[0] == '[', "must be");
-          switch (at[1]) {
-            case 'B': in_elem_bt[i]  = T_BYTE; break;
-            case 'C': in_elem_bt[i]  = T_CHAR; break;
-            case 'D': in_elem_bt[i]  = T_DOUBLE; break;
-            case 'F': in_elem_bt[i]  = T_FLOAT; break;
-            case 'I': in_elem_bt[i]  = T_INT; break;
-            case 'J': in_elem_bt[i]  = T_LONG; break;
-            case 'S': in_elem_bt[i]  = T_SHORT; break;
-            case 'Z': in_elem_bt[i]  = T_BOOLEAN; break;
-            default: ShouldNotReachHere();
-          }
-        }
+        ss.skip_array_prefix(1);  // skip one '['
+        assert(ss.is_primitive(), "primitive type expected");
+        in_elem_bt[i] = ss.type();
       } else {
         out_sig_bt[argc++] = in_sig_bt[i];
         in_elem_bt[i] = T_VOID;
       }
       if (in_sig_bt[i] != T_VOID) {
-        assert(in_sig_bt[i] == ss.type(), "must match");
+        assert(in_sig_bt[i] == ss.type() ||
+               in_sig_bt[i] == T_ARRAY, "must match");
         ss.next();
       }
     }
@@ -2506,7 +2495,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   __ reset_last_Java_frame();
 
   // Unbox oop result, e.g. JNIHandles::resolve value in I0.
-  if (ret_type == T_OBJECT || ret_type == T_ARRAY) {
+  if (is_reference_type(ret_type)) {
     __ resolve_jobject(I0, G3_scratch);
   }
 
@@ -3097,7 +3086,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
   __ set_last_Java_frame(SP, noreg);
 
   Register saved_O7 = O7->after_save();
-  if (!cause_return && SafepointMechanism::uses_thread_local_poll()) {
+  if (!cause_return) {
     // Keep a copy of the return pc in L0 to detect if it gets modified
     __ mov(saved_O7, L0);
     // Adjust and keep a copy of our npc saved by the signal handler
@@ -3128,7 +3117,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
   __ ld_ptr(G2_thread, in_bytes(Thread::pending_exception_offset()), O1);
   __ br_notnull_short(O1, Assembler::pn, pending);
 
-  if (!cause_return && SafepointMechanism::uses_thread_local_poll()) {
+  if (!cause_return) {
     // If nobody modified our return pc then we must return to the npc which he saved in L1
     __ cmp(saved_O7, L0);
     __ movcc(Assembler::equal, false, Assembler::ptr_cc, L1, saved_O7);

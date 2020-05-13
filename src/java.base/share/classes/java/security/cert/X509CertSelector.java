@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,7 +88,7 @@ public class X509CertSelector implements CertSelector {
     private static final Debug debug = Debug.getInstance("certpath");
 
     private static final ObjectIdentifier ANY_EXTENDED_KEY_USAGE =
-        ObjectIdentifier.newInternal(new int[] {2, 5, 29, 37, 0});
+        ObjectIdentifier.of("2.5.29.37.0");
 
     static {
         CertPathHelperImpl.initialize();
@@ -2115,8 +2115,11 @@ public class X509CertSelector implements CertSelector {
             if (certSubjectKeyID == null ||
                     !Arrays.equals(subjectKeyID, certSubjectKeyID)) {
                 if (debug != null) {
-                    debug.println("X509CertSelector.match: "
-                        + "subject key IDs don't match");
+                    debug.println("X509CertSelector.match: subject key IDs " +
+                        "don't match\nX509CertSelector.match: subjectKeyID: " +
+                        Arrays.toString(subjectKeyID) +
+                        "\nX509CertSelector.match: certSubjectKeyID: " +
+                        Arrays.toString(certSubjectKeyID));
                 }
                 return false;
             }

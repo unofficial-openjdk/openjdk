@@ -28,6 +28,8 @@
 #include "gc/g1/g1CodeCacheRemSet.hpp"
 #include "gc/g1/g1FromCardCache.hpp"
 #include "gc/g1/sparsePRT.hpp"
+#include "runtime/atomic.hpp"
+#include "utilities/bitMap.hpp"
 
 // Remembered set for a heap region.  Represent a set of "cards" that
 // contain pointers into the owner heap region.  Cards are defined somewhat
@@ -37,7 +39,6 @@ class G1CollectedHeap;
 class G1BlockOffsetTable;
 class G1CardLiveData;
 class HeapRegion;
-class HeapRegionRemSetIterator;
 class PerRegionTable;
 class SparsePRT;
 class nmethod;
@@ -67,10 +68,10 @@ class nmethod;
 //      thinking the PRT is for a different region, does no harm.
 
 class OtherRegionsTable {
-  friend class HeapRegionRemSetIterator;
-
   G1CollectedHeap* _g1h;
   Mutex*           _m;
+
+  size_t volatile _num_occupied;
 
   // These are protected by "_m".
   CHeapBitMap _coarse_map;
@@ -80,8 +81,8 @@ class OtherRegionsTable {
   PerRegionTable** _fine_grain_regions;
   size_t           _n_fine_entries;
 
-  // The fine grain remembered sets are doubly linked together using
-  // their 'next' and 'prev' fields.
+  // The fine grain remembered sets are linked together using
+  // their 'next' fields.
   // This allows fast bulk freeing of all the fine grain remembered
   // set entries, and fast finding of all of them without iterating
   // over the _fine_grain_regions table.
@@ -108,22 +109,19 @@ class OtherRegionsTable {
   // Find, delete, and return a candidate PerRegionTable, if any exists,
   // adding the deleted region to the coarse bitmap.  Requires the caller
   // to hold _m, and the fine-grain table to be full.
-  PerRegionTable* delete_region_table();
+  PerRegionTable* delete_region_table(size_t& added_by_deleted);
 
   // link/add the given fine grain remembered set into the "all" list
   void link_to_all(PerRegionTable * prt);
-  // unlink/remove the given fine grain remembered set into the "all" list
-  void unlink_from_all(PerRegionTable * prt);
 
   bool contains_reference_locked(OopOrNarrowOopStar from) const;
-
-  size_t occ_fine() const;
-  size_t occ_coarse() const;
-  size_t occ_sparse() const;
 
 public:
   // Create a new remembered set. The given mutex is used to ensure consistency.
   OtherRegionsTable(Mutex* m);
+
+  template <class Closure>
+  void iterate(Closure& v);
 
   // Returns the card index of the given within_region pointer relative to the bottom
   // of the given heap region.
@@ -155,11 +153,127 @@ public:
 
   // Clear the entire contents of this remembered set.
   void clear();
+
+  // Safe for use by concurrent readers outside _m
+  bool is_region_coarsened(RegionIdx_t from_hrm_ind) const;
+};
+
+class PerRegionTable: public CHeapObj<mtGC> {
+  friend class OtherRegionsTable;
+
+  HeapRegion*     _hr;
+  CHeapBitMap     _bm;
+  jint            _occupied;
+
+  // next pointer for free/allocated 'all' list
+  PerRegionTable* _next;
+
+  // next pointer in collision list
+  PerRegionTable * _collision_list_next;
+
+  // Global free list of PRTs
+  static PerRegionTable* volatile _free_list;
+
+protected:
+  PerRegionTable(HeapRegion* hr) :
+    _hr(hr),
+    _bm(HeapRegion::CardsPerRegion, mtGC),
+    _occupied(0),
+    _next(NULL),
+    _collision_list_next(NULL)
+  {}
+
+public:
+  // We need access in order to union things into the base table.
+  BitMap* bm() { return &_bm; }
+
+  HeapRegion* hr() const { return Atomic::load_acquire(&_hr); }
+
+  jint occupied() const {
+    return _occupied;
+  }
+
+  void init(HeapRegion* hr, bool clear_links_to_all_list);
+
+  inline bool add_reference(OopOrNarrowOopStar from);
+
+  inline bool add_card(CardIdx_t from_card_index);
+
+  // (Destructively) union the bitmap of the current table into the given
+  // bitmap (which is assumed to be of the same size.)
+  void union_bitmap_into(BitMap* bm) {
+    bm->set_union(_bm);
+  }
+
+  // Mem size in bytes.
+  size_t mem_size() const {
+    return sizeof(PerRegionTable) + _bm.size_in_words() * HeapWordSize;
+  }
+
+  // Requires "from" to be in "hr()".
+  bool contains_reference(OopOrNarrowOopStar from) const {
+    assert(hr()->is_in_reserved(from), "Precondition.");
+    size_t card_ind = pointer_delta(from, hr()->bottom(),
+                                    G1CardTable::card_size);
+    return _bm.at(card_ind);
+  }
+
+  // Bulk-free the PRTs from prt to last, assumes that they are
+  // linked together using their _next field.
+  static void bulk_free(PerRegionTable* prt, PerRegionTable* last) {
+    while (true) {
+      PerRegionTable* fl = _free_list;
+      last->set_next(fl);
+      PerRegionTable* res = Atomic::cmpxchg(&_free_list, fl, prt);
+      if (res == fl) {
+        return;
+      }
+    }
+    ShouldNotReachHere();
+  }
+
+  static void free(PerRegionTable* prt) {
+    bulk_free(prt, prt);
+  }
+
+  // Returns an initialized PerRegionTable instance.
+  static PerRegionTable* alloc(HeapRegion* hr);
+
+  PerRegionTable* next() const { return _next; }
+  void set_next(PerRegionTable* next) { _next = next; }
+
+  // Accessor and Modification routines for the pointer for the
+  // singly linked collision list that links the PRTs within the
+  // OtherRegionsTable::_fine_grain_regions hash table.
+  //
+
+  PerRegionTable* collision_list_next() const {
+    return _collision_list_next;
+  }
+
+  void set_collision_list_next(PerRegionTable* next) {
+    _collision_list_next = next;
+  }
+
+  PerRegionTable** collision_list_next_addr() {
+    return &_collision_list_next;
+  }
+
+  static size_t fl_mem_size() {
+    PerRegionTable* cur = _free_list;
+    size_t res = 0;
+    while (cur != NULL) {
+      res += cur->mem_size();
+      cur = cur->next();
+    }
+    return res;
+  }
+
+  static void test_fl_mem_size();
 };
 
 class HeapRegionRemSet : public CHeapObj<mtGC> {
   friend class VMStructs;
-  friend class HeapRegionRemSetIterator;
 
 private:
   G1BlockOffsetTable* _bot;
@@ -179,25 +293,27 @@ private:
 public:
   HeapRegionRemSet(G1BlockOffsetTable* bot, HeapRegion* hr);
 
+  // Setup sparse and fine-grain tables sizes.
   static void setup_remset_size();
 
-  bool cardset_is_empty() const {
-    return _other_regions.is_empty();
-  }
-
   bool is_empty() const {
-    return (strong_code_roots_list_length() == 0) && cardset_is_empty();
+    return (strong_code_roots_list_length() == 0) && _other_regions.is_empty();
   }
 
   bool occupancy_less_or_equal_than(size_t occ) const {
     return (strong_code_roots_list_length() == 0) && _other_regions.occupancy_less_or_equal_than(occ);
   }
 
+  // For each PRT in the card (remembered) set call one of the following methods
+  // of the given closure:
+  //
+  // set_full_region_dirty(uint region_idx) - pass the region index for coarse PRTs
+  // set_bitmap_dirty(uint region_idx, BitMap* bitmap) - pass the region index and bitmap for fine PRTs
+  // set_cards_dirty(uint region_idx, elem_t* cards, uint num_cards) - pass region index and cards for sparse PRTs
+  template <class Closure>
+  inline void iterate_prts(Closure& cl);
+
   size_t occupied() {
-    MutexLockerEx x(&_m, Mutex::_no_safepoint_check_flag);
-    return occupied_locked();
-  }
-  size_t occupied_locked() {
     return _other_regions.occupied();
   }
 
@@ -243,12 +359,6 @@ public:
     _state = Complete;
   }
 
-  // Used in the sequential case.
-  void add_reference(OopOrNarrowOopStar from) {
-    add_reference(from, 0);
-  }
-
-  // Used in the parallel case.
   void add_reference(OopOrNarrowOopStar from, uint tid) {
     RemSetState state = _state;
     if (state == Untracked) {
@@ -274,7 +384,7 @@ public:
   // The actual # of bytes this hr_remset takes up.
   // Note also includes the strong code root set.
   size_t mem_size() {
-    MutexLockerEx x(&_m, Mutex::_no_safepoint_check_flag);
+    MutexLocker x(&_m, Mutex::_no_safepoint_check_flag);
     return _other_regions.mem_size()
       // This correction is necessary because the above includes the second
       // part.
@@ -336,72 +446,6 @@ public:
 
   static void test();
 #endif
-};
-
-class HeapRegionRemSetIterator : public StackObj {
-private:
-  // The region RSet over which we are iterating.
-  HeapRegionRemSet* _hrrs;
-
-  // Local caching of HRRS fields.
-  const BitMap*             _coarse_map;
-
-  G1BlockOffsetTable*       _bot;
-  G1CollectedHeap*          _g1h;
-
-  // The number of cards yielded since initialization.
-  size_t _n_yielded_fine;
-  size_t _n_yielded_coarse;
-  size_t _n_yielded_sparse;
-
-  // Indicates what granularity of table that we are currently iterating over.
-  // We start iterating over the sparse table, progress to the fine grain
-  // table, and then finish with the coarse table.
-  enum IterState {
-    Sparse,
-    Fine,
-    Coarse
-  };
-  IterState _is;
-
-  // For both Coarse and Fine remembered set iteration this contains the
-  // first card number of the heap region we currently iterate over.
-  size_t _cur_region_card_offset;
-
-  // Current region index for the Coarse remembered set iteration.
-  int    _coarse_cur_region_index;
-  size_t _coarse_cur_region_cur_card;
-
-  bool coarse_has_next(size_t& card_index);
-
-  // The PRT we are currently iterating over.
-  PerRegionTable* _fine_cur_prt;
-  // Card offset within the current PRT.
-  size_t _cur_card_in_prt;
-
-  // Update internal variables when switching to the given PRT.
-  void switch_to_prt(PerRegionTable* prt);
-  bool fine_has_next();
-  bool fine_has_next(size_t& card_index);
-
-  // The Sparse remembered set iterator.
-  SparsePRTIter _sparse_iter;
-
-public:
-  HeapRegionRemSetIterator(HeapRegionRemSet* hrrs);
-
-  // If there remains one or more cards to be yielded, returns true and
-  // sets "card_index" to one of those cards (which is then considered
-  // yielded.)   Otherwise, returns false (and leaves "card_index"
-  // undefined.)
-  bool has_next(size_t& card_index);
-
-  size_t n_yielded_fine() { return _n_yielded_fine; }
-  size_t n_yielded_coarse() { return _n_yielded_coarse; }
-  size_t n_yielded_sparse() { return _n_yielded_sparse; }
-  size_t n_yielded() {
-    return n_yielded_fine() + n_yielded_coarse() + n_yielded_sparse();
-  }
 };
 
 #endif // SHARE_GC_G1_HEAPREGIONREMSET_HPP

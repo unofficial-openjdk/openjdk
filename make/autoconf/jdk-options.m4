@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@
 AC_DEFUN_ONCE([JDKOPT_SETUP_JDK_VARIANT],
 [
   # Deprecated in JDK 12
-  BASIC_DEPRECATED_ARG_WITH([jdk-variant])
+  UTIL_DEPRECATED_ARG_WITH([jdk-variant])
 ])
 
 ###############################################################################
@@ -46,19 +46,17 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JDK_VARIANT],
 AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_LEVEL],
 [
   DEBUG_LEVEL="release"
-  AC_MSG_CHECKING([which debug level to use])
-  AC_ARG_ENABLE([debug], [AS_HELP_STRING([--enable-debug],
-      [set the debug level to fastdebug (shorthand for --with-debug-level=fastdebug) @<:@disabled@:>@])],
-      [
-        ENABLE_DEBUG="${enableval}"
-        DEBUG_LEVEL="fastdebug"
-      ], [ENABLE_DEBUG="no"])
 
+  UTIL_ARG_ENABLE(NAME: debug, DEFAULT: false, RESULT: ENABLE_DEBUG,
+      DESC: [enable debugging (shorthand for --with-debug-level=fastdebug)],
+      IF_ENABLED: [ DEBUG_LEVEL="fastdebug" ])
+
+  AC_MSG_CHECKING([which debug level to use])
   AC_ARG_WITH([debug-level], [AS_HELP_STRING([--with-debug-level],
       [set the debug level (release, fastdebug, slowdebug, optimized) @<:@release@:>@])],
       [
         DEBUG_LEVEL="${withval}"
-        if test "x$ENABLE_DEBUG" = xyes; then
+        if test "x$ENABLE_DEBUG" = xtrue; then
           AC_MSG_ERROR([You cannot use both --enable-debug and --with-debug-level at the same time.])
         fi
       ])
@@ -103,89 +101,56 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_LEVEL],
 #
 AC_DEFUN_ONCE([JDKOPT_SETUP_OPEN_OR_CUSTOM],
 [
-  AC_ARG_ENABLE([openjdk-only], [AS_HELP_STRING([--enable-openjdk-only],
-      [suppress building custom source even if present @<:@disabled@:>@])],,[enable_openjdk_only="no"])
-
-  AC_MSG_CHECKING([if custom source is suppressed (openjdk-only)])
-  AC_MSG_RESULT([$enable_openjdk_only])
-  if test "x$enable_openjdk_only" = "xyes"; then
-    SUPPRESS_CUSTOM_EXTENSIONS="true"
-  elif test "x$enable_openjdk_only" = "xno"; then
-    SUPPRESS_CUSTOM_EXTENSIONS="false"
-  else
-    AC_MSG_ERROR([Invalid value for --enable-openjdk-only: $enable_openjdk_only])
-  fi
+  UTIL_ARG_ENABLE(NAME: openjdk-only, DEFAULT: false,
+      RESULT: SUPPRESS_CUSTOM_EXTENSIONS,
+      DESC: [suppress building custom source even if present],
+      CHECKING_MSG: [if custom source is suppressed (openjdk-only)])
 ])
 
 AC_DEFUN_ONCE([JDKOPT_SETUP_JDK_OPTIONS],
 [
   # Should we build a JDK without a graphical UI?
-  AC_MSG_CHECKING([headless only])
-  AC_ARG_ENABLE([headless-only], [AS_HELP_STRING([--enable-headless-only],
-      [only build headless (no GUI) support @<:@disabled@:>@])])
-
-  if test "x$enable_headless_only" = "xyes"; then
-    ENABLE_HEADLESS_ONLY="true"
-    AC_MSG_RESULT([yes])
-  elif test "x$enable_headless_only" = "xno"; then
-    ENABLE_HEADLESS_ONLY="false"
-    AC_MSG_RESULT([no])
-  elif test "x$enable_headless_only" = "x"; then
-    ENABLE_HEADLESS_ONLY="false"
-    AC_MSG_RESULT([no])
-  else
-    AC_MSG_ERROR([--enable-headless-only can only take yes or no])
-  fi
-
+  UTIL_ARG_ENABLE(NAME: headless-only, DEFAULT: false,
+      RESULT: ENABLE_HEADLESS_ONLY,
+      DESC: [only build headless (no GUI) support],
+      CHECKING_MSG: [if we should build headless-only (no GUI)])
   AC_SUBST(ENABLE_HEADLESS_ONLY)
 
-  # Should we build the complete docs, or just a lightweight version?
-  AC_ARG_ENABLE([full-docs], [AS_HELP_STRING([--enable-full-docs],
-      [build complete documentation @<:@enabled if all tools found@:>@])])
+  # should we linktime gc unused code sections in the JDK build ?
+  if test "x$OPENJDK_TARGET_OS" = "xlinux" && test "x$OPENJDK_TARGET_CPU" = xs390x; then
+    LINKTIME_GC_DEFAULT=true
+  else
+    LINKTIME_GC_DEFAULT=false
+  fi
 
-  # Verify dependencies
+  UTIL_ARG_ENABLE(NAME: linktime-gc, DEFAULT: $LINKTIME_GC_DEFAULT,
+      DEFAULT_DESC: [auto], RESULT: ENABLE_LINKTIME_GC,
+      DESC: [use link time gc on unused code sections in the JDK build],
+      CHECKING_MSG: [if linker should clean out unused code (linktime-gc)])
+  AC_SUBST(ENABLE_LINKTIME_GC)
+
+  # Check for full doc dependencies
+  FULL_DOCS_AVAILABLE=true
   AC_MSG_CHECKING([for graphviz dot])
   if test "x$DOT" != "x"; then
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no, cannot generate full docs])
-    FULL_DOCS_DEP_MISSING=true
+    FULL_DOCS_AVAILABLE=false
   fi
 
   AC_MSG_CHECKING([for pandoc])
-  if test "x$PANDOC" != "x"; then
+  if test "x$ENABLE_PANDOC" = "xtrue"; then
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no, cannot generate full docs])
-    FULL_DOCS_DEP_MISSING=true
+    FULL_DOCS_AVAILABLE=false
   fi
 
-  AC_MSG_CHECKING([full docs])
-  if test "x$enable_full_docs" = xyes; then
-    if test "x$FULL_DOCS_DEP_MISSING" = "xtrue"; then
-      AC_MSG_RESULT([no, missing dependencies])
-      HELP_MSG_MISSING_DEPENDENCY([dot])
-      AC_MSG_ERROR([Cannot enable full docs with missing dependencies. See above. $HELP_MSG])
-    else
-      ENABLE_FULL_DOCS=true
-      AC_MSG_RESULT([yes, forced])
-    fi
-  elif test "x$enable_full_docs" = xno; then
-    ENABLE_FULL_DOCS=false
-    AC_MSG_RESULT([no, forced])
-  elif test "x$enable_full_docs" = x; then
-    # Check for prerequisites
-    if test "x$FULL_DOCS_DEP_MISSING" = xtrue; then
-      ENABLE_FULL_DOCS=false
-      AC_MSG_RESULT([no, missing dependencies])
-    else
-      ENABLE_FULL_DOCS=true
-      AC_MSG_RESULT([yes, dependencies present])
-    fi
-  else
-    AC_MSG_ERROR([--enable-full-docs can only take yes or no])
-  fi
-
+  # Should we build the complete docs, or just a lightweight version?
+  UTIL_ARG_ENABLE(NAME: full-docs, DEFAULT: auto, RESULT: ENABLE_FULL_DOCS,
+      AVAILABLE: $FULL_DOCS_AVAILABLE, DESC: [build complete documentation],
+      DEFAULT_DESC: [enabled if all tools found])
   AC_SUBST(ENABLE_FULL_DOCS)
 
   # Choose cacerts source file
@@ -205,14 +170,8 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JDK_OPTIONS],
   AC_SUBST(CACERTS_FILE)
 
   # Enable or disable unlimited crypto
-  AC_ARG_ENABLE(unlimited-crypto, [AS_HELP_STRING([--disable-unlimited-crypto],
-      [Disable unlimited crypto policy @<:@enabled@:>@])],,
-      [enable_unlimited_crypto=yes])
-  if test "x$enable_unlimited_crypto" = "xyes"; then
-    UNLIMITED_CRYPTO=true
-  else
-    UNLIMITED_CRYPTO=false
-  fi
+  UTIL_ARG_ENABLE(NAME: unlimited-crypto, DEFAULT: true, RESULT: UNLIMITED_CRYPTO,
+      DESC: [enable unlimited crypto policy])
   AC_SUBST(UNLIMITED_CRYPTO)
 
   # Should we build the serviceability agent (SA)?
@@ -290,7 +249,7 @@ AC_DEFUN_ONCE([JDKOPT_DETECT_INTREE_EC],
 AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_SYMBOLS],
 [
   #
-  # NATIVE_DEBUG_SYMBOLS
+  # Native debug symbols.
   # This must be done after the toolchain is setup, since we're looking at objcopy.
   #
   AC_MSG_CHECKING([what type of native debug symbols to use])
@@ -302,24 +261,48 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_SYMBOLS],
           if test "x$withval" = xexternal || test "x$withval" = xzipped; then
             AC_MSG_ERROR([AIX only supports the parameters 'none' and 'internal' for --with-native-debug-symbols])
           fi
+        elif test "x$OPENJDK_TARGET_OS" = xwindows; then
+          if test "x$withval" = xinternal; then
+            AC_MSG_ERROR([Windows does not support the parameter 'internal' for --with-native-debug-symbols])
+          fi
         fi
       ],
       [
-        if test "x$OPENJDK_TARGET_OS" = xaix; then
-          # AIX doesn't support 'external' so use 'internal' as default
-          with_native_debug_symbols="internal"
+        if test "x$STATIC_BUILD" = xtrue; then
+          with_native_debug_symbols="none"
         else
-          if test "x$STATIC_BUILD" = xtrue; then
-            with_native_debug_symbols="none"
+          if test "x$OPENJDK_TARGET_OS" = xaix; then
+            # AIX doesn't support 'external' so use 'internal' as default
+            with_native_debug_symbols="internal"
           else
             with_native_debug_symbols="external"
           fi
         fi
       ])
-  NATIVE_DEBUG_SYMBOLS=$with_native_debug_symbols
-  AC_MSG_RESULT([$NATIVE_DEBUG_SYMBOLS])
+  AC_MSG_RESULT([$with_native_debug_symbols])
 
-  if test "x$NATIVE_DEBUG_SYMBOLS" = xzipped; then
+  if test "x$with_native_debug_symbols" = xnone; then
+    COMPILE_WITH_DEBUG_SYMBOLS=false
+    COPY_DEBUG_SYMBOLS=false
+    ZIP_EXTERNAL_DEBUG_SYMBOLS=false
+  elif test "x$with_native_debug_symbols" = xinternal; then
+    COMPILE_WITH_DEBUG_SYMBOLS=true
+    COPY_DEBUG_SYMBOLS=false
+    ZIP_EXTERNAL_DEBUG_SYMBOLS=false
+  elif test "x$with_native_debug_symbols" = xexternal; then
+
+    if test "x$OPENJDK_TARGET_OS" = xsolaris || test "x$OPENJDK_TARGET_OS" = xlinux; then
+      if test "x$OBJCOPY" = x; then
+        # enabling of enable-debug-symbols and can't find objcopy
+        # this is an error
+        AC_MSG_ERROR([Unable to find objcopy, cannot enable native debug symbols])
+      fi
+    fi
+
+    COMPILE_WITH_DEBUG_SYMBOLS=true
+    COPY_DEBUG_SYMBOLS=true
+    ZIP_EXTERNAL_DEBUG_SYMBOLS=false
+  elif test "x$with_native_debug_symbols" = xzipped; then
 
     if test "x$OPENJDK_TARGET_OS" = xsolaris || test "x$OPENJDK_TARGET_OS" = xlinux; then
       if test "x$OBJCOPY" = x; then
@@ -332,27 +315,6 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_SYMBOLS],
     COMPILE_WITH_DEBUG_SYMBOLS=true
     COPY_DEBUG_SYMBOLS=true
     ZIP_EXTERNAL_DEBUG_SYMBOLS=true
-  elif test "x$NATIVE_DEBUG_SYMBOLS" = xnone; then
-    COMPILE_WITH_DEBUG_SYMBOLS=false
-    COPY_DEBUG_SYMBOLS=false
-    ZIP_EXTERNAL_DEBUG_SYMBOLS=false
-  elif test "x$NATIVE_DEBUG_SYMBOLS" = xinternal; then
-    COMPILE_WITH_DEBUG_SYMBOLS=true
-    COPY_DEBUG_SYMBOLS=false
-    ZIP_EXTERNAL_DEBUG_SYMBOLS=false
-  elif test "x$NATIVE_DEBUG_SYMBOLS" = xexternal; then
-
-    if test "x$OPENJDK_TARGET_OS" = xsolaris || test "x$OPENJDK_TARGET_OS" = xlinux; then
-      if test "x$OBJCOPY" = x; then
-        # enabling of enable-debug-symbols and can't find objcopy
-        # this is an error
-        AC_MSG_ERROR([Unable to find objcopy, cannot enable native debug symbols])
-      fi
-    fi
-
-    COMPILE_WITH_DEBUG_SYMBOLS=true
-    COPY_DEBUG_SYMBOLS=true
-    ZIP_EXTERNAL_DEBUG_SYMBOLS=false
   else
     AC_MSG_ERROR([Allowed native debug symbols are: none, internal, external, zipped])
   fi
@@ -360,6 +322,33 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_SYMBOLS],
   AC_SUBST(COMPILE_WITH_DEBUG_SYMBOLS)
   AC_SUBST(COPY_DEBUG_SYMBOLS)
   AC_SUBST(ZIP_EXTERNAL_DEBUG_SYMBOLS)
+
+  # Should we add external native debug symbols to the shipped bundles?
+  AC_MSG_CHECKING([if we should add external native debug symbols to the shipped bundles])
+  AC_ARG_WITH([external-symbols-in-bundles],
+      [AS_HELP_STRING([--with-external-symbols-in-bundles],
+      [which type of external native debug symbol information shall be shipped in product bundles (none, public, full)
+      (e.g. ship full/stripped pdbs on Windows) @<:@none@:>@])])
+
+  if test "x$with_external_symbols_in_bundles" = x || test "x$with_external_symbols_in_bundles" = xnone ; then
+    AC_MSG_RESULT([no])
+  elif test "x$with_external_symbols_in_bundles" = xfull || test "x$with_external_symbols_in_bundles" = xpublic ; then
+    if test "x$OPENJDK_TARGET_OS" != xwindows ; then
+      AC_MSG_ERROR([--with-external-symbols-in-bundles currently only works on windows!])
+    elif test "x$COPY_DEBUG_SYMBOLS" != xtrue ; then
+      AC_MSG_ERROR([--with-external-symbols-in-bundles only works when --with-native-debug-symbols=external is used!])
+    elif test "x$with_external_symbols_in_bundles" = xfull ; then
+      AC_MSG_RESULT([full])
+      SHIP_DEBUG_SYMBOLS=full
+    else
+      AC_MSG_RESULT([public])
+      SHIP_DEBUG_SYMBOLS=public
+    fi
+  else
+    AC_MSG_ERROR([$with_external_symbols_in_bundles is an unknown value for --with-external-symbols-in-bundles])
+  fi
+
+  AC_SUBST(SHIP_DEBUG_SYMBOLS)
 ])
 
 ################################################################################
@@ -368,14 +357,19 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_SYMBOLS],
 #
 AC_DEFUN_ONCE([JDKOPT_SETUP_CODE_COVERAGE],
 [
-  AC_ARG_ENABLE(native-coverage, [AS_HELP_STRING([--enable-native-coverage],
-      [enable native compilation with code coverage data@<:@disabled@:>@])])
-  GCOV_ENABLED="false"
-  if test "x$enable_native_coverage" = "xyes"; then
-    case $TOOLCHAIN_TYPE in
-      gcc | clang)
-        AC_MSG_CHECKING([if native coverage is enabled])
-        AC_MSG_RESULT([yes])
+  UTIL_ARG_ENABLE(NAME: native-coverage, DEFAULT: false, RESULT: GCOV_ENABLED,
+      DESC: [enable native compilation with code coverage data],
+      CHECK_AVAILABLE: [
+        AC_MSG_CHECKING([if native coverage is available])
+        if test "x$TOOLCHAIN_TYPE" = "xgcc" ||
+            test "x$TOOLCHAIN_TYPE" = "xclang"; then
+          AC_MSG_RESULT([yes])
+        else
+          AC_MSG_RESULT([no])
+          AVAILABLE=false
+        fi
+      ],
+      IF_ENABLED: [
         GCOV_CFLAGS="-fprofile-arcs -ftest-coverage -fno-inline"
         GCOV_LDFLAGS="-fprofile-arcs"
         JVM_CFLAGS="$JVM_CFLAGS $GCOV_CFLAGS"
@@ -386,27 +380,19 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_CODE_COVERAGE],
         CXXFLAGS_JDKEXE="$CXXFLAGS_JDKEXE $GCOV_CFLAGS"
         LDFLAGS_JDKLIB="$LDFLAGS_JDKLIB $GCOV_LDFLAGS"
         LDFLAGS_JDKEXE="$LDFLAGS_JDKEXE $GCOV_LDFLAGS"
-        GCOV_ENABLED="true"
-        ;;
-      *)
-        AC_MSG_ERROR([--enable-native-coverage only works with toolchain type gcc or clang])
-        ;;
-    esac
-  elif test "x$enable_native_coverage" = "xno"; then
-    AC_MSG_CHECKING([if native coverage is enabled])
-    AC_MSG_RESULT([no])
-  elif test "x$enable_native_coverage" != "x"; then
-    AC_MSG_ERROR([--enable-native-coverage can only be assigned "yes" or "no"])
-  fi
+      ])
   AC_SUBST(GCOV_ENABLED)
 
   AC_ARG_WITH(jcov, [AS_HELP_STRING([--with-jcov],
       [jcov library location])])
   AC_ARG_WITH(jcov-input-jdk, [AS_HELP_STRING([--with-jcov-input-jdk],
       [jdk image to instrument])])
+  AC_ARG_WITH(jcov-filters, [AS_HELP_STRING([--with-jcov-filters],
+      [filters to limit code for jcov instrumentation and report generation])])
   JCOV_HOME=
   JCOV_INPUT_JDK=
   JCOV_ENABLED=
+  JCOV_FILTERS=
   if test "x$with_jcov" = "x" ; then
     JCOV_ENABLED="false"
   else
@@ -416,19 +402,23 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_CODE_COVERAGE],
       AC_MSG_ERROR([Invalid JCov bundle: "$JCOV_HOME/lib/jcov.jar" does not exist])
     fi
     JCOV_ENABLED="true"
-    BASIC_FIXUP_PATH(JCOV_HOME)
+    UTIL_FIXUP_PATH(JCOV_HOME)
     if test "x$with_jcov_input_jdk" != "x" ; then
       JCOV_INPUT_JDK="$with_jcov_input_jdk"
       if test ! -f "$JCOV_INPUT_JDK/bin/java$EXE_SUFFIX"; then
         AC_MSG_RESULT([fail])
         AC_MSG_ERROR([Invalid JDK bundle: "$JCOV_INPUT_JDK/bin/java$EXE_SUFFIX" does not exist])
       fi
-      BASIC_FIXUP_PATH(JCOV_INPUT_JDK)
+      UTIL_FIXUP_PATH(JCOV_INPUT_JDK)
+    fi
+    if test "x$with_jcov_filters" != "x" ; then
+      JCOV_FILTERS="$with_jcov_filters"
     fi
   fi
   AC_SUBST(JCOV_ENABLED)
   AC_SUBST(JCOV_HOME)
   AC_SUBST(JCOV_INPUT_JDK)
+  AC_SUBST(JCOV_FILTERS)
 ])
 
 ###############################################################################
@@ -437,14 +427,19 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_CODE_COVERAGE],
 #
 AC_DEFUN_ONCE([JDKOPT_SETUP_ADDRESS_SANITIZER],
 [
-  AC_ARG_ENABLE(asan, [AS_HELP_STRING([--enable-asan],
-      [enable AddressSanitizer if possible @<:@disabled@:>@])])
-  ASAN_ENABLED="no"
-  if test "x$enable_asan" = "xyes"; then
-    case $TOOLCHAIN_TYPE in
-      gcc | clang)
-        AC_MSG_CHECKING([if asan is enabled])
-        AC_MSG_RESULT([yes])
+  UTIL_ARG_ENABLE(NAME: asan, DEFAULT: false,
+      DESC: [enable AddressSanitizer],
+      CHECK_AVAILABLE: [
+        AC_MSG_CHECKING([if AddressSanitizer (asan) is available])
+        if test "x$TOOLCHAIN_TYPE" = "xgcc" ||
+            test "x$TOOLCHAIN_TYPE" = "xclang"; then
+          AC_MSG_RESULT([yes])
+        else
+          AC_MSG_RESULT([no])
+          AVAILABLE=false
+        fi
+      ],
+      IF_ENABLED: [
         ASAN_CFLAGS="-fsanitize=address -fno-omit-frame-pointer"
         ASAN_LDFLAGS="-fsanitize=address"
         JVM_CFLAGS="$JVM_CFLAGS $ASAN_CFLAGS"
@@ -456,17 +451,10 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_ADDRESS_SANITIZER],
         LDFLAGS_JDKLIB="$LDFLAGS_JDKLIB $ASAN_LDFLAGS"
         LDFLAGS_JDKEXE="$LDFLAGS_JDKEXE $ASAN_LDFLAGS"
         ASAN_ENABLED="yes"
-        ;;
-      *)
-        AC_MSG_ERROR([--enable-asan only works with toolchain type gcc or clang])
-        ;;
-    esac
-  elif test "x$enable_asan" = "xno"; then
-    AC_MSG_CHECKING([if asan is enabled])
-    AC_MSG_RESULT([no])
-  elif test "x$enable_asan" != "x"; then
-    AC_MSG_ERROR([--enable-asan can only be assigned "yes" or "no"])
-  fi
+      ],
+      IF_DISABLED: [
+        ASAN_ENABLED="no"
+      ])
 
   AC_SUBST(ASAN_ENABLED)
 ])
@@ -478,26 +466,23 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_ADDRESS_SANITIZER],
 #
 AC_DEFUN_ONCE([JDKOPT_SETUP_STATIC_BUILD],
 [
-  AC_ARG_ENABLE([static-build], [AS_HELP_STRING([--enable-static-build],
-    [enable static library build @<:@disabled@:>@])])
-  STATIC_BUILD=false
-  if test "x$enable_static_build" = "xyes"; then
-    AC_MSG_CHECKING([if static build is enabled])
-    AC_MSG_RESULT([yes])
-    if test "x$OPENJDK_TARGET_OS" != "xmacosx"; then
-      AC_MSG_ERROR([--enable-static-build is only supported for macosx builds])
-    fi
-    STATIC_BUILD_CFLAGS="-DSTATIC_BUILD=1"
-    CFLAGS_JDKLIB_EXTRA="$CFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
-    CXXFLAGS_JDKLIB_EXTRA="$CXXFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
-    STATIC_BUILD=true
-  elif test "x$enable_static_build" = "xno"; then
-    AC_MSG_CHECKING([if static build is enabled])
-    AC_MSG_RESULT([no])
-  elif test "x$enable_static_build" != "x"; then
-    AC_MSG_ERROR([--enable-static-build can only be assigned "yes" or "no"])
-  fi
-
+  UTIL_ARG_ENABLE(NAME: static-build, DEFAULT: false, RESULT: STATIC_BUILD,
+      DESC: [enable static library build],
+      CHECKING_MSG: [if static build is enabled],
+      CHECK_AVAILABLE: [
+        AC_MSG_CHECKING([if static build is available])
+        if test "x$OPENJDK_TARGET_OS" = "xmacosx"; then
+          AC_MSG_RESULT([yes])
+        else
+          AC_MSG_RESULT([no])
+          AVAILABLE=false
+        fi
+      ],
+      IF_ENABLED: [
+        STATIC_BUILD_CFLAGS="-DSTATIC_BUILD=1"
+        CFLAGS_JDKLIB_EXTRA="$CFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
+        CXXFLAGS_JDKLIB_EXTRA="$CXXFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
+      ])
   AC_SUBST(STATIC_BUILD)
 ])
 
@@ -508,24 +493,10 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_STATIC_BUILD],
 #
 AC_DEFUN_ONCE([JDKOPT_SETUP_JLINK_OPTIONS],
 [
-  AC_ARG_ENABLE([keep-packaged-modules], [AS_HELP_STRING([--disable-keep-packaged-modules],
-    [Do not keep packaged modules in jdk image @<:@enable@:>@])])
-
-  AC_MSG_CHECKING([if packaged modules are kept])
-  if test "x$enable_keep_packaged_modules" = "xyes"; then
-    AC_MSG_RESULT([yes])
-    JLINK_KEEP_PACKAGED_MODULES=true
-  elif test "x$enable_keep_packaged_modules" = "xno"; then
-    AC_MSG_RESULT([no])
-    JLINK_KEEP_PACKAGED_MODULES=false
-  elif test "x$enable_keep_packaged_modules" = "x"; then
-    AC_MSG_RESULT([yes (default)])
-    JLINK_KEEP_PACKAGED_MODULES=true
-  else
-    AC_MSG_RESULT([error])
-    AC_MSG_ERROR([--enable-keep-packaged-modules accepts no argument])
-  fi
-
+  UTIL_ARG_ENABLE(NAME: keep-packaged-modules, DEFAULT: true,
+      RESULT: JLINK_KEEP_PACKAGED_MODULES,
+      DESC: [enable keeping of packaged modules in jdk image],
+      CHECKING_MSG: [if packaged modules are kept])
   AC_SUBST(JLINK_KEEP_PACKAGED_MODULES)
 ])
 
@@ -535,36 +506,20 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JLINK_OPTIONS],
 #
 AC_DEFUN_ONCE([JDKOPT_ENABLE_DISABLE_FAILURE_HANDLER],
 [
-  AC_ARG_ENABLE([jtreg-failure-handler], [AS_HELP_STRING([--enable-jtreg-failure-handler],
-    [forces build of the jtreg failure handler to be enabled, missing dependencies
-     become fatal errors. Default is auto, where the failure handler is built if all
-     dependencies are present and otherwise just disabled.])])
-
-  AC_MSG_CHECKING([if jtreg failure handler should be built])
-
-  if test "x$enable_jtreg_failure_handler" = "xyes"; then
-    if test "x$JT_HOME" = "x"; then
-      AC_MSG_ERROR([Cannot enable jtreg failure handler without jtreg.])
-    else
-      BUILD_FAILURE_HANDLER=true
-      AC_MSG_RESULT([yes, forced])
-    fi
-  elif test "x$enable_jtreg_failure_handler" = "xno"; then
-    BUILD_FAILURE_HANDLER=false
-    AC_MSG_RESULT([no, forced])
-  elif test "x$enable_jtreg_failure_handler" = "xauto" \
-      || test "x$enable_jtreg_failure_handler" = "x"; then
-    if test "x$JT_HOME" = "x"; then
-      BUILD_FAILURE_HANDLER=false
-      AC_MSG_RESULT([no, missing jtreg])
-    else
-      BUILD_FAILURE_HANDLER=true
-      AC_MSG_RESULT([yes, jtreg present])
-    fi
-  else
-    AC_MSG_ERROR([Invalid value for --enable-jtreg-failure-handler: $enable_jtreg_failure_handler])
-  fi
-
+  UTIL_ARG_ENABLE(NAME: jtreg-failure-handler, DEFAULT: auto,
+      RESULT: BUILD_FAILURE_HANDLER,
+      DESC: [enable keeping of packaged modules in jdk image],
+      DEFAULT_DESC: [enabled if jtreg is present],
+      CHECKING_MSG: [if the jtreg failure handler should be built],
+      CHECK_AVAILABLE: [
+        AC_MSG_CHECKING([if the jtreg failure handler is available])
+        if test "x$JT_HOME" != "x"; then
+          AC_MSG_RESULT([yes])
+        else
+          AVAILABLE=false
+          AC_MSG_RESULT([no (jtreg not present)])
+        fi
+      ])
   AC_SUBST(BUILD_FAILURE_HANDLER)
 ])
 
@@ -574,41 +529,14 @@ AC_DEFUN_ONCE([JDKOPT_ENABLE_DISABLE_FAILURE_HANDLER],
 #
 AC_DEFUN_ONCE([JDKOPT_ENABLE_DISABLE_GENERATE_CLASSLIST],
 [
-  AC_ARG_ENABLE([generate-classlist], [AS_HELP_STRING([--disable-generate-classlist],
-      [forces enabling or disabling of the generation of a CDS classlist at build time.
-      Default is to generate it when either the server or client JVMs are built and
-      enable-cds is true.])])
-
-  # Check if it's likely that it's possible to generate the classlist. Depending
-  # on exact jvm configuration it could be possible anyway.
-  if test "x$ENABLE_CDS" = "xtrue" && (HOTSPOT_CHECK_JVM_VARIANT(server) || HOTSPOT_CHECK_JVM_VARIANT(client) || HOTSPOT_CHECK_JVM_FEATURE(cds)); then
-    ENABLE_GENERATE_CLASSLIST_POSSIBLE="true"
-  else
-    ENABLE_GENERATE_CLASSLIST_POSSIBLE="false"
-  fi
-
-  AC_MSG_CHECKING([if the CDS classlist generation should be enabled])
-  if test "x$enable_generate_classlist" = "xyes"; then
-    AC_MSG_RESULT([yes, forced])
-    ENABLE_GENERATE_CLASSLIST="true"
-    if test "x$ENABLE_GENERATE_CLASSLIST_POSSIBLE" = "xfalse"; then
-      AC_MSG_WARN([Generation of classlist might not be possible with JVM Variants $JVM_VARIANTS and enable-cds=$ENABLE_CDS])
-    fi
-  elif test "x$enable_generate_classlist" = "xno"; then
-    AC_MSG_RESULT([no, forced])
-    ENABLE_GENERATE_CLASSLIST="false"
-  elif test "x$enable_generate_classlist" = "x"; then
-    if test "x$ENABLE_GENERATE_CLASSLIST_POSSIBLE" = "xtrue"; then
-      AC_MSG_RESULT([yes])
-      ENABLE_GENERATE_CLASSLIST="true"
-    else
-      AC_MSG_RESULT([no])
-      ENABLE_GENERATE_CLASSLIST="false"
-    fi
-  else
-    AC_MSG_ERROR([Invalid value for --enable-generate-classlist: $enable_generate_classlist])
-  fi
-
+  # In GenerateLinkOptData.gmk, DumpLoadedClassList is used to generate the
+  # classlist file. It never will work if CDS is disabled, since the VM will report
+  # an error for DumpLoadedClassList.
+  UTIL_ARG_ENABLE(NAME: generate-classlist, DEFAULT: auto,
+      RESULT: ENABLE_GENERATE_CLASSLIST, AVAILABLE: $ENABLE_CDS,
+      DESC: [enable generation of a CDS classlist at build time],
+      DEFAULT_DESC: [enabled if the JVM feature 'cds' is enabled for all JVM variants],
+      CHECKING_MSG: [if the CDS classlist generation should be enabled])
   AC_SUBST(ENABLE_GENERATE_CLASSLIST)
 ])
 
@@ -640,56 +568,121 @@ AC_DEFUN([JDKOPT_EXCLUDE_TRANSLATIONS],
 #
 AC_DEFUN([JDKOPT_ENABLE_DISABLE_MANPAGES],
 [
-  AC_ARG_ENABLE([manpages], [AS_HELP_STRING([--disable-manpages],
-      [Set to disable copy of static man pages @<:@enabled@:>@])])
-
-  BUILD_MANPAGES="true"
-  AC_MSG_CHECKING([if static man pages should be copied])
-  if test "x$enable_manpages" = "x"; then
-    AC_MSG_RESULT([yes])
-  elif test "x$enable_manpages" = "xyes"; then
-    AC_MSG_RESULT([yes, forced])
-  elif test "x$enable_manpages" = "xno"; then
-    AC_MSG_RESULT([no, forced])
-    BUILD_MANPAGES="false"
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([--enable-manpages can only yes/no or empty])
-  fi
-
+  UTIL_ARG_ENABLE(NAME: manpages, DEFAULT: true, RESULT: BUILD_MANPAGES,
+      DESC: [enable copying of static man pages],
+      CHECKING_MSG: [if static man pages should be copied])
   AC_SUBST(BUILD_MANPAGES)
 ])
 
 ################################################################################
 #
 # Disable the default CDS archive generation
-#   cross compilation - disabled
 #
 AC_DEFUN([JDKOPT_ENABLE_DISABLE_CDS_ARCHIVE],
 [
-  AC_ARG_ENABLE([cds-archive], [AS_HELP_STRING([--disable-cds-archive],
-      [Set to disable generation of a default CDS archive in the product image @<:@enabled@:>@])])
+  UTIL_ARG_ENABLE(NAME: cds-archive, DEFAULT: auto, RESULT: BUILD_CDS_ARCHIVE,
+      DESC: [enable generation of a default CDS archive in the product image],
+      DEFAULT_DESC: [enabled if possible],
+      CHECKING_MSG: [if a default CDS archive should be generated],
+      CHECK_AVAILABLE: [
+        AC_MSG_CHECKING([if CDS archive is available])
+        if test "x$ENABLE_CDS" = "xfalse"; then
+          AC_MSG_RESULT([no (CDS is disabled)])
+          AVAILABLE=false
+        elif test "x$COMPILE_TYPE" = "xcross"; then
+          AC_MSG_RESULT([no (not possible with cross compilation)])
+          AVAILABLE=false
+        else
+          AC_MSG_RESULT([yes])
+        fi
+      ])
+  AC_SUBST(BUILD_CDS_ARCHIVE)
+])
 
-  AC_MSG_CHECKING([if a default CDS archive should be generated])
-  if test "x$ENABLE_CDS" = "xfalse"; then
-    AC_MSG_RESULT([no, because CDS is disabled])
-    BUILD_CDS_ARCHIVE="false"
-  elif test "x$COMPILE_TYPE" = "xcross"; then
-    AC_MSG_RESULT([no, not possible with cross compilation])
-    BUILD_CDS_ARCHIVE="false"
-  elif test "x$enable_cds_archive" = "xyes"; then
-    AC_MSG_RESULT([yes, forced])
-    BUILD_CDS_ARCHIVE="true"
-  elif test "x$enable_cds_archive" = "x"; then
-    AC_MSG_RESULT([yes])
-    BUILD_CDS_ARCHIVE="true"
-  elif test "x$enable_cds_archive" = "xno"; then
+################################################################################
+#
+# Disallow any output from containing absolute paths from the build system.
+# This setting defaults to allowed on debug builds and not allowed on release
+# builds.
+#
+AC_DEFUN([JDKOPT_ALLOW_ABSOLUTE_PATHS_IN_OUTPUT],
+[
+  AC_ARG_ENABLE([absolute-paths-in-output],
+      [AS_HELP_STRING([--disable-absolute-paths-in-output],
+       [Set to disable to prevent any absolute paths from the build to end up in
+        any of the build output. @<:@disabled in release builds, otherwise enabled@:>@])
+      ])
+
+  AC_MSG_CHECKING([if absolute paths should be allowed in the build output])
+  if test "x$enable_absolute_paths_in_output" = "xno"; then
     AC_MSG_RESULT([no, forced])
-    BUILD_CDS_ARCHIVE="false"
+    ALLOW_ABSOLUTE_PATHS_IN_OUTPUT="false"
+  elif test "x$enable_absolute_paths_in_output" = "xyes"; then
+    AC_MSG_RESULT([yes, forced])
+    ALLOW_ABSOLUTE_PATHS_IN_OUTPUT="true"
+  elif test "x$DEBUG_LEVEL" = "xrelease"; then
+    AC_MSG_RESULT([no, release build])
+    ALLOW_ABSOLUTE_PATHS_IN_OUTPUT="false"
   else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([--enable-cds_archive can only be yes/no or empty])
+    AC_MSG_RESULT([yes, debug build])
+    ALLOW_ABSOLUTE_PATHS_IN_OUTPUT="true"
   fi
 
-  AC_SUBST(BUILD_CDS_ARCHIVE)
+  AC_SUBST(ALLOW_ABSOLUTE_PATHS_IN_OUTPUT)
+])
+
+################################################################################
+#
+# Check and set options related to reproducible builds.
+#
+AC_DEFUN_ONCE([JDKOPT_SETUP_REPRODUCIBLE_BUILD],
+[
+  AC_ARG_WITH([source-date], [AS_HELP_STRING([--with-source-date],
+      [how to set SOURCE_DATE_EPOCH ('updated', 'current', 'version' a timestamp or an ISO-8601 date) @<:@updated@:>@])],
+      [with_source_date_present=true], [with_source_date_present=false])
+
+  AC_MSG_CHECKING([what source date to use])
+
+  if test "x$with_source_date" = xyes; then
+    AC_MSG_ERROR([--with-source-date must have a value])
+  elif test "x$with_source_date" = xupdated || test "x$with_source_date" = x; then
+    # Tell the makefiles to update at each build
+    SOURCE_DATE=updated
+    AC_MSG_RESULT([determined at build time, from 'updated'])
+  elif test "x$with_source_date" = xcurrent; then
+    # Set the current time
+    SOURCE_DATE=$($DATE +"%s")
+    AC_MSG_RESULT([$SOURCE_DATE, from 'current'])
+  elif test "x$with_source_date" = xversion; then
+    # Use the date from version-numbers
+    UTIL_GET_EPOCH_TIMESTAMP(SOURCE_DATE, $DEFAULT_VERSION_DATE)
+    if test "x$SOURCE_DATE" = x; then
+      AC_MSG_RESULT([unavailable])
+      AC_MSG_ERROR([Cannot convert DEFAULT_VERSION_DATE to timestamp])
+    fi
+    AC_MSG_RESULT([$SOURCE_DATE, from 'version'])
+  else
+    # It's a timestamp, an ISO-8601 date, or an invalid string
+    # Additional [] needed to keep m4 from mangling shell constructs.
+    if [ [[ "$with_source_date" =~ ^[0-9][0-9]*$ ]] ] ; then
+      SOURCE_DATE=$with_source_date
+      AC_MSG_RESULT([$SOURCE_DATE, from timestamp on command line])
+    else
+      UTIL_GET_EPOCH_TIMESTAMP(SOURCE_DATE, $with_source_date)
+      if test "x$SOURCE_DATE" != x; then
+        AC_MSG_RESULT([$SOURCE_DATE, from ISO-8601 date on command line])
+      else
+        AC_MSG_RESULT([unavailable])
+        AC_MSG_ERROR([Cannot parse date string "$with_source_date"])
+      fi
+    fi
+  fi
+
+  UTIL_ARG_ENABLE(NAME: reproducible-build, DEFAULT: $with_source_date_present,
+      RESULT: ENABLE_REPRODUCIBLE_BUILD,
+      DESC: [enable reproducible builds (not yet fully functional)],
+      DEFAULT_DESC: [enabled if --with-source-date is given])
+
+  AC_SUBST(SOURCE_DATE)
+  AC_SUBST(ENABLE_REPRODUCIBLE_BUILD)
 ])

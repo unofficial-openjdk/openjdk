@@ -12,11 +12,10 @@ also an alternate target `exploded-test` that uses the exploded image
 instead. Not all tests will run successfully on the exploded image, but using
 this target can greatly improve rebuild times for certain workflows.
 
-Previously, `make test` was used invoke an old system for running test, and
+Previously, `make test` was used to invoke an old system for running tests, and
 `make run-test` was used for the new test framework. For backward compatibility
 with scripts and muscle memory, `run-test` (and variants like
-`exploded-run-test` or `run-test-tier1`) are kept as aliases. The old system
-can still be accessed for some time using `cd test && make`.
+`exploded-run-test` or `run-test-tier1`) are kept as aliases.
 
 Some example command-lines:
 
@@ -24,7 +23,7 @@ Some example command-lines:
     $ make test-jdk_lang JTREG="JOBS=8"
     $ make test TEST=jdk_lang
     $ make test-only TEST="gtest:LogTagSet gtest:LogTagSetDescriptions" GTEST="REPEAT=-1"
-    $ make test TEST="hotspot:hotspot_gc" JTREG="JOBS=1;TIMEOUT=8;VM_OPTIONS=-XshowSettings -Xlog:gc+ref=debug"
+    $ make test TEST="hotspot:hotspot_gc" JTREG="JOBS=1;TIMEOUT_FACTOR=8;JAVA_OPTIONS=-XshowSettings -Xlog:gc+ref=debug"
     $ make test TEST="jtreg:test/hotspot:hotspot_gc test/hotspot/jtreg/native_sanity/JniVersion.java"
     $ make test TEST="micro:java.lang.reflect" MICRO="FORK=1;WARMUP_ITER=2"
     $ make exploded-test TEST=tier2
@@ -181,21 +180,21 @@ It is possible to control various aspects of the test suites using make control
 variables.
 
 These variables use a keyword=value approach to allow multiple values to be
-set. So, for instance, `JTREG="JOBS=1;TIMEOUT=8"` will set the JTReg
+set. So, for instance, `JTREG="JOBS=1;TIMEOUT_FACTOR=8"` will set the JTReg
 concurrency level to 1 and the timeout factor to 8. This is equivalent to
-setting `JTREG_JOBS=1 JTREG_TIMEOUT=8`, but using the keyword format means that
+setting `JTREG_JOBS=1 JTREG_TIMEOUT_FACTOR=8`, but using the keyword format means that
 the `JTREG` variable is parsed and verified for correctness, so
-`JTREG="TMIEOUT=8"` would give an error, while `JTREG_TMIEOUT=8` would just
+`JTREG="TMIEOUT_FACTOR=8"` would give an error, while `JTREG_TMIEOUT_FACTOR=8` would just
 pass unnoticed.
 
 To separate multiple keyword=value pairs, use `;` (semicolon). Since the shell
 normally eats `;`, the recommended usage is to write the assignment inside
 qoutes, e.g. `JTREG="...;..."`. This will also make sure spaces are preserved,
-as in `JTREG="VM_OPTIONS=-XshowSettings -Xlog:gc+ref=debug"`.
+as in `JTREG="JAVA_OPTIONS=-XshowSettings -Xlog:gc+ref=debug"`.
 
-(Other ways are possible, e.g. using backslash: `JTREG=JOBS=1\;TIMEOUT=8`.
+(Other ways are possible, e.g. using backslash: `JTREG=JOBS=1\;TIMEOUT_FACTOR=8`.
 Also, as a special technique, the string `%20` will be replaced with space for
-certain options, e.g. `JTREG=VM_OPTIONS=-XshowSettings%20-Xlog:gc+ref=debug`.
+certain options, e.g. `JTREG=JAVA_OPTIONS=-XshowSettings%20-Xlog:gc+ref=debug`.
 This can be useful if you have layers of scripts and have trouble getting
 proper quoting of command line arguments through.)
 
@@ -219,11 +218,11 @@ Currently only applies to JTReg.
 
 Currently only applies to JTReg.
 
-#### VM_OPTIONS
+#### JAVA_OPTIONS
 
 Applies to JTReg, GTest and Micro.
 
-#### JAVA_OPTIONS
+#### VM_OPTIONS
 
 Applies to JTReg, GTest and Micro.
 
@@ -242,9 +241,19 @@ The simplest way to run tests with JCov coverage report is to use the special
 target `jcov-test` instead of `test`, e.g. `make jcov-test TEST=jdk_lang`. This
 will make sure the JCov image is built, and that JCov reporting is enabled.
 
-The JCov report is stored in `build/$BUILD/test-results/jcov-output`.
+The JCov report is stored in `build/$BUILD/test-results/jcov-output/report`.
 
 Please note that running with JCov reporting can be very memory intensive.
+
+#### JCOV_DIFF_CHANGESET
+
+While collecting code coverage with JCov, it is also possible to find coverage
+for only recently changed code. JCOV_DIFF_CHANGESET specifies a source
+revision. A textual report will be generated showing coverage of the diff
+between the specified revision and the repository tip.
+
+The report is stored in `build/$BUILD/test-results/jcov-output/diff_coverage_report`
+file.
 
 ### JTReg keywords
 
@@ -252,8 +261,9 @@ Please note that running with JCov reporting can be very memory intensive.
 The test concurrency (`-concurrency`).
 
 Defaults to TEST_JOBS (if set by `--with-test-jobs=`), otherwise it defaults to
-JOBS, except for Hotspot, where the default is *number of CPU cores/2*, but
-never more than 12.
+JOBS, except for Hotspot, where the default is *number of CPU cores/2* (for
+sparc, if more than 16 cpus, then *number of CPU cores/5*, otherwise *number of
+CPU cores/4*), but never more than *memory size in GB/2*.
 
 #### TIMEOUT_FACTOR
 The timeout factor (`-timeoutFactor`).
@@ -261,9 +271,9 @@ The timeout factor (`-timeoutFactor`).
 Defaults to 4.
 
 #### TEST_MODE
-The test mode (`-agentvm`, `-samevm` or `-othervm`).
+The test mode (`agentvm` or `othervm`).
 
-Defaults to `-agentvm`.
+Defaults to `agentvm`.
 
 #### ASSERT
 Enable asserts (`-ea -esa`, or none).
@@ -306,6 +316,14 @@ help avoid quoting issues, the special value `%20`).
 The file names should be either absolute, or relative to the JTReg test root of
 the tests to be run.
 
+#### RUN_PROBLEM_LISTS
+
+Use the problem lists to select tests instead of excluding them.
+
+Set to `true` or `false`.
+If `true`, JTReg will use `-match:` option, otherwise `-exclude:` will be used.
+Default is `false`.
+
 
 #### OPTIONS
 Additional options to the JTReg test framework.
@@ -313,16 +331,25 @@ Additional options to the JTReg test framework.
 Use `JTREG="OPTIONS=--help all"` to see all available JTReg options.
 
 #### JAVA_OPTIONS
-Additional Java options to JTReg (`-javaoption`).
+Additional Java options for running test classes (sent to JTReg as
+`-javaoption`).
 
 #### VM_OPTIONS
-Additional VM options to JTReg (`-vmoption`).
+Additional Java options to be used when compiling and running classes (sent to
+JTReg as `-vmoption`).
+
+This option is only needed in special circumstances. To pass Java options to
+your test classes, use `JAVA_OPTIONS`.
 
 #### AOT_MODULES
 
 Generate AOT modules before testing for the specified module, or set of
 modules. If multiple modules are specified, they should be separated by space
 (or, to help avoid quoting issues, the special value `%20`).
+
+#### RETRY_COUNT
+
+Retry failed tests up to a set number of times. Defaults to 0.
 
 ### Gtest keywords
 
@@ -372,6 +399,75 @@ Additional VM arguments to provide to forked off VMs. Same as `-jvmArgs <args>`
 
 #### OPTIONS
 Additional arguments to send to JMH.
+
+## Notes for Specific Tests
+
+### Docker Tests
+
+Docker tests with default parameters may fail on systems with glibc versions not
+compatible with the one used in the default docker image (e.g., Oracle Linux 7.6 for x86).
+For example, they pass on Ubuntu 16.04 but fail on Ubuntu 18.04 if run like this on x86:
+
+    $ make test TEST="jtreg:test/hotspot/jtreg/containers/docker"
+
+To run these tests correctly, additional parameters for the correct docker image are
+required on Ubuntu 18.04 by using `JAVA_OPTIONS`.
+
+    $ make test TEST="jtreg:test/hotspot/jtreg/containers/docker" JTREG="JAVA_OPTIONS=-Djdk.test.docker.image.name=ubuntu -Djdk.test.docker.image.version=latest"
+
+### Non-US locale
+
+If your locale is non-US, some tests are likely to fail. To work around this you can
+set the locale to US. On Unix platforms simply setting `LANG="en_US"` in the
+environment before running tests should work. On Windows, setting
+`JTREG="VM_OPTIONS=-Duser.language=en -Duser.country=US"` helps for most, but not all test cases.
+For example:
+
+    $ export LANG="en_US" && make test TEST=...
+    $ make test JTREG="VM_OPTIONS=-Duser.language=en -Duser.country=US" TEST=...
+
+### PKCS11 Tests
+
+It is highly recommended to use the latest NSS version when running PKCS11 tests.
+Improper NSS version may lead to unexpected failures which are hard to diagnose.
+For example, sun/security/pkcs11/Secmod/AddTrustedCert.java may fail on Ubuntu
+18.04 with the default NSS version in the system.
+To run these tests correctly, the system property `test.nss.lib.paths` is required
+on Ubuntu 18.04 to specify the alternative NSS lib directories.
+For example:
+
+    $ make test TEST="jtreg:sun/security/pkcs11/Secmod/AddTrustedCert.java" JTREG="JAVA_OPTIONS=-Dtest.nss.lib.paths=/path/to/your/latest/NSS-libs"
+
+For more notes about the PKCS11 tests, please refer to test/jdk/sun/security/pkcs11/README.
+
+### Client UI Tests
+
+Some Client UI tests use key sequences which may be reserved by the operating
+system. Usually that causes the test failure. So it is highly recommended to disable
+system key shortcuts prior testing. The steps to access and disable system key shortcuts
+for various platforms are provided below.
+
+#### MacOS
+Choose Apple menu; System Preferences, click Keyboard, then click Shortcuts;
+select or deselect desired shortcut.
+
+For example, test/jdk/javax/swing/TooltipManager/JMenuItemToolTipKeyBindingsTest/JMenuItemToolTipKeyBindingsTest.java fails
+on MacOS because it uses `CTRL + F1` key sequence to show or hide tooltip message
+but the key combination is reserved by the operating system. To run the test correctly
+the default global key shortcut should be disabled using the steps described above, and then deselect
+"Turn keyboard access on or off" option which is responsible for `CTRL + F1` combination.
+
+#### Linux
+Open the Activities overview and start typing Settings; Choose Settings, click Devices,
+then click Keyboard; set or override desired shortcut.
+
+#### Windows
+Type `gpedit` in the Search and then click Edit group policy; navigate to
+User Configuration -> Administrative Templates -> Windows Components -> File Explorer;
+in the right-side pane look for "Turn off Windows key hotkeys" and double click on it;
+enable or disable hotkeys.
+
+Note: restart is required to make the settings take effect.
 
 ---
 # Override some definitions in the global css file that are not optimal for

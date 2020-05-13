@@ -26,7 +26,6 @@
 #define SHARE_GC_G1_G1HOTCARDCACHE_HPP
 
 #include "gc/g1/g1CardCounts.hpp"
-#include "gc/g1/g1_globals.hpp"
 #include "memory/allocation.hpp"
 #include "runtime/safepoint.hpp"
 #include "runtime/thread.hpp"
@@ -53,7 +52,10 @@ class HeapRegion;
 // code, increasing throughput.
 
 class G1HotCardCache: public CHeapObj<mtGC> {
+public:
+  typedef CardTable::CardValue CardValue;
 
+private:
   G1CollectedHeap*  _g1h;
 
   bool              _use_cache;
@@ -62,7 +64,7 @@ class G1HotCardCache: public CHeapObj<mtGC> {
 
 
   // The card cache table
-  jbyte**           _hot_cache;
+  CardValue** _hot_cache;
 
   size_t            _hot_cache_size;
 
@@ -78,6 +80,11 @@ class G1HotCardCache: public CHeapObj<mtGC> {
   volatile size_t _hot_cache_par_claimed_idx;
 
   char _pad_after[DEFAULT_CACHE_LINE_SIZE];
+
+  // Records whether insertion overflowed the hot card cache at least once. This
+  // avoids the need for a separate atomic counter of how many valid entries are
+  // in the HCC.
+  volatile bool _cache_wrapped_around;
 
   // The number of cached cards a thread claims when flushing the cache
   static const int ClaimChunkSize = 32;
@@ -107,11 +114,11 @@ class G1HotCardCache: public CHeapObj<mtGC> {
   // adding, NULL is returned and no further action in needed.
   // If we evict a card from the cache to make room for the new card,
   // the evicted card is then returned for refinement.
-  jbyte* insert(jbyte* card_ptr);
+  CardValue* insert(CardValue* card_ptr);
 
   // Refine the cards that have delayed as a result of
   // being in the cache.
-  void drain(G1CardTableEntryClosure* cl, uint worker_i);
+  void drain(G1CardTableEntryClosure* cl, uint worker_id);
 
   // Set up for parallel processing of the cards in the hot cache
   void reset_hot_cache_claimed_index() {
@@ -123,13 +130,17 @@ class G1HotCardCache: public CHeapObj<mtGC> {
     assert(SafepointSynchronize::is_at_safepoint(), "Should be at a safepoint");
     assert(Thread::current()->is_VM_thread(), "Current thread should be the VMthread");
     if (default_use_cache()) {
-        reset_hot_cache_internal();
+      reset_hot_cache_internal();
     }
   }
 
   // Zeros the values in the card counts table for the given region
   void reset_card_counts(HeapRegion* hr);
 
+  // Number of entries in the HCC.
+  size_t num_entries() const {
+    return _cache_wrapped_around ? _hot_cache_size : _hot_cache_idx + 1;
+  }
  private:
   void reset_hot_cache_internal() {
     assert(_hot_cache != NULL, "Logic");
@@ -137,6 +148,7 @@ class G1HotCardCache: public CHeapObj<mtGC> {
     for (size_t i = 0; i < _hot_cache_size; i++) {
       _hot_cache[i] = NULL;
     }
+    _cache_wrapped_around = false;
   }
 };
 

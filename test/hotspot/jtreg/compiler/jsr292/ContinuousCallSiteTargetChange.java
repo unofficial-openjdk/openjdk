@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,8 @@
  * @test
  * @library /test/lib /
  *
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  * @run driver compiler.jsr292.ContinuousCallSiteTargetChange
  */
 
@@ -33,6 +35,7 @@ package compiler.jsr292;
 import jdk.test.lib.Asserts;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
+import sun.hotspot.WhiteBox;
 
 import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandle;
@@ -57,8 +60,7 @@ public class ContinuousCallSiteTargetChange {
         argsList.add(test.getName());
         argsList.add(Integer.toString(ITERATIONS));
 
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-                argsList.toArray(new String[argsList.size()]));
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(argsList);
 
         OutputAnalyzer analyzer = new OutputAnalyzer(pb.start());
 
@@ -71,7 +73,8 @@ public class ContinuousCallSiteTargetChange {
 
     static void testServer(Class<?> test, String... args) throws Exception {
         List<String> extraArgsList = new ArrayList<>(
-                List.of("-server", "-XX:-TieredCompilation"));
+                List.of("-server", "-XX:-TieredCompilation", "-Xbootclasspath/a:.",
+                        "-XX:+UnlockDiagnosticVMOptions", "-XX:+WhiteBoxAPI"));
         extraArgsList.addAll(Arrays.asList(args));
 
         runTest(test, extraArgsList.toArray(new String[extraArgsList.size()]));
@@ -79,7 +82,8 @@ public class ContinuousCallSiteTargetChange {
 
     static void testClient(Class<?> test, String... args) throws Exception {
         List<String> extraArgsList = new ArrayList<>(
-                List.of("-client", "-XX:+TieredCompilation", "-XX:TieredStopAtLevel=1"));
+                List.of("-client", "-XX:+TieredCompilation", "-XX:TieredStopAtLevel=1",
+                        "-Xbootclasspath/a:.", "-XX:+UnlockDiagnosticVMOptions", "-XX:+WhiteBoxAPI"));
         extraArgsList.addAll(Arrays.asList(args));
 
         runTest(test, extraArgsList.toArray(new String[extraArgsList.size()]));
@@ -163,8 +167,10 @@ public class ContinuousCallSiteTargetChange {
 
         public static void main(String[] args) throws Throwable {
             int iterations = Integer.parseInt(args[0]);
+            WhiteBox whiteBox = WhiteBox.getWhiteBox();
             for (int i = 0; i < iterations; i++) {
                 iteration();
+                whiteBox.forceNMethodSweep();
             }
         }
     }

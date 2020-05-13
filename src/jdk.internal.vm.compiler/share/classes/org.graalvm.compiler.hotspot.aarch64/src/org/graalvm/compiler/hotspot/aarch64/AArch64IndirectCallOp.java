@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,9 @@
 
 package org.graalvm.compiler.hotspot.aarch64;
 
-import static org.graalvm.compiler.lir.LIRInstruction.OperandFlag.REG;
 import static jdk.vm.ci.aarch64.AArch64.r12;
 import static jdk.vm.ci.code.ValueUtil.asRegister;
+import static org.graalvm.compiler.lir.LIRInstruction.OperandFlag.REG;
 
 import org.graalvm.compiler.asm.aarch64.AArch64MacroAssembler;
 import org.graalvm.compiler.hotspot.GraalHotSpotVMConfig;

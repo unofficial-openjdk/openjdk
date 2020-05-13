@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,8 @@
  * @modules java.base/jdk.internal.misc
  *          java.management
  * @build sun.hotspot.WhiteBox
- * @run driver ClassFileInstaller sun.hotspot.WhiteBox sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:. UseCompressedOops
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ * @run main/othervm/timeout=480 -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:. UseCompressedOops
  */
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,12 +58,8 @@ public class UseCompressedOops {
         testCompressedOopsModes(args);
         // Test GCs.
         testCompressedOopsModes(args, "-XX:+UseG1GC");
-        if (!Compiler.isGraalEnabled()) { // Graal does not support CMS
-            testCompressedOopsModes(args, "-XX:+UseConcMarkSweepGC");
-        }
         testCompressedOopsModes(args, "-XX:+UseSerialGC");
         testCompressedOopsModes(args, "-XX:+UseParallelGC");
-        testCompressedOopsModes(args, "-XX:+UseParallelOldGC");
         if (GC.Shenandoah.isSupported()) {
             testCompressedOopsModes(args, "-XX:+UnlockExperimentalVMOptions", "-XX:+UseShenandoahGC");
         }
@@ -193,7 +189,7 @@ public class UseCompressedOops {
 
         args.add("-version");
 
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(args.toArray(new String[0]));
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(args);
         return new OutputAnalyzer(pb.start());
     }
 }

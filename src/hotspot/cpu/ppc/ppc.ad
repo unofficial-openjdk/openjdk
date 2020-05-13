@@ -1,6 +1,6 @@
 //
-// Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
-// Copyright (c) 2012, 2018 SAP SE. All rights reserved.
+// Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2012, 2020 SAP SE. All rights reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -972,6 +972,8 @@ source_hpp %{
   // To keep related declarations/definitions/uses close together,
   // we switch between source %{ }% and source_hpp %{ }% freely as needed.
 
+#include "opto/convertnode.hpp"
+
   // Returns true if Node n is followed by a MemBar node that
   // will do an acquire. If so, this node must not do the acquire
   // operation.
@@ -980,10 +982,26 @@ source_hpp %{
 
 source %{
 
+void PhaseOutput::pd_perform_mach_node_analysis() {
+}
+
+int MachNode::pd_alignment_required() const {
+  return 1;
+}
+
+int MachNode::compute_padding(int current_offset) const {
+  return 0;
+}
+
+// Should the matcher clone input 'm' of node 'n'?
+bool Matcher::pd_clone_node(Node* n, Node* m, Matcher::MStack& mstack) {
+  return false;
+}
+
 // Should the Matcher clone shifts on addressing modes, expecting them
 // to be subsumed into complex addressing expressions or compute them
 // into registers?
-bool Matcher::clone_address_expressions(AddPNode* m, Matcher::MStack& mstack, VectorSet& address_visited) {
+bool Matcher::pd_clone_address_expressions(AddPNode* m, Matcher::MStack& mstack, VectorSet& address_visited) {
   return clone_base_plus_offset_address(m, mstack, address_visited);
 }
 
@@ -1142,7 +1160,7 @@ bool SafePointNode::needs_polling_address_input() {
 
 // Emit an interrupt that is caught by the debugger (for debugging compiler).
 void emit_break(CodeBuffer &cbuf) {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   __ illtrap();
 }
 
@@ -1163,7 +1181,7 @@ uint MachBreakpointNode::size(PhaseRegAlloc *ra_) const {
 //=============================================================================
 
 void emit_nop(CodeBuffer &cbuf) {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   __ nop();
 }
 
@@ -1182,12 +1200,14 @@ source_hpp %{ // Header information of the source block.
 //---<  Used for optimization in Compile::Shorten_branches  >---
 //--------------------------------------------------------------
 
+class C2_MacroAssembler;
+
 class CallStubImpl {
 
  public:
 
   // Emit call stub, compiled java to interpreter.
-  static void emit_trampoline_stub(MacroAssembler &_masm, int destination_toc_offset, int insts_call_instruction_offset);
+  static void emit_trampoline_stub(C2_MacroAssembler &_masm, int destination_toc_offset, int insts_call_instruction_offset);
 
   // Size of call trampoline stub.
   // This doesn't need to be accurate to the byte, but it
@@ -1218,7 +1238,7 @@ source %{
 //   load the call target from the constant pool
 //   branch via CTR (LR/link still points to the call-site above)
 
-void CallStubImpl::emit_trampoline_stub(MacroAssembler &_masm, int destination_toc_offset, int insts_call_instruction_offset) {
+void CallStubImpl::emit_trampoline_stub(C2_MacroAssembler &_masm, int destination_toc_offset, int insts_call_instruction_offset) {
   address stub = __ emit_trampoline_stub(destination_toc_offset, insts_call_instruction_offset);
   if (stub == NULL) {
     ciEnv::current()->record_out_of_memory_failure();
@@ -1249,7 +1269,7 @@ typedef struct {
 // - Add a relocation at the branch-and-link instruction.
 // - Emit a branch-and-link.
 // - Remember the return pc offset.
-EmitCallOffsets emit_call_with_trampoline_stub(MacroAssembler &_masm, address entry_point, relocInfo::relocType rtype) {
+EmitCallOffsets emit_call_with_trampoline_stub(C2_MacroAssembler &_masm, address entry_point, relocInfo::relocType rtype) {
   EmitCallOffsets offsets = { -1, -1 };
   const int start_offset = __ offset();
   offsets.insts_call_instruction_offset = __ offset();
@@ -1295,7 +1315,7 @@ static inline jlong replicate_immF(float con) {
 //=============================================================================
 
 const RegMask& MachConstantBaseNode::_out_RegMask = BITS64_CONSTANT_TABLE_BASE_mask();
-int Compile::ConstantTable::calculate_table_base_offset() const {
+int ConstantTable::calculate_table_base_offset() const {
   return 0;  // absolute addressing, no offset
 }
 
@@ -1336,10 +1356,10 @@ void MachConstantBaseNode::format(PhaseRegAlloc* ra_, outputStream* st) const {
 #ifndef PRODUCT
 void MachPrologNode::format(PhaseRegAlloc *ra_, outputStream *st) const {
   Compile* C = ra_->C;
-  const long framesize = C->frame_slots() << LogBytesPerInt;
+  const long framesize = C->output()->frame_slots() << LogBytesPerInt;
 
   st->print("PROLOG\n\t");
-  if (C->need_stack_bang(framesize)) {
+  if (C->output()->need_stack_bang(framesize)) {
     st->print("stack_overflow_check\n\t");
   }
 
@@ -1377,9 +1397,9 @@ void MachPrologNode::format(PhaseRegAlloc *ra_, outputStream *st) const {
 
 void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   Compile* C = ra_->C;
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
 
-  const long framesize = C->frame_size_in_bytes();
+  const long framesize = C->output()->frame_size_in_bytes();
   assert(framesize % (2 * wordSize) == 0, "must preserve 2*wordSize alignment");
 
   const bool method_is_frameless      = false /* TODO: PPC port C->is_frameless_method()*/;
@@ -1400,15 +1420,33 @@ void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
     ___(mflr) mflr(return_pc);
   }
 
+  if (C->clinit_barrier_on_entry()) {
+    assert(!C->method()->holder()->is_not_initialized(), "initialization should have been started");
+
+    Label L_skip_barrier;
+    Register klass = toc_temp;
+
+    // Notify OOP recorder (don't need the relocation)
+    AddressLiteral md = __ constant_metadata_address(C->method()->holder()->constant_encoding());
+    __ load_const_optimized(klass, md.value(), R0);
+    __ clinit_barrier(klass, R16_thread, &L_skip_barrier /*L_fast_path*/);
+
+    __ load_const_optimized(klass, SharedRuntime::get_handle_wrong_method_stub(), R0);
+    __ mtctr(klass);
+    __ bctr();
+
+    __ bind(L_skip_barrier);
+  }
+
   // Calls to C2R adapters often do not accept exceptional returns.
   // We require that their callers must bang for them. But be
   // careful, because some VM calls (such as call site linkage) can
   // use several kilobytes of stack. But the stack safety zone should
   // account for that. See bugs 4446381, 4468289, 4497237.
 
-  int bangsize = C->bang_size_in_bytes();
+  int bangsize = C->output()->bang_size_in_bytes();
   assert(bangsize >= framesize || bangsize <= 0, "stack bang size incorrect");
-  if (C->need_stack_bang(bangsize) && UseStackBanging) {
+  if (C->output()->need_stack_bang(bangsize) && UseStackBanging) {
     // Unfortunately we cannot use the function provided in
     // assembler.cpp as we have to emulate the pipes. So I had to
     // insert the code of generate_stack_overflow_check(), see
@@ -1462,7 +1500,7 @@ void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
       bang_offset += page_size;
     }
     // R11 trashed
-  } // C->need_stack_bang(framesize) && UseStackBanging
+  } // C->output()->need_stack_bang(framesize) && UseStackBanging
 
   unsigned int bytes = (unsigned int)framesize;
   long offset = Assembler::align_addr(bytes, frame::alignment_in_bytes);
@@ -1517,7 +1555,7 @@ void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
     ___(std) std(return_pc, _abi(lr), callers_sp);
   }
 
-  C->set_frame_complete(cbuf.insts_size());
+  C->output()->set_frame_complete(cbuf.insts_size());
 }
 #undef ___
 #undef ___stop
@@ -1551,9 +1589,9 @@ void MachEpilogNode::format(PhaseRegAlloc *ra_, outputStream *st) const {
 
 void MachEpilogNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   Compile* C = ra_->C;
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
 
-  const long framesize = ((long)C->frame_slots()) << LogBytesPerInt;
+  const long framesize = ((long)C->output()->frame_slots()) << LogBytesPerInt;
   assert(framesize >= 0, "negative frame-size?");
 
   const bool method_needs_polling = do_polling() && C->is_method_compilation();
@@ -1567,11 +1605,7 @@ void MachEpilogNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   }
 
   if (method_needs_polling) {
-    if (SafepointMechanism::uses_thread_local_poll()) {
-      __ ld(polling_page, in_bytes(JavaThread::polling_page_offset()), R16_thread);
-    } else {
-      __ load_const_optimized(polling_page, (long)(address) os::get_polling_page());
-    }
+    __ ld(polling_page, in_bytes(JavaThread::polling_page_offset()), R16_thread);
   }
 
   if (!method_is_frameless) {
@@ -1607,17 +1641,9 @@ const Pipeline * MachEpilogNode::pipeline() const {
   return MachNode::pipeline_class();
 }
 
-// This method seems to be obsolete. It is declared in machnode.hpp
-// and defined in all *.ad files, but it is never called. Should we
-// get rid of it?
-int MachEpilogNode::safepoint_offset() const {
-  assert(do_polling(), "no return for this epilog node");
-  return 0;
-}
-
 #if 0 // TODO: PPC port
 void MachLoadPollAddrLateNode::emit(CodeBuffer& cbuf, PhaseRegAlloc* ra_) const {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   if (LoadPollAddressFromThread) {
     _masm.ld(R11, in_bytes(JavaThread::poll_address_offset()), R16_thread);
   } else {
@@ -1734,7 +1760,7 @@ uint MachSpillCopyNode::implementation(CodeBuffer *cbuf, PhaseRegAlloc *ra_, boo
       int src_offset = ra_->reg2offset(src_lo);
       int dst_offset = ra_->reg2offset(dst_lo);
       if (cbuf) {
-        MacroAssembler _masm(cbuf);
+        C2_MacroAssembler _masm(cbuf);
         __ ld(R0, src_offset, R1_SP);
         __ std(R0, dst_offset, R1_SP);
         __ ld(R0, src_offset+8, R1_SP);
@@ -1747,7 +1773,7 @@ uint MachSpillCopyNode::implementation(CodeBuffer *cbuf, PhaseRegAlloc *ra_, boo
       VectorSRegister Rsrc = as_VectorSRegister(Matcher::_regEncode[src_lo]);
       int dst_offset = ra_->reg2offset(dst_lo);
       if (cbuf) {
-        MacroAssembler _masm(cbuf);
+        C2_MacroAssembler _masm(cbuf);
         __ addi(R0, R1_SP, dst_offset);
         __ stxvd2x(Rsrc, R0);
       }
@@ -1758,7 +1784,7 @@ uint MachSpillCopyNode::implementation(CodeBuffer *cbuf, PhaseRegAlloc *ra_, boo
       VectorSRegister Rdst = as_VectorSRegister(Matcher::_regEncode[dst_lo]);
       int src_offset = ra_->reg2offset(src_lo);
       if (cbuf) {
-        MacroAssembler _masm(cbuf);
+        C2_MacroAssembler _masm(cbuf);
         __ addi(R0, R1_SP, src_offset);
         __ lxvd2x(Rdst, R0);
       }
@@ -1769,7 +1795,7 @@ uint MachSpillCopyNode::implementation(CodeBuffer *cbuf, PhaseRegAlloc *ra_, boo
       VectorSRegister Rsrc = as_VectorSRegister(Matcher::_regEncode[src_lo]);
       VectorSRegister Rdst = as_VectorSRegister(Matcher::_regEncode[dst_lo]);
       if (cbuf) {
-        MacroAssembler _masm(cbuf);
+        C2_MacroAssembler _masm(cbuf);
         __ xxlor(Rdst, Rsrc, Rsrc);
       }
       size += 4;
@@ -1813,7 +1839,7 @@ uint MachSpillCopyNode::implementation(CodeBuffer *cbuf, PhaseRegAlloc *ra_, boo
       size = (Rsrc != Rdst) ? 4 : 0;
 
       if (cbuf) {
-        MacroAssembler _masm(cbuf);
+        C2_MacroAssembler _masm(cbuf);
         if (size) {
           __ mr(Rdst, Rsrc);
         }
@@ -1859,7 +1885,7 @@ uint MachSpillCopyNode::implementation(CodeBuffer *cbuf, PhaseRegAlloc *ra_, boo
   // Check for float reg-reg copy.
   if (src_lo_rc == rc_float && dst_lo_rc == rc_float) {
     if (cbuf) {
-      MacroAssembler _masm(cbuf);
+      C2_MacroAssembler _masm(cbuf);
       FloatRegister Rsrc = as_FloatRegister(Matcher::_regEncode[src_lo]);
       FloatRegister Rdst = as_FloatRegister(Matcher::_regEncode[dst_lo]);
       __ fmr(Rdst, Rsrc);
@@ -2029,7 +2055,7 @@ void MachNopNode::format(PhaseRegAlloc *ra_, outputStream *st) const {
 #endif
 
 void MachNopNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *) const {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   // _count contains the number of nops needed for padding.
   for (int i = 0; i < _count; i++) {
     __ nop();
@@ -2050,7 +2076,7 @@ void BoxLockNode::format(PhaseRegAlloc *ra_, outputStream *st) const {
 #endif
 
 void BoxLockNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
 
   int offset = ra_->reg2offset(in_RegMask(0).find_first_elem());
   int reg    = ra_->get_encode(this);
@@ -2076,7 +2102,7 @@ void MachUEPNode::format(PhaseRegAlloc *ra_, outputStream *st) const {
 
 void MachUEPNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   // This is the unverified entry point.
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
 
   // Inline_cache contains a klass.
   Register ic_klass       = as_Register(Matcher::inline_cache_reg_encode());
@@ -2154,12 +2180,19 @@ class HandlerImpl {
 
 };
 
+class Node::PD {
+public:
+  enum NodeFlags {
+    _last_flag = Node::_last_flag
+  };
+};
+
 %} // end source_hpp
 
 source %{
 
 int HandlerImpl::emit_exception_handler(CodeBuffer &cbuf) {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
 
   address base = __ start_a_stub(size_exception_handler());
   if (base == NULL) return 0; // CodeBuffer::expand failed
@@ -2176,7 +2209,7 @@ int HandlerImpl::emit_exception_handler(CodeBuffer &cbuf) {
 // The deopt_handler is like the exception handler, but it calls to
 // the deoptimization blob instead of jumping to the exception blob.
 int HandlerImpl::emit_deopt_handler(CodeBuffer& cbuf) {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
 
   address base = __ start_a_stub(size_deopt_handler());
   if (base == NULL) return 0; // CodeBuffer::expand failed
@@ -2204,6 +2237,7 @@ const bool Matcher::match_rule_supported(int opcode) {
   if (!has_match_rule(opcode))
     return false;
 
+  bool ret_value = true;
   switch (opcode) {
   case Op_SqrtD:
     return VM_Version::has_fsqrt();
@@ -2254,6 +2288,7 @@ const bool Matcher::match_rule_supported(int opcode) {
   case Op_AddVL:
   case Op_SubVL:
   case Op_MulVI:
+  case Op_RoundDoubleModeV:
     return SuperwordUseVSX;
   case Op_PopCountVI:
     return (SuperwordUseVSX && UsePopCountInstruction);
@@ -2265,12 +2300,20 @@ const bool Matcher::match_rule_supported(int opcode) {
   case Op_UpperCase:
   case Op_Whitespace:
     return UseCharacterCompareIntrinsics;
+
+  case Op_CacheWB:
+  case Op_CacheWBPreSync:
+  case Op_CacheWBPostSync:
+    if (!VM_Version::supports_data_cache_line_flush()) {
+      ret_value = false;
+    }
+    break;
   }
 
-  return true;  // Per default match rules are supported.
+  return ret_value;  // Per default match rules are supported.
 }
 
-const bool Matcher::match_rule_supported_vector(int opcode, int vlen) {
+const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType bt) {
 
   // TODO
   // identify extra cases that we might want to provide match rules for
@@ -2323,11 +2366,6 @@ const uint Matcher::vector_ideal_reg(int size) {
   }
 }
 
-const uint Matcher::vector_shift_count_ideal_reg(int size) {
-  fatal("vector shift is not supported");
-  return Node::NotAMachineReg;
-}
-
 // Limits on vector size (number of elements) loaded into vector.
 const int Matcher::max_vector_size(const BasicType bt) {
   assert(is_java_primitive(bt), "only primitive type vectors");
@@ -2378,7 +2416,7 @@ const bool Matcher::isSimpleConstant64(jlong value) {
 /* TODO: PPC port
 // Make a new machine dependent decode node (with its operands).
 MachTypeNode *Matcher::make_decode_node() {
-  assert(Universe::narrow_oop_base() == NULL && Universe::narrow_oop_shift() == 0,
+  assert(CompressedOops::base() == NULL && CompressedOops::shift() == 0,
          "This method is only implemented for unscaled cOops mode so far");
   MachTypeNode *decode = new decodeN_unscaledNode();
   decode->set_opnd_array(0, new iRegPdstOper());
@@ -2405,6 +2443,24 @@ const bool Matcher::require_postalloc_expand = true;
 // PowerPC requires masked shift counts.
 const bool Matcher::need_masked_shift_count = true;
 
+// No support for generic vector operands.
+const bool Matcher::supports_generic_vector_operands  = false;
+
+MachOper* Matcher::pd_specialize_generic_vector_operand(MachOper* original_opnd, uint ideal_reg, bool is_temp) {
+  ShouldNotReachHere(); // generic vector operands not supported
+  return NULL;
+}
+
+bool Matcher::is_generic_reg2reg_move(MachNode* m) {
+  ShouldNotReachHere();  // generic vector operands not supported
+  return false;
+}
+
+bool Matcher::is_generic_vector(MachOper* opnd)  {
+  ShouldNotReachHere();  // generic vector operands not supported
+  return false;
+}
+
 // This affects two different things:
 //  - how Decode nodes are matched
 //  - how ImplicitNullCheck opportunities are recognized
@@ -2429,12 +2485,12 @@ bool Matcher::narrow_klass_use_complex_address() {
 
 bool Matcher::const_oop_prefer_decode() {
   // Prefer ConN+DecodeN over ConP in simple compressed oops mode.
-  return Universe::narrow_oop_base() == NULL;
+  return CompressedOops::base() == NULL;
 }
 
 bool Matcher::const_klass_prefer_decode() {
   // Prefer ConNKlass+DecodeNKlass over ConP in simple compressed klass mode.
-  return Universe::narrow_klass_base() == NULL;
+  return CompressedKlassPointers::base() == NULL;
 }
 
 // Is it better to copy float constants, or load them directly from memory?
@@ -2453,8 +2509,7 @@ void Matcher::pd_implicit_null_fixup(MachNode *node, uint idx) {
  Unimplemented();
 }
 
-// Advertise here if the CPU requires explicit rounding operations
-// to implement the UseStrictFP mode.
+// Advertise here if the CPU requires explicit rounding operations to implement strictfp mode.
 const bool Matcher::strict_fp_requires_explicit_rounding = false;
 
 // Do floats take an entire double register or just half?
@@ -2613,14 +2668,14 @@ const bool Matcher::convi2l_type_required = true;
 encode %{
   enc_class enc_unimplemented %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     __ unimplemented("Unimplemented mach node encoding in AD file.", 13);
   %}
 
   enc_class enc_untested %{
 #ifdef ASSERT
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     __ untested("Untested mach node encoding in AD file.");
 #else
     // TODO: PPC port $archOpcode(ppc64Opcode_none);
@@ -2629,7 +2684,7 @@ encode %{
 
   enc_class enc_lbz(iRegIdst dst, memory mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_lbz);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     __ lbz($dst$$Register, Idisp, $mem$$base$$Register);
   %}
@@ -2637,7 +2692,7 @@ encode %{
   // Load acquire.
   enc_class enc_lbz_ac(iRegIdst dst, memory mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     __ lbz($dst$$Register, Idisp, $mem$$base$$Register);
     __ twi_0($dst$$Register);
@@ -2647,7 +2702,7 @@ encode %{
   enc_class enc_lhz(iRegIdst dst, memory mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_lhz);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     __ lhz($dst$$Register, Idisp, $mem$$base$$Register);
   %}
@@ -2656,7 +2711,7 @@ encode %{
   enc_class enc_lhz_ac(iRegIdst dst, memory mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     __ lhz($dst$$Register, Idisp, $mem$$base$$Register);
     __ twi_0($dst$$Register);
@@ -2666,7 +2721,7 @@ encode %{
   enc_class enc_lwz(iRegIdst dst, memory mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_lwz);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     __ lwz($dst$$Register, Idisp, $mem$$base$$Register);
   %}
@@ -2675,7 +2730,7 @@ encode %{
   enc_class enc_lwz_ac(iRegIdst dst, memory mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     __ lwz($dst$$Register, Idisp, $mem$$base$$Register);
     __ twi_0($dst$$Register);
@@ -2684,7 +2739,7 @@ encode %{
 
   enc_class enc_ld(iRegLdst dst, memoryAlg4 mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_ld);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     // Operand 'ds' requires 4-alignment.
     assert((Idisp & 0x3) == 0, "unaligned offset");
@@ -2694,7 +2749,7 @@ encode %{
   // Load acquire.
   enc_class enc_ld_ac(iRegLdst dst, memoryAlg4 mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     // Operand 'ds' requires 4-alignment.
     assert((Idisp & 0x3) == 0, "unaligned offset");
@@ -2705,7 +2760,7 @@ encode %{
 
   enc_class enc_lfd(RegF dst, memory mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_lfd);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     __ lfd($dst$$FloatRegister, Idisp, $mem$$base$$Register);
   %}
@@ -2713,7 +2768,7 @@ encode %{
   enc_class enc_load_long_constL(iRegLdst dst, immL src, iRegLdst toc) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_ld);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int toc_offset = 0;
 
     address const_toc_addr;
@@ -2737,9 +2792,9 @@ encode %{
   enc_class enc_load_long_constL_hi(iRegLdst dst, iRegLdst toc, immL src) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_addis);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
 
-    if (!ra_->C->in_scratch_emit_size()) {
+    if (!ra_->C->output()->in_scratch_emit_size()) {
       address const_toc_addr;
       // Create a non-oop constant, no relocation needed.
       // If it is an IC, it has a virtual_call_Relocation.
@@ -2972,7 +3027,7 @@ encode %{
   enc_class enc_load_long_constP(iRegLdst dst, immP src, iRegLdst toc) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_ld);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int toc_offset = 0;
 
     intptr_t val = $src$$constant;
@@ -3005,8 +3060,8 @@ encode %{
   enc_class enc_load_long_constP_hi(iRegLdst dst, immP src, iRegLdst toc) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_addis);
 
-    MacroAssembler _masm(&cbuf);
-    if (!ra_->C->in_scratch_emit_size()) {
+    C2_MacroAssembler _masm(&cbuf);
+    if (!ra_->C->output()->in_scratch_emit_size()) {
       intptr_t val = $src$$constant;
       relocInfo::relocType constant_reloc = $src->constant_reloc();  // src
       address const_toc_addr;
@@ -3139,14 +3194,14 @@ encode %{
 
   enc_class enc_stw(iRegIsrc src, memory mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_stw);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     __ stw($src$$Register, Idisp, $mem$$base$$Register);
   %}
 
   enc_class enc_std(iRegIsrc src, memoryAlg4 mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_std);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     // Operand 'ds' requires 4-alignment.
     assert((Idisp & 0x3) == 0, "unaligned offset");
@@ -3155,14 +3210,14 @@ encode %{
 
   enc_class enc_stfs(RegF src, memory mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_stfs);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     __ stfs($src$$FloatRegister, Idisp, $mem$$base$$Register);
   %}
 
   enc_class enc_stfd(RegF src, memory mem) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_stfd);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     __ stfd($src$$FloatRegister, Idisp, $mem$$base$$Register);
   %}
@@ -3183,7 +3238,7 @@ encode %{
     // __ bind(skip_release);
     // __ stb(card mark);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     Label skip_storestore;
 
 #if 0 // TODO: PPC port
@@ -3404,7 +3459,7 @@ encode %{
   enc_class enc_cmove_reg(iRegIdst dst, flagsRegSrc crx, iRegIsrc src, cmpOp cmp) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_cmove);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int cc        = $cmp$$cmpcode;
     int flags_reg = $crx$$reg;
     Label done;
@@ -3419,7 +3474,7 @@ encode %{
   enc_class enc_cmove_imm(iRegIdst dst, flagsRegSrc crx, immI16 src, cmpOp cmp) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_cmove);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     Label done;
     assert((Assembler::bcondCRbiIs1 & ~Assembler::bcondCRbiIs0) == 8, "check encoding");
     // Branch if not (cmp crx).
@@ -3433,14 +3488,14 @@ encode %{
   // input mapping for latency computation.
   enc_class enc_andc(iRegIdst dst, iRegIsrc src1, iRegIsrc src2) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_andc);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     __ andc($dst$$Register, $src1$$Register, $src2$$Register);
   %}
 
   enc_class enc_convI2B_regI__cmove(iRegIdst dst, iRegIsrc src, flagsReg crx, immI16 zero, immI16 notzero) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
 
     Label done;
     __ cmpwi($crx$$CondRegister, $src$$Register, 0);
@@ -3453,7 +3508,7 @@ encode %{
   enc_class enc_convP2B_regP__cmove(iRegIdst dst, iRegPsrc src, flagsReg crx, immI16 zero, immI16 notzero) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
 
     Label done;
     __ cmpdi($crx$$CondRegister, $src$$Register, 0);
@@ -3466,7 +3521,7 @@ encode %{
   enc_class enc_cmove_bso_stackSlotL(iRegLdst dst, flagsRegSrc crx, stackSlotL mem ) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_cmove);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
     Label done;
     __ bso($crx$$CondRegister, done);
@@ -3478,7 +3533,7 @@ encode %{
   enc_class enc_cmove_bso_reg(iRegLdst dst, flagsRegSrc crx, regD src) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_cmove);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     Label done;
     __ bso($crx$$CondRegister, done);
     __ mffprd($dst$$Register, $src$$FloatRegister);
@@ -3489,7 +3544,7 @@ encode %{
   enc_class enc_bc(flagsRegSrc crx, cmpOp cmp, Label lbl) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_bc);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     Label d;   // dummy
     __ bind(d);
     Label* p = ($lbl$$label);
@@ -3519,7 +3574,7 @@ encode %{
     // to ppc64Opcode_bc in order to hide this detail from the scheduler.
     // TODO: PPC port $archOpcode(ppc64Opcode_bc);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     Label d;    // dummy
     __ bind(d);
     Label* p = ($lbl$$label);
@@ -3551,7 +3606,7 @@ encode %{
     // to ppc64Opcode_bc in order to hide this detail from the scheduler.
     // TODO: PPC port $archOpcode(ppc64Opcode_bc);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     Label d;   // dummy
     __ bind(d);
     Label* p = ($lbl$$label);
@@ -3636,7 +3691,7 @@ encode %{
     // Fake operand dst needed for PPC scheduler.
     assert($dst$$constant == 0x0, "dst must be 0x0");
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     // Mark the code position where the load from the safepoint
     // polling page was emitted as relocInfo::poll_type.
     __ relocate(relocInfo::poll_type);
@@ -3692,7 +3747,7 @@ encode %{
   enc_class enc_java_static_call(method meth) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_bl);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     address entry_point = (address)$meth$$method;
 
     if (!_method) {
@@ -3742,9 +3797,9 @@ encode %{
   enc_class enc_java_dynamic_call_sched(method meth) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_bl);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
 
-    if (!ra_->C->in_scratch_emit_size()) {
+    if (!ra_->C->output()->in_scratch_emit_size()) {
       // Create a call trampoline stub for the given method.
       const address entry_point = !($meth$$method) ? 0 : (address)$meth$$method;
       const address entry_point_const = __ address_constant(entry_point, RelocationHolder::none);
@@ -3845,7 +3900,7 @@ encode %{
   // In the code we have to use $constanttablebase.
   enc_class enc_java_dynamic_call(method meth, iRegLdst toc) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int start_offset = __ offset();
 
     Register Rtoc = (ra_) ? $constanttablebase : R2_TOC;
@@ -3904,7 +3959,7 @@ encode %{
   enc_class enc_java_to_runtime_call (method meth) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
 
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     const address start_pc = __ pc();
 
 #if defined(ABI_ELFv2)
@@ -3937,7 +3992,7 @@ encode %{
   // input mapping for latency computation.
   enc_class enc_leaf_call_mtctr(iRegLsrc src) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_mtctr);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     __ mtctr($src$$Register);
   %}
 
@@ -4151,7 +4206,7 @@ frame %{
   // opcodes. This simplifies the register allocator.
   c_return_value %{
     assert((ideal_reg >= Op_RegI && ideal_reg <= Op_RegL) ||
-            (ideal_reg == Op_RegN && Universe::narrow_oop_base() == NULL && Universe::narrow_oop_shift() == 0),
+            (ideal_reg == Op_RegN && CompressedOops::base() == NULL && CompressedOops::shift() == 0),
             "only return normal values");
     // enum names from opcodes.hpp:    Op_Node Op_Set Op_RegN       Op_RegI       Op_RegP       Op_RegF       Op_RegD       Op_RegL
     static int typeToRegLo[Op_RegL+1] = { 0,   0,     R3_num,   R3_num,   R3_num,   F1_num,   F1_num,   R3_num };
@@ -4162,7 +4217,7 @@ frame %{
   // Location of compiled Java return values.  Same as C
   return_value %{
     assert((ideal_reg >= Op_RegI && ideal_reg <= Op_RegL) ||
-            (ideal_reg == Op_RegN && Universe::narrow_oop_base() == NULL && Universe::narrow_oop_shift() == 0),
+            (ideal_reg == Op_RegN && CompressedOops::base() == NULL && CompressedOops::shift() == 0),
             "only return normal values");
     // enum names from opcodes.hpp:    Op_Node Op_Set Op_RegN       Op_RegI       Op_RegP       Op_RegF       Op_RegD       Op_RegL
     static int typeToRegLo[Op_RegL+1] = { 0,   0,     R3_num,   R3_num,   R3_num,   F1_num,   F1_num,   R3_num };
@@ -4303,7 +4358,7 @@ operand immIhi16() %{
 %}
 
 operand immInegpow2() %{
-  predicate(is_power_of_2_long((jlong) (julong) (juint) (-(n->get_int()))));
+  predicate(is_power_of_2((jlong) (julong) (juint) (-(n->get_int()))));
   match(ConI);
   op_cost(0);
   format %{ %}
@@ -4311,7 +4366,7 @@ operand immInegpow2() %{
 %}
 
 operand immIpow2minus1() %{
-  predicate(is_power_of_2_long((((jlong) (n->get_int()))+1)));
+  predicate(is_power_of_2((((jlong) (n->get_int()))+1)));
   match(ConI);
   op_cost(0);
   format %{ %}
@@ -4319,7 +4374,7 @@ operand immIpow2minus1() %{
 %}
 
 operand immIpowerOf2() %{
-  predicate(is_power_of_2_long((((jlong) (julong) (juint) (n->get_int())))));
+  predicate(is_power_of_2((((jlong) (julong) (juint) (n->get_int())))));
   match(ConI);
   op_cost(0);
   format %{ %}
@@ -4553,7 +4608,7 @@ operand immLhighest16() %{
 %}
 
 operand immLnegpow2() %{
-  predicate(is_power_of_2_long((jlong)-(n->get_long())));
+  predicate(is_power_of_2((jlong)-(n->get_long())));
   match(ConL);
   op_cost(0);
   format %{ %}
@@ -4561,7 +4616,7 @@ operand immLnegpow2() %{
 %}
 
 operand immLpow2minus1() %{
-  predicate(is_power_of_2_long((((jlong) (n->get_long()))+1)) &&
+  predicate(is_power_of_2((((jlong) (n->get_long()))+1)) &&
             (n->get_long() != (jlong)0xffffffffffffffffL));
   match(ConL);
   op_cost(0);
@@ -4627,6 +4682,16 @@ operand immF_0() %{
 operand immD() %{
   match(ConD);
   op_cost(40);
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
+// Double Immediate: +0.0d.
+operand immD_0() %{
+  predicate(jlong_cast(n->getd()) == 0);
+  match(ConD);
+
+  op_cost(0);
   format %{ %}
   interface(CONST_INTER);
 %}
@@ -4978,7 +5043,7 @@ operand interpreter_method_oop_regP(iRegPdst reg) %{
 // Operands to remove register moves in unscaled mode.
 // Match read/write registers with an EncodeP node if neither shift nor add are required.
 operand iRegP2N(iRegPsrc reg) %{
-  predicate(false /* TODO: PPC port MatchDecodeNodes*/&& Universe::narrow_oop_shift() == 0);
+  predicate(false /* TODO: PPC port MatchDecodeNodes*/&& CompressedOops::shift() == 0);
   constraint(ALLOC_IN_RC(bits64_reg_ro));
   match(EncodeP reg);
   format %{ "$reg" %}
@@ -4994,7 +5059,7 @@ operand iRegN2P(iRegNsrc reg) %{
 %}
 
 operand iRegN2P_klass(iRegNsrc reg) %{
-  predicate(Universe::narrow_klass_base() == NULL && Universe::narrow_klass_shift() == 0);
+  predicate(CompressedKlassPointers::base() == NULL && CompressedKlassPointers::shift() == 0);
   constraint(ALLOC_IN_RC(bits32_reg_ro));
   match(DecodeNKlass reg);
   format %{ "$reg" %}
@@ -5063,7 +5128,7 @@ operand indirectNarrow(iRegNsrc reg) %{
 %}
 
 operand indirectNarrow_klass(iRegNsrc reg) %{
-  predicate(Universe::narrow_klass_base() == NULL && Universe::narrow_klass_shift() == 0);
+  predicate(CompressedKlassPointers::base() == NULL && CompressedKlassPointers::shift() == 0);
   constraint(ALLOC_IN_RC(bits64_reg_ro));
   match(DecodeNKlass reg);
   op_cost(100);
@@ -5092,7 +5157,7 @@ operand indOffset16Narrow(iRegNsrc reg, immL16 offset) %{
 %}
 
 operand indOffset16Narrow_klass(iRegNsrc reg, immL16 offset) %{
-  predicate(Universe::narrow_klass_base() == NULL && Universe::narrow_klass_shift() == 0);
+  predicate(CompressedKlassPointers::base() == NULL && CompressedKlassPointers::shift() == 0);
   constraint(ALLOC_IN_RC(bits64_reg_ro));
   match(AddP (DecodeNKlass reg) offset);
   op_cost(100);
@@ -5121,7 +5186,7 @@ operand indOffset16NarrowAlg4(iRegNsrc reg, immL16Alg4 offset) %{
 %}
 
 operand indOffset16NarrowAlg4_klass(iRegNsrc reg, immL16Alg4 offset) %{
-  predicate(Universe::narrow_klass_base() == NULL && Universe::narrow_klass_shift() == 0);
+  predicate(CompressedKlassPointers::base() == NULL && CompressedKlassPointers::shift() == 0);
   constraint(ALLOC_IN_RC(bits64_reg_ro));
   match(AddP (DecodeNKlass reg) offset);
   op_cost(100);
@@ -5850,7 +5915,7 @@ instruct loadN_ac(iRegNdst dst, memory mem) %{
 // Load Compressed Pointer and decode it if narrow_oop_shift == 0.
 instruct loadN2P_unscaled(iRegPdst dst, memory mem) %{
   match(Set dst (DecodeN (LoadN mem)));
-  predicate(_kids[0]->_leaf->as_Load()->is_unordered() && Universe::narrow_oop_shift() == 0);
+  predicate(_kids[0]->_leaf->as_Load()->is_unordered() && CompressedOops::shift() == 0);
   ins_cost(MEMORY_REF_COST);
 
   format %{ "LWZ     $dst, $mem \t// DecodeN (unscaled)" %}
@@ -5861,7 +5926,7 @@ instruct loadN2P_unscaled(iRegPdst dst, memory mem) %{
 
 instruct loadN2P_klass_unscaled(iRegPdst dst, memory mem) %{
   match(Set dst (DecodeNKlass (LoadNKlass mem)));
-  predicate(Universe::narrow_klass_base() == NULL && Universe::narrow_klass_shift() == 0 &&
+  predicate(CompressedKlassPointers::base() == NULL && CompressedKlassPointers::shift() == 0 &&
             _kids[0]->_leaf->as_Load()->is_unordered());
   ins_cost(MEMORY_REF_COST);
 
@@ -6228,7 +6293,7 @@ instruct loadConL_lo(iRegLdst dst, immL src, iRegLdst base) %{
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_ld);
-    int offset = ra_->C->in_scratch_emit_size() ? 0 : _const_toc_offset_hi_node->_const_toc_offset;
+    int offset = ra_->C->output()->in_scratch_emit_size() ? 0 : _const_toc_offset_hi_node->_const_toc_offset;
     __ ld($dst$$Register, MacroAssembler::largeoffset_si16_si16_lo(offset), $base$$Register);
   %}
   ins_pipe(pipe_class_memory);
@@ -6327,7 +6392,7 @@ instruct loadBase(iRegLdst dst) %{
   format %{ "LoadConst $dst, heapbase" %}
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
-    __ load_const_optimized($dst$$Register, Universe::narrow_oop_base(), R0);
+    __ load_const_optimized($dst$$Register, CompressedOops::base(), R0);
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -6375,7 +6440,7 @@ instruct loadConNKlass_hi(iRegNdst dst, immNKlass_NM src) %{
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_addis);
-    intptr_t Csrc = Klass::encode_klass((Klass *)$src$$constant);
+    intptr_t Csrc = CompressedKlassPointers::encode((Klass *)$src$$constant);
     __ lis($dst$$Register, (int)(short)((Csrc >> 16) & 0xffff));
   %}
   ins_pipe(pipe_class_default);
@@ -6407,7 +6472,7 @@ instruct loadConNKlass_lo(iRegNdst dst, immNKlass_NM src1, iRegNsrc src2) %{
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_ori);
-    intptr_t Csrc = Klass::encode_klass((Klass *)$src1$$constant);
+    intptr_t Csrc = CompressedKlassPointers::encode((Klass *)$src1$$constant);
     assert(__ oop_recorder() != NULL, "this assembler needs an OopRecorder");
     int klass_index = __ oop_recorder()->find_index((Klass *)$src1$$constant);
     RelocationHolder rspec = metadata_Relocation::spec(klass_index);
@@ -6435,7 +6500,7 @@ instruct loadConNKlass_Ex(iRegNdst dst, immNKlass src) %{
     nodes->push(m1);
 
     MachNode *m2 = m1;
-    if (!Assembler::is_uimm((jlong)Klass::encode_klass((Klass *)op_src->constant()), 31)) {
+    if (!Assembler::is_uimm((jlong)CompressedKlassPointers::encode((Klass *)op_src->constant()), 31)) {
       // Value might be 1-extended. Mask out these bits.
       m2 = new loadConNKlass_maskNode();
       m2->add_req(NULL, m1);
@@ -6513,7 +6578,7 @@ instruct loadConP_lo(iRegPdst dst, immP_NM src, iRegLdst base) %{
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_ld);
-    int offset = ra_->C->in_scratch_emit_size() ? 0 : _const_toc_offset_hi_node->_const_toc_offset;
+    int offset = ra_->C->output()->in_scratch_emit_size() ? 0 : _const_toc_offset_hi_node->_const_toc_offset;
     __ ld($dst$$Register, MacroAssembler::largeoffset_si16_si16_lo(offset), $base$$Register);
   %}
   ins_pipe(pipe_class_memory);
@@ -6897,25 +6962,6 @@ instruct storeCM_CMS(memory mem, iRegLdst releaseFieldAddr, flagsReg crx) %{
   ins_pipe(pipe_class_memory);
 %}
 
-// Card-mark for CMS garbage collection.
-// This cardmark does an optimization so that it must not always
-// do a releasing store. For this, it needs the constant address of
-// CMSCollectorCardTableBarrierSetBSExt::_requires_release.
-// This constant address is split off here by expand so we can use
-// adlc / matcher functionality to load it from the constant section.
-instruct storeCM_CMS_ExEx(memory mem, immI_0 zero) %{
-  match(Set mem (StoreCM mem zero));
-  predicate(UseConcMarkSweepGC);
-
-  expand %{
-    immL baseImm %{ 0 /* TODO: PPC port (jlong)CMSCollectorCardTableBarrierSetBSExt::requires_release_address() */ %}
-    iRegLdst releaseFieldAddress;
-    flagsReg crx;
-    loadConL_Ex(releaseFieldAddress, baseImm);
-    storeCM_CMS(mem, releaseFieldAddress, crx);
-  %}
-%}
-
 instruct storeCM_G1(memory mem, immI_0 zero) %{
   match(Set mem (StoreCM mem zero));
   predicate(UseG1GC);
@@ -6949,7 +6995,7 @@ instruct encodeP_shift(iRegNdst dst, iRegNsrc src) %{
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_rldicl);
-    __ srdi($dst$$Register, $src$$Register, Universe::narrow_oop_shift() & 0x3f);
+    __ srdi($dst$$Register, $src$$Register, CompressedOops::shift() & 0x3f);
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -6963,7 +7009,7 @@ instruct encodeP_sub(iRegPdst dst, iRegPdst src) %{
   format %{ "SUB     $dst, $src, oop_base \t// encode" %}
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
-    __ sub_const_optimized($dst$$Register, $src$$Register, Universe::narrow_oop_base(), R0);
+    __ sub_const_optimized($dst$$Register, $src$$Register, CompressedOops::base(), R0);
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -6981,7 +7027,7 @@ instruct cond_sub_base(iRegNdst dst, flagsRegSrc crx, iRegPsrc src1) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
     Label done;
     __ beq($crx$$CondRegister, done);
-    __ sub_const_optimized($dst$$Register, $src1$$Register, Universe::narrow_oop_base(), R0);
+    __ sub_const_optimized($dst$$Register, $src1$$Register, CompressedOops::base(), R0);
     __ bind(done);
   %}
   ins_pipe(pipe_class_default);
@@ -7006,13 +7052,13 @@ instruct cond_set_0_oop(iRegNdst dst, flagsRegSrc crx, iRegPsrc src1) %{
 // Disjoint narrow oop base.
 instruct encodeP_Disjoint(iRegNdst dst, iRegPsrc src) %{
   match(Set dst (EncodeP src));
-  predicate(Universe::narrow_oop_base_disjoint());
+  predicate(CompressedOops::base_disjoint());
 
   format %{ "EXTRDI  $dst, $src, #32, #3 \t// encode with disjoint base" %}
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_rldicl);
-    __ rldicl($dst$$Register, $src$$Register, 64-Universe::narrow_oop_shift(), 32);
+    __ rldicl($dst$$Register, $src$$Register, 64-CompressedOops::shift(), 32);
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -7022,8 +7068,8 @@ instruct encodeP_Ex(iRegNdst dst, flagsReg crx, iRegPsrc src) %{
   match(Set dst (EncodeP src));
   effect(TEMP crx);
   predicate(n->bottom_type()->make_ptr()->ptr() != TypePtr::NotNull &&
-            Universe::narrow_oop_shift() != 0 &&
-            Universe::narrow_oop_base_overlaps());
+            CompressedOops::shift() != 0 &&
+            CompressedOops::base_overlaps());
 
   format %{ "EncodeP $dst, $crx, $src \t// postalloc expanded" %}
   postalloc_expand( postalloc_expand_encode_oop(dst, src, crx));
@@ -7033,8 +7079,8 @@ instruct encodeP_Ex(iRegNdst dst, flagsReg crx, iRegPsrc src) %{
 instruct encodeP_not_null_Ex(iRegNdst dst, iRegPsrc src) %{
   match(Set dst (EncodeP src));
   predicate(n->bottom_type()->make_ptr()->ptr() == TypePtr::NotNull &&
-            Universe::narrow_oop_shift() != 0 &&
-            Universe::narrow_oop_base_overlaps());
+            CompressedOops::shift() != 0 &&
+            CompressedOops::base_overlaps());
 
   format %{ "EncodeP $dst, $src\t// $src != Null, postalloc expanded" %}
   postalloc_expand( postalloc_expand_encode_oop_not_null(dst, src) );
@@ -7044,14 +7090,14 @@ instruct encodeP_not_null_Ex(iRegNdst dst, iRegPsrc src) %{
 // TODO: This is the same as encodeP_shift. Merge!
 instruct encodeP_not_null_base_null(iRegNdst dst, iRegPsrc src) %{
   match(Set dst (EncodeP src));
-  predicate(Universe::narrow_oop_shift() != 0 &&
-            Universe::narrow_oop_base() ==0);
+  predicate(CompressedOops::shift() != 0 &&
+            CompressedOops::base() ==0);
 
   format %{ "SRDI    $dst, $src, #3 \t// encodeP, $src != NULL" %}
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_rldicl);
-    __ srdi($dst$$Register, $src$$Register, Universe::narrow_oop_shift() & 0x3f);
+    __ srdi($dst$$Register, $src$$Register, CompressedOops::shift() & 0x3f);
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -7060,7 +7106,7 @@ instruct encodeP_not_null_base_null(iRegNdst dst, iRegPsrc src) %{
 // shift == 0, base == 0
 instruct encodeP_narrow_oop_shift_0(iRegNdst dst, iRegPsrc src) %{
   match(Set dst (EncodeP src));
-  predicate(Universe::narrow_oop_shift() == 0);
+  predicate(CompressedOops::shift() == 0);
 
   format %{ "MR      $dst, $src \t// Ptr->Narrow" %}
   // variable size, 0 or 4.
@@ -7083,7 +7129,7 @@ instruct decodeN_shift(iRegPdst dst, iRegPsrc src) %{
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_rldicr);
-    __ sldi($dst$$Register, $src$$Register, Universe::narrow_oop_shift());
+    __ sldi($dst$$Register, $src$$Register, CompressedOops::shift());
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -7097,7 +7143,7 @@ instruct decodeN_add(iRegPdst dst, iRegPdst src) %{
   format %{ "ADD     $dst, $src, heapbase \t// DecodeN, add oop base" %}
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
-    __ add_const_optimized($dst$$Register, $src$$Register, Universe::narrow_oop_base(), R0);
+    __ add_const_optimized($dst$$Register, $src$$Register, CompressedOops::base(), R0);
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -7118,7 +7164,7 @@ instruct cond_add_base(iRegPdst dst, flagsRegSrc crx, iRegPsrc src) %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
     Label done;
     __ beq($crx$$CondRegister, done);
-    __ add_const_optimized($dst$$Register, $src$$Register, Universe::narrow_oop_base(), R0);
+    __ add_const_optimized($dst$$Register, $src$$Register, CompressedOops::base(), R0);
     __ bind(done);
   %}
   ins_pipe(pipe_class_default);
@@ -7147,8 +7193,8 @@ instruct decodeN_Ex(iRegPdst dst, iRegNsrc src, flagsReg crx) %{
   match(Set dst (DecodeN src));
   predicate((n->bottom_type()->is_oopptr()->ptr() != TypePtr::NotNull &&
              n->bottom_type()->is_oopptr()->ptr() != TypePtr::Constant) &&
-            Universe::narrow_oop_shift() != 0 &&
-            Universe::narrow_oop_base() != 0);
+            CompressedOops::shift() != 0 &&
+            CompressedOops::base() != 0);
   ins_cost(4 * DEFAULT_COST); // Should be more expensive than decodeN_Disjoint_isel_Ex.
   effect(TEMP crx);
 
@@ -7159,14 +7205,14 @@ instruct decodeN_Ex(iRegPdst dst, iRegNsrc src, flagsReg crx) %{
 // shift != 0, base == 0
 instruct decodeN_nullBase(iRegPdst dst, iRegNsrc src) %{
   match(Set dst (DecodeN src));
-  predicate(Universe::narrow_oop_shift() != 0 &&
-            Universe::narrow_oop_base() == 0);
+  predicate(CompressedOops::shift() != 0 &&
+            CompressedOops::base() == 0);
 
   format %{ "SLDI    $dst, $src, #3 \t// DecodeN (zerobased)" %}
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_rldicr);
-    __ sldi($dst$$Register, $src$$Register, Universe::narrow_oop_shift());
+    __ sldi($dst$$Register, $src$$Register, CompressedOops::shift());
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -7183,7 +7229,7 @@ instruct decodeN_mergeDisjoint(iRegPdst dst, iRegNsrc src, iRegLsrc base) %{
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_rldimi);
-    __ rldimi($dst$$Register, $src$$Register, Universe::narrow_oop_shift(), 32-Universe::narrow_oop_shift());
+    __ rldimi($dst$$Register, $src$$Register, CompressedOops::shift(), 32-CompressedOops::shift());
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -7197,7 +7243,7 @@ instruct decodeN_Disjoint_notNull_Ex(iRegPdst dst, iRegNsrc src) %{
   effect(TEMP_DEF dst);
   predicate((n->bottom_type()->is_oopptr()->ptr() == TypePtr::NotNull ||
              n->bottom_type()->is_oopptr()->ptr() == TypePtr::Constant) &&
-            Universe::narrow_oop_base_disjoint());
+            CompressedOops::base_disjoint());
   ins_cost(DEFAULT_COST);
 
   format %{ "MOV     $dst, heapbase \t\n"
@@ -7227,7 +7273,7 @@ instruct decodeN_Disjoint_isel_Ex(iRegPdst dst, iRegNsrc src, flagsReg crx) %{
   effect(TEMP_DEF dst, TEMP crx);
   predicate((n->bottom_type()->is_oopptr()->ptr() != TypePtr::NotNull &&
              n->bottom_type()->is_oopptr()->ptr() != TypePtr::Constant) &&
-            Universe::narrow_oop_base_disjoint() && VM_Version::has_isel());
+            CompressedOops::base_disjoint() && VM_Version::has_isel());
   ins_cost(3 * DEFAULT_COST);
 
   format %{ "DecodeN  $dst, $src \t// decode with disjoint base using isel" %}
@@ -7276,8 +7322,8 @@ instruct decodeN_notNull_addBase_Ex(iRegPdst dst, iRegNsrc src) %{
   match(Set dst (DecodeN src));
   predicate((n->bottom_type()->is_oopptr()->ptr() == TypePtr::NotNull ||
              n->bottom_type()->is_oopptr()->ptr() == TypePtr::Constant) &&
-            Universe::narrow_oop_shift() != 0 &&
-            Universe::narrow_oop_base() != 0);
+            CompressedOops::shift() != 0 &&
+            CompressedOops::base() != 0);
   ins_cost(2 * DEFAULT_COST);
 
   format %{ "DecodeN $dst, $src \t// $src != NULL, postalloc expanded" %}
@@ -7287,7 +7333,7 @@ instruct decodeN_notNull_addBase_Ex(iRegPdst dst, iRegNsrc src) %{
 // Compressed OOPs with narrow_oop_shift == 0.
 instruct decodeN_unscaled(iRegPdst dst, iRegNsrc src) %{
   match(Set dst (DecodeN src));
-  predicate(Universe::narrow_oop_shift() == 0);
+  predicate(CompressedOops::shift() == 0);
   ins_cost(DEFAULT_COST);
 
   format %{ "MR      $dst, $src \t// DecodeN (unscaled)" %}
@@ -7302,7 +7348,7 @@ instruct decodeN_unscaled(iRegPdst dst, iRegNsrc src) %{
 // Convert compressed oop into int for vectors alignment masking.
 instruct decodeN2I_unscaled(iRegIdst dst, iRegNsrc src) %{
   match(Set dst (ConvL2I (CastP2X (DecodeN src))));
-  predicate(Universe::narrow_oop_shift() == 0);
+  predicate(CompressedOops::shift() == 0);
   ins_cost(DEFAULT_COST);
 
   format %{ "MR      $dst, $src \t// (int)DecodeN (unscaled)" %}
@@ -7328,7 +7374,7 @@ instruct encodePKlass_shift(iRegNdst dst, iRegNsrc src) %{
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_rldicl);
-    __ srdi($dst$$Register, $src$$Register, Universe::narrow_klass_shift());
+    __ srdi($dst$$Register, $src$$Register, CompressedKlassPointers::shift());
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -7351,13 +7397,13 @@ instruct encodePKlass_sub_base(iRegPdst dst, iRegLsrc base, iRegPdst src) %{
 // Disjoint narrow oop base.
 instruct encodePKlass_Disjoint(iRegNdst dst, iRegPsrc src) %{
   match(Set dst (EncodePKlass src));
-  predicate(false /* TODO: PPC port Universe::narrow_klass_base_disjoint()*/);
+  predicate(false /* TODO: PPC port CompressedKlassPointers::base_disjoint()*/);
 
   format %{ "EXTRDI  $dst, $src, #32, #3 \t// encode with disjoint base" %}
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_rldicl);
-    __ rldicl($dst$$Register, $src$$Register, 64-Universe::narrow_klass_shift(), 32);
+    __ rldicl($dst$$Register, $src$$Register, 64-CompressedKlassPointers::shift(), 32);
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -7392,13 +7438,13 @@ instruct encodePKlass_not_null_Ex(iRegNdst dst, iRegLsrc base, iRegPsrc src) %{
 // shift != 0, base != 0
 instruct encodePKlass_not_null_ExEx(iRegNdst dst, iRegPsrc src) %{
   match(Set dst (EncodePKlass src));
-  //predicate(Universe::narrow_klass_shift() != 0 &&
-  //          true /* TODO: PPC port Universe::narrow_klass_base_overlaps()*/);
+  //predicate(CompressedKlassPointers::shift() != 0 &&
+  //          true /* TODO: PPC port CompressedKlassPointers::base_overlaps()*/);
 
   //format %{ "EncodePKlass $dst, $src\t// $src != Null, postalloc expanded" %}
   ins_cost(DEFAULT_COST*2);  // Don't count constant.
   expand %{
-    immL baseImm %{ (jlong)(intptr_t)Universe::narrow_klass_base() %}
+    immL baseImm %{ (jlong)(intptr_t)CompressedKlassPointers::base() %}
     iRegLdst base;
     loadConL_Ex(base, baseImm);
     encodePKlass_not_null_Ex(dst, base, src);
@@ -7417,7 +7463,7 @@ instruct decodeNKlass_shift(iRegPdst dst, iRegPsrc src) %{
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_rldicr);
-    __ sldi($dst$$Register, $src$$Register, Universe::narrow_klass_shift());
+    __ sldi($dst$$Register, $src$$Register, CompressedKlassPointers::shift());
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -7470,8 +7516,8 @@ instruct decodeNKlass_notNull_addBase_Ex(iRegPdst dst, iRegLsrc base, iRegNsrc s
 // src != 0, shift != 0, base != 0
 instruct decodeNKlass_notNull_addBase_ExEx(iRegPdst dst, iRegNsrc src) %{
   match(Set dst (DecodeNKlass src));
-  // predicate(Universe::narrow_klass_shift() != 0 &&
-  //           Universe::narrow_klass_base() != 0);
+  // predicate(CompressedKlassPointers::shift() != 0 &&
+  //           CompressedKlassPointers::base() != 0);
 
   //format %{ "DecodeNKlass $dst, $src \t// $src != NULL, expanded" %}
 
@@ -7479,7 +7525,7 @@ instruct decodeNKlass_notNull_addBase_ExEx(iRegPdst dst, iRegNsrc src) %{
   expand %{
     // We add first, then we shift. Like this, we can get along with one register less.
     // But we have to load the base pre-shifted.
-    immL baseImm %{ (jlong)((intptr_t)Universe::narrow_klass_base() >> Universe::narrow_klass_shift()) %}
+    immL baseImm %{ (jlong)((intptr_t)CompressedKlassPointers::base() >> CompressedKlassPointers::shift()) %}
     iRegLdst base;
     loadConL_Ex(base, baseImm);
     decodeNKlass_notNull_addBase_Ex(dst, base, src);
@@ -13678,6 +13724,24 @@ instruct bytes_reverse_int_Ex(iRegIdst dst, iRegIsrc src) %{
   %}
 %}
 
+instruct bytes_reverse_int_vec(iRegIdst dst, iRegIsrc src, vecX tmpV) %{
+  match(Set dst (ReverseBytesI src));
+  predicate(UseVectorByteReverseInstructionsPPC64);
+  effect(TEMP tmpV);
+  ins_cost(DEFAULT_COST*3);
+  size(12);
+  format %{ "MTVSRWZ $tmpV, $src\n"
+            "\tXXBRW   $tmpV, $tmpV\n"
+            "\tMFVSRWZ $dst, $tmpV" %}
+
+  ins_encode %{
+    __ mtvsrwz($tmpV$$VectorSRegister, $src$$Register);
+    __ xxbrw($tmpV$$VectorSRegister, $tmpV$$VectorSRegister);
+    __ mfvsrwz($dst$$Register, $tmpV$$VectorSRegister);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
 instruct bytes_reverse_long_Ex(iRegLdst dst, iRegLsrc src) %{
   match(Set dst (ReverseBytesL src));
   ins_cost(15*DEFAULT_COST);
@@ -13715,6 +13779,24 @@ instruct bytes_reverse_long_Ex(iRegLdst dst, iRegLsrc src) %{
     orL_reg_reg(tmpL6, tmpL3, tmpL4);   // tmpL6 : |h|g| | |d|c| | |
     orL_reg_reg(dst, tmpL5, tmpL6);     // dst   : |h|g|f|e|d|c|b|a|
   %}
+%}
+
+instruct bytes_reverse_long_vec(iRegLdst dst, iRegLsrc src, vecX tmpV) %{
+  match(Set dst (ReverseBytesL src));
+  predicate(UseVectorByteReverseInstructionsPPC64);
+  effect(TEMP tmpV);
+  ins_cost(DEFAULT_COST*3);
+  size(12);
+  format %{ "MTVSRD  $tmpV, $src\n"
+            "\tXXBRD   $tmpV, $tmpV\n"
+            "\tMFVSRD  $dst, $tmpV" %}
+
+  ins_encode %{
+    __ mtvsrd($tmpV$$VectorSRegister, $src$$Register);
+    __ xxbrd($tmpV$$VectorSRegister, $tmpV$$VectorSRegister);
+    __ mfvsrd($dst$$Register, $tmpV$$VectorSRegister);
+  %}
+  ins_pipe(pipe_class_default);
 %}
 
 instruct bytes_reverse_ushort_Ex(iRegIdst dst, iRegIsrc src) %{
@@ -14009,7 +14091,7 @@ instruct repl4S_reg_Ex(iRegLdst dst, iRegIsrc src) %{
 instruct repl4S_immI0(iRegLdst dst, immI_0 zero) %{
   match(Set dst (ReplicateS zero));
   predicate(n->as_Vector()->length() == 4);
-  format %{ "LI      $dst, #0 \t// replicate4C" %}
+  format %{ "LI      $dst, #0 \t// replicate4S" %}
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_addi);
@@ -14021,7 +14103,7 @@ instruct repl4S_immI0(iRegLdst dst, immI_0 zero) %{
 instruct repl4S_immIminus1(iRegLdst dst, immI_minus1 src) %{
   match(Set dst (ReplicateS src));
   predicate(n->as_Vector()->length() == 4);
-  format %{ "LI      $dst, -1 \t// replicate4C" %}
+  format %{ "LI      $dst, -1 \t// replicate4S" %}
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_addi);
@@ -14062,7 +14144,7 @@ instruct repl8S_immIminus1(vecX dst, immI_minus1 src) %{
   match(Set dst (ReplicateS src));
   predicate(n->as_Vector()->length() == 8);
 
-  format %{ "XXLEQV      $dst, $src \t// replicate16B" %}
+  format %{ "XXLEQV      $dst, $src \t// replicate8S" %}
   size(4);
   ins_encode %{
     __ xxleqv($dst$$VectorSRegister, $dst$$VectorSRegister, $dst$$VectorSRegister);
@@ -14083,7 +14165,7 @@ instruct repl2I_reg_Ex(iRegLdst dst, iRegIsrc src) %{
 instruct repl2I_immI0(iRegLdst dst, immI_0 zero) %{
   match(Set dst (ReplicateI zero));
   predicate(n->as_Vector()->length() == 2);
-  format %{ "LI      $dst, #0 \t// replicate4C" %}
+  format %{ "LI      $dst, #0 \t// replicate2I" %}
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_addi);
@@ -14095,7 +14177,7 @@ instruct repl2I_immI0(iRegLdst dst, immI_0 zero) %{
 instruct repl2I_immIminus1(iRegLdst dst, immI_minus1 src) %{
   match(Set dst (ReplicateI src));
   predicate(n->as_Vector()->length() == 2);
-  format %{ "LI      $dst, -1 \t// replicate4C" %}
+  format %{ "LI      $dst, -1 \t// replicate2I" %}
   size(4);
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_addi);
@@ -14418,6 +14500,53 @@ instruct vabs2D_reg(vecX dst, vecX src) %{
   ins_pipe(pipe_class_default);
 %}
 
+// Round Instructions
+instruct roundD_reg(regD dst, regD src, immI8 rmode) %{
+  match(Set dst (RoundDoubleMode src rmode));
+  format %{ "RoundDoubleMode $src,$rmode" %}
+  size(4);
+  ins_encode %{
+    switch ($rmode$$constant) {
+      case RoundDoubleModeNode::rmode_rint:
+        __ frin($dst$$FloatRegister, $src$$FloatRegister);
+        break;
+      case RoundDoubleModeNode::rmode_floor:
+        __ frim($dst$$FloatRegister, $src$$FloatRegister);
+        break;
+      case RoundDoubleModeNode::rmode_ceil:
+        __ frip($dst$$FloatRegister, $src$$FloatRegister);
+        break;
+      default:
+        ShouldNotReachHere();
+    }
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+// Vector Round Instructions
+instruct vround2D_reg(vecX dst, vecX src, immI8 rmode) %{
+  match(Set dst (RoundDoubleModeV src rmode));
+  predicate(n->as_Vector()->length() == 2);
+  format %{ "RoundDoubleModeV $src,$rmode" %}
+  size(4);
+  ins_encode %{
+    switch ($rmode$$constant) {
+      case RoundDoubleModeNode::rmode_rint:
+        __ xvrdpi($dst$$VectorSRegister, $src$$VectorSRegister);
+        break;
+      case RoundDoubleModeNode::rmode_floor:
+        __ xvrdpim($dst$$VectorSRegister, $src$$VectorSRegister);
+        break;
+      case RoundDoubleModeNode::rmode_ceil:
+        __ xvrdpip($dst$$VectorSRegister, $src$$VectorSRegister);
+        break;
+      default:
+        ShouldNotReachHere();
+    }
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
 // Vector Negate Instructions
 
 instruct vneg4F_reg(vecX dst, vecX src) %{
@@ -14669,7 +14798,7 @@ instruct repl2D_reg_Ex(vecX dst, regD src) %{
   ins_pipe(pipe_class_default);
 %}
 
-instruct repl2D_immI0(vecX dst, immI_0 zero) %{
+instruct repl2D_immD0(vecX dst, immD_0 zero) %{
   match(Set dst (ReplicateD zero));
   predicate(n->as_Vector()->length() == 2);
 
@@ -14677,18 +14806,6 @@ instruct repl2D_immI0(vecX dst, immI_0 zero) %{
   size(4);
   ins_encode %{
     __ xxlxor($dst$$VectorSRegister, $dst$$VectorSRegister, $dst$$VectorSRegister);
-  %}
-  ins_pipe(pipe_class_default);
-%}
-
-instruct repl2D_immIminus1(vecX dst, immI_minus1 src) %{
-  match(Set dst (ReplicateD src));
-  predicate(n->as_Vector()->length() == 2);
-
-  format %{ "XXLEQV      $dst, $src \t// replicate16B" %}
-  size(4);
-  ins_encode %{
-    __ xxleqv($dst$$VectorSRegister, $dst$$VectorSRegister, $dst$$VectorSRegister);
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -14754,7 +14871,7 @@ instruct repl2L_immIminus1(vecX dst, immI_minus1 src) %{
   match(Set dst (ReplicateL src));
   predicate(n->as_Vector()->length() == 2);
 
-  format %{ "XXLEQV      $dst, $src \t// replicate16B" %}
+  format %{ "XXLEQV      $dst, $src \t// replicate2L" %}
   size(4);
   ins_encode %{
     __ xxleqv($dst$$VectorSRegister, $dst$$VectorSRegister, $dst$$VectorSRegister);
@@ -15140,6 +15257,44 @@ instruct brNop2() %{
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_mcrf);
     __ brnop2();
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct cacheWB(indirect addr)
+%{
+  match(CacheWB addr);
+
+  ins_cost(100);
+  format %{ "cache writeback, address = $addr" %}
+  ins_encode %{
+    assert($addr->index_position() < 0, "should be");
+    assert($addr$$disp == 0, "should be");
+    __ cache_wb(Address($addr$$base$$Register));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct cacheWBPreSync()
+%{
+  match(CacheWBPreSync);
+
+  ins_cost(0);
+  format %{ "cache writeback presync" %}
+  ins_encode %{
+    __ cache_wbsync(true);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct cacheWBPostSync()
+%{
+  match(CacheWBPostSync);
+
+  ins_cost(100);
+  format %{ "cache writeback postsync" %}
+  ins_encode %{
+    __ cache_wbsync(false);
   %}
   ins_pipe(pipe_class_default);
 %}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,7 @@ public class HeapSummary extends Tool {
    public void run() {
       CollectedHeap heap = VM.getVM().getUniverse().heap();
       VM.Flag[] flags = VM.getVM().getCommandLineFlags();
-      Map flagMap = new HashMap();
+      Map<String, VM.Flag> flagMap = new HashMap<>();
       if (flags == null) {
          System.out.println("WARNING: command line flags are not available");
       } else {
@@ -158,12 +158,6 @@ public class HeapSummary extends Tool {
        long l = getFlagValue("UseTLAB", flagMap);
        if (l == 1L) {
           System.out.println("using thread-local object allocation.");
-       }
-
-       l = getFlagValue("UseConcMarkSweepGC", flagMap);
-       if (l == 1L) {
-          System.out.println("Concurrent Mark-Sweep GC");
-          return;
        }
 
        l = getFlagValue("UseParallelGC", flagMap);

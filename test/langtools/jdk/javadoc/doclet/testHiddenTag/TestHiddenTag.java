@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,33 +46,39 @@ public class TestHiddenTag extends JavadocTester {
     @Test
     public void test1() {
         javadoc("-d", "out1",
-                "--frames",
                 "-sourcepath", testSrc,
                 "-package",
                 "pkg1");
         checkExit(Exit.OK);
 
         checkOutput("pkg1/A.html", true,
-                "<a id=\"visibleField\">",
-                "<a id=\"visibleMethod()\">",
-                "<dt>Direct Known Subclasses:</dt>\n" +
-                "<dd><code><a href=\"A.VisibleInner.html\" title=\"class in pkg1\">" +
-                "A.VisibleInner</a></code>, <code><a href=\"A.VisibleInnerExtendsInvisibleInner.html\" " +
-                "title=\"class in pkg1\">A.VisibleInnerExtendsInvisibleInner</a></code></dd>");
+                """
+                    <section class="detail" id="visibleField">""",
+                """
+                    <section class="detail" id="visibleMethod()">""",
+                """
+                    <dt>Direct Known Subclasses:</dt>
+                    <dd><code><a href="A.VisibleInner.html" title="class in pkg1">A.VisibleInner</a>\
+                    </code>, <code><a href="A.VisibleInnerExtendsInvisibleInner.html" title="class i\
+                    n pkg1">A.VisibleInnerExtendsInvisibleInner</a></code></dd>""");
 
         checkOutput("pkg1/A.html", false,
-                "<a id=\"inVisibleField\">",
-                "<a id=\"inVisibleMethod()\">");
+                "<h3 id=\"inVisibleField\">",
+                """
+                    <h3><span id="inVisibleMethod()">""");
 
         checkOutput("pkg1/A.VisibleInner.html", true,
-                "<code><a href=\"A.html#visibleField\">visibleField</a></code>",
-                "<code><a href=\"A.html#visibleMethod()\">visibleMethod</a></code>",
-                "<h3>Nested classes/interfaces inherited from class&nbsp;pkg1." +
-                "<a href=\"A.html\" title=\"class in pkg1\">A</a></h3>\n" +
-                "<code><a href=\"A.VisibleInner.html\" title=\"class in pkg1\">" +
-                "A.VisibleInner</a>, <a href=\"A.VisibleInnerExtendsInvisibleInner.html\" " +
-                "title=\"class in pkg1\">A.VisibleInnerExtendsInvisibleInner</a></code></li>\n" +
-                "</ul>");
+                """
+                    <code><a href="A.html#visibleField">visibleField</a></code>""",
+                """
+                    <code><a href="A.html#visibleMethod()">visibleMethod</a></code>""",
+                """
+                    <h2 id="nested.classes.inherited.from.class.pkg1.A">Nested classes/interfaces in\
+                    herited from class&nbsp;pkg1.<a href="A.html" title="class in pkg1">A</a></h2>
+                    <code><a href="A.VisibleInner.html" title="class in pkg1">A.VisibleInner</a>, <a\
+                     href="A.VisibleInnerExtendsInvisibleInner.html" title="class in pkg1">A.Visible\
+                    InnerExtendsInvisibleInner</a></code></div>
+                    """);
 
         checkOutput("pkg1/A.VisibleInner.html", false,
                 "../pkg1/A.VisibleInner.html#VisibleInner()",
@@ -80,18 +86,18 @@ public class TestHiddenTag extends JavadocTester {
                 "<a id=\"inVisibleMethod()\">");
 
         checkOutput("pkg1/A.VisibleInnerExtendsInvisibleInner.html", true,
-                "<pre>public static class <span class=\"typeNameLabel\">" +
-                "A.VisibleInnerExtendsInvisibleInner</span>\n" +
-                "extends <a href=\"A.html\" title=\"class in pkg1\">A</a></pre>",
-                "<code><a href=\"A.html#visibleField\">visibleField</a></code></li>",
-                "<code><a href=\"A.html#visibleMethod()\">visibleMethod</a></code>");
+                """
+                    <pre>public static class <span class="type-name-label">A.VisibleInnerExtendsInvisibleInner</span>
+                    extends <a href="A.html" title="class in pkg1">A</a></pre>""",
+                """
+                    <code><a href="A.html#visibleField">visibleField</a></code>""",
+                """
+                    <code><a href="A.html#visibleMethod()">visibleMethod</a></code>""");
 
         checkOutput("pkg1/A.VisibleInnerExtendsInvisibleInner.html", false,
                 "invisibleField",
                 "invisibleMethod",
                 "A.InvisibleInner");
-
-        checkOutput("pkg1/package-frame.html", false, "A.InvisibleInner");
 
         checkOutput("pkg1/package-summary.html", false, "A.InvisibleInner");
 

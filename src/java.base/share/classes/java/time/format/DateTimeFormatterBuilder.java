@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,7 +85,6 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.chrono.ChronoLocalDate;
-import java.time.chrono.ChronoLocalDateTime;
 import java.time.chrono.Chronology;
 import java.time.chrono.Era;
 import java.time.chrono.IsoChronology;
@@ -122,7 +121,6 @@ import java.util.concurrent.ConcurrentMap;
 import sun.text.spi.JavaTimeDateTimePatternProvider;
 import sun.util.locale.provider.CalendarDataUtility;
 import sun.util.locale.provider.LocaleProviderAdapter;
-import sun.util.locale.provider.LocaleResources;
 import sun.util.locale.provider.TimeZoneNameUtility;
 
 /**
@@ -308,7 +306,7 @@ public final class DateTimeFormatterBuilder {
     /**
      * Changes the parse style to be strict for the remainder of the formatter.
      * <p>
-     * Parsing can be strict or lenient - by default its strict.
+     * Parsing can be strict or lenient - by default it is strict.
      * This controls the degree of flexibility in matching the text and sign styles.
      * <p>
      * When used, this method changes the parsing to be strict from this point onwards.
@@ -327,7 +325,7 @@ public final class DateTimeFormatterBuilder {
      * Changes the parse style to be lenient for the remainder of the formatter.
      * Note that case sensitivity is set separately to this method.
      * <p>
-     * Parsing can be strict or lenient - by default its strict.
+     * Parsing can be strict or lenient - by default it is strict.
      * This controls the degree of flexibility in matching the text and sign styles.
      * Applications calling this method should typically also call {@link #parseCaseInsensitive()}.
      * <p>
@@ -3202,7 +3200,7 @@ public final class DateTimeFormatterBuilder {
                 char ch = text.charAt(pos++);
                 int digit = context.getDecimalStyle().convertToDigit(ch);
                 if (digit < 0) {
-                    if (pos < minEndPos) {
+                    if (pos <= minEndPos) {
                         return ~position;  // need at least min width digits
                     }
                     pos--;
@@ -3871,7 +3869,11 @@ public final class DateTimeFormatterBuilder {
             if (offsetSecs == null) {
                 return false;
             }
-            String gmtText = "GMT";  // TODO: get localized version of 'GMT'
+            String key = "timezone.gmtZeroFormat";
+            String gmtText = DateTimeTextProvider.getLocalizedResource(key, context.getLocale());
+            if (gmtText == null) {
+                gmtText = "GMT";  // Default to "GMT"
+            }
             buf.append(gmtText);
             int totalSecs = Math.toIntExact(offsetSecs);
             if (totalSecs != 0) {
@@ -3917,7 +3919,11 @@ public final class DateTimeFormatterBuilder {
         public int parse(DateTimeParseContext context, CharSequence text, int position) {
             int pos = position;
             int end = text.length();
-            String gmtText = "GMT";  // TODO: get localized version of 'GMT'
+            String key = "timezone.gmtZeroFormat";
+            String gmtText = DateTimeTextProvider.getLocalizedResource(key, context.getLocale());
+            if (gmtText == null) {
+                gmtText = "GMT";  // Default to "GMT"
+            }
             if (!context.subSequenceEquals(text, pos, gmtText, 0, gmtText.length())) {
                     return ~position;
                 }
@@ -4117,7 +4123,8 @@ public final class DateTimeFormatterBuilder {
             }
             Locale locale = context.getLocale();
             boolean isCaseSensitive = context.isCaseSensitive();
-            Set<String> regionIds = ZoneRulesProvider.getAvailableZoneIds();
+            Set<String> regionIds = new HashSet<>(ZoneRulesProvider.getAvailableZoneIds());
+            Set<String> nonRegionIds = new HashSet<>(64);
             int regionIdsSize = regionIds.size();
 
             Map<Locale, Entry<Integer, SoftReference<PrefixTree>>> cached =
@@ -4133,7 +4140,8 @@ public final class DateTimeFormatterBuilder {
                 zoneStrings = TimeZoneNameUtility.getZoneStrings(locale);
                 for (String[] names : zoneStrings) {
                     String zid = names[0];
-                    if (!regionIds.contains(zid)) {
+                    if (!regionIds.remove(zid)) {
+                        nonRegionIds.add(zid);
                         continue;
                     }
                     tree.add(zid, zid);    // don't convert zid -> metazone
@@ -4143,12 +4151,27 @@ public final class DateTimeFormatterBuilder {
                         tree.add(names[i], zid);
                     }
                 }
+
+                // add names for provider's custom ids
+                final PrefixTree t = tree;
+                regionIds.stream()
+                    .filter(zid -> !zid.startsWith("Etc") && !zid.startsWith("GMT"))
+                    .forEach(cid -> {
+                        String[] cidNames = TimeZoneNameUtility.retrieveDisplayNames(cid, locale);
+                        int i = textStyle == TextStyle.FULL ? 1 : 2;
+                        for (; i < cidNames.length; i += 2) {
+                            if (cidNames[i] != null && !cidNames[i].isEmpty()) {
+                                t.add(cidNames[i], cid);
+                            }
+                        }
+                    });
+
                 // if we have a set of preferred zones, need a copy and
                 // add the preferred zones again to overwrite
                 if (preferredZones != null) {
                     for (String[] names : zoneStrings) {
                         String zid = names[0];
-                        if (!preferredZones.contains(zid) || !regionIds.contains(zid)) {
+                        if (!preferredZones.contains(zid) || nonRegionIds.contains(zid)) {
                             continue;
                         }
                         int i = textStyle == TextStyle.FULL ? 1 : 2;
@@ -4237,9 +4260,15 @@ public final class DateTimeFormatterBuilder {
                 char nextNextChar = text.charAt(position + 1);
                 if (context.charEquals(nextChar, 'U') && context.charEquals(nextNextChar, 'T')) {
                     if (length >= position + 3 && context.charEquals(text.charAt(position + 2), 'C')) {
-                        return parseOffsetBased(context, text, position, position + 3, OffsetIdPrinterParser.INSTANCE_ID_ZERO);
+                        // There are localized zone texts that start with "UTC", e.g.
+                        // "UTC\u221210:00" (MINUS SIGN instead of HYPHEN-MINUS) in French.
+                        // Exclude those ZoneText cases.
+                        if (!(this instanceof ZoneTextPrinterParser)) {
+                            return parseOffsetBased(context, text, position, position + 3, OffsetIdPrinterParser.INSTANCE_ID_ZERO);
+                        }
+                    } else {
+                        return parseOffsetBased(context, text, position, position + 2, OffsetIdPrinterParser.INSTANCE_ID_ZERO);
                     }
-                    return parseOffsetBased(context, text, position, position + 2, OffsetIdPrinterParser.INSTANCE_ID_ZERO);
                 } else if (context.charEquals(nextChar, 'G') && length >= position + 3 &&
                         context.charEquals(nextNextChar, 'M') && context.charEquals(text.charAt(position + 2), 'T')) {
                     if (length >= position + 4 && context.charEquals(text.charAt(position + 3), '0')) {

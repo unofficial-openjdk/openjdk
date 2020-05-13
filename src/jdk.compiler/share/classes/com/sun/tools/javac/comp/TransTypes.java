@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -567,6 +567,13 @@ public class TransTypes extends TreeTranslator {
         result = tree;
     }
 
+    public void visitBindingPattern(JCBindingPattern tree) {
+        if (tree.vartype != null) {
+            tree.vartype = translate(tree.vartype, null);
+        }
+        result = tree;
+    }
+
     public void visitSwitchExpression(JCSwitchExpression tree) {
         Type selsuper = types.supertype(tree.selector.type);
         boolean enumSwitch = selsuper != null &&
@@ -620,11 +627,14 @@ public class TransTypes extends TreeTranslator {
 
     @Override
     public void visitBreak(JCBreak tree) {
-        if (tree.isValueBreak()) {
-            tree.value = translate(tree.value, erasure(tree.value.type));
-            tree.value.type = erasure(tree.value.type);
-            tree.value = retype(tree.value, tree.value.type, pt);
-        }
+        result = tree;
+    }
+
+    @Override
+    public void visitYield(JCYield tree) {
+        tree.value = translate(tree.value, erasure(tree.value.type));
+        tree.value.type = erasure(tree.value.type);
+        tree.value = retype(tree.value, tree.value.type, pt);
         result = tree;
     }
 
@@ -777,7 +787,7 @@ public class TransTypes extends TreeTranslator {
 
     public void visitTypeTest(JCInstanceOf tree) {
         tree.expr = translate(tree.expr, null);
-        tree.clazz = translate(tree.clazz, null);
+        tree.pattern = translate(tree.pattern, null);
         result = tree;
     }
 

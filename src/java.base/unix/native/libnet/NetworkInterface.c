@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@
 #include <netinet/in6_var.h>
 #include <sys/ndd_var.h>
 #include <sys/kinfo.h>
+#include <strings.h>
 #endif
 
 #if defined(__solaris__)
@@ -238,6 +239,7 @@ JNIEXPORT jobject JNICALL Java_java_net_NetworkInterface_getByName0
 
     ifs = enumInterfaces(env);
     if (ifs == NULL) {
+        (*env)->ReleaseStringUTFChars(env, name, name_utf);
         return NULL;
     }
 
@@ -320,33 +322,9 @@ JNIEXPORT jobject JNICALL Java_java_net_NetworkInterface_getByIndex0
     return obj;
 }
 
-/*
- * Class:     java_net_NetworkInterface
- * Method:    getByInetAddress0
- * Signature: (Ljava/net/InetAddress;)Ljava/net/NetworkInterface;
- */
-JNIEXPORT jobject JNICALL Java_java_net_NetworkInterface_getByInetAddress0
-  (JNIEnv *env, jclass cls, jobject iaObj)
-{
-    netif *ifs, *curr;
-    jobject obj = NULL;
-    jboolean match = JNI_FALSE;
-    int family = getInetAddress_family(env, iaObj);
-    JNU_CHECK_EXCEPTION_RETURN(env, NULL);
-
-    if (family == java_net_InetAddress_IPv4) {
-        family = AF_INET;
-    } else if (family == java_net_InetAddress_IPv6) {
-        family = AF_INET6;
-    } else {
-        return NULL; // Invalid family
-    }
-    ifs = enumInterfaces(env);
-    if (ifs == NULL) {
-        return NULL;
-    }
-
-    curr = ifs;
+// Return the interface in ifs that iaObj is bound to, if any - otherwise NULL
+static netif* find_bound_interface(JNIEnv *env, netif* ifs, jobject iaObj, int family) {
+    netif* curr = ifs;
     while (curr != NULL) {
         netaddr *addrP = curr->addr;
 
@@ -359,11 +337,10 @@ JNIEXPORT jobject JNICALL Java_java_net_NetworkInterface_getByInetAddress0
                         ((struct sockaddr_in *)addrP->addr)->sin_addr.s_addr);
                     int address2 = getInetAddress_addr(env, iaObj);
                     if ((*env)->ExceptionCheck(env)) {
-                        goto cleanup;
+                        return NULL;
                     }
                     if (address1 == address2) {
-                        match = JNI_TRUE;
-                        break;
+                        return curr;
                     }
                 } else if (family == AF_INET6) {
                     jbyte *bytes = (jbyte *)&(
@@ -383,30 +360,117 @@ JNIEXPORT jobject JNICALL Java_java_net_NetworkInterface_getByInetAddress0
                         i++;
                     }
                     if (i >= 16) {
-                        match = JNI_TRUE;
-                        break;
+                        return curr;
                     }
                 }
             }
 
-            if (match) {
-                break;
-            }
             addrP = addrP->next;
-        }
-
-        if (match) {
-            break;
         }
         curr = curr->next;
     }
 
-    // if found create a NetworkInterface
-    if (match) {
-        obj = createNetworkInterface(env, curr);
+    return NULL;
+}
+
+/*
+ * Class:     java_net_NetworkInterface
+ * Method:    boundInetAddress0
+ * Signature: (Ljava/net/InetAddress;)boundInetAddress;
+ */
+JNIEXPORT jboolean JNICALL Java_java_net_NetworkInterface_boundInetAddress0
+    (JNIEnv *env, jclass cls, jobject iaObj)
+{
+    netif *ifs = NULL;
+    jboolean bound = JNI_FALSE;
+    int sock;
+
+    int family = getInetAddress_family(env, iaObj);
+    JNU_CHECK_EXCEPTION_RETURN(env, JNI_FALSE);
+
+    if (family == java_net_InetAddress_IPv4) {
+        family = AF_INET;
+    } else if (family == java_net_InetAddress_IPv6) {
+        family = AF_INET6;
+    } else {
+        return JNI_FALSE; // Invalid family
+    }
+
+    if (family == AF_INET) {
+        sock = openSocket(env, AF_INET);
+        if (sock < 0 && (*env)->ExceptionOccurred(env)) {
+            return JNI_FALSE;
+        }
+
+        // enumerate IPv4 addresses
+        if (sock >= 0) {
+            ifs = enumIPv4Interfaces(env, sock, ifs);
+            close(sock);
+
+            if ((*env)->ExceptionOccurred(env)) {
+                goto cleanup;
+            }
+        }
+        if (find_bound_interface(env, ifs, iaObj, family) != NULL)
+            bound = JNI_TRUE;
+    } else if (ipv6_available()) {
+        // If IPv6 is available then enumerate IPv6 addresses.
+        // User can disable ipv6 explicitly by -Djava.net.preferIPv4Stack=true,
+        // so we have to call ipv6_available()
+        sock = openSocket(env, AF_INET6);
+        if (sock < 0) {
+            return JNI_FALSE;
+        }
+
+        ifs = enumIPv6Interfaces(env, sock, ifs);
+        close(sock);
+
+        if ((*env)->ExceptionOccurred(env)) {
+            goto cleanup;
+        }
+
+        if (find_bound_interface(env, ifs, iaObj, family) != NULL)
+            bound = JNI_TRUE;
     }
 
 cleanup:
+    freeif(ifs);
+
+    return bound;
+}
+
+/*
+ * Class:     java_net_NetworkInterface
+ * Method:    getByInetAddress0
+ * Signature: (Ljava/net/InetAddress;)Ljava/net/NetworkInterface;
+ */
+JNIEXPORT jobject JNICALL Java_java_net_NetworkInterface_getByInetAddress0
+  (JNIEnv *env, jclass cls, jobject iaObj)
+{
+    netif *ifs, *curr;
+    jobject obj = NULL;
+    int family = getInetAddress_family(env, iaObj);
+    JNU_CHECK_EXCEPTION_RETURN(env, NULL);
+
+    if (family == java_net_InetAddress_IPv4) {
+        family = AF_INET;
+    } else if (family == java_net_InetAddress_IPv6) {
+        family = AF_INET6;
+    } else {
+        return NULL; // Invalid family
+    }
+    ifs = enumInterfaces(env);
+    if (ifs == NULL) {
+        return NULL;
+    }
+
+    curr = find_bound_interface(env, ifs, iaObj, family);
+
+    // if found create a NetworkInterface
+    if (curr != NULL) {
+        obj = createNetworkInterface(env, curr);
+    }
+
     // release the interface list
     freeif(ifs);
 
@@ -807,17 +871,19 @@ static netif *enumInterfaces(JNIEnv *env) {
     int sock;
 
     sock = openSocket(env, AF_INET);
-    if (sock < 0) {
+    if (sock < 0 && (*env)->ExceptionOccurred(env)) {
         return NULL;
     }
 
     // enumerate IPv4 addresses
-    ifs = enumIPv4Interfaces(env, sock, NULL);
-    close(sock);
+    if (sock >= 0) {
+        ifs = enumIPv4Interfaces(env, sock, ifs);
+        close(sock);
 
-    // return partial list if an exception occurs in the middle of process ???
-    if (ifs == NULL && (*env)->ExceptionOccurred(env)) {
-        return NULL;
+        if ((*env)->ExceptionOccurred(env)) {
+            freeif(ifs);
+            return NULL;
+        }
     }
 
     // If IPv6 is available then enumerate IPv6 addresses.
@@ -1076,9 +1142,9 @@ static int openSocket(JNIEnv *env, int proto) {
     int sock;
 
     if ((sock = socket(proto, SOCK_DGRAM, 0)) < 0) {
-        // If EPROTONOSUPPORT is returned it means we don't have
-        // support for this proto so don't throw an exception.
-        if (errno != EPROTONOSUPPORT) {
+        // If we lack support for this address family or protocol,
+        // don't throw an exception.
+        if (errno != EPROTONOSUPPORT && errno != EAFNOSUPPORT) {
             JNU_ThrowByNameWithMessageAndLastError
                 (env, JNU_JAVANETPKG "SocketException", "Socket creation failed");
         }
@@ -1099,7 +1165,7 @@ static int openSocketWithFallback(JNIEnv *env, const char *ifname) {
     int sock;
 
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        if (errno == EPROTONOSUPPORT) {
+        if (errno == EPROTONOSUPPORT || errno == EAFNOSUPPORT) {
             if ((sock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
                 JNU_ThrowByNameWithMessageAndLastError
                     (env, JNU_JAVANETPKG "SocketException", "IPV6 Socket creation failed");
@@ -1328,6 +1394,10 @@ static int getFlags(int sock, const char *ifname, int *flags) {
 /** AIX **/
 #if defined(_AIX)
 
+/* seems getkerninfo is guarded by _KERNEL in the system headers */
+/* see net/proto_uipc.h */
+int getkerninfo(int, char *, int *, int32long64_t);
+
 /*
  * Opens a socket for further ioctl calls. Tries AF_INET socket first and
  * if it fails return AF_INET6 socket.
@@ -1336,7 +1406,7 @@ static int openSocketWithFallback(JNIEnv *env, const char *ifname) {
     int sock;
 
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        if (errno == EPROTONOSUPPORT) {
+        if (errno == EPROTONOSUPPORT || errno == EAFNOSUPPORT) {
             if ((sock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
                 JNU_ThrowByNameWithMessageAndLastError
                     (env, JNU_JAVANETPKG "SocketException", "IPV6 Socket creation failed");
@@ -1547,7 +1617,7 @@ static int getMacAddress
         return -1;
     }
 
-    if (getkerninfo(KINFO_NDD, nddp, &size, 0) < 0) {
+    if (getkerninfo(KINFO_NDD, (char*) nddp, &size, 0) < 0) {
         perror("getkerninfo 2");
         free(nddp);
         return -1;
@@ -1614,7 +1684,7 @@ static int openSocketWithFallback(JNIEnv *env, const char *ifname) {
     struct lifreq if2;
 
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        if (errno == EPROTONOSUPPORT) {
+        if (errno == EPROTONOSUPPORT || errno == EAFNOSUPPORT) {
             if ((sock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
                 JNU_ThrowByNameWithMessageAndLastError
                     (env, JNU_JAVANETPKG "SocketException", "IPV6 Socket creation failed");
@@ -1814,6 +1884,7 @@ static int getMacFromDevice
     int fd;
     dl_phys_addr_req_t dlpareq;
     dl_phys_addr_ack_t *dlpaack;
+    dl_error_ack_t     *dlerack;
     struct strbuf msg;
     char buf[128];
     int flags = 0;
@@ -1848,6 +1919,19 @@ static int getMacFromDevice
         JNU_ThrowByNameWithMessageAndLastError
             (env, JNU_JAVANETPKG "SocketException", "getmsg() failed");
         return -1;
+    }
+
+    if (dlpaack->dl_primitive == DL_ERROR_ACK) {
+        dlerack = (dl_error_ack_t *)buf;
+        if (dlerack->dl_error_primitive != DL_PHYS_ADDR_REQ) {
+            JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+                           "Couldn't obtain physical address\n");
+            return -1;
+        }
+        if (dlerack->dl_errno == DL_UNSUPPORTED) {
+            // fallback to lookup in the ARP table
+            return 0;
+        }
     }
 
     if (msg.len < DL_PHYS_ADDR_ACK_SIZE || dlpaack->dl_primitive != DL_PHYS_ADDR_ACK) {
@@ -1965,7 +2049,7 @@ static int openSocketWithFallback(JNIEnv *env, const char *ifname) {
     int sock;
 
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        if (errno == EPROTONOSUPPORT) {
+        if (errno == EPROTONOSUPPORT || errno == EAFNOSUPPORT) {
             if ((sock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
                 JNU_ThrowByNameWithMessageAndLastError
                     (env, JNU_JAVANETPKG "SocketException", "IPV6 Socket creation failed");

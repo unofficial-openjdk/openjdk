@@ -47,7 +47,6 @@ package com.sun.org.apache.bcel.internal.generic;
  * @see InstructionHandle
  * @see InstructionList
  * @see InstructionTargeter
- * @version $Id: TargetLostException.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public final class TargetLostException extends Exception {
 

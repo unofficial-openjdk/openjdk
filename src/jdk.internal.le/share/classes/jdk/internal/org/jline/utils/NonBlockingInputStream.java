@@ -4,7 +4,7 @@
  * This software is distributable under the BSD license. See the terms of the
  * BSD license in the documentation provided with this software.
  *
- * http://www.opensource.org/licenses/bsd-license.php
+ * https://opensource.org/licenses/BSD-3-Clause
  */
 package jdk.internal.org.jline.utils;
 
@@ -76,6 +76,16 @@ public abstract class NonBlockingInputStream extends InputStream {
         }
         b[off] = (byte)c;
         return 1;
+    }
+
+    public int readBuffered(byte[] b) throws IOException {
+        if (b == null) {
+            throw new NullPointerException();
+        } else if (b.length == 0) {
+            return 0;
+        } else {
+            return super.read(b, 0, b.length);
+        }
     }
 
     /**

@@ -68,10 +68,7 @@ public:
   virtual ~GrowableElement() {}
   virtual address getCacheValue()          =0;
   virtual bool equals(GrowableElement* e)  =0;
-  virtual bool lessThan(GrowableElement *e)=0;
   virtual GrowableElement *clone()         =0;
-  virtual void oops_do(OopClosure* f)      =0;
-  virtual void metadata_do(void f(Metadata*)) =0;
 };
 
 class GrowableCache {
@@ -110,18 +107,10 @@ public:
   int find(GrowableElement* e);
   // append a copy of the element to the end of the collection, notify listener
   void append(GrowableElement* e);
-  // insert a copy of the element using lessthan(), notify listener
-  void insert(GrowableElement* e);
   // remove the element at index, notify listener
   void remove (int index);
   // clear out all elements and release all heap space, notify listener
   void clear();
-  // apply f to every element and update the cache
-  void oops_do(OopClosure* f);
-  // walk metadata to preserve for RedefineClasses
-  void metadata_do(void f(Metadata*));
-  // update the cache after a full gc
-  void gc_epilogue();
 };
 
 
@@ -143,7 +132,7 @@ public:
   ~JvmtiBreakpointCache() {}
 
   void initialize(void *this_obj, void listener_fun(void *, address*) ) {
-    _cache.initialize(this_obj,listener_fun);
+    _cache.initialize(this_obj, listener_fun);
   }
 
   int length()                          { return _cache.length(); }
@@ -151,10 +140,6 @@ public:
   int find(JvmtiBreakpoint& e)          { return _cache.find((GrowableElement *) &e); }
   void append(JvmtiBreakpoint& e)       { _cache.append((GrowableElement *) &e); }
   void remove (int index)               { _cache.remove(index); }
-  void clear()                          { _cache.clear(); }
-  void oops_do(OopClosure* f)           { _cache.oops_do(f); }
-  void metadata_do(void f(Metadata*))   { _cache.metadata_do(f); }
-  void gc_epilogue()                    { _cache.gc_epilogue(); }
 };
 
 
@@ -174,16 +159,14 @@ class JvmtiBreakpoint : public GrowableElement {
 private:
   Method*               _method;
   int                   _bci;
-  Bytecodes::Code       _orig_bytecode;
-  oop                   _class_holder;  // keeps _method memory from being deallocated
+  oop*                  _class_holder;  // keeps _method memory from being deallocated
 
 public:
-  JvmtiBreakpoint();
+  JvmtiBreakpoint() : _method(NULL), _bci(0), _class_holder(NULL) {}
   JvmtiBreakpoint(Method* m_method, jlocation location);
+  virtual ~JvmtiBreakpoint();
   bool equals(JvmtiBreakpoint& bp);
-  bool lessThan(JvmtiBreakpoint &bp);
   void copy(JvmtiBreakpoint& bp);
-  bool is_valid();
   address getBcp() const;
   void each_method_version_do(method_action meth_act);
   void set();
@@ -194,17 +177,7 @@ public:
 
   // GrowableElement implementation
   address getCacheValue()         { return getBcp(); }
-  bool lessThan(GrowableElement* e) { Unimplemented(); return false; }
   bool equals(GrowableElement* e) { return equals((JvmtiBreakpoint&) *e); }
-  void oops_do(OopClosure* f)     {
-    // Mark the method loader as live so the Method* class loader doesn't get
-    // unloaded and Method* memory reclaimed.
-    f->do_oop(&_class_holder);
-  }
-  void metadata_do(void f(Metadata*)) {
-    // walk metadata to preserve for RedefineClasses
-    f(_method);
-  }
 
   GrowableElement *clone()        {
     JvmtiBreakpoint *bp = new JvmtiBreakpoint();
@@ -243,21 +216,16 @@ private:
   void set_at_safepoint(JvmtiBreakpoint& bp);
   void clear_at_safepoint(JvmtiBreakpoint& bp);
 
-  static void do_element(GrowableElement *e);
-
 public:
   JvmtiBreakpoints(void listener_fun(void *, address *));
   ~JvmtiBreakpoints();
 
   int length();
-  void oops_do(OopClosure* f);
-  void metadata_do(void f(Metadata*));
   void print();
 
   int  set(JvmtiBreakpoint& bp);
   int  clear(JvmtiBreakpoint& bp);
   void clearall_in_class_at_safepoint(Klass* klass);
-  void gc_epilogue();
 };
 
 
@@ -285,7 +253,6 @@ private:
   // It exists only to make is_breakpoint fast.
   static address          *_breakpoint_list;
   static inline void set_breakpoint_list(address *breakpoint_list) { _breakpoint_list = breakpoint_list; }
-  static inline address *get_breakpoint_list()                     { return _breakpoint_list; }
 
   // Listener for the GrowableCache in _jvmti_breakpoints, updates _breakpoint_list.
   static void listener_fun(void *this_obj, address *cache);
@@ -296,10 +263,6 @@ public:
 
   // lazily create _jvmti_breakpoints and _breakpoint_list
   static JvmtiBreakpoints& get_jvmti_breakpoints();
-
-  static void oops_do(OopClosure* f);
-  static void metadata_do(void f(Metadata*)) NOT_JVMTI_RETURN;
-  static void gc_epilogue();
 };
 
 ///////////////////////////////////////////////////////////////
@@ -331,8 +294,6 @@ public:
 
   VMOp_Type type() const { return VMOp_ChangeBreakpoints; }
   void doit();
-  void oops_do(OopClosure* f);
-  void metadata_do(void f(Metadata*));
 };
 
 
@@ -445,14 +406,14 @@ class JvmtiDeferredEvent {
     TYPE_NONE,
     TYPE_COMPILED_METHOD_LOAD,
     TYPE_COMPILED_METHOD_UNLOAD,
-    TYPE_DYNAMIC_CODE_GENERATED
+    TYPE_DYNAMIC_CODE_GENERATED,
+    TYPE_CLASS_UNLOAD
   } Type;
 
   Type _type;
   union {
     nmethod* compiled_method_load;
     struct {
-      nmethod* nm;
       jmethodID method_id;
       const void* code_begin;
     } compiled_method_unload;
@@ -461,6 +422,9 @@ class JvmtiDeferredEvent {
       const void* code_begin;
       const void* code_end;
     } dynamic_code_generated;
+    struct {
+      const char* name;
+    } class_unload;
   } _event_data;
 
   JvmtiDeferredEvent(Type t) : _type(t) {}
@@ -472,14 +436,22 @@ class JvmtiDeferredEvent {
   // Factory methods
   static JvmtiDeferredEvent compiled_method_load_event(nmethod* nm)
     NOT_JVMTI_RETURN_(JvmtiDeferredEvent());
-  static JvmtiDeferredEvent compiled_method_unload_event(nmethod* nm,
+  static JvmtiDeferredEvent compiled_method_unload_event(
       jmethodID id, const void* code) NOT_JVMTI_RETURN_(JvmtiDeferredEvent());
   static JvmtiDeferredEvent dynamic_code_generated_event(
       const char* name, const void* begin, const void* end)
           NOT_JVMTI_RETURN_(JvmtiDeferredEvent());
+  static JvmtiDeferredEvent class_unload_event(
+      const char* name) NOT_JVMTI_RETURN_(JvmtiDeferredEvent());
 
   // Actually posts the event.
   void post() NOT_JVMTI_RETURN;
+  void post_compiled_method_load_event(JvmtiEnv* env) NOT_JVMTI_RETURN;
+  void run_nmethod_entry_barriers() NOT_JVMTI_RETURN;
+  // Sweeper support to keep nmethods from being zombied while in the queue.
+  void nmethods_do(CodeBlobClosure* cf) NOT_JVMTI_RETURN;
+  // GC support to keep nmethod from being unloaded while in the queue.
+  void oops_do(OopClosure* f, CodeBlobClosure* cf) NOT_JVMTI_RETURN;
 };
 
 /**
@@ -487,7 +459,7 @@ class JvmtiDeferredEvent {
  * and posts the events.  The Service_lock is required to be held
  * when operating on the queue.
  */
-class JvmtiDeferredEventQueue : AllStatic {
+class JvmtiDeferredEventQueue : public CHeapObj<mtInternal> {
   friend class JvmtiDeferredEvent;
  private:
   class QueueNode : public CHeapObj<mtInternal> {
@@ -499,20 +471,30 @@ class JvmtiDeferredEventQueue : AllStatic {
     QueueNode(const JvmtiDeferredEvent& event)
       : _event(event), _next(NULL) {}
 
-    const JvmtiDeferredEvent& event() const { return _event; }
+    JvmtiDeferredEvent& event() { return _event; }
     QueueNode* next() const { return _next; }
 
     void set_next(QueueNode* next) { _next = next; }
   };
 
-  static QueueNode* _queue_head;             // Hold Service_lock to access
-  static QueueNode* _queue_tail;             // Hold Service_lock to access
+  QueueNode* _queue_head;
+  QueueNode* _queue_tail;
 
  public:
-  // Must be holding Service_lock when calling these
-  static bool has_events() NOT_JVMTI_RETURN_(false);
-  static void enqueue(const JvmtiDeferredEvent& event) NOT_JVMTI_RETURN;
-  static JvmtiDeferredEvent dequeue() NOT_JVMTI_RETURN_(JvmtiDeferredEvent());
+  JvmtiDeferredEventQueue() : _queue_head(NULL), _queue_tail(NULL) {}
+
+  bool has_events() NOT_JVMTI_RETURN_(false);
+  JvmtiDeferredEvent dequeue() NOT_JVMTI_RETURN_(JvmtiDeferredEvent());
+
+  // Post all events in the queue for the current Jvmti environment
+  void post(JvmtiEnv* env) NOT_JVMTI_RETURN;
+  void enqueue(JvmtiDeferredEvent event) NOT_JVMTI_RETURN;
+  void run_nmethod_entry_barriers();
+
+  // Sweeper support to keep nmethods from being zombied while in the queue.
+  void nmethods_do(CodeBlobClosure* cf) NOT_JVMTI_RETURN;
+  // GC support to keep nmethod from being unloaded while in the queue.
+  void oops_do(OopClosure* f, CodeBlobClosure* cf) NOT_JVMTI_RETURN;
 };
 
 // Utility macro that checks for NULL pointers:

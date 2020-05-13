@@ -26,6 +26,7 @@
 #define SHARE_RUNTIME_THREADSMR_INLINE_HPP
 
 #include "runtime/atomic.hpp"
+#include "memory/iterator.hpp"
 #include "runtime/prefetch.inline.hpp"
 #include "runtime/thread.inline.hpp"
 #include "runtime/threadSMR.hpp"
@@ -56,7 +57,7 @@ inline void ThreadsList::threads_do(T *cl) const {
 // they are called by public inline update_tlh_stats() below:
 
 inline void ThreadsSMRSupport::add_tlh_times(uint add_value) {
-  Atomic::add(add_value, &_tlh_times);
+  Atomic::add(&_tlh_times, add_value);
 }
 
 inline void ThreadsSMRSupport::inc_tlh_cnt() {
@@ -70,7 +71,7 @@ inline void ThreadsSMRSupport::update_tlh_time_max(uint new_value) {
       // No need to update max value so we're done.
       break;
     }
-    if (Atomic::cmpxchg(new_value, &_tlh_time_max, cur_value) == cur_value) {
+    if (Atomic::cmpxchg(&_tlh_time_max, cur_value, new_value) == cur_value) {
       // Updated max value so we're done. Otherwise try it all again.
       break;
     }
@@ -78,11 +79,11 @@ inline void ThreadsSMRSupport::update_tlh_time_max(uint new_value) {
 }
 
 inline ThreadsList* ThreadsSMRSupport::get_java_thread_list() {
-  return (ThreadsList*)OrderAccess::load_acquire(&_java_thread_list);
+  return (ThreadsList*)Atomic::load_acquire(&_java_thread_list);
 }
 
 inline bool ThreadsSMRSupport::is_a_protected_JavaThread_with_lock(JavaThread *thread) {
-  MutexLockerEx ml(Threads_lock->owned_by_self() ? NULL : Threads_lock);
+  MutexLocker ml(Threads_lock->owned_by_self() ? NULL : Threads_lock);
   return is_a_protected_JavaThread(thread);
 }
 

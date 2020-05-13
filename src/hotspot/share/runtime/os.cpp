@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,10 +38,10 @@
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
-#ifdef ASSERT
 #include "memory/guardedMemory.hpp"
-#endif
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
+#include "oops/compressedOops.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
@@ -87,12 +87,6 @@ julong os::free_bytes = 0;          // # of bytes freed
 static size_t cur_malloc_words = 0;  // current size for MallocMaxTestWords
 
 DEBUG_ONLY(bool os::_mutex_init_done = false;)
-
-void os_init_globals() {
-  // Called from init_globals().
-  // See Threads::create_vm() in thread.cpp, and init.cpp.
-  os::init_globals();
-}
 
 static time_t get_timezone(const struct tm* time_struct) {
 #if defined(_ALLBSD_SOURCE)
@@ -279,12 +273,25 @@ static bool conc_path_file_and_check(char *buffer, char *printbuffer, size_t pri
   return false;
 }
 
+// Frees all memory allocated on the heap for the
+// supplied array of arrays of chars (a), where n
+// is the number of elements in the array.
+static void free_array_of_char_arrays(char** a, size_t n) {
+      while (n > 0) {
+          n--;
+          if (a[n] != NULL) {
+            FREE_C_HEAP_ARRAY(char, a[n]);
+          }
+      }
+      FREE_C_HEAP_ARRAY(char*, a);
+}
+
 bool os::dll_locate_lib(char *buffer, size_t buflen,
                         const char* pname, const char* fname) {
   bool retval = false;
 
   size_t fullfnamelen = strlen(JNI_LIB_PREFIX) + strlen(fname) + strlen(JNI_LIB_SUFFIX);
-  char* fullfname = (char*)NEW_C_HEAP_ARRAY(char, fullfnamelen + 1, mtInternal);
+  char* fullfname = NEW_C_HEAP_ARRAY(char, fullfnamelen + 1, mtInternal);
   if (dll_build_name(fullfname, fullfnamelen + 1, fname)) {
     const size_t pnamelen = pname ? strlen(pname) : 0;
 
@@ -299,10 +306,10 @@ bool os::dll_locate_lib(char *buffer, size_t buflen,
       }
     } else if (strchr(pname, *os::path_separator()) != NULL) {
       // A list of paths. Search for the path that contains the library.
-      int n;
-      char** pelements = split_path(pname, &n);
+      size_t n;
+      char** pelements = split_path(pname, &n, fullfnamelen);
       if (pelements != NULL) {
-        for (int i = 0; i < n; i++) {
+        for (size_t i = 0; i < n; i++) {
           char* path = pelements[i];
           // Really shouldn't be NULL, but check can't hurt.
           size_t plen = (path == NULL) ? 0 : strlen(path);
@@ -314,12 +321,7 @@ bool os::dll_locate_lib(char *buffer, size_t buflen,
           if (retval) break;
         }
         // Release the storage allocated by split_path.
-        for (int i = 0; i < n; i++) {
-          if (pelements[i] != NULL) {
-            FREE_C_HEAP_ARRAY(char, pelements[i]);
-          }
-        }
-        FREE_C_HEAP_ARRAY(char*, pelements);
+        free_array_of_char_arrays(pelements, n);
       }
     } else {
       // A definite path.
@@ -360,11 +362,33 @@ static void signal_thread_entry(JavaThread* thread, TRAPS) {
 
     switch (sig) {
       case SIGBREAK: {
+#if INCLUDE_SERVICES
         // Check if the signal is a trigger to start the Attach Listener - in that
         // case don't print stack traces.
-        if (!DisableAttachMechanism && AttachListener::is_init_trigger()) {
-          continue;
+        if (!DisableAttachMechanism) {
+          // Attempt to transit state to AL_INITIALIZING.
+          AttachListenerState cur_state = AttachListener::transit_state(AL_INITIALIZING, AL_NOT_INITIALIZED);
+          if (cur_state == AL_INITIALIZING) {
+            // Attach Listener has been started to initialize. Ignore this signal.
+            continue;
+          } else if (cur_state == AL_NOT_INITIALIZED) {
+            // Start to initialize.
+            if (AttachListener::is_init_trigger()) {
+              // Attach Listener has been initialized.
+              // Accept subsequent request.
+              continue;
+            } else {
+              // Attach Listener could not be started.
+              // So we need to transit the state to AL_NOT_INITIALIZED.
+              AttachListener::set_state(AL_NOT_INITIALIZED);
+            }
+          } else if (AttachListener::check_socket_file()) {
+            // Attach Listener has been started, but unix domain socket file
+            // does not exist. So restart Attach Listener.
+            continue;
+          }
         }
+#endif
         // Print stack traces
         // Any SIGBREAK operations added here should make sure to flush
         // the output stream (e.g. tty->flush()) after output.  See 4803766.
@@ -468,7 +492,7 @@ void os::initialize_jdk_signal_support(TRAPS) {
                             thread_oop,
                             CHECK);
 
-    { MutexLocker mu(Threads_lock);
+    { MutexLocker mu(THREAD, Threads_lock);
       JavaThread* signal_thread = new JavaThread(&signal_thread_entry);
 
       // At this point it may be possible that no osthread was created for the
@@ -511,14 +535,6 @@ void* os::native_java_library() {
   if (_native_java_library == NULL) {
     char buffer[JVM_MAXPATHLEN];
     char ebuf[1024];
-
-    // Try to load verify dll first. In 1.3 java dll depends on it and is not
-    // always able to find it when the loading executable is outside the JDK.
-    // In order to keep working with 1.2 we ignore any loading errors.
-    if (dll_locate_lib(buffer, sizeof(buffer), Arguments::get_dll_dir(),
-                       "verify")) {
-      dll_load(buffer, ebuf, sizeof(ebuf));
-    }
 
     // Load java dll
     if (dll_locate_lib(buffer, sizeof(buffer), Arguments::get_dll_dir(),
@@ -652,7 +668,7 @@ static bool has_reached_max_malloc_test_peak(size_t alloc_size) {
     if ((cur_malloc_words + words) > MallocMaxTestWords) {
       return true;
     }
-    Atomic::add(words, &cur_malloc_words);
+    Atomic::add(&cur_malloc_words, words);
   }
   return false;
 }
@@ -704,12 +720,15 @@ void* os::malloc(size_t size, MEMFLAGS memflags, const NativeCallStack& stack) {
   // Wrap memory with guard
   GuardedMemory guarded(ptr, size + nmt_header_size);
   ptr = guarded.get_user_ptr();
-#endif
+
   if ((intptr_t)ptr == (intptr_t)MallocCatchPtr) {
     log_warning(malloc, free)("os::malloc caught, " SIZE_FORMAT " bytes --> " PTR_FORMAT, size, p2i(ptr));
     breakpoint();
   }
-  debug_only(if (paranoid) verify_memory(ptr));
+  if (paranoid) {
+    verify_memory(ptr);
+  }
+#endif
 
   // we do not track guard memory
   return MemTracker::record_malloc((address)ptr, size, memflags, stack, level);
@@ -736,8 +755,8 @@ void* os::realloc(void *memblock, size_t size, MEMFLAGS memflags, const NativeCa
   NOT_PRODUCT(inc_stat_counter(&num_mallocs, 1));
   NOT_PRODUCT(inc_stat_counter(&alloc_bytes, size));
    // NMT support
-  void* membase = MemTracker::record_free(memblock);
   NMT_TrackingLevel level = MemTracker::tracking_level();
+  void* membase = MemTracker::record_free(memblock, level);
   size_t  nmt_header_size = MemTracker::malloc_header_size(level);
   void* ptr = ::realloc(membase, size + nmt_header_size);
   return MemTracker::record_malloc(ptr, size, memflags, stack, level);
@@ -760,10 +779,8 @@ void* os::realloc(void *memblock, size_t size, MEMFLAGS memflags, const NativeCa
     // Guard's user data contains NMT header
     size_t memblock_size = guarded.get_user_size() - MemTracker::malloc_header_size(memblock);
     memcpy(ptr, memblock, MIN2(size, memblock_size));
-    if (paranoid) verify_memory(MemTracker::malloc_base(ptr));
-    if ((intptr_t)ptr == (intptr_t)MallocCatchPtr) {
-      log_warning(malloc, free)("os::realloc caught, " SIZE_FORMAT " bytes --> " PTR_FORMAT, size, p2i(ptr));
-      breakpoint();
+    if (paranoid) {
+      verify_memory(MemTracker::malloc_base(ptr));
     }
     os::free(memblock);
   }
@@ -771,7 +788,7 @@ void* os::realloc(void *memblock, size_t size, MEMFLAGS memflags, const NativeCa
 #endif
 }
 
-
+// handles NULL pointers
 void  os::free(void *memblock) {
   NOT_PRODUCT(inc_stat_counter(&num_frees, 1));
 #ifdef ASSERT
@@ -780,7 +797,7 @@ void  os::free(void *memblock) {
     log_warning(malloc, free)("os::free caught " PTR_FORMAT, p2i(memblock));
     breakpoint();
   }
-  void* membase = MemTracker::record_free(memblock);
+  void* membase = MemTracker::record_free(memblock, MemTracker::tracking_level());
   verify_memory(membase);
 
   GuardedMemory guarded(membase);
@@ -789,7 +806,7 @@ void  os::free(void *memblock) {
   membase = guarded.release_for_freeing();
   ::free(membase);
 #else
-  void* membase = MemTracker::record_free(memblock);
+  void* membase = MemTracker::record_free(memblock, MemTracker::tracking_level());
   ::free(membase);
 #endif
 }
@@ -838,7 +855,7 @@ int os::random() {
   while (true) {
     unsigned int seed = _rand_seed;
     unsigned int rand = random_helper(seed);
-    if (Atomic::cmpxchg(rand, &_rand_seed, seed) == seed) {
+    if (Atomic::cmpxchg(&_rand_seed, seed, rand) == seed) {
       return static_cast<int>(rand);
     }
   }
@@ -857,7 +874,7 @@ int os::random() {
 
 void os::start_thread(Thread* thread) {
   // guard suspend/resume
-  MutexLockerEx ml(thread->SR_lock(), Mutex::_no_safepoint_check_flag);
+  MutexLocker ml(thread->SR_lock(), Mutex::_no_safepoint_check_flag);
   OSThread* osthread = thread->osthread();
   osthread->set_state(RUNNABLE);
   pd_start_thread(thread);
@@ -872,6 +889,8 @@ void os::abort(bool dump_core) {
 
 void os::print_hex_dump(outputStream* st, address start, address end, int unitsize) {
   assert(unitsize == 1 || unitsize == 2 || unitsize == 4 || unitsize == 8, "just checking");
+
+  start = align_down(start, unitsize);
 
   int cols = 0;
   int cols_per_line = 0;
@@ -907,6 +926,14 @@ void os::print_hex_dump(outputStream* st, address start, address end, int unitsi
     }
   }
   st->cr();
+}
+
+void os::print_dhm(outputStream* st, const char* startStr, long sec) {
+  long days    = sec/86400;
+  long hours   = (sec/3600) - (days * 24);
+  long minutes = (sec/60) - (days * 1440) - (hours * 60);
+  if (startStr == NULL) startStr = "";
+  st->print_cr("%s %ld days %ld:%02ld hours", startStr, days, hours, minutes);
 }
 
 void os::print_instructions(outputStream* st, address pc, int unitsize) {
@@ -989,10 +1016,9 @@ void os::print_date_and_time(outputStream *st, char* buf, size_t buflen) {
   }
 
   double t = os::elapsedTime();
-  // NOTE: It tends to crash after a SEGV if we want to printf("%f",...) in
-  //       Linux. Must be a bug in glibc ? Workaround is to round "t" to int
-  //       before printf. We lost some precision, but who cares?
+  // NOTE: a crash using printf("%f",...) on Linux was historically noted here.
   int eltime = (int)t;  // elapsed time in seconds
+  int eltimeFraction = (int) ((t - eltime) * 1000000);
 
   // print elapsed time in a human-readable format:
   int eldays = eltime / secs_per_day;
@@ -1002,7 +1028,7 @@ void os::print_date_and_time(outputStream *st, char* buf, size_t buflen) {
   int elmins = (eltime - day_secs - hour_secs) / secs_per_min;
   int minute_secs = elmins * secs_per_min;
   int elsecs = (eltime - day_secs - hour_secs - minute_secs);
-  st->print_cr(" elapsed time: %d seconds (%dd %dh %dm %ds)", eltime, eldays, elhours, elmins, elsecs);
+  st->print_cr(" elapsed time: %d.%06d seconds (%dd %dh %dm %ds)", eltime, eltimeFraction, eldays, elhours, elmins, elsecs);
 }
 
 
@@ -1021,8 +1047,9 @@ bool os::is_readable_pointer(const void* p) {
 }
 
 bool os::is_readable_range(const void* from, const void* to) {
-  for (address p = align_down((address)from, min_page_size()); p < to; p += min_page_size()) {
-    if (!is_readable_pointer(p)) {
+  if ((uintptr_t)from >= (uintptr_t)to) return false;
+  for (uintptr_t p = align_down((uintptr_t)from, min_page_size()); p < (uintptr_t)to; p += min_page_size()) {
+    if (!is_readable_pointer((const void*)p)) {
       return false;
     }
   }
@@ -1048,35 +1075,9 @@ void os::print_location(outputStream* st, intptr_t x, bool verbose) {
   }
 
   // Check if addr points into Java heap.
-  if (Universe::heap()->is_in(addr)) {
-    oop o = oopDesc::oop_or_null(addr);
-    if (o != NULL) {
-      if ((HeapWord*)o == (HeapWord*)addr) {
-        st->print(INTPTR_FORMAT " is an oop: ", p2i(addr));
-      } else {
-        st->print(INTPTR_FORMAT " is pointing into object: " , p2i(addr));
-      }
-      o->print_on(st);
-      return;
-    }
-  } else if (Universe::heap()->is_in_reserved(addr)) {
-    st->print_cr(INTPTR_FORMAT " is an unallocated location in the heap", p2i(addr));
+  if (Universe::heap()->print_location(st, addr)) {
     return;
   }
-
-  // Compressed oop needs to be decoded first.
-#ifdef _LP64
-  if (UseCompressedOops && ((uintptr_t)addr &~ (uintptr_t)max_juint) == 0) {
-    narrowOop narrow_oop = (narrowOop)(uintptr_t)addr;
-    oop o = oopDesc::decode_oop_raw(narrow_oop);
-
-    if (oopDesc::is_valid(o)) {
-      st->print(UINT32_FORMAT " is a compressed pointer to object: ", narrow_oop);
-      o->print_on(st);
-      return;
-    }
-  }
-#endif
 
   bool accessible = is_readable_pointer(addr);
 
@@ -1112,7 +1113,7 @@ void os::print_location(outputStream* st, intptr_t x, bool verbose) {
     }
     // If the addr is in the stack region for this thread then report that
     // and print thread info
-    if (thread->on_local_stack(addr)) {
+    if (thread->is_in_full_stack(addr)) {
       st->print_cr(INTPTR_FORMAT " is pointing into the stack for thread: "
                    INTPTR_FORMAT, p2i(addr), p2i(thread));
       if (verbose) thread->print_on(st);
@@ -1139,7 +1140,7 @@ void os::print_location(outputStream* st, intptr_t x, bool verbose) {
 #ifdef _LP64
   if (UseCompressedClassPointers && ((uintptr_t)addr &~ (uintptr_t)max_juint) == 0) {
     narrowKlass narrow_klass = (narrowKlass)(uintptr_t)addr;
-    Klass* k = Klass::decode_klass_raw(narrow_klass);
+    Klass* k = CompressedKlassPointers::decode_raw(narrow_klass);
 
     if (Klass::is_valid(k)) {
       st->print_cr(UINT32_FORMAT " is a compressed pointer to class: " INTPTR_FORMAT, narrow_klass, p2i((HeapWord*)k));
@@ -1222,9 +1223,6 @@ char* os::format_boot_path(const char* format_string,
     }
 
     char* formatted_path = NEW_C_HEAP_ARRAY(char, formatted_path_len + 1, mtInternal);
-    if (formatted_path == NULL) {
-        return NULL;
-    }
 
     // Create boot classpath from format, substituting separator chars and
     // java home directory.
@@ -1308,26 +1306,28 @@ bool os::set_boot_path(char fileSep, char pathSep) {
   return false;
 }
 
-/*
- * Splits a path, based on its separator, the number of
- * elements is returned back in n.
- * It is the callers responsibility to:
- *   a> check the value of n, and n may be 0.
- *   b> ignore any empty path elements
- *   c> free up the data.
- */
-char** os::split_path(const char* path, int* n) {
-  *n = 0;
-  if (path == NULL || strlen(path) == 0) {
+// Splits a path, based on its separator, the number of
+// elements is returned back in "elements".
+// file_name_length is used as a modifier for each path's
+// length when compared to JVM_MAXPATHLEN. So if you know
+// each returned path will have something appended when
+// in use, you can pass the length of that in
+// file_name_length, to ensure we detect if any path
+// exceeds the maximum path length once prepended onto
+// the sub-path/file name.
+// It is the callers responsibility to:
+//   a> check the value of "elements", which may be 0.
+//   b> ignore any empty path elements
+//   c> free up the data.
+char** os::split_path(const char* path, size_t* elements, size_t file_name_length) {
+  *elements = (size_t)0;
+  if (path == NULL || strlen(path) == 0 || file_name_length == (size_t)NULL) {
     return NULL;
   }
   const char psepchar = *os::path_separator();
-  char* inpath = (char*)NEW_C_HEAP_ARRAY(char, strlen(path) + 1, mtInternal);
-  if (inpath == NULL) {
-    return NULL;
-  }
+  char* inpath = NEW_C_HEAP_ARRAY(char, strlen(path) + 1, mtInternal);
   strcpy(inpath, path);
-  int count = 1;
+  size_t count = 1;
   char* p = strchr(inpath, psepchar);
   // Get a count of elements to allocate memory
   while (p != NULL) {
@@ -1335,30 +1335,29 @@ char** os::split_path(const char* path, int* n) {
     p++;
     p = strchr(p, psepchar);
   }
-  char** opath = (char**) NEW_C_HEAP_ARRAY(char*, count, mtInternal);
-  if (opath == NULL) {
-    return NULL;
-  }
+
+  char** opath = NEW_C_HEAP_ARRAY(char*, count, mtInternal);
 
   // do the actual splitting
   p = inpath;
-  for (int i = 0 ; i < count ; i++) {
+  for (size_t i = 0 ; i < count ; i++) {
     size_t len = strcspn(p, os::path_separator());
-    if (len > JVM_MAXPATHLEN) {
-      return NULL;
+    if (len + file_name_length > JVM_MAXPATHLEN) {
+      // release allocated storage before exiting the vm
+      free_array_of_char_arrays(opath, i++);
+      vm_exit_during_initialization("The VM tried to use a path that exceeds the maximum path length for "
+                                    "this system. Review path-containing parameters and properties, such as "
+                                    "sun.boot.library.path, to identify potential sources for this path.");
     }
     // allocate the string and add terminator storage
-    char* s  = (char*)NEW_C_HEAP_ARRAY(char, len + 1, mtInternal);
-    if (s == NULL) {
-      return NULL;
-    }
+    char* s = NEW_C_HEAP_ARRAY(char, len + 1, mtInternal);
     strncpy(s, p, len);
     s[len] = '\0';
     opath[i] = s;
     p += len + 1;
   }
   FREE_C_HEAP_ARRAY(char, inpath);
-  *n = count;
+  *elements = count;
   return opath;
 }
 
@@ -1749,6 +1748,7 @@ bool os::uncommit_memory(char* addr, size_t bytes) {
 bool os::release_memory(char* addr, size_t bytes) {
   bool res;
   if (MemTracker::tracking_level() > NMT_minimal) {
+    // Note: Tracker contains a ThreadCritical.
     Tracker tkr(Tracker::release);
     res = pd_release_memory(addr, bytes);
     if (res) {
@@ -1805,6 +1805,35 @@ void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
   pd_realign_memory(addr, bytes, alignment_hint);
 }
 
+char* os::reserve_memory_special(size_t size, size_t alignment,
+                                 char* addr, bool executable) {
+
+  assert(is_aligned(addr, alignment), "Unaligned request address");
+
+  char* result = pd_reserve_memory_special(size, alignment, addr, executable);
+  if (result != NULL) {
+    // The memory is committed
+    MemTracker::record_virtual_memory_reserve_and_commit((address)result, size, CALLER_PC);
+  }
+
+  return result;
+}
+
+bool os::release_memory_special(char* addr, size_t bytes) {
+  bool res;
+  if (MemTracker::tracking_level() > NMT_minimal) {
+    // Note: Tracker contains a ThreadCritical.
+    Tracker tkr(Tracker::release);
+    res = pd_release_memory_special(addr, bytes);
+    if (res) {
+      tkr.record((address)addr, bytes);
+    }
+  } else {
+    res = pd_release_memory_special(addr, bytes);
+  }
+  return res;
+}
+
 #ifndef _WINDOWS
 /* try to switch state from state "from" to state "to"
  * returns the state set after the method is complete
@@ -1812,7 +1841,7 @@ void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
 os::SuspendResume::State os::SuspendResume::switch_state(os::SuspendResume::State from,
                                                          os::SuspendResume::State to)
 {
-  os::SuspendResume::State result = Atomic::cmpxchg(to, &_state, from);
+  os::SuspendResume::State result = Atomic::cmpxchg(&_state, from, to);
   if (result == from) {
     // success
     return to;
@@ -1820,3 +1849,15 @@ os::SuspendResume::State os::SuspendResume::switch_state(os::SuspendResume::Stat
   return result;
 }
 #endif
+
+// Convenience wrapper around naked_short_sleep to allow for longer sleep
+// times. Only for use by non-JavaThreads.
+void os::naked_sleep(jlong millis) {
+  assert(!Thread::current()->is_Java_thread(), "not for use by JavaThreads");
+  const jlong limit = 999;
+  while (millis > limit) {
+    naked_short_sleep(limit);
+    millis -= limit;
+  }
+  naked_short_sleep(millis);
+}

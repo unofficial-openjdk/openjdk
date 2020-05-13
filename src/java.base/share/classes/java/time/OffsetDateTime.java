@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -184,6 +184,7 @@ public final class OffsetDateTime
     /**
      * Serialization version.
      */
+    @java.io.Serial
     private static final long serialVersionUID = 2287754244819255394L;
 
     /**
@@ -1654,8 +1655,14 @@ public final class OffsetDateTime
     public long until(Temporal endExclusive, TemporalUnit unit) {
         OffsetDateTime end = OffsetDateTime.from(endExclusive);
         if (unit instanceof ChronoUnit) {
-            end = end.withOffsetSameInstant(offset);
-            return dateTime.until(end.dateTime, unit);
+            OffsetDateTime start = this;
+            try {
+                end = end.withOffsetSameInstant(offset);
+            } catch (DateTimeException ex) {
+                // end may be out of valid range. Adjust to end's offset.
+                start = withOffsetSameInstant(end.offset);
+            }
+            return start.dateTime.until(end.dateTime, unit);
         }
         return unit.between(this, end);
     }
@@ -1925,6 +1932,7 @@ public final class OffsetDateTime
      *
      * @return the instance of {@code Ser}, not null
      */
+    @java.io.Serial
     private Object writeReplace() {
         return new Ser(Ser.OFFSET_DATE_TIME_TYPE, this);
     }
@@ -1935,6 +1943,7 @@ public final class OffsetDateTime
      * @param s the stream to read
      * @throws InvalidObjectException always
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream s) throws InvalidObjectException {
         throw new InvalidObjectException("Deserialization via serialization delegate");
     }

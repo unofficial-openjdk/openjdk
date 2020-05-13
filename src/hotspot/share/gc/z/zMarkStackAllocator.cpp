@@ -70,7 +70,7 @@ uintptr_t ZMarkStackSpace::alloc_space(size_t size) {
       return 0;
     }
 
-    const uintptr_t prev_top = Atomic::cmpxchg(new_top, &_top, top);
+    const uintptr_t prev_top = Atomic::cmpxchg(&_top, top, new_top);
     if (prev_top == top) {
       // Success
       return top;
@@ -110,8 +110,8 @@ uintptr_t ZMarkStackSpace::expand_and_alloc_space(size_t size) {
 
   // Increment top before end to make sure another
   // thread can't steal out newly expanded space.
-  addr = Atomic::add(size, &_top) - size;
-  Atomic::add(expand_size, &_end);
+  addr = Atomic::fetch_and_add(&_top, size);
+  Atomic::add(&_end, expand_size);
 
   return addr;
 }
@@ -166,7 +166,7 @@ ZMarkStackMagazine* ZMarkStackAllocator::create_magazine_from_space(uintptr_t ad
 
 ZMarkStackMagazine* ZMarkStackAllocator::alloc_magazine() {
   // Try allocating from the free list first
-  ZMarkStackMagazine* const magazine = _freelist.pop_atomic();
+  ZMarkStackMagazine* const magazine = _freelist.pop();
   if (magazine != NULL) {
     return magazine;
   }
@@ -181,5 +181,5 @@ ZMarkStackMagazine* ZMarkStackAllocator::alloc_magazine() {
 }
 
 void ZMarkStackAllocator::free_magazine(ZMarkStackMagazine* magazine) {
-  _freelist.push_atomic(magazine);
+  _freelist.push(magazine);
 }

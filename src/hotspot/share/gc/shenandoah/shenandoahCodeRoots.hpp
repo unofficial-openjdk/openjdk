@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2017, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -26,21 +27,26 @@
 
 #include "code/codeCache.hpp"
 #include "gc/shenandoah/shenandoahSharedVariables.hpp"
+#include "gc/shenandoah/shenandoahLock.hpp"
+#include "gc/shenandoah/shenandoahPadding.hpp"
 #include "memory/allocation.hpp"
 #include "memory/iterator.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 class ShenandoahHeap;
 class ShenandoahHeapRegion;
-class ShenandoahCodeRootsLock;
+class ShenandoahNMethodTable;
+class ShenandoahNMethodTableSnapshot;
+class WorkGang;
 
 class ShenandoahParallelCodeHeapIterator {
   friend class CodeCache;
 private:
   CodeHeap*     _heap;
-  DEFINE_PAD_MINUS_SIZE(0, DEFAULT_CACHE_LINE_SIZE, sizeof(volatile int));
+  shenandoah_padding(0);
   volatile int  _claimed_idx;
   volatile bool _finished;
-  DEFINE_PAD_MINUS_SIZE(1, DEFAULT_CACHE_LINE_SIZE, 0);
+  shenandoah_padding(1);
 public:
   ShenandoahParallelCodeHeapIterator(CodeHeap* heap);
   void parallel_blobs_do(CodeBlobClosure* f);
@@ -51,49 +57,22 @@ class ShenandoahParallelCodeCacheIterator {
 private:
   ShenandoahParallelCodeHeapIterator* _iters;
   int                       _length;
+
+  NONCOPYABLE(ShenandoahParallelCodeCacheIterator);
+
 public:
   ShenandoahParallelCodeCacheIterator(const GrowableArray<CodeHeap*>* heaps);
   ~ShenandoahParallelCodeCacheIterator();
   void parallel_blobs_do(CodeBlobClosure* f);
 };
 
-// ShenandoahNMethod tuple records the internal locations of oop slots within the nmethod.
-// This allows us to quickly scan the oops without doing the nmethod-internal scans, that
-// sometimes involves parsing the machine code. Note it does not record the oops themselves,
-// because it would then require handling these tuples as the new class of roots.
-class ShenandoahNMethod : public CHeapObj<mtGC> {
-private:
-  nmethod* _nm;
-  oop**    _oops;
-  int      _oops_count;
-
-public:
-  ShenandoahNMethod(nmethod *nm, GrowableArray<oop*>* oops);
-  ~ShenandoahNMethod();
-
-  nmethod* nm() {
-    return _nm;
-  }
-
-  bool has_cset_oops(ShenandoahHeap* heap);
-
-  void assert_alive_and_correct() NOT_DEBUG_RETURN;
-  void assert_same_oops(GrowableArray<oop*>* oops) NOT_DEBUG_RETURN;
-
-  static bool find_with_nmethod(void* nm, ShenandoahNMethod* other) {
-    return other->_nm == nm;
-  }
-};
-
 class ShenandoahCodeRootsIterator {
   friend class ShenandoahCodeRoots;
 protected:
-  ShenandoahHeap* _heap;
   ShenandoahParallelCodeCacheIterator _par_iterator;
   ShenandoahSharedFlag _seq_claimed;
-  DEFINE_PAD_MINUS_SIZE(0, DEFAULT_CACHE_LINE_SIZE, sizeof(volatile size_t));
-  volatile size_t _claimed;
-  DEFINE_PAD_MINUS_SIZE(1, DEFAULT_CACHE_LINE_SIZE, 0);
+  ShenandoahNMethodTableSnapshot* _table_snapshot;
+
 protected:
   ShenandoahCodeRootsIterator();
   ~ShenandoahCodeRootsIterator();
@@ -117,84 +96,31 @@ public:
   void possibly_parallel_blobs_do(CodeBlobClosure* f);
 };
 
-class ShenandoahCodeRoots : public CHeapObj<mtGC> {
+class ShenandoahCodeRoots : public AllStatic {
   friend class ShenandoahHeap;
-  friend class ShenandoahCodeRootsLock;
   friend class ShenandoahCodeRootsIterator;
 
 public:
   static void initialize();
-  static void add_nmethod(nmethod* nm);
-  static void remove_nmethod(nmethod* nm);
+  static void register_nmethod(nmethod* nm);
+  static void unregister_nmethod(nmethod* nm);
+  static void flush_nmethod(nmethod* nm);
 
-  /**
-   * Provides the iterator over all nmethods in the code cache that have oops.
-   * @return
-   */
-  static ShenandoahAllCodeRootsIterator iterator();
+  static ShenandoahNMethodTable* table() {
+    return _nmethod_table;
+  }
 
-  /**
-   * Provides the iterator over nmethods that have at least one oop in collection set.
-   * @return
-   */
-  static ShenandoahCsetCodeRootsIterator cset_iterator();
+  // Concurrent nmethod unloading support
+  static void unlink(WorkGang* workers, bool unloading_occurred);
+  static void purge(WorkGang* workers);
+  static void arm_nmethods();
+  static void disarm_nmethods();
+  static int  disarmed_value()         { return _disarmed_value; }
+  static int* disarmed_value_address() { return &_disarmed_value; }
 
 private:
-  struct PaddedLock {
-    DEFINE_PAD_MINUS_SIZE(0, DEFAULT_CACHE_LINE_SIZE, sizeof(volatile int));
-    volatile int _lock;
-    DEFINE_PAD_MINUS_SIZE(1, DEFAULT_CACHE_LINE_SIZE, 0);
-  };
-
-  static PaddedLock _recorded_nms_lock;
-  static GrowableArray<ShenandoahNMethod*>* _recorded_nms;
-
-  static void acquire_lock(bool write) {
-    volatile int* loc = &_recorded_nms_lock._lock;
-    if (write) {
-      while ((OrderAccess::load_acquire(loc) != 0) ||
-             Atomic::cmpxchg(-1, loc, 0) != 0) {
-        SpinPause();
-      }
-      assert (*loc == -1, "acquired for write");
-    } else {
-      while (true) {
-        int cur = OrderAccess::load_acquire(loc);
-        if (cur >= 0) {
-          if (Atomic::cmpxchg(cur + 1, loc, cur) == cur) {
-            // Success!
-            assert (*loc > 0, "acquired for read");
-            return;
-          }
-        }
-        SpinPause();
-      }
-    }
-  }
-
-  static void release_lock(bool write) {
-    volatile int* loc = &ShenandoahCodeRoots::_recorded_nms_lock._lock;
-    if (write) {
-      OrderAccess::release_store_fence(loc, 0);
-    } else {
-      Atomic::dec(loc);
-    }
-  }
-};
-
-// Very simple unranked read-write lock
-class ShenandoahCodeRootsLock : public StackObj {
-  friend class ShenandoahCodeRoots;
-private:
-  const bool _write;
-public:
-  ShenandoahCodeRootsLock(bool write) : _write(write) {
-    ShenandoahCodeRoots::acquire_lock(write);
-  }
-
-  ~ShenandoahCodeRootsLock() {
-    ShenandoahCodeRoots::release_lock(_write);
-  }
+  static ShenandoahNMethodTable* _nmethod_table;
+  static int                     _disarmed_value;
 };
 
 #endif // SHARE_GC_SHENANDOAH_SHENANDOAHCODEROOTS_HPP

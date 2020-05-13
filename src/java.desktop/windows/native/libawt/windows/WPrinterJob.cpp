@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -118,10 +118,7 @@ Java_sun_print_PrintServiceLookupProvider_getDefaultPrinterName(JNIEnv *env,
 }
 
 
-JNIEXPORT jobjectArray JNICALL
-Java_sun_print_PrintServiceLookupProvider_getAllPrinterNames(JNIEnv *env,
-                                                          jobject peer)
-{
+static jobjectArray getPrinterNames(JNIEnv *env, DWORD flags) {
     TRY;
 
     DWORD cbNeeded = 0;
@@ -136,10 +133,10 @@ Java_sun_print_PrintServiceLookupProvider_getAllPrinterNames(JNIEnv *env,
     jobjectArray nameArray;
 
     try {
-        ::EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS,
+        ::EnumPrinters(flags,
                        NULL, 4, NULL, 0, &cbNeeded, &cReturned);
         pPrinterEnum = new BYTE[cbNeeded];
-        ::EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS,
+        ::EnumPrinters(flags,
                        NULL, 4, pPrinterEnum, cbNeeded, &cbNeeded,
                        &cReturned);
 
@@ -174,28 +171,34 @@ Java_sun_print_PrintServiceLookupProvider_getAllPrinterNames(JNIEnv *env,
     CATCH_BAD_ALLOC_RET(NULL);
 }
 
+JNIEXPORT jobjectArray JNICALL
+Java_sun_print_PrintServiceLookupProvider_getAllPrinterNames(JNIEnv *env,
+                                                             jobject peer)
+{
+    return getPrinterNames(env, PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS);
+}
 
-JNIEXPORT jlong JNICALL
-Java_sun_print_PrintServiceLookupProvider_notifyFirstPrinterChange(JNIEnv *env,
-                                                                jobject peer,
-                                                                jstring printer) {
+JNIEXPORT jobjectArray JNICALL
+Java_sun_print_PrintServiceLookupProvider_getRemotePrintersNames(JNIEnv *env,
+                                                                 jobject peer)
+{
+    return getPrinterNames(env, PRINTER_ENUM_CONNECTIONS);
+}
+
+JNIEXPORT void JNICALL
+Java_sun_print_PrintServiceLookupProvider_notifyLocalPrinterChange(JNIEnv *env,
+                                                                   jobject peer)
+{
+    jclass cls = env->GetObjectClass(peer);
+    CHECK_NULL(cls);
+    jmethodID refresh = env->GetMethodID(cls, "refreshServices", "()V");
+    CHECK_NULL(refresh);
+
     HANDLE hPrinter;
-
-    LPTSTR printerName = NULL;
-    if (printer != NULL) {
-        printerName = (LPTSTR)JNU_GetStringPlatformChars(env,
-                                                         printer,
-                                                         NULL);
-        JNU_ReleaseStringPlatformChars(env, printer, printerName);
+    LPTSTR printerName = NULL; // NULL indicates the local printer server
+    if (!::OpenPrinter(printerName, &hPrinter, NULL)) {
+        return;
     }
-
-    // printerName - "Win NT/2K/XP: If NULL, it indicates the local printer
-    // server" - MSDN.   Win9x : OpenPrinter returns 0.
-    BOOL ret = OpenPrinter(printerName, &hPrinter, NULL);
-    if (!ret) {
-      return (jlong)-1;
-    }
-
     // PRINTER_CHANGE_PRINTER = PRINTER_CHANGE_ADD_PRINTER |
     //                          PRINTER_CHANGE_SET_PRINTER |
     //                          PRINTER_CHANGE_DELETE_PRINTER |
@@ -204,104 +207,25 @@ Java_sun_print_PrintServiceLookupProvider_notifyFirstPrinterChange(JNIEnv *env,
                                                        PRINTER_CHANGE_PRINTER,
                                                        0,
                                                        NULL);
-    return (chgObj == INVALID_HANDLE_VALUE) ? (jlong)-1 : (jlong)chgObj;
-}
-
-
-
-JNIEXPORT void JNICALL
-Java_sun_print_PrintServiceLookupProvider_notifyClosePrinterChange(JNIEnv *env,
-                                                                jobject peer,
-                                                                jlong chgObject) {
-    FindClosePrinterChangeNotification((HANDLE)chgObject);
-}
-
-
-JNIEXPORT jint JNICALL
-Java_sun_print_PrintServiceLookupProvider_notifyPrinterChange(JNIEnv *env,
-                                                           jobject peer,
-                                                           jlong chgObject) {
-    DWORD dwChange;
-
-    DWORD ret = WaitForSingleObject((HANDLE)chgObject, INFINITE);
-    if (ret == WAIT_OBJECT_0) {
-        return(FindNextPrinterChangeNotification((HANDLE)chgObject,
-                                                  &dwChange, NULL, NULL));
-    } else {
-        return 0;
-    }
-}
-
-JNIEXPORT jobjectArray JNICALL
-Java_sun_print_PrintServiceLookupProvider_getRemotePrintersNames(JNIEnv *env,
-                                                           jobject peer)
-{
-    TRY;
-
-    int remotePrintersCount = 0;
-    DWORD cbNeeded = 0;
-    DWORD cReturned = 0;
-    LPBYTE pPrinterEnum = NULL;
-    LPBYTE pNetworkPrinterLoc = NULL;
-
-    jstring utf_str;
-    jclass clazz = env->FindClass("java/lang/String");
-    if (clazz == NULL) {
-        return NULL;
-    }
-    jobjectArray nameArray;
-
-    try {
-        ::EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS,
-                       NULL, 4, NULL, 0, &cbNeeded, &cReturned);
-        pPrinterEnum = new BYTE[cbNeeded];
-        pNetworkPrinterLoc = new BYTE[cbNeeded/sizeof(PRINTER_INFO_4)];
-        ::EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS,
-                       NULL, 4, pPrinterEnum, cbNeeded, &cbNeeded,
-                       &cReturned);
-
-        if (cReturned > 0) {
-            for (DWORD i = 0; i < cReturned; i++) {
-                PRINTER_INFO_4 *info4 = (PRINTER_INFO_4 *) (pPrinterEnum + i * sizeof(PRINTER_INFO_4));
-
-                // Store the network printers indexes
-                if (info4->Attributes & PRINTER_ATTRIBUTE_NETWORK) {
-                    pNetworkPrinterLoc[remotePrintersCount++] = i;
-                }
+    if (chgObj != INVALID_HANDLE_VALUE) {
+        BOOL keepMonitoring;
+        do {
+            keepMonitoring = FALSE;
+            if (WaitForSingleObject(chgObj, INFINITE) == WAIT_OBJECT_0) {
+                DWORD dwChange;
+                keepMonitoring = FindNextPrinterChangeNotification(
+                                                 chgObj, &dwChange, NULL, NULL);
             }
-
-            // Allocate space only for the network type printers
-            nameArray = env->NewObjectArray(remotePrintersCount, clazz, NULL);
-            if (nameArray == NULL) {
-                throw std::bad_alloc();
+            if (keepMonitoring) {
+                env->CallVoidMethod(peer, refresh);
             }
-        } else {
-            nameArray = NULL;
-        }
+        } while (keepMonitoring && !env->ExceptionCheck());
 
-        // Loop thro' network printers list only
-        for (int i = 0; i < remotePrintersCount; i++) {
-            PRINTER_INFO_4 *info4 = (PRINTER_INFO_4 *)
-                (pPrinterEnum + pNetworkPrinterLoc[i] * sizeof(PRINTER_INFO_4));
-            utf_str = JNU_NewStringPlatform(env, info4->pPrinterName);
-            if (utf_str == NULL) {
-                throw std::bad_alloc();
-            }
-            env->SetObjectArrayElement(nameArray, i, utf_str);
-            env->DeleteLocalRef(utf_str);
-        }
-    } catch (std::bad_alloc&) {
-        delete [] pPrinterEnum;
-        delete [] pNetworkPrinterLoc;
-        throw;
+        FindClosePrinterChangeNotification(chgObj);
     }
-
-    delete [] pPrinterEnum;
-    delete [] pNetworkPrinterLoc;
-    return nameArray;
-
-    CATCH_BAD_ALLOC_RET(NULL);
+    ::ClosePrinter(hPrinter);
 }
+
 
 JNIEXPORT jfloatArray JNICALL
 Java_sun_print_Win32PrintService_getMediaPrintableArea(JNIEnv *env,
@@ -720,7 +644,7 @@ Java_sun_print_Win32PrintService_getAllResolutions(JNIEnv *env,
   }
 
   JNU_ReleaseStringPlatformChars(env, printer, printerName);
-  JNU_ReleaseStringPlatformChars(env, printer, printerPort);
+  JNU_ReleaseStringPlatformChars(env, port, printerPort);
   return resolutionArray;
 }
 
@@ -863,7 +787,7 @@ Java_sun_print_Win32PrintService_getCapabilities(JNIEnv *env,
 
   RESTORE_CONTROLWORD
   JNU_ReleaseStringPlatformChars(env, printer, printerName);
-  JNU_ReleaseStringPlatformChars(env, printer, printerPort);
+  JNU_ReleaseStringPlatformChars(env, port, printerPort);
   return ret;
 }
 

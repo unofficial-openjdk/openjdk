@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,8 @@ package java.lang.constant;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.List;
 
@@ -111,10 +113,8 @@ final class MethodTypeDescImpl implements MethodTypeDesc {
 
     @Override
     public MethodTypeDesc dropParameterTypes(int start, int end) {
-        if (start < 0 || start >= argTypes.length || end < 0 || end > argTypes.length)
+        if (start < 0 || start >= argTypes.length || end < 0 || end > argTypes.length || start > end)
             throw new IndexOutOfBoundsException();
-        else if (start > end)
-            throw new IllegalArgumentException(String.format("Range (%d, %d) not valid for size %d", start, end, argTypes.length));
         ClassDesc[] newArgs = new ClassDesc[argTypes.length - (end - start)];
         System.arraycopy(argTypes, 0, newArgs, 0, start);
         System.arraycopy(argTypes, end, newArgs, start, argTypes.length - end);
@@ -133,8 +133,21 @@ final class MethodTypeDescImpl implements MethodTypeDesc {
     }
 
     @Override
-    public MethodType resolveConstantDesc(MethodHandles.Lookup lookup) {
-        return MethodType.fromMethodDescriptorString(descriptorString(), lookup.lookupClass().getClassLoader());
+    public MethodType resolveConstantDesc(MethodHandles.Lookup lookup) throws ReflectiveOperationException {
+        MethodType mtype = AccessController.doPrivileged(new PrivilegedAction<>() {
+            @Override
+            public MethodType run() {
+                return MethodType.fromMethodDescriptorString(descriptorString(),
+                                                             lookup.lookupClass().getClassLoader());
+            }
+        });
+
+        // let's check that the lookup has access to all the types in the method type
+        lookup.accessClass(mtype.returnType());
+        for (Class<?> paramType: mtype.parameterArray()) {
+            lookup.accessClass(paramType);
+        }
+        return mtype;
     }
 
     /**
@@ -145,8 +158,8 @@ final class MethodTypeDescImpl implements MethodTypeDesc {
      *
      * @param o the {@code MethodTypeDescImpl} to compare to this
      *       {@code MethodTypeDescImpl}
-     * @return {@code true} if the specified {@code MethodTypeDescImpl} is
-     *      equals to this {@code MethodTypeDescImpl}.
+     * @return {@code true} if the specified {@code MethodTypeDescImpl}
+     *      is equal to this {@code MethodTypeDescImpl}.
      */
     @Override
     public boolean equals(Object o) {

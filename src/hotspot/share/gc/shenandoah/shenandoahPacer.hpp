@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,6 +26,7 @@
 #define SHARE_GC_SHENANDOAH_SHENANDOAHPACER_HPP
 
 #include "gc/shenandoah/shenandoahNumberSeq.hpp"
+#include "gc/shenandoah/shenandoahPadding.hpp"
 #include "memory/allocation.hpp"
 
 class ShenandoahHeap;
@@ -49,14 +51,14 @@ private:
   volatile double _tax_rate;
 
   // Heavily updated, protect from accidental false sharing
-  DEFINE_PAD_MINUS_SIZE(0, DEFAULT_CACHE_LINE_SIZE, sizeof(volatile intptr_t));
+  shenandoah_padding(0);
   volatile intptr_t _budget;
-  DEFINE_PAD_MINUS_SIZE(1, DEFAULT_CACHE_LINE_SIZE, 0);
+  shenandoah_padding(1);
 
   // Heavily updated, protect from accidental false sharing
-  DEFINE_PAD_MINUS_SIZE(2, DEFAULT_CACHE_LINE_SIZE, sizeof(volatile intptr_t));
+  shenandoah_padding(2);
   volatile intptr_t _progress;
-  DEFINE_PAD_MINUS_SIZE(3, DEFAULT_CACHE_LINE_SIZE, 0);
+  shenandoah_padding(3);
 
 public:
   ShenandoahPacer(ShenandoahHeap* heap) :
@@ -71,7 +73,9 @@ public:
   void setup_for_mark();
   void setup_for_evac();
   void setup_for_updaterefs();
-  void setup_for_traversal();
+
+  void setup_for_reset();
+  void setup_for_preclean();
 
   inline void report_mark(size_t words);
   inline void report_evac(size_t words);

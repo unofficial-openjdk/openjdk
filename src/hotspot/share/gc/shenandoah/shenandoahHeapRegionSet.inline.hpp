@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -24,23 +25,24 @@
 #ifndef SHARE_GC_SHENANDOAH_SHENANDOAHHEAPREGIONSET_INLINE_HPP
 #define SHARE_GC_SHENANDOAH_SHENANDOAHHEAPREGIONSET_INLINE_HPP
 
+#include "gc/shenandoah/shenandoahAsserts.hpp"
 #include "gc/shenandoah/shenandoahHeapRegionSet.hpp"
 #include "gc/shenandoah/shenandoahHeap.hpp"
 #include "gc/shenandoah/shenandoahHeap.inline.hpp"
 #include "gc/shenandoah/shenandoahHeapRegion.hpp"
 
-bool ShenandoahHeapRegionSet::is_in(size_t region_number) const {
-  assert(region_number < _heap->num_regions(), "Sanity");
-  return _set_map[region_number] == 1;
+bool ShenandoahHeapRegionSet::is_in(size_t region_idx) const {
+  assert(region_idx < _heap->num_regions(), "Sanity");
+  return _set_map[region_idx] == 1;
 }
 
 bool ShenandoahHeapRegionSet::is_in(ShenandoahHeapRegion* r) const {
-  return is_in(r->region_number());
+  return is_in(r->index());
 }
 
-bool ShenandoahHeapRegionSet::is_in(HeapWord* p) const {
-  assert(_heap->is_in(p), "Must be in the heap");
-  uintx index = ((uintx) p) >> _region_size_bytes_shift;
+bool ShenandoahHeapRegionSet::is_in(oop p) const {
+  shenandoah_assert_in_heap(NULL, p);
+  uintx index = (cast_from_oop<uintx>(p)) >> _region_size_bytes_shift;
   // no need to subtract the bottom of the heap from p,
   // _biased_set_map is biased
   return _biased_set_map[index] == 1;

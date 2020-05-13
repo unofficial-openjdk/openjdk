@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 #include "classfile/javaClasses.inline.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterRuntime.hpp"
+#include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "prims/methodHandles.hpp"
@@ -594,7 +595,7 @@ void trace_method_handle_stub_wrapper(MethodHandleStubArguments* args) {
 }
 
 void MethodHandles::trace_method_handle(MacroAssembler* _masm, const char* adaptername) {
-  if (!TraceMethodHandles)  return;
+  if (!log_is_enabled(Info, methodhandles))  return;
   BLOCK_COMMENT(err_msg("trace_method_handle %s {", adaptername));
   __ enter();
   __ andptr(rsp, -16); // align stack if needed for FPU state
@@ -604,7 +605,10 @@ void MethodHandles::trace_method_handle(MacroAssembler* _masm, const char* adapt
   // robust stack walking implemented in trace_method_handle_stub.
 
   // save FP result, valid at some call sites (adapter_opt_return_float, ...)
-  __ increment(rsp, -2 * wordSize);
+  __ decrement(rsp, 2 * wordSize);
+#ifdef _LP64
+  __ movdbl(Address(rsp, 0), xmm0);
+#else
   if  (UseSSE >= 2) {
     __ movdbl(Address(rsp, 0), xmm0);
   } else if (UseSSE == 1) {
@@ -612,6 +616,7 @@ void MethodHandles::trace_method_handle(MacroAssembler* _masm, const char* adapt
   } else {
     __ fst_d(Address(rsp, 0));
   }
+#endif // LP64
 
   // Incoming state:
   // rcx: method handle
@@ -626,6 +631,9 @@ void MethodHandles::trace_method_handle(MacroAssembler* _masm, const char* adapt
   __ super_call_VM_leaf(CAST_FROM_FN_PTR(address, trace_method_handle_stub_wrapper), rsp);
   __ increment(rsp, sizeof(MethodHandleStubArguments));
 
+#ifdef _LP64
+  __ movdbl(xmm0, Address(rsp, 0));
+#else
   if  (UseSSE >= 2) {
     __ movdbl(xmm0, Address(rsp, 0));
   } else if (UseSSE == 1) {
@@ -633,6 +641,7 @@ void MethodHandles::trace_method_handle(MacroAssembler* _masm, const char* adapt
   } else {
     __ fld_d(Address(rsp, 0));
   }
+#endif // LP64
   __ increment(rsp, 2 * wordSize);
 
   __ popa();

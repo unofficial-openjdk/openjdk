@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,12 +28,12 @@ package gc.g1;
  * @bug 8051973
  * @summary Test to make sure that eager reclaim of humongous objects correctly clears
  * mark bitmaps at reclaim.
- * @key gc
+ * @key gc randomness
  * @requires vm.gc.G1
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @run main gc.g1.TestEagerReclaimHumongousRegionsClearMarkBits
+ * @run driver gc.g1.TestEagerReclaimHumongousRegionsClearMarkBits
  */
 
 import java.util.ArrayList;
@@ -42,6 +42,7 @@ import java.util.Random;
 
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
+import jdk.test.lib.Utils;
 
 // An object that has a few references to other instances to slow down marking.
 class ObjectWithSomeRefs {
@@ -75,7 +76,7 @@ class TestEagerReclaimHumongousRegionsClearMarkBitsReclaimRegionFast {
              longList.add(new ObjectWithSomeRefs());
         }
 
-        Random rnd = new Random();
+        Random rnd = Utils.getRandomInstance();
         for (int i = 0; i < longList.size(); i++) {
              int len = longList.size();
              longList.get(i).other1 = longList.get(rnd.nextInt(len));

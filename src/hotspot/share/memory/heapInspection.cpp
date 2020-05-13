@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,11 @@
 #include "classfile/moduleEntry.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "gc/shared/collectedHeap.hpp"
+#include "logging/log.hpp"
+#include "logging/logTag.hpp"
 #include "memory/heapInspection.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/reflectionAccessorImplKlassHelper.hpp"
 #include "runtime/os.hpp"
@@ -38,14 +41,6 @@
 #include "utilities/stack.inline.hpp"
 
 // HeapInspection
-
-int KlassSizeStats::count(oop x) {
-  return (HeapWordSize * (((x) != NULL) ? (x)->size() : 0));
-}
-
-int KlassSizeStats::count_array(objArrayOop x) {
-  return (HeapWordSize * (((x) != NULL) ? (x)->size() : 0));
-}
 
 inline KlassInfoEntry::~KlassInfoEntry() {
   if (_subclasses != NULL) {
@@ -71,8 +66,8 @@ int KlassInfoEntry::compare(KlassInfoEntry* e1, KlassInfoEntry* e2) {
   ResourceMark rm;
   const char* name1 = e1->klass()->external_name();
   const char* name2 = e2->klass()->external_name();
-  bool d1 = (name1[0] == '[');
-  bool d2 = (name2[0] == '[');
+  bool d1 = (name1[0] == JVM_SIGNATURE_ARRAY);
+  bool d2 = (name2[0] == JVM_SIGNATURE_ARRAY);
   if (d1 && !d2) {
     return -1;
   } else if (d2 && !d1) {
@@ -106,11 +101,12 @@ void KlassInfoEntry::print_on(outputStream* st) const {
   // simplify the formatting (ILP32 vs LP64) - always cast the numbers to 64-bit
   ModuleEntry* module = _klass->module();
   if (module->is_named()) {
-    st->print_cr(INT64_FORMAT_W(13) "  " UINT64_FORMAT_W(13) "  %s (%s@%s)",
+    st->print_cr(INT64_FORMAT_W(13) "  " UINT64_FORMAT_W(13) "  %s (%s%s%s)",
                  (int64_t)_instance_count,
                  (uint64_t)_instance_words * HeapWordSize,
                  name(),
                  module->name()->as_C_string(),
+                 module->version() != NULL ? "@" : "",
                  module->version() != NULL ? module->version()->as_C_string() : "");
   } else {
     st->print_cr(INT64_FORMAT_W(13) "  " UINT64_FORMAT_W(13) "  %s",
@@ -121,6 +117,11 @@ void KlassInfoEntry::print_on(outputStream* st) const {
 }
 
 KlassInfoEntry* KlassInfoBucket::lookup(Klass* const k) {
+  // Can happen if k is an archived class that we haven't loaded yet.
+  if (k->java_mirror_no_keepalive() == NULL) {
+    return NULL;
+  }
+
   KlassInfoEntry* elt = _list;
   while (elt != NULL) {
     if (elt->is_equal(k)) {
@@ -202,7 +203,8 @@ KlassInfoEntry* KlassInfoTable::lookup(Klass* k) {
   assert(_buckets != NULL, "Allocation failure should have been caught");
   KlassInfoEntry*  e   = _buckets[idx].lookup(k);
   // Lookup may fail if this is a new klass for which we
-  // could not allocate space for an new entry.
+  // could not allocate space for an new entry, or if it's
+  // an archived class that we haven't loaded yet.
   assert(e == NULL || k == e->klass(), "must be equal");
   return e;
 }
@@ -268,67 +270,6 @@ void KlassInfoHisto::print_elements(outputStream* st) const {
   }
   st->print_cr("Total " INT64_FORMAT_W(13) "  " UINT64_FORMAT_W(13),
                total, totalw * HeapWordSize);
-}
-
-#define MAKE_COL_NAME(field, name, help)     #name,
-#define MAKE_COL_HELP(field, name, help)     help,
-
-static const char *name_table[] = {
-  HEAP_INSPECTION_COLUMNS_DO(MAKE_COL_NAME)
-};
-
-static const char *help_table[] = {
-  HEAP_INSPECTION_COLUMNS_DO(MAKE_COL_HELP)
-};
-
-bool KlassInfoHisto::is_selected(const char *col_name) {
-  if (_selected_columns == NULL) {
-    return true;
-  }
-  if (strcmp(_selected_columns, col_name) == 0) {
-    return true;
-  }
-
-  const char *start = strstr(_selected_columns, col_name);
-  if (start == NULL) {
-    return false;
-  }
-
-  // The following must be true, because _selected_columns != col_name
-  if (start > _selected_columns && start[-1] != ',') {
-    return false;
-  }
-  char x = start[strlen(col_name)];
-  if (x != ',' && x != '\0') {
-    return false;
-  }
-
-  return true;
-}
-
-void KlassInfoHisto::print_title(outputStream* st, bool csv_format,
-                                 bool selected[], int width_table[],
-                                 const char *name_table[]) {
-  if (csv_format) {
-    st->print("Index,Super");
-    for (int c=0; c<KlassSizeStats::_num_columns; c++) {
-       if (selected[c]) {st->print(",%s", name_table[c]);}
-    }
-    st->print(",ClassName");
-  } else {
-    st->print("Index Super");
-    for (int c = 0; c < KlassSizeStats::_num_columns; c++) {
-      if (selected[c]) {
-        st->print("%*s", width_table[c], name_table[c]);
-      }
-    }
-    st->print(" ClassName");
-  }
-
-  if (is_selected("ClassLoader")) {
-    st->print(",ClassLoader");
-  }
-  st->cr();
 }
 
 class HierarchyClosure : public KlassInfoClosure {
@@ -521,155 +462,10 @@ void KlassHierarchy::print_class(outputStream* st, KlassInfoEntry* cie, bool pri
   }
 }
 
-void KlassInfoHisto::print_class_stats(outputStream* st,
-                                      bool csv_format, const char *columns) {
-  ResourceMark rm;
-  KlassSizeStats sz, sz_sum;
-  int i;
-  julong *col_table = (julong*)(&sz);
-  julong *colsum_table = (julong*)(&sz_sum);
-  int width_table[KlassSizeStats::_num_columns];
-  bool selected[KlassSizeStats::_num_columns];
-
-  _selected_columns = columns;
-
-  memset(&sz_sum, 0, sizeof(sz_sum));
-  for (int c=0; c<KlassSizeStats::_num_columns; c++) {
-    selected[c] = is_selected(name_table[c]);
-  }
-
-  for(i=0; i < elements()->length(); i++) {
-    elements()->at(i)->set_index(i+1);
-  }
-
-  // First iteration is for accumulating stats totals in colsum_table[].
-  // Second iteration is for printing stats for each class.
-  for (int pass=1; pass<=2; pass++) {
-    if (pass == 2) {
-      print_title(st, csv_format, selected, width_table, name_table);
-    }
-    for(i=0; i < elements()->length(); i++) {
-      KlassInfoEntry* e = (KlassInfoEntry*)elements()->at(i);
-      const Klass* k = e->klass();
-
-      // Get the stats for this class.
-      memset(&sz, 0, sizeof(sz));
-      sz._inst_count = e->count();
-      sz._inst_bytes = HeapWordSize * e->words();
-      k->collect_statistics(&sz);
-      sz._total_bytes = sz._ro_bytes + sz._rw_bytes;
-
-      if (pass == 1) {
-        // Add the stats for this class to the overall totals.
-        for (int c=0; c<KlassSizeStats::_num_columns; c++) {
-          colsum_table[c] += col_table[c];
-        }
-      } else {
-        int super_index = -1;
-        // Print the stats for this class.
-        if (k->is_instance_klass()) {
-          Klass* super = k->super();
-          if (super) {
-            KlassInfoEntry* super_e = _cit->lookup(super);
-            if (super_e) {
-              super_index = super_e->index();
-            }
-          }
-        }
-
-        if (csv_format) {
-          st->print("%ld,%d", e->index(), super_index);
-          for (int c=0; c<KlassSizeStats::_num_columns; c++) {
-            if (selected[c]) {st->print("," JULONG_FORMAT, col_table[c]);}
-          }
-          st->print(",%s",e->name());
-        } else {
-          st->print("%5ld %5d", e->index(), super_index);
-          for (int c=0; c<KlassSizeStats::_num_columns; c++) {
-            if (selected[c]) {print_julong(st, width_table[c], col_table[c]);}
-          }
-          st->print(" %s", e->name());
-        }
-        if (is_selected("ClassLoader")) {
-          ClassLoaderData* loader_data = k->class_loader_data();
-          st->print(",");
-          loader_data->print_value_on(st);
-        }
-        st->cr();
-      }
-    }
-
-    if (pass == 1) {
-      // Calculate the minimum width needed for the column by accounting for the
-      // column header width and the width of the largest value in the column.
-      for (int c=0; c<KlassSizeStats::_num_columns; c++) {
-        width_table[c] = col_width(colsum_table[c], name_table[c]);
-      }
-    }
-  }
-
-  sz_sum._inst_size = 0;
-
-  // Print the column totals.
-  if (csv_format) {
-    st->print(",");
-    for (int c=0; c<KlassSizeStats::_num_columns; c++) {
-      if (selected[c]) {st->print("," JULONG_FORMAT, colsum_table[c]);}
-    }
-  } else {
-    st->print("           ");
-    for (int c=0; c<KlassSizeStats::_num_columns; c++) {
-      if (selected[c]) {print_julong(st, width_table[c], colsum_table[c]);}
-    }
-    st->print(" Total");
-    if (sz_sum._total_bytes > 0) {
-      st->cr();
-      st->print("           ");
-      for (int c=0; c<KlassSizeStats::_num_columns; c++) {
-        if (selected[c]) {
-          switch (c) {
-          case KlassSizeStats::_index_inst_size:
-          case KlassSizeStats::_index_inst_count:
-          case KlassSizeStats::_index_method_count:
-            st->print("%*s", width_table[c], "-");
-            break;
-          default:
-            {
-              double perc = (double)(100) * (double)(colsum_table[c]) / (double)sz_sum._total_bytes;
-              st->print("%*.1f%%", width_table[c]-1, perc);
-            }
-          }
-        }
-      }
-    }
-  }
-  st->cr();
-
-  if (!csv_format) {
-    print_title(st, csv_format, selected, width_table, name_table);
-  }
-}
-
-julong KlassInfoHisto::annotations_bytes(Array<AnnotationArray*>* p) const {
-  julong bytes = 0;
-  if (p != NULL) {
-    for (int i = 0; i < p->length(); i++) {
-      bytes += count_bytes_array(p->at(i));
-    }
-    bytes += count_bytes_array(p);
-  }
-  return bytes;
-}
-
-void KlassInfoHisto::print_histo_on(outputStream* st, bool print_stats,
-                                    bool csv_format, const char *columns) {
-  if (print_stats) {
-    print_class_stats(st, csv_format, columns);
-  } else {
-    st->print_cr(" num     #instances         #bytes  class name (module)");
-    st->print_cr("-------------------------------------------------------");
-    print_elements(st);
-  }
+void KlassInfoHisto::print_histo_on(outputStream* st) {
+  st->print_cr(" num     #instances         #bytes  class name (module)");
+  st->print_cr("-------------------------------------------------------");
+  print_elements(st);
 }
 
 class HistoClosure : public KlassInfoClosure {
@@ -719,32 +515,14 @@ size_t HeapInspection::populate_table(KlassInfoTable* cit, BoolObjectClosure *fi
 void HeapInspection::heap_inspection(outputStream* st) {
   ResourceMark rm;
 
-  if (_print_help) {
-    for (int c=0; c<KlassSizeStats::_num_columns; c++) {
-      st->print("%s:\n\t", name_table[c]);
-      const int max_col = 60;
-      int col = 0;
-      for (const char *p = help_table[c]; *p; p++,col++) {
-        if (col >= max_col && *p == ' ') {
-          st->print("\n\t");
-          col = 0;
-        } else {
-          st->print("%c", *p);
-        }
-      }
-      st->print_cr(".\n");
-    }
-    return;
-  }
-
-  KlassInfoTable cit(_print_class_stats);
+  KlassInfoTable cit(false);
   if (!cit.allocation_failed()) {
     // populate table with object allocation info
     size_t missed_count = populate_table(&cit);
     if (missed_count != 0) {
-      st->print_cr("WARNING: Ran out of C-heap; undercounted " SIZE_FORMAT
-                   " total instances in data below",
-                   missed_count);
+      log_info(gc, classhisto)("WARNING: Ran out of C-heap; undercounted " SIZE_FORMAT
+                               " total instances in data below",
+                               missed_count);
     }
 
     // Sort and print klass instance info
@@ -754,7 +532,7 @@ void HeapInspection::heap_inspection(outputStream* st) {
     cit.iterate(&hc);
 
     histo.sort();
-    histo.print_histo_on(st, _print_class_stats, _csv_format, _columns);
+    histo.print_histo_on(st);
   } else {
     st->print_cr("ERROR: Ran out of C-heap; histogram not generated");
   }
@@ -771,6 +549,10 @@ class FindInstanceClosure : public ObjectClosure {
 
   void do_object(oop obj) {
     if (obj->is_a(_klass)) {
+      // obj was read with AS_NO_KEEPALIVE, or equivalent.
+      // The object needs to be kept alive when it is published.
+      Universe::heap()->keep_alive(obj);
+
       _result->append(obj);
     }
   }
@@ -785,8 +567,5 @@ void HeapInspection::find_instances_at_safepoint(Klass* k, GrowableArray<oop>* r
 
   // Iterate over objects in the heap
   FindInstanceClosure fic(k, result);
-  // If this operation encounters a bad object when using CMS,
-  // consider using safe_object_iterate() which avoids metadata
-  // objects that may contain bad references.
   Universe::heap()->object_iterate(&fic);
 }

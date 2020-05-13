@@ -59,11 +59,11 @@ class MemTracker : AllStatic {
   static inline size_t malloc_header_size(NMT_TrackingLevel level) { return 0; }
   static inline size_t malloc_header_size(void* memblock) { return 0; }
   static inline void* malloc_base(void* memblock) { return memblock; }
-  static inline void* record_free(void* memblock) { return memblock; }
+  static inline void* record_free(void* memblock, NMT_TrackingLevel level) { return memblock; }
 
   static inline void record_new_arena(MEMFLAGS flag) { }
   static inline void record_arena_free(MEMFLAGS flag) { }
-  static inline void record_arena_size_change(int diff, MEMFLAGS flag) { }
+  static inline void record_arena_size_change(ssize_t diff, MEMFLAGS flag) { }
   static inline void record_virtual_memory_reserve(void* addr, size_t size, const NativeCallStack& stack,
                        MEMFLAGS flag = mtNone) { }
   static inline void record_virtual_memory_reserve_and_commit(void* addr, size_t size,
@@ -82,6 +82,7 @@ class MemTracker : AllStatic {
 #include "runtime/mutexLocker.hpp"
 #include "runtime/threadCritical.hpp"
 #include "services/mallocTracker.hpp"
+#include "services/threadStackTracker.hpp"
 #include "services/virtualMemoryTracker.hpp"
 
 extern volatile bool NMT_stack_walkable;
@@ -156,7 +157,10 @@ class MemTracker : AllStatic {
 
   static inline void* record_malloc(void* mem_base, size_t size, MEMFLAGS flag,
     const NativeCallStack& stack, NMT_TrackingLevel level) {
-    return MallocTracker::record_malloc(mem_base, size, flag, stack, level);
+    if (level != NMT_off) {
+      return MallocTracker::record_malloc(mem_base, size, flag, stack, level);
+    }
+    return mem_base;
   }
 
   static inline size_t malloc_header_size(NMT_TrackingLevel level) {
@@ -176,7 +180,11 @@ class MemTracker : AllStatic {
   static void* malloc_base(void* memblock);
 
   // Record malloc free and return malloc base address
-  static inline void* record_free(void* memblock) {
+  static inline void* record_free(void* memblock, NMT_TrackingLevel level) {
+    // Never turned on
+    if (level == NMT_off || memblock == NULL) {
+      return memblock;
+    }
     return MallocTracker::record_free(memblock);
   }
 
@@ -195,7 +203,7 @@ class MemTracker : AllStatic {
 
   // Record arena size change. Arena size is the size of all arena
   // chuncks that backing up the arena.
-  static inline void record_arena_size_change(int diff, MEMFLAGS flag) {
+  static inline void record_arena_size_change(ssize_t diff, MEMFLAGS flag) {
     if (tracking_level() < NMT_summary) return;
     MallocTracker::record_arena_size_change(diff, flag);
   }
@@ -241,31 +249,19 @@ class MemTracker : AllStatic {
     }
   }
 
-#ifdef _AIX
-  // See JDK-8202772 - temporarily disable thread stack tracking on AIX.
-  static inline void record_thread_stack(void* addr, size_t size) {}
-  static inline void release_thread_stack(void* addr, size_t size) {}
-#else
-  static inline void record_thread_stack(void* addr, size_t size) {
+  static void record_thread_stack(void* addr, size_t size) {
     if (tracking_level() < NMT_summary) return;
     if (addr != NULL) {
-      // uses thread stack malloc slot for book keeping number of threads
-      MallocMemorySummary::record_malloc(0, mtThreadStack);
-      record_virtual_memory_reserve(addr, size, CALLER_PC, mtThreadStack);
+      ThreadStackTracker::new_thread_stack((address)addr, size, CALLER_PC);
     }
   }
 
   static inline void release_thread_stack(void* addr, size_t size) {
     if (tracking_level() < NMT_summary) return;
     if (addr != NULL) {
-      // uses thread stack malloc slot for book keeping number of threads
-      MallocMemorySummary::record_free(0, mtThreadStack);
-      ThreadCritical tc;
-      if (tracking_level() < NMT_summary) return;
-      VirtualMemoryTracker::remove_released_region((address)addr, size);
+      ThreadStackTracker::delete_thread_stack((address)addr, size);
     }
   }
-#endif
 
   // Query lock is used to synchronize the access to tracking data.
   // So far, it is only used by JCmd query, but it may be used by
@@ -282,13 +278,7 @@ class MemTracker : AllStatic {
     }
    }
 
-  static void final_report(outputStream* output) {
-    NMT_TrackingLevel level = tracking_level();
-    if (level >= NMT_summary) {
-      report(level == NMT_summary, output);
-    }
-  }
-
+  static void final_report(outputStream* output);
 
   // Stored baseline
   static inline MemBaseline& get_baseline() {

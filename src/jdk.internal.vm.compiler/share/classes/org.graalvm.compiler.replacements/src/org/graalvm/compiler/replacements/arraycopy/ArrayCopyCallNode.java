@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,8 +51,8 @@ import org.graalvm.compiler.nodes.calc.LeftShiftNode;
 import org.graalvm.compiler.nodes.extended.ForeignCallNode;
 import org.graalvm.compiler.nodes.memory.AbstractMemoryCheckpoint;
 import org.graalvm.compiler.nodes.memory.MemoryAccess;
-import org.graalvm.compiler.nodes.memory.MemoryCheckpoint;
-import org.graalvm.compiler.nodes.memory.MemoryNode;
+import org.graalvm.compiler.nodes.memory.MemoryKill;
+import org.graalvm.compiler.nodes.memory.SingleMemoryKill;
 import org.graalvm.compiler.nodes.memory.address.OffsetAddressNode;
 import org.graalvm.compiler.nodes.spi.Lowerable;
 import org.graalvm.compiler.nodes.spi.LoweringTool;
@@ -66,7 +66,7 @@ import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.meta.PrimitiveConstant;
 
 @NodeInfo(allowedUsageTypes = {Memory}, cycles = CYCLES_UNKNOWN, size = SIZE_UNKNOWN)
-public final class ArrayCopyCallNode extends AbstractMemoryCheckpoint implements Lowerable, MemoryCheckpoint.Single, MemoryAccess, Canonicalizable {
+public final class ArrayCopyCallNode extends AbstractMemoryCheckpoint implements Lowerable, SingleMemoryKill, MemoryAccess, Canonicalizable {
 
     public static final NodeClass<ArrayCopyCallNode> TYPE = NodeClass.create(ArrayCopyCallNode.class);
     @Input protected ValueNode src;
@@ -75,7 +75,7 @@ public final class ArrayCopyCallNode extends AbstractMemoryCheckpoint implements
     @Input protected ValueNode destPos;
     @Input protected ValueNode length;
 
-    @OptionalInput(Memory) MemoryNode lastLocationAccess;
+    @OptionalInput(Memory) MemoryKill lastLocationAccess;
 
     private final JavaKind elementKind;
     private final LocationIdentity locationIdentity;
@@ -173,12 +173,12 @@ public final class ArrayCopyCallNode extends AbstractMemoryCheckpoint implements
     }
 
     @Override
-    public MemoryNode getLastLocationAccess() {
+    public MemoryKill getLastLocationAccess() {
         return lastLocationAccess;
     }
 
     @Override
-    public void setLastLocationAccess(MemoryNode lla) {
+    public void setLastLocationAccess(MemoryKill lla) {
         updateUsagesInterface(lastLocationAccess, lla);
         lastLocationAccess = lla;
     }
@@ -188,11 +188,16 @@ public final class ArrayCopyCallNode extends AbstractMemoryCheckpoint implements
         return locationIdentity;
     }
 
-    @NodeIntrinsic
+    @Override
+    public LocationIdentity getKilledLocationIdentity() {
+        return getLocationIdentity();
+    }
+
+    @NodeIntrinsic(hasSideEffect = true)
     private static native void arraycopy(Object src, int srcPos, Object dest, int destPos, int length, @ConstantNodeParameter JavaKind elementKind, @ConstantNodeParameter boolean aligned,
                     @ConstantNodeParameter boolean disjoint, @ConstantNodeParameter boolean uninitialized, @ConstantNodeParameter int heapWordSize);
 
-    @NodeIntrinsic
+    @NodeIntrinsic(hasSideEffect = true)
     private static native void arraycopy(Object src, int srcPos, Object dest, int destPos, int length, @ConstantNodeParameter JavaKind elementKind,
                     @ConstantNodeParameter LocationIdentity locationIdentity, @ConstantNodeParameter boolean aligned, @ConstantNodeParameter boolean disjoint,
                     @ConstantNodeParameter boolean uninitialized, @ConstantNodeParameter int heapWordSize);
@@ -201,12 +206,17 @@ public final class ArrayCopyCallNode extends AbstractMemoryCheckpoint implements
         arraycopy(src, srcPos, dest, destPos, length, JavaKind.Object, LocationIdentity.any(), false, false, false, heapWordSize);
     }
 
-    public static void arraycopy(Object src, int srcPos, Object dest, int destPos, int length, @ConstantNodeParameter JavaKind elementKind, @ConstantNodeParameter int heapWordSize) {
-        arraycopy(src, srcPos, dest, destPos, length, elementKind, false, false, false, heapWordSize);
+    public static void arraycopy(Object src, int srcPos, Object dest, int destPos, int length, @ConstantNodeParameter JavaKind elementKind, @ConstantNodeParameter LocationIdentity locationIdentity,
+                    @ConstantNodeParameter int heapWordSize) {
+        arraycopy(src, srcPos, dest, destPos, length, elementKind, locationIdentity, false, false, false, heapWordSize);
     }
 
     public static void disjointArraycopy(Object src, int srcPos, Object dest, int destPos, int length, @ConstantNodeParameter JavaKind elementKind, @ConstantNodeParameter int heapWordSize) {
         arraycopy(src, srcPos, dest, destPos, length, elementKind, false, true, false, heapWordSize);
+    }
+
+    public static void disjointArraycopyKillsAny(Object src, int srcPos, Object dest, int destPos, int length, @ConstantNodeParameter JavaKind elementKind, @ConstantNodeParameter int heapWordSize) {
+        arraycopy(src, srcPos, dest, destPos, length, elementKind, LocationIdentity.any(), false, true, false, heapWordSize);
     }
 
     public static void disjointUninitializedArraycopy(Object src, int srcPos, Object dest, int destPos, int length, @ConstantNodeParameter JavaKind elementKind,

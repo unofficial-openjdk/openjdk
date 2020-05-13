@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,28 +92,25 @@ typedef struct {
 } AOTHeader;
 
 typedef struct {
-  enum { CONFIG_SIZE = 8 * jintSize + 11 };
-  // 8 int values
+  enum { CONFIG_SIZE = 7 * jintSize + 9 };
+  // 7 int values
   int _config_size;
   int _narrowOopShift;
   int _narrowKlassShift;
   int _contendedPaddingWidth;
-  int _fieldsAllocationStyle;
   int _objectAlignment;
   int _codeSegmentSize;
   int _gc;
-  // byte[11] array map to boolean values here
+  // byte[9] array map to boolean values here
   bool _debug_VM;
   bool _useCompressedOops;
   bool _useCompressedClassPointers;
-  bool _compactFields;
   bool _useTLAB;
   bool _useBiasedLocking;
   bool _tieredAOT;
   bool _enableContended;
   bool _restrictContended;
   bool _omitAssertions;
-  bool _threadLocalHandshakes;
 } AOTConfiguration;
 
 class AOTLib : public CHeapObj<mtCode> {
@@ -252,8 +249,8 @@ public:
 
 
   void oops_do(OopClosure* f);
-  void metadata_do(void f(Metadata*));
-  void got_metadata_do(void f(Metadata*));
+  void metadata_do(MetadataClosure* f);
+  void got_metadata_do(MetadataClosure* f);
 
 #ifdef ASSERT
   bool got_contains(Metadata **p) {

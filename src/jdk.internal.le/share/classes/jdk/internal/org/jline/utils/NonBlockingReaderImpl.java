@@ -4,7 +4,7 @@
  * This software is distributable under the BSD license. See the terms of the
  * BSD license in the documentation provided with this software.
  *
- * http://www.opensource.org/licenses/bsd-license.php
+ * https://opensource.org/licenses/BSD-3-Clause
  */
 package jdk.internal.org.jline.utils;
 
@@ -88,6 +88,34 @@ public class NonBlockingReaderImpl
     @Override
     public synchronized boolean ready() throws IOException {
         return ch >= 0 || in.ready();
+    }
+
+    @Override
+    public int readBuffered(char[] b) throws IOException {
+        if (b == null) {
+            throw new NullPointerException();
+        } else if (b.length == 0) {
+            return 0;
+        } else if (exception != null) {
+            assert ch == READ_EXPIRED;
+            IOException toBeThrown = exception;
+            exception = null;
+            throw toBeThrown;
+        } else if (ch >= -1) {
+            b[0] = (char) ch;
+            ch = READ_EXPIRED;
+            return 1;
+        } else if (!threadIsReading) {
+            return in.read(b);
+        } else {
+            int c = read(-1, false);
+            if (c >= 0) {
+                b[0] = (char) c;
+                return 1;
+            } else {
+                return -1;
+            }
+        }
     }
 
     /**

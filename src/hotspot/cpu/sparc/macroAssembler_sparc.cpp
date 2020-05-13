@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
 #include "oops/accessDecorators.hpp"
+#include "oops/compressedOops.hpp"
 #include "oops/klass.inline.hpp"
 #include "prims/methodHandles.hpp"
 #include "runtime/biasedLocking.hpp"
@@ -47,9 +48,7 @@
 #include "runtime/stubRoutines.hpp"
 #include "utilities/align.hpp"
 #include "utilities/macros.hpp"
-#ifdef COMPILER2
-#include "opto/intrinsicnode.hpp"
-#endif
+#include "utilities/powerOfTwo.hpp"
 
 #ifdef PRODUCT
 #define BLOCK_COMMENT(str) /* nothing */
@@ -237,18 +236,10 @@ void MacroAssembler::breakpoint_trap() {
 }
 
 void MacroAssembler::safepoint_poll(Label& slow_path, bool a, Register thread_reg, Register temp_reg) {
-  if (SafepointMechanism::uses_thread_local_poll()) {
-    ldx(Address(thread_reg, Thread::polling_page_offset()), temp_reg, 0);
-    // Armed page has poll bit set.
-    and3(temp_reg, SafepointMechanism::poll_bit(), temp_reg);
-    br_notnull(temp_reg, a, Assembler::pn, slow_path);
-  } else {
-    AddressLiteral sync_state(SafepointSynchronize::address_of_state());
-
-    load_contents(sync_state, temp_reg);
-    cmp(temp_reg, SafepointSynchronize::_not_synchronized);
-    br(Assembler::notEqual, a, Assembler::pn, slow_path);
-  }
+  ldx(Address(thread_reg, Thread::polling_page_offset()), temp_reg, 0);
+  // Armed page has poll bit set.
+  and3(temp_reg, SafepointMechanism::poll_bit(), temp_reg);
+  br_notnull(temp_reg, a, Assembler::pn, slow_path);
 }
 
 void MacroAssembler::enter() {
@@ -989,7 +980,7 @@ AddressLiteral MacroAssembler::constant_oop_address(jobject obj) {
   {
     ThreadInVMfromUnknown tiv;
     assert(oop_recorder() != NULL, "this assembler needs an OopRecorder");
-    assert(Universe::heap()->is_in_reserved(JNIHandles::resolve(obj)), "not an oop");
+    assert(Universe::heap()->is_in(JNIHandles::resolve(obj)), "not an oop");
   }
 #endif
   int oop_index = oop_recorder()->find_index(obj);
@@ -1015,7 +1006,7 @@ void  MacroAssembler::set_narrow_klass(Klass* k, Register d) {
   assert(oop_recorder() != NULL, "this assembler needs an OopRecorder");
   int klass_index = oop_recorder()->find_index(k);
   RelocationHolder rspec = metadata_Relocation::spec(klass_index);
-  narrowOop encoded_k = Klass::encode_klass(k);
+  narrowOop encoded_k = CompressedKlassPointers::encode(k);
 
   assert_not_delayed();
   // Relocation with special format (see relocInfo_sparc.hpp).
@@ -1127,21 +1118,6 @@ void RegistersForDebugging::restore_registers(MacroAssembler* a, Register r) {
   for (int k = 0; k < 64; k += 2) {
     a->ldf(FloatRegisterImpl::D, O0, d_offset(k), as_FloatRegister(k));
   }
-}
-
-
-// pushes double TOS element of FPU stack on CPU stack; pops from FPU stack
-void MacroAssembler::push_fTOS() {
-  // %%%%%% need to implement this
-}
-
-// pops double TOS element from CPU stack and pushes on FPU stack
-void MacroAssembler::pop_fTOS() {
-  // %%%%%% need to implement this
-}
-
-void MacroAssembler::empty_FPU_stack() {
-  // %%%%%% need to implement this
 }
 
 void MacroAssembler::_verify_oop(Register reg, const char* msg, const char * file, int line) {
@@ -2451,15 +2427,15 @@ void MacroAssembler::biased_locking_enter(Register obj_reg, Register mark_reg,
   // whether the epoch is still valid
   // Note that the runtime guarantees sufficient alignment of JavaThread
   // pointers to allow age to be placed into low bits
-  assert(markOopDesc::age_shift == markOopDesc::lock_bits + markOopDesc::biased_lock_bits, "biased locking makes assumptions about bit layout");
-  and3(mark_reg, markOopDesc::biased_lock_mask_in_place, temp_reg);
-  cmp_and_brx_short(temp_reg, markOopDesc::biased_lock_pattern, Assembler::notEqual, Assembler::pn, cas_label);
+  assert(markWord::age_shift == markWord::lock_bits + markWord::biased_lock_bits, "biased locking makes assumptions about bit layout");
+  and3(mark_reg, markWord::biased_lock_mask_in_place, temp_reg);
+  cmp_and_brx_short(temp_reg, markWord::biased_lock_pattern, Assembler::notEqual, Assembler::pn, cas_label);
 
   load_klass(obj_reg, temp_reg);
   ld_ptr(Address(temp_reg, Klass::prototype_header_offset()), temp_reg);
   or3(G2_thread, temp_reg, temp_reg);
   xor3(mark_reg, temp_reg, temp_reg);
-  andcc(temp_reg, ~((int) markOopDesc::age_mask_in_place), temp_reg);
+  andcc(temp_reg, ~((int) markWord::age_mask_in_place), temp_reg);
   if (counters != NULL) {
     cond_inc(Assembler::equal, (address) counters->biased_lock_entry_count_addr(), mark_reg, temp_reg);
     // Reload mark_reg as we may need it later
@@ -2482,7 +2458,7 @@ void MacroAssembler::biased_locking_enter(Register obj_reg, Register mark_reg,
   // If the low three bits in the xor result aren't clear, that means
   // the prototype header is no longer biased and we have to revoke
   // the bias on this object.
-  btst(markOopDesc::biased_lock_mask_in_place, temp_reg);
+  btst(markWord::biased_lock_mask_in_place, temp_reg);
   brx(Assembler::notZero, false, Assembler::pn, try_revoke_bias);
 
   // Biasing is still enabled for this data type. See whether the
@@ -2494,7 +2470,7 @@ void MacroAssembler::biased_locking_enter(Register obj_reg, Register mark_reg,
   // that the current epoch is invalid in order to do this because
   // otherwise the manipulations it performs on the mark word are
   // illegal.
-  delayed()->btst(markOopDesc::epoch_mask_in_place, temp_reg);
+  delayed()->btst(markWord::epoch_mask_in_place, temp_reg);
   brx(Assembler::notZero, false, Assembler::pn, try_rebias);
 
   // The epoch of the current bias is still valid but we know nothing
@@ -2504,7 +2480,7 @@ void MacroAssembler::biased_locking_enter(Register obj_reg, Register mark_reg,
   // Note that we first construct the presumed unbiased header so we
   // don't accidentally blow away another thread's valid bias.
   delayed()->and3(mark_reg,
-                  markOopDesc::biased_lock_mask_in_place | markOopDesc::age_mask_in_place | markOopDesc::epoch_mask_in_place,
+                  markWord::biased_lock_mask_in_place | markWord::age_mask_in_place | markWord::epoch_mask_in_place,
                   mark_reg);
   or3(G2_thread, mark_reg, temp_reg);
   cas_ptr(mark_addr.base(), mark_reg, temp_reg);
@@ -2585,8 +2561,8 @@ void MacroAssembler::biased_locking_exit (Address mark_addr, Register temp_reg, 
   // lock, the object could not be rebiased toward another thread, so
   // the bias bit would be clear.
   ld_ptr(mark_addr, temp_reg);
-  and3(temp_reg, markOopDesc::biased_lock_mask_in_place, temp_reg);
-  cmp(temp_reg, markOopDesc::biased_lock_pattern);
+  and3(temp_reg, markWord::biased_lock_mask_in_place, temp_reg);
+  cmp(temp_reg, markWord::biased_lock_pattern);
   brx(Assembler::equal, allow_delay_slot_filling, Assembler::pt, done);
   delayed();
   if (!allow_delay_slot_filling) {
@@ -2602,12 +2578,12 @@ void MacroAssembler::biased_locking_exit (Address mark_addr, Register temp_reg, 
 // box->dhw disposition - post-conditions at DONE_LABEL.
 // -   Successful inflated lock:  box->dhw != 0.
 //     Any non-zero value suffices.
-//     Consider G2_thread, rsp, boxReg, or markOopDesc::unused_mark()
+//     Consider G2_thread, rsp, boxReg, or markWord::unused_mark()
 // -   Successful Stack-lock: box->dhw == mark.
 //     box->dhw must contain the displaced mark word value
 // -   Failure -- icc.ZFlag == 0 and box->dhw is undefined.
-//     The slow-path fast_enter() and slow_enter() operators
-//     are responsible for setting box->dhw = NonZero (typically markOopDesc::unused_mark()).
+//     The slow-path enter() is responsible for setting
+//     box->dhw = NonZero (typically markWord::unused_mark()).
 // -   Biased: box->dhw is undefined
 //
 // SPARC refworkload performance - specifically jetstream and scimark - are
@@ -2657,7 +2633,7 @@ void MacroAssembler::compiler_lock_object(Register Roop, Register Rmark,
    // This presumes TSO, of course.
 
    mov(0, Rscratch);
-   or3(Rmark, markOopDesc::unlocked_value, Rmark);
+   or3(Rmark, markWord::unlocked_value, Rmark);
    assert(mark_addr.disp() == 0, "cas must take a zero displacement");
    cas_ptr(mark_addr.base(), Rmark, Rscratch);
 // prefetch (mark_addr, Assembler::severalWritesAndPossiblyReads);
@@ -2711,7 +2687,7 @@ void MacroAssembler::compiler_lock_object(Register Roop, Register Rmark,
    // set icc.zf : 1=success 0=failure
    // ST box->displaced_header = NonZero.
    // Any non-zero value suffices:
-   //    markOopDesc::unused_mark(), G2_thread, RBox, RScratch, rsp, etc.
+   //    markWord::unused_mark(), G2_thread, RBox, RScratch, rsp, etc.
    st_ptr(Rbox, Rbox, BasicLock::displaced_header_offset_in_bytes());
    // Intentional fall-through into done
 
@@ -2824,47 +2800,6 @@ void MacroAssembler::compiler_unlock_object(Register Roop, Register Rmark,
 
    bind(done);
 }
-
-
-
-void MacroAssembler::print_CPU_state() {
-  // %%%%% need to implement this
-}
-
-void MacroAssembler::verify_FPU(int stack_depth, const char* s) {
-  // %%%%% need to implement this
-}
-
-void MacroAssembler::push_IU_state() {
-  // %%%%% need to implement this
-}
-
-
-void MacroAssembler::pop_IU_state() {
-  // %%%%% need to implement this
-}
-
-
-void MacroAssembler::push_FPU_state() {
-  // %%%%% need to implement this
-}
-
-
-void MacroAssembler::pop_FPU_state() {
-  // %%%%% need to implement this
-}
-
-
-void MacroAssembler::push_CPU_state() {
-  // %%%%% need to implement this
-}
-
-
-void MacroAssembler::pop_CPU_state() {
-  // %%%%% need to implement this
-}
-
-
 
 void MacroAssembler::verify_tlab() {
 #ifdef ASSERT
@@ -3295,9 +3230,9 @@ void MacroAssembler::store_heap_oop(Register d, const Address& a, int offset, Re
 void MacroAssembler::encode_heap_oop(Register src, Register dst) {
   assert (UseCompressedOops, "must be compressed");
   assert (Universe::heap() != NULL, "java heap should be initialized");
-  assert (LogMinObjAlignmentInBytes == Universe::narrow_oop_shift(), "decode alg wrong");
+  assert (LogMinObjAlignmentInBytes == CompressedOops::shift(), "decode alg wrong");
   verify_oop(src);
-  if (Universe::narrow_oop_base() == NULL) {
+  if (CompressedOops::base() == NULL) {
     srlx(src, LogMinObjAlignmentInBytes, dst);
     return;
   }
@@ -3323,9 +3258,9 @@ void MacroAssembler::encode_heap_oop(Register src, Register dst) {
 void MacroAssembler::encode_heap_oop_not_null(Register r) {
   assert (UseCompressedOops, "must be compressed");
   assert (Universe::heap() != NULL, "java heap should be initialized");
-  assert (LogMinObjAlignmentInBytes == Universe::narrow_oop_shift(), "decode alg wrong");
+  assert (LogMinObjAlignmentInBytes == CompressedOops::shift(), "decode alg wrong");
   verify_oop(r);
-  if (Universe::narrow_oop_base() != NULL)
+  if (CompressedOops::base() != NULL)
     sub(r, G6_heapbase, r);
   srlx(r, LogMinObjAlignmentInBytes, r);
 }
@@ -3333,9 +3268,9 @@ void MacroAssembler::encode_heap_oop_not_null(Register r) {
 void MacroAssembler::encode_heap_oop_not_null(Register src, Register dst) {
   assert (UseCompressedOops, "must be compressed");
   assert (Universe::heap() != NULL, "java heap should be initialized");
-  assert (LogMinObjAlignmentInBytes == Universe::narrow_oop_shift(), "decode alg wrong");
+  assert (LogMinObjAlignmentInBytes == CompressedOops::shift(), "decode alg wrong");
   verify_oop(src);
-  if (Universe::narrow_oop_base() == NULL) {
+  if (CompressedOops::base() == NULL) {
     srlx(src, LogMinObjAlignmentInBytes, dst);
   } else {
     sub(src, G6_heapbase, dst);
@@ -3347,9 +3282,9 @@ void MacroAssembler::encode_heap_oop_not_null(Register src, Register dst) {
 void  MacroAssembler::decode_heap_oop(Register src, Register dst) {
   assert (UseCompressedOops, "must be compressed");
   assert (Universe::heap() != NULL, "java heap should be initialized");
-  assert (LogMinObjAlignmentInBytes == Universe::narrow_oop_shift(), "decode alg wrong");
+  assert (LogMinObjAlignmentInBytes == CompressedOops::shift(), "decode alg wrong");
   sllx(src, LogMinObjAlignmentInBytes, dst);
-  if (Universe::narrow_oop_base() != NULL) {
+  if (CompressedOops::base() != NULL) {
     Label done;
     bpr(rc_nz, true, Assembler::pt, dst, done);
     delayed() -> add(dst, G6_heapbase, dst); // annuled if not taken
@@ -3364,9 +3299,9 @@ void  MacroAssembler::decode_heap_oop_not_null(Register r) {
   // Also do not verify_oop as this is called by verify_oop.
   assert (UseCompressedOops, "must be compressed");
   assert (Universe::heap() != NULL, "java heap should be initialized");
-  assert (LogMinObjAlignmentInBytes == Universe::narrow_oop_shift(), "decode alg wrong");
+  assert (LogMinObjAlignmentInBytes == CompressedOops::shift(), "decode alg wrong");
   sllx(r, LogMinObjAlignmentInBytes, r);
-  if (Universe::narrow_oop_base() != NULL)
+  if (CompressedOops::base() != NULL)
     add(r, G6_heapbase, r);
 }
 
@@ -3375,26 +3310,26 @@ void  MacroAssembler::decode_heap_oop_not_null(Register src, Register dst) {
   // pd_code_size_limit.
   // Also do not verify_oop as this is called by verify_oop.
   assert (UseCompressedOops, "must be compressed");
-  assert (LogMinObjAlignmentInBytes == Universe::narrow_oop_shift(), "decode alg wrong");
+  assert (LogMinObjAlignmentInBytes == CompressedOops::shift(), "decode alg wrong");
   sllx(src, LogMinObjAlignmentInBytes, dst);
-  if (Universe::narrow_oop_base() != NULL)
+  if (CompressedOops::base() != NULL)
     add(dst, G6_heapbase, dst);
 }
 
 void MacroAssembler::encode_klass_not_null(Register r) {
   assert (UseCompressedClassPointers, "must be compressed");
-  if (Universe::narrow_klass_base() != NULL) {
+  if (CompressedKlassPointers::base() != NULL) {
     assert(r != G6_heapbase, "bad register choice");
-    set((intptr_t)Universe::narrow_klass_base(), G6_heapbase);
+    set((intptr_t)CompressedKlassPointers::base(), G6_heapbase);
     sub(r, G6_heapbase, r);
-    if (Universe::narrow_klass_shift() != 0) {
-      assert (LogKlassAlignmentInBytes == Universe::narrow_klass_shift(), "decode alg wrong");
+    if (CompressedKlassPointers::shift() != 0) {
+      assert (LogKlassAlignmentInBytes == CompressedKlassPointers::shift(), "decode alg wrong");
       srlx(r, LogKlassAlignmentInBytes, r);
     }
     reinit_heapbase();
   } else {
-    assert (LogKlassAlignmentInBytes == Universe::narrow_klass_shift() || Universe::narrow_klass_shift() == 0, "decode alg wrong");
-    srlx(r, Universe::narrow_klass_shift(), r);
+    assert (LogKlassAlignmentInBytes == CompressedKlassPointers::shift() || CompressedKlassPointers::shift() == 0, "decode alg wrong");
+    srlx(r, CompressedKlassPointers::shift(), r);
   }
 }
 
@@ -3403,16 +3338,16 @@ void MacroAssembler::encode_klass_not_null(Register src, Register dst) {
     encode_klass_not_null(src);
   } else {
     assert (UseCompressedClassPointers, "must be compressed");
-    if (Universe::narrow_klass_base() != NULL) {
-      set((intptr_t)Universe::narrow_klass_base(), dst);
+    if (CompressedKlassPointers::base() != NULL) {
+      set((intptr_t)CompressedKlassPointers::base(), dst);
       sub(src, dst, dst);
-      if (Universe::narrow_klass_shift() != 0) {
+      if (CompressedKlassPointers::shift() != 0) {
         srlx(dst, LogKlassAlignmentInBytes, dst);
       }
     } else {
       // shift src into dst
-      assert (LogKlassAlignmentInBytes == Universe::narrow_klass_shift() || Universe::narrow_klass_shift() == 0, "decode alg wrong");
-      srlx(src, Universe::narrow_klass_shift(), dst);
+      assert (LogKlassAlignmentInBytes == CompressedKlassPointers::shift() || CompressedKlassPointers::shift() == 0, "decode alg wrong");
+      srlx(src, CompressedKlassPointers::shift(), dst);
     }
   }
 }
@@ -3423,11 +3358,11 @@ void MacroAssembler::encode_klass_not_null(Register src, Register dst) {
 int MacroAssembler::instr_size_for_decode_klass_not_null() {
   assert (UseCompressedClassPointers, "only for compressed klass ptrs");
   int num_instrs = 1;  // shift src,dst or add
-  if (Universe::narrow_klass_base() != NULL) {
+  if (CompressedKlassPointers::base() != NULL) {
     // set + add + set
-    num_instrs += insts_for_internal_set((intptr_t)Universe::narrow_klass_base()) +
-                  insts_for_internal_set((intptr_t)Universe::narrow_ptrs_base());
-    if (Universe::narrow_klass_shift() != 0) {
+    num_instrs += insts_for_internal_set((intptr_t)CompressedKlassPointers::base()) +
+                  insts_for_internal_set((intptr_t)CompressedOops::ptrs_base());
+    if (CompressedKlassPointers::shift() != 0) {
       num_instrs += 1;  // sllx
     }
   }
@@ -3440,16 +3375,16 @@ void  MacroAssembler::decode_klass_not_null(Register r) {
   // Do not add assert code to this unless you change vtableStubs_sparc.cpp
   // pd_code_size_limit.
   assert (UseCompressedClassPointers, "must be compressed");
-  if (Universe::narrow_klass_base() != NULL) {
+  if (CompressedKlassPointers::base() != NULL) {
     assert(r != G6_heapbase, "bad register choice");
-    set((intptr_t)Universe::narrow_klass_base(), G6_heapbase);
-    if (Universe::narrow_klass_shift() != 0)
+    set((intptr_t)CompressedKlassPointers::base(), G6_heapbase);
+    if (CompressedKlassPointers::shift() != 0)
       sllx(r, LogKlassAlignmentInBytes, r);
     add(r, G6_heapbase, r);
     reinit_heapbase();
   } else {
-    assert (LogKlassAlignmentInBytes == Universe::narrow_klass_shift() || Universe::narrow_klass_shift() == 0, "decode alg wrong");
-    sllx(r, Universe::narrow_klass_shift(), r);
+    assert (LogKlassAlignmentInBytes == CompressedKlassPointers::shift() || CompressedKlassPointers::shift() == 0, "decode alg wrong");
+    sllx(r, CompressedKlassPointers::shift(), r);
   }
 }
 
@@ -3460,21 +3395,21 @@ void  MacroAssembler::decode_klass_not_null(Register src, Register dst) {
     // Do not add assert code to this unless you change vtableStubs_sparc.cpp
     // pd_code_size_limit.
     assert (UseCompressedClassPointers, "must be compressed");
-    if (Universe::narrow_klass_base() != NULL) {
-      if (Universe::narrow_klass_shift() != 0) {
+    if (CompressedKlassPointers::base() != NULL) {
+      if (CompressedKlassPointers::shift() != 0) {
         assert((src != G6_heapbase) && (dst != G6_heapbase), "bad register choice");
-        set((intptr_t)Universe::narrow_klass_base(), G6_heapbase);
+        set((intptr_t)CompressedKlassPointers::base(), G6_heapbase);
         sllx(src, LogKlassAlignmentInBytes, dst);
         add(dst, G6_heapbase, dst);
         reinit_heapbase();
       } else {
-        set((intptr_t)Universe::narrow_klass_base(), dst);
+        set((intptr_t)CompressedKlassPointers::base(), dst);
         add(src, dst, dst);
       }
     } else {
       // shift/mov src into dst.
-      assert (LogKlassAlignmentInBytes == Universe::narrow_klass_shift() || Universe::narrow_klass_shift() == 0, "decode alg wrong");
-      sllx(src, Universe::narrow_klass_shift(), dst);
+      assert (LogKlassAlignmentInBytes == CompressedKlassPointers::shift() || CompressedKlassPointers::shift() == 0, "decode alg wrong");
+      sllx(src, CompressedKlassPointers::shift(), dst);
     }
   }
 }
@@ -3482,505 +3417,13 @@ void  MacroAssembler::decode_klass_not_null(Register src, Register dst) {
 void MacroAssembler::reinit_heapbase() {
   if (UseCompressedOops || UseCompressedClassPointers) {
     if (Universe::heap() != NULL) {
-      set((intptr_t)Universe::narrow_ptrs_base(), G6_heapbase);
+      set((intptr_t)CompressedOops::ptrs_base(), G6_heapbase);
     } else {
-      AddressLiteral base(Universe::narrow_ptrs_base_addr());
+      AddressLiteral base(CompressedOops::ptrs_base_addr());
       load_ptr_contents(base, G6_heapbase);
     }
   }
 }
-
-#ifdef COMPILER2
-
-// Compress char[] to byte[] by compressing 16 bytes at once. Return 0 on failure.
-void MacroAssembler::string_compress_16(Register src, Register dst, Register cnt, Register result,
-                                        Register tmp1, Register tmp2, Register tmp3, Register tmp4,
-                                        FloatRegister ftmp1, FloatRegister ftmp2, FloatRegister ftmp3, Label& Ldone) {
-  Label Lloop, Lslow;
-  assert(UseVIS >= 3, "VIS3 is required");
-  assert_different_registers(src, dst, cnt, tmp1, tmp2, tmp3, tmp4, result);
-  assert_different_registers(ftmp1, ftmp2, ftmp3);
-
-  // Check if cnt >= 8 (= 16 bytes)
-  cmp(cnt, 8);
-  br(Assembler::less, false, Assembler::pn, Lslow);
-  delayed()->mov(cnt, result); // copy count
-
-  // Check for 8-byte alignment of src and dst
-  or3(src, dst, tmp1);
-  andcc(tmp1, 7, G0);
-  br(Assembler::notZero, false, Assembler::pn, Lslow);
-  delayed()->nop();
-
-  // Set mask for bshuffle instruction
-  Register mask = tmp4;
-  set(0x13579bdf, mask);
-  bmask(mask, G0, G0);
-
-  // Set mask to 0xff00 ff00 ff00 ff00 to check for non-latin1 characters
-  Assembler::sethi(0xff00fc00, mask); // mask = 0x0000 0000 ff00 fc00
-  add(mask, 0x300, mask);             // mask = 0x0000 0000 ff00 ff00
-  sllx(mask, 32, tmp1);               // tmp1 = 0xff00 ff00 0000 0000
-  or3(mask, tmp1, mask);              // mask = 0xff00 ff00 ff00 ff00
-
-  // Load first 8 bytes
-  ldx(src, 0, tmp1);
-
-  bind(Lloop);
-  // Load next 8 bytes
-  ldx(src, 8, tmp2);
-
-  // Check for non-latin1 character by testing if the most significant byte of a char is set.
-  // Although we have to move the data between integer and floating point registers, this is
-  // still faster than the corresponding VIS instructions (ford/fand/fcmpd).
-  or3(tmp1, tmp2, tmp3);
-  btst(tmp3, mask);
-  // annul zeroing if branch is not taken to preserve original count
-  brx(Assembler::notZero, true, Assembler::pn, Ldone);
-  delayed()->mov(G0, result); // 0 - failed
-
-  // Move bytes into float register
-  movxtod(tmp1, ftmp1);
-  movxtod(tmp2, ftmp2);
-
-  // Compress by copying one byte per char from ftmp1 and ftmp2 to ftmp3
-  bshuffle(ftmp1, ftmp2, ftmp3);
-  stf(FloatRegisterImpl::D, ftmp3, dst, 0);
-
-  // Increment addresses and decrement count
-  inc(src, 16);
-  inc(dst, 8);
-  dec(cnt, 8);
-
-  cmp(cnt, 8);
-  // annul LDX if branch is not taken to prevent access past end of string
-  br(Assembler::greaterEqual, true, Assembler::pt, Lloop);
-  delayed()->ldx(src, 0, tmp1);
-
-  // Fallback to slow version
-  bind(Lslow);
-}
-
-// Compress char[] to byte[]. Return 0 on failure.
-void MacroAssembler::string_compress(Register src, Register dst, Register cnt, Register result, Register tmp, Label& Ldone) {
-  Label Lloop;
-  assert_different_registers(src, dst, cnt, tmp, result);
-
-  lduh(src, 0, tmp);
-
-  bind(Lloop);
-  inc(src, sizeof(jchar));
-  cmp(tmp, 0xff);
-  // annul zeroing if branch is not taken to preserve original count
-  br(Assembler::greater, true, Assembler::pn, Ldone); // don't check xcc
-  delayed()->mov(G0, result); // 0 - failed
-  deccc(cnt);
-  stb(tmp, dst, 0);
-  inc(dst);
-  // annul LDUH if branch is not taken to prevent access past end of string
-  br(Assembler::notZero, true, Assembler::pt, Lloop);
-  delayed()->lduh(src, 0, tmp); // hoisted
-}
-
-// Inflate byte[] to char[] by inflating 16 bytes at once.
-void MacroAssembler::string_inflate_16(Register src, Register dst, Register cnt, Register tmp,
-                                       FloatRegister ftmp1, FloatRegister ftmp2, FloatRegister ftmp3, FloatRegister ftmp4, Label& Ldone) {
-  Label Lloop, Lslow;
-  assert(UseVIS >= 3, "VIS3 is required");
-  assert_different_registers(src, dst, cnt, tmp);
-  assert_different_registers(ftmp1, ftmp2, ftmp3, ftmp4);
-
-  // Check if cnt >= 8 (= 16 bytes)
-  cmp(cnt, 8);
-  br(Assembler::less, false, Assembler::pn, Lslow);
-  delayed()->nop();
-
-  // Check for 8-byte alignment of src and dst
-  or3(src, dst, tmp);
-  andcc(tmp, 7, G0);
-  br(Assembler::notZero, false, Assembler::pn, Lslow);
-  // Initialize float register to zero
-  FloatRegister zerof = ftmp4;
-  delayed()->fzero(FloatRegisterImpl::D, zerof);
-
-  // Load first 8 bytes
-  ldf(FloatRegisterImpl::D, src, 0, ftmp1);
-
-  bind(Lloop);
-  inc(src, 8);
-  dec(cnt, 8);
-
-  // Inflate the string by interleaving each byte from the source array
-  // with a zero byte and storing the result in the destination array.
-  fpmerge(zerof, ftmp1->successor(), ftmp2);
-  stf(FloatRegisterImpl::D, ftmp2, dst, 8);
-  fpmerge(zerof, ftmp1, ftmp3);
-  stf(FloatRegisterImpl::D, ftmp3, dst, 0);
-
-  inc(dst, 16);
-
-  cmp(cnt, 8);
-  // annul LDX if branch is not taken to prevent access past end of string
-  br(Assembler::greaterEqual, true, Assembler::pt, Lloop);
-  delayed()->ldf(FloatRegisterImpl::D, src, 0, ftmp1);
-
-  // Fallback to slow version
-  bind(Lslow);
-}
-
-// Inflate byte[] to char[].
-void MacroAssembler::string_inflate(Register src, Register dst, Register cnt, Register tmp, Label& Ldone) {
-  Label Loop;
-  assert_different_registers(src, dst, cnt, tmp);
-
-  ldub(src, 0, tmp);
-  bind(Loop);
-  inc(src);
-  deccc(cnt);
-  sth(tmp, dst, 0);
-  inc(dst, sizeof(jchar));
-  // annul LDUB if branch is not taken to prevent access past end of string
-  br(Assembler::notZero, true, Assembler::pt, Loop);
-  delayed()->ldub(src, 0, tmp); // hoisted
-}
-
-void MacroAssembler::string_compare(Register str1, Register str2,
-                                    Register cnt1, Register cnt2,
-                                    Register tmp1, Register tmp2,
-                                    Register result, int ae) {
-  Label Ldone, Lloop;
-  assert_different_registers(str1, str2, cnt1, cnt2, tmp1, result);
-  int stride1, stride2;
-
-  // Note: Making use of the fact that compareTo(a, b) == -compareTo(b, a)
-  // we interchange str1 and str2 in the UL case and negate the result.
-  // Like this, str1 is always latin1 encoded, expect for the UU case.
-
-  if (ae == StrIntrinsicNode::LU || ae == StrIntrinsicNode::UL) {
-    srl(cnt2, 1, cnt2);
-  }
-
-  // See if the lengths are different, and calculate min in cnt1.
-  // Save diff in case we need it for a tie-breaker.
-  Label Lskip;
-  Register diff = tmp1;
-  subcc(cnt1, cnt2, diff);
-  br(Assembler::greater, true, Assembler::pt, Lskip);
-  // cnt2 is shorter, so use its count:
-  delayed()->mov(cnt2, cnt1);
-  bind(Lskip);
-
-  // Rename registers
-  Register limit1 = cnt1;
-  Register limit2 = limit1;
-  Register chr1   = result;
-  Register chr2   = cnt2;
-  if (ae == StrIntrinsicNode::LU || ae == StrIntrinsicNode::UL) {
-    // We need an additional register to keep track of two limits
-    assert_different_registers(str1, str2, cnt1, cnt2, tmp1, tmp2, result);
-    limit2 = tmp2;
-  }
-
-  // Is the minimum length zero?
-  cmp(limit1, (int)0); // use cast to resolve overloading ambiguity
-  br(Assembler::equal, true, Assembler::pn, Ldone);
-  // result is difference in lengths
-  if (ae == StrIntrinsicNode::UU) {
-    delayed()->sra(diff, 1, result);  // Divide by 2 to get number of chars
-  } else {
-    delayed()->mov(diff, result);
-  }
-
-  // Load first characters
-  if (ae == StrIntrinsicNode::LL) {
-    stride1 = stride2 = sizeof(jbyte);
-    ldub(str1, 0, chr1);
-    ldub(str2, 0, chr2);
-  } else if (ae == StrIntrinsicNode::UU) {
-    stride1 = stride2 = sizeof(jchar);
-    lduh(str1, 0, chr1);
-    lduh(str2, 0, chr2);
-  } else {
-    stride1 = sizeof(jbyte);
-    stride2 = sizeof(jchar);
-    ldub(str1, 0, chr1);
-    lduh(str2, 0, chr2);
-  }
-
-  // Compare first characters
-  subcc(chr1, chr2, chr1);
-  br(Assembler::notZero, false, Assembler::pt, Ldone);
-  assert(chr1 == result, "result must be pre-placed");
-  delayed()->nop();
-
-  // Check if the strings start at same location
-  cmp(str1, str2);
-  brx(Assembler::equal, true, Assembler::pn, Ldone);
-  delayed()->mov(G0, result);  // result is zero
-
-  // We have no guarantee that on 64 bit the higher half of limit is 0
-  signx(limit1);
-
-  // Get limit
-  if (ae == StrIntrinsicNode::LU || ae == StrIntrinsicNode::UL) {
-    sll(limit1, 1, limit2);
-    subcc(limit2, stride2, chr2);
-  }
-  subcc(limit1, stride1, chr1);
-  br(Assembler::zero, true, Assembler::pn, Ldone);
-  // result is difference in lengths
-  if (ae == StrIntrinsicNode::UU) {
-    delayed()->sra(diff, 1, result);  // Divide by 2 to get number of chars
-  } else {
-    delayed()->mov(diff, result);
-  }
-
-  // Shift str1 and str2 to the end of the arrays, negate limit
-  add(str1, limit1, str1);
-  add(str2, limit2, str2);
-  neg(chr1, limit1);  // limit1 = -(limit1-stride1)
-  if (ae == StrIntrinsicNode::LU || ae == StrIntrinsicNode::UL) {
-    neg(chr2, limit2);  // limit2 = -(limit2-stride2)
-  }
-
-  // Compare the rest of the characters
-  load_sized_value(Address(str1, limit1), chr1, (ae == StrIntrinsicNode::UU) ? 2 : 1, false);
-
-  bind(Lloop);
-  load_sized_value(Address(str2, limit2), chr2, (ae == StrIntrinsicNode::LL) ? 1 : 2, false);
-
-  subcc(chr1, chr2, chr1);
-  br(Assembler::notZero, false, Assembler::pt, Ldone);
-  assert(chr1 == result, "result must be pre-placed");
-  delayed()->inccc(limit1, stride1);
-  if (ae == StrIntrinsicNode::LU || ae == StrIntrinsicNode::UL) {
-    inccc(limit2, stride2);
-  }
-
-  // annul LDUB if branch is not taken to prevent access past end of string
-  br(Assembler::notZero, true, Assembler::pt, Lloop);
-  delayed()->load_sized_value(Address(str1, limit1), chr1, (ae == StrIntrinsicNode::UU) ? 2 : 1, false);
-
-  // If strings are equal up to min length, return the length difference.
-  if (ae == StrIntrinsicNode::UU) {
-    // Divide by 2 to get number of chars
-    sra(diff, 1, result);
-  } else {
-    mov(diff, result);
-  }
-
-  // Otherwise, return the difference between the first mismatched chars.
-  bind(Ldone);
-  if(ae == StrIntrinsicNode::UL) {
-    // Negate result (see note above)
-    neg(result);
-  }
-}
-
-void MacroAssembler::array_equals(bool is_array_equ, Register ary1, Register ary2,
-                                  Register limit, Register tmp, Register result, bool is_byte) {
-  Label Ldone, Lloop, Lremaining;
-  assert_different_registers(ary1, ary2, limit, tmp, result);
-
-  int length_offset  = arrayOopDesc::length_offset_in_bytes();
-  int base_offset    = arrayOopDesc::base_offset_in_bytes(is_byte ? T_BYTE : T_CHAR);
-  assert(base_offset % 8 == 0, "Base offset must be 8-byte aligned");
-
-  if (is_array_equ) {
-    // return true if the same array
-    cmp(ary1, ary2);
-    brx(Assembler::equal, true, Assembler::pn, Ldone);
-    delayed()->mov(1, result);  // equal
-
-    br_null(ary1, true, Assembler::pn, Ldone);
-    delayed()->clr(result);     // not equal
-
-    br_null(ary2, true, Assembler::pn, Ldone);
-    delayed()->clr(result);     // not equal
-
-    // load the lengths of arrays
-    ld(Address(ary1, length_offset), limit);
-    ld(Address(ary2, length_offset), tmp);
-
-    // return false if the two arrays are not equal length
-    cmp(limit, tmp);
-    br(Assembler::notEqual, true, Assembler::pn, Ldone);
-    delayed()->clr(result);     // not equal
-  }
-
-  cmp_zero_and_br(Assembler::zero, limit, Ldone, true, Assembler::pn);
-  delayed()->mov(1, result); // zero-length arrays are equal
-
-  if (is_array_equ) {
-    // load array addresses
-    add(ary1, base_offset, ary1);
-    add(ary2, base_offset, ary2);
-    // set byte count
-    if (!is_byte) {
-      sll(limit, exact_log2(sizeof(jchar)), limit);
-    }
-  } else {
-    // We have no guarantee that on 64 bit the higher half of limit is 0
-    signx(limit);
-  }
-
-#ifdef ASSERT
-  // Sanity check for doubleword (8-byte) alignment of ary1 and ary2.
-  // Guaranteed on 64-bit systems (see arrayOopDesc::header_size_in_bytes()).
-  Label Laligned;
-  or3(ary1, ary2, tmp);
-  andcc(tmp, 7, tmp);
-  br_null_short(tmp, Assembler::pn, Laligned);
-  STOP("First array element is not 8-byte aligned.");
-  should_not_reach_here();
-  bind(Laligned);
-#endif
-
-  // Shift ary1 and ary2 to the end of the arrays, negate limit
-  add(ary1, limit, ary1);
-  add(ary2, limit, ary2);
-  neg(limit, limit);
-
-  // MAIN LOOP
-  // Load and compare array elements of size 'byte_width' until the elements are not
-  // equal or we reached the end of the arrays. If the size of the arrays is not a
-  // multiple of 'byte_width', we simply read over the end of the array, bail out and
-  // compare the remaining bytes below by skipping the garbage bytes.
-  ldx(ary1, limit, result);
-  bind(Lloop);
-  ldx(ary2, limit, tmp);
-  inccc(limit, 8);
-  // Bail out if we reached the end (but still do the comparison)
-  br(Assembler::positive, false, Assembler::pn, Lremaining);
-  delayed()->cmp(result, tmp);
-  // Check equality of elements
-  brx(Assembler::equal, false, Assembler::pt, target(Lloop));
-  delayed()->ldx(ary1, limit, result);
-
-  ba(Ldone);
-  delayed()->clr(result); // not equal
-
-  // TAIL COMPARISON
-  // We got here because we reached the end of the arrays. 'limit' is the number of
-  // garbage bytes we may have compared by reading over the end of the arrays. Shift
-  // out the garbage and compare the remaining elements.
-  bind(Lremaining);
-  // Optimistic shortcut: elements potentially including garbage are equal
-  brx(Assembler::equal, true, Assembler::pt, target(Ldone));
-  delayed()->mov(1, result); // equal
-  // Shift 'limit' bytes to the right and compare
-  sll(limit, 3, limit); // bytes to bits
-  srlx(result, limit, result);
-  srlx(tmp, limit, tmp);
-  cmp(result, tmp);
-  clr(result);
-  movcc(Assembler::equal, false, xcc, 1, result);
-
-  bind(Ldone);
-}
-
-void MacroAssembler::has_negatives(Register inp, Register size, Register result, Register t2, Register t3, Register t4, Register t5) {
-
-  // test for negative bytes in input string of a given size
-  // result 1 if found, 0 otherwise.
-
-  Label Lcore, Ltail, Lreturn, Lcore_rpt;
-
-  assert_different_registers(inp, size, t2, t3, t4, t5, result);
-
-  Register i     = result;  // result used as integer index i until very end
-  Register lmask = t2;      // t2 is aliased to lmask
-
-  // INITIALIZATION
-  // ===========================================================
-  // initialize highbits mask -> lmask = 0x8080808080808080  (8B/64b)
-  // compute unaligned offset -> i
-  // compute core end index   -> t5
-  Assembler::sethi(0x80808000, t2);   //! sethi macro fails to emit optimal
-  add(t2, 0x80, t2);
-  sllx(t2, 32, t3);
-  or3(t3, t2, lmask);                 // 0x8080808080808080 -> lmask
-  sra(size,0,size);
-  andcc(inp, 0x7, i);                 // unaligned offset -> i
-  br(Assembler::zero, true, Assembler::pn, Lcore); // starts 8B aligned?
-  delayed()->add(size, -8, t5);       // (annuled) core end index -> t5
-
-  // ===========================================================
-
-  // UNALIGNED HEAD
-  // ===========================================================
-  // * unaligned head handling: grab aligned 8B containing unaligned inp(ut)
-  // * obliterate (ignore) bytes outside string by shifting off reg ends
-  // * compare with bitmask, short circuit return true if one or more high
-  //   bits set.
-  cmp(size, 0);
-  br(Assembler::zero, true, Assembler::pn, Lreturn); // short-circuit?
-  delayed()->mov(0,result);      // annuled so i not clobbered for following
-  neg(i, t4);
-  add(i, size, t5);
-  ldx(inp, t4, t3);  // raw aligned 8B containing unaligned head -> t3
-  mov(8, t4);
-  sub(t4, t5, t4);
-  sra(t4, 31, t5);
-  andn(t4, t5, t5);
-  add(i, t5, t4);
-  sll(t5, 3, t5);
-  sll(t4, 3, t4);   // # bits to shift right, left -> t5,t4
-  srlx(t3, t5, t3);
-  sllx(t3, t4, t3); // bytes outside string in 8B header obliterated -> t3
-  andcc(lmask, t3, G0);
-  brx(Assembler::notZero, true, Assembler::pn, Lreturn); // short circuit?
-  delayed()->mov(1,result);      // annuled so i not clobbered for following
-  add(size, -8, t5);             // core end index -> t5
-  mov(8, t4);
-  sub(t4, i, i);                 // # bytes examined in unalgn head (<8) -> i
-  // ===========================================================
-
-  // ALIGNED CORE
-  // ===========================================================
-  // * iterate index i over aligned 8B sections of core, comparing with
-  //   bitmask, short circuit return true if one or more high bits set
-  // t5 contains core end index/loop limit which is the index
-  //     of the MSB of last (unaligned) 8B fully contained in the string.
-  // inp   contains address of first byte in string/array
-  // lmask contains 8B high bit mask for comparison
-  // i     contains next index to be processed (adr. inp+i is on 8B boundary)
-  bind(Lcore);
-  cmp_and_br_short(i, t5, Assembler::greater, Assembler::pn, Ltail);
-  bind(Lcore_rpt);
-  ldx(inp, i, t3);
-  andcc(t3, lmask, G0);
-  brx(Assembler::notZero, true, Assembler::pn, Lreturn);
-  delayed()->mov(1, result);    // annuled so i not clobbered for following
-  add(i, 8, i);
-  cmp_and_br_short(i, t5, Assembler::lessEqual, Assembler::pn, Lcore_rpt);
-  // ===========================================================
-
-  // ALIGNED TAIL (<8B)
-  // ===========================================================
-  // handle aligned tail of 7B or less as complete 8B, obliterating end of
-  // string bytes by shifting them off end, compare what's left with bitmask
-  // inp   contains address of first byte in string/array
-  // lmask contains 8B high bit mask for comparison
-  // i     contains next index to be processed (adr. inp+i is on 8B boundary)
-  bind(Ltail);
-  subcc(size, i, t4);   // # of remaining bytes in string -> t4
-  // return 0 if no more remaining bytes
-  br(Assembler::lessEqual, true, Assembler::pn, Lreturn);
-  delayed()->mov(0, result); // annuled so i not clobbered for following
-  ldx(inp, i, t3);       // load final 8B (aligned) containing tail -> t3
-  mov(8, t5);
-  sub(t5, t4, t4);
-  mov(0, result);        // ** i clobbered at this point
-  sll(t4, 3, t4);        // bits beyond end of string          -> t4
-  srlx(t3, t4, t3);      // bytes beyond end now obliterated   -> t3
-  andcc(lmask, t3, G0);
-  movcc(Assembler::notZero, false, xcc,  1, result);
-  bind(Lreturn);
-}
-
-#endif
-
 
 // Use BIS for zeroing (count is in bytes).
 void MacroAssembler::bis_zeroing(Register to, Register count, Register temp, Label& Ldone) {

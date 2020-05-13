@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ inline void ZLiveMap::reset() {
 }
 
 inline bool ZLiveMap::is_marked() const {
-  return _seqnum == ZGlobalSeqNum;
+  return Atomic::load_acquire(&_seqnum) == ZGlobalSeqNum;
 }
 
 inline uint32_t ZLiveMap::live_objects() const {
@@ -68,15 +68,15 @@ inline BitMapView ZLiveMap::segment_claim_bits() {
 }
 
 inline bool ZLiveMap::is_segment_live(BitMap::idx_t segment) const {
-  return segment_live_bits().at(segment);
+  return segment_live_bits().par_at(segment);
 }
 
-inline bool ZLiveMap::set_segment_live_atomic(BitMap::idx_t segment) {
-  return segment_live_bits().par_set_bit(segment);
+inline bool ZLiveMap::set_segment_live(BitMap::idx_t segment) {
+  return segment_live_bits().par_set_bit(segment, memory_order_release);
 }
 
 inline bool ZLiveMap::claim_segment(BitMap::idx_t segment) {
-  return segment_claim_bits().par_set_bit(segment);
+  return segment_claim_bits().par_set_bit(segment, memory_order_acq_rel);
 }
 
 inline BitMap::idx_t ZLiveMap::first_live_segment() const {
@@ -92,7 +92,7 @@ inline BitMap::idx_t ZLiveMap::segment_size() const {
 }
 
 inline BitMap::idx_t ZLiveMap::index_to_segment(BitMap::idx_t index) const {
-  return index >> _shift;
+  return index >> _segment_shift;
 }
 
 inline bool ZLiveMap::get(size_t index) const {
@@ -102,7 +102,7 @@ inline bool ZLiveMap::get(size_t index) const {
          _bitmap.at(index);          // Object is marked
 }
 
-inline bool ZLiveMap::set_atomic(size_t index, bool finalizable, bool& inc_live) {
+inline bool ZLiveMap::set(size_t index, bool finalizable, bool& inc_live) {
   if (!is_marked()) {
     // First object to be marked during this
     // cycle, reset marking information.
@@ -119,9 +119,9 @@ inline bool ZLiveMap::set_atomic(size_t index, bool finalizable, bool& inc_live)
   return _bitmap.par_set_bit_pair(index, finalizable, inc_live);
 }
 
-inline void ZLiveMap::inc_live_atomic(uint32_t objects, size_t bytes) {
-  Atomic::add(objects, &_live_objects);
-  Atomic::add(bytes, &_live_bytes);
+inline void ZLiveMap::inc_live(uint32_t objects, size_t bytes) {
+  Atomic::add(&_live_objects, objects);
+  Atomic::add(&_live_bytes, bytes);
 }
 
 inline BitMap::idx_t ZLiveMap::segment_start(BitMap::idx_t segment) const {
@@ -144,7 +144,7 @@ inline void ZLiveMap::iterate_segment(ObjectClosure* cl, BitMap::idx_t segment, 
     const uintptr_t addr = page_start + ((index / 2) << page_object_alignment_shift);
 
     // Apply closure
-    cl->do_object(ZOop::to_oop(addr));
+    cl->do_object(ZOop::from_address(addr));
 
     // Find next bit after this object
     const size_t size = ZUtils::object_size(addr);

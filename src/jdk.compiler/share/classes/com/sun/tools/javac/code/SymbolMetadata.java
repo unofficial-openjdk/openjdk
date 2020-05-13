@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.sun.tools.javac.code.Kinds.Kind;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
+import com.sun.tools.javac.util.Pair;
 
 /**
  * Container for all annotations (attributes in javac) on a Symbol.
@@ -254,5 +255,37 @@ public class SymbolMetadata {
 
     private boolean isStarted() {
         return attributes != DECL_NOT_STARTED;
+    }
+
+    private List<Attribute.Compound> removeFromCompoundList(List<Attribute.Compound> l, Attribute.Compound compound) {
+        ListBuffer<Attribute.Compound> lb = new ListBuffer<>();
+        for (Attribute.Compound c : l) {
+            if (c != compound) {
+                lb.add(c);
+            }
+        }
+        return lb.toList();
+    }
+
+    public void removeDeclarationMetadata(Attribute.Compound compound) {
+        if (attributes.contains(compound)) {
+            attributes = removeFromCompoundList(attributes, compound);
+        } else {
+            // slow path, it could be that attributes list contains annotation containers, so we have to dig deeper
+            for (Attribute.Compound attrCompound : attributes) {
+                if (attrCompound.isSynthesized() && !attrCompound.values.isEmpty()) {
+                    Pair<Symbol.MethodSymbol, Attribute> val = attrCompound.values.get(0);
+                    if (val.fst.getSimpleName().contentEquals("value") &&
+                            val.snd instanceof Attribute.Array) {
+                        Attribute.Array arr = (Attribute.Array) val.snd;
+                        if (arr.values.length != 0
+                                && arr.values[0] instanceof Attribute.Compound
+                                && arr.values[0].type == compound.type) {
+                            attributes = removeFromCompoundList(attributes, attrCompound);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

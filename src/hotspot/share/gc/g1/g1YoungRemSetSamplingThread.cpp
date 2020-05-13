@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@
 #include "gc/g1/heapRegion.inline.hpp"
 #include "gc/g1/heapRegionRemSet.hpp"
 #include "gc/shared/suspendibleThreadSet.hpp"
+#include "memory/universe.hpp"
 #include "runtime/mutexLocker.hpp"
 
 G1YoungRemSetSamplingThread::G1YoungRemSetSamplingThread() :
@@ -47,10 +48,10 @@ G1YoungRemSetSamplingThread::G1YoungRemSetSamplingThread() :
 }
 
 void G1YoungRemSetSamplingThread::sleep_before_next_cycle() {
-  MutexLockerEx x(&_monitor, Mutex::_no_safepoint_check_flag);
+  MonitorLocker ml(&_monitor, Mutex::_no_safepoint_check_flag);
   if (!should_terminate()) {
     uintx waitms = G1ConcRefinementServiceIntervalMillis;
-    _monitor.wait(Mutex::_no_safepoint_check_flag, waitms);
+    ml.wait(waitms);
   }
 }
 
@@ -89,7 +90,9 @@ void G1YoungRemSetSamplingThread::check_for_periodic_gc(){
   if ((os::elapsedTime() - _last_periodic_gc_attempt_s) > (G1PeriodicGCInterval / 1000.0)) {
     log_debug(gc, periodic)("Checking for periodic GC.");
     if (should_start_periodic_gc()) {
-      Universe::heap()->collect(GCCause::_g1_periodic_collection);
+      if (!G1CollectedHeap::heap()->try_collect(GCCause::_g1_periodic_collection)) {
+        log_debug(gc, periodic)("GC request denied. Skipping.");
+      }
     }
     _last_periodic_gc_attempt_s = os::elapsedTime();
   }
@@ -106,7 +109,7 @@ void G1YoungRemSetSamplingThread::run_service() {
   }
 
   while (!should_terminate()) {
-    sample_young_list_rs_lengths();
+    sample_young_list_rs_length();
 
     if (os::supports_vtime()) {
       _vtime_accum = (os::elapsedVTime() - vtime_start);
@@ -121,21 +124,21 @@ void G1YoungRemSetSamplingThread::run_service() {
 }
 
 void G1YoungRemSetSamplingThread::stop_service() {
-  MutexLockerEx x(&_monitor, Mutex::_no_safepoint_check_flag);
+  MutexLocker x(&_monitor, Mutex::_no_safepoint_check_flag);
   _monitor.notify();
 }
 
 class G1YoungRemSetSamplingClosure : public HeapRegionClosure {
   SuspendibleThreadSetJoiner* _sts;
   size_t _regions_visited;
-  size_t _sampled_rs_lengths;
+  size_t _sampled_rs_length;
 public:
   G1YoungRemSetSamplingClosure(SuspendibleThreadSetJoiner* sts) :
-    HeapRegionClosure(), _sts(sts), _regions_visited(0), _sampled_rs_lengths(0) { }
+    HeapRegionClosure(), _sts(sts), _regions_visited(0), _sampled_rs_length(0) { }
 
   virtual bool do_heap_region(HeapRegion* r) {
     size_t rs_length = r->rem_set()->occupied();
-    _sampled_rs_lengths += rs_length;
+    _sampled_rs_length += rs_length;
 
     // Update the collection set policy information for this region
     G1CollectedHeap::heap()->collection_set()->update_young_region_prediction(r, rs_length);
@@ -154,22 +157,22 @@ public:
     return false;
   }
 
-  size_t sampled_rs_lengths() const { return _sampled_rs_lengths; }
+  size_t sampled_rs_length() const { return _sampled_rs_length; }
 };
 
-void G1YoungRemSetSamplingThread::sample_young_list_rs_lengths() {
+void G1YoungRemSetSamplingThread::sample_young_list_rs_length() {
   SuspendibleThreadSetJoiner sts;
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
-  G1Policy* g1p = g1h->g1_policy();
+  G1Policy* policy = g1h->policy();
 
-  if (g1p->adaptive_young_list_length()) {
+  if (policy->use_adaptive_young_list_length()) {
     G1YoungRemSetSamplingClosure cl(&sts);
 
     G1CollectionSet* g1cs = g1h->collection_set();
     g1cs->iterate(&cl);
 
     if (cl.is_complete()) {
-      g1p->revise_young_list_target_length_if_necessary(cl.sampled_rs_lengths());
+      policy->revise_young_list_target_length_if_necessary(cl.sampled_rs_length());
     }
   }
 }

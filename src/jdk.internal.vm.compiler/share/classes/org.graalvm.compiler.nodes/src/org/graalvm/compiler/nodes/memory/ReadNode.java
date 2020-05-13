@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,11 +71,12 @@ public class ReadNode extends FloatableAccessNode implements LIRLowerableAccess,
     protected ReadNode(NodeClass<? extends ReadNode> c, AddressNode address, LocationIdentity location, Stamp stamp, GuardingNode guard, BarrierType barrierType, boolean nullCheck,
                     FrameState stateBefore) {
         super(c, address, location, stamp, guard, barrierType, nullCheck, stateBefore);
+        this.lastLocationAccess = null;
     }
 
     @Override
     public void generate(NodeLIRBuilderTool gen) {
-        LIRKind readKind = gen.getLIRGeneratorTool().getLIRKind(getAccessStamp());
+        LIRKind readKind = gen.getLIRGeneratorTool().getLIRKind(getAccessStamp(NodeView.DEFAULT));
         gen.setResult(this, gen.getLIRGeneratorTool().getArithmetic().emitLoad(readKind, gen.operand(address), gen.state(this)));
     }
 
@@ -96,7 +97,7 @@ public class ReadNode extends FloatableAccessNode implements LIRLowerableAccess,
 
     @SuppressWarnings("try")
     @Override
-    public FloatingAccessNode asFloatingNode(MemoryNode lastLocationAccess) {
+    public FloatingAccessNode asFloatingNode() {
         try (DebugCloseable position = withNodeSourcePosition()) {
             return graph().unique(new FloatingReadNode(getAddress(), getLocationIdentity(), lastLocationAccess, stamp(NodeView.DEFAULT), getGuard(), getBarrierType()));
         }
@@ -152,7 +153,7 @@ public class ReadNode extends FloatableAccessNode implements LIRLowerableAccess,
     }
 
     @Override
-    public Stamp getAccessStamp() {
-        return stamp(NodeView.DEFAULT);
+    public Stamp getAccessStamp(NodeView view) {
+        return stamp(view);
     }
 }

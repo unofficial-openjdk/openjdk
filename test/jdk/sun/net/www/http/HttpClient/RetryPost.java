@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
  * @test
  * @bug 6427251 6382788
  * @modules jdk.httpserver
+ * @library /test/lib
  * @run main RetryPost
  * @run main/othervm -Dsun.net.http.retryPost=false RetryPost noRetry
  * @summary HttpURLConnection automatically retries non-idempotent method POST
@@ -36,12 +37,14 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketException;
 import java.net.URL;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
+import jdk.test.lib.net.URIBuilder;
 
 public class RetryPost
 {
@@ -51,26 +54,27 @@ public class RetryPost
     MyHandler httpHandler;
     ExecutorService executorService;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         if (args.length == 1 && args[0].equals("noRetry"))
             shouldRetry = false;
 
         new RetryPost();
     }
 
-    public RetryPost() {
-        try {
-            startHttpServer(shouldRetry);
-            doClient();
-        } catch (IOException ioe) {
-            System.err.println(ioe);
-        }
+    public RetryPost() throws Exception {
+        startHttpServer(shouldRetry);
+        doClient();
     }
 
-    void doClient() {
+    void doClient() throws Exception {
         try {
             InetSocketAddress address = httpServer.getAddress();
-            URL url = new URL("http://localhost:" + address.getPort() + "/test/");
+            URL url = URIBuilder.newBuilder()
+                      .scheme("http")
+                      .host(address.getAddress())
+                      .port(address.getPort())
+                      .path("/test/")
+                      .toURLUnchecked();
             HttpURLConnection uc = (HttpURLConnection)url.openConnection(Proxy.NO_PROXY);
             uc.setDoOutput(true);
             uc.setRequestMethod("POST");
@@ -80,15 +84,17 @@ public class RetryPost
             throw new RuntimeException("Failed: POST request being retried");
 
         } catch (SocketException se) {
+            System.out.println("Got expected exception: " + se);
             // this is what we expect to happen and is OK.
-            if (shouldRetry && httpHandler.getCallCount() != 2)
+            if (shouldRetry && httpHandler.getCallCount() != 2) {
+                se.printStackTrace(System.out);
                 throw new RuntimeException("Failed: Handler should have been called twice. " +
                                            "It was called "+ httpHandler.getCallCount() + " times");
-            else if (!shouldRetry && httpHandler.getCallCount() != 1)
+            } else if (!shouldRetry && httpHandler.getCallCount() != 1) {
+                se.printStackTrace(System.out);
                 throw new RuntimeException("Failed: Handler should have only been called once" +
                                            "It was called "+ httpHandler.getCallCount() + " times");
-        } catch (IOException e) {
-            e.printStackTrace();
+            }
         } finally {
             httpServer.stop(1);
             executorService.shutdown();
@@ -99,7 +105,8 @@ public class RetryPost
      * Http Server
      */
     public void startHttpServer(boolean shouldRetry) throws IOException {
-        httpServer = com.sun.net.httpserver.HttpServer.create(new InetSocketAddress(0), 0);
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        httpServer = com.sun.net.httpserver.HttpServer.create(new InetSocketAddress(loopback, 0), 0);
         httpHandler = new MyHandler(shouldRetry);
 
         HttpContext ctx = httpServer.createContext("/test/", httpHandler);
@@ -110,8 +117,8 @@ public class RetryPost
     }
 
     class MyHandler implements HttpHandler {
-        int callCount = 0;
-        boolean shouldRetry;
+        volatile int callCount = 0;
+        final boolean shouldRetry;
 
         public MyHandler(boolean shouldRetry) {
             this.shouldRetry = shouldRetry;

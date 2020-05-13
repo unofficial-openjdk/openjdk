@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,12 +70,8 @@ public class InputStreamReader extends Reader {
      */
     public InputStreamReader(InputStream in) {
         super(in);
-        try {
-            sd = StreamDecoder.forInputStreamReader(in, this, (String)null); // ## check lock object
-        } catch (UnsupportedEncodingException e) {
-            // The default encoding should always be available
-            throw new Error(e);
-        }
+        sd = StreamDecoder.forInputStreamReader(in, this,
+                Charset.defaultCharset()); // ## check lock object
     }
 
     /**
@@ -88,7 +84,7 @@ public class InputStreamReader extends Reader {
      *         The name of a supported
      *         {@link java.nio.charset.Charset charset}
      *
-     * @exception  UnsupportedEncodingException
+     * @throws     UnsupportedEncodingException
      *             If the named charset is not supported
      */
     public InputStreamReader(InputStream in, String charsetName)
@@ -141,11 +137,11 @@ public class InputStreamReader extends Reader {
      * <p> If this instance was created with the {@link
      * #InputStreamReader(InputStream, String)} constructor then the returned
      * name, being unique for the encoding, may differ from the name passed to
-     * the constructor. This method will return <code>null</code> if the
+     * the constructor. This method will return {@code null} if the
      * stream has been closed.
      * </p>
      * @return The historical name of this encoding, or
-     *         <code>null</code> if the stream has been closed
+     *         {@code null} if the stream has been closed
      *
      * @see java.nio.charset.Charset
      *
@@ -162,7 +158,7 @@ public class InputStreamReader extends Reader {
      * @return The character read, or -1 if the end of the stream has been
      *         reached
      *
-     * @exception  IOException  If an I/O error occurs
+     * @throws     IOException  If an I/O error occurs
      */
     public int read() throws IOException {
         return sd.read();
@@ -178,8 +174,8 @@ public class InputStreamReader extends Reader {
      * @return     The number of characters read, or -1 if the end of the
      *             stream has been reached
      *
-     * @exception  IOException  If an I/O error occurs
-     * @exception  IndexOutOfBoundsException {@inheritDoc}
+     * @throws     IOException  If an I/O error occurs
+     * @throws     IndexOutOfBoundsException {@inheritDoc}
      */
     public int read(char cbuf[], int offset, int length) throws IOException {
         return sd.read(cbuf, offset, length);
@@ -190,7 +186,7 @@ public class InputStreamReader extends Reader {
      * ready if its input buffer is not empty, or if bytes are available to be
      * read from the underlying byte stream.
      *
-     * @exception  IOException  If an I/O error occurs
+     * @throws     IOException  If an I/O error occurs
      */
     public boolean ready() throws IOException {
         return sd.ready();

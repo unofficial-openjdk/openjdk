@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,7 @@ import javax.crypto.SecretKey;
  */
 public class SecretKeySpec implements KeySpec, SecretKey {
 
+    @java.io.Serial
     private static final long serialVersionUID = 6577238317307289933L;
 
     /**
@@ -198,7 +199,7 @@ public class SecretKeySpec implements KeySpec, SecretKey {
                     this.algorithm.toLowerCase(Locale.ENGLISH).hashCode());
     }
 
-   /**
+    /**
      * Tests for equality between the specified object and this
      * object. Two SecretKeySpec objects are considered equal if
      * they are both SecretKey instances which have the

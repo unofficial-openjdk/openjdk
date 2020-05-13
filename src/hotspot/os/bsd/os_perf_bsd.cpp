@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,8 @@
 #include "memory/resourceArea.hpp"
 #include "runtime/os.hpp"
 #include "runtime/os_perf.hpp"
-#include "vm_version_ext_x86.hpp"
+#include "utilities/globalDefinitions.hpp"
+#include CPU_HEADER(vm_version_ext)
 
 #ifdef __APPLE__
   #import <libproc.h>
@@ -72,8 +73,8 @@ class CPUPerformanceInterface::CPUPerformance : public CHeapObj<mtInternal> {
   int cpu_load_total_process(double* cpu_load);
   int cpu_loads_process(double* pjvmUserLoad, double* pjvmKernelLoad, double* psystemTotalLoad);
 
-  CPUPerformance(const CPUPerformance& rhs); // no impl
-  CPUPerformance& operator=(const CPUPerformance& rhs); // no impl
+  NONCOPYABLE(CPUPerformance);
+
  public:
   CPUPerformance();
   bool initialize();
@@ -234,7 +235,7 @@ CPUPerformanceInterface::CPUPerformanceInterface() {
 
 bool CPUPerformanceInterface::initialize() {
   _impl = new CPUPerformanceInterface::CPUPerformance();
-  return _impl != NULL && _impl->initialize();
+  return _impl->initialize();
 }
 
 CPUPerformanceInterface::~CPUPerformanceInterface() {
@@ -264,8 +265,7 @@ class SystemProcessInterface::SystemProcesses : public CHeapObj<mtInternal> {
  private:
   SystemProcesses();
   bool initialize();
-  SystemProcesses(const SystemProcesses& rhs); // no impl
-  SystemProcesses& operator=(const SystemProcesses& rhs); // no impl
+  NONCOPYABLE(SystemProcesses);
   ~SystemProcesses();
 
   //information about system processes
@@ -355,7 +355,7 @@ SystemProcessInterface::SystemProcessInterface() {
 
 bool SystemProcessInterface::initialize() {
   _impl = new SystemProcessInterface::SystemProcesses();
-  return _impl != NULL && _impl->initialize();
+  return _impl->initialize();
 }
 
 SystemProcessInterface::~SystemProcessInterface() {
@@ -370,16 +370,11 @@ CPUInformationInterface::CPUInformationInterface() {
 
 bool CPUInformationInterface::initialize() {
   _cpu_info = new CPUInformation();
-
-  if (NULL == _cpu_info) {
-    return false;
-  }
   _cpu_info->set_number_of_hardware_threads(VM_Version_Ext::number_of_threads());
   _cpu_info->set_number_of_cores(VM_Version_Ext::number_of_cores());
   _cpu_info->set_number_of_sockets(VM_Version_Ext::number_of_sockets());
   _cpu_info->set_cpu_name(VM_Version_Ext::cpu_name());
   _cpu_info->set_cpu_description(VM_Version_Ext::cpu_description());
-
   return true;
 }
 
@@ -412,8 +407,7 @@ class NetworkPerformanceInterface::NetworkPerformance : public CHeapObj<mtIntern
   friend class NetworkPerformanceInterface;
  private:
   NetworkPerformance();
-  NetworkPerformance(const NetworkPerformance& rhs); // no impl
-  NetworkPerformance& operator=(const NetworkPerformance& rhs); // no impl
+  NONCOPYABLE(NetworkPerformance);
   bool initialize();
   ~NetworkPerformance();
   int network_utilization(NetworkInterface** network_interfaces) const;
@@ -483,7 +477,7 @@ NetworkPerformanceInterface::~NetworkPerformanceInterface() {
 
 bool NetworkPerformanceInterface::initialize() {
   _impl = new NetworkPerformanceInterface::NetworkPerformance();
-  return _impl != NULL && _impl->initialize();
+  return _impl->initialize();
 }
 
 int NetworkPerformanceInterface::network_utilization(NetworkInterface** network_interfaces) const {

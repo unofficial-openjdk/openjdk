@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug      8202947
+ * @bug      8202947 8239804
  * @summary  test the at-version tag, and corresponding option
  * @library  /tools/lib ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
@@ -51,11 +51,13 @@ public class TestVersionTag extends JavadocTester {
     TestVersionTag() throws Exception {
         src = Files.createDirectories(Paths.get("src"));
         tb.writeJavaFiles(src,
-                  "package pkg;\n"
-                + "/** Introduction. \n"
-                + " * @version 1.2.3\n"
-                + " */\n"
-                + "public class Test { }\n");
+                  """
+                      package pkg;
+                      /** Introduction.\s
+                       * @version 1.2.3
+                       */
+                      public class Test { }
+                      """);
     }
 
     @Test
@@ -81,9 +83,10 @@ public class TestVersionTag extends JavadocTester {
 
     void checkVersion(boolean on) {
         checkOutput("pkg/Test.html", on,
-                "<dl>\n"
-                + "<dt><span class=\"simpleTagLabel\">Version:</span></dt>\n"
-                + "<dd>1.2.3</dd>\n"
-                + "</dl>");
+                """
+                    <dl class="notes">
+                    <dt>Version:</dt>
+                    <dd>1.2.3</dd>
+                    </dl>""");
     }
 }

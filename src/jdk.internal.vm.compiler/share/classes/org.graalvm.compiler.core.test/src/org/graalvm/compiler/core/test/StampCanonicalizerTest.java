@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,14 +24,11 @@
 
 package org.graalvm.compiler.core.test;
 
-import org.junit.Test;
-
 import org.graalvm.compiler.core.common.type.IntegerStamp;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
-import org.graalvm.compiler.phases.common.CanonicalizerPhase;
 import org.graalvm.compiler.phases.common.DeadCodeEliminationPhase;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
+import org.junit.Test;
 
 /**
  * This class tests some specific patterns the stamp system should be able to canonicalize away
@@ -113,7 +110,7 @@ public class StampCanonicalizerTest extends GraalCompilerTest {
 
     private void testZeroReturn(String methodName) {
         StructuredGraph graph = parseEager(methodName, AllowAssumptions.YES);
-        new CanonicalizerPhase().apply(graph, new PhaseContext(getProviders()));
+        createCanonicalizerPhase().apply(graph, getProviders());
         new DeadCodeEliminationPhase().apply(graph);
         assertConstantReturn(graph, 0);
     }

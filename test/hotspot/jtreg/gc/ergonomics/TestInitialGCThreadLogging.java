@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,30 +27,40 @@ package gc.ergonomics;
  * @test TestInitialGCThreadLogging
  * @bug 8157240
  * @summary Check trace logging of initial GC threads.
- * @requires vm.gc=="null"
  * @key gc
  * @modules java.base/jdk.internal.misc
  * @library /test/lib
  * @build sun.hotspot.WhiteBox
- * @run driver ClassFileInstaller sun.hotspot.WhiteBox sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI gc.ergonomics.TestInitialGCThreadLogging
  */
 
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
+import jtreg.SkippedException;
 import sun.hotspot.gc.GC;
 
 public class TestInitialGCThreadLogging {
   public static void main(String[] args) throws Exception {
+    boolean noneGCSupported = true;
 
-    testInitialGCThreadLogging("UseConcMarkSweepGC", "GC Thread");
+    if (GC.G1.isSupported()) {
+      noneGCSupported = false;
+      testInitialGCThreadLogging("UseG1GC", "GC Thread");
+    }
 
-    testInitialGCThreadLogging("UseG1GC", "GC Thread");
-
-    testInitialGCThreadLogging("UseParallelGC", "ParGC Thread");
+    if (GC.Parallel.isSupported()) {
+      noneGCSupported = false;
+      testInitialGCThreadLogging("UseParallelGC", "GC Thread");
+    }
 
     if (GC.Shenandoah.isSupported()) {
-        testInitialGCThreadLogging("UseShenandoahGC", "Shenandoah GC Thread");
+      noneGCSupported = false;
+      testInitialGCThreadLogging("UseShenandoahGC", "Shenandoah GC Thread");
+    }
+
+    if (noneGCSupported) {
+      throw new SkippedException("Skipping test because none of G1/Parallel/Shenandoah is supported.");
     }
   }
 
@@ -60,11 +70,14 @@ public class TestInitialGCThreadLogging {
   }
 
   private static void testInitialGCThreadLogging(String gcFlag, String threadName) throws Exception {
-    // UseDynamicNumberOfGCThreads and TraceDynamicGCThreads enabled
-    String[] baseArgs = {"-XX:+UnlockExperimentalVMOptions", "-XX:+" + gcFlag, "-Xmx10M", "-XX:+UseDynamicNumberOfGCThreads", "-Xlog:gc+task=trace", "-version"};
-
     // Base test with gc and +UseDynamicNumberOfGCThreads:
-    ProcessBuilder pb_enabled = ProcessTools.createJavaProcessBuilder(baseArgs);
+    ProcessBuilder pb_enabled = ProcessTools.createJavaProcessBuilder(
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+" + gcFlag,
+        "-Xmx10M",
+        "-XX:+UseDynamicNumberOfGCThreads",
+        "-Xlog:gc+task=trace",
+        "-version");
     verifyDynamicNumberOfGCThreads(new OutputAnalyzer(pb_enabled.start()), threadName);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,11 +27,12 @@ package sun.jvm.hotspot.runtime;
 import java.util.*;
 import sun.jvm.hotspot.debugger.*;
 import sun.jvm.hotspot.types.*;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
 // The OSThread class holds OS-specific thread information.  It is equivalent
 // to the sys_thread_t structure of the classic JVM implementation.
 public class OSThread extends VMObject {
-    private static JIntField interruptedField;
     private static Field threadIdField;
     private static CIntegerField threadStateField;
 
@@ -56,7 +57,6 @@ public class OSThread extends VMObject {
 
     private static synchronized void initialize(TypeDataBase db) {
         Type type = db.lookupType("OSThread");
-        interruptedField = type.getJIntField("_interrupted");
         threadIdField = type.getField("_thread_id");
         threadStateField = type.getCIntegerField("_state");
 
@@ -73,10 +73,6 @@ public class OSThread extends VMObject {
 
     public OSThread(Address addr) {
         super(addr);
-    }
-
-    public boolean interrupted() {
-        return ((int)interruptedField.getValue(addr)) != 0;
     }
 
     public int threadId() {

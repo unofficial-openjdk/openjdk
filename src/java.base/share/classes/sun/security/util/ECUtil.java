@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,18 @@ import java.security.interfaces.*;
 import java.security.spec.*;
 import java.util.Arrays;
 
-public class ECUtil {
+public final class ECUtil {
+
+    // Used by SunEC
+    public static byte[] sArray(BigInteger s, ECParameterSpec params) {
+        byte[] arr = s.toByteArray();
+        ArrayUtil.reverse(arr);
+        int byteLength = (params.getOrder().bitLength() + 7) / 8;
+        byte[] arrayS = new byte[byteLength];
+        int length = Math.min(byteLength, arr.length);
+        System.arraycopy(arr, 0, arrayS, 0, length);
+        return arrayS;
+    }
 
     // Used by SunPKCS11 and SunJSSE.
     public static ECPoint decodePoint(byte[] data, EllipticCurve curve)
@@ -219,6 +230,21 @@ public class ECUtil {
 
         return nameSpec.getName();
     }
+
+    public static boolean equals(ECParameterSpec spec1, ECParameterSpec spec2) {
+        if (spec1 == spec2) {
+            return true;
+        }
+
+        if (spec1 == null || spec2 == null) {
+            return false;
+        }
+        return (spec1.getCofactor() == spec2.getCofactor() &&
+                spec1.getOrder().equals(spec2.getOrder()) &&
+                spec1.getCurve().equals(spec2.getCurve()) &&
+                spec1.getGenerator().equals(spec2.getGenerator()));
+    }
+
 
     // Convert the concatenation R and S in into their DER encoding
     public static byte[] encodeSignature(byte[] signature) throws SignatureException {

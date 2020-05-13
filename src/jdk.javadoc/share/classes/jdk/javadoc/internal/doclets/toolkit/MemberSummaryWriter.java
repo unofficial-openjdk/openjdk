@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,9 +39,6 @@ import com.sun.source.doctree.DocTree;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
- * @author Bhavesh Patel (Modified)
  */
 
 public interface MemberSummaryWriter {
@@ -53,8 +50,7 @@ public interface MemberSummaryWriter {
      * @param memberSummaryTree the content tree to which the member summary will be added
      * @return a content tree for the member summary header
      */
-    public Content getMemberSummaryHeader(TypeElement typeElement,
-            Content memberSummaryTree);
+    Content getMemberSummaryHeader(TypeElement typeElement, Content memberSummaryTree);
 
     /**
      * Get the summary table for the given class.
@@ -62,7 +58,7 @@ public interface MemberSummaryWriter {
      * @param typeElement the class the summary table belongs to
      * @return a content tree for the member summary table
      */
-    public Content getSummaryTableTree(TypeElement typeElement);
+    Content getSummaryTableTree(TypeElement typeElement);
 
     /**
      * Add the member summary for the given class and member.
@@ -71,8 +67,8 @@ public interface MemberSummaryWriter {
      * @param member the member that is documented
      * @param firstSentenceTags the tags for the sentence being documented
      */
-    public void addMemberSummary(TypeElement typeElement, Element member,
-            List<? extends DocTree> firstSentenceTags);
+    void addMemberSummary(TypeElement typeElement, Element member,
+                          List<? extends DocTree> firstSentenceTags);
 
     /**
      * Get the inherited member summary header for the given class.
@@ -80,7 +76,7 @@ public interface MemberSummaryWriter {
      * @param typeElement the class the summary belongs to
      * @return a content tree containing the inherited summary header
      */
-    public Content getInheritedSummaryHeader(TypeElement typeElement);
+    Content getInheritedSummaryHeader(TypeElement typeElement);
 
     /**
      * Add the inherited member summary for the given class and member.
@@ -91,24 +87,24 @@ public interface MemberSummaryWriter {
      * @param isLast true if this is the last member in the list
      * @param linksTree the content tree to which the links will be added
      */
-    public void addInheritedMemberSummary(TypeElement typeElement,
-        Element member, boolean isFirst, boolean isLast,
-        Content linksTree);
+    void addInheritedMemberSummary(TypeElement typeElement,
+                                   Element member, boolean isFirst, boolean isLast,
+                                   Content linksTree);
 
     /**
      * Get inherited summary links.
      *
      * @return a content tree containing the inherited summary links
      */
-    public Content getInheritedSummaryLinksTree();
+    Content getInheritedSummaryLinksTree();
 
     /**
-     * Add the member tree to the member summary tree.
+     * Adds the given summary to the list of summaries.
      *
-     * @param memberSummaryTree the content tree representing the member summary
-     * @param memberTree the content tree representing the member
+     * @param summariesList the list of summaries
+     * @param content       the summary
      */
-    public void addMemberTree(Content memberSummaryTree, Content memberTree);
+    void addSummary(Content summariesList, Content content);
 
     /**
      * Get the member tree.
@@ -116,5 +112,5 @@ public interface MemberSummaryWriter {
      * @param memberTree the content tree representing the member
      * @return a content tree for the member
      */
-    public Content getMemberTree(Content memberTree);
+    Content getMemberTree(Content memberTree);
 }

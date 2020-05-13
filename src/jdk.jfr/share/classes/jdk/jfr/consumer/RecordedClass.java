@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,11 +25,7 @@
 
 package jdk.jfr.consumer;
 
-import java.lang.reflect.Modifier;
-import java.util.List;
-
-import jdk.jfr.ValueDescriptor;
-import jdk.jfr.internal.Type;
+import jdk.jfr.internal.consumer.ObjectContext;
 
 /**
  * A recorded Java type, such as a class or an interface.
@@ -37,32 +33,20 @@ import jdk.jfr.internal.Type;
  * @since 9
  */
 public final class RecordedClass extends RecordedObject {
-
-    static ObjectFactory<RecordedClass> createFactory(Type type, TimeConverter timeConverter) {
-        return new ObjectFactory<RecordedClass>(type) {
-            @Override
-            RecordedClass createTyped(List<ValueDescriptor> desc, long id, Object[] object) {
-                return new RecordedClass(desc, id, object, timeConverter);
-            }
-        };
-    }
-
     private final long uniqueId;
 
     // package private
-    private RecordedClass(List<ValueDescriptor> descriptors, long id, Object[] values, TimeConverter timeConverter) {
-        super(descriptors, values, timeConverter);
+    RecordedClass(ObjectContext objectContext, long id, Object[] values) {
+        super(objectContext, values);
         this.uniqueId = id;
     }
 
     /**
      * Returns the modifiers of the class.
-     * <p>
-     * See {@link java.lang.reflect.Modifier}
      *
      * @return the modifiers
      *
-     * @see Modifier
+     * @see java.lang.reflect.Modifier
      */
     public int getModifiers() {
         return getTyped("modifiers", Integer.class, -1);
@@ -70,7 +54,7 @@ public final class RecordedClass extends RecordedObject {
 
     /**
      * Returns the class loader that defined the class.
-     * <P>
+     * <p>
      * If the bootstrap class loader is represented as {@code null} in the Java
      * Virtual Machine (JVM), then {@code null} is also the return value of this method.
      *

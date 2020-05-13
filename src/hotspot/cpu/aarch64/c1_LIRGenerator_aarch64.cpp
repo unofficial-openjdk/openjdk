@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -37,6 +37,7 @@
 #include "ci/ciTypeArrayKlass.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
+#include "utilities/powerOfTwo.hpp"
 #include "vmreg_aarch64.inline.hpp"
 
 #ifdef ASSERT
@@ -426,7 +427,7 @@ void LIRGenerator::do_ArithmeticOp_FPU(ArithmeticOp* x) {
     tmp = new_register(T_DOUBLE);
   }
 
-  arithmetic_op_fpu(x->op(), reg, left.result(), right.result(), NULL);
+  arithmetic_op_fpu(x->op(), reg, left.result(), right.result(), x->is_strictfp());
 
   set_result(x, round_item(reg));
 }
@@ -447,7 +448,7 @@ void LIRGenerator::do_ArithmeticOp_Long(ArithmeticOp* x) {
       // no need to do div-by-zero check if the divisor is a non-zero constant
       if (c != 0) need_zero_check = false;
       // do not load right if the divisor is a power-of-2 constant
-      if (c > 0 && is_power_of_2_long(c)) {
+      if (c > 0 && is_power_of_2(c)) {
         right.dont_load_item();
       } else {
         right.load_item();
@@ -733,7 +734,7 @@ LIR_Opr LIRGenerator::atomic_cmpxchg(BasicType type, LIR_Opr addr, LIRItem& cmp_
   new_value.load_item();
   cmp_value.load_item();
   LIR_Opr result = new_register(T_INT);
-  if (type == T_OBJECT || type == T_ARRAY) {
+  if (is_reference_type(type)) {
     __ cas_obj(addr, cmp_value.result(), new_value.result(), new_register(T_INT), new_register(T_INT), result);
   } else if (type == T_INT) {
     __ cas_int(addr->as_address_ptr()->base(), cmp_value.result(), new_value.result(), ill, ill);
@@ -748,7 +749,7 @@ LIR_Opr LIRGenerator::atomic_cmpxchg(BasicType type, LIR_Opr addr, LIRItem& cmp_
 }
 
 LIR_Opr LIRGenerator::atomic_xchg(BasicType type, LIR_Opr addr, LIRItem& value) {
-  bool is_oop = type == T_OBJECT || type == T_ARRAY;
+  bool is_oop = is_reference_type(type);
   LIR_Opr result = new_register(type);
   value.load_item();
   assert(type == T_INT || is_oop LP64_ONLY( || type == T_LONG ), "unexpected type");
@@ -1127,7 +1128,6 @@ void LIRGenerator::do_Convert(Convert* x) {
   // arguments of lir_convert
   LIR_Opr conv_input = input;
   LIR_Opr conv_result = result;
-  ConversionStub* stub = NULL;
 
   __ convert(x->op(), conv_input, conv_result);
 

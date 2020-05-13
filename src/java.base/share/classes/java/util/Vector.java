@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,8 @@ import java.io.StreamCorruptedException;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
+
+import jdk.internal.util.ArraysSupport;
 
 /**
  * The {@code Vector} class implements a growable array of
@@ -100,6 +102,7 @@ public class Vector<E>
      *
      * @serial
      */
+    @SuppressWarnings("serial") // Conditionally serializable
     protected Object[] elementData;
 
     /**
@@ -122,6 +125,7 @@ public class Vector<E>
     protected int capacityIncrement;
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
+    @java.io.Serial
     private static final long serialVersionUID = -2767605614048989439L;
 
     /**
@@ -242,14 +246,6 @@ public class Vector<E>
     }
 
     /**
-     * The maximum size of array to allocate (unless necessary).
-     * Some VMs reserve some header words in an array.
-     * Attempts to allocate larger arrays may result in
-     * OutOfMemoryError: Requested array size exceeds VM limit
-     */
-    private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
-
-    /**
      * Increases the capacity to ensure that it can hold at least the
      * number of elements specified by the minimum capacity argument.
      *
@@ -257,43 +253,16 @@ public class Vector<E>
      * @throws OutOfMemoryError if minCapacity is less than zero
      */
     private Object[] grow(int minCapacity) {
-        return elementData = Arrays.copyOf(elementData,
-                                           newCapacity(minCapacity));
+        int oldCapacity = elementData.length;
+        int newCapacity = ArraysSupport.newLength(oldCapacity,
+                minCapacity - oldCapacity, /* minimum growth */
+                capacityIncrement > 0 ? capacityIncrement : oldCapacity
+                                           /* preferred growth */);
+        return elementData = Arrays.copyOf(elementData, newCapacity);
     }
 
     private Object[] grow() {
         return grow(elementCount + 1);
-    }
-
-    /**
-     * Returns a capacity at least as large as the given minimum capacity.
-     * Will not return a capacity greater than MAX_ARRAY_SIZE unless
-     * the given minimum capacity is greater than MAX_ARRAY_SIZE.
-     *
-     * @param minCapacity the desired minimum capacity
-     * @throws OutOfMemoryError if minCapacity is less than zero
-     */
-    private int newCapacity(int minCapacity) {
-        // overflow-conscious code
-        int oldCapacity = elementData.length;
-        int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
-                                         capacityIncrement : oldCapacity);
-        if (newCapacity - minCapacity <= 0) {
-            if (minCapacity < 0) // overflow
-                throw new OutOfMemoryError();
-            return minCapacity;
-        }
-        return (newCapacity - MAX_ARRAY_SIZE <= 0)
-            ? newCapacity
-            : hugeCapacity(minCapacity);
-    }
-
-    private static int hugeCapacity(int minCapacity) {
-        if (minCapacity < 0) // overflow
-            throw new OutOfMemoryError();
-        return (minCapacity > MAX_ARRAY_SIZE) ?
-            Integer.MAX_VALUE :
-            MAX_ARRAY_SIZE;
     }
 
     /**
@@ -1182,6 +1151,7 @@ public class Vector<E>
      * @throws ClassNotFoundException if the stream contains data
      *         of a non-existing class
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream in)
             throws IOException, ClassNotFoundException {
         ObjectInputStream.GetField gfields = in.readFields();
@@ -1203,6 +1173,7 @@ public class Vector<E>
      * @param s the stream
      * @throws java.io.IOException if an I/O error occurs
      */
+    @java.io.Serial
     private void writeObject(java.io.ObjectOutputStream s)
             throws java.io.IOException {
         final java.io.ObjectOutputStream.PutField fields = s.putFields();
@@ -1402,6 +1373,7 @@ public class Vector<E>
             es[i] = operator.apply(elementAt(es, i));
         if (modCount != expectedModCount)
             throw new ConcurrentModificationException();
+        // TODO(8203662): remove increment of modCount from ...
         modCount++;
     }
 

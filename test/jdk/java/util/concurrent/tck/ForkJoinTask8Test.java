@@ -559,6 +559,8 @@ public class ForkJoinTask8Test extends JSR166TestCase {
                 AsyncFib f = new AsyncFib(8);
                 assertSame(f, f.fork());
                 helpQuiesce();
+                while (!f.isDone()) // wait out race
+                    ;
                 assertEquals(0, getQueuedTaskCount());
                 f.checkCompletedNormally();
             }};
@@ -900,14 +902,13 @@ public class ForkJoinTask8Test extends JSR166TestCase {
         RecursiveAction a = new CheckedRecursiveAction() {
             protected void realCompute() {
                 AsyncFib nul = null;
-                Runnable[] throwingActions = {
+                assertThrows(
+                    NullPointerException.class,
                     () -> invokeAll(nul),
                     () -> invokeAll(nul, nul),
                     () -> invokeAll(new AsyncFib(8), new AsyncFib(9), nul),
                     () -> invokeAll(new AsyncFib(8), nul, new AsyncFib(9)),
-                    () -> invokeAll(nul, new AsyncFib(8), new AsyncFib(9)),
-                };
-                assertThrows(NullPointerException.class, throwingActions);
+                    () -> invokeAll(nul, new AsyncFib(8), new AsyncFib(9)));
             }};
         testInvokeOnPool(pool, a);
     }

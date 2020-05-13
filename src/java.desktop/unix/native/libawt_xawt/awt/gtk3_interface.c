@@ -398,6 +398,8 @@ GtkApi* gtk3_load(JNIEnv *env, const char* lib_name)
         } else {
             fp_gdk_window_create_similar_image_surface =
                        dl_symbol("gdk_window_create_similar_image_surface");
+            fp_gdk_window_get_scale_factor =
+                    dl_symbol("gdk_window_get_scale_factor");
         }
         gtk3_version_3_14 = !fp_gtk_check_version(3, 14, 0);
 
@@ -477,8 +479,7 @@ GtkApi* gtk3_load(JNIEnv *env, const char* lib_name)
         fp_gtk_fixed_new = dl_symbol("gtk_fixed_new");
         fp_gtk_handle_box_new = dl_symbol("gtk_handle_box_new");
         fp_gtk_image_new = dl_symbol("gtk_image_new");
-        fp_gtk_hpaned_new = dl_symbol("gtk_hpaned_new");
-        fp_gtk_vpaned_new = dl_symbol("gtk_vpaned_new");
+        fp_gtk_paned_new = dl_symbol("gtk_paned_new");
         fp_gtk_scale_new = dl_symbol("gtk_scale_new");
         fp_gtk_hscrollbar_new = dl_symbol("gtk_hscrollbar_new");
         fp_gtk_vscrollbar_new = dl_symbol("gtk_vscrollbar_new");
@@ -1081,7 +1082,7 @@ static GtkWidget *gtk3_get_widget(WidgetType widget_type)
         case SPLIT_PANE:
             if (init_result = (NULL == gtk3_widgets[_GTK_HPANED_TYPE]))
             {
-                gtk3_widgets[_GTK_HPANED_TYPE] = (*fp_gtk_hpaned_new)();
+                gtk3_widgets[_GTK_HPANED_TYPE] = (*fp_gtk_paned_new)(GTK_ORIENTATION_HORIZONTAL);
             }
             result = gtk3_widgets[_GTK_HPANED_TYPE];
             break;
@@ -1314,7 +1315,7 @@ static GtkWidget *gtk3_get_widget(WidgetType widget_type)
         case VSPLIT_PANE_DIVIDER:
             if (init_result = (NULL == gtk3_widgets[_GTK_VPANED_TYPE]))
             {
-                gtk3_widgets[_GTK_VPANED_TYPE] = (*fp_gtk_vpaned_new)();
+                gtk3_widgets[_GTK_VPANED_TYPE] = (*fp_gtk_paned_new)(GTK_ORIENTATION_VERTICAL);
             }
             result = gtk3_widgets[_GTK_VPANED_TYPE];
             break;
@@ -1434,6 +1435,14 @@ static GtkStyleContext* get_style(WidgetType widget_type, const gchar *detail)
             } else if (strcmp(detail, "option") == 0) {
                 path = createWidgetPath (NULL);
                 append_element(path, "radio");
+            } else if (strcmp(detail, "paned") == 0) {
+                path = createWidgetPath (fp_gtk_style_context_get_path (widget_context));
+                append_element(path, "paned");
+                append_element(path, "separator");
+            } else if (strcmp(detail, "spinbutton_down") == 0 || strcmp(detail, "spinbutton_up") == 0) {
+                path = createWidgetPath (fp_gtk_style_context_get_path (widget_context));
+                append_element(path, "spinbutton");
+                append_element(path, "button");
             } else {
                 path = createWidgetPath (fp_gtk_style_context_get_path (widget_context));
                 append_element(path, detail);
@@ -1777,13 +1786,18 @@ static void gtk3_paint_flat_box(WidgetType widget_type, GtkStateType state_type,
         (widget_type == CHECK_BOX || widget_type == RADIO_BUTTON)) {
         return;
     }
-    gtk3_widget = gtk3_get_widget(widget_type);
 
-    GtkStyleContext* context = fp_gtk_widget_get_style_context (gtk3_widget);
-    fp_gtk_style_context_save (context);
-
-    if (detail != 0) {
-        transform_detail_string(detail, context);
+    GtkStyleContext* context = NULL;
+    if (widget_type == TOOL_TIP) {
+        context = get_style(widget_type, detail);
+        fp_gtk_style_context_add_class(context, "background");
+    } else {
+        gtk3_widget = gtk3_get_widget(widget_type);
+        context = fp_gtk_widget_get_style_context (gtk3_widget);
+        fp_gtk_style_context_save (context);
+        if (detail != 0) {
+            transform_detail_string(detail, context);
+        }
     }
 
     GtkStateFlags flags = get_gtk_flags(state_type);
@@ -1799,8 +1813,11 @@ static void gtk3_paint_flat_box(WidgetType widget_type, GtkStateType state_type,
     }
 
     fp_gtk_render_background (context, cr, x, y, width, height);
-
-    fp_gtk_style_context_restore (context);
+    if (widget_type == TOOL_TIP) {
+        disposeOrRestoreContext(context);
+    } else {
+        fp_gtk_style_context_restore (context);
+    }
 }
 
 static void gtk3_paint_focus(WidgetType widget_type, GtkStateType state_type,
@@ -1824,22 +1841,30 @@ static void gtk3_paint_handle(WidgetType widget_type, GtkStateType state_type,
 {
     gtk3_widget = gtk3_get_widget(widget_type);
 
-    GtkStyleContext* context = fp_gtk_widget_get_style_context (gtk3_widget);
-
-    fp_gtk_style_context_save (context);
+    GtkStyleContext* context = get_style(widget_type, detail);
 
     GtkStateFlags flags = get_gtk_flags(state_type);
     fp_gtk_style_context_set_state(context, GTK_STATE_FLAG_PRELIGHT);
 
-    if (detail != 0) {
+    if (detail != 0 && !(strcmp(detail, "paned") == 0)) {
         transform_detail_string(detail, context);
         fp_gtk_style_context_add_class (context, "handlebox_bin");
     }
 
-    fp_gtk_render_handle(context, cr, x, y, width, height);
-    fp_gtk_render_background(context, cr, x, y, width, height);
+    if (!(strcmp(detail, "paned") == 0)) {
+        fp_gtk_render_handle(context, cr, x, y, width, height);
+        fp_gtk_render_background(context, cr, x, y, width, height);
+    } else {
+        if (orientation == GTK_ORIENTATION_VERTICAL) {
+            fp_gtk_render_handle(context, cr, x+width/2, y, 2, height);
+            fp_gtk_render_background(context, cr, x+width/2, y, 2, height);
+        } else {
+            fp_gtk_render_handle(context, cr, x, y+height/2, width, 2);
+            fp_gtk_render_background(context, cr, x, y+height/2, width, 2);
+        }
+    }
 
-    fp_gtk_style_context_restore (context);
+    disposeOrRestoreContext(context);
 }
 
 static void gtk3_paint_hline(WidgetType widget_type, GtkStateType state_type,
@@ -2360,17 +2385,19 @@ static gint gtk3_get_color_for_state(JNIEnv *env, WidgetType widget_type,
 
     init_containers();
 
-    if (widget_type == TEXT_FIELD && state_type == GTK_STATE_SELECTED &&
-        color_type == TEXT_BACKGROUND) {
-        widget_type = TEXT_AREA;
+    if (gtk3_version_3_20) {
+        if ((widget_type == TEXT_FIELD || widget_type == PASSWORD_FIELD || widget_type == SPINNER_TEXT_FIELD ||
+            widget_type == FORMATTED_TEXT_FIELD) && state_type == GTK_STATE_SELECTED && color_type == TEXT_BACKGROUND) {
+            widget_type = TEXT_AREA;
+        }
     }
 
-    gtk3_widget = gtk3_get_widget(widget_type);
-
-    GtkStyleContext* context = fp_gtk_widget_get_style_context(gtk3_widget);
-
+    GtkStyleContext* context = NULL;
     if (widget_type == TOOL_TIP) {
-        fp_gtk_style_context_add_class(context, "tooltip");
+        context = get_style(widget_type, "tooltip");
+    } else {
+        gtk3_widget = gtk3_get_widget(widget_type);
+        context = fp_gtk_widget_get_style_context(gtk3_widget);
     }
     if (widget_type == CHECK_BOX_MENU_ITEM
      || widget_type == RADIO_BUTTON_MENU_ITEM) {
@@ -2388,7 +2415,9 @@ static gint gtk3_get_color_for_state(JNIEnv *env, WidgetType widget_type,
 
     result = recode_color(color.alpha) << 24 | recode_color(color.red) << 16 |
              recode_color(color.green) << 8 | recode_color(color.blue);
-
+    if (widget_type == TOOL_TIP) {
+        disposeOrRestoreContext(context);
+    }
     return result;
 }
 
@@ -2876,7 +2905,14 @@ static gboolean gtk3_get_drawable_data(JNIEnv *env, jintArray pixelArray,
     jint *ary;
 
     GdkWindow *root = (*fp_gdk_get_default_root_window)();
-    pixbuf = (*fp_gdk_pixbuf_get_from_drawable)(root, x, y, width, height);
+    if (gtk3_version_3_10) {
+        int win_scale = (*fp_gdk_window_get_scale_factor)(root);
+        pixbuf = (*fp_gdk_pixbuf_get_from_drawable)(
+            root, x, y, (int) (width / (float) win_scale + 0.5), (int) (height / (float) win_scale + 0.5));
+    } else {
+        pixbuf = (*fp_gdk_pixbuf_get_from_drawable)(root, x, y, width, height);
+    }
+
     if (pixbuf && scale != 1) {
         GdkPixbuf *scaledPixbuf;
         x /= scale;
@@ -2894,8 +2930,8 @@ static gboolean gtk3_get_drawable_data(JNIEnv *env, jintArray pixelArray,
     if (pixbuf) {
         int nchan = (*fp_gdk_pixbuf_get_n_channels)(pixbuf);
         int stride = (*fp_gdk_pixbuf_get_rowstride)(pixbuf);
-        if ((*fp_gdk_pixbuf_get_width)(pixbuf) == width
-                && (*fp_gdk_pixbuf_get_height)(pixbuf) == height
+        if ((*fp_gdk_pixbuf_get_width)(pixbuf) >= width
+                && (*fp_gdk_pixbuf_get_height)(pixbuf) >= height
                 && (*fp_gdk_pixbuf_get_bits_per_sample)(pixbuf) == 8
                 && (*fp_gdk_pixbuf_get_colorspace)(pixbuf) == GDK_COLORSPACE_RGB
                 && nchan >= 3
@@ -2907,7 +2943,7 @@ static gboolean gtk3_get_drawable_data(JNIEnv *env, jintArray pixelArray,
                 int index;
                 for (_y = 0; _y < height; _y++) {
                     for (_x = 0; _x < width; _x++) {
-                        p = pix + _y * stride + _x * nchan;
+                        p = pix + (intptr_t) _y * stride + _x * nchan;
 
                         index = (_y + dy) * jwidth + (_x + dx);
                         ary[index] = 0xff000000

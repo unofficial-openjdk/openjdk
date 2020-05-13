@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,22 +23,35 @@
 
 /**
  * @test
- * @bug 8179559
+ * @bug 8179559 8225239
+ * @library /test/lib
+ * @modules java.base/java.net:open
  */
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
+import java.lang.reflect.Method;
+import jdk.test.lib.Platform;
 
 public class NetworkInterfaceRetrievalTests {
     public static void main(String[] args) throws Exception {
         int checkFailureCount = 0;
+
+        Method isBound = NetworkInterface.class.getDeclaredMethod("isBoundInetAddress", InetAddress.class);
+        isBound.setAccessible(true);
 
         try {
             Enumeration<NetworkInterface> en = NetworkInterface
                     .getNetworkInterfaces();
             while (en.hasMoreElements()) {
                 NetworkInterface ni = en.nextElement();
+
+                //JDK-8230132: Should not test on Windows with Teredo Tunneling Pseudo-Interface
+                String dName = ni.getDisplayName();
+                if (Platform.isWindows() && dName != null && dName.contains("Teredo"))
+                    continue;
+
                 Enumeration<InetAddress> addrs = ni.getInetAddresses();
                 System.out.println("############ Checking network interface + "
                         + ni + " #############");
@@ -58,6 +71,13 @@ public class NetworkInterfaceRetrievalTests {
                         checkFailureCount++;
                     }
 
+                    // Any bound address should return true when calling isBoundInetAddress
+                    if (!((boolean)isBound.invoke(null, addr))) {
+                        System.out.println("Retreived net if bound addr " + addr
+                                + "NOT shown as bound using NetworkInterface.isBoundAddress "
+                                + "***********");
+                        checkFailureCount++;
+                    }
                 }
             }
 

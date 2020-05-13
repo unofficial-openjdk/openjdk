@@ -50,6 +50,7 @@ import java.security.PrivilegedAction;
 import java.util.Enumeration;
 
 import sun.net.ext.ExtendedSocketOptions;
+import sun.net.util.IPAddressUtil;
 import sun.security.action.GetPropertyAction;
 
 public class Net {
@@ -106,6 +107,16 @@ public class Net {
     }
 
     /**
+     * Tells whether both IPV6_XXX and IP_XXX socket options should be set on
+     * IPv6 sockets. On some kernels, both IPV6_XXX and IP_XXX socket options
+     * need to be set so that the settings are effective for IPv4 multicast
+     * datagrams sent using the socket.
+     */
+    static boolean shouldSetBothIPv4AndIPv6Options() {
+        return shouldSetBothIPv4AndIPv6Options0();
+    }
+
+    /**
      * Tells whether IPv6 sockets can join IPv4 multicast groups
      */
     static boolean canIPv6SocketJoinIPv4Group() {
@@ -118,6 +129,14 @@ public class Net {
      */
     static boolean canJoin6WithIPv4Group() {
         return canJoin6WithIPv4Group0();
+    }
+
+    /**
+     * Tells whether IPV6_XXX socket options should be used on an IPv6 socket
+     * that is bound to an IPv4 address.
+     */
+    static boolean canUseIPv6OptionsWithIPv4LocalAddress() {
+        return canUseIPv6OptionsWithIPv4LocalAddress0();
     }
 
     public static InetSocketAddress checkAddress(SocketAddress sa) {
@@ -310,6 +329,12 @@ public class Net {
     static final ExtendedSocketOptions extendedOptions =
             ExtendedSocketOptions.getInstance();
 
+    static void setSocketOption(FileDescriptor fd, SocketOption<?> name, Object value)
+        throws IOException
+    {
+        setSocketOption(fd, Net.UNSPEC, name, value);
+    }
+
     static void setSocketOption(FileDescriptor fd, ProtocolFamily family,
                                 SocketOption<?> name, Object value)
         throws IOException
@@ -372,8 +397,13 @@ public class Net {
         setIntOption0(fd, mayNeedConversion, key.level(), key.name(), arg, isIPv6);
     }
 
-    static Object getSocketOption(FileDescriptor fd, ProtocolFamily family,
-                                  SocketOption<?> name)
+    static Object getSocketOption(FileDescriptor fd, SocketOption<?> name)
+        throws IOException
+    {
+        return getSocketOption(fd, Net.UNSPEC, name);
+    }
+
+    static Object getSocketOption(FileDescriptor fd, ProtocolFamily family, SocketOption<?> name)
         throws IOException
     {
         Class<?> type = name.type();
@@ -418,16 +448,19 @@ public class Net {
      */
     private static native int isExclusiveBindAvailable();
 
+    private static native boolean shouldSetBothIPv4AndIPv6Options0();
+
     private static native boolean canIPv6SocketJoinIPv4Group0();
 
     private static native boolean canJoin6WithIPv4Group0();
+
+    private static native boolean canUseIPv6OptionsWithIPv4LocalAddress0();
 
     static FileDescriptor socket(boolean stream) throws IOException {
         return socket(UNSPEC, stream);
     }
 
-    static FileDescriptor socket(ProtocolFamily family, boolean stream)
-        throws IOException {
+    static FileDescriptor socket(ProtocolFamily family, boolean stream) throws IOException {
         boolean preferIPv6 = isIPv6Available() &&
             (family != StandardProtocolFamily.INET);
         return IOUtil.newFD(socket0(preferIPv6, stream, false, fastLoopback));
@@ -452,6 +485,9 @@ public class Net {
     {
         boolean preferIPv6 = isIPv6Available() &&
             (family != StandardProtocolFamily.INET);
+        if (addr.isLinkLocalAddress()) {
+            addr = IPAddressUtil.toScopedAddress(addr);
+        }
         bind0(fd, preferIPv6, exclusiveBind, addr, port);
     }
 
@@ -471,6 +507,9 @@ public class Net {
     static int connect(ProtocolFamily family, FileDescriptor fd, InetAddress remote, int remotePort)
         throws IOException
     {
+        if (remote.isLinkLocalAddress()) {
+            remote = IPAddressUtil.toScopedAddress(remote);
+        }
         boolean preferIPv6 = isIPv6Available() &&
             (family != StandardProtocolFamily.INET);
         return connect0(preferIPv6, fd, remote, remotePort);
@@ -482,6 +521,10 @@ public class Net {
                                        int remotePort)
         throws IOException;
 
+    public static native int accept(FileDescriptor fd,
+                                    FileDescriptor newfd,
+                                    InetSocketAddress[] isaa)
+        throws IOException;
 
     public static final int SHUT_RD = 0;
     public static final int SHUT_WR = 1;
@@ -521,8 +564,21 @@ public class Net {
                                              int level, int opt, int arg, boolean isIPv6)
         throws IOException;
 
+    /**
+     * Polls a file descriptor for events.
+     * @param timeout the timeout to wait; 0 to not wait, -1 to wait indefinitely
+     * @return the polled events or 0 if no events are polled
+     */
     static native int poll(FileDescriptor fd, int events, long timeout)
         throws IOException;
+
+    /**
+     * Performs a non-blocking poll of a file descriptor.
+     * @return the polled events or 0 if no events are polled
+     */
+    static int pollNow(FileDescriptor fd, int events) throws IOException {
+        return poll(fd, events, 0);
+    }
 
     /**
      * Polls a connecting socket to test if the connection has been established.
@@ -530,10 +586,20 @@ public class Net {
      * @apiNote This method is public to allow it be used by code in jdk.sctp.
      *
      * @param timeout the timeout to wait; 0 to not wait, -1 to wait indefinitely
-     * @return 1 if connected, 0 if not connected, or IOS_INTERRUPTED
+     * @return true if connected
      */
-    public static native int pollConnect(FileDescriptor fd, long timeout)
+    public static native boolean pollConnect(FileDescriptor fd, long timeout)
         throws IOException;
+
+    /**
+     * Performs a non-blocking poll of a connecting socket to test if the
+     * connection has been established.
+     *
+     * @return true if connected
+     */
+    static boolean pollConnectNow(FileDescriptor fd) throws IOException {
+        return pollConnect(fd, 0);
+    }
 
     /**
      * Return the number of bytes in the socket input buffer.

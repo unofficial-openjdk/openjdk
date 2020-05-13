@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,33 +36,75 @@ import com.sun.source.doctree.DocTree;
  * The interface for a custom taglet supported by doclets such as
  * the {@link jdk.javadoc.doclet.StandardDoclet standard doclet}.
  * Custom taglets are used to handle custom tags in documentation
- * comments.
+ * comments; custom tags can be instantiated individually as either
+ * <i>block tags</i>, which appear at the end of a comment,
+ * or <i>inline tags</i>, which can appear within the main body of a
+ * documentation comment.
  *
- * <p>A custom taglet must implement this interface, and must have
- * a public default constructor (i.e. a public constructor with no
- * parameters), by which, the doclet will instantiate and
- * register the custom taglet.
+ * <p> Each implementation of a taglet must provide a public no-argument constructor
+ * to be used by doclets to instantiate the taglet. A doclet will interact
+ * with classes implementing this interface as follows:
  *
+ * <ol>
+ * <li> The doclet will create an instance of a taglet using the no-arg
+ *      constructor of the taglet class.
+ * <li> Next, the doclet calls the {@link #init(DocletEnvironment,Doclet) init}
+        method with an appropriate environment and doclet.
+ * <li> Afterwards, the doclet calls {@link #getName() getName},
+ *      {@link #getAllowedLocations() getAllowedLocations}, and
+ *      {@link #isInlineTag() isInlineTag}, to determine the characteristics
+ *      of the tags supported by the taglet.
+ * <li> As appropriate, the doclet calls the
+ *      {@link #toString(List,Element) toString} method on the taglet object,
+ *      giving it a list of tags and the element for which the tags are part
+ *      of the element's documentation comment, from which the taglet can
+ *      determine the string to be included in the documentation.
+ *      The doclet will typically specify any requirements on the contents of
+ *      the string that is returned.
+ * </ol>
+ *
+ * <p>If a taglet object is created and used without the above protocol being
+ * followed, then the taglet's behavior is not defined by this interface
+ * specification.
+ *
+ * @apiNote
+ * It is typical for a taglet to be designed to work in conjunction with a
+ * specific doclet.
+ *
+ * @see <a href="StandardDoclet.html#user-defined-taglets">User-Defined Taglets
+ *      for the Standard Doclet</a>
  * @since 9
  */
 
 public interface Taglet {
 
     /**
-     * Returns the set of locations in which a tag may be used.
-     * @return the set of locations in which a tag may be used
+     * Returns the set of supported locations for block tags.
+     * @return the set of supported locations for block tags
      */
     Set<Location> getAllowedLocations();
 
     /**
-     * Indicates whether this taglet is for inline tags or not.
-     * @return true if this taglet is for an inline tag, and false otherwise
+     * Indicates whether this taglet supports inline tags.
+     *
+     * @return true if this taglet supports inline tags
      */
     boolean isInlineTag();
 
     /**
-     * Returns the name of the tag.
-     * @return the name of this custom tag.
+     * Indicates whether this taglet supports block tags.
+     *
+     * @return true if this taglet supports block tags
+     * @implSpec This implementation returns the inverse
+     * result to {@code isInlineTag}.
+     */
+    default boolean isBlockTag() {
+        return !isInlineTag();
+    }
+
+    /**
+     * Returns the name of the tag supported by this taglet.
+     * @return the name of this tag
      */
     String getName();
 
@@ -85,28 +127,34 @@ public interface Taglet {
     /**
      * Returns the string representation of a series of instances of
      * this tag to be included in the generated output.
-     * If this taglet is for an {@link #isInlineTag inline} tag it will
-     * be called once per instance of the tag, each time with a singleton list.
-     * Otherwise, if this tag is a block tag, it will be called once per
-     * comment, with a list of all the instances of the tag in a comment.
+     *
+     * <p>If this taglet supports {@link #isInlineTag inline} tags, it will
+     * be called once per instance of the inline tag, each time with a singleton list.
+     * If this taglet supports {@link #isBlockTag block} tags, it will be called once
+     * for each comment containing instances of block tags, with a list of all the instances
+     * of the block tag in that comment.
+     *
      * @param tags the list of instances of this tag
      * @param element the element to which the enclosing comment belongs
      * @return the string representation of the tags to be included in
      *  the generated output
+     *
+     * @see <a href="StandardDoclet.html#user-defined-taglets">User-Defined Taglets
+     *      for the Standard Doclet</a>
      */
     String toString(List<? extends DocTree> tags, Element element);
 
     /**
      * The kind of location in which a tag may be used.
      */
-    public static enum Location {
+    enum Location {
         /** In an Overview document. */
         OVERVIEW,
         /** In the documentation for a module. */
         MODULE,
         /** In the documentation for a package. */
         PACKAGE,
-        /** In the documentation for a class, interface or enum. */
+        /** In the documentation for a type, such as a class, interface or enum. */
         TYPE,
         /** In the documentation for a constructor. */
         CONSTRUCTOR,

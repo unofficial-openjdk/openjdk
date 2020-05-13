@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2012, 2015 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,7 +33,9 @@
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/barrierSetAssembler.hpp"
 #include "oops/accessDecorators.hpp"
+#include "oops/compressedOops.hpp"
 #include "runtime/safepointMechanism.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 inline bool MacroAssembler::is_ld_largeoffset(address a) {
   const int inst1 = *(int *)a;
@@ -55,7 +57,7 @@ inline int MacroAssembler::get_ld_largeoffset_offset(address a) {
 }
 
 inline void MacroAssembler::round_to(Register r, int modulus) {
-  assert(is_power_of_2_long((jlong)modulus), "must be power of 2");
+  assert(is_power_of_2((jlong)modulus), "must be power of 2");
   addi(r, r, modulus-1);
   clrrdi(r, r, log2_long((jlong)modulus));
 }
@@ -265,7 +267,7 @@ inline address MacroAssembler::last_calls_return_pc() {
 
 // Read from the polling page, its address is already in a register.
 inline void MacroAssembler::load_from_polling_page(Register polling_page_address, int offset) {
-  if (SafepointMechanism::uses_thread_local_poll() && USE_POLL_BIT_ONLY) {
+  if (USE_POLL_BIT_ONLY) {
     int encoding = SafepointMechanism::poll_bit();
     tdi(traptoGreaterThanUnsigned | traptoEqual, polling_page_address, encoding);
   } else {
@@ -378,19 +380,19 @@ inline void MacroAssembler::store_heap_oop(Register d, RegisterOrConstant offs, 
 
 inline Register MacroAssembler::encode_heap_oop_not_null(Register d, Register src) {
   Register current = (src != noreg) ? src : d; // Oop to be compressed is in d if no src provided.
-  if (Universe::narrow_oop_base_overlaps()) {
-    sub_const_optimized(d, current, Universe::narrow_oop_base(), R0);
+  if (CompressedOops::base_overlaps()) {
+    sub_const_optimized(d, current, CompressedOops::base(), R0);
     current = d;
   }
-  if (Universe::narrow_oop_shift() != 0) {
-    rldicl(d, current, 64-Universe::narrow_oop_shift(), 32);  // Clears the upper bits.
+  if (CompressedOops::shift() != 0) {
+    rldicl(d, current, 64-CompressedOops::shift(), 32);  // Clears the upper bits.
     current = d;
   }
   return current; // Encoded oop is in this register.
 }
 
 inline Register MacroAssembler::encode_heap_oop(Register d, Register src) {
-  if (Universe::narrow_oop_base() != NULL) {
+  if (CompressedOops::base() != NULL) {
     if (VM_Version::has_isel()) {
       cmpdi(CCR0, src, 0);
       Register co = encode_heap_oop_not_null(d, src);
@@ -410,20 +412,20 @@ inline Register MacroAssembler::encode_heap_oop(Register d, Register src) {
 }
 
 inline Register MacroAssembler::decode_heap_oop_not_null(Register d, Register src) {
-  if (Universe::narrow_oop_base_disjoint() && src != noreg && src != d &&
-      Universe::narrow_oop_shift() != 0) {
-    load_const_optimized(d, Universe::narrow_oop_base(), R0);
-    rldimi(d, src, Universe::narrow_oop_shift(), 32-Universe::narrow_oop_shift());
+  if (CompressedOops::base_disjoint() && src != noreg && src != d &&
+      CompressedOops::shift() != 0) {
+    load_const_optimized(d, CompressedOops::base(), R0);
+    rldimi(d, src, CompressedOops::shift(), 32-CompressedOops::shift());
     return d;
   }
 
   Register current = (src != noreg) ? src : d; // Compressed oop is in d if no src provided.
-  if (Universe::narrow_oop_shift() != 0) {
-    sldi(d, current, Universe::narrow_oop_shift());
+  if (CompressedOops::shift() != 0) {
+    sldi(d, current, CompressedOops::shift());
     current = d;
   }
-  if (Universe::narrow_oop_base() != NULL) {
-    add_const_optimized(d, current, Universe::narrow_oop_base(), R0);
+  if (CompressedOops::base() != NULL) {
+    add_const_optimized(d, current, CompressedOops::base(), R0);
     current = d;
   }
   return current; // Decoded oop is in this register.
@@ -432,7 +434,7 @@ inline Register MacroAssembler::decode_heap_oop_not_null(Register d, Register sr
 inline void MacroAssembler::decode_heap_oop(Register d) {
   Label isNull;
   bool use_isel = false;
-  if (Universe::narrow_oop_base() != NULL) {
+  if (CompressedOops::base() != NULL) {
     cmpwi(CCR0, d, 0);
     if (VM_Version::has_isel()) {
       use_isel = true;

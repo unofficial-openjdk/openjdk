@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,10 +30,11 @@ import sun.jvm.hotspot.memory.*;
 import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.types.*;
 import sun.jvm.hotspot.utilities.*;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
 public class CodeCache {
   private static GrowableArray<CodeHeap> heapArray;
-  private static AddressField scavengeRootNMethodsField;
   private static VirtualConstructor virtualConstructor;
 
   static {
@@ -50,13 +51,11 @@ public class CodeCache {
     // Get array of CodeHeaps
     // Note: CodeHeap may be subclassed with optional private heap mechanisms.
     Type codeHeapType = db.lookupType("CodeHeap");
-    VirtualBaseConstructor heapConstructor =
-        new VirtualBaseConstructor(db, codeHeapType, "sun.jvm.hotspot.memory", CodeHeap.class);
+    VirtualBaseConstructor<CodeHeap> heapConstructor =
+        new VirtualBaseConstructor<>(db, codeHeapType, "sun.jvm.hotspot.memory", CodeHeap.class);
 
     AddressField heapsField = type.getAddressField("_heaps");
     heapArray = GrowableArray.create(heapsField.getValue(), heapConstructor);
-
-    scavengeRootNMethodsField = type.getAddressField("_scavenge_root_nmethods");
 
     virtualConstructor = new VirtualConstructor(db);
     // Add mappings for all possible CodeBlob subclasses
@@ -71,10 +70,6 @@ public class CodeCache {
       virtualConstructor.addMapping("ExceptionBlob", ExceptionBlob.class);
       virtualConstructor.addMapping("UncommonTrapBlob", UncommonTrapBlob.class);
     }
-  }
-
-  public NMethod scavengeRootMethods() {
-    return (NMethod) VMObjectFactory.newObject(NMethod.class, scavengeRootNMethodsField.getValue());
   }
 
   public boolean contains(Address p) {

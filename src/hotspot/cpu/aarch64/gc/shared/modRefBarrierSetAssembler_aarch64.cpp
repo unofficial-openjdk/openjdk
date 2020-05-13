@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,24 +29,24 @@
 #define __ masm->
 
 void ModRefBarrierSetAssembler::arraycopy_prologue(MacroAssembler* masm, DecoratorSet decorators, bool is_oop,
-                                                   Register addr, Register count, RegSet saved_regs) {
+                                                   Register src, Register dst, Register count, RegSet saved_regs) {
 
   if (is_oop) {
-    gen_write_ref_array_pre_barrier(masm, decorators, addr, count, saved_regs);
+    gen_write_ref_array_pre_barrier(masm, decorators, dst, count, saved_regs);
   }
 }
 
 void ModRefBarrierSetAssembler::arraycopy_epilogue(MacroAssembler* masm, DecoratorSet decorators, bool is_oop,
-                                                   Register start, Register end, Register tmp,
+                                                   Register start, Register count, Register tmp,
                                                    RegSet saved_regs) {
   if (is_oop) {
-    gen_write_ref_array_post_barrier(masm, decorators, start, end, tmp, saved_regs);
+    gen_write_ref_array_post_barrier(masm, decorators, start, count, tmp, saved_regs);
   }
 }
 
 void ModRefBarrierSetAssembler::store_at(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
                                          Address dst, Register val, Register tmp1, Register tmp2) {
-  if (type == T_OBJECT || type == T_ARRAY) {
+  if (is_reference_type(type)) {
     oop_store_at(masm, decorators, type, dst, val, tmp1, tmp2);
   } else {
     BarrierSetAssembler::store_at(masm, decorators, type, dst, val, tmp1, tmp2);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,18 +30,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.sun.source.doctree.AttributeTree.ValueKind;
+import com.sun.source.doctree.ErroneousTree;
+import com.sun.source.doctree.UnknownBlockTagTree;
 import com.sun.tools.javac.parser.DocCommentParser.TagParser.Kind;
 import com.sun.tools.javac.parser.Tokens.Comment;
 import com.sun.tools.javac.parser.Tokens.TokenKind;
 import com.sun.tools.javac.tree.DCTree;
 import com.sun.tools.javac.tree.DCTree.DCAttribute;
 import com.sun.tools.javac.tree.DCTree.DCDocComment;
-import com.sun.tools.javac.tree.DCTree.DCEndElement;
 import com.sun.tools.javac.tree.DCTree.DCEndPosTree;
 import com.sun.tools.javac.tree.DCTree.DCErroneous;
 import com.sun.tools.javac.tree.DCTree.DCIdentifier;
 import com.sun.tools.javac.tree.DCTree.DCReference;
-import com.sun.tools.javac.tree.DCTree.DCStartElement;
 import com.sun.tools.javac.tree.DCTree.DCText;
 import com.sun.tools.javac.tree.DocTreeMaker;
 import com.sun.tools.javac.tree.JCTree;
@@ -54,7 +54,7 @@ import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Position;
 import com.sun.tools.javac.util.StringUtils;
 
-import static com.sun.tools.javac.util.LayoutCharacters.*;
+import static com.sun.tools.javac.util.LayoutCharacters.EOI;
 
 /**
  *
@@ -188,7 +188,7 @@ public class DocCommentParser {
                     if (isFileContent) {
                         switch (phase) {
                             case PREAMBLE:
-                                if (peek("body")) {
+                                if (isEndPreamble()) {
                                     trees.add(html());
                                     if (textStart == -1) {
                                         textStart = bp;
@@ -200,7 +200,7 @@ public class DocCommentParser {
                                 }
                                 break;
                             case BODY:
-                                if (peek("/body")) {
+                                if (isEndBody()) {
                                     addPendingText(trees, lastNonWhite);
                                     break loop;
                                 }
@@ -261,7 +261,7 @@ public class DocCommentParser {
     /**
      * Read a series of block tags, including their content.
      * Standard tags parse their content appropriately.
-     * Non-standard tags are represented by {@link UnknownBlockTag}.
+     * Non-standard tags are represented by {@link UnknownBlockTagTree}.
      */
     protected List<DCTree> blockTags() {
         ListBuffer<DCTree> tags = new ListBuffer<>();
@@ -273,7 +273,7 @@ public class DocCommentParser {
     /**
      * Read a single block tag, including its content.
      * Standard tags parse their content appropriately.
-     * Non-standard tags are represented by {@link UnknownBlockTag}.
+     * Non-standard tags are represented by {@link UnknownBlockTagTree}.
      */
     protected DCTree blockTag() {
         int p = bp;
@@ -321,8 +321,8 @@ public class DocCommentParser {
     /**
      * Read a single inline tag, including its content.
      * Standard tags parse their content appropriately.
-     * Non-standard tags are represented by {@link UnknownBlockTag}.
-     * Malformed tags may be returned as {@link Erroneous}.
+     * Non-standard tags are represented by {@link UnknownBlockTagTree}.
+     * Malformed tags may be returned as {@link ErroneousTree}.
      */
     protected DCTree inlineTag() {
         int p = bp - 1;
@@ -409,13 +409,6 @@ public class DocCommentParser {
                     if (--depth == 0) {
                         return m.at(pos).newTextTree(newString(pos, bp));
                     }
-                    newline = false;
-                    lastNonWhite = bp;
-                    break;
-
-                case '@':
-                    if (newline)
-                        break loop;
                     newline = false;
                     lastNonWhite = bp;
                     break;
@@ -787,6 +780,94 @@ public class DocCommentParser {
         }
     }
 
+    /**
+     * Returns whether this is the end of the preamble of an HTML file.
+     * The preamble ends with start of {@code body} element followed by
+     * possible whitespace and the start of a {@code main} element.
+     *
+     * @return whether this is the end of the preamble
+     */
+    boolean isEndPreamble() {
+        final int savedpos = bp;
+        try {
+            if (ch == '<')
+                nextChar();
+
+            if (isIdentifierStart(ch)) {
+                String name = StringUtils.toLowerCase(readIdentifier().toString());
+                switch (name) {
+                    case "body":
+                        // Check if also followed by <main>
+                        // 1. skip rest of <body>
+                        while (ch != -1 && ch != '>') {
+                            nextChar();
+                        }
+                        if (ch == '>') {
+                            nextChar();
+                        }
+                        // 2. skip any whitespce
+                        while (ch != -1 && Character.isWhitespace(ch)) {
+                            nextChar();
+                        }
+                        // 3. check if looking at "<main..."
+                        if (ch == '<') {
+                            nextChar();
+                            if (isIdentifierStart(ch)) {
+                                name = StringUtils.toLowerCase(readIdentifier().toString());
+                                if (name.equals("main")) {
+                                    return false;
+                                }
+                            }
+                        }
+                        // if <body> is _not_ followed by <main> then this is the
+                        // end of the preamble
+                        return true;
+
+                    case "main":
+                        // <main> is unconditionally the end of the preamble
+                        return true;
+                }
+            }
+            return false;
+        } finally {
+            bp = savedpos;
+            ch = buf[bp];
+        }
+    }
+
+    /**
+     * Returns whether this is the end of the main body of the content in a standalone
+     * HTML file.
+     * The content ends with the closing tag for a {@code main} or {@code body} element.
+     *
+     * @return whether this is the end of the main body of the content
+     */
+    boolean isEndBody() {
+        final int savedpos = bp;
+        try {
+            if (ch == '<')
+                nextChar();
+
+            if (ch == '/') {
+                nextChar();
+                if (isIdentifierStart(ch)) {
+                    String name = StringUtils.toLowerCase(readIdentifier().toString());
+                    switch (name) {
+                        case "body":
+                        case "main":
+                            return true;
+                    }
+                }
+            }
+
+            return false;
+        } finally {
+            bp = savedpos;
+            ch = buf[bp];
+        }
+
+    }
+
     boolean peek(String s) {
         final int savedpos = bp;
         try {
@@ -842,7 +923,7 @@ public class DocCommentParser {
                 skipWhitespace();
                 if (ch == '>') {
                     nextChar();
-                    return m.at(p).newEndElementTree(name);
+                    return m.at(p).newEndElementTree(name).setEndPos(bp);
                 }
             }
         } else if (ch == '!') {

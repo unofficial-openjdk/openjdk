@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,8 +47,6 @@ import jdk.javadoc.internal.doclets.toolkit.util.Utils;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
  */
 public abstract class LinkFactory {
     protected final Utils utils;
@@ -81,7 +79,7 @@ public abstract class LinkFactory {
                 // handles primitives, no types and error types
                 @Override
                 protected Content defaultAction(TypeMirror type, LinkInfo linkInfo) {
-                    link.addContent(utils.getTypeName(type, false));
+                    link.add(utils.getTypeName(type, false));
                     return link;
                 }
 
@@ -89,21 +87,21 @@ public abstract class LinkFactory {
                 @Override
                 public Content visitArray(ArrayType type, LinkInfo linkInfo) {
                     // keep track of the dimension depth and replace the last dimension
-                    // specifier with vararags, when the stack is fully unwound.
+                    // specifier with varargs, when the stack is fully unwound.
                     currentDepth++;
                     linkInfo.type = type.getComponentType();
                     visit(linkInfo.type, linkInfo);
                     currentDepth--;
                     if (utils.isAnnotated(type)) {
                         linkInfo.type = type;
-                        link.addContent(" ");
-                        link.addContent(getTypeAnnotationLinks(linkInfo));
+                        link.add(" ");
+                        link.add(getTypeAnnotationLinks(linkInfo));
                     }
                     // use vararg if required
                     if (linkInfo.isVarArg && currentDepth == 0) {
-                        link.addContent("...");
+                        link.add("...");
                     } else {
-                        link.addContent("[]");
+                        link.add("[]");
                     }
                     return link;
                 }
@@ -111,25 +109,25 @@ public abstract class LinkFactory {
                 @Override
                 public Content visitWildcard(WildcardType type, LinkInfo linkInfo) {
                     linkInfo.isTypeBound = true;
-                    link.addContent("?");
+                    link.add("?");
                     TypeMirror extendsBound = type.getExtendsBound();
                     if (extendsBound != null) {
-                        link.addContent(" extends ");
+                        link.add(" extends ");
                         setBoundsLinkInfo(linkInfo, extendsBound);
-                        link.addContent(getLink(linkInfo));
+                        link.add(getLink(linkInfo));
                     }
                     TypeMirror superBound = type.getSuperBound();
                     if (superBound != null) {
-                        link.addContent(" super ");
+                        link.add(" super ");
                         setBoundsLinkInfo(linkInfo, superBound);
-                        link.addContent(getLink(linkInfo));
+                        link.add(getLink(linkInfo));
                     }
                     return link;
                 }
 
                 @Override
                 public Content visitTypeVariable(TypeVariable type, LinkInfo linkInfo) {
-                    link.addContent(getTypeAnnotationLinks(linkInfo));
+                    link.add(getTypeAnnotationLinks(linkInfo));
                     linkInfo.isTypeBound = true;
                     TypeVariable typevariable = (utils.isArrayType(type))
                             ? (TypeVariable) componentType
@@ -138,12 +136,12 @@ public abstract class LinkFactory {
                     if ((!linkInfo.excludeTypeParameterLinks) && utils.isTypeElement(owner)) {
                         linkInfo.typeElement = (TypeElement) owner;
                         Content label = newContent();
-                        label.addContent(utils.getTypeName(type, false));
+                        label.add(utils.getTypeName(type, false));
                         linkInfo.label = label;
-                        link.addContent(getClassLink(linkInfo));
+                        link.add(getClassLink(linkInfo));
                     } else {
                         // No need to link method type parameters.
-                        link.addContent(utils.getTypeName(typevariable, false));
+                        link.add(utils.getTypeName(typevariable, false));
                     }
 
                     if (!linkInfo.excludeTypeBounds) {
@@ -159,9 +157,9 @@ public abstract class LinkFactory {
                                     !utils.isAnnotated(bound)) {
                                 continue;
                             }
-                            link.addContent(more ? " & " : " extends ");
+                            link.add(more ? " & " : " extends ");
                             setBoundsLinkInfo(linkInfo, bound);
-                            link.addContent(getLink(linkInfo));
+                            link.add(getLink(linkInfo));
                             more = true;
                         }
                     }
@@ -173,16 +171,16 @@ public abstract class LinkFactory {
                     if (linkInfo.isTypeBound && linkInfo.excludeTypeBoundsLinks) {
                         // Since we are excluding type parameter links, we should not
                         // be linking to the type bound.
-                        link.addContent(utils.getTypeName(type, false));
-                        link.addContent(getTypeParameterLinks(linkInfo));
+                        link.add(utils.getTypeName(type, false));
+                        link.add(getTypeParameterLinks(linkInfo));
                         return link;
                     } else {
                         link = newContent();
-                        link.addContent(getTypeAnnotationLinks(linkInfo));
+                        link.add(getTypeAnnotationLinks(linkInfo));
                         linkInfo.typeElement = utils.asTypeElement(type);
-                        link.addContent(getClassLink(linkInfo));
+                        link.add(getClassLink(linkInfo));
                         if (linkInfo.includeTypeAsSepLink) {
-                            link.addContent(getTypeParameterLinks(linkInfo, false));
+                            link.add(getTypeParameterLinks(linkInfo, false));
                         }
                     }
                     return link;
@@ -191,9 +189,9 @@ public abstract class LinkFactory {
             return linkVisitor.visit(linkInfo.type, linkInfo);
         } else if (linkInfo.typeElement != null) {
             Content link = newContent();
-            link.addContent(getClassLink(linkInfo));
+            link.add(getClassLink(linkInfo));
             if (linkInfo.includeTypeAsSepLink) {
-                link.addContent(getTypeParameterLinks(linkInfo, false));
+                link.add(getTypeParameterLinks(linkInfo, false));
             }
             return link;
         } else {

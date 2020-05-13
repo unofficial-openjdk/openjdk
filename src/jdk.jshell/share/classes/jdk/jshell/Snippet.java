@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,9 +73,10 @@ public abstract class Snippet {
          * ({@link jdk.jshell.Snippet.SubKind#SINGLE_STATIC_IMPORT_SUBKIND}) --
          * use {@link jdk.jshell.Snippet#subKind()} to distinguish.
          *
-         * @jls 8.3: importDeclaration.
          * <P>
          * An import declaration is {@linkplain Kind#isPersistent() persistent}.
+         *
+         * @jls 7.5 Import Declarations
          */
         IMPORT(true),
 
@@ -91,9 +92,10 @@ public abstract class Snippet {
          * annotation interfaces -- see {@link jdk.jshell.Snippet.SubKind} to
          * differentiate.
          *
-         * @jls 7.6: TypeDeclaration.
          * <P>
          * A type declaration is {@linkplain Kind#isPersistent() persistent}.
+         *
+         * @jls 7.6 Top Level Type Declarations
          */
         TYPE_DECL(true),
 
@@ -101,9 +103,10 @@ public abstract class Snippet {
          * A method declaration.
          * The snippet is an instance of {@link jdk.jshell.MethodSnippet}.
          *
-         * @jls 8.4: MethodDeclaration.
          * <P>
          * A method declaration is {@linkplain Kind#isPersistent() persistent}.
+         *
+         * @jls 8.4 Method Declarations
          */
         METHOD(true),
 
@@ -116,9 +119,10 @@ public abstract class Snippet {
          * variable representing an expression -- see
          * {@link jdk.jshell.Snippet.SubKind}to differentiate.
          *
-         * @jls 8.3: FieldDeclaration.
          * <P>
          * A variable declaration is {@linkplain Kind#isPersistent() persistent}.
+         *
+         * @jls 8.3 Field Declarations
          */
         VAR(true),
 
@@ -133,7 +137,7 @@ public abstract class Snippet {
          * All other expression forms (operators, method calls, ...) generate a
          * scratch variable and so are instead of the VAR Kind.
          *
-         * @jls 15: Expression.
+         * @jls 15 Expressions
          */
         EXPRESSION(false),
 
@@ -141,7 +145,7 @@ public abstract class Snippet {
          * A statement.
          * The snippet is an instance of {@link jdk.jshell.StatementSnippet}.
          *
-         * @jls 14.5: Statement.
+         * @jls 14.5 Statements
          */
         STATEMENT(false),
 
@@ -185,99 +189,114 @@ public abstract class Snippet {
         /**
          * Single-Type-Import Declaration.
          * An import declaration of a single type.
-         * @jls 7.5.1 SingleTypeImportDeclaration.
+         * @jls 7.5.1 Single-Type-Import Declarations
          */
         SINGLE_TYPE_IMPORT_SUBKIND(Kind.IMPORT),
 
         /**
          * Type-Import-on-Demand Declaration.
          * A non-static "star" import.
-         * @jls 7.5.2. TypeImportOnDemandDeclaration.
+         * @jls 7.5.2 Type-Import-on-Demand Declarations
          */
         TYPE_IMPORT_ON_DEMAND_SUBKIND(Kind.IMPORT),
 
         /**
          * Single-Static-Import Declaration.
          * An import of a static member.
-         * @jls 7.5.3 Single-Static-Import.
+         * @jls 7.5.3 Single-Static-Import Declarations
          */
         SINGLE_STATIC_IMPORT_SUBKIND(Kind.IMPORT),
 
         /**
          * Static-Import-on-Demand Declaration.
          * A static "star" import of all static members of a named type.
-         * @jls 7.5.4. Static-Import-on-Demand Static "star" import.
+         * @jls 7.5.4 Static-Import-on-Demand Declarations
          */
         STATIC_IMPORT_ON_DEMAND_SUBKIND(Kind.IMPORT),
 
         /**
          * A class declaration.
          * A {@code SubKind} of {@link Kind#TYPE_DECL}.
-         * @jls 8.1. NormalClassDeclaration.
+         * @jls 8.1 Class Declarations
          */
         CLASS_SUBKIND(Kind.TYPE_DECL),
 
         /**
          * An interface declaration.
          * A {@code SubKind} of {@link Kind#TYPE_DECL}.
-         * @jls 9.1. NormalInterfaceDeclaration.
+         * @jls 9.1 Interface Declarations
          */
         INTERFACE_SUBKIND(Kind.TYPE_DECL),
 
         /**
          * An enum declaration.
          * A {@code SubKind} of {@link Kind#TYPE_DECL}.
-         * @jls 8.9. EnumDeclaration.
+         * @jls 8.9 Enum Types
          */
         ENUM_SUBKIND(Kind.TYPE_DECL),
 
         /**
+         * {@preview Associated with records, a preview feature of the Java language.
+         *
+         *           This enum constant is associated with <i>records</i>, a preview
+         *           feature of the Java language. Preview features
+         *           may be removed in a future release, or upgraded to permanent
+         *           features of the Java language.}
+         *
+         * A record declaration.
+         * A {@code SubKind} of {@link Kind#TYPE_DECL}.
+         * @jls 8.10 Record Types
+         * @since 14
+         *
+         */
+        @jdk.internal.PreviewFeature(feature=jdk.internal.PreviewFeature.Feature.RECORDS)
+        RECORD_SUBKIND(Kind.TYPE_DECL),
+
+        /**
          * An annotation interface declaration. A {@code SubKind} of
          * {@link Kind#TYPE_DECL}.
-         * @jls 9.6. AnnotationTypeDeclaration.
+         * @jls 9.6 Annotation Types
          */
         ANNOTATION_TYPE_SUBKIND(Kind.TYPE_DECL),
 
         /**
          * A method. The only {@code SubKind} for {@link Kind#METHOD}.
-         * @jls 8.4. MethodDeclaration.
+         * @jls 8.4 Method Declarations
          */
         METHOD_SUBKIND(Kind.METHOD),
 
         /**
          * A variable declaration without initializer.
          * A {@code SubKind} of {@link Kind#VAR}.
-         * @jls 8.3. VariableDeclarator without VariableInitializer in
-         * FieldDeclaration.
+         * @jls 8.3 Field Declarations
          */
         VAR_DECLARATION_SUBKIND(Kind.VAR, true, true),
 
         /**
          * A variable declaration with an initializer expression. A
          * {@code SubKind} of {@link Kind#VAR}.
-         * @jls 8.3. VariableDeclarator with VariableInitializer in
-         * FieldDeclaration.
+         * @jls 8.3 Field Declarations
          */
         VAR_DECLARATION_WITH_INITIALIZER_SUBKIND(Kind.VAR, true, true),
 
         /**
          * An expression whose value has been stored in a temporary variable. A
          * {@code SubKind} of {@link Kind#VAR}.
-         * @jls 15. Primary.
+         * @jls 15 Expressions
          */
         TEMP_VAR_EXPRESSION_SUBKIND(Kind.VAR, true, true),
 
         /**
          * A simple variable reference expression. A {@code SubKind} of
          * {@link Kind#EXPRESSION}.
-         * @jls 15.11. Field Access as 3.8. Identifier.
+         * @jls 15.11 Field Access Expressions
          */
         VAR_VALUE_SUBKIND(Kind.EXPRESSION, true, true),
 
         /**
          * An assignment expression. A {@code SubKind} of
          * {@link Kind#EXPRESSION}.
-         * @jls 15.26. Assignment.
+         * @jls 15.26 Assignment Operators
          */
         ASSIGNMENT_SUBKIND(Kind.EXPRESSION, true, true),
 
@@ -289,7 +308,7 @@ public abstract class Snippet {
 
         /**
          * A statement. The only {@code SubKind} for {@link Kind#STATEMENT}.
-         * @jls 14.5. Statement.
+         * @jls 14.5 Statements
          */
         STATEMENT_SUBKIND(Kind.STATEMENT, true, false),
 

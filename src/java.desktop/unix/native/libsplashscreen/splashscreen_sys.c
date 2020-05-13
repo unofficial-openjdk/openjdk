@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -405,7 +405,7 @@ HandleIOError(Display * display) {
     return 0;
 }
 
-void
+int
 SplashInitPlatform(Splash * splash) {
     int shapeVersionMajor, shapeVersionMinor;
 
@@ -424,7 +424,7 @@ SplashInitPlatform(Splash * splash) {
     splash->display = XOpenDisplay(NULL);
     if (!splash->display) {
         splash->isVisible = -1;
-        return;
+        return 0;
     }
 
     shapeSupported = XShapeQueryExtension(splash->display, &shapeEventBase,
@@ -474,7 +474,7 @@ SplashInitPlatform(Splash * splash) {
                 splash->screen = NULL;
                 splash->visual = NULL;
                 fprintf(stderr, "Warning: unable to initialize the splashscreen. Not enough available color cells.\n");
-                return;
+                return 0;
             }
             splash->cmap = AllocColors(splash->display, splash->screen,
                     numColors, colorIndex);
@@ -506,6 +506,7 @@ SplashInitPlatform(Splash * splash) {
     default:
         ; /* FIXME: should probably be fixed, but javaws splash screen doesn't support other visuals either */
     }
+    return 1;
 }
 
 
@@ -801,7 +802,7 @@ SplashReconfigure(Splash * splash) {
     sendctl(splash, SPLASHCTL_RECONFIGURE);
 }
 
-JNIEXPORT jboolean JNICALL
+JNIEXPORT jboolean
 SplashGetScaledImageName(const char* jarName, const char* fileName,
                            float *scaleFactor, char *scaledImgName,
                            const size_t scaledImageNameLength)

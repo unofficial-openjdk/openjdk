@@ -36,9 +36,15 @@ fi
 # Diff exceptions
 
 if [ "$OPENJDK_TARGET_OS" = "linux" ]; then
-  ACCEPTED_BIN_DIFF="
-      ./lib/server/libjvm.so
-      "
+  if [ "$HOTSPOT_BUILD_TIME" = "" -o "$USE_PRECOMPILED_HEADER" = "true" ]; then
+    ACCEPTED_BIN_DIFF="
+        ./lib/server/libjvm.so
+        ./hotspot/gtest/server/libjvm.so
+        "
+    STRIP_BEFORE_COMPARE="
+        ./hotspot/gtest/server/libjvm.so
+        "
+   fi
 elif [ "$OPENJDK_TARGET_OS" = "solaris" ]; then
   SKIP_BIN_DIFF="true"
   SKIP_FULLDUMP_DIFF="true"
@@ -46,14 +52,14 @@ elif [ "$OPENJDK_TARGET_OS" = "solaris" ]; then
   SORT_SYMBOLS="
       ./lib/libfontmanager.so
       ./lib/libjimage.so
-      ./lib/libunpack.so
       ./lib/server/libjvm.so
-      ./bin/unpack200
+      ./hotspot/gtest/server/libjvm.so
       "
   KNOWN_DIS_DIFF="
       ./lib/libfontmanager.so
       ./lib/libsaproc.so
   "
+  STRIP_TESTS_BEFORE_COMPARE="true"
 elif [ "$OPENJDK_TARGET_OS" = "windows" ]; then
   SKIP_BIN_DIFF="true"
   SKIP_FULLDUMP_DIFF="true"
@@ -68,5 +74,7 @@ elif [ "$OPENJDK_TARGET_OS" = "macosx" ]; then
       ./lib/libosxapp.dylib
       ./lib/libosxui.dylib
       ./lib/server/libjvm.dylib
+      ./hotspot/gtest/server/libjvm.dylib
       "
+  STRIP_TESTS_BEFORE_COMPARE="true"
 fi

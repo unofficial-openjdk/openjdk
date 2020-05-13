@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,9 +27,8 @@ package com.sun.tools.javac.tree;
 
 import java.util.Iterator;
 
-import com.sun.source.tree.CaseTree.CaseKind;
+import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.ModuleTree.ModuleKind;
-import com.sun.source.tree.Tree.Kind;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Attribute.UnresolvedClass;
 import com.sun.tools.javac.code.Symbol.*;
@@ -274,7 +273,7 @@ public class TreeMaker implements JCTree.Factory {
         return tree;
     }
 
-    public JCCase Case(@SuppressWarnings("removal") CaseKind caseKind, List<JCExpression> pats,
+    public JCCase Case(CaseTree.CaseKind caseKind, List<JCExpression> pats,
                        List<JCStatement> stats, JCTree body) {
         JCCase tree = new JCCase(caseKind, pats, stats, body);
         tree.pos = pos;
@@ -333,8 +332,14 @@ public class TreeMaker implements JCTree.Factory {
         return tree;
     }
 
-    public JCBreak Break(JCExpression label) {
+    public JCBreak Break(Name label) {
         JCBreak tree = new JCBreak(label, null);
+        tree.pos = pos;
+        return tree;
+    }
+
+    public JCYield Yield(JCExpression value) {
+        JCYield tree = new JCYield(value, null);
         tree.pos = pos;
         return tree;
     }
@@ -455,6 +460,12 @@ public class TreeMaker implements JCTree.Factory {
 
     public JCInstanceOf TypeTest(JCExpression expr, JCTree clazz) {
         JCInstanceOf tree = new JCInstanceOf(expr, clazz);
+        tree.pos = pos;
+        return tree;
+    }
+
+    public JCBindingPattern BindingPattern(Name name, JCTree vartype) {
+        JCBindingPattern tree = new JCBindingPattern(name, null, vartype);
         tree.pos = pos;
         return tree;
     }

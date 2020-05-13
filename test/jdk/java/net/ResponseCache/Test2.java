@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,11 @@
 /**
  * @test
  * @bug 8042622
+ * @library /test/lib
  * @summary Check for CRL results in IllegalArgumentException "white space not allowed"
  * @modules jdk.httpserver
  * @run main/othervm Test2
+ * @run main/othervm -Djava.net.preferIPv6Addresses=true Test2
  */
 
 import com.sun.net.httpserver.*;
@@ -38,6 +40,7 @@ import java.net.*;
 import java.security.*;
 import javax.security.auth.callback.*;
 import javax.net.ssl.*;
+import jdk.test.lib.net.URIBuilder;
 
 public class Test2 {
 
@@ -63,26 +66,38 @@ public class Test2 {
 
     static int port;
 
-    static String urlstring, redirstring;
+    static URL url, redir;
 
     public static void main (String[] args) throws Exception {
         Handler handler = new Handler();
-        InetSocketAddress addr = new InetSocketAddress (0);
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        InetSocketAddress addr = new InetSocketAddress(loopback, 0);
         HttpServer server = HttpServer.create (addr, 0);
         port = server.getAddress().getPort();
         HttpContext ctx = server.createContext ("/test", handler);
-        System.out.println ("Server: " + server.getAddress().getPort());
+        System.out.println ("Server: " + server.getAddress());
         ResponseCache.setDefault(new Cache());
 
         ExecutorService executor = Executors.newCachedThreadPool();
         server.setExecutor (executor);
         server.start ();
 
-        urlstring = "http://127.0.0.1:" + Integer.toString(port)+"/test/foo";
-        redirstring = urlstring + "/redirect/bar";
+        url = URIBuilder.newBuilder()
+            .scheme("http")
+            .loopback()
+            .port(port)
+            .path("/test/foo")
+            .toURLUnchecked();
+        System.out.println("URL: " + url);
+        redir = URIBuilder.newBuilder()
+            .scheme("http")
+            .loopback()
+            .port(port)
+            .path("/test/foo/redirect/bar")
+            .toURLUnchecked();
+        System.out.println("Redir URL: " + redir);
 
-        URL url = new URL (urlstring);
-        HttpURLConnection urlc = (HttpURLConnection)url.openConnection();
+        HttpURLConnection urlc = (HttpURLConnection)url.openConnection(Proxy.NO_PROXY);
         urlc.addRequestProperty("X-Foo", "bar");
         urlc.setInstanceFollowRedirects(true);
         System.out.println(urlc.getResponseCode());
@@ -114,7 +129,7 @@ public class Test2 {
             Headers rmap = t.getResponseHeaders();
             invocation ++;
             if (invocation == 1) {
-                rmap.add("Location", redirstring);
+                rmap.add("Location", redir.toString());
                 while (is.read () != -1) ;
                 is.close();
                 System.out.println ("sending response");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@
 #include "opto/mulnode.hpp"
 #include "opto/phaseX.hpp"
 #include "opto/subnode.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 // Portions of code courtesy of Clifford Click
 
@@ -306,7 +307,7 @@ Node *MulLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
       Node *n2 = phase->transform(new LShiftLNode(in(1), phase->intcon(log2_long(bit2))));
       res = new AddLNode(n2, n1);
 
-    } else if (is_power_of_2_long(abs_con+1)) {
+    } else if (is_power_of_2(abs_con+1)) {
       // Sleezy: power-of-2 -1.  Next time be generic.
       julong temp = abs_con + 1;
       Node *n1 = phase->transform( new LShiftLNode(in(1), phase->intcon(log2_long(temp))));
@@ -1165,6 +1166,18 @@ Node *URShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
       phase->type(shl->in(2)) == t2 )
     return new AndINode( shl->in(1), phase->intcon(mask) );
 
+  // Check for (x >> n) >>> 31. Replace with (x >>> 31)
+  Node *shr = in(1);
+  if ( in1_op == Op_RShiftI ) {
+    Node *in11 = shr->in(1);
+    Node *in12 = shr->in(2);
+    const TypeInt *t11 = phase->type(in11)->isa_int();
+    const TypeInt *t12 = phase->type(in12)->isa_int();
+    if ( t11 && t2 && t2->is_con(31) && t12 && t12->is_con() ) {
+      return new URShiftINode(in11, phase->intcon(31));
+    }
+  }
+
   return NULL;
 }
 
@@ -1294,6 +1307,17 @@ Node *URShiftLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
       phase->type(shl->in(2)) == t2 )
     return new AndLNode( shl->in(1), phase->longcon(mask) );
 
+  // Check for (x >> n) >>> 63. Replace with (x >>> 63)
+  Node *shr = in(1);
+  if ( shr->Opcode() == Op_RShiftL ) {
+    Node *in11 = shr->in(1);
+    Node *in12 = shr->in(2);
+    const TypeLong *t11 = phase->type(in11)->isa_long();
+    const TypeInt *t12 = phase->type(in12)->isa_int();
+    if ( t11 && t2 && t2->is_con(63) && t12 && t12->is_con() ) {
+      return new URShiftLNode(in11, phase->intcon(63));
+    }
+  }
   return NULL;
 }
 
@@ -1409,4 +1433,3 @@ const Type* FmaFNode::Value(PhaseGVN* phase) const {
 uint MulAddS2INode::hash() const {
   return (uintptr_t)in(1) + (uintptr_t)in(2) + (uintptr_t)in(3) + (uintptr_t)in(4) + Opcode();
 }
-

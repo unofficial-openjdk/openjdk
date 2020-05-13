@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -502,7 +502,7 @@ JNIEXPORT void JNICALL Java_sun_security_mscapi_CKeyStore_loadKeysOrCertificateC
                 else
                 {
                     if ((dwKeySpec & CERT_NCRYPT_KEY_SPEC) == CERT_NCRYPT_KEY_SPEC) {
-                        PP("CNG %I64d", hCryptProv);
+                        PP("CNG %I64d", (__int64)hCryptProv);
                     } else {
                         // Private key is available
                         BOOL bGetUserKey = ::CryptGetUserKey(hCryptProv, dwKeySpec, &hUserKey); //deprecated
@@ -517,7 +517,7 @@ JNIEXPORT void JNICALL Java_sun_security_mscapi_CKeyStore_loadKeysOrCertificateC
                         // Set cipher mode to ECB
                         DWORD dwCipherMode = CRYPT_MODE_ECB;
                         ::CryptSetKeyParam(hUserKey, KP_MODE, (BYTE*)&dwCipherMode, NULL); //deprecated
-                        PP("CAPI %I64d %I64d", hCryptProv, hUserKey);
+                        PP("CAPI %I64d %I64d", (__int64)hCryptProv, (__int64)hUserKey);
                     }
                     // If the private key is present in smart card, we may not be able to
                     // determine the key length by using the private key handle. However,
@@ -649,19 +649,28 @@ JNIEXPORT void JNICALL Java_sun_security_mscapi_CKeyStore_loadKeysOrCertificateC
                                 if (::NCryptGetProperty(
                                         hCryptProv, NCRYPT_ALGORITHM_PROPERTY,
                                         (PBYTE)buffer, 32, &len, NCRYPT_SILENT_FLAG) == ERROR_SUCCESS) {
+                                    jstring name = env->NewStringUTF(pszNameString);
+                                    if (name == NULL) {
+                                        __leave;
+                                    }
                                     if (buffer[0] == 'E' && buffer[2] == 'C'
                                             && (dwPublicKeyLength == 256
                                                     || dwPublicKeyLength == 384
                                                     || dwPublicKeyLength == 521)) {
-                                        jstring name = env->NewStringUTF(pszNameString);
-                                        if (name == NULL) {
-                                            __leave;
-                                        }
                                         env->CallVoidMethod(obj, mGenKeyAndCertChain,
                                             0,
                                             name,
-                                            (jlong) hCryptProv, 0,
+                                            (jlong) hCryptProv, (jlong) 0,
                                             dwPublicKeyLength, jArrayList);
+                                    } else if (buffer[0] == 'R' && buffer[2] == 'S'
+                                            && buffer[4] == 'A') {
+                                        env->CallVoidMethod(obj, mGenKeyAndCertChain,
+                                            1,
+                                            name,
+                                            (jlong) hCryptProv, (jlong) 0,
+                                            dwPublicKeyLength, jArrayList);
+                                    } else {
+                                        dump("Unknown NCRYPT_ALGORITHM_PROPERTY", buffer, len);
                                     }
                                 }
                             }
@@ -692,18 +701,22 @@ JNIEXPORT void JNICALL Java_sun_security_mscapi_CKeyStore_loadKeysOrCertificateC
 
 
 /*
- * Class:     sun_security_mscapi_Key
+ * Class:     sun_security_mscapi_CKey
  * Method:    cleanUp
  * Signature: (JJ)V
  */
-JNIEXPORT void JNICALL Java_sun_security_mscapi_Key_cleanUp
+JNIEXPORT void JNICALL Java_sun_security_mscapi_CKey_cleanUp
   (JNIEnv *env, jclass clazz, jlong hCryptProv, jlong hCryptKey)
 {
-    if (hCryptKey != NULL)
-        ::CryptDestroyKey((HCRYPTKEY) hCryptKey); // deprecated
+    if (hCryptKey == NULL && hCryptProv != NULL) {
+        NCryptFreeObject((NCRYPT_HANDLE)hCryptProv);
+    } else {
+        if (hCryptKey != NULL)
+            ::CryptDestroyKey((HCRYPTKEY) hCryptKey); // deprecated
 
-    if (hCryptProv != NULL)
-        ::CryptReleaseContext((HCRYPTPROV) hCryptProv, NULL); // deprecated
+        if (hCryptProv != NULL)
+            ::CryptReleaseContext((HCRYPTPROV) hCryptProv, NULL); // deprecated
+    }
 }
 
 /*
@@ -863,8 +876,8 @@ JNIEXPORT jbyteArray JNICALL Java_sun_security_mscapi_CSignature_signCngHash
             SS_CHECK(::NCryptTranslateHandle(
                 NULL,
                 &hk,
-                hCryptProv,
-                hCryptKey,
+                (HCRYPTPROV)hCryptProv,
+                (HCRYPTKEY)hCryptKey,
                 NULL,
                 0));
         }
@@ -886,11 +899,15 @@ JNIEXPORT jbyteArray JNICALL Java_sun_security_mscapi_CSignature_signCngHash
             break;
         case 1:
             BCRYPT_PKCS1_PADDING_INFO pkcs1Info;
-            pkcs1Info.pszAlgId = MapHashIdentifier(env, jHashAlgorithm);
-            if (pkcs1Info.pszAlgId == NULL) {
-                ThrowExceptionWithMessage(env, SIGNATURE_EXCEPTION,
-                        "Unrecognised hash algorithm");
-                __leave;
+            if (jHashAlgorithm) {
+                pkcs1Info.pszAlgId = MapHashIdentifier(env, jHashAlgorithm);
+                if (pkcs1Info.pszAlgId == NULL) {
+                    ThrowExceptionWithMessage(env, SIGNATURE_EXCEPTION,
+                            "Unrecognised hash algorithm");
+                    __leave;
+                }
+            } else {
+                pkcs1Info.pszAlgId = NULL;
             }
             param = &pkcs1Info;
             dwFlags = BCRYPT_PAD_PKCS1;
@@ -1087,8 +1104,8 @@ JNIEXPORT jboolean JNICALL Java_sun_security_mscapi_CSignature_verifyCngSignedHa
             SS_CHECK(::NCryptTranslateHandle(
                 NULL,
                 &hk,
-                hCryptProv,
-                hCryptKey,
+                (HCRYPTPROV)hCryptProv,
+                (HCRYPTKEY)hCryptKey,
                 NULL,
                 0));
         }
@@ -1117,11 +1134,15 @@ JNIEXPORT jboolean JNICALL Java_sun_security_mscapi_CSignature_verifyCngSignedHa
             break;
         case 1:
             BCRYPT_PKCS1_PADDING_INFO pkcs1Info;
-            pkcs1Info.pszAlgId = MapHashIdentifier(env, jHashAlgorithm);
-            if (pkcs1Info.pszAlgId == NULL) {
-                ThrowExceptionWithMessage(env, SIGNATURE_EXCEPTION,
-                        "Unrecognised hash algorithm");
-                __leave;
+            if (jHashAlgorithm) {
+                pkcs1Info.pszAlgId = MapHashIdentifier(env, jHashAlgorithm);
+                if (pkcs1Info.pszAlgId == NULL) {
+                    ThrowExceptionWithMessage(env, SIGNATURE_EXCEPTION,
+                            "Unrecognised hash algorithm");
+                    __leave;
+                }
+            } else {
+                pkcs1Info.pszAlgId = NULL;
             }
             param = &pkcs1Info;
             dwFlags = NCRYPT_PAD_PKCS1_FLAG;
@@ -1920,7 +1941,7 @@ JNIEXPORT jbyteArray JNICALL Java_sun_security_mscapi_CPublicKey_getPublicKeyBlo
         // Determine the size of the blob
         if (hCryptKey == 0) {
             SS_CHECK(::NCryptExportKey(
-                hCryptProv, NULL, BCRYPT_ECCPUBLIC_BLOB,
+                (NCRYPT_KEY_HANDLE)hCryptProv, NULL, BCRYPT_ECCPUBLIC_BLOB,
                 NULL, NULL, 0, &dwBlobLen, NCRYPT_SILENT_FLAG));
         } else {
             if (! ::CryptExportKey((HCRYPTKEY) hCryptKey, 0, PUBLICKEYBLOB, 0, NULL, //deprecated
@@ -1939,7 +1960,7 @@ JNIEXPORT jbyteArray JNICALL Java_sun_security_mscapi_CPublicKey_getPublicKeyBlo
         // Generate key blob
         if (hCryptKey == 0) {
             SS_CHECK(::NCryptExportKey(
-                hCryptProv, NULL, BCRYPT_ECCPUBLIC_BLOB,
+                (NCRYPT_KEY_HANDLE)hCryptProv, NULL, BCRYPT_ECCPUBLIC_BLOB,
                 NULL, pbKeyBlob, dwBlobLen, &dwBlobLen, NCRYPT_SILENT_FLAG));
         } else {
             if (! ::CryptExportKey((HCRYPTKEY) hCryptKey, 0, PUBLICKEYBLOB, 0, //deprecated

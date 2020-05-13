@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,10 +31,8 @@ import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 
-import jdk.javadoc.internal.doclets.toolkit.AnnotationTypeFieldWriter;
 import jdk.javadoc.internal.doclets.toolkit.AnnotationTypeOptionalMemberWriter;
 import jdk.javadoc.internal.doclets.toolkit.AnnotationTypeRequiredMemberWriter;
-import jdk.javadoc.internal.doclets.toolkit.AnnotationTypeWriter;
 import jdk.javadoc.internal.doclets.toolkit.ClassWriter;
 import jdk.javadoc.internal.doclets.toolkit.ConstantsSummaryWriter;
 import jdk.javadoc.internal.doclets.toolkit.DocFilesHandler;
@@ -53,8 +51,6 @@ import jdk.javadoc.internal.doclets.toolkit.util.VisibleMemberTable;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
  */
 public class WriterFactoryImpl implements WriterFactory {
 
@@ -63,124 +59,70 @@ public class WriterFactoryImpl implements WriterFactory {
         this.configuration = configuration;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public ConstantsSummaryWriter getConstantsSummaryWriter() {
         return new ConstantsSummaryWriterImpl(configuration);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public PackageSummaryWriter getPackageSummaryWriter(PackageElement packageElement) {
         return new PackageWriterImpl(configuration, packageElement);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public ModuleSummaryWriter getModuleSummaryWriter(ModuleElement mdle) {
         return new ModuleWriterImpl(configuration, mdle);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public ClassWriter getClassWriter(TypeElement typeElement, ClassTree classTree) {
         return new ClassWriterImpl(configuration, typeElement, classTree);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public AnnotationTypeWriter getAnnotationTypeWriter(TypeElement annotationType) {
-        return new AnnotationTypeWriterImpl(configuration, annotationType);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public AnnotationTypeFieldWriter getAnnotationTypeFieldWriter(
-            AnnotationTypeWriter annotationTypeWriter) {
-        TypeElement te = annotationTypeWriter.getAnnotationTypeElement();
-        return new AnnotationTypeFieldWriterImpl(
-            (SubWriterHolderWriter) annotationTypeWriter, te);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public AnnotationTypeOptionalMemberWriter getAnnotationTypeOptionalMemberWriter(
-        AnnotationTypeWriter annotationTypeWriter) {
-        TypeElement te = annotationTypeWriter.getAnnotationTypeElement();
+            ClassWriter classWriter) {
+        TypeElement te = classWriter.getTypeElement();
         return new AnnotationTypeOptionalMemberWriterImpl(
-            (SubWriterHolderWriter) annotationTypeWriter, te);
+                (ClassWriterImpl) classWriter, te);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public AnnotationTypeRequiredMemberWriter getAnnotationTypeRequiredMemberWriter(
-            AnnotationTypeWriter annotationTypeWriter) {
-        TypeElement te = annotationTypeWriter.getAnnotationTypeElement();
+            ClassWriter classWriter) {
+        TypeElement te = classWriter.getTypeElement();
         return new AnnotationTypeRequiredMemberWriterImpl(
-            (SubWriterHolderWriter) annotationTypeWriter, te);
+            (ClassWriterImpl) classWriter, te);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public EnumConstantWriterImpl getEnumConstantWriter(ClassWriter classWriter) {
-        return new EnumConstantWriterImpl((SubWriterHolderWriter) classWriter,
+        return new EnumConstantWriterImpl((ClassWriterImpl) classWriter,
                 classWriter.getTypeElement());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public FieldWriterImpl getFieldWriter(ClassWriter classWriter) {
-        return new FieldWriterImpl((SubWriterHolderWriter) classWriter, classWriter.getTypeElement());
+        return new FieldWriterImpl((ClassWriterImpl) classWriter, classWriter.getTypeElement());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public PropertyWriterImpl getPropertyWriter(ClassWriter classWriter) {
-        return new PropertyWriterImpl((SubWriterHolderWriter) classWriter,
+        return new PropertyWriterImpl((ClassWriterImpl) classWriter,
                 classWriter.getTypeElement());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public MethodWriterImpl getMethodWriter(ClassWriter classWriter) {
-        return new MethodWriterImpl((SubWriterHolderWriter) classWriter, classWriter.getTypeElement());
+        return new MethodWriterImpl((ClassWriterImpl) classWriter, classWriter.getTypeElement());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public ConstructorWriterImpl getConstructorWriter(ClassWriter classWriter) {
-        return new ConstructorWriterImpl((SubWriterHolderWriter) classWriter,
+        return new ConstructorWriterImpl((ClassWriterImpl) classWriter,
                 classWriter.getTypeElement());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public MemberSummaryWriter getMemberSummaryWriter(ClassWriter classWriter,
             VisibleMemberTable.Kind memberType) {
@@ -189,6 +131,12 @@ public class WriterFactoryImpl implements WriterFactory {
                 return getConstructorWriter(classWriter);
             case ENUM_CONSTANTS:
                 return getEnumConstantWriter(classWriter);
+            case ANNOTATION_TYPE_MEMBER_OPTIONAL:
+                return (AnnotationTypeOptionalMemberWriterImpl)
+                        getAnnotationTypeOptionalMemberWriter(classWriter);
+            case ANNOTATION_TYPE_MEMBER_REQUIRED:
+                return (AnnotationTypeRequiredMemberWriterImpl)
+                        getAnnotationTypeRequiredMemberWriter(classWriter);
             case FIELDS:
                 return getFieldWriter(classWriter);
             case PROPERTIES:
@@ -203,38 +151,11 @@ public class WriterFactoryImpl implements WriterFactory {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MemberSummaryWriter getMemberSummaryWriter(AnnotationTypeWriter annotationTypeWriter,
-            VisibleMemberTable.Kind memberType) {
-        switch (memberType) {
-            case ANNOTATION_TYPE_FIELDS:
-                return (AnnotationTypeFieldWriterImpl)
-                    getAnnotationTypeFieldWriter(annotationTypeWriter);
-            case ANNOTATION_TYPE_MEMBER_OPTIONAL:
-                return (AnnotationTypeOptionalMemberWriterImpl)
-                    getAnnotationTypeOptionalMemberWriter(annotationTypeWriter);
-            case ANNOTATION_TYPE_MEMBER_REQUIRED:
-                return (AnnotationTypeRequiredMemberWriterImpl)
-                    getAnnotationTypeRequiredMemberWriter(annotationTypeWriter);
-            default:
-                return null;
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public SerializedFormWriter getSerializedFormWriter() {
         return new SerializedFormWriterImpl(configuration);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public DocFilesHandler getDocFilesHandler(Element element) {
         return new DocFilesHandlerImpl(configuration, element);

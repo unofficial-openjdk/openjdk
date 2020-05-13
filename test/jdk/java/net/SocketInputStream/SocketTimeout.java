@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 /**
  * @test
  * @bug 4158021
+ * @library /test/lib
  * @summary cannot distinguish Thread.interrupt and Socket.setSoTimeout exceptions
  * @run main SocketTimeout
  * @run main/othervm -Djava.net.preferIPv4Stack=true SocketTimeout
@@ -31,18 +32,21 @@
 
 import java.net.*;
 import java.io.*;
+import jdk.test.lib.net.IPSupport;
 
 public class SocketTimeout  {
     static final int TIMEOUT = 1000;
 
     public static void main(String args[]) throws Exception {
+    IPSupport.throwSkippedExceptionIfNonOperational();
     InetAddress  sin = InetAddress.getLocalHost();
     Socket       soc = null,soc1 = null;
     InputStream  is = null;
     ServerSocket srv = null;
     int          port = 0;
 
-    srv = new ServerSocket(0);
+    srv = new ServerSocket();
+    srv.bind(new InetSocketAddress(sin, 0));
     port = srv.getLocalPort();
     soc = new Socket(sin, port);
     soc1 = srv.accept();

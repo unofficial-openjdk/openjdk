@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@
 
 #include "metaprogramming/integralConstant.hpp"
 #include "metaprogramming/primitiveConversions.hpp"
-#include "runtime/globals.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 // OBJECT hierarchy
@@ -40,15 +39,14 @@ typedef juint narrowOop; // Offset instead of address for an oop within a java o
 typedef juint  narrowKlass;
 
 typedef void* OopOrNarrowOopStar;
-typedef class   markOopDesc*                markOop;
 
 #ifndef CHECK_UNHANDLED_OOPS
 
-typedef class oopDesc*                            oop;
+typedef class oopDesc*                    oop;
 typedef class   instanceOopDesc*            instanceOop;
-typedef class   arrayOopDesc*                    arrayOop;
+typedef class   arrayOopDesc*               arrayOop;
 typedef class     objArrayOopDesc*            objArrayOop;
-typedef class     typeArrayOopDesc*            typeArrayOop;
+typedef class     typeArrayOopDesc*           typeArrayOop;
 
 #else
 
@@ -72,8 +70,9 @@ typedef class     typeArrayOopDesc*            typeArrayOop;
 // instead, which generates less code anyway.
 
 class Thread;
-class PromotedObject;
 class oopDesc;
+
+extern "C" bool CheckUnhandledOops;
 
 class oop {
   oopDesc* _o;
@@ -81,13 +80,11 @@ class oop {
   void register_oop();
   void unregister_oop();
 
-  // friend class markOop;
 public:
   void set_obj(const void* p)         {
-    raw_set_obj(p);
+    _o = (oopDesc*)p;
     if (CheckUnhandledOops) register_oop();
   }
-  void raw_set_obj(const void* p)     { _o = (oopDesc*)p; }
 
   oop()                               { set_obj(NULL); }
   oop(const oop& o)                   { set_obj(o.obj()); }
@@ -101,9 +98,9 @@ public:
 
   // General access
   oopDesc*  operator->() const        { return obj(); }
-  bool operator==(const oop o) const;
+  bool operator==(const oop o) const  { return obj() == o.obj(); }
   bool operator==(void *p) const      { return obj() == p; }
-  bool operator!=(const volatile oop o) const;
+  bool operator!=(const volatile oop o) const { return obj() != o.obj(); }
   bool operator!=(void *p) const      { return obj() != p; }
 
   // Assignment
@@ -112,23 +109,7 @@ public:
   volatile oop& operator=(const volatile oop& o) volatile { _o = o.obj(); return *this; }
 
   // Explict user conversions
-  operator void* () const             { return (void *)obj(); }
-#ifndef SOLARIS
-  operator void* () const volatile    { return (void *)obj(); }
-#endif
-  operator HeapWord* () const         { return (HeapWord*)obj(); }
   operator oopDesc* () const volatile { return obj(); }
-  operator intptr_t* () const         { return (intptr_t*)obj(); }
-  operator PromotedObject* () const   { return (PromotedObject*)obj(); }
-  operator markOop () const volatile  { return markOop(obj()); }
-  operator address   () const         { return (address)obj(); }
-
-  // from javaCalls.cpp
-  operator jobject () const           { return (jobject)obj(); }
-
-  // from parNewGeneration and other things that want to get to the end of
-  // an oop for stuff (like ObjArrayKlass.cpp)
-  operator oop* () const              { return (oop *)obj(); }
 };
 
 template<>
@@ -145,6 +126,7 @@ struct PrimitiveConversions::Translate<oop> : public TrueType {
    class type##Oop : public oop {                                          \
      public:                                                               \
        type##Oop() : oop() {}                                              \
+       type##Oop(const type##Oop& o) : oop(o) {}                           \
        type##Oop(const oop& o) : oop(o) {}                                 \
        type##Oop(const volatile oop& o) : oop(o) {}                        \
        type##Oop(const void* p) : oop(p) {}                                \
@@ -189,11 +171,7 @@ template <class T> inline oop cast_to_oop(T value) {
   return (oop)(CHECK_UNHANDLED_OOPS_ONLY((void *))(value));
 }
 template <class T> inline T cast_from_oop(oop o) {
-  return (T)(CHECK_UNHANDLED_OOPS_ONLY((void*))o);
-}
-
-inline bool check_obj_alignment(oop obj) {
-  return (cast_from_oop<intptr_t>(obj) & MinObjAlignmentInBytesMask) == 0;
+  return (T)(CHECK_UNHANDLED_OOPS_ONLY((oopDesc*))o);
 }
 
 // The metadata hierarchy is separate from the oop hierarchy

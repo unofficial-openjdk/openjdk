@@ -39,6 +39,7 @@
 #include "opto/superword.hpp"
 #include "opto/vectornode.hpp"
 #include "opto/movenode.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 //
 //                  S U P E R W O R D   T R A N S F O R M
@@ -145,7 +146,7 @@ void SuperWord::transform_loop(IdealLoopTree* lpt, bool do_optimization) {
   // Skip any loops already optimized by slp
   if (cl->is_vectorized_loop()) return;
 
-  if (cl->do_unroll_only()) return;
+  if (cl->is_unroll_only()) return;
 
   if (cl->is_main_loop()) {
     // Check for pre-loop ending with CountedLoopEnd(Bool(Cmp(x,Opaque1(limit))))
@@ -576,12 +577,13 @@ void SuperWord::find_adjacent_refs() {
   }
 
   Node_List align_to_refs;
+  int max_idx;
   int best_iv_adjustment = 0;
   MemNode* best_align_to_mem_ref = NULL;
 
   while (memops.size() != 0) {
     // Find a memory reference to align to.
-    MemNode* mem_ref = find_align_to_ref(memops);
+    MemNode* mem_ref = find_align_to_ref(memops, max_idx);
     if (mem_ref == NULL) break;
     align_to_refs.push(mem_ref);
     int iv_adjustment = get_iv_adjustment(mem_ref);
@@ -705,10 +707,26 @@ void SuperWord::find_adjacent_refs() {
           assert(!same_velt_type(s, mem_ref), "sanity");
           memops.push(s);
         }
-        best_align_to_mem_ref = find_align_to_ref(memops);
+        best_align_to_mem_ref = find_align_to_ref(memops, max_idx);
         if (best_align_to_mem_ref == NULL) {
           if (TraceSuperWord) {
             tty->print_cr("SuperWord::find_adjacent_refs(): best_align_to_mem_ref == NULL");
+          }
+          // best_align_to_mem_ref will be used for adjusting the pre-loop limit in
+          // SuperWord::align_initial_loop_index. Find one with the biggest vector size,
+          // smallest data size and smallest iv offset from memory ops from remaining packs.
+          if (_packset.length() > 0) {
+            if (orig_msize == 0) {
+              best_align_to_mem_ref = memops.at(max_idx)->as_Mem();
+            } else {
+              for (uint i = 0; i < orig_msize; i++) {
+                memops.remove(0);
+              }
+              best_align_to_mem_ref = find_align_to_ref(memops, max_idx);
+              assert(best_align_to_mem_ref == NULL, "sanity");
+              best_align_to_mem_ref = memops.at(max_idx)->as_Mem();
+            }
+            assert(best_align_to_mem_ref != NULL, "sanity");
           }
           break;
         }
@@ -751,7 +769,7 @@ void SuperWord::find_adjacent_refs_trace_1(Node* best_align_to_mem_ref, int best
 // Find a memory reference to align the loop induction variable to.
 // Looks first at stores then at loads, looking for a memory reference
 // with the largest number of references similar to it.
-MemNode* SuperWord::find_align_to_ref(Node_List &memops) {
+MemNode* SuperWord::find_align_to_ref(Node_List &memops, int &idx) {
   GrowableArray<int> cmp_ct(arena(), memops.size(), memops.size(), 0);
 
   // Count number of comparable memory ops
@@ -838,6 +856,7 @@ MemNode* SuperWord::find_align_to_ref(Node_List &memops) {
   }
 #endif
 
+  idx = max_idx;
   if (max_ct > 0) {
 #ifdef ASSERT
     if (TraceSuperWord) {
@@ -1209,9 +1228,47 @@ bool SuperWord::are_adjacent_refs(Node* s1, Node* s2) {
 bool SuperWord::isomorphic(Node* s1, Node* s2) {
   if (s1->Opcode() != s2->Opcode()) return false;
   if (s1->req() != s2->req()) return false;
-  if (s1->in(0) != s2->in(0)) return false;
   if (!same_velt_type(s1, s2)) return false;
-  return true;
+  Node* s1_ctrl = s1->in(0);
+  Node* s2_ctrl = s2->in(0);
+  // If the control nodes are equivalent, no further checks are required to test for isomorphism.
+  if (s1_ctrl == s2_ctrl) {
+    return true;
+  } else {
+    bool s1_ctrl_inv = ((s1_ctrl == NULL) ? true : lpt()->is_invariant(s1_ctrl));
+    bool s2_ctrl_inv = ((s2_ctrl == NULL) ? true : lpt()->is_invariant(s2_ctrl));
+    // If the control nodes are not invariant for the loop, fail isomorphism test.
+    if (!s1_ctrl_inv || !s2_ctrl_inv) {
+      return false;
+    }
+    if(s1_ctrl != NULL && s2_ctrl != NULL) {
+      if (s1_ctrl->is_Proj()) {
+        s1_ctrl = s1_ctrl->in(0);
+        assert(lpt()->is_invariant(s1_ctrl), "must be invariant");
+      }
+      if (s2_ctrl->is_Proj()) {
+        s2_ctrl = s2_ctrl->in(0);
+        assert(lpt()->is_invariant(s2_ctrl), "must be invariant");
+      }
+      if (!s1_ctrl->is_RangeCheck() || !s2_ctrl->is_RangeCheck()) {
+        return false;
+      }
+    }
+    // Control nodes are invariant. However, we have no way of checking whether they resolve
+    // in an equivalent manner. But, we know that invariant range checks are guaranteed to
+    // throw before the loop (if they would have thrown). Thus, the loop would not have been reached.
+    // Therefore, if the control nodes for both are range checks, we accept them to be isomorphic.
+    for (DUIterator_Fast imax, i = s1->fast_outs(imax); i < imax; i++) {
+      Node* t1 = s1->fast_out(i);
+      for (DUIterator_Fast jmax, j = s2->fast_outs(jmax); j < jmax; j++) {
+        Node* t2 = s2->fast_out(j);
+        if (VectorNode::is_muladds2i(t1) && VectorNode::is_muladds2i(t2)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 //------------------------------independent---------------------------
@@ -2007,12 +2064,11 @@ bool SuperWord::profitable(Node_List* p) {
         for (uint k = 0; k < use->req(); k++) {
           Node* n = use->in(k);
           if (def == n) {
-            // reductions should only have a Phi use at the the loop
-            // head and out of loop uses
+            // Reductions should only have a Phi use at the loop head or a non-phi use
+            // outside of the loop if it is the last element of the pack (e.g. SafePoint).
             if (def->is_reduction() &&
                 ((use->is_Phi() && use->in(0) == _lpt->_head) ||
-                 !_lpt->is_member(_phase->get_loop(_phase->ctrl_or_self(use))))) {
-              assert(i == p->size()-1, "must be last element of the pack");
+                 (!_lpt->is_member(_phase->get_loop(_phase->ctrl_or_self(use))) && i == p->size()-1))) {
               continue;
             }
             if (!is_vector_use(use, k)) {
@@ -2203,40 +2259,12 @@ void SuperWord::co_locate_pack(Node_List* pk) {
         _igvn.replace_input_of(ld, MemNode::Memory, upper_insert_pt);
       }
     }
-  } else if (pk->at(0)->is_Load()) { //load
-    // all loads in the pack should have the same memory state. By default,
+  } else if (pk->at(0)->is_Load()) { // Load pack
+    // All loads in the pack should have the same memory state. By default,
     // we use the memory state of the last load. However, if any load could
     // not be moved down due to the dependence constraint, we use the memory
     // state of the first load.
-    Node* first_mem = pk->at(0)->in(MemNode::Memory);
-    Node* last_mem = first_mem;
-    for (uint i = 1; i < pk->size(); i++) {
-      Node* ld = pk->at(i);
-      Node* mem = ld->in(MemNode::Memory);
-      assert(in_bb(first_mem) || in_bb(mem) || mem == first_mem, "2 different memory state from outside the loop?");
-      if (in_bb(mem)) {
-        if (in_bb(first_mem) && bb_idx(mem) < bb_idx(first_mem)) {
-          first_mem = mem;
-        }
-        if (!in_bb(last_mem) || bb_idx(mem) > bb_idx(last_mem)) {
-          last_mem = mem;
-        }
-      }
-    }
-    bool schedule_last = true;
-    for (uint i = 0; i < pk->size(); i++) {
-      Node* ld = pk->at(i);
-      for (Node* current = last_mem; current != ld->in(MemNode::Memory);
-           current=current->in(MemNode::Memory)) {
-        assert(current != first_mem, "corrupted memory graph");
-        if(current->is_Mem() && !independent(current, ld)){
-          schedule_last = false; // a later store depends on this load
-          break;
-        }
-      }
-    }
-
-    Node* mem_input = schedule_last ? last_mem : first_mem;
+    Node* mem_input = pick_mem_state(pk);
     _igvn.hash_delete(mem_input);
     // Give each load the same memory state
     for (uint i = 0; i < pk->size(); i++) {
@@ -2244,6 +2272,75 @@ void SuperWord::co_locate_pack(Node_List* pk) {
       _igvn.replace_input_of(ld, MemNode::Memory, mem_input);
     }
   }
+}
+
+// Finds the first and last memory state and then picks either of them by checking dependence constraints.
+// If a store is dependent on an earlier load then we need to pick the memory state of the first load and cannot
+// pick the memory state of the last load.
+Node* SuperWord::pick_mem_state(Node_List* pk) {
+  Node* first_mem = find_first_mem_state(pk);
+  Node* last_mem  = find_last_mem_state(pk, first_mem);
+
+  for (uint i = 0; i < pk->size(); i++) {
+    Node* ld = pk->at(i);
+    for (Node* current = last_mem; current != ld->in(MemNode::Memory); current = current->in(MemNode::Memory)) {
+      assert(current->is_Mem() && in_bb(current), "unexpected memory");
+      assert(current != first_mem, "corrupted memory graph");
+      if (!independent(current, ld)) {
+#ifdef ASSERT
+        // Added assertion code since no case has been observed that should pick the first memory state.
+        // Remove the assertion code whenever we find a (valid) case that really needs the first memory state.
+        pk->dump();
+        first_mem->dump();
+        last_mem->dump();
+        current->dump();
+        ld->dump();
+        ld->in(MemNode::Memory)->dump();
+        assert(false, "never observed that first memory should be picked");
+#endif
+        return first_mem; // A later store depends on this load, pick memory state of first load
+      }
+    }
+  }
+  return last_mem;
+}
+
+// Walk the memory graph from the current first load until the
+// start of the loop and check if nodes on the way are memory
+// edges of loads in the pack. The last one we encounter is the
+// first load.
+Node* SuperWord::find_first_mem_state(Node_List* pk) {
+  Node* first_mem = pk->at(0)->in(MemNode::Memory);
+  for (Node* current = first_mem; in_bb(current); current = current->is_Phi() ? current->in(LoopNode::EntryControl) : current->in(MemNode::Memory)) {
+    assert(current->is_Mem() || (current->is_Phi() && current->in(0) == bb()), "unexpected memory");
+    for (uint i = 1; i < pk->size(); i++) {
+      Node* ld = pk->at(i);
+      if (ld->in(MemNode::Memory) == current) {
+        first_mem = current;
+        break;
+      }
+    }
+  }
+  return first_mem;
+}
+
+// Find the last load by going over the pack again and walking
+// the memory graph from the loads of the pack to the memory of
+// the first load. If we encounter the memory of the current last
+// load, then we started from further down in the memory graph and
+// the load we started from is the last load.
+Node* SuperWord::find_last_mem_state(Node_List* pk, Node* first_mem) {
+  Node* last_mem = pk->at(0)->in(MemNode::Memory);
+  for (uint i = 0; i < pk->size(); i++) {
+    Node* ld = pk->at(i);
+    for (Node* current = ld->in(MemNode::Memory); current != first_mem; current = current->in(MemNode::Memory)) {
+      assert(current->is_Mem() && in_bb(current), "unexpected memory");
+      if (current->in(MemNode::Memory) == last_mem) {
+        last_mem = ld->in(MemNode::Memory);
+      }
+    }
+  }
+  return last_mem;
 }
 
 #ifndef PRODUCT
@@ -2364,6 +2461,12 @@ void SuperWord::output() {
         const TypePtr* atyp = n->adr_type();
         vn = StoreVectorNode::make(opc, ctl, mem, adr, atyp, val, vlen);
         vlen_in_bytes = vn->as_StoreVector()->memory_size();
+      } else if (VectorNode::is_roundopD(n)) {
+        Node* in1 = vector_opd(p, 1);
+        Node* in2 = low_adr->in(2);
+        assert(in2->is_Con(), "Constant rounding mode expected.");
+        vn = VectorNode::make(opc, in1, in2, vlen, velt_basic_type(n));
+        vlen_in_bytes = vn->as_Vector()->length_in_bytes();
       } else if (VectorNode::is_muladds2i(n)) {
         assert(n->req() == 5u, "MulAddS2I should have 4 operands.");
         Node* in1 = vector_opd(p, 1);
@@ -2415,6 +2518,7 @@ void SuperWord::output() {
         }
       } else if (opc == Op_SqrtF || opc == Op_SqrtD ||
                  opc == Op_AbsF || opc == Op_AbsD ||
+                 opc == Op_AbsI || opc == Op_AbsL ||
                  opc == Op_NegF || opc == Op_NegD ||
                  opc == Op_PopCountI) {
         assert(n->req() == 2, "only one input expected");
@@ -2636,13 +2740,11 @@ Node* SuperWord::vector_opd(Node_List* p, int opd_idx) {
           NOT_PRODUCT(if(is_trace_loop_reverse() || TraceLoopOpts) {tty->print_cr("Should be int type only");})
           return NULL;
         }
-        // Move non constant shift count into vector register.
-        cnt = VectorNode::shift_count(p0, cnt, vlen, velt_basic_type(p0));
       }
-      if (cnt != opd) {
-        _igvn.register_new_node_with_optimizer(cnt);
-        _phase->set_ctrl(cnt, _phase->get_ctrl(opd));
-      }
+      // Move shift count into vector register.
+      cnt = VectorNode::shift_count(p0, cnt, vlen, velt_basic_type(p0));
+      _igvn.register_new_node_with_optimizer(cnt);
+      _phase->set_ctrl(cnt, _phase->get_ctrl(opd));
       return cnt;
     }
     assert(!opd->is_StoreVector(), "such vector is not expected here");
@@ -3257,7 +3359,14 @@ LoadNode::ControlDependency SuperWord::control_dependency(Node_List* p) {
     Node* n = p->at(i);
     assert(n->is_Load(), "only meaningful for loads");
     if (!n->depends_only_on_test()) {
-      dep = LoadNode::Pinned;
+      if (n->as_Load()->has_unknown_control_dependency() &&
+          dep != LoadNode::Pinned) {
+        // Upgrade to unknown control...
+        dep = LoadNode::UnknownControl;
+      } else {
+        // Otherwise, we must pin it.
+        dep = LoadNode::Pinned;
+      }
     }
   }
   return dep;

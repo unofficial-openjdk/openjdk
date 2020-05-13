@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,10 +45,10 @@ import java.nio.charset.UnsupportedCharsetException;
  * ({@code '\n'}) is written.
  *
  * <p> All characters printed by a {@code PrintStream} are converted into
- * bytes using the given encoding or charset, or platform's default character
- * encoding if not specified.
+ * bytes using the given encoding or charset, or the platform's default
+ * character encoding if not specified.
  * The {@link PrintWriter} class should be used in situations that require
- *  writing characters rather than bytes.
+ * writing characters rather than bytes.
  *
  * <p> This class always replaces malformed and unmappable character sequences with
  * the charset's default replacement string.
@@ -121,7 +121,9 @@ public class PrintStream extends FilterOutputStream
     }
 
     /**
-     * Creates a new print stream.  This stream will not flush automatically.
+     * Creates a new print stream, without automatic line flushing, with the
+     * specified OutputStream. Characters written to the stream are converted
+     * to bytes using the platform's default character encoding.
      *
      * @param  out        The output stream to which values and objects will be
      *                    printed
@@ -133,11 +135,13 @@ public class PrintStream extends FilterOutputStream
     }
 
     /**
-     * Creates a new print stream.
+     * Creates a new print stream, with the specified OutputStream and line
+     * flushing. Characters written to the stream are converted to bytes using
+     * the platform's default character encoding.
      *
      * @param  out        The output stream to which values and objects will be
      *                    printed
-     * @param  autoFlush  A boolean; if true, the output buffer will be flushed
+     * @param  autoFlush  Whether the output buffer will be flushed
      *                    whenever a byte array is written, one of the
      *                    {@code println} methods is invoked, or a newline
      *                    character or byte ({@code '\n'}) is written
@@ -149,11 +153,12 @@ public class PrintStream extends FilterOutputStream
     }
 
     /**
-     * Creates a new print stream.
+     * Creates a new print stream, with the specified OutputStream, line
+     * flushing, and character encoding.
      *
      * @param  out        The output stream to which values and objects will be
      *                    printed
-     * @param  autoFlush  A boolean; if true, the output buffer will be flushed
+     * @param  autoFlush  Whether the output buffer will be flushed
      *                    whenever a byte array is written, one of the
      *                    {@code println} methods is invoked, or a newline
      *                    character or byte ({@code '\n'}) is written
@@ -173,14 +178,14 @@ public class PrintStream extends FilterOutputStream
     }
 
     /**
-     * Creates a new print stream, with the specified OutputStream, automatic line
+     * Creates a new print stream, with the specified OutputStream, line
      * flushing and charset.  This convenience constructor creates the necessary
      * intermediate {@link java.io.OutputStreamWriter OutputStreamWriter},
      * which will encode characters using the provided charset.
      *
      * @param  out        The output stream to which values and objects will be
      *                    printed
-     * @param  autoFlush  A boolean; if true, the output buffer will be flushed
+     * @param  autoFlush  Whether the output buffer will be flushed
      *                    whenever a byte array is written, one of the
      *                    {@code println} methods is invoked, or a newline
      *                    character or byte ({@code '\n'}) is written
@@ -410,6 +415,7 @@ public class PrintStream extends FilterOutputStream
      *
      * @see        java.io.OutputStream#flush()
      */
+    @Override
     public void flush() {
         synchronized (this) {
             try {
@@ -430,6 +436,7 @@ public class PrintStream extends FilterOutputStream
      *
      * @see        java.io.OutputStream#close()
      */
+    @Override
     public void close() {
         synchronized (this) {
             if (! closing) {
@@ -521,6 +528,7 @@ public class PrintStream extends FilterOutputStream
      * @see #print(char)
      * @see #println(char)
      */
+    @Override
     public void write(int b) {
         try {
             synchronized (this) {
@@ -552,6 +560,7 @@ public class PrintStream extends FilterOutputStream
      * @param  off   Offset from which to start taking bytes
      * @param  len   Number of bytes to write
      */
+    @Override
     public void write(byte buf[], int off, int len) {
         try {
             synchronized (this) {
@@ -567,6 +576,66 @@ public class PrintStream extends FilterOutputStream
         catch (IOException x) {
             trouble = true;
         }
+    }
+
+    /**
+     * Writes all bytes from the specified byte array to this stream. If
+     * automatic flushing is enabled then the {@code flush} method will be
+     * invoked.
+     *
+     * <p> Note that the bytes will be written as given; to write characters
+     * that will be translated according to the platform's default character
+     * encoding, use the {@code print(char[])} or {@code println(char[])}
+     * methods.
+     *
+     * @apiNote
+     * Although declared to throw {@code IOException}, this method never
+     * actually does so. Instead, like other methods that this class
+     * overrides, it sets an internal flag which may be tested via the
+     * {@link #checkError()} method. To write an array of bytes without having
+     * to write a {@code catch} block for the {@code IOException}, use either
+     * {@link #writeBytes(byte[] buf) writeBytes(buf)} or
+     * {@link #write(byte[], int, int) write(buf, 0, buf.length)}.
+     *
+     * @implSpec
+     * This method is equivalent to
+     * {@link java.io.PrintStream#write(byte[],int,int)
+     * this.write(buf, 0, buf.length)}.
+     *
+     * @param  buf   A byte array
+     *
+     * @throws IOException If an I/O error occurs.
+     *
+     * @see #writeBytes(byte[])
+     * @see #write(byte[],int,int)
+     *
+     * @since 14
+     */
+    @Override
+    public void write(byte buf[]) throws IOException {
+        this.write(buf, 0, buf.length);
+    }
+
+    /**
+     * Writes all bytes from the specified byte array to this stream.
+     * If automatic flushing is enabled then the {@code flush} method
+     * will be invoked.
+     *
+     * <p> Note that the bytes will be written as given; to write characters
+     * that will be translated according to the platform's default character
+     * encoding, use the {@code print(char[])} or {@code println(char[])}
+     * methods.
+     *
+     * @implSpec
+     * This method is equivalent to
+     * {@link #write(byte[], int, int) this.write(buf, 0, buf.length)}.
+     *
+     * @param  buf   A byte array
+     *
+     * @since 14
+     */
+    public void writeBytes(byte buf[]) {
+        this.write(buf, 0, buf.length);
     }
 
     /*
@@ -700,9 +769,9 @@ public class PrintStream extends FilterOutputStream
 
     /**
      * Prints a character.  The character is translated into one or more bytes
-     * according to the platform's default character encoding, and these bytes
-     * are written in exactly the manner of the
-     * {@link #write(int)} method.
+     * according to the character encoding given to the constructor, or the
+     * platform's default character encoding if none specified. These bytes
+     * are written in exactly the manner of the {@link #write(int)} method.
      *
      * @param      c   The {@code char} to be printed
      */
@@ -768,9 +837,9 @@ public class PrintStream extends FilterOutputStream
 
     /**
      * Prints an array of characters.  The characters are converted into bytes
-     * according to the platform's default character encoding, and these bytes
-     * are written in exactly the manner of the
-     * {@link #write(int)} method.
+     * according to the character encoding given to the constructor, or the
+     * platform's default character encoding if none specified. These bytes
+     * are written in exactly the manner of the {@link #write(int)} method.
      *
      * @param      s   The array of chars to be printed
      *
@@ -783,8 +852,9 @@ public class PrintStream extends FilterOutputStream
     /**
      * Prints a string.  If the argument is {@code null} then the string
      * {@code "null"} is printed.  Otherwise, the string's characters are
-     * converted into bytes according to the platform's default character
-     * encoding, and these bytes are written in exactly the manner of the
+     * converted into bytes according to the character encoding given to the
+     * constructor, or the platform's default character encoding if none
+     * specified. These bytes are written in exactly the manner of the
      * {@link #write(int)} method.
      *
      * @param      s   The {@code String} to be printed

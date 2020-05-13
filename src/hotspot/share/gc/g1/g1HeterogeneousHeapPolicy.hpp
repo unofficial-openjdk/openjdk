@@ -25,7 +25,6 @@
 #ifndef SHARE_GC_G1_G1HETEROGENEOUSHEAPPOLICY_HPP
 #define SHARE_GC_G1_G1HETEROGENEOUSHEAPPOLICY_HPP
 
-#include "gc/g1/g1CollectorPolicy.hpp"
 #include "gc/g1/g1Policy.hpp"
 #include "gc/g1/heterogeneousHeapRegionManager.hpp"
 
@@ -34,12 +33,12 @@ class G1HeterogeneousHeapPolicy : public G1Policy {
   HeterogeneousHeapRegionManager* _manager;
 
 public:
-  G1HeterogeneousHeapPolicy(G1CollectorPolicy* policy, STWGCTimer* gc_timer);
+  G1HeterogeneousHeapPolicy(STWGCTimer* gc_timer);
 
   // initialize policy
   virtual void init(G1CollectedHeap* g1h, G1CollectionSet* collection_set);
   // Record end of an evacuation pause.
-  virtual void record_collection_pause_end(double pause_time_ms, size_t cards_scanned, size_t heap_used_bytes_before_gc);
+  virtual void record_collection_pause_end(double pause_time_ms);
   // Record the end of full collection.
   virtual void record_full_collection_end();
 

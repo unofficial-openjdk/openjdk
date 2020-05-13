@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,7 +113,6 @@ enum SSLExtension implements SSLStringizer {
                                 null,
                                 null,
                                 CertStatusExtension.certStatusReqStringizer),
-
     CR_STATUS_REQUEST       (0x0005, "status_request"),
     CT_STATUS_REQUEST       (0x0005, "status_request",
                                 SSLHandshake.CERTIFICATE,
@@ -124,6 +123,7 @@ enum SSLExtension implements SSLStringizer {
                                 null,
                                 null,
                                 CertStatusExtension.certStatusRespStringizer),
+
     // extensions defined in RFC 4681
     USER_MAPPING            (0x0006, "user_mapping"),
 
@@ -142,7 +142,7 @@ enum SSLExtension implements SSLStringizer {
                                 SupportedGroupsExtension.chOnLoadConsumer,
                                 null,
                                 null,
-                                null,
+                                SupportedGroupsExtension.chOnTradAbsence,
                                 SupportedGroupsExtension.sgsStringizer),
     EE_SUPPORTED_GROUPS     (0x000A, "supported_groups",
                                 SSLHandshake.ENCRYPTED_EXTENSIONS,
@@ -309,8 +309,28 @@ enum SSLExtension implements SSLStringizer {
     // extensions defined in RFC 7924
     CACHED_INFO             (0x0019, "cached_info"),
 
-    // extensions defined in RFC 4507/5077
-    SESSION_TICKET          (0x0023, "session_ticket"),
+    // extensions defined in RFC 5077
+    CH_SESSION_TICKET       (0x0023, "session_ticket",
+            SSLHandshake.CLIENT_HELLO,
+            ProtocolVersion.PROTOCOLS_10_12,
+            SessionTicketExtension.chNetworkProducer,
+            SessionTicketExtension.chOnLoadConsumer,
+            null,
+            null,
+            null,
+            SessionTicketExtension.steStringizer),
+            //null),
+
+    SH_SESSION_TICKET       (0x0023, "session_ticket",
+            SSLHandshake.SERVER_HELLO,
+            ProtocolVersion.PROTOCOLS_10_12,
+            SessionTicketExtension.shNetworkProducer,
+            SessionTicketExtension.shOnLoadConsumer,
+            null,
+            null,
+            null,
+            SessionTicketExtension.steStringizer),
+            //null),
 
     // extensions defined in TLS 1.3
     CH_EARLY_DATA           (0x002A, "early_data"),
@@ -396,7 +416,9 @@ enum SSLExtension implements SSLStringizer {
                                 ProtocolVersion.PROTOCOLS_OF_13,
                                 KeyShareExtension.chNetworkProducer,
                                 KeyShareExtension.chOnLoadConsumer,
-                                null, null, null,
+                                null,
+                                null,
+                                KeyShareExtension.chOnTradAbsence,
                                 KeyShareExtension.chStringizer),
     SH_KEY_SHARE            (0x0033, "key_share",
                                 SSLHandshake.SERVER_HELLO,
@@ -449,7 +471,7 @@ enum SSLExtension implements SSLStringizer {
                                 PreSharedKeyExtension.chOnLoadConsumer,
                                 PreSharedKeyExtension.chOnLoadAbsence,
                                 PreSharedKeyExtension.chOnTradeConsumer,
-                                null,
+                                PreSharedKeyExtension.chOnTradAbsence,
                                 PreSharedKeyExtension.chStringizer),
     SH_PRE_SHARED_KEY       (0x0029, "pre_shared_key",
                                 SSLHandshake.SERVER_HELLO,
@@ -464,6 +486,25 @@ enum SSLExtension implements SSLStringizer {
     final SSLHandshake handshakeType;
     final String name;
     final ProtocolVersion[] supportedProtocols;
+
+    /*
+     * networkProducer: produces outbound handshake data.
+     *
+     * onLoadConsumer:  parses inbound data.  It may not be appropriate
+     *                  to act until all of the message inputs have
+     *                  been parsed.  (e.g. parsing keyShares and choosing
+     *                  a local value without having seen the SupportedGroups
+     *                  extension.)
+     *
+     * onLoadAbsence:   if a missing message needs special handling
+     *                  during the load phase.
+     *
+     * onTradeConsumer: act on the parsed message once all inbound data has
+     *                  been traded and parsed.
+     *
+     * onTradeAbsence:  if a missing message needs special handling
+     *                  during the trade phase.
+     */
     final HandshakeProducer networkProducer;
     final ExtensionConsumer onLoadConsumer;
     final HandshakeAbsence  onLoadAbsence;
@@ -513,6 +554,16 @@ enum SSLExtension implements SSLStringizer {
         }
 
         return null;
+    }
+
+    static String nameOf(int extensionType) {
+        for (SSLExtension ext : SSLExtension.values()) {
+            if (ext.id == extensionType) {
+                return ext.name;
+            }
+        }
+
+        return "unknown extension";
     }
 
     static boolean isConsumable(int extensionType) {
@@ -592,7 +643,8 @@ enum SSLExtension implements SSLStringizer {
     }
 
     @Override
-    public String toString(ByteBuffer byteBuffer) {
+    public String toString(
+            HandshakeContext handshakeContext, ByteBuffer byteBuffer) {
         MessageFormat messageFormat = new MessageFormat(
             "\"{0} ({1})\": '{'\n" +
             "{2}\n" +
@@ -605,7 +657,7 @@ enum SSLExtension implements SSLStringizer {
             String encoded = hexEncoder.encode(byteBuffer.duplicate());
             extData = encoded;
         } else {
-            extData = stringizer.toString(byteBuffer);
+            extData = stringizer.toString(handshakeContext, byteBuffer);
         }
 
         Object[] messageFields = {
@@ -657,8 +709,18 @@ enum SSLExtension implements SSLStringizer {
             }
 
             // To switch off the max_fragment_length extension.
+            //
+            // Note that "jsse.enableMFLNExtension" is the CSR approved
+            // property name.  However, "jsse.enableMFLExtension" was used
+            // in the original implementation.  Temporarily, if either of
+            // the two properties set to true, the extension is switch on.
+            // We may remove the "jsse.enableMFLExtension" property in the
+            // future.  Please don't continue to use the misspelling property.
             enableExtension =
-                Utilities.getBooleanProperty("jsse.enableMFLExtension", false);
+                Utilities.getBooleanProperty(
+                        "jsse.enableMFLNExtension", false) ||
+                Utilities.getBooleanProperty(
+                        "jsse.enableMFLExtension", false);
             if (!enableExtension) {
                 extensions.remove(CH_MAX_FRAGMENT_LENGTH);
             }

@@ -28,26 +28,34 @@ import java.lang.management.*;
 import static jdk.test.lib.Asserts.*;
 import java.util.stream.*;
 
-/* @test TestMemoryMXBeansAndPoolsPresence
+/* @test TestMemoryMXBeansAndPoolsPresenceG1
  * @bug 8191564
  * @summary Tests that GarbageCollectorMXBeans and GC MemoryPools are created.
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @requires vm.gc == null
+ * @requires vm.gc.G1
  * @run main/othervm -XX:+UseG1GC gc.TestMemoryMXBeansAndPoolsPresence G1
- * @run main/othervm -XX:+UseParallelGC gc.TestMemoryMXBeansAndPoolsPresence Parallel
- * @run main/othervm -XX:+UseSerialGC gc.TestMemoryMXBeansAndPoolsPresence Serial
  */
 
-/* @test TestMemoryMXBeansAndPoolsPresenceCMS
+/* @test TestMemoryMXBeansAndPoolsPresenceParallel
  * @bug 8191564
+ * @summary Tests that GarbageCollectorMXBeans and GC MemoryPools are created.
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @comment Graal does not support CMS
- * @requires vm.gc == null & !vm.graal.enabled
- * @run main/othervm -XX:+UseConcMarkSweepGC gc.TestMemoryMXBeansAndPoolsPresence CMS
+ * @requires vm.gc.Parallel
+ * @run main/othervm -XX:+UseParallelGC gc.TestMemoryMXBeansAndPoolsPresence Parallel
+ */
+
+/* @test TestMemoryMXBeansAndPoolsPresenceSerial
+ * @bug 8191564
+ * @summary Tests that GarbageCollectorMXBeans and GC MemoryPools are created.
+ * @library /test/lib
+ * @modules java.base/jdk.internal.misc
+ *          java.management
+ * @requires vm.gc.Serial
+ * @run main/othervm -XX:+UseSerialGC gc.TestMemoryMXBeansAndPoolsPresence Serial
  */
 
 class GCBeanDescription {
@@ -89,10 +97,6 @@ public class TestMemoryMXBeansAndPoolsPresence {
             case "G1":
                 test(new GCBeanDescription("G1 Young Generation", new String[] {"G1 Eden Space", "G1 Survivor Space", "G1 Old Gen"}),
                      new GCBeanDescription("G1 Old Generation",   new String[] {"G1 Eden Space", "G1 Survivor Space", "G1 Old Gen"}));
-                break;
-            case "CMS":
-                test(new GCBeanDescription("ParNew",              new String[] {"Par Eden Space", "Par Survivor Space"}),
-                     new GCBeanDescription("ConcurrentMarkSweep", new String[] {"Par Eden Space", "Par Survivor Space", "CMS Old Gen"}));
                 break;
             case "Parallel":
                 test(new GCBeanDescription("PS Scavenge",         new String[] {"PS Eden Space", "PS Survivor Space"}),

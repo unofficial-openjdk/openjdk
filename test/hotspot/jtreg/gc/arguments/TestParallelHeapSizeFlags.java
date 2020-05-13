@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,24 +29,21 @@ package gc.arguments;
  * @bug 8006088
  * @summary Tests argument processing for initial and maximum heap size for the
  * parallel collectors.
- * @requires vm.gc=="null"
+ * @requires vm.gc.Parallel
  * @library /test/lib
  * @library /
  * @modules java.base/jdk.internal.misc
  *          java.management
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm gc.arguments.TestParallelHeapSizeFlags
+ * @run driver gc.arguments.TestParallelHeapSizeFlags
  * @author thomas.schatzl@oracle.com
  */
 
 public class TestParallelHeapSizeFlags {
 
   public static void main(String args[]) throws Exception {
-    // just pick one of the parallel generational collectors. Sizing logic is the
-    // same.
-    final String gcName = "-XX:+UseParallelOldGC";
+    final String gcName = "-XX:+UseParallelGC";
 
     TestMaxHeapSizeTools.checkMinInitialMaxHeapFlags(gcName);
 

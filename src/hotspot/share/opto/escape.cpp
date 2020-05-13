@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -350,6 +350,12 @@ void ConnectionGraph::add_node_to_connection_graph(Node *n, Unique_Node_List *de
   if (n_ptn != NULL)
     return; // No need to redefine PointsTo node during first iteration.
 
+  int opcode = n->Opcode();
+  bool gc_handled = BarrierSet::barrier_set()->barrier_set_c2()->escape_add_to_con_graph(this, igvn, delayed_worklist, n, opcode);
+  if (gc_handled) {
+    return; // Ignore node if already handled by GC.
+  }
+
   if (n->is_Call()) {
     // Arguments to allocation and locking don't escape.
     if (n->is_AbstractLock()) {
@@ -382,11 +388,6 @@ void ConnectionGraph::add_node_to_connection_graph(Node *n, Unique_Node_List *de
   if (n_ptn == phantom_obj || n_ptn == null_obj)
     return; // Skip predefined nodes.
 
-  int opcode = n->Opcode();
-  bool gc_handled = BarrierSet::barrier_set()->barrier_set_c2()->escape_add_to_con_graph(this, igvn, delayed_worklist, n, opcode);
-  if (gc_handled) {
-    return; // Ignore node if already handled by GC.
-  }
   switch (opcode) {
     case Op_AddP: {
       Node* base = get_addp_base(n);
@@ -989,6 +990,8 @@ void ConnectionGraph::process_call_arguments(CallNode *call) {
                   strcmp(call->as_CallLeaf()->_name, "aescrypt_decryptBlock") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "cipherBlockChaining_encryptAESCrypt") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "cipherBlockChaining_decryptAESCrypt") == 0 ||
+                  strcmp(call->as_CallLeaf()->_name, "electronicCodeBook_encryptAESCrypt") == 0 ||
+                  strcmp(call->as_CallLeaf()->_name, "electronicCodeBook_decryptAESCrypt") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "counterMode_AESCrypt") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "ghash_processBlocks") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "encodeBlock") == 0 ||
@@ -1003,6 +1006,8 @@ void ConnectionGraph::process_call_arguments(CallNode *call) {
                   strcmp(call->as_CallLeaf()->_name, "mulAdd") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "montgomery_multiply") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "montgomery_square") == 0 ||
+                  strcmp(call->as_CallLeaf()->_name, "bigIntegerRightShiftWorker") == 0 ||
+                  strcmp(call->as_CallLeaf()->_name, "bigIntegerLeftShiftWorker") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "vectorizedMismatch") == 0)
                  ))) {
             call->dump();
@@ -1411,7 +1416,7 @@ int ConnectionGraph::add_java_object_edges(JavaObjectNode* jobj, bool populate_w
     }
   }
   _worklist.clear();
-  _in_worklist.Reset();
+  _in_worklist.reset();
   return new_edges;
 }
 
@@ -2110,7 +2115,8 @@ bool ConnectionGraph::is_oop_field(Node* n, int offset, bool* unsafe) {
       }
     }
   }
-  return (bt == T_OBJECT || bt == T_NARROWOOP || bt == T_ARRAY);
+  // Note: T_NARROWOOP is not classed as a real reference type
+  return (is_reference_type(bt) || bt == T_NARROWOOP);
 }
 
 // Returns unique pointed java object or NULL.
@@ -2122,6 +2128,9 @@ JavaObjectNode* ConnectionGraph::unique_java_object(Node *n) {
     return NULL;
   }
   PointsToNode* ptn = ptnode_adr(idx);
+  if (ptn == NULL) {
+    return NULL;
+  }
   if (ptn->is_JavaObject()) {
     return ptn->as_JavaObject();
   }
@@ -2175,6 +2184,9 @@ bool ConnectionGraph::not_global_escape(Node *n) {
     return false;
   }
   PointsToNode* ptn = ptnode_adr(idx);
+  if (ptn == NULL) {
+    return false; // not in congraph (e.g. ConI)
+  }
   PointsToNode::EscapeState es = ptn->escape_state();
   // If we have already computed a value, return it.
   if (es >= PointsToNode::GlobalEscape)
@@ -2346,8 +2358,7 @@ Node* ConnectionGraph::get_addp_base(Node *addp) {
       assert(opcode == Op_ConP || opcode == Op_ThreadLocal ||
              opcode == Op_CastX2P || uncast_base->is_DecodeNarrowPtr() ||
              (uncast_base->is_Mem() && (uncast_base->bottom_type()->isa_rawptr() != NULL)) ||
-             (uncast_base->is_Proj() && uncast_base->in(0)->is_Allocate()) ||
-             BarrierSet::barrier_set()->barrier_set_c2()->escape_is_barrier_node(uncast_base), "sanity");
+             (uncast_base->is_Proj() && uncast_base->in(0)->is_Allocate()), "sanity");
     }
   }
   return base;
@@ -2735,11 +2746,14 @@ Node* ConnectionGraph::find_inst_mem(Node *orig_mem, int alias_idx, GrowableArra
           result = proj_in->in(TypeFunc::Memory);
         }
       } else if (proj_in->is_MemBar()) {
-        if (proj_in->in(TypeFunc::Memory)->is_MergeMem() &&
-            proj_in->in(TypeFunc::Memory)->as_MergeMem()->in(Compile::AliasIdxRaw)->is_Proj() &&
-            proj_in->in(TypeFunc::Memory)->as_MergeMem()->in(Compile::AliasIdxRaw)->in(0)->is_ArrayCopy()) {
-          // clone
-          ArrayCopyNode* ac = proj_in->in(TypeFunc::Memory)->as_MergeMem()->in(Compile::AliasIdxRaw)->in(0)->as_ArrayCopy();
+        // Check if there is an array copy for a clone
+        // Step over GC barrier when ReduceInitialCardMarks is disabled
+        BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
+        Node* control_proj_ac = bs->step_over_gc_barrier(proj_in->in(0));
+
+        if (control_proj_ac->is_Proj() && control_proj_ac->in(0)->is_ArrayCopy()) {
+          // Stop if it is a clone
+          ArrayCopyNode* ac = control_proj_ac->in(0)->as_ArrayCopy();
           if (ac->may_modify(toop, igvn)) {
             break;
           }
@@ -3085,7 +3099,6 @@ void ConnectionGraph::split_unique_types(GrowableArray<Node *>  &alloc_worklist,
                n->is_CheckCastPP() ||
                n->is_EncodeP() ||
                n->is_DecodeN() ||
-               BarrierSet::barrier_set()->barrier_set_c2()->escape_is_barrier_node(n) ||
                (n->is_ConstraintCast() && n->Opcode() == Op_CastPP)) {
       if (visited.test_set(n->_idx)) {
         assert(n->is_Phi(), "loops only through Phi's");
@@ -3156,7 +3169,6 @@ void ConnectionGraph::split_unique_types(GrowableArray<Node *>  &alloc_worklist,
                  use->is_CheckCastPP() ||
                  use->is_EncodeNarrowPtr() ||
                  use->is_DecodeNarrowPtr() ||
-                 BarrierSet::barrier_set()->barrier_set_c2()->escape_is_barrier_node(use) ||
                  (use->is_ConstraintCast() && use->Opcode() == Op_CastPP)) {
         alloc_worklist.append_if_missing(use);
 #ifdef ASSERT
@@ -3187,6 +3199,7 @@ void ConnectionGraph::split_unique_types(GrowableArray<Node *>  &alloc_worklist,
               op == Op_FastLock || op == Op_AryEq || op == Op_StrComp || op == Op_HasNegatives ||
               op == Op_StrCompressedCopy || op == Op_StrInflatedCopy ||
               op == Op_StrEquals || op == Op_StrIndexOf || op == Op_StrIndexOfChar ||
+              op == Op_SubTypeCheck ||
               BarrierSet::barrier_set()->barrier_set_c2()->is_gc_barrier_node(use))) {
           n->dump();
           use->dump();

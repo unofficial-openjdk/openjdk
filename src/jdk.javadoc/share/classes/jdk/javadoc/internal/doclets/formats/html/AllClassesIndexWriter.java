@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,22 +22,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package jdk.javadoc.internal.doclets.formats.html;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 import com.sun.source.doctree.DocTree;
+import jdk.javadoc.internal.doclets.formats.html.markup.BodyContents;
 import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
-import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
-import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation.PageMode;
+import jdk.javadoc.internal.doclets.formats.html.Navigation.PageMode;
 import jdk.javadoc.internal.doclets.formats.html.markup.Table;
 import jdk.javadoc.internal.doclets.formats.html.markup.TableHeader;
 import jdk.javadoc.internal.doclets.toolkit.Content;
@@ -45,6 +43,7 @@ import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
 import jdk.javadoc.internal.doclets.toolkit.util.IndexBuilder;
+import jdk.javadoc.internal.doclets.toolkit.util.IndexItem;
 
 /**
  * Generate the file with list of all the classes in this run.
@@ -54,28 +53,20 @@ public class AllClassesIndexWriter extends HtmlDocletWriter {
     /**
      * Index of all the classes.
      */
-    protected IndexBuilder indexbuilder;
+    protected IndexBuilder indexBuilder;
 
     /**
-     * The HTML tree for main tag.
-     */
-    protected HtmlTree mainTree = HtmlTree.MAIN();
-
-    private final Navigation navBar;
-
-    /**
-     * Construct AllClassesFrameWriter object. Also initializes the indexbuilder variable in this
+     * Construct AllClassesIndexWriter object. Also initializes the indexBuilder variable in this
      * class.
      *
      * @param configuration The current configuration
      * @param filename Path to the file which is getting generated.
-     * @param indexbuilder Unicode based Index from {@link IndexBuilder}
+     * @param indexBuilder Unicode based Index from {@link IndexBuilder}
      */
     public AllClassesIndexWriter(HtmlConfiguration configuration,
-            DocPath filename, IndexBuilder indexbuilder) {
+            DocPath filename, IndexBuilder indexBuilder) {
         super(configuration, filename);
-        this.indexbuilder = indexbuilder;
-        this.navBar = new Navigation(null, configuration, fixedNavDiv, PageMode.ALLCLASSES, path);
+        this.indexBuilder = indexBuilder;
     }
 
     /**
@@ -102,21 +93,24 @@ public class AllClassesIndexWriter extends HtmlDocletWriter {
      */
     protected void buildAllClassesFile() throws DocFileIOException {
         String label = resources.getText("doclet.All_Classes");
-        HtmlTree bodyTree = getBody(true, getWindowTitle(label));
-        HtmlTree header = HtmlTree.HEADER();
+        Content header = new ContentBuilder();
         addTop(header);
+        Navigation navBar = new Navigation(null, configuration, PageMode.ALL_CLASSES, path);
         navBar.setUserHeader(getUserHeaderFooter(true));
-        header.addContent(navBar.getContent(true));
-        bodyTree.addContent(header);
+        header.add(navBar.getContent(Navigation.Position.TOP));
         Content allClassesContent = new ContentBuilder();
         addContents(allClassesContent);
-        mainTree.addContent(allClassesContent);
-        bodyTree.addContent(mainTree);
+        Content mainContent = new ContentBuilder();
+        mainContent.add(allClassesContent);
         Content footer = HtmlTree.FOOTER();
         navBar.setUserFooter(getUserHeaderFooter(false));
-        footer.addContent(navBar.getContent(false));
+        footer.add(navBar.getContent(Navigation.Position.BOTTOM));
         addBottom(footer);
-        bodyTree.addContent(footer);
+        HtmlTree bodyTree = getBody(getWindowTitle(label));
+        bodyTree.add(new BodyContents()
+                .setHeader(header)
+                .addMainContent(mainContent)
+                .setFooter(footer));
         printHtmlDocument(null, "class index", bodyTree);
     }
 
@@ -126,10 +120,11 @@ public class AllClassesIndexWriter extends HtmlDocletWriter {
      * @param content HtmlTree content to which the links will be added
      */
     protected void addContents(Content content) {
-        Table table = new Table(HtmlStyle.typeSummary)
+        Table table = new Table(HtmlStyle.typeSummary, HtmlStyle.summaryTable)
                 .setHeader(new TableHeader(contents.classLabel, contents.descriptionLabel))
                 .setRowScopeColumn(1)
                 .setColumnStyles(HtmlStyle.colFirst, HtmlStyle.colLast)
+                .setId("all-classes-table")
                 .setDefaultTab(resources.getText("doclet.All_Classes"))
                 .addTab(resources.interfaceSummary, utils::isInterface)
                 .addTab(resources.classSummary, e -> utils.isOrdinaryClass((TypeElement)e))
@@ -138,27 +133,22 @@ public class AllClassesIndexWriter extends HtmlDocletWriter {
                 .addTab(resources.errorSummary, e -> utils.isError((TypeElement)e))
                 .addTab(resources.annotationTypeSummary, utils::isAnnotationType)
                 .setTabScript(i -> "show(" + i + ");");
-        for (Character unicode : indexbuilder.index()) {
-            for (Element element : indexbuilder.getMemberList(unicode)) {
-                TypeElement typeElement = (TypeElement) element;
-                if (!utils.isCoreClass(typeElement)) {
+        for (Character unicode : indexBuilder.keys()) {
+            for (IndexItem indexItem : indexBuilder.getMemberList(unicode)) {
+                TypeElement typeElement = (TypeElement) indexItem.getElement();
+                if (typeElement == null || !utils.isCoreClass(typeElement)) {
                     continue;
                 }
                 addTableRow(table, typeElement);
             }
         }
         Content titleContent = contents.allClassesLabel;
-        Content pHeading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, true,
+        Content pHeading = HtmlTree.HEADING_TITLE(Headings.PAGE_TITLE_HEADING,
                 HtmlStyle.title, titleContent);
         Content headerDiv = HtmlTree.DIV(HtmlStyle.header, pHeading);
-        content.addContent(headerDiv);
+        content.add(headerDiv);
         if (!table.isEmpty()) {
-            HtmlTree li = HtmlTree.LI(HtmlStyle.blockList, table.toContent());
-            HtmlTree ul = HtmlTree.UL(HtmlStyle.blockList, li);
-            HtmlTree div = new HtmlTree(HtmlTag.DIV);
-            div.setStyle(HtmlStyle.allClassesContainer);
-            div.addContent(ul);
-            content.addContent(div);
+            content.add(table);
             if (table.needsScript()) {
                 getMainBodyScript().append(table.getScript());
             }
@@ -177,7 +167,7 @@ public class AllClassesIndexWriter extends HtmlDocletWriter {
                 configuration, LinkInfoImpl.Kind.INDEX, klass));
         ContentBuilder description = new ContentBuilder();
         if (utils.isDeprecated(klass)) {
-            description.addContent(getDeprecatedPhrase(klass));
+            description.add(getDeprecatedPhrase(klass));
             List<? extends DocTree> tags = utils.getDeprecatedTrees(klass);
             if (!tags.isEmpty()) {
                 addSummaryDeprecatedComment(klass, tags.get(0), description);

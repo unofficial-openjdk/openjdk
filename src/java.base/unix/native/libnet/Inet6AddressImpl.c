@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -413,7 +413,7 @@ cleanupAndReturn:
 /*
  * Class:     java_net_Inet6AddressImpl
  * Method:    getHostByAddr
- * Signature: (I)Ljava/lang/String;
+ * Signature: ([B)Ljava/lang/String;
  *
  * Theoretically the UnknownHostException could be enriched with gai error
  * information. But as it is silently ignored anyway, there's no need for this.
@@ -668,7 +668,7 @@ ping6(JNIEnv *env, jint fd, SOCKETADDRESS *sa, SOCKETADDRESS *netif,
 /*
  * Class:     java_net_Inet6AddressImpl
  * Method:    isReachable0
- * Signature: ([bII[bI)Z
+ * Signature: ([BII[BII)Z
  */
 JNIEXPORT jboolean JNICALL
 Java_java_net_Inet6AddressImpl_isReachable0(JNIEnv *env, jobject this,
@@ -703,10 +703,6 @@ Java_java_net_Inet6AddressImpl_isReachable0(JNIEnv *env, jobject this,
     sa.sa6.sin6_family = AF_INET6;
     if (scope > 0) {
         sa.sa6.sin6_scope_id = scope;
-#if defined(__linux__)
-    } else {
-        sa.sa6.sin6_scope_id = getDefaultIPv6Interface(&sa.sa6.sin6_addr);
-#endif
     }
 
     // load network interface address to SOCKETADDRESS, if specified

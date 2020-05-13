@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 #define SHARE_GC_Z_ZTHREAD_HPP
 
 #include "memory/allocation.hpp"
-#include "utilities/debug.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 class ZThread : public AllStatic {
   friend class ZTask;
@@ -33,21 +33,16 @@ class ZThread : public AllStatic {
   friend class ZRuntimeWorkersInitializeTask;
 
 private:
-  static __thread bool      _initialized;
-  static __thread uintptr_t _id;
-  static __thread bool      _is_vm;
-  static __thread bool      _is_java;
-  static __thread bool      _is_worker;
-  static __thread bool      _is_runtime_worker;
-  static __thread uint      _worker_id;
+  static THREAD_LOCAL bool      _initialized;
+  static THREAD_LOCAL uintptr_t _id;
+  static THREAD_LOCAL bool      _is_vm;
+  static THREAD_LOCAL bool      _is_java;
+  static THREAD_LOCAL bool      _is_worker;
+  static THREAD_LOCAL bool      _is_runtime_worker;
+  static THREAD_LOCAL uint      _worker_id;
 
   static void initialize();
-
-  static void ensure_initialized() {
-    if (!_initialized) {
-      initialize();
-    }
-  }
+  static void ensure_initialized();
 
   static void set_worker();
   static void set_runtime_worker();
@@ -58,36 +53,12 @@ private:
 
 public:
   static const char* name();
-
-  static uintptr_t id() {
-    ensure_initialized();
-    return _id;
-  }
-
-  static bool is_vm() {
-    ensure_initialized();
-    return _is_vm;
-  }
-
-  static bool is_java() {
-    ensure_initialized();
-    return _is_java;
-  }
-
-  static bool is_worker() {
-    ensure_initialized();
-    return _is_worker;
-  }
-
-  static bool is_runtime_worker() {
-    ensure_initialized();
-    return _is_runtime_worker;
-  }
-
-  static uint worker_id() {
-    assert(has_worker_id(), "Worker id not initialized");
-    return _worker_id;
-  }
+  static uintptr_t id();
+  static bool is_vm();
+  static bool is_java();
+  static bool is_worker();
+  static bool is_runtime_worker();
+  static uint worker_id();
 };
 
 #endif // SHARE_GC_Z_ZTHREAD_HPP

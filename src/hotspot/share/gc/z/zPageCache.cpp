@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,12 +27,21 @@
 #include "gc/z/zPage.inline.hpp"
 #include "gc/z/zPageCache.hpp"
 #include "gc/z/zStat.hpp"
+#include "gc/z/zValue.inline.hpp"
 #include "logging/log.hpp"
 
 static const ZStatCounter ZCounterPageCacheHitL1("Memory", "Page Cache Hit L1", ZStatUnitOpsPerSecond);
 static const ZStatCounter ZCounterPageCacheHitL2("Memory", "Page Cache Hit L2", ZStatUnitOpsPerSecond);
+static const ZStatCounter ZCounterPageCacheHitL3("Memory", "Page Cache Hit L3", ZStatUnitOpsPerSecond);
 static const ZStatCounter ZCounterPageCacheMiss("Memory", "Page Cache Miss", ZStatUnitOpsPerSecond);
-static const ZStatCounter ZCounterPageCacheFlush("Memory", "Page Cache Flush", ZStatUnitBytesPerSecond);
+
+ZPageCacheFlushClosure::ZPageCacheFlushClosure(size_t requested) :
+    _requested(requested),
+    _flushed(0) {}
+
+size_t ZPageCacheFlushClosure::overflushed() const {
+  return _flushed > _requested ? _flushed - _requested : 0;
+}
 
 ZPageCache::ZPageCache() :
     _available(0),
@@ -68,40 +77,73 @@ ZPage* ZPageCache::alloc_small_page() {
     remote_numa_id++;
   }
 
-  ZStatInc(ZCounterPageCacheMiss);
   return NULL;
 }
 
 ZPage* ZPageCache::alloc_medium_page() {
-  ZPage* const l1_page = _medium.remove_first();
-  if (l1_page != NULL) {
+  ZPage* const page = _medium.remove_first();
+  if (page != NULL) {
     ZStatInc(ZCounterPageCacheHitL1);
-    return l1_page;
+    return page;
   }
 
-  ZStatInc(ZCounterPageCacheMiss);
   return NULL;
 }
 
 ZPage* ZPageCache::alloc_large_page(size_t size) {
   // Find a page with the right size
   ZListIterator<ZPage> iter(&_large);
-  for (ZPage* l1_page; iter.next(&l1_page);) {
-    if (l1_page->size() == size) {
+  for (ZPage* page; iter.next(&page);) {
+    if (size == page->size()) {
       // Page found
-      _large.remove(l1_page);
+      _large.remove(page);
       ZStatInc(ZCounterPageCacheHitL1);
-      return l1_page;
+      return page;
     }
   }
 
-  ZStatInc(ZCounterPageCacheMiss);
   return NULL;
+}
+
+ZPage* ZPageCache::alloc_oversized_medium_page(size_t size) {
+  if (size <= ZPageSizeMedium) {
+    return _medium.remove_first();
+  }
+
+  return NULL;
+}
+
+ZPage* ZPageCache::alloc_oversized_large_page(size_t size) {
+  // Find a page that is large enough
+  ZListIterator<ZPage> iter(&_large);
+  for (ZPage* page; iter.next(&page);) {
+    if (size <= page->size()) {
+      // Page found
+      _large.remove(page);
+      return page;
+    }
+  }
+
+  return NULL;
+}
+
+ZPage* ZPageCache::alloc_oversized_page(size_t size) {
+  ZPage* page = alloc_oversized_large_page(size);
+  if (page == NULL) {
+    page = alloc_oversized_medium_page(size);
+  }
+
+  if (page != NULL) {
+    ZStatInc(ZCounterPageCacheHitL3);
+  }
+
+  return page;
 }
 
 ZPage* ZPageCache::alloc_page(uint8_t type, size_t size) {
   ZPage* page;
 
+  // Try allocate exact page
   if (type == ZPageTypeSmall) {
     page = alloc_small_page();
   } else if (type == ZPageTypeMedium) {
@@ -110,18 +152,33 @@ ZPage* ZPageCache::alloc_page(uint8_t type, size_t size) {
     page = alloc_large_page(size);
   }
 
+  if (page == NULL) {
+    // Try allocate potentially oversized page
+    ZPage* const oversized = alloc_oversized_page(size);
+    if (oversized != NULL) {
+      if (size < oversized->size()) {
+        // Split oversized page
+        page = oversized->split(type, size);
+
+        // Cache remainder
+        free_page_inner(oversized);
+      } else {
+        // Re-type correctly sized page
+        page = oversized->retype(type);
+      }
+    }
+  }
+
   if (page != NULL) {
     _available -= page->size();
+  } else {
+    ZStatInc(ZCounterPageCacheMiss);
   }
 
   return page;
 }
 
-void ZPageCache::free_page(ZPage* page) {
-  assert(!page->is_active(), "Invalid page state");
-  assert(!page->is_pinned(), "Invalid page state");
-  assert(!page->is_detached(), "Invalid page state");
-
+void ZPageCache::free_page_inner(ZPage* page) {
   const uint8_t type = page->type();
   if (type == ZPageTypeSmall) {
     _small.get(page->numa_id()).insert_first(page);
@@ -130,68 +187,79 @@ void ZPageCache::free_page(ZPage* page) {
   } else {
     _large.insert_first(page);
   }
+}
 
+void ZPageCache::free_page(ZPage* page) {
+  free_page_inner(page);
   _available += page->size();
 }
 
-void ZPageCache::flush_list(ZList<ZPage>* from, size_t requested, ZList<ZPage>* to, size_t* flushed) {
-  while (*flushed < requested) {
-    // Flush least recently used
-    ZPage* const page = from->remove_last();
-    if (page == NULL) {
-      break;
-    }
-
-    *flushed += page->size();
-    to->insert_last(page);
+bool ZPageCache::flush_list_inner(ZPageCacheFlushClosure* cl, ZList<ZPage>* from, ZList<ZPage>* to) {
+  ZPage* const page = from->last();
+  if (page == NULL || !cl->do_page(page)) {
+    // Don't flush page
+    return false;
   }
+
+  // Flush page
+  _available -= page->size();
+  from->remove(page);
+  to->insert_last(page);
+  return true;
 }
 
-void ZPageCache::flush_per_numa_lists(ZPerNUMA<ZList<ZPage> >* from, size_t requested, ZList<ZPage>* to, size_t* flushed) {
+void ZPageCache::flush_list(ZPageCacheFlushClosure* cl, ZList<ZPage>* from, ZList<ZPage>* to) {
+  while (flush_list_inner(cl, from, to));
+}
+
+void ZPageCache::flush_per_numa_lists(ZPageCacheFlushClosure* cl, ZPerNUMA<ZList<ZPage> >* from, ZList<ZPage>* to) {
   const uint32_t numa_count = ZNUMA::count();
-  uint32_t numa_empty = 0;
+  uint32_t numa_done = 0;
   uint32_t numa_next = 0;
 
   // Flush lists round-robin
-  while (*flushed < requested) {
-    ZPage* const page = from->get(numa_next).remove_last();
-
+  while (numa_done < numa_count) {
+    ZList<ZPage>* numa_list = from->addr(numa_next);
     if (++numa_next == numa_count) {
       numa_next = 0;
     }
 
-    if (page == NULL) {
-      // List is empty
-      if (++numa_empty == numa_count) {
-        // All lists are empty
-        break;
-      }
-
-      // Try next list
-      continue;
+    if (flush_list_inner(cl, numa_list, to)) {
+      // Not done
+      numa_done = 0;
+    } else {
+      // Done
+      numa_done++;
     }
-
-    // Flush page
-    numa_empty = 0;
-    *flushed += page->size();
-    to->insert_last(page);
   }
 }
 
-void ZPageCache::flush(ZList<ZPage>* to, size_t requested) {
-  size_t flushed = 0;
-
+void ZPageCache::flush(ZPageCacheFlushClosure* cl, ZList<ZPage>* to) {
   // Prefer flushing large, then medium and last small pages
-  flush_list(&_large, requested, to, &flushed);
-  flush_list(&_medium, requested, to, &flushed);
-  flush_per_numa_lists(&_small, requested, to, &flushed);
+  flush_list(cl, &_large, to);
+  flush_list(cl, &_medium, to);
+  flush_per_numa_lists(cl, &_small, to);
+}
 
-  ZStatInc(ZCounterPageCacheFlush, flushed);
+void ZPageCache::pages_do(ZPageClosure* cl) const {
+  // Small
+  ZPerNUMAConstIterator<ZList<ZPage> > iter_numa(&_small);
+  for (const ZList<ZPage>* list; iter_numa.next(&list);) {
+    ZListIterator<ZPage> iter_small(list);
+    for (ZPage* page; iter_small.next(&page);) {
+      cl->do_page(page);
+    }
+  }
 
-  log_info(gc, heap)("Page Cache Flushed: "
-                     SIZE_FORMAT "M requested, "
-                     SIZE_FORMAT "M(" SIZE_FORMAT "M->" SIZE_FORMAT "M) flushed",
-                     requested / M, flushed / M , _available / M, (_available - flushed) / M);
+  // Medium
+  ZListIterator<ZPage> iter_medium(&_medium);
+  for (ZPage* page; iter_medium.next(&page);) {
+    cl->do_page(page);
+  }
 
-  _available -= flushed;
+  // Large
+  ZListIterator<ZPage> iter_large(&_large);
+  for (ZPage* page; iter_large.next(&page);) {
+    cl->do_page(page);
+  }
 }

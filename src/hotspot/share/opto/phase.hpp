@@ -59,6 +59,7 @@ public:
     Ideal_Loop,                       // Find idealized trip-counted loops
     Macro_Expand,                     // Expand macro nodes
     Peephole,                         // Apply peephole optimizations
+    Output,
     last_phase
   };
 
@@ -83,6 +84,7 @@ public:
       _t_barrierExpand,
       _t_graphReshaping,
     _t_matcher,
+      _t_postselect_cleanup,
     _t_scheduler,
     _t_registerAllocation,
       _t_ctorChaitin,
@@ -131,7 +133,7 @@ protected:
   // Object; if you wish to check an Object you need to load the Object's
   // class prior to coming here.
   // Used in GraphKit and PhaseMacroExpand
-  static Node* gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, MergeMemNode* mem, PhaseGVN* gvn);
+  static Node* gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, Node* mem, PhaseGVN& gvn);
 
 public:
   Compile * C;

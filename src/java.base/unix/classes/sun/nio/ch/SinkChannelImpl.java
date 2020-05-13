@@ -60,8 +60,7 @@ class SinkChannelImpl
     // Channel state
     private static final int ST_INUSE = 0;
     private static final int ST_CLOSING = 1;
-    private static final int ST_KILLPENDING = 2;
-    private static final int ST_KILLED = 3;
+    private static final int ST_CLOSED = 2;
     private int state;
 
     // ID of native thread doing write, for signalling
@@ -85,69 +84,91 @@ class SinkChannelImpl
     }
 
     /**
+     * Closes the write end of the pipe if there are no write operation in
+     * progress and the channel is not registered with a Selector.
+     */
+    private boolean tryClose() throws IOException {
+        assert Thread.holdsLock(stateLock) && state == ST_CLOSING;
+        if (thread == 0 && !isRegistered()) {
+            state = ST_CLOSED;
+            nd.close(fd);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Invokes tryClose to attempt to close the write end of the pipe.
+     *
+     * This method is used for deferred closing by I/O and Selector operations.
+     */
+    private void tryFinishClose() {
+        try {
+            tryClose();
+        } catch (IOException ignore) { }
+    }
+
+    /**
+     * Closes this channel when configured in blocking mode.
+     *
+     * If there is a write operation in progress then the write-end of the pipe
+     * is pre-closed and the writer is signalled, in which case the final close
+     * is deferred until the writer aborts.
+     */
+    private void implCloseBlockingMode() throws IOException {
+        synchronized (stateLock) {
+            assert state < ST_CLOSING;
+            state = ST_CLOSING;
+            if (!tryClose()) {
+                long th = thread;
+                if (th != 0) {
+                    nd.preClose(fd);
+                    NativeThread.signal(th);
+                }
+            }
+        }
+    }
+
+    /**
+     * Closes this channel when configured in non-blocking mode.
+     *
+     * If the channel is registered with a Selector then the close is deferred
+     * until the channel is flushed from all Selectors.
+     */
+    private void implCloseNonBlockingMode() throws IOException {
+        synchronized (stateLock) {
+            assert state < ST_CLOSING;
+            state = ST_CLOSING;
+        }
+        // wait for any write operation to complete before trying to close
+        writeLock.lock();
+        writeLock.unlock();
+        synchronized (stateLock) {
+            if (state == ST_CLOSING) {
+                tryClose();
+            }
+        }
+    }
+
+    /**
      * Invoked by implCloseChannel to close the channel.
      */
     @Override
     protected void implCloseSelectableChannel() throws IOException {
         assert !isOpen();
-
-        boolean interrupted = false;
-        boolean blocking;
-
-        // set state to ST_CLOSING
-        synchronized (stateLock) {
-            assert state < ST_CLOSING;
-            state = ST_CLOSING;
-            blocking = isBlocking();
-        }
-
-        // wait for any outstanding write to complete
-        if (blocking) {
-            synchronized (stateLock) {
-                assert state == ST_CLOSING;
-                long th = thread;
-                if (th != 0) {
-                    nd.preClose(fd);
-                    NativeThread.signal(th);
-
-                    // wait for write operation to end
-                    while (thread != 0) {
-                        try {
-                            stateLock.wait();
-                        } catch (InterruptedException e) {
-                            interrupted = true;
-                        }
-                    }
-                }
-            }
+        if (isBlocking()) {
+            implCloseBlockingMode();
         } else {
-            // non-blocking mode: wait for write to complete
-            writeLock.lock();
-            writeLock.unlock();
+            implCloseNonBlockingMode();
         }
-
-        // set state to ST_KILLPENDING
-        synchronized (stateLock) {
-            assert state == ST_CLOSING;
-            state = ST_KILLPENDING;
-        }
-
-        // close socket if not registered with Selector
-        if (!isRegistered())
-            kill();
-
-        // restore interrupt status
-        if (interrupted)
-            Thread.currentThread().interrupt();
     }
 
     @Override
-    public void kill() throws IOException {
+    public void kill() {
         synchronized (stateLock) {
-            assert thread == 0;
-            if (state == ST_KILLPENDING) {
-                state = ST_KILLED;
-                nd.close(fd);
+            if (state == ST_CLOSING) {
+                tryFinishClose();
             }
         }
     }
@@ -157,6 +178,8 @@ class SinkChannelImpl
         writeLock.lock();
         try {
             synchronized (stateLock) {
+                if (!isOpen())
+                    throw new ClosedChannelException();
                 IOUtil.configureBlocking(fd, block);
             }
         } finally {
@@ -232,9 +255,8 @@ class SinkChannelImpl
         if (blocking) {
             synchronized (stateLock) {
                 thread = 0;
-                // notify any thread waiting in implCloseSelectableChannel
                 if (state == ST_CLOSING) {
-                    stateLock.notifyAll();
+                    tryFinishClose();
                 }
             }
             // remove hook for Thread.interrupt
@@ -252,9 +274,13 @@ class SinkChannelImpl
             int n = 0;
             try {
                 beginWrite(blocking);
-                do {
-                    n = IOUtil.write(fd, src, -1, nd);
-                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                n = IOUtil.write(fd, src, -1, nd);
+                if (blocking) {
+                    while (IOStatus.okayToRetry(n) && isOpen()) {
+                        park(Net.POLLOUT);
+                        n = IOUtil.write(fd, src, -1, nd);
+                    }
+                }
             } finally {
                 endWrite(blocking, n > 0);
                 assert IOStatus.check(n);
@@ -275,9 +301,13 @@ class SinkChannelImpl
             long n = 0;
             try {
                 beginWrite(blocking);
-                do {
-                    n = IOUtil.write(fd, srcs, offset, length, nd);
-                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                n = IOUtil.write(fd, srcs, offset, length, nd);
+                if (blocking) {
+                    while (IOStatus.okayToRetry(n) && isOpen()) {
+                        park(Net.POLLOUT);
+                        n = IOUtil.write(fd, srcs, offset, length, nd);
+                    }
+                }
             } finally {
                 endWrite(blocking, n > 0);
                 assert IOStatus.check(n);

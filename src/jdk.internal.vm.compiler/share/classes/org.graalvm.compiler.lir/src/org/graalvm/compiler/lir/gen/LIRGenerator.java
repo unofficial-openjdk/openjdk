@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,8 +35,8 @@ import static org.graalvm.compiler.lir.LIRValueUtil.isVirtualStackSlot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import jdk.vm.ci.code.RegisterConfig;
 import org.graalvm.compiler.asm.Label;
 import org.graalvm.compiler.core.common.LIRKind;
 import org.graalvm.compiler.core.common.calc.Condition;
@@ -46,6 +46,7 @@ import org.graalvm.compiler.core.common.spi.ForeignCallLinkage;
 import org.graalvm.compiler.core.common.spi.ForeignCallsProvider;
 import org.graalvm.compiler.core.common.spi.LIRKindTool;
 import org.graalvm.compiler.core.common.type.Stamp;
+import org.graalvm.compiler.debug.DebugCloseable;
 import org.graalvm.compiler.debug.GraalError;
 import org.graalvm.compiler.debug.TTY;
 import org.graalvm.compiler.graph.NodeSourcePosition;
@@ -58,9 +59,10 @@ import org.graalvm.compiler.lir.LabelRef;
 import org.graalvm.compiler.lir.StandardOp;
 import org.graalvm.compiler.lir.StandardOp.BlockEndOp;
 import org.graalvm.compiler.lir.StandardOp.LabelOp;
-import org.graalvm.compiler.lir.StandardOp.SaveRegistersOp;
+import org.graalvm.compiler.lir.StandardOp.ZapRegistersOp;
 import org.graalvm.compiler.lir.SwitchStrategy;
 import org.graalvm.compiler.lir.Variable;
+import org.graalvm.compiler.lir.hashing.Hasher;
 import org.graalvm.compiler.options.Option;
 import org.graalvm.compiler.options.OptionKey;
 import org.graalvm.compiler.options.OptionType;
@@ -70,6 +72,7 @@ import jdk.vm.ci.code.CallingConvention;
 import jdk.vm.ci.code.CodeCacheProvider;
 import jdk.vm.ci.code.Register;
 import jdk.vm.ci.code.RegisterAttributes;
+import jdk.vm.ci.code.RegisterConfig;
 import jdk.vm.ci.code.StackSlot;
 import jdk.vm.ci.code.TargetDescription;
 import jdk.vm.ci.meta.AllocatableValue;
@@ -208,7 +211,6 @@ public abstract class LIRGenerator implements LIRGeneratorTool {
         return res.getRegisterConfig();
     }
 
-    @Override
     public RegisterAttributes attributes(Register register) {
         return getRegisterConfig().getAttributesMap()[register.number];
     }
@@ -227,8 +229,28 @@ public abstract class LIRGenerator implements LIRGeneratorTool {
     }
 
     @Override
+    public Variable emitReadRegister(Register register, ValueKind<?> kind) {
+        return emitMove(register.asValue(kind));
+    }
+
+    @Override
+    public void emitWriteRegister(Register dst, Value src, ValueKind<?> kind) {
+        emitMove(dst.asValue(kind), src);
+    }
+
+    @Override
     public void emitMoveConstant(AllocatableValue dst, Constant src) {
         append(moveFactory.createLoad(dst, src));
+    }
+
+    @Override
+    public boolean canInlineConstant(Constant constant) {
+        return moveFactory.canInlineConstant(constant);
+    }
+
+    @Override
+    public boolean mayEmbedConstantLoad(Constant constant) {
+        return moveFactory.mayEmbedConstantLoad(constant);
     }
 
     @Override
@@ -271,7 +293,6 @@ public abstract class LIRGenerator implements LIRGeneratorTool {
         return (Variable) value;
     }
 
-    @Override
     public Value loadNonConst(Value value) {
         if (isConstantValue(value) && !moveFactory.canInlineConstant(asConstant(value))) {
             return emitMove(value);
@@ -282,7 +303,6 @@ public abstract class LIRGenerator implements LIRGeneratorTool {
     /**
      * Determines if only oop maps are required for the code generated from the LIR.
      */
-    @Override
     public boolean needOnlyOopMaps() {
         return false;
     }
@@ -295,7 +315,6 @@ public abstract class LIRGenerator implements LIRGeneratorTool {
      * @return the operand representing the ABI defined location used return a value of kind
      *         {@code kind}
      */
-    @Override
     public AllocatableValue resultOperandFor(JavaKind javaKind, ValueKind<?> valueKind) {
         Register reg = getRegisterConfig().getReturnRegister(javaKind);
         assert target().arch.canStoreValue(reg.getRegisterCategory(), valueKind.getPlatformKind()) : reg.getRegisterCategory() + " " + valueKind.getPlatformKind();
@@ -304,7 +323,6 @@ public abstract class LIRGenerator implements LIRGeneratorTool {
 
     NodeSourcePosition currentPosition;
 
-    @Override
     public void setSourcePosition(NodeSourcePosition position) {
         currentPosition = position;
     }
@@ -323,7 +341,6 @@ public abstract class LIRGenerator implements LIRGeneratorTool {
         return op;
     }
 
-    @Override
     public boolean hasBlockEnd(AbstractBlockBase<?> block) {
         ArrayList<LIRInstruction> ops = getResult().getLIR().getLIRforBlock(block);
         if (ops.size() == 0) {
@@ -377,14 +394,30 @@ public abstract class LIRGenerator implements LIRGeneratorTool {
 
     }
 
-    @Override
     public final BlockScope getBlockScope(AbstractBlockBase<?> block) {
         BlockScopeImpl blockScope = new BlockScopeImpl(block);
         blockScope.doBlockStart();
         return blockScope;
     }
 
-    @Override
+    private final class MatchScope implements DebugCloseable {
+
+        private MatchScope(AbstractBlockBase<?> block) {
+            currentBlock = block;
+        }
+
+        @Override
+        public void close() {
+            currentBlock = null;
+        }
+
+    }
+
+    public final DebugCloseable getMatchScope(AbstractBlockBase<?> block) {
+        MatchScope matchScope = new MatchScope(block);
+        return matchScope;
+    }
+
     public void emitIncomingValues(Value[] params) {
         ((LabelOp) res.getLIR().getLIRforBlock(getCurrentBlock()).get(0)).setIncomingValues(params);
     }
@@ -392,14 +425,11 @@ public abstract class LIRGenerator implements LIRGeneratorTool {
     @Override
     public abstract void emitJump(LabelRef label);
 
-    @Override
     public abstract void emitCompareBranch(PlatformKind cmpKind, Value left, Value right, Condition cond, boolean unorderedIsTrue, LabelRef trueDestination, LabelRef falseDestination,
                     double trueDestinationProbability);
 
-    @Override
     public abstract void emitOverflowCheckBranch(LabelRef overflow, LabelRef noOverflow, LIRKind cmpKind, double overflowProbability);
 
-    @Override
     public abstract void emitIntegerTestBranch(Value left, Value right, LabelRef trueDestination, LabelRef falseDestination, double trueSuccessorProbability);
 
     @Override
@@ -447,40 +477,74 @@ public abstract class LIRGenerator implements LIRGeneratorTool {
         }
     }
 
-    @Override
     public void emitStrategySwitch(JavaConstant[] keyConstants, double[] keyProbabilities, LabelRef[] keyTargets, LabelRef defaultTarget, Variable value) {
-        int keyCount = keyConstants.length;
         SwitchStrategy strategy = SwitchStrategy.getBestStrategy(keyProbabilities, keyConstants, keyTargets);
-        long valueRange = keyConstants[keyCount - 1].asLong() - keyConstants[0].asLong() + 1;
+
+        int keyCount = keyConstants.length;
+        double minDensity = 1 / Math.sqrt(strategy.getAverageEffort());
+        Optional<Hasher> hasher = hasherFor(keyConstants, minDensity);
+        double hashTableSwitchDensity = hasher.map(h -> keyCount / (double) h.cardinality()).orElse(0d);
+        // The value range computation below may overflow, so compute it as a long.
+        long valueRange = (long) keyConstants[keyCount - 1].asInt() - (long) keyConstants[0].asInt() + 1;
         double tableSwitchDensity = keyCount / (double) valueRange;
+
         /*
          * This heuristic tries to find a compromise between the effort for the best switch strategy
          * and the density of a tableswitch. If the effort for the strategy is at least 4, then a
          * tableswitch is preferred if better than a certain value that starts at 0.5 and lowers
          * gradually with additional effort.
          */
-        if (strategy.getAverageEffort() < 4 || tableSwitchDensity < (1 / Math.sqrt(strategy.getAverageEffort()))) {
+        if (strategy.getAverageEffort() < 4d || (tableSwitchDensity < minDensity && hashTableSwitchDensity < minDensity)) {
             emitStrategySwitch(strategy, value, keyTargets, defaultTarget);
         } else {
-            int minValue = keyConstants[0].asInt();
-            assert valueRange < Integer.MAX_VALUE;
-            LabelRef[] targets = new LabelRef[(int) valueRange];
-            for (int i = 0; i < valueRange; i++) {
-                targets[i] = defaultTarget;
+            if (hashTableSwitchDensity > tableSwitchDensity) {
+                Hasher h = hasher.get();
+                int cardinality = h.cardinality();
+                LabelRef[] targets = new LabelRef[cardinality];
+                JavaConstant[] keys = new JavaConstant[cardinality];
+                for (int i = 0; i < cardinality; i++) {
+                    keys[i] = JavaConstant.INT_0;
+                    targets[i] = defaultTarget;
+                }
+                for (int i = 0; i < keyCount; i++) {
+                    int idx = h.hash(keyConstants[i].asInt());
+                    keys[idx] = keyConstants[i];
+                    targets[idx] = keyTargets[i];
+                }
+                emitHashTableSwitch(h, keys, defaultTarget, targets, value);
+            } else {
+                int minValue = keyConstants[0].asInt();
+                assert valueRange < Integer.MAX_VALUE;
+                LabelRef[] targets = new LabelRef[(int) valueRange];
+                for (int i = 0; i < valueRange; i++) {
+                    targets[i] = defaultTarget;
+                }
+                for (int i = 0; i < keyCount; i++) {
+                    targets[keyConstants[i].asInt() - minValue] = keyTargets[i];
+                }
+                emitTableSwitch(minValue, defaultTarget, targets, value);
             }
-            for (int i = 0; i < keyCount; i++) {
-                targets[keyConstants[i].asInt() - minValue] = keyTargets[i];
-            }
-            emitTableSwitch(minValue, defaultTarget, targets, value);
         }
     }
 
-    @Override
     public abstract void emitStrategySwitch(SwitchStrategy strategy, Variable key, LabelRef[] keyTargets, LabelRef defaultTarget);
 
     protected abstract void emitTableSwitch(int lowKey, LabelRef defaultTarget, LabelRef[] targets, Value key);
 
-    @Override
+    @SuppressWarnings("unused")
+    protected Optional<Hasher> hasherFor(JavaConstant[] keyConstants, double minDensity) {
+        return Optional.empty();
+    }
+
+    @SuppressWarnings("unused")
+    protected void emitHashTableSwitch(Hasher hasher, JavaConstant[] keys, LabelRef defaultTarget, LabelRef[] targets, Value value) {
+        throw new UnsupportedOperationException(getClass().getSimpleName() + " doesn't support hash table switches");
+    }
+
+    /**
+     * Called just before register allocation is performed on the LIR owned by this generator.
+     * Overriding implementations of this method must call the overridden method.
+     */
     public void beforeRegisterAllocation() {
     }
 
@@ -530,11 +594,16 @@ public abstract class LIRGenerator implements LIRGeneratorTool {
     }
 
     @Override
-    public abstract SaveRegistersOp createZapRegisters(Register[] zappedRegisters, JavaConstant[] zapValues);
+    public abstract ZapRegistersOp createZapRegisters(Register[] zappedRegisters, JavaConstant[] zapValues);
 
     @Override
-    public SaveRegistersOp createZapRegisters() {
+    public ZapRegistersOp createZapRegisters() {
         Register[] zappedRegisters = getResult().getFrameMap().getRegisterConfig().getAllocatableRegisters().toArray();
+        return createZapRegisters(zappedRegisters);
+    }
+
+    @Override
+    public ZapRegistersOp createZapRegisters(Register[] zappedRegisters) {
         JavaConstant[] zapValues = new JavaConstant[zappedRegisters.length];
         for (int i = 0; i < zappedRegisters.length; i++) {
             PlatformKind kind = target().arch.getLargestStorableKind(zappedRegisters[i].getRegisterCategory());

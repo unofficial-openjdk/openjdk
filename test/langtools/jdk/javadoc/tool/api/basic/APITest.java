@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -197,38 +197,28 @@ class APITest {
             "help-doc.html",
             "index-all.html",
             "index.html",
-            "jquery/jquery-3.3.1.js",
-            "jquery/jquery-migrate-3.0.1.js",
-            "jquery/jquery-ui.js",
-            "jquery/jquery-ui.css",
-            "jquery/jquery-ui.min.js",
-            "jquery/jquery-ui.min.css",
-            "jquery/jquery-ui.structure.min.css",
-            "jquery/jquery-ui.structure.css",
-            "jquery/external/jquery/jquery.js",
-            "jquery/jszip/dist/jszip.js",
-            "jquery/jszip/dist/jszip.min.js",
-            "jquery/jszip-utils/dist/jszip-utils.js",
-            "jquery/jszip-utils/dist/jszip-utils.min.js",
-            "jquery/jszip-utils/dist/jszip-utils-ie.js",
-            "jquery/jszip-utils/dist/jszip-utils-ie.min.js",
-            "jquery/images/ui-bg_glass_65_dadada_1x400.png",
-            "jquery/images/ui-icons_454545_256x240.png",
-            "jquery/images/ui-bg_glass_95_fef1ec_1x400.png",
-            "jquery/images/ui-bg_glass_75_dadada_1x400.png",
-            "jquery/images/ui-bg_highlight-soft_75_cccccc_1x100.png",
-            "jquery/images/ui-icons_888888_256x240.png",
-            "jquery/images/ui-icons_2e83ff_256x240.png",
-            "jquery/images/ui-icons_cd0a0a_256x240.png",
-            "jquery/images/ui-bg_glass_55_fbf9ee_1x400.png",
-            "jquery/images/ui-icons_222222_256x240.png",
-            "jquery/images/ui-bg_glass_75_e6e6e6_1x400.png",
+            "script-dir/jquery-3.4.1.js",
+            "script-dir/jquery-ui.js",
+            "script-dir/jquery-ui.css",
+            "script-dir/jquery-ui.min.js",
+            "script-dir/jquery-ui.min.css",
+            "script-dir/jquery-ui.structure.min.css",
+            "script-dir/jquery-ui.structure.css",
+            "script-dir/images/ui-bg_glass_65_dadada_1x400.png",
+            "script-dir/images/ui-icons_454545_256x240.png",
+            "script-dir/images/ui-bg_glass_95_fef1ec_1x400.png",
+            "script-dir/images/ui-bg_glass_75_dadada_1x400.png",
+            "script-dir/images/ui-bg_highlight-soft_75_cccccc_1x100.png",
+            "script-dir/images/ui-icons_888888_256x240.png",
+            "script-dir/images/ui-icons_2e83ff_256x240.png",
+            "script-dir/images/ui-icons_cd0a0a_256x240.png",
+            "script-dir/images/ui-bg_glass_55_fbf9ee_1x400.png",
+            "script-dir/images/ui-icons_222222_256x240.png",
+            "script-dir/images/ui-bg_glass_75_e6e6e6_1x400.png",
             "member-search-index.js",
-            "member-search-index.zip",
             "overview-tree.html",
             "element-list",
             "package-search-index.js",
-            "package-search-index.zip",
             "pkg/C.html",
             "pkg/package-summary.html",
             "pkg/package-tree.html",
@@ -237,14 +227,14 @@ class APITest {
             "script.js",
             "search.js",
             "stylesheet.css",
-            "type-search-index.js",
-            "type-search-index.zip"
+            "type-search-index.js"
     ));
 
     protected static Set<String> noIndexFiles = standardExpectFiles.stream()
-            .filter(s -> !s.startsWith("jquery") && !s.startsWith("resources") && !s.endsWith("zip")
+            .filter(s -> !s.startsWith("script-dir") && !s.startsWith("resources")
             && !s.equals("index-all.html") && !s.equals("search.js") && !s.endsWith("-search-index.js")
-            && !s.equals("allclasses-index.html") && !s.equals("allpackages-index.html"))
+            && !s.equals("allclasses-index.html") && !s.equals("allpackages-index.html")
+            && !s.equals("system-properties.html"))
             .collect(Collectors.toSet());
 }
 

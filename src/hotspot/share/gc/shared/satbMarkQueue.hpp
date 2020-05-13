@@ -27,8 +27,9 @@
 
 #include "gc/shared/ptrQueue.hpp"
 #include "memory/allocation.hpp"
+#include "memory/padded.hpp"
 
-class JavaThread;
+class Thread;
 class Monitor;
 class SATBMarkQueueSet;
 
@@ -54,19 +55,20 @@ private:
   template<typename Filter>
   inline void apply_filter(Filter filter_out);
 
+protected:
+  virtual void handle_completed_buffer();
+
 public:
-  SATBMarkQueue(SATBMarkQueueSet* qset, bool permanent = false);
+  SATBMarkQueue(SATBMarkQueueSet* qset);
 
   // Process queue entries and free resources.
   void flush();
 
+  inline SATBMarkQueueSet* satb_qset() const;
+
   // Apply cl to the active part of the buffer.
   // Prerequisite: Must be at a safepoint.
   void apply_closure_and_empty(SATBBufferClosure* cl);
-
-  // Overrides PtrQueue::should_enqueue_buffer(). See the method's
-  // definition for more information.
-  virtual bool should_enqueue_buffer();
 
 #ifndef PRODUCT
   // Helpful for debugging
@@ -92,8 +94,17 @@ public:
 };
 
 class SATBMarkQueueSet: public PtrQueueSet {
-  SATBMarkQueue _shared_satb_queue;
+
+  DEFINE_PAD_MINUS_SIZE(1, DEFAULT_CACHE_LINE_SIZE, 0);
+  PaddedEnd<BufferNode::Stack> _list;
+  volatile size_t _count_and_process_flag;
+  // These are rarely (if ever) changed, so same cache line as count.
+  size_t _process_completed_buffers_threshold;
   size_t _buffer_enqueue_threshold;
+  DEFINE_PAD_MINUS_SIZE(2, DEFAULT_CACHE_LINE_SIZE, 3 * sizeof(size_t));
+
+  BufferNode* get_completed_buffer();
+  void abandon_completed_buffers();
 
 #ifdef ASSERT
   void dump_active_states(bool expected_active);
@@ -101,22 +112,16 @@ class SATBMarkQueueSet: public PtrQueueSet {
 #endif // ASSERT
 
 protected:
-  SATBMarkQueueSet();
-  ~SATBMarkQueueSet() {}
+  SATBMarkQueueSet(BufferNode::Allocator* allocator);
+  ~SATBMarkQueueSet();
 
   template<typename Filter>
   void apply_filter(Filter filter, SATBMarkQueue* queue) {
     queue->apply_filter(filter);
   }
 
-  void initialize(Monitor* cbl_mon,
-                  BufferNode::Allocator* allocator,
-                  size_t process_completed_buffers_threshold,
-                  uint buffer_enqueue_threshold_percentage,
-                  Mutex* lock);
-
 public:
-  virtual SATBMarkQueue& satb_queue_for_thread(JavaThread* const t) const = 0;
+  virtual SATBMarkQueue& satb_queue_for_thread(Thread* const t) const = 0;
 
   // Apply "set_active(active)" to all SATB queues in the set. It should be
   // called only with the world stopped. The method will assert that the
@@ -124,11 +129,12 @@ public:
   // set itself, has an active value same as expected_active.
   void set_active_all_threads(bool active, bool expected_active);
 
-  size_t buffer_enqueue_threshold() const { return _buffer_enqueue_threshold; }
-  virtual void filter(SATBMarkQueue* queue) = 0;
+  void set_process_completed_buffers_threshold(size_t value);
 
-  // Filter all the currently-active SATB buffers.
-  void filter_thread_buffers();
+  size_t buffer_enqueue_threshold() const { return _buffer_enqueue_threshold; }
+  void set_buffer_enqueue_threshold_percentage(uint value);
+
+  virtual void filter(SATBMarkQueue* queue) = 0;
 
   // If there exists some completed buffer, pop and process it, and
   // return true.  Otherwise return false.  Processing a buffer
@@ -136,19 +142,34 @@ public:
   // buffer; the leading entries may be excluded due to filtering.
   bool apply_closure_to_completed_buffer(SATBBufferClosure* cl);
 
+  virtual void enqueue_completed_buffer(BufferNode* node);
+
+  // The number of buffers in the list.  Racy and not updated atomically
+  // with the set of completed buffers.
+  size_t completed_buffers_num() const {
+    return _count_and_process_flag >> 1;
+  }
+
+  // Return true if completed buffers should be processed.
+  bool process_completed_buffers() const {
+    return (_count_and_process_flag & 1) != 0;
+  }
+
 #ifndef PRODUCT
   // Helpful for debugging
   void print_all(const char* msg);
 #endif // PRODUCT
 
-  SATBMarkQueue* shared_satb_queue() { return &_shared_satb_queue; }
-
   // If a marking is being abandoned, reset any unprocessed log buffers.
   void abandon_partial_marking();
 };
 
+inline SATBMarkQueueSet* SATBMarkQueue::satb_qset() const {
+  return static_cast<SATBMarkQueueSet*>(qset());
+}
+
 inline void SATBMarkQueue::filter() {
-  static_cast<SATBMarkQueueSet*>(qset())->filter(this);
+  satb_qset()->filter(this);
 }
 
 // Removes entries from the buffer that are no longer needed, as

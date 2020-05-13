@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@
 #include "interpreter/interpreterRuntime.hpp"
 #include "logging/log.hpp"
 #include "oops/arrayOop.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
 #include "oops/methodData.hpp"
 #include "oops/method.hpp"
 #include "prims/jvmtiExport.hpp"
@@ -39,6 +39,7 @@
 #include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/thread.inline.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 // Implementation of InterpreterMacroAssembler
 
@@ -50,7 +51,7 @@ void InterpreterMacroAssembler::jump_to_entry(address entry) {
 void InterpreterMacroAssembler::profile_obj_type(Register obj, const Address& mdo_addr) {
   Label update, next, none;
 
-  verify_oop(obj);
+  interp_verify_oop(obj, atos);
 
   testptr(obj, obj);
   jccb(Assembler::notZero, update);
@@ -348,7 +349,7 @@ void InterpreterMacroAssembler::load_earlyret_value(TosState state) {
   switch (state) {
     case atos: movptr(rax, oop_addr);
                movptr(oop_addr, (int32_t)NULL_WORD);
-               verify_oop(rax, state);              break;
+               interp_verify_oop(rax, state);         break;
     case ltos: movptr(rax, val_addr);                 break;
     case btos:                                   // fall through
     case ztos:                                   // fall through
@@ -369,7 +370,7 @@ void InterpreterMacroAssembler::load_earlyret_value(TosState state) {
   switch (state) {
     case atos: movptr(rax, oop_addr);
                movptr(oop_addr, NULL_WORD);
-               verify_oop(rax, state);                break;
+               interp_verify_oop(rax, state);         break;
     case ltos:
                movl(rdx, val_addr1);               // fall through
     case btos:                                     // fall through
@@ -487,7 +488,8 @@ void InterpreterMacroAssembler::get_cache_entry_pointer_at_bcp(Register cache,
                                                                Register tmp,
                                                                int bcp_offset,
                                                                size_t index_size) {
-  assert(cache != tmp, "must use different register");
+  assert_different_registers(cache, tmp);
+
   get_cache_index_at_bcp(tmp, bcp_offset, index_size);
   assert(sizeof(ConstantPoolCacheEntry) == 4 * wordSize, "adjust code below");
   // convert from field index to ConstantPoolCacheEntry index
@@ -501,8 +503,9 @@ void InterpreterMacroAssembler::get_cache_entry_pointer_at_bcp(Register cache,
 }
 
 // Load object from cpool->resolved_references(index)
-void InterpreterMacroAssembler::load_resolved_reference_at_index(
-                                           Register result, Register index, Register tmp) {
+void InterpreterMacroAssembler::load_resolved_reference_at_index(Register result,
+                                                                 Register index,
+                                                                 Register tmp) {
   assert_different_registers(result, index);
 
   get_constant_pool(result);
@@ -516,12 +519,30 @@ void InterpreterMacroAssembler::load_resolved_reference_at_index(
 }
 
 // load cpool->resolved_klass_at(index)
-void InterpreterMacroAssembler::load_resolved_klass_at_index(Register cpool,
-                                           Register index, Register klass) {
+void InterpreterMacroAssembler::load_resolved_klass_at_index(Register klass,
+                                                             Register cpool,
+                                                             Register index) {
+  assert_different_registers(cpool, index);
+
   movw(index, Address(cpool, index, Address::times_ptr, sizeof(ConstantPool)));
   Register resolved_klasses = cpool;
   movptr(resolved_klasses, Address(cpool, ConstantPool::resolved_klasses_offset_in_bytes()));
   movptr(klass, Address(resolved_klasses, index, Address::times_ptr, Array<Klass*>::base_offset_in_bytes()));
+}
+
+void InterpreterMacroAssembler::load_resolved_method_at_index(int byte_no,
+                                                              Register method,
+                                                              Register cache,
+                                                              Register index) {
+  assert_different_registers(cache, index);
+
+  const int method_offset = in_bytes(
+    ConstantPoolCache::base_offset() +
+      ((byte_no == TemplateTable::f2_byte)
+       ? ConstantPoolCacheEntry::f2_offset()
+       : ConstantPoolCacheEntry::f1_offset()));
+
+  movptr(method, Address(cache, index, Address::times_ptr, method_offset)); // get f1 Method*
 }
 
 // Generate a subtype check: branch to ok_is_subtype if sub_klass is a
@@ -635,11 +656,11 @@ void InterpreterMacroAssembler::pop(TosState state) {
   case vtos: /* nothing to do */        break;
   default:   ShouldNotReachHere();
   }
-  verify_oop(rax, state);
+  interp_verify_oop(rax, state);
 }
 
 void InterpreterMacroAssembler::push(TosState state) {
-  verify_oop(rax, state);
+  interp_verify_oop(rax, state);
   switch (state) {
   case atos: push_ptr();                break;
   case btos:
@@ -701,7 +722,7 @@ void InterpreterMacroAssembler::pop(TosState state) {
     case vtos: /* nothing to do */                           break;
     default  : ShouldNotReachHere();
   }
-  verify_oop(rax, state);
+  interp_verify_oop(rax, state);
 }
 
 
@@ -724,7 +745,7 @@ void InterpreterMacroAssembler::push_d() {
 
 
 void InterpreterMacroAssembler::push(TosState state) {
-  verify_oop(rax, state);
+  interp_verify_oop(rax, state);
   switch (state) {
     case atos: push_ptr(rax); break;
     case btos:                                               // fall through
@@ -823,13 +844,13 @@ void InterpreterMacroAssembler::dispatch_base(TosState state,
     bind(L);
   }
   if (verifyoop) {
-    verify_oop(rax, state);
+    interp_verify_oop(rax, state);
   }
 
   address* const safepoint_table = Interpreter::safept_table(state);
 #ifdef _LP64
   Label no_safepoint, dispatch;
-  if (SafepointMechanism::uses_thread_local_poll() && table != safepoint_table && generate_poll) {
+  if (table != safepoint_table && generate_poll) {
     NOT_PRODUCT(block_comment("Thread-local Safepoint poll"));
     testb(Address(r15_thread, Thread::polling_page_offset()), SafepointMechanism::poll_bit());
 
@@ -845,7 +866,7 @@ void InterpreterMacroAssembler::dispatch_base(TosState state,
 
 #else
   Address index(noreg, rbx, Address::times_ptr);
-  if (SafepointMechanism::uses_thread_local_poll() && table != safepoint_table && generate_poll) {
+  if (table != safepoint_table && generate_poll) {
     NOT_PRODUCT(block_comment("Thread-local Safepoint poll"));
     Label no_safepoint;
     const Register thread = rcx;
@@ -1600,38 +1621,10 @@ void InterpreterMacroAssembler::profile_virtual_call(Register receiver,
     bind(skip_receiver_profile);
 
     // The method data pointer needs to be updated to reflect the new target.
-#if INCLUDE_JVMCI
-    if (MethodProfileWidth == 0) {
-      update_mdp_by_constant(mdp, in_bytes(VirtualCallData::virtual_call_data_size()));
-    }
-#else // INCLUDE_JVMCI
-    update_mdp_by_constant(mdp,
-                           in_bytes(VirtualCallData::
-                                    virtual_call_data_size()));
-#endif // INCLUDE_JVMCI
-    bind(profile_continue);
-  }
-}
-
-#if INCLUDE_JVMCI
-void InterpreterMacroAssembler::profile_called_method(Register method, Register mdp, Register reg2) {
-  assert_different_registers(method, mdp, reg2);
-  if (ProfileInterpreter && MethodProfileWidth > 0) {
-    Label profile_continue;
-
-    // If no method data exists, go to profile_continue.
-    test_method_data_pointer(mdp, profile_continue);
-
-    Label done;
-    record_item_in_profile_helper(method, mdp, reg2, 0, done, MethodProfileWidth,
-      &VirtualCallData::method_offset, &VirtualCallData::method_count_offset, in_bytes(VirtualCallData::nonprofiled_receiver_count_offset()));
-    bind(done);
-
     update_mdp_by_constant(mdp, in_bytes(VirtualCallData::virtual_call_data_size()));
     bind(profile_continue);
   }
 }
-#endif // INCLUDE_JVMCI
 
 // This routine creates a state machine for updating the multi-row
 // type profile at a virtual call site (or other type-sensitive bytecode).
@@ -1938,9 +1931,9 @@ void InterpreterMacroAssembler::profile_switch_case(Register index,
 
 
 
-void InterpreterMacroAssembler::verify_oop(Register reg, TosState state) {
+void InterpreterMacroAssembler::_interp_verify_oop(Register reg, TosState state, const char* file, int line) {
   if (state == atos) {
-    MacroAssembler::verify_oop(reg);
+    MacroAssembler::_verify_oop(reg, "broken oop", file, line);
   }
 }
 

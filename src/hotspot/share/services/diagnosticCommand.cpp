@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@
 #include "gc/shared/gcVMOperations.hpp"
 #include "memory/metaspace/metaspaceDCmd.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/typeArrayOop.inline.hpp"
@@ -47,6 +48,7 @@
 #include "services/management.hpp"
 #include "services/writeableFlags.hpp"
 #include "utilities/debug.hpp"
+#include "utilities/events.hpp"
 #include "utilities/formatBuffer.hpp"
 #include "utilities/macros.hpp"
 
@@ -88,12 +90,12 @@ void DCmdRegistrant::register_dcmds(){
 #if INCLUDE_SERVICES
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<HeapDumpDCmd>(DCmd_Source_Internal | DCmd_Source_AttachAPI, true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<ClassHistogramDCmd>(full_export, true, false));
-  DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<ClassStatsDCmd>(full_export, true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<SystemDictionaryDCmd>(full_export, true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<ClassHierarchyDCmd>(full_export, true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<SymboltableDCmd>(full_export, true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<StringtableDCmd>(full_export, true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<metaspace::MetaspaceDCmd>(full_export, true, false));
+  DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<EventLogDCmd>(full_export, true, false));
 #if INCLUDE_JVMTI // Both JVMTI and SERVICES have to be enabled to have this dcmd
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<JVMTIAgentLoadDCmd>(full_export, true, false));
 #endif // INCLUDE_JVMTI
@@ -126,7 +128,7 @@ void DCmdRegistrant::register_dcmds(){
 
   // Debug on cmd (only makes sense with JVMTI since the agentlib needs it).
 #if INCLUDE_JVMTI
-  DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<DebugOnCmdStartDCmd>(full_export, true, false));
+  DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<DebugOnCmdStartDCmd>(full_export, true, true));
 #endif // INCLUDE_JVMTI
 
 }
@@ -438,8 +440,7 @@ void SystemGCDCmd::execute(DCmdSource source, TRAPS) {
 }
 
 void RunFinalizationDCmd::execute(DCmdSource source, TRAPS) {
-  Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(),
-                                                 true, CHECK);
+  Klass* k = SystemDictionary::System_klass();
   JavaValue result(T_VOID);
   JavaCalls::call_static(&result, k,
                          vmSymbols::run_finalization_name(),
@@ -447,12 +448,12 @@ void RunFinalizationDCmd::execute(DCmdSource source, TRAPS) {
 }
 
 void HeapInfoDCmd::execute(DCmdSource source, TRAPS) {
-  MutexLocker hl(Heap_lock);
+  MutexLocker hl(THREAD, Heap_lock);
   Universe::heap()->print_on(output());
 }
 
 void FinalizerInfoDCmd::execute(DCmdSource source, TRAPS) {
-  ResourceMark rm;
+  ResourceMark rm(THREAD);
 
   Klass* k = SystemDictionary::resolve_or_fail(
     vmSymbols::finalizer_histogram_klass(), true, CHECK);
@@ -513,19 +514,7 @@ void HeapDumpDCmd::execute(DCmdSource source, TRAPS) {
   // This helps reduces the amount of unreachable objects in the dump
   // and makes it easier to browse.
   HeapDumper dumper(!_all.value() /* request GC if _all is false*/);
-  int res = dumper.dump(_filename.value());
-  if (res == 0) {
-    output()->print_cr("Heap dump file created");
-  } else {
-    // heap dump failed
-    ResourceMark rm;
-    char* error = dumper.error_as_C_string();
-    if (error == NULL) {
-      output()->print_cr("Dump failed - reason unknown");
-    } else {
-      output()->print_cr("%s", error);
-    }
-  }
+  dumper.dump(_filename.value(), output());
 }
 
 int HeapDumpDCmd::num_arguments() {
@@ -563,57 +552,6 @@ int ClassHistogramDCmd::num_arguments() {
   }
 }
 
-#define DEFAULT_COLUMNS "InstBytes,KlassBytes,CpAll,annotations,MethodCount,Bytecodes,MethodAll,ROAll,RWAll,Total"
-ClassStatsDCmd::ClassStatsDCmd(outputStream* output, bool heap) :
-                                       DCmdWithParser(output, heap),
-  _all("-all", "Show all columns",
-       "BOOLEAN", false, "false"),
-  _csv("-csv", "Print in CSV (comma-separated values) format for spreadsheets",
-       "BOOLEAN", false, "false"),
-  _help("-help", "Show meaning of all the columns",
-       "BOOLEAN", false, "false"),
-  _columns("columns", "Comma-separated list of all the columns to show. "
-           "If not specified, the following columns are shown: " DEFAULT_COLUMNS,
-           "STRING", false) {
-  _dcmdparser.add_dcmd_option(&_all);
-  _dcmdparser.add_dcmd_option(&_csv);
-  _dcmdparser.add_dcmd_option(&_help);
-  _dcmdparser.add_dcmd_argument(&_columns);
-}
-
-void ClassStatsDCmd::execute(DCmdSource source, TRAPS) {
-  VM_GC_HeapInspection heapop(output(),
-                              true /* request_full_gc */);
-  heapop.set_csv_format(_csv.value());
-  heapop.set_print_help(_help.value());
-  heapop.set_print_class_stats(true);
-  if (_all.value()) {
-    if (_columns.has_value()) {
-      output()->print_cr("Cannot specify -all and individual columns at the same time");
-      return;
-    } else {
-      heapop.set_columns(NULL);
-    }
-  } else {
-    if (_columns.has_value()) {
-      heapop.set_columns(_columns.value());
-    } else {
-      heapop.set_columns(DEFAULT_COLUMNS);
-    }
-  }
-  VMThread::execute(&heapop);
-}
-
-int ClassStatsDCmd::num_arguments() {
-  ResourceMark rm;
-  ClassStatsDCmd* dcmd = new ClassStatsDCmd(NULL, false);
-  if (dcmd != NULL) {
-    DCmdMark mark(dcmd);
-    return dcmd->_dcmdparser.num_arguments();
-  } else {
-    return 0;
-  }
-}
 #endif // INCLUDE_SERVICES
 
 ThreadDumpDCmd::ThreadDumpDCmd(outputStream* output, bool heap) :
@@ -709,7 +647,7 @@ JMXStartRemoteDCmd::JMXStartRemoteDCmd(outputStream *output, bool heap_allocated
 
   _jmxremote_ssl_config_file
   ("jmxremote.ssl.config.file",
-   "set com.sun.management.jmxremote.ssl_config_file", "STRING", false),
+   "set com.sun.management.jmxremote.ssl.config.file", "STRING", false),
 
 // JDP Protocol support
   _jmxremote_autodiscovery
@@ -943,13 +881,20 @@ void CodeCacheDCmd::execute(DCmdSource source, TRAPS) {
 CodeHeapAnalyticsDCmd::CodeHeapAnalyticsDCmd(outputStream* output, bool heap) :
                                              DCmdWithParser(output, heap),
   _function("function", "Function to be performed (aggregate, UsedSpace, FreeSpace, MethodCount, MethodSpace, MethodAge, MethodNames, discard", "STRING", false, "all"),
-  _granularity("granularity", "Detail level - smaller value -> more detail", "STRING", false, "4096") {
+  _granularity("granularity", "Detail level - smaller value -> more detail", "INT", false, "4096") {
   _dcmdparser.add_dcmd_argument(&_function);
   _dcmdparser.add_dcmd_argument(&_granularity);
 }
 
 void CodeHeapAnalyticsDCmd::execute(DCmdSource source, TRAPS) {
-  CompileBroker::print_heapinfo(output(), _function.value(), _granularity.value());
+  jlong granularity = _granularity.value();
+  if (granularity < 1) {
+    Exceptions::fthrow(THREAD_AND_LOCATION, vmSymbols::java_lang_IllegalArgumentException(),
+                       "Invalid granularity value " JLONG_FORMAT  ". Should be positive.\n", granularity);
+    return;
+  }
+
+  CompileBroker::print_heapinfo(output(), _function.value(), granularity);
 }
 
 int CodeHeapAnalyticsDCmd::num_arguments() {
@@ -963,6 +908,45 @@ int CodeHeapAnalyticsDCmd::num_arguments() {
   }
 }
 //---<  END  >--- CodeHeap State Analytics.
+
+EventLogDCmd::EventLogDCmd(outputStream* output, bool heap) :
+  DCmdWithParser(output, heap),
+  _log("log", "Name of log to be printed. If omitted, all logs are printed.", "STRING", false, NULL),
+  _max("max", "Maximum number of events to be printed (newest first). If omitted, all events are printed.", "STRING", false, NULL)
+{
+  _dcmdparser.add_dcmd_option(&_log);
+  _dcmdparser.add_dcmd_option(&_max);
+}
+
+void EventLogDCmd::execute(DCmdSource source, TRAPS) {
+  const char* max_value = _max.value();
+  long max = -1;
+  if (max_value != NULL) {
+    char* endptr = NULL;
+    max = ::strtol(max_value, &endptr, 10);
+    if (max == 0 && max_value == endptr) {
+      output()->print_cr("Invalid max option: \"%s\".", max_value);
+      return;
+    }
+  }
+  const char* log_name = _log.value();
+  if (log_name != NULL) {
+    Events::print_one(output(), log_name, max);
+  } else {
+    Events::print_all(output(), max);
+  }
+}
+
+int EventLogDCmd::num_arguments() {
+  ResourceMark rm;
+  EventLogDCmd* dcmd = new EventLogDCmd(NULL, false);
+  if (dcmd != NULL) {
+    DCmdMark mark(dcmd);
+    return dcmd->_dcmdparser.num_arguments();
+  } else {
+    return 0;
+  }
+}
 
 void CompilerDirectivesPrintDCmd::execute(DCmdSource source, TRAPS) {
   DirectivesStack::print(output());

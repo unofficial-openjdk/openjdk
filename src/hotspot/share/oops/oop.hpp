@@ -28,6 +28,7 @@
 #include "memory/iterator.hpp"
 #include "memory/memRegion.hpp"
 #include "oops/access.hpp"
+#include "oops/markWord.hpp"
 #include "oops/metadata.hpp"
 #include "runtime/atomic.hpp"
 #include "utilities/macros.hpp"
@@ -39,14 +40,11 @@
 //
 // no virtual functions allowed
 
-extern bool always_do_update_barrier;
-
 // Forward declarations.
 class OopClosure;
 class ScanClosure;
 class FastScanClosure;
 class FilteringClosure;
-class CMSIsAliveClosure;
 
 class PSPromotionManager;
 class ParCompactionManager;
@@ -55,24 +53,24 @@ class oopDesc {
   friend class VMStructs;
   friend class JVMCIVMStructs;
  private:
-  volatile markOop _mark;
+  volatile markWord _mark;
   union _metadata {
     Klass*      _klass;
     narrowKlass _compressed_klass;
   } _metadata;
 
  public:
-  inline markOop  mark()          const;
-  inline markOop  mark_raw()      const;
-  inline markOop* mark_addr_raw() const;
+  inline markWord  mark()          const;
+  inline markWord  mark_raw()      const;
+  inline markWord* mark_addr_raw() const;
 
-  inline void set_mark(volatile markOop m);
-  inline void set_mark_raw(volatile markOop m);
-  static inline void set_mark_raw(HeapWord* mem, markOop m);
+  inline void set_mark(volatile markWord m);
+  inline void set_mark_raw(volatile markWord m);
+  static inline void set_mark_raw(HeapWord* mem, markWord m);
 
-  inline void release_set_mark(markOop m);
-  inline markOop cas_set_mark(markOop new_mark, markOop old_mark);
-  inline markOop cas_set_mark_raw(markOop new_mark, markOop old_mark, atomic_memory_order order = memory_order_conservative);
+  inline void release_set_mark(markWord m);
+  inline markWord cas_set_mark(markWord new_mark, markWord old_mark);
+  inline markWord cas_set_mark_raw(markWord new_mark, markWord old_mark, atomic_memory_order order = memory_order_conservative);
 
   // Used only to re-initialize the mark word (e.g., of promoted
   // objects during a GC) -- requires a valid klass pointer
@@ -94,9 +92,6 @@ class oopDesc {
   inline int klass_gap() const;
   inline void set_klass_gap(int z);
   static inline void set_klass_gap(HeapWord* mem, int z);
-  // For when the klass pointer is being used as a linked list "next" field.
-  inline void set_klass_to_list_ptr(oop k);
-  inline oop list_ptr_from_klass();
 
   // size of object header, aligned to platform wordSize
   static int header_size() { return sizeof(oopDesc)/HeapWordSize; }
@@ -151,10 +146,6 @@ class oopDesc {
     }
   }
 
-  inline static bool equals(oop o1, oop o2) { return Access<>::equals(o1, o2); }
-
-  inline static bool equals_raw(oop o1, oop o2) { return RawAccess<>::equals(o1, o2); }
-
   // Access to fields in a instanceOop through these methods.
   template <DecoratorSet decorator>
   oop obj_field_access(int offset) const;
@@ -178,6 +169,8 @@ class oopDesc {
 
   jboolean bool_field(int offset) const;
   void bool_field_put(int offset, jboolean contents);
+  jboolean bool_field_volatile(int offset) const;
+  void bool_field_put_volatile(int offset, jboolean contents);
 
   jint int_field(int offset) const;
   jint int_field_raw(int offset) const;
@@ -255,10 +248,6 @@ class oopDesc {
   // asserts and guarantees
   static bool is_oop(oop obj, bool ignore_mark_word = false);
   static bool is_oop_or_null(oop obj, bool ignore_mark_word = false);
-#ifndef PRODUCT
-  inline bool is_unlocked_oop() const;
-  static bool is_archived_object(oop p) NOT_CDS_JAVA_HEAP_RETURN_(false);
-#endif
 
   // garbage collection
   inline bool is_gc_marked() const;
@@ -266,14 +255,16 @@ class oopDesc {
   // Forward pointer operations for scavenge
   inline bool is_forwarded() const;
 
+  void verify_forwardee(oop forwardee) NOT_DEBUG_RETURN;
+
   inline void forward_to(oop p);
-  inline bool cas_forward_to(oop p, markOop compare, atomic_memory_order order = memory_order_conservative);
+  inline bool cas_forward_to(oop p, markWord compare, atomic_memory_order order = memory_order_conservative);
 
   // Like "forward_to", but inserts the forwarding pointer atomically.
   // Exactly one thread succeeds in inserting the forwarding pointer, and
   // this call returns "NULL" for that thread; any other thread has the
   // value of the forwarding pointer returned and does not modify "this".
-  inline oop forward_to_atomic(oop p, markOop compare, atomic_memory_order order = memory_order_conservative);
+  inline oop forward_to_atomic(oop p, markWord compare, atomic_memory_order order = memory_order_conservative);
 
   inline oop forwardee() const;
   inline oop forwardee_acquire() const;
@@ -309,9 +300,14 @@ class oopDesc {
   intptr_t slow_identity_hash();
 
   // marks are forwarded to stack when object is locked
-  inline bool    has_displaced_mark_raw() const;
-  inline markOop displaced_mark_raw() const;
-  inline void    set_displaced_mark_raw(markOop m);
+  inline bool     has_displaced_mark_raw() const;
+  inline markWord displaced_mark_raw() const;
+  inline void     set_displaced_mark_raw(markWord m);
+
+  // Checks if the mark word needs to be preserved
+  inline bool mark_must_be_preserved() const;
+  inline bool mark_must_be_preserved(markWord m) const;
+  inline bool mark_must_be_preserved_for_promotion_failure(markWord m) const;
 
   static bool has_klass_gap();
 
@@ -324,11 +320,8 @@ class oopDesc {
   }
 
   // for error reporting
-  static oop   decode_oop_raw(narrowOop narrow_oop);
   static void* load_klass_raw(oop obj);
   static void* load_oop_raw(oop obj, int offset);
-  static bool  is_valid(oop obj);
-  static oop   oop_or_null(address addr);
 };
 
 #endif // SHARE_OOPS_OOP_HPP

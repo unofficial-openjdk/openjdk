@@ -25,6 +25,7 @@
 #ifndef SHARE_MEMORY_UNIVERSE_HPP
 #define SHARE_MEMORY_UNIVERSE_HPP
 
+#include "gc/shared/verifyOption.hpp"
 #include "oops/array.hpp"
 #include "runtime/handles.hpp"
 #include "utilities/growableArray.hpp"
@@ -68,29 +69,6 @@ class LatestMethodCache : public CHeapObj<mtClass> {
     f->do_ptr((void**)&_klass);
   }
   void metaspace_pointers_do(MetaspaceClosure* it);
-};
-
-
-// For UseCompressedOops.
-struct NarrowPtrStruct {
-  // Base address for oop-within-java-object materialization.
-  // NULL if using wide oops or zero based narrow oops.
-  address _base;
-  // Number of shift bits for encoding/decoding narrow ptrs.
-  // 0 if using wide ptrs or zero based unscaled narrow ptrs,
-  // LogMinObjAlignmentInBytes/LogKlassAlignmentInBytes otherwise.
-  int     _shift;
-  // Generate code with implicit null checks for narrow ptrs.
-  bool    _use_implicit_null_checks;
-};
-
-enum VerifyOption {
-      VerifyOption_Default = 0,
-
-      // G1
-      VerifyOption_G1UsePrevMarking = VerifyOption_Default,
-      VerifyOption_G1UseNextMarking = VerifyOption_G1UsePrevMarking + 1,
-      VerifyOption_G1UseFullMarking = VerifyOption_G1UseNextMarking + 1
 };
 
 class Universe: AllStatic {
@@ -138,6 +116,7 @@ class Universe: AllStatic {
   static LatestMethodCache* _finalizer_register_cache; // static method for registering finalizable objects
   static LatestMethodCache* _loader_addClass_cache;    // method for registering loaded classes in class loader vector
   static LatestMethodCache* _throw_illegal_access_error_cache; // Unsafe.throwIllegalAccessError() method
+  static LatestMethodCache* _throw_no_such_method_error_cache; // Unsafe.throwNoSuchMethodError() method
   static LatestMethodCache* _do_stack_walk_cache;      // method for stack walker callback
 
   // preallocated error objects (no backtrace)
@@ -181,13 +160,6 @@ class Universe: AllStatic {
 
   static intptr_t _non_oop_bits;
 
-  // For UseCompressedOops.
-  static struct NarrowPtrStruct _narrow_oop;
-  // For UseCompressedClassPointers.
-  static struct NarrowPtrStruct _narrow_klass;
-  static address _narrow_ptrs_base;
-  // CompressedClassSpaceSize set to 1GB, but appear 3GB away from _narrow_ptrs_base during CDS dump.
-  static uint64_t _narrow_klass_range;
   // array of dummy objects used with +FullGCAlot
   debug_only(static objArrayOop _fullgc_alot_dummy_array;)
   // index of next entry to clear
@@ -212,8 +184,8 @@ class Universe: AllStatic {
   static size_t _heap_capacity_at_last_gc;
   static size_t _heap_used_at_last_gc;
 
-  static CollectedHeap* create_heap();
   static jint initialize_heap();
+  static void initialize_tlab();
   static void initialize_basic_type_mirrors(TRAPS);
   static void fixup_mirrors(TRAPS);
 
@@ -230,23 +202,6 @@ class Universe: AllStatic {
     return m;
   }
 
-  static void     set_narrow_oop_base(address base) {
-    assert(UseCompressedOops, "no compressed oops?");
-    _narrow_oop._base    = base;
-  }
-  static void     set_narrow_klass_base(address base) {
-    assert(UseCompressedClassPointers, "no compressed klass ptrs?");
-    _narrow_klass._base   = base;
-  }
-  static void     set_narrow_klass_range(uint64_t range) {
-     assert(UseCompressedClassPointers, "no compressed klass ptrs?");
-     _narrow_klass_range = range;
-  }
-  static void     set_narrow_oop_use_implicit_null_checks(bool use) {
-    assert(UseCompressedOops, "no compressed ptrs?");
-    _narrow_oop._use_implicit_null_checks   = use;
-  }
-
   // Debugging
   static int _verify_count;                           // number of verifies done
 
@@ -257,9 +212,9 @@ class Universe: AllStatic {
   static uintptr_t _verify_oop_mask;
   static uintptr_t _verify_oop_bits;
 
+ public:
   static void calculate_verify_data(HeapWord* low_boundary, HeapWord* high_boundary) PRODUCT_RETURN;
 
- public:
   // Known classes in the VM
   static Klass* boolArrayKlassObj()                 { return typeArrayKlassObj(T_BOOLEAN); }
   static Klass* byteArrayKlassObj()                 { return typeArrayKlassObj(T_BYTE); }
@@ -322,6 +277,7 @@ class Universe: AllStatic {
   static Method*      loader_addClass_method()        { return _loader_addClass_cache->get_method(); }
 
   static Method*      throw_illegal_access_error()    { return _throw_illegal_access_error_cache->get_method(); }
+  static Method*      throw_no_such_method_error()    { return _throw_no_such_method_error_cache->get_method(); }
 
   static Method*      do_stack_walk_method()          { return _do_stack_walk_cache->get_method(); }
 
@@ -369,71 +325,8 @@ class Universe: AllStatic {
   // The particular choice of collected heap.
   static CollectedHeap* heap() { return _collectedHeap; }
 
-  // For UseCompressedOops
-  // Narrow Oop encoding mode:
-  // 0 - Use 32-bits oops without encoding when
-  //     NarrowOopHeapBaseMin + heap_size < 4Gb
-  // 1 - Use zero based compressed oops with encoding when
-  //     NarrowOopHeapBaseMin + heap_size < 32Gb
-  // 2 - Use compressed oops with disjoint heap base if
-  //     base is 32G-aligned and base > 0. This allows certain
-  //     optimizations in encoding/decoding.
-  //     Disjoint: Bits used in base are disjoint from bits used
-  //     for oops ==> oop = (cOop << 3) | base.  One can disjoint
-  //     the bits of an oop into base and compressed oop.
-  // 3 - Use compressed oops with heap base + encoding.
-  enum NARROW_OOP_MODE {
-    UnscaledNarrowOop  = 0,
-    ZeroBasedNarrowOop = 1,
-    DisjointBaseNarrowOop = 2,
-    HeapBasedNarrowOop = 3,
-    AnyNarrowOopMode = 4
-  };
-  static NARROW_OOP_MODE narrow_oop_mode();
-  static const char* narrow_oop_mode_to_string(NARROW_OOP_MODE mode);
-  static address  narrow_oop_base()                  { return  _narrow_oop._base; }
-  // Test whether bits of addr and possible offsets into the heap overlap.
-  static bool     is_disjoint_heap_base_address(address addr) {
-    return (((uint64_t)(intptr_t)addr) &
-            (((uint64_t)UCONST64(0xFFFFffffFFFFffff)) >> (32-LogMinObjAlignmentInBytes))) == 0;
-  }
-  // Check for disjoint base compressed oops.
-  static bool     narrow_oop_base_disjoint()        {
-    return _narrow_oop._base != NULL && is_disjoint_heap_base_address(_narrow_oop._base);
-  }
-  // Check for real heapbased compressed oops.
-  // We must subtract the base as the bits overlap.
-  // If we negate above function, we also get unscaled and zerobased.
-  static bool     narrow_oop_base_overlaps()          {
-    return _narrow_oop._base != NULL && !is_disjoint_heap_base_address(_narrow_oop._base);
-  }
-  static bool  is_narrow_oop_base(void* addr)             { return (narrow_oop_base() == (address)addr); }
-  static int      narrow_oop_shift()                      { return  _narrow_oop._shift; }
-  static bool     narrow_oop_use_implicit_null_checks()   { return  _narrow_oop._use_implicit_null_checks; }
-
-  // For UseCompressedClassPointers
-  static address  narrow_klass_base()                     { return  _narrow_klass._base; }
-  static uint64_t narrow_klass_range()                    { return  _narrow_klass_range; }
-  static int      narrow_klass_shift()                    { return  _narrow_klass._shift; }
-
-  static address* narrow_ptrs_base_addr()                 { return &_narrow_ptrs_base; }
-  static void     set_narrow_ptrs_base(address a)         { _narrow_ptrs_base = a; }
-  static address  narrow_ptrs_base()                      { return _narrow_ptrs_base; }
-
-  static void     print_compressed_oops_mode(outputStream* st);
-
-  // this is set in vm_version on sparc (and then reset in universe afaict)
-  static void     set_narrow_oop_shift(int shift)         {
-    _narrow_oop._shift   = shift;
-  }
-
-  static void     set_narrow_klass_shift(int shift)       {
-    assert(shift == 0 || shift == LogKlassAlignmentInBytes, "invalid shift for klass ptrs");
-    _narrow_klass._shift   = shift;
-  }
-
   // Reserve Java heap and determine CompressedOops mode
-  static ReservedSpace reserve_heap(size_t heap_size, size_t alignment);
+  static ReservedHeapSpace reserve_heap(size_t heap_size, size_t alignment);
 
   // Historic gc information
   static size_t get_heap_free_at_last_gc()             { return _heap_capacity_at_last_gc - _heap_used_at_last_gc; }
@@ -476,6 +369,7 @@ class Universe: AllStatic {
     Verify_MetaspaceUtils = 128,
     Verify_JNIHandles = 256,
     Verify_CodeCacheOops = 512,
+    Verify_ResolvedMethodTable = 1024,
     Verify_All = -1
   };
   static void initialize_verify_flags();

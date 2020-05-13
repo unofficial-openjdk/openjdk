@@ -28,8 +28,6 @@
 #include "memory/arena.hpp"
 #include "memory/metaspaceShared.hpp"
 #include "memory/resourceArea.hpp"
-#include "memory/universe.hpp"
-#include "runtime/atomic.hpp"
 #include "runtime/os.hpp"
 #include "runtime/task.hpp"
 #include "runtime/threadCritical.hpp"
@@ -65,6 +63,7 @@ char* ReallocateHeap(char *old,
   return p;
 }
 
+// handles NULL pointers
 void FreeHeap(void* p) {
   os::free(p);
 }
@@ -84,8 +83,14 @@ void* MetaspaceObj::operator new(size_t size, ClassLoaderData* loader_data,
   return Metaspace::allocate(loader_data, word_size, type, THREAD);
 }
 
-bool MetaspaceObj::is_metaspace_object() const {
-  return Metaspace::contains((void*)this);
+bool MetaspaceObj::is_valid(const MetaspaceObj* p) {
+  // Weed out obvious bogus values first without traversing metaspace
+  if ((size_t)p < os::min_page_size()) {
+    return false;
+  } else if (!is_aligned((address)p, sizeof(MetaWord))) {
+    return false;
+  }
+  return Metaspace::contains((void*)p);
 }
 
 void MetaspaceObj::print_address_on(outputStream* st) const {
@@ -252,25 +257,6 @@ void AllocatedObj::print_on(outputStream* st) const {
 
 void AllocatedObj::print_value_on(outputStream* st) const {
   st->print("AllocatedObj(" INTPTR_FORMAT ")", p2i(this));
-}
-
-AllocStats::AllocStats() {
-  start_mallocs      = os::num_mallocs;
-  start_frees        = os::num_frees;
-  start_malloc_bytes = os::alloc_bytes;
-  start_mfree_bytes  = os::free_bytes;
-  start_res_bytes    = Arena::_bytes_allocated;
-}
-
-julong  AllocStats::num_mallocs() { return os::num_mallocs - start_mallocs; }
-julong  AllocStats::alloc_bytes() { return os::alloc_bytes - start_malloc_bytes; }
-julong  AllocStats::num_frees()   { return os::num_frees - start_frees; }
-julong  AllocStats::free_bytes()  { return os::free_bytes - start_mfree_bytes; }
-julong  AllocStats::resource_bytes() { return Arena::_bytes_allocated - start_res_bytes; }
-void    AllocStats::print() {
-  tty->print_cr(UINT64_FORMAT " mallocs (" UINT64_FORMAT "MB), "
-                UINT64_FORMAT " frees (" UINT64_FORMAT "MB), " UINT64_FORMAT "MB resrc",
-                num_mallocs(), alloc_bytes()/M, num_frees(), free_bytes()/M, resource_bytes()/M);
 }
 
 ReallocMark::ReallocMark() {

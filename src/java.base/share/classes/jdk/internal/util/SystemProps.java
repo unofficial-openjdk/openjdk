@@ -90,10 +90,6 @@ public final class SystemProps {
         putIfAbsent(props, "http.nonProxyHosts", raw.propDefault(Raw._http_nonProxyHosts_NDX));
         putIfAbsent(props, "ftp.nonProxyHosts", raw.propDefault(Raw._ftp_nonProxyHosts_NDX));
         putIfAbsent(props, "socksNonProxyHosts", raw.propDefault(Raw._socksNonProxyHosts_NDX));
-        putIfAbsent(props, "awt.toolkit", raw.propDefault(Raw._awt_toolkit_NDX));
-        putIfAbsent(props, "java.awt.headless", raw.propDefault(Raw._java_awt_headless_NDX));
-        putIfAbsent(props, "java.awt.graphicsenv", raw.propDefault(Raw._java_awt_graphicsenv_NDX));
-        putIfAbsent(props, "sun.desktop", raw.propDefault(Raw._sun_desktop_NDX));
         putIfAbsent(props, "sun.arch.abi", raw.propDefault(Raw._sun_arch_abi_NDX));
         putIfAbsent(props, "sun.arch.data.model", raw.propDefault(Raw._sun_arch_data_model_NDX));
         putIfAbsent(props, "sun.os.patch.level", raw.propDefault(Raw._sun_os_patch_level_NDX));
@@ -188,8 +184,7 @@ public final class SystemProps {
     public static class Raw {
         // Array indices written by native vmProperties()
         // The order is arbitrary (but alphabetic for convenience)
-        @Native private static final int _awt_toolkit_NDX = 0;
-        @Native private static final int _display_country_NDX = 1 + _awt_toolkit_NDX;
+        @Native private static final int _display_country_NDX = 0;
         @Native private static final int _display_language_NDX = 1 + _display_country_NDX;
         @Native private static final int _display_script_NDX = 1 + _display_language_NDX;
         @Native private static final int _display_variant_NDX = 1 + _display_script_NDX;
@@ -207,9 +202,7 @@ public final class SystemProps {
         @Native private static final int _http_proxyPort_NDX = 1 + _http_proxyHost_NDX;
         @Native private static final int _https_proxyHost_NDX = 1 + _http_proxyPort_NDX;
         @Native private static final int _https_proxyPort_NDX = 1 + _https_proxyHost_NDX;
-        @Native private static final int _java_awt_graphicsenv_NDX = 1 + _https_proxyPort_NDX;
-        @Native private static final int _java_awt_headless_NDX = 1 + _java_awt_graphicsenv_NDX;
-        @Native private static final int _java_io_tmpdir_NDX = 1 + _java_awt_headless_NDX;
+        @Native private static final int _java_io_tmpdir_NDX = 1 + _https_proxyPort_NDX;
         @Native private static final int _line_separator_NDX = 1 + _java_io_tmpdir_NDX;
         @Native private static final int _os_arch_NDX = 1 + _line_separator_NDX;
         @Native private static final int _os_name_NDX = 1 + _os_arch_NDX;
@@ -222,8 +215,7 @@ public final class SystemProps {
         @Native private static final int _sun_arch_data_model_NDX = 1 + _sun_arch_abi_NDX;
         @Native private static final int _sun_cpu_endian_NDX = 1 + _sun_arch_data_model_NDX;
         @Native private static final int _sun_cpu_isalist_NDX = 1 + _sun_cpu_endian_NDX;
-        @Native private static final int _sun_desktop_NDX = 1 + _sun_cpu_isalist_NDX;
-        @Native private static final int _sun_io_unicode_encoding_NDX = 1 + _sun_desktop_NDX;
+        @Native private static final int _sun_io_unicode_encoding_NDX = 1 + _sun_cpu_isalist_NDX;
         @Native private static final int _sun_jnu_encoding_NDX = 1 + _sun_io_unicode_encoding_NDX;
         @Native private static final int _sun_os_patch_level_NDX = 1 + _sun_jnu_encoding_NDX;
         @Native private static final int _sun_stderr_encoding_NDX = 1 + _sun_os_patch_level_NDX;

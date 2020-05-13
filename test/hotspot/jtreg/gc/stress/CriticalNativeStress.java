@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. and/or its affiliates.
+ * Copyright (c) 2018, 2019, Red Hat, Inc. and/or its affiliates.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,34 +26,34 @@ package gc.stress;
 import java.util.Random;
 
 import gc.CriticalNative;
+import jdk.test.lib.Utils;
 
 /*
  * @test CriticalNativeStressEpsilon
- * @key gc
+ * @key gc randomness
  * @bug 8199868
- * @library /
- * @requires (os.arch =="x86_64" | os.arch == "amd64") & vm.gc.Epsilon & !vm.graal.enabled
+ * @library / /test/lib
+ * @requires (os.arch =="x86_64" | os.arch == "amd64" | os.arch=="x86" | os.arch=="i386") & vm.gc.Epsilon & !vm.graal.enabled
  * @summary test argument pinning by nmethod wrapper of critical native method
  * @run main/othervm/native -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -Xcomp -Xmx1G -XX:+CriticalJNINatives gc.stress.CriticalNativeStress
  */
 
 /*
  * @test CriticalNativeStressShenandoah
- * @key gc
+ * @key gc randomness
  * @bug 8199868
- * @library /
- * @requires (os.arch =="x86_64" | os.arch == "amd64") & vm.gc.Shenandoah & !vm.graal.enabled
+ * @library / /test/lib
+ * @requires (os.arch =="x86_64" | os.arch == "amd64" | os.arch=="x86" | os.arch=="i386") & vm.gc.Shenandoah & !vm.graal.enabled
  * @summary test argument pinning by nmethod wrapper of critical native method
- * @run main/othervm/native -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=passive    -XX:-ShenandoahDegeneratedGC -Xcomp -Xmx512M -XX:+CriticalJNINatives gc.stress.CriticalNativeStress
- * @run main/othervm/native -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=passive    -XX:+ShenandoahDegeneratedGC -Xcomp -Xmx512M -XX:+CriticalJNINatives gc.stress.CriticalNativeStress
+ * @run main/othervm/native -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahGCMode=passive    -XX:-ShenandoahDegeneratedGC -Xcomp -Xmx512M -XX:+CriticalJNINatives gc.stress.CriticalNativeStress
+ * @run main/othervm/native -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahGCMode=passive    -XX:+ShenandoahDegeneratedGC -Xcomp -Xmx512M -XX:+CriticalJNINatives gc.stress.CriticalNativeStress
  *
  * @run main/othervm/native -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=aggressive -Xcomp -Xmx512M -XX:+CriticalJNINatives gc.stress.CriticalNativeStress
  * @run main/othervm/native -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC                                       -Xcomp -Xmx256M -XX:+CriticalJNINatives gc.stress.CriticalNativeStress
- * @run main/othervm/native -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=traversal  -Xcomp -Xmx512M -XX:+CriticalJNINatives gc.stress.CriticalNativeStress
+ * @run main/othervm/native -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahGCMode=iu        -Xcomp -Xmx512M -XX:+CriticalJNINatives gc.stress.CriticalNativeStress
+ * @run main/othervm/native -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahGCMode=iu -XX:ShenandoahGCHeuristics=aggressive -Xcomp -Xmx512M -XX:+CriticalJNINatives gc.stress.CriticalNativeStress
  */
 public class CriticalNativeStress {
-    private static Random rand = new Random();
-
     // CYCLES and THREAD_PER_CASE are used to tune the tests for different GC settings,
     // so that they can execrise enough GC cycles and not OOM
     private static int CYCLES = Integer.getInteger("cycles", 3);
@@ -94,7 +95,7 @@ public class CriticalNativeStress {
     // arbitrary values, then calcuate sum of the array
     // elements with critical native JNI methods and java
     // methods, and compare the results for correctness.
-    static void run_test_case1() {
+    static void run_test_case1(Random rand) {
         // Create testing arary with arbitrary length and
         // values
         int length = rand.nextInt(50) + 1;
@@ -119,7 +120,7 @@ public class CriticalNativeStress {
         }
     }
 
-    static void run_test_case2() {
+    static void run_test_case2(Random rand) {
         // Create testing arary with arbitrary length and
         // values
         int index;
@@ -166,25 +167,29 @@ public class CriticalNativeStress {
     }
 
     static class Case1Runner extends Thread {
+        private final Random rand;
         public Case1Runner() {
+            rand = new Random(Utils.getRandomInstance().nextLong());
             start();
         }
 
         public void run() {
             for (int index = 0; index < CYCLES; index ++) {
-                run_test_case1();
+                run_test_case1(rand);
             }
         }
     }
 
     static class Case2Runner extends Thread {
+        private final Random rand;
         public Case2Runner() {
+            rand = new Random(Utils.getRandomInstance().nextLong());
             start();
         }
 
         public void run() {
             for (int index = 0; index < CYCLES; index ++) {
-                run_test_case2();
+                run_test_case2(rand);
             }
         }
     }

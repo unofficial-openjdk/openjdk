@@ -103,11 +103,14 @@ void PhaseCFG::replace_block_proj_ctrl( Node *n ) {
 }
 
 bool PhaseCFG::is_dominator(Node* dom_node, Node* node) {
+  assert(is_CFG(node) && is_CFG(dom_node), "node and dom_node must be CFG nodes");
   if (dom_node == node) {
     return true;
   }
-  Block* d = get_block_for_node(dom_node);
-  Block* n = get_block_for_node(node);
+  Block* d = find_block_for_node(dom_node);
+  Block* n = find_block_for_node(node);
+  assert(n != NULL && d != NULL, "blocks must exist");
+
   if (d == n) {
     if (dom_node->is_block_start()) {
       return true;
@@ -121,21 +124,74 @@ bool PhaseCFG::is_dominator(Node* dom_node, Node* node) {
     if (node->is_block_proj()) {
       return true;
     }
+
+    assert(is_control_proj_or_safepoint(node), "node must be control projection or safepoint");
+    assert(is_control_proj_or_safepoint(dom_node), "dom_node must be control projection or safepoint");
+
+    // Neither 'node' nor 'dom_node' is a block start or block projection.
+    // Check if 'dom_node' is above 'node' in the control graph.
+    if (is_dominating_control(dom_node, node)) {
+      return true;
+    }
+
 #ifdef ASSERT
-    node->dump();
-    dom_node->dump();
+    // If 'dom_node' does not dominate 'node' then 'node' has to dominate 'dom_node'
+    if (!is_dominating_control(node, dom_node)) {
+      node->dump();
+      dom_node->dump();
+      assert(false, "neither dom_node nor node dominates the other");
+    }
 #endif
-    fatal("unhandled");
+
     return false;
   }
   return d->dom_lca(n) == d;
 }
 
+bool PhaseCFG::is_CFG(Node* n) {
+  return n->is_block_proj() || n->is_block_start() || is_control_proj_or_safepoint(n);
+}
+
+bool PhaseCFG::is_control_proj_or_safepoint(Node* n) {
+  bool result = (n->is_Mach() && n->as_Mach()->ideal_Opcode() == Op_SafePoint) || (n->is_Proj() && n->as_Proj()->bottom_type() == Type::CONTROL);
+  assert(!result || (n->is_Mach() && n->as_Mach()->ideal_Opcode() == Op_SafePoint)
+          || (n->is_Proj() && n->as_Proj()->_con == 0), "If control projection, it must be projection 0");
+  return result;
+}
+
+Block* PhaseCFG::find_block_for_node(Node* n) {
+  if (n->is_block_start() || n->is_block_proj()) {
+    return get_block_for_node(n);
+  } else {
+    // Walk the control graph up if 'n' is not a block start nor a block projection. In this case 'n' must be
+    // an unmatched control projection or a not yet matched safepoint precedence edge in the middle of a block.
+    assert(is_control_proj_or_safepoint(n), "must be control projection or safepoint");
+    Node* ctrl = n->in(0);
+    while (!ctrl->is_block_start()) {
+      ctrl = ctrl->in(0);
+    }
+    return get_block_for_node(ctrl);
+  }
+}
+
+// Walk up the control graph from 'n' and check if 'dom_ctrl' is found.
+bool PhaseCFG::is_dominating_control(Node* dom_ctrl, Node* n) {
+  Node* ctrl = n->in(0);
+  while (!ctrl->is_block_start()) {
+    if (ctrl == dom_ctrl) {
+      return true;
+    }
+    ctrl = ctrl->in(0);
+  }
+  return false;
+}
+
+
 //------------------------------schedule_pinned_nodes--------------------------
 // Set the basic block for Nodes pinned into blocks
 void PhaseCFG::schedule_pinned_nodes(VectorSet &visited) {
   // Allocate node stack of size C->live_nodes()+8 to avoid frequent realloc
-  GrowableArray <Node *> spstack(C->live_nodes() + 8);
+  GrowableArray <Node*> spstack(C->live_nodes() + 8);
   spstack.push(_root);
   while (spstack.is_nonempty()) {
     Node* node = spstack.pop();
@@ -160,13 +216,9 @@ void PhaseCFG::schedule_pinned_nodes(VectorSet &visited) {
       for (uint i = node->len()-1; i >= node->req(); i--) {
         Node* m = node->in(i);
         if (m == NULL) continue;
-        // Skip the precedence edge if the test that guarded a CastPP:
-        // - was optimized out during escape analysis
-        // (OptimizePtrCompare): the CastPP's control isn't an end of
-        // block.
-        // - is moved in the branch of a dominating If: the control of
-        // the CastPP is then a Region.
-        if (m->is_block_proj() || m->is_block_start()) {
+
+        // Only process precedence edges that are CFG nodes. Safepoints and control projections can be in the middle of a block
+        if (is_CFG(m)) {
           node->rm_prec(i);
           if (n == NULL) {
             n = m;
@@ -174,6 +226,9 @@ void PhaseCFG::schedule_pinned_nodes(VectorSet &visited) {
             assert(is_dominator(n, m) || is_dominator(m, n), "one must dominate the other");
             n = is_dominator(n, m) ? m : n;
           }
+        } else {
+          assert(node->is_Mach(), "sanity");
+          assert(node->as_Mach()->ideal_Opcode() == Op_StoreCM, "must be StoreCM node");
         }
       }
       if (n != NULL) {
@@ -185,7 +240,7 @@ void PhaseCFG::schedule_pinned_nodes(VectorSet &visited) {
       }
 
       // process all inputs that are non NULL
-      for (int i = node->req() - 1; i >= 0; --i) {
+      for (int i = node->req()-1; i >= 0; --i) {
         if (node->in(i) != NULL) {
           spstack.push(node->in(i));
         }
@@ -510,6 +565,7 @@ Block* PhaseCFG::insert_anti_dependences(Block* LCA, Node* load, bool verify) {
   // do not need anti-dependence edges.
   int load_alias_idx = C->get_alias_index(load->adr_type());
 #ifdef ASSERT
+  assert(Compile::AliasIdxTop <= load_alias_idx && load_alias_idx < C->num_alias_types(), "Invalid alias index");
   if (load_alias_idx == Compile::AliasIdxBot && C->AliasLevel() > 0 &&
       (PrintOpto || VerifyAliases ||
        (PrintMiscellaneous && (WizardMode || Verbose)))) {
@@ -522,18 +578,6 @@ Block* PhaseCFG::insert_anti_dependences(Block* LCA, Node* load, bool verify) {
     if (VerifyAliases)  assert(load_alias_idx != Compile::AliasIdxBot, "");
   }
 #endif
-  assert(load_alias_idx || (load->is_Mach() && load->as_Mach()->ideal_Opcode() == Op_StrComp),
-         "String compare is only known 'load' that does not conflict with any stores");
-  assert(load_alias_idx || (load->is_Mach() && load->as_Mach()->ideal_Opcode() == Op_StrEquals),
-         "String equals is a 'load' that does not conflict with any stores");
-  assert(load_alias_idx || (load->is_Mach() && load->as_Mach()->ideal_Opcode() == Op_StrIndexOf),
-         "String indexOf is a 'load' that does not conflict with any stores");
-  assert(load_alias_idx || (load->is_Mach() && load->as_Mach()->ideal_Opcode() == Op_StrIndexOfChar),
-         "String indexOfChar is a 'load' that does not conflict with any stores");
-  assert(load_alias_idx || (load->is_Mach() && load->as_Mach()->ideal_Opcode() == Op_AryEq),
-         "Arrays equals is a 'load' that does not conflict with any stores");
-  assert(load_alias_idx || (load->is_Mach() && load->as_Mach()->ideal_Opcode() == Op_HasNegatives),
-         "HasNegatives is a 'load' that does not conflict with any stores");
 
   if (!C->alias_type(load_alias_idx)->is_rewritable()) {
     // It is impossible to spoil this load by putting stores before it,
@@ -747,7 +791,7 @@ Block* PhaseCFG::insert_anti_dependences(Block* LCA, Node* load, bool verify) {
       // Found a possibly-interfering store in the load's 'early' block.
       // This means 'load' cannot sink at all in the dominator tree.
       // Add an anti-dep edge, and squeeze 'load' into the highest block.
-      assert(store != load->in(0), "dependence cycle found");
+      assert(store != load->find_exact_control(load->in(0)), "dependence cycle found");
       if (verify) {
         assert(store->find_edge(load) != -1, "missing precedence edge");
       } else {
@@ -787,7 +831,7 @@ Block* PhaseCFG::insert_anti_dependences(Block* LCA, Node* load, bool verify) {
       Block* store_block = get_block_for_node(store);
       if (store_block == LCA) {
         // add anti_dependence from store to load in its own block
-        assert(store != load->in(0), "dependence cycle found");
+        assert(store != load->find_exact_control(load->in(0)), "dependence cycle found");
         if (verify) {
           assert(store->find_edge(load) != -1, "missing precedence edge");
         } else {
@@ -837,7 +881,7 @@ Node_Backward_Iterator::Node_Backward_Iterator( Node *root, VectorSet &visited, 
   stack.push(root, root->outcnt());
 
   // Clear the visited bits
-  visited.Clear();
+  visited.clear();
 }
 
 // Iterator for the Node_Backward_Iterator
@@ -1359,7 +1403,7 @@ void PhaseCFG::global_code_motion() {
   // Find the earliest Block any instruction can be placed in.  Some
   // instructions are pinned into Blocks.  Unpinned instructions can
   // appear in last block in which all their inputs occur.
-  visited.Clear();
+  visited.clear();
   Node_Stack stack(arena, (C->live_nodes() >> 2) + 16); // pre-grow
   if (!schedule_early(visited, stack)) {
     // Bailout without retry
@@ -1379,11 +1423,9 @@ void PhaseCFG::global_code_motion() {
   // Now schedule all codes as LATE as possible.  This is the LCA in the
   // dominator tree of all USES of a value.  Pick the block with the least
   // loop nesting depth that is lowest in the dominator tree.
-  // ( visited.Clear() called in schedule_late()->Node_Backward_Iterator() )
+  // ( visited.clear() called in schedule_late()->Node_Backward_Iterator() )
   schedule_late(visited, stack);
   if (C->failing()) {
-    // schedule_late fails only when graph is incorrect.
-    assert(!VerifyGraphEdges, "verification should have failed");
     return;
   }
 
@@ -1460,7 +1502,7 @@ void PhaseCFG::global_code_motion() {
   // Schedule locally.  Right now a simple topological sort.
   // Later, do a real latency aware scheduler.
   GrowableArray<int> ready_cnt(C->unique(), C->unique(), -1);
-  visited.Clear();
+  visited.reset();
   for (uint i = 0; i < number_of_blocks(); i++) {
     Block* block = get_block(i);
     if (!schedule_local(block, ready_cnt, visited, recalc_pressure_nodes)) {

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -27,20 +28,39 @@
 #include "gc/shenandoah/shenandoahHeapRegion.hpp"
 #include "gc/shenandoah/shenandoahMonitoringSupport.hpp"
 
-#define VM_STRUCTS_SHENANDOAH(nonstatic_field, volatile_nonstatic_field, static_field)  \
-  static_field(ShenandoahHeapRegion, RegionSizeBytes,        size_t)                    \
-  nonstatic_field(ShenandoahHeap, _num_regions,              size_t)                    \
-  volatile_nonstatic_field(ShenandoahHeap, _used,            size_t)                    \
-  volatile_nonstatic_field(ShenandoahHeap, _committed,       size_t)                    \
+#define VM_STRUCTS_SHENANDOAH(nonstatic_field, volatile_nonstatic_field, static_field)                \
+  nonstatic_field(ShenandoahHeap, _num_regions,                    size_t)                            \
+  nonstatic_field(ShenandoahHeap, _regions,                        ShenandoahHeapRegion**)            \
+  nonstatic_field(ShenandoahHeap, _log_min_obj_alignment_in_bytes, int)                               \
+  volatile_nonstatic_field(ShenandoahHeap, _used,                  size_t)                            \
+  volatile_nonstatic_field(ShenandoahHeap, _committed,             size_t)                            \
+  static_field(ShenandoahHeapRegion, RegionSizeBytes,              size_t)                            \
+  static_field(ShenandoahHeapRegion, RegionSizeBytesShift,         size_t)                            \
+  nonstatic_field(ShenandoahHeapRegion, _state,                    ShenandoahHeapRegion::RegionState) \
+  nonstatic_field(ShenandoahHeapRegion, _index,                    size_t const)                      \
+  nonstatic_field(ShenandoahHeapRegion, _bottom,                   HeapWord* const)                   \
+  nonstatic_field(ShenandoahHeapRegion, _top,                      HeapWord*)                         \
+  nonstatic_field(ShenandoahHeapRegion, _end,                      HeapWord* const)                   \
 
-#define VM_INT_CONSTANTS_SHENANDOAH(declare_constant, declare_constant_with_value)
+#define VM_INT_CONSTANTS_SHENANDOAH(declare_constant, declare_constant_with_value) \
+  declare_constant(ShenandoahHeapRegion::_empty_uncommitted)                       \
+  declare_constant(ShenandoahHeapRegion::_empty_committed)                         \
+  declare_constant(ShenandoahHeapRegion::_regular)                                 \
+  declare_constant(ShenandoahHeapRegion::_humongous_start)                         \
+  declare_constant(ShenandoahHeapRegion::_humongous_cont)                          \
+  declare_constant(ShenandoahHeapRegion::_pinned_humongous_start)                  \
+  declare_constant(ShenandoahHeapRegion::_cset)                                    \
+  declare_constant(ShenandoahHeapRegion::_pinned)                                  \
+  declare_constant(ShenandoahHeapRegion::_pinned_cset)                             \
+  declare_constant(ShenandoahHeapRegion::_trash)                                   \
 
 #define VM_TYPES_SHENANDOAH(declare_type,                                     \
                             declare_toplevel_type,                            \
                             declare_integer_type)                             \
   declare_type(ShenandoahHeap, CollectedHeap)                                 \
-  declare_type(ShenandoahHeapRegion, ContiguousSpace)                         \
+  declare_toplevel_type(ShenandoahHeapRegion)                                 \
   declare_toplevel_type(ShenandoahHeap*)                                      \
   declare_toplevel_type(ShenandoahHeapRegion*)                                \
+  declare_toplevel_type(ShenandoahHeapRegion::RegionState)                    \
 
 #endif // SHARE_GC_SHENANDOAH_VMSTRUCTS_SHENANDOAH_HPP

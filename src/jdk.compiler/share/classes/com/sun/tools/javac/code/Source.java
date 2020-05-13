@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,11 +84,25 @@ public enum Source {
     /** 1.11 local-variable syntax for lambda parameters */
     JDK11("11"),
 
-    /** 12 covers the to be determined language features that will be added in JDK 12. */
+    /** 12, no language features; switch expression in preview */
     JDK12("12"),
 
-    /** 13 covers the to be determined language features that will be added in JDK 13. */
-    JDK13("13");
+    /**
+     * 13, no language features; text blocks and revised switch
+     * expressions in preview
+     */
+    JDK13("13"),
+
+    /**
+     * 14, switch expressions; pattern matching, records, and revised
+     * text blocks in preview
+     */
+    JDK14("14"),
+
+    /**
+      * 15, tbd
+      */
+    JDK15("15");
 
     private static final Context.Key<Source> sourceKey = new Context.Key<>();
 
@@ -139,6 +153,8 @@ public enum Source {
     }
 
     public Target requiredTarget() {
+        if (this.compareTo(JDK15) >= 0) return Target.JDK1_15;
+        if (this.compareTo(JDK14) >= 0) return Target.JDK1_14;
         if (this.compareTo(JDK13) >= 0) return Target.JDK1_13;
         if (this.compareTo(JDK12) >= 0) return Target.JDK1_12;
         if (this.compareTo(JDK11) >= 0) return Target.JDK1_11;
@@ -186,9 +202,14 @@ public enum Source {
         LOCAL_VARIABLE_TYPE_INFERENCE(JDK10),
         VAR_SYNTAX_IMPLICIT_LAMBDAS(JDK11, Fragments.FeatureVarSyntaxInImplicitLambda, DiagKind.PLURAL),
         IMPORT_ON_DEMAND_OBSERVABLE_PACKAGES(JDK1_2, JDK8),
-        SWITCH_MULTIPLE_CASE_LABELS(JDK13, Fragments.FeatureMultipleCaseLabels, DiagKind.PLURAL),
-        SWITCH_RULE(JDK13, Fragments.FeatureSwitchRules, DiagKind.PLURAL),
-        SWITCH_EXPRESSION(JDK13, Fragments.FeatureSwitchExpressions, DiagKind.PLURAL);
+        SWITCH_MULTIPLE_CASE_LABELS(JDK14, Fragments.FeatureMultipleCaseLabels, DiagKind.PLURAL),
+        SWITCH_RULE(JDK14, Fragments.FeatureSwitchRules, DiagKind.PLURAL),
+        SWITCH_EXPRESSION(JDK14, Fragments.FeatureSwitchExpressions, DiagKind.PLURAL),
+        TEXT_BLOCKS(JDK15, Fragments.FeatureTextBlocks, DiagKind.PLURAL),
+        PATTERN_MATCHING_IN_INSTANCEOF(JDK15, Fragments.FeaturePatternMatchingInstanceof, DiagKind.NORMAL),
+        REIFIABLE_TYPES_INSTANCEOF(JDK15, Fragments.FeatureReifiableTypesInstanceof, DiagKind.PLURAL),
+        RECORDS(JDK15, Fragments.FeatureRecords, DiagKind.PLURAL),
+        ;
 
         enum DiagKind {
             NORMAL,
@@ -275,6 +296,10 @@ public enum Source {
             return RELEASE_12;
         case JDK13:
             return RELEASE_13;
+        case JDK14:
+            return RELEASE_14;
+        case JDK15:
+            return RELEASE_15;
         default:
             return null;
         }

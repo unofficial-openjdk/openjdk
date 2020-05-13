@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,24 +40,12 @@ extern "C" {
  */
 
 /*
- *
+ * Export the platform dependent path canonicalization so that
+ * the VM can find it when loading system classes.
+ * This function is also used by the instrumentation agent.
  */
-JNIEXPORT void
-JDK_GetVersionInfo0(jdk_version_info* info, size_t info_size);
-
-
-/*-------------------------------------------------------
- * Internal interface for JDK to use
- *-------------------------------------------------------
- */
-
-/* Init JVM handle for symbol lookup;
- * Return 0 if JVM handle not found.
- */
-int JDK_InitJvmHandle();
-
-/* Find the named JVM entry; returns NULL if not found. */
-void* JDK_FindJvmEntry(const char* name);
+JNIEXPORT int
+JDK_Canonicalize(const char *orig, char *out, int len);
 
 #ifdef __cplusplus
 } /* extern "C" */

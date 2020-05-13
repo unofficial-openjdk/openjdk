@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,11 +27,12 @@ package gc.logging;
  * @test TestPrintReferences
  * @bug 8136991 8186402 8186465 8188245
  * @summary Validate the reference processing logging
+ * @requires vm.gc.G1
  * @key gc
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @run main gc.logging.TestPrintReferences
+ * @run driver gc.logging.TestPrintReferences
  */
 
 import java.lang.ref.SoftReference;
@@ -55,9 +56,6 @@ public class TestPrintReferences {
     static final String phaseNotifyKeepAliveFinalizer = "Notify and keep alive finalizable";
     static final String phaseNotifyPhantomReferences  = "Notify PhantomReferences";
 
-    static final String phase1 = "Phase1";
-    static final String phase2 = "Phase2";
-    static final String phase3 = "Phase3";
     static final String gcLogTimeRegex = ".* GC\\([0-9]+\\) ";
 
     public static void main(String[] args) throws Exception {

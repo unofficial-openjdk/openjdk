@@ -51,6 +51,7 @@ private:
   int _scopes_begin;
   int _reloc_begin;
   int _exception_table_begin;
+  int _nul_chk_table_begin;
   int _oopmap_begin;
   address at_offset(size_t offset) const { return ((address) this) + offset; }
 public:
@@ -63,9 +64,9 @@ public:
   relocInfo* relocation_begin() const { return (relocInfo*) at_offset(_reloc_begin); }
   relocInfo* relocation_end() const { return (relocInfo*) at_offset(_exception_table_begin); }
   address handler_table_begin   () const { return at_offset(_exception_table_begin); }
-  address handler_table_end() const { return at_offset(_oopmap_begin); }
+  address handler_table_end() const { return at_offset(_nul_chk_table_begin); }
 
-  address nul_chk_table_begin() const { return at_offset(_oopmap_begin); }
+  address nul_chk_table_begin() const { return at_offset(_nul_chk_table_begin); }
   address nul_chk_table_end() const { return at_offset(_oopmap_begin); }
 
   ImmutableOopMapSet* oopmap_set() const { return (ImmutableOopMapSet*) at_offset(_oopmap_begin); }
@@ -167,7 +168,7 @@ private:
   int state() const { return *_state_adr; }
 
   // Non-virtual for speed
-  bool _is_alive() const { return state() < zombie; }
+  bool _is_alive() const { return state() < unloaded; }
 
   virtual bool is_zombie() const { return state() == zombie; }
   virtual bool is_unloaded() const { return state() == unloaded; }
@@ -206,8 +207,6 @@ private:
   // AOT compiled methods do not get into zombie state
   virtual bool can_convert_to_zombie() { return false; }
 
-  // Evol dependent methods already marked.
-  virtual bool is_evol_dependent() { return false; }
   virtual bool is_dependent_on_method(Method* dependee) { return true; }
 
   virtual void clear_inline_caches();
@@ -241,7 +240,7 @@ private:
   address get_original_pc(const frame* fr) { return *orig_pc_addr(fr); }
   void    set_original_pc(const frame* fr, address pc) { *orig_pc_addr(fr) = pc; }
 
-  virtual void metadata_do(void f(Metadata*));
+  virtual void metadata_do(MetadataClosure* f);
 
   bool metadata_got_contains(Metadata **p) {
     return p >= &_metadata_got[0] && p < &_metadata_got[_metadata_size];

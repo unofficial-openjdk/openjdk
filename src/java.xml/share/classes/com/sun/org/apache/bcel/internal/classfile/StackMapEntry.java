@@ -31,7 +31,6 @@ import com.sun.org.apache.bcel.internal.Const;
  * local variables and the the of stack items at a given byte code offset.
  * See CLDC specification 5.3.1.2
  *
- * @version $Id: StackMapEntry.java 1750029 2016-06-23 22:14:38Z sebb $
  * @see     StackMap
  * @see     StackMapType
  */
@@ -51,8 +50,8 @@ public final class StackMapEntry implements Node, Cloneable
      * @param input Input stream
      * @throws IOException
      */
-    StackMapEntry(final DataInput input, final ConstantPool constant_pool) throws IOException {
-        this(input.readByte() & 0xFF, -1, null, null, constant_pool);
+    StackMapEntry(final DataInput input, final ConstantPool constantPool) throws IOException {
+        this(input.readByte() & 0xFF, -1, null, null, constantPool);
 
         if (frame_type >= Const.SAME_FRAME && frame_type <= Const.SAME_FRAME_MAX) {
             byte_code_offset = frame_type - Const.SAME_FRAME;
@@ -60,11 +59,11 @@ public final class StackMapEntry implements Node, Cloneable
                    frame_type <= Const.SAME_LOCALS_1_STACK_ITEM_FRAME_MAX) {
             byte_code_offset = frame_type - Const.SAME_LOCALS_1_STACK_ITEM_FRAME;
             types_of_stack_items = new StackMapType[1];
-            types_of_stack_items[0] = new StackMapType(input, constant_pool);
+            types_of_stack_items[0] = new StackMapType(input, constantPool);
         } else if (frame_type == Const.SAME_LOCALS_1_STACK_ITEM_FRAME_EXTENDED) {
             byte_code_offset = input.readShort();
             types_of_stack_items = new StackMapType[1];
-            types_of_stack_items[0] = new StackMapType(input, constant_pool);
+            types_of_stack_items[0] = new StackMapType(input, constantPool);
         } else if (frame_type >= Const.CHOP_FRAME && frame_type <= Const.CHOP_FRAME_MAX) {
             byte_code_offset = input.readShort();
         } else if (frame_type == Const.SAME_FRAME_EXTENDED) {
@@ -74,19 +73,19 @@ public final class StackMapEntry implements Node, Cloneable
             final int number_of_locals = frame_type - 251;
             types_of_locals = new StackMapType[number_of_locals];
             for (int i = 0; i < number_of_locals; i++) {
-                types_of_locals[i] = new StackMapType(input, constant_pool);
+                types_of_locals[i] = new StackMapType(input, constantPool);
             }
         } else if (frame_type == Const.FULL_FRAME) {
             byte_code_offset = input.readShort();
             final int number_of_locals = input.readShort();
             types_of_locals = new StackMapType[number_of_locals];
             for (int i = 0; i < number_of_locals; i++) {
-                types_of_locals[i] = new StackMapType(input, constant_pool);
+                types_of_locals[i] = new StackMapType(input, constantPool);
             }
             final int number_of_stack_items = input.readShort();
             types_of_stack_items = new StackMapType[number_of_stack_items];
             for (int i = 0; i < number_of_stack_items; i++) {
-                types_of_stack_items[i] = new StackMapType(input, constant_pool);
+                types_of_stack_items[i] = new StackMapType(input, constantPool);
             }
         } else {
             /* Can't happen */
@@ -97,42 +96,42 @@ public final class StackMapEntry implements Node, Cloneable
     /**
      * DO NOT USE
      *
-     * @param byte_code_offset
-     * @param number_of_locals NOT USED
-     * @param types_of_locals array of {@link StackMapType}s of locals
-     * @param number_of_stack_items NOT USED
-     * @param types_of_stack_items array ot {@link StackMapType}s of stack items
-     * @param constant_pool the constant pool
+     * @param byteCodeOffset
+     * @param numberOfLocals NOT USED
+     * @param typesOfLocals array of {@link StackMapType}s of locals
+     * @param numberOfStackItems NOT USED
+     * @param typesOfStackItems array ot {@link StackMapType}s of stack items
+     * @param constantPool the constant pool
      * @deprecated Since 6.0, use {@link #StackMapEntry(int, int, StackMapType[], StackMapType[], ConstantPool)}
      * instead
      */
     @java.lang.Deprecated
-    public StackMapEntry(final int byte_code_offset, final int number_of_locals,
-            final StackMapType[] types_of_locals, final int number_of_stack_items,
-            final StackMapType[] types_of_stack_items, final ConstantPool constant_pool) {
-        this.byte_code_offset = byte_code_offset;
-        this.types_of_locals = types_of_locals != null ? types_of_locals : new StackMapType[0];
-        this.types_of_stack_items = types_of_stack_items != null ? types_of_stack_items : new StackMapType[0];
-        this.constant_pool = constant_pool;
+    public StackMapEntry(final int byteCodeOffset, final int numberOfLocals,
+            final StackMapType[] typesOfLocals, final int numberOfStackItems,
+            final StackMapType[] typesOfStackItems, final ConstantPool constantPool) {
+        this.byte_code_offset = byteCodeOffset;
+        this.types_of_locals = typesOfLocals != null ? typesOfLocals : new StackMapType[0];
+        this.types_of_stack_items = typesOfStackItems != null ? typesOfStackItems : new StackMapType[0];
+        this.constant_pool = constantPool;
     }
 
     /**
      * Create an instance
      *
      * @param tag the frame_type to use
-     * @param byte_code_offset
-     * @param types_of_locals array of {@link StackMapType}s of locals
-     * @param types_of_stack_items array ot {@link StackMapType}s of stack items
-     * @param constant_pool the constant pool
+     * @param byteCodeOffset
+     * @param typesOfLocals array of {@link StackMapType}s of locals
+     * @param typesOfStackItems array ot {@link StackMapType}s of stack items
+     * @param constantPool the constant pool
      */
-    public StackMapEntry(final int tag, final int byte_code_offset,
-            final StackMapType[] types_of_locals,
-            final StackMapType[] types_of_stack_items, final ConstantPool constant_pool) {
+    public StackMapEntry(final int tag, final int byteCodeOffset,
+            final StackMapType[] typesOfLocals,
+            final StackMapType[] typesOfStackItems, final ConstantPool constantPool) {
         this.frame_type = tag;
-        this.byte_code_offset = byte_code_offset;
-        this.types_of_locals = types_of_locals != null ? types_of_locals : new StackMapType[0];
-        this.types_of_stack_items = types_of_stack_items != null ? types_of_stack_items : new StackMapType[0];
-        this.constant_pool = constant_pool;
+        this.byte_code_offset = byteCodeOffset;
+        this.types_of_locals = typesOfLocals != null ? typesOfLocals : new StackMapType[0];
+        this.types_of_stack_items = typesOfStackItems != null ? typesOfStackItems : new StackMapType[0];
+        this.constant_pool = constantPool;
     }
 
 
@@ -142,7 +141,7 @@ public final class StackMapEntry implements Node, Cloneable
      * @param file Output file stream
      * @throws IOException
      */
-    public final void dump( final DataOutputStream file ) throws IOException {
+    public void dump( final DataOutputStream file ) throws IOException {
         file.write(frame_type);
         if (frame_type >= Const.SAME_FRAME && frame_type <= Const.SAME_FRAME_MAX) {
             // nothing to be done
@@ -182,7 +181,7 @@ public final class StackMapEntry implements Node, Cloneable
      * @return String representation.
      */
     @Override
-    public final String toString() {
+    public String toString() {
         final StringBuilder buf = new StringBuilder(64);
         buf.append("(");
         if (frame_type >= Const.SAME_FRAME && frame_type <= Const.SAME_FRAME_MAX) {
@@ -426,7 +425,7 @@ public final class StackMapEntry implements Node, Cloneable
     /**
      * @return Constant pool used by this object.
      */
-    public final ConstantPool getConstantPool() {
+    public ConstantPool getConstantPool() {
         return constant_pool;
     }
 
@@ -434,7 +433,7 @@ public final class StackMapEntry implements Node, Cloneable
     /**
      * @param constant_pool Constant pool to be used for this object.
      */
-    public final void setConstantPool( final ConstantPool constant_pool ) {
+    public void setConstantPool( final ConstantPool constant_pool ) {
         this.constant_pool = constant_pool;
     }
 }

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -24,6 +25,7 @@
 #ifndef SHARE_GC_SHENANDOAH_SHENANDOAHEVACOOMHANDLER_HPP
 #define SHARE_GC_SHENANDOAH_SHENANDOAHEVACOOMHANDLER_HPP
 
+#include "gc/shenandoah/shenandoahPadding.hpp"
 #include "memory/allocation.hpp"
 #include "utilities/globalDefinitions.hpp"
 
@@ -31,8 +33,8 @@
  * Provides safe handling of out-of-memory situations during evacuation.
  *
  * When a Java thread encounters out-of-memory while evacuating an object in a
- * write-barrier (i.e. it cannot copy the object to to-space), it does not necessarily
- * follow we can return immediately from the WB (and store to from-space).
+ * load-reference-barrier (i.e. it cannot copy the object to to-space), it does not
+ * necessarily follow we can return immediately from the LRB (and store to from-space).
  *
  * In very basic case, on such failure we may wait until the the evacuation is over,
  * and then resolve the forwarded copy, and to the store there. This is possible
@@ -64,25 +66,25 @@
  * - failure:
  *   - if offending value is a valid counter, then try again
  *   - if offending value is OOM-during-evac special value: loop until
- *     counter drops to 0, then exit with read-barrier
+ *     counter drops to 0, then exit with resolving the ptr
  *
  * Upon exit, exiting thread will decrease the counter using atomic dec.
  *
  * Upon OOM-during-evac, any thread will attempt to CAS OOM-during-evac
  * special value into the counter. Depending on result:
- *   - success: busy-loop until counter drops to zero, then exit with RB
+ *   - success: busy-loop until counter drops to zero, then exit with resolve
  *   - failure:
  *     - offender is valid counter update: try again
  *     - offender is OOM-during-evac: busy loop until counter drops to
- *       zero, then exit with RB
+ *       zero, then exit with resolve
  */
 class ShenandoahEvacOOMHandler {
 private:
   static const jint OOM_MARKER_MASK;
 
-  DEFINE_PAD_MINUS_SIZE(0, DEFAULT_CACHE_LINE_SIZE, sizeof(volatile jint));
+  shenandoah_padding(0);
   volatile jint _threads_in_evac;
-  DEFINE_PAD_MINUS_SIZE(1, DEFAULT_CACHE_LINE_SIZE, 0);
+  shenandoah_padding(1);
 
   void wait_for_no_evac_threads();
 
@@ -94,7 +96,7 @@ public:
    *
    * When this returns true, it is safe to continue with normal evacuation.
    * When this method returns false, evacuation must not be entered, and caller
-   * may safely continue with a read-barrier (if Java thread).
+   * may safely continue with a simple resolve (if Java thread).
    */
   void enter_evacuation();
 
@@ -106,7 +108,7 @@ public:
   /**
    * Signal out-of-memory during evacuation. It will prevent any other threads
    * from entering the evacuation path, then wait until all threads have left the
-   * evacuation path, and then return. It is then safe to continue with a read-barrier.
+   * evacuation path, and then return. It is then safe to continue with a simple resolve.
    */
   void handle_out_of_memory_during_evacuation();
 
@@ -117,12 +119,6 @@ class ShenandoahEvacOOMScope : public StackObj {
 public:
   ShenandoahEvacOOMScope();
   ~ShenandoahEvacOOMScope();
-};
-
-class ShenandoahEvacOOMScopeLeaver : public StackObj {
-public:
-  ShenandoahEvacOOMScopeLeaver();
-  ~ShenandoahEvacOOMScopeLeaver();
 };
 
 #endif // SHARE_GC_SHENANDOAH_SHENANDOAHEVACOOMHANDLER_HPP

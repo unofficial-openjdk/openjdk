@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
 #include "prims/jvmtiEventController.hpp"
 #include "prims/jvmtiThreadState.hpp"
 #include "oops/oopHandle.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/fieldDescriptor.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/thread.hpp"
@@ -98,7 +99,7 @@ class JvmtiEnvBase : public CHeapObj<mtInternal> {
   const void *_env_local_storage;     // per env agent allocated data.
   jvmtiEventCallbacks _event_callbacks;
   jvmtiExtEventCallbacks _ext_event_callbacks;
-  JvmtiTagMap* _tag_map;
+  JvmtiTagMap* volatile _tag_map;
   JvmtiEnvEventEnable _env_event_enable;
   jvmtiCapabilities _current_capabilities;
   jvmtiCapabilities _prohibited_capabilities;
@@ -253,6 +254,13 @@ class JvmtiEnvBase : public CHeapObj<mtInternal> {
     return _tag_map;
   }
 
+  JvmtiTagMap* tag_map_acquire() {
+    return Atomic::load_acquire(&_tag_map);
+  }
+
+  void release_set_tag_map(JvmtiTagMap* tag_map) {
+    Atomic::release_store(&_tag_map, tag_map);
+  }
 
   // return true if event is enabled globally or for any thread
   // True only if there is a callback for it.
@@ -284,7 +292,8 @@ class JvmtiEnvBase : public CHeapObj<mtInternal> {
   // get a field descriptor for the specified class and field
   static bool get_field_descriptor(Klass* k, jfieldID field, fieldDescriptor* fd);
 
-  // JVMTI API helper functions which are called at safepoint or thread is suspended.
+  // JVMTI API helper functions which are called when target thread is suspended
+  // or at safepoint / thread local handshake.
   jvmtiError get_frame_count(JvmtiThreadState *state, jint *count_ptr);
   jvmtiError get_frame_location(JavaThread* java_thread, jint depth,
                                               jmethodID* method_ptr, jlocation* location_ptr);
@@ -293,11 +302,10 @@ class JvmtiEnvBase : public CHeapObj<mtInternal> {
   jvmtiError get_stack_trace(JavaThread *java_thread,
                                            jint stack_depth, jint max_count,
                                            jvmtiFrameInfo* frame_buffer, jint* count_ptr);
-  jvmtiError get_current_contended_monitor(JavaThread *calling_thread,
-                                                         JavaThread *java_thread,
-                                                         jobject *monitor_ptr);
-  jvmtiError get_owned_monitors(JavaThread *calling_thread, JavaThread* java_thread,
-                          GrowableArray<jvmtiMonitorStackDepthInfo*> *owned_monitors_list);
+  jvmtiError get_current_contended_monitor(JavaThread *java_thread,
+                                           jobject *monitor_ptr);
+  jvmtiError get_owned_monitors(JavaThread* java_thread,
+                                GrowableArray<jvmtiMonitorStackDepthInfo*> *owned_monitors_list);
   jvmtiError check_top_frame(JavaThread* current_thread, JavaThread* java_thread,
                              jvalue value, TosState tos, Handle* ret_ob_h);
   jvmtiError force_early_return(JavaThread* java_thread, jvalue value, TosState tos);
@@ -368,27 +376,21 @@ public:
 };
 
 
-// VM operation to get monitor information with stack depth.
-class VM_GetOwnedMonitorInfo : public VM_Operation {
+// HandshakeClosure to get monitor information with stack depth.
+class GetOwnedMonitorInfoClosure : public HandshakeClosure {
 private:
   JvmtiEnv *_env;
-  JavaThread* _calling_thread;
-  JavaThread *_java_thread;
   jvmtiError _result;
   GrowableArray<jvmtiMonitorStackDepthInfo*> *_owned_monitors_list;
 
 public:
-  VM_GetOwnedMonitorInfo(JvmtiEnv* env, JavaThread* calling_thread,
-                                   JavaThread* java_thread,
-                                   GrowableArray<jvmtiMonitorStackDepthInfo*>* owned_monitor_list) {
-    _env = env;
-    _calling_thread = calling_thread;
-    _java_thread = java_thread;
-    _owned_monitors_list = owned_monitor_list;
-    _result = JVMTI_ERROR_NONE;
-  }
-  VMOp_Type type() const { return VMOp_GetOwnedMonitorInfo; }
-  void doit();
+  GetOwnedMonitorInfoClosure(JvmtiEnv* env,
+                             GrowableArray<jvmtiMonitorStackDepthInfo*>* owned_monitor_list)
+    : HandshakeClosure("GetOwnedMonitorInfo"),
+      _env(env),
+      _result(JVMTI_ERROR_NONE),
+      _owned_monitors_list(owned_monitor_list) {}
+  void do_thread(Thread *target);
   jvmtiError result() { return _result; }
 };
 
@@ -417,25 +419,21 @@ public:
 
 };
 
-// VM operation to get current contended monitor.
-class VM_GetCurrentContendedMonitor : public VM_Operation {
+// HandshakeClosure to get current contended monitor.
+class GetCurrentContendedMonitorClosure : public HandshakeClosure {
 private:
   JvmtiEnv *_env;
-  JavaThread *_calling_thread;
-  JavaThread *_java_thread;
   jobject *_owned_monitor_ptr;
   jvmtiError _result;
 
 public:
-  VM_GetCurrentContendedMonitor(JvmtiEnv *env, JavaThread *calling_thread, JavaThread *java_thread, jobject *mon_ptr) {
-    _env = env;
-    _calling_thread = calling_thread;
-    _java_thread = java_thread;
-    _owned_monitor_ptr = mon_ptr;
-  }
-  VMOp_Type type() const { return VMOp_GetCurrentContendedMonitor; }
+  GetCurrentContendedMonitorClosure(JvmtiEnv *env, jobject *mon_ptr)
+    : HandshakeClosure("GetCurrentContendedMonitor"),
+      _env(env),
+      _owned_monitor_ptr(mon_ptr),
+      _result(JVMTI_ERROR_THREAD_NOT_ALIVE) {}
   jvmtiError result() { return _result; }
-  void doit();
+  void do_thread(Thread *target);
 };
 
 // VM operation to get stack trace at safepoint.

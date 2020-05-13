@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,7 @@ import org.graalvm.compiler.hotspot.nodes.aot.ResolveConstantStubCall;
 import org.graalvm.compiler.hotspot.replacements.AESCryptSubstitutions;
 import org.graalvm.compiler.hotspot.replacements.BigIntegerSubstitutions;
 import org.graalvm.compiler.hotspot.replacements.CipherBlockChainingSubstitutions;
+import org.graalvm.compiler.hotspot.replacements.DigestBaseSubstitutions;
 import org.graalvm.compiler.hotspot.replacements.SHA2Substitutions;
 import org.graalvm.compiler.hotspot.replacements.SHA5Substitutions;
 import org.graalvm.compiler.hotspot.replacements.SHASubstitutions;
@@ -60,6 +61,7 @@ import org.graalvm.compiler.lir.LIRInstruction;
 import org.graalvm.compiler.lir.LIRInstruction.OperandFlag;
 import org.graalvm.compiler.lir.LIRInstruction.OperandMode;
 import org.graalvm.compiler.lir.StandardOp.LabelOp;
+import org.graalvm.compiler.lir.StandardOp.RestoreRegistersOp;
 import org.graalvm.compiler.lir.StandardOp.SaveRegistersOp;
 import org.graalvm.compiler.lir.ValueConsumer;
 import org.graalvm.compiler.lir.asm.CompilationResultBuilder;
@@ -71,18 +73,20 @@ import org.graalvm.compiler.options.OptionKey;
 import org.graalvm.compiler.options.OptionType;
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.tiers.SuitesProvider;
+import org.graalvm.compiler.serviceprovider.JavaVersionUtil;
 import org.graalvm.compiler.word.Word;
 import jdk.internal.vm.compiler.word.Pointer;
 
+import jdk.vm.ci.code.CallingConvention;
 import jdk.vm.ci.code.CompilationRequest;
 import jdk.vm.ci.code.CompiledCode;
 import jdk.vm.ci.code.Register;
-import jdk.vm.ci.code.RegisterSaveLayout;
 import jdk.vm.ci.code.StackSlot;
 import jdk.vm.ci.code.ValueUtil;
 import jdk.vm.ci.hotspot.HotSpotCompilationRequest;
 import jdk.vm.ci.hotspot.HotSpotJVMCIRuntime;
 import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
+import jdk.vm.ci.meta.AllocatableValue;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 import jdk.vm.ci.meta.Value;
 import jdk.vm.ci.runtime.JVMCICompiler;
@@ -95,7 +99,7 @@ public abstract class HotSpotBackend extends Backend implements FrameMap.Referen
     public static class Options {
         // @formatter:off
         @Option(help = "Use Graal arithmetic stubs instead of HotSpot stubs where possible")
-        public static final OptionKey<Boolean> GraalArithmeticStubs = new OptionKey<>(false); // GR-8276
+        public static final OptionKey<Boolean> GraalArithmeticStubs = new OptionKey<>(JavaVersionUtil.JAVA_SPEC >= 9);
         @Option(help = "Enables instruction profiling on assembler level. Valid values are a comma separated list of supported instructions." +
                         " Compare with subclasses of Assembler.InstructionCounter.", type = OptionType.Debug)
         public static final OptionKey<String> ASMInstructionProfiling = new OptionKey<>(null);
@@ -261,12 +265,78 @@ public abstract class HotSpotBackend extends Backend implements FrameMap.Referen
     @NodeIntrinsic(ForeignCallNode.class)
     private static native void sha5ImplCompressStub(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word bufAddr, Object state);
 
+    /**
+     * @see DigestBaseSubstitutions#implCompressMultiBlock0
+     */
+    public static final ForeignCallDescriptor SHA_IMPL_COMPRESS_MB = new ForeignCallDescriptor("shaImplCompressMB", int.class, Word.class, Object.class, int.class, int.class);
+
+    public static int shaImplCompressMBStub(Word bufAddr, Object stateAddr, int ofs, int limit) {
+        return shaImplCompressMBStub(HotSpotBackend.SHA_IMPL_COMPRESS_MB, bufAddr, stateAddr, ofs, limit);
+    }
+
+    @NodeIntrinsic(ForeignCallNode.class)
+    private static native int shaImplCompressMBStub(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word bufAddr, Object state, int ofs, int limit);
+
+    public static final ForeignCallDescriptor SHA2_IMPL_COMPRESS_MB = new ForeignCallDescriptor("sha2ImplCompressMB", int.class, Word.class, Object.class, int.class, int.class);
+
+    public static int sha2ImplCompressMBStub(Word bufAddr, Object stateAddr, int ofs, int limit) {
+        return sha2ImplCompressMBStub(HotSpotBackend.SHA2_IMPL_COMPRESS_MB, bufAddr, stateAddr, ofs, limit);
+    }
+
+    @NodeIntrinsic(ForeignCallNode.class)
+    private static native int sha2ImplCompressMBStub(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word bufAddr, Object state, int ofs, int limit);
+
+    public static final ForeignCallDescriptor SHA5_IMPL_COMPRESS_MB = new ForeignCallDescriptor("sha5ImplCompressMB", int.class, Word.class, Object.class, int.class, int.class);
+
+    public static int sha5ImplCompressMBStub(Word bufAddr, Object stateAddr, int ofs, int limit) {
+        return sha5ImplCompressMBStub(HotSpotBackend.SHA5_IMPL_COMPRESS_MB, bufAddr, stateAddr, ofs, limit);
+    }
+
+    @NodeIntrinsic(ForeignCallNode.class)
+    private static native int sha5ImplCompressMBStub(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word bufAddr, Object state, int ofs, int limit);
+
     public static void unsafeArraycopy(Word srcAddr, Word dstAddr, Word size) {
         unsafeArraycopyStub(UNSAFE_ARRAYCOPY, srcAddr, dstAddr, size);
     }
 
     @NodeIntrinsic(ForeignCallNode.class)
     private static native void unsafeArraycopyStub(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word srcAddr, Word dstAddr, Word size);
+
+    /**
+     * Descriptor for {@code StubRoutines::_ghash_processBlocks}.
+     */
+    public static final ForeignCallDescriptor GHASH_PROCESS_BLOCKS = new ForeignCallDescriptor("ghashProcessBlocks", void.class, Word.class, Word.class, Word.class, int.class);
+
+    /**
+     * Descriptor for {@code StubRoutines::_base64_encodeBlock}.
+     */
+    public static final ForeignCallDescriptor BASE64_ENCODE_BLOCK = new ForeignCallDescriptor("base64EncodeBlock", void.class, Word.class, int.class, int.class, Word.class, int.class, boolean.class);
+
+    /**
+     * Descriptor for {@code StubRoutines::_counterMode_AESCrypt}.
+     */
+    public static final ForeignCallDescriptor COUNTERMODE_IMPL_CRYPT = new ForeignCallDescriptor("counterModeAESCrypt", int.class, Word.class, Word.class, Word.class, Word.class, int.class,
+                    Word.class, Word.class);
+
+    public static int counterModeAESCrypt(Word srcAddr, Word dstAddr, Word kPtr, Word cntPtr, int len, Word encCntPtr, Word used) {
+        return counterModeAESCrypt(COUNTERMODE_IMPL_CRYPT, srcAddr, dstAddr, kPtr, cntPtr, len, encCntPtr, used);
+    }
+
+    @NodeIntrinsic(ForeignCallNode.class)
+    private static native int counterModeAESCrypt(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word srcAddr, Word dstAddr, Word kPtr, Word cntPtr, int len, Word encCntPtr,
+                    Word used);
+
+    /**
+     * Descriptor for {@code StubRoutines::_vectorizedMismatch}.
+     */
+    public static final ForeignCallDescriptor VECTORIZED_MISMATCHED = new ForeignCallDescriptor("vectorizedMismatch", int.class, Word.class, Word.class, int.class, int.class);
+
+    public static int vectorizedMismatch(Word aAddr, Word bAddr, int length, int log2ArrayIndexScale) {
+        return vectorizedMismatchStub(VECTORIZED_MISMATCHED, aAddr, bAddr, length, log2ArrayIndexScale);
+    }
+
+    @NodeIntrinsic(ForeignCallNode.class)
+    private static native int vectorizedMismatchStub(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word aAddr, Word bAddr, int length, int log2ArrayIndexScale);
 
     /**
      * @see VMErrorNode
@@ -357,10 +427,12 @@ public abstract class HotSpotBackend extends Backend implements FrameMap.Referen
     /**
      * Finds all the registers that are defined by some given LIR.
      *
-     * @param lir the LIR to examine
+     * @param gen the result to examine
      * @return the registers that are defined by or used as temps for any instruction in {@code lir}
      */
-    protected final EconomicSet<Register> gatherDestroyedCallerRegisters(LIR lir) {
+    private EconomicSet<Register> gatherDestroyedCallerRegisters(HotSpotLIRGenerationResult gen) {
+        LIR lir = gen.getLIR();
+        final EconomicSet<Register> preservedRegisters = EconomicSet.create(Equivalence.IDENTITY);
         final EconomicSet<Register> destroyedRegisters = EconomicSet.create(Equivalence.IDENTITY);
         ValueConsumer defConsumer = new ValueConsumer() {
 
@@ -368,20 +440,44 @@ public abstract class HotSpotBackend extends Backend implements FrameMap.Referen
             public void visitValue(Value value, OperandMode mode, EnumSet<OperandFlag> flags) {
                 if (ValueUtil.isRegister(value)) {
                     final Register reg = ValueUtil.asRegister(value);
-                    destroyedRegisters.add(reg);
+                    if (!preservedRegisters.contains(reg)) {
+                        destroyedRegisters.add(reg);
+                    }
                 }
             }
         };
+        boolean sawSaveRegisters = false;
         for (AbstractBlockBase<?> block : lir.codeEmittingOrder()) {
             if (block == null) {
                 continue;
             }
+            // Ignore the effects of instructions bracketed by save/restore
+            SaveRegistersOp save = null;
             for (LIRInstruction op : lir.getLIRforBlock(block)) {
                 if (op instanceof LabelOp) {
                     // Don't consider this as a definition
+                } else if (op instanceof SaveRegistersOp) {
+                    save = (SaveRegistersOp) op;
+                    sawSaveRegisters = true;
+                    preservedRegisters.addAll(save.getSaveableRegisters());
+                } else if (op instanceof RestoreRegistersOp) {
+                    save = null;
+                    preservedRegisters.clear();
                 } else {
                     op.visitEachTemp(defConsumer);
                     op.visitEachOutput(defConsumer);
+                }
+            }
+            assert save == null : "missing RestoreRegistersOp";
+        }
+
+        if (sawSaveRegisters) {
+            // The return value must be killed so it can be propagated out
+            CallingConvention cc = gen.getCallingConvention();
+            AllocatableValue returnValue = cc.getReturn();
+            if (returnValue != null) {
+                if (ValueUtil.isRegister(returnValue)) {
+                    destroyedRegisters.add(ValueUtil.asRegister(returnValue));
                 }
             }
         }
@@ -389,30 +485,42 @@ public abstract class HotSpotBackend extends Backend implements FrameMap.Referen
     }
 
     /**
-     * Updates a given stub with respect to the registers it destroys.
-     * <p>
-     * Any entry in {@code calleeSaveInfo} that {@linkplain SaveRegistersOp#supportsRemove()
-     * supports} pruning will have {@code destroyedRegisters}
-     * {@linkplain SaveRegistersOp#remove(EconomicSet) removed} as these registers are declared as
-     * temporaries in the stub's {@linkplain ForeignCallLinkage linkage} (and thus will be saved by
-     * the stub's caller).
+     * Translates a set of registers from the callee's perspective to the caller's perspective. This
+     * is needed for architectures where input/output registers are renamed during a call (e.g.
+     * register windows on SPARC). Registers which are not visible by the caller are removed.
+     */
+    protected abstract EconomicSet<Register> translateToCallerRegisters(EconomicSet<Register> calleeRegisters);
+
+    /**
+     * Updates a given stub with respect to the registers it destroys by
+     * {@link #gatherDestroyedCallerRegisters(HotSpotLIRGenerationResult) computing the destroyed
+     * registers} and removing those registers from the {@linkplain SaveRegistersOp SaveRegistersOp}
+     * as these registers are declared as temporaries in the stub's {@linkplain ForeignCallLinkage
+     * linkage} (and thus will be saved by the stub's caller).
      *
      * @param stub the stub to update
-     * @param destroyedRegisters the registers destroyed by the stub
-     * @param calleeSaveInfo a map from debug infos to the operations that provide their
-     *            {@linkplain RegisterSaveLayout callee-save information}
+     * @param gen the HotSpotLIRGenerationResult being emitted
      * @param frameMap used to {@linkplain FrameMap#offsetForStackSlot(StackSlot) convert} a virtual
-     *            slot to a frame slot index
      */
-    protected void updateStub(Stub stub, EconomicSet<Register> destroyedRegisters, EconomicMap<LIRFrameState, SaveRegistersOp> calleeSaveInfo, FrameMap frameMap) {
+    protected void updateStub(Stub stub, HotSpotLIRGenerationResult gen, FrameMap frameMap) {
+        EconomicSet<Register> destroyedRegisters = gatherDestroyedCallerRegisters(gen);
+        EconomicMap<LIRFrameState, SaveRegistersOp> calleeSaveInfo = gen.getCalleeSaveInfo();
+
+        if (stub.getLinkage().needsDebugInfo() && calleeSaveInfo.isEmpty()) {
+            // This call is a safepoint but no register saving was done so we must ensure that all
+            // registers appear to be killed. The Native ABI may allow caller save registers but
+            // for HotSpot they must be described in a RegisterMap so they are accessible.
+            for (Register r : frameMap.getRegisterConfig().getCallerSaveRegisters()) {
+                destroyedRegisters.add(r);
+            }
+        }
+
         stub.initDestroyedCallerRegisters(destroyedRegisters);
 
         MapCursor<LIRFrameState, SaveRegistersOp> cursor = calleeSaveInfo.getEntries();
         while (cursor.advance()) {
             SaveRegistersOp save = cursor.getValue();
-            if (save.supportsRemove()) {
-                save.remove(destroyedRegisters);
-            }
+            save.remove(destroyedRegisters);
             if (cursor.getKey() != LIRFrameState.NO_STATE) {
                 cursor.getKey().debugInfo().setCalleeSaveInfo(save.getMap(frameMap));
             }

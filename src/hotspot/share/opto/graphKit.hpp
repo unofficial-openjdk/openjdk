@@ -386,6 +386,11 @@ class GraphKit : public Phase {
   // Check the null_seen bit.
   bool seems_never_null(Node* obj, ciProfileData* data, bool& speculating);
 
+  void guard_klass_being_initialized(Node* klass);
+  void guard_init_thread(Node* klass);
+
+  void clinit_barrier(ciInstanceKlass* ik, ciMethod* context);
+
   // Check for unique class for receiver at call
   ciKlass* profile_has_unique_klass() {
     ciCallProfile profile = method()->call_profile_at_bci(bci());
@@ -518,27 +523,27 @@ class GraphKit : public Phase {
   Node* make_load(Node* ctl, Node* adr, const Type* t, BasicType bt,
                   MemNode::MemOrd mo, LoadNode::ControlDependency control_dependency = LoadNode::DependsOnlyOnTest,
                   bool require_atomic_access = false, bool unaligned = false,
-                  bool mismatched = false, bool unsafe = false) {
+                  bool mismatched = false, bool unsafe = false, uint8_t barrier_data = 0) {
     // This version computes alias_index from bottom_type
     return make_load(ctl, adr, t, bt, adr->bottom_type()->is_ptr(),
                      mo, control_dependency, require_atomic_access,
-                     unaligned, mismatched, unsafe);
+                     unaligned, mismatched, unsafe, barrier_data);
   }
   Node* make_load(Node* ctl, Node* adr, const Type* t, BasicType bt, const TypePtr* adr_type,
                   MemNode::MemOrd mo, LoadNode::ControlDependency control_dependency = LoadNode::DependsOnlyOnTest,
                   bool require_atomic_access = false, bool unaligned = false,
-                  bool mismatched = false, bool unsafe = false) {
+                  bool mismatched = false, bool unsafe = false, uint8_t barrier_data = 0) {
     // This version computes alias_index from an address type
     assert(adr_type != NULL, "use other make_load factory");
     return make_load(ctl, adr, t, bt, C->get_alias_index(adr_type),
                      mo, control_dependency, require_atomic_access,
-                     unaligned, mismatched, unsafe);
+                     unaligned, mismatched, unsafe, barrier_data);
   }
   // This is the base version which is given an alias index.
   Node* make_load(Node* ctl, Node* adr, const Type* t, BasicType bt, int adr_idx,
                   MemNode::MemOrd mo, LoadNode::ControlDependency control_dependency = LoadNode::DependsOnlyOnTest,
                   bool require_atomic_access = false, bool unaligned = false,
-                  bool mismatched = false, bool unsafe = false);
+                  bool mismatched = false, bool unsafe = false, uint8_t barrier_data = 0);
 
   // Create & transform a StoreNode and store the effect into the
   // parser's memory state.
@@ -560,7 +565,7 @@ class GraphKit : public Phase {
     return store_to_memory(ctl, adr, val, bt,
                            C->get_alias_index(adr_type),
                            mo, require_atomic_access,
-                           unaligned, mismatched);
+                           unaligned, mismatched, unsafe);
   }
   // This is the base version which is given alias index
   // Return the new StoreXNode
@@ -633,8 +638,6 @@ class GraphKit : public Phase {
                              DecoratorSet decorators);
 
   void access_clone(Node* src, Node* dst, Node* size, bool is_array);
-
-  Node* access_resolve(Node* n, DecoratorSet decorators);
 
   // Return addressing for an array element.
   Node* array_element_address(Node* ary, Node* idx, BasicType elembt,
@@ -822,13 +825,7 @@ class GraphKit : public Phase {
   Node* gen_checkcast( Node *subobj, Node* superkls,
                        Node* *failure_control = NULL );
 
-  Node* gen_subtype_check(Node* subklass, Node* superklass) {
-    MergeMemNode* mem = merged_memory();
-    Node* ctrl = control();
-    Node* n = Phase::gen_subtype_check(subklass, superklass, &ctrl, mem, &_gvn);
-    set_control(ctrl);
-    return n;
-  }
+  Node* gen_subtype_check(Node* obj, Node* superklass);
 
   // Exact type check used for predicted calls and casts.
   // Rewrites (*casted_receiver) to be casted to the stronger type.
@@ -881,9 +878,8 @@ class GraphKit : public Phase {
     return iff;
   }
 
-  // Insert a loop predicate into the graph
-  void add_predicate(int nargs = 0);
-  void add_predicate_impl(Deoptimization::DeoptReason reason, int nargs);
+  void add_empty_predicates(int nargs = 0);
+  void add_empty_predicate_impl(Deoptimization::DeoptReason reason, int nargs);
 
   Node* make_constant_from_field(ciField* field, Node* obj);
 };

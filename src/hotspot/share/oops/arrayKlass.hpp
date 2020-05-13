@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
 #ifndef SHARE_OOPS_ARRAYKLASS_HPP
 #define SHARE_OOPS_ARRAYKLASS_HPP
 
-#include "memory/universe.hpp"
 #include "oops/klass.hpp"
 
 class fieldDescriptor;
@@ -105,14 +104,6 @@ class ArrayKlass: public Klass {
 
   virtual void metaspace_pointers_do(MetaspaceClosure* iter);
 
-#if INCLUDE_SERVICES
-  virtual void collect_statistics(KlassSizeStats *sz) const {
-    Klass::collect_statistics(sz);
-    // Do nothing for now, but remember to modify if you add new
-    // stuff to ArrayKlass.
-  }
-#endif
-
   // Iterators
   void array_klasses_do(void f(Klass* k));
   void array_klasses_do(void f(Klass* k, TRAPS), TRAPS);
@@ -130,7 +121,7 @@ class ArrayKlass: public Klass {
   // CDS support - remove and restore oops from metadata. Oops are not shared.
   virtual void remove_unshareable_info();
   virtual void remove_java_mirror();
-  virtual void restore_unshareable_info(ClassLoaderData* loader_data, Handle protection_domain, TRAPS);
+  void restore_unshareable_info(ClassLoaderData* loader_data, Handle protection_domain, TRAPS);
 
   // Printing
   void print_on(outputStream* st) const;

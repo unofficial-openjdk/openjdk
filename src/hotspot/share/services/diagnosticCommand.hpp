@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -376,28 +376,6 @@ public:
   virtual void execute(DCmdSource source, TRAPS);
 };
 
-class ClassStatsDCmd : public DCmdWithParser {
-protected:
-  DCmdArgument<bool> _all;
-  DCmdArgument<bool> _csv;
-  DCmdArgument<bool> _help;
-  DCmdArgument<char*> _columns;
-public:
-  ClassStatsDCmd(outputStream* output, bool heap);
-  static const char* name() {
-    return "GC.class_stats";
-  }
-  static const char* description() {
-    return "Provide statistics about Java class meta data.";
-  }
-  static const char* impact() {
-    return "High: Depends on Java heap size and content.";
-  }
-  static int num_arguments();
-  virtual void execute(DCmdSource source, TRAPS);
-};
-
-
 class ClassHierarchyDCmd : public DCmdWithParser {
 protected:
   DCmdArgument<bool> _print_interfaces; // true if inherited interfaces should be printed.
@@ -645,7 +623,7 @@ public:
 class CodeHeapAnalyticsDCmd : public DCmdWithParser {
 protected:
   DCmdArgument<char*> _function;
-  DCmdArgument<char*> _granularity;
+  DCmdArgument<jlong> _granularity;
 public:
   CodeHeapAnalyticsDCmd(outputStream* output, bool heap);
   static const char* name() {
@@ -880,12 +858,36 @@ public:
     return "High: Switches the VM into Java debug mode.";
   }
   static const JavaPermission permission() {
-    JavaPermission p = { "java.lang.management.ManagementPermission", "monitor", NULL };
+    JavaPermission p = { "java.lang.management.ManagementPermission", "control", NULL };
     return p;
   }
   static int num_arguments() { return 0; }
   virtual void execute(DCmdSource source, TRAPS);
 };
 #endif // INCLUDE_JVMTI
+
+class EventLogDCmd : public DCmdWithParser {
+protected:
+  DCmdArgument<char*> _log;
+  DCmdArgument<char*> _max;
+public:
+  EventLogDCmd(outputStream* output, bool heap);
+  static const char* name() {
+    return "VM.events";
+  }
+  static const char* description() {
+    return "Print VM event logs";
+  }
+  static const char* impact() {
+    return "Low: Depends on event log size. ";
+  }
+  static const JavaPermission permission() {
+    JavaPermission p = {"java.lang.management.ManagementPermission",
+                        "monitor", NULL};
+    return p;
+  }
+  static int num_arguments();
+  virtual void execute(DCmdSource source, TRAPS);
+};
 
 #endif // SHARE_SERVICES_DIAGNOSTICCOMMAND_HPP

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2013, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -32,12 +33,9 @@
 //   - VM_ShenandoahInitMark: initiate concurrent marking
 //   - VM_ShenandoahReferenceOperation:
 //       - VM_ShenandoahFinalMarkStartEvac: finish up concurrent marking, and start evacuation
-//       - VM_ShenandoahFinalEvac: finish concurrent evacuation
 //       - VM_ShenandoahInitUpdateRefs: initiate update references
 //       - VM_ShenandoahFinalUpdateRefs: finish up update references
 //       - VM_ShenandoahFullGC: do full GC
-//       - VM_ShenandoahInitTraversalGC: init traversal GC
-//       - VM_ShenandoahFinalTraversalGC: finish traversal GC
 
 class VM_ShenandoahOperation : public VM_Operation {
 protected:
@@ -69,14 +67,6 @@ public:
   virtual  void doit();
 };
 
-class VM_ShenandoahFinalEvac: public VM_ShenandoahOperation {
-public:
-  VM_ShenandoahFinalEvac() : VM_ShenandoahOperation() {};
-  VM_Operation::VMOp_Type type() const { return VMOp_ShenandoahFinalEvac; }
-  const char* name()             const { return "Shenandoah Final Evacuation"; }
-  virtual  void doit();
-};
-
 class VM_ShenandoahDegeneratedGC: public VM_ShenandoahReferenceOperation {
 private:
   // Really the ShenandoahHeap::ShenandoahDegenerationPoint, but casted to int here
@@ -96,22 +86,6 @@ public:
   VM_ShenandoahFullGC(GCCause::Cause gc_cause) : VM_ShenandoahReferenceOperation(), _gc_cause(gc_cause) {};
   VM_Operation::VMOp_Type type() const { return VMOp_ShenandoahFullGC; }
   const char* name()             const { return "Shenandoah Full GC"; }
-  virtual void doit();
-};
-
-class VM_ShenandoahInitTraversalGC: public VM_ShenandoahOperation {
-public:
-  VM_ShenandoahInitTraversalGC() : VM_ShenandoahOperation() {};
-  VM_Operation::VMOp_Type type() const { return VMOp_ShenandoahInitTraversalGC; }
-  const char* name()             const { return "Shenandoah Init Traversal Collection"; }
-  virtual void doit();
-};
-
-class VM_ShenandoahFinalTraversalGC: public VM_ShenandoahReferenceOperation {
-public:
-  VM_ShenandoahFinalTraversalGC() : VM_ShenandoahReferenceOperation() {};
-  VM_Operation::VMOp_Type type() const { return VMOp_ShenandoahFinalTraversalGC; }
-  const char* name()             const { return "Shenandoah Final Traversal Collection"; }
   virtual void doit();
 };
 

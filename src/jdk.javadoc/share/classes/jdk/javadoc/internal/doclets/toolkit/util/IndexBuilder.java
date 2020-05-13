@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,81 +26,75 @@
 package jdk.javadoc.internal.doclets.toolkit.util;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 
-import jdk.javadoc.doclet.DocletEnvironment;
+import jdk.javadoc.internal.doclets.formats.html.SearchIndexItem;
 import jdk.javadoc.internal.doclets.toolkit.BaseConfiguration;
 import jdk.javadoc.internal.doclets.toolkit.Messages;
 
 import static jdk.javadoc.internal.doclets.toolkit.util.VisibleMemberTable.Kind.*;
 
 /**
- * Build the mapping of each Unicode character with it's member lists
- * containing members names starting with it. Also build a list for all the
- * Unicode characters which start a member name. Member name is
- * classkind or field or method or constructor name.
+ *  An alphabetical index of {@link Element elements}.
  *
  *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @see java.lang.Character
- * @author Atul M Dambalkar
  */
 public class IndexBuilder {
 
     /**
-     * Mapping of each Unicode Character with the member list containing
-     * members with names starting with it.
+     * Sets of elements keyed by the first character of the names of the
+     * elements in those sets.
      */
-    private final Map<Character, SortedSet<Element>> indexmap;
+    private final Map<Character, SortedSet<IndexItem>> indexMap;
 
     /**
      * Don't generate deprecated information if true.
      */
-    private boolean noDeprecated;
+    private final boolean noDeprecated;
 
     /**
-     * Build this Index only for classes?
+     * Build this index only for classes?
      */
-    private boolean classesOnly;
-
-    /**
-     * Indicates javafx mode.
-     */
-    private boolean javafx;
+    private final boolean classesOnly;
 
     private final BaseConfiguration configuration;
     private final Utils utils;
-    private final Comparator<Element> comparator;
+    private final Comparator<IndexItem> comparator;
 
     /**
-     * Constructor. Build the index map.
+     * Creates a new {@code IndexBuilder}.
      *
-     * @param configuration the current configuration of the doclet.
+     * @param configuration the current configuration of the doclet
      * @param noDeprecated  true if -nodeprecated option is used,
-     *                      false otherwise.
+     *                      false otherwise
      */
-    public IndexBuilder(BaseConfiguration configuration, boolean noDeprecated) {
+    public IndexBuilder(BaseConfiguration configuration,
+                        boolean noDeprecated)
+    {
         this(configuration, noDeprecated, false);
     }
 
     /**
-     * Constructor. Build the index map.
+     * Creates a new {@code IndexBuilder}.
      *
-     * @param configuration the current configuration of the doclet.
+     * @param configuration the current configuration of the doclet
      * @param noDeprecated  true if -nodeprecated option is used,
-     *                      false otherwise.
-     * @param classesOnly   Include only classes in index.
+     *                      false otherwise
+     * @param classesOnly   include only classes in index
      */
-    public IndexBuilder(BaseConfiguration configuration, boolean noDeprecated,
-                        boolean classesOnly) {
-        this.configuration  = configuration;
+    public IndexBuilder(BaseConfiguration configuration,
+                        boolean noDeprecated,
+                        boolean classesOnly)
+    {
+        this.configuration = configuration;
         this.utils = configuration.utils;
 
         Messages messages = configuration.getMessages();
@@ -112,156 +106,178 @@ public class IndexBuilder {
 
         this.noDeprecated = noDeprecated;
         this.classesOnly = classesOnly;
-        this.javafx = configuration.javafx;
-        this.indexmap = new TreeMap<>();
-        comparator = classesOnly
-                ? utils.makeAllClassesComparator()
-                : utils.makeIndexUseComparator();
-        buildIndexMap(configuration.docEnv);
+        this.indexMap = new TreeMap<>();
+        comparator = utils.comparators.makeIndexComparator(classesOnly);
+        buildIndex();
     }
 
     /**
-     * Get all the members in all the Packages and all the Classes
-     * given on the command line. Form separate list of those members depending
-     * upon their names.
-     *
-     * @param docEnv the doclet environment
+     * Indexes all the members in all the packages and all the classes.
      */
-    protected void buildIndexMap(DocletEnvironment docEnv)  {
-        Set<PackageElement> packages = configuration.getSpecifiedPackageElements();
+    private void buildIndex()  {
         Set<TypeElement> classes = configuration.getIncludedTypeElements();
-        if (!classesOnly) {
-            if (packages.isEmpty()) {
-                Set<PackageElement> set = new HashSet<>();
-                for (TypeElement aClass : classes) {
-                    PackageElement pkg = utils.containingPackage(aClass);
-                    if (pkg != null && !pkg.isUnnamed()) {
-                        set.add(pkg);
-                    }
-                }
-                adjustIndexMap(set);
-            } else {
-                adjustIndexMap(packages);
-            }
+        indexTypeElements(classes);
+        if (classesOnly) {
+            return;
         }
-        adjustIndexMap(classes);
-        if (!classesOnly) {
-            for (TypeElement aClass : classes) {
-                if (shouldAddToIndexMap(aClass)) {
-                    putMembersInIndexMap(aClass);
-                }
-            }
-            if (configuration.showModules) {
-                addModulesToIndexMap();
-            }
+        Set<PackageElement> packages = configuration.getSpecifiedPackageElements();
+        if (packages.isEmpty()) {
+            packages = classes
+                    .stream()
+                    .map(utils::containingPackage)
+                    .filter(_package -> _package != null && !_package.isUnnamed())
+                    .collect(Collectors.toSet());
+        }
+        packages.forEach(this::indexPackage);
+        classes.stream()
+               .filter(this::shouldIndex)
+               .forEach(this::indexMembers);
+
+        if (configuration.showModules) {
+            indexModules();
         }
     }
 
     /**
-     * Put all the members(fields, methods and constructors) in the te
-     * to the indexmap.
+     * Indexes all the members (fields, methods, constructors, etc.) of the
+     * provided type element.
      *
-     * @param te TypeElement whose members will be added to the indexmap.
+     * @param te TypeElement whose members are to be indexed
      */
-    protected void putMembersInIndexMap(TypeElement te) {
+    private void indexMembers(TypeElement te) {
         VisibleMemberTable vmt = configuration.getVisibleMemberTable(te);
-        adjustIndexMap(vmt.getMembers(ANNOTATION_TYPE_FIELDS));
-        adjustIndexMap(vmt.getMembers(FIELDS));
-        adjustIndexMap(vmt.getMembers(METHODS));
-        adjustIndexMap(vmt.getMembers(CONSTRUCTORS));
-        adjustIndexMap(vmt.getMembers(ENUM_CONSTANTS));
+        indexElements(vmt.getVisibleMembers(FIELDS), te);
+        indexElements(vmt.getVisibleMembers(ANNOTATION_TYPE_MEMBER_OPTIONAL), te);
+        indexElements(vmt.getVisibleMembers(ANNOTATION_TYPE_MEMBER_REQUIRED), te);
+        indexElements(vmt.getVisibleMembers(METHODS), te);
+        indexElements(vmt.getVisibleMembers(CONSTRUCTORS), te);
+        indexElements(vmt.getVisibleMembers(ENUM_CONSTANTS), te);
     }
 
-
     /**
-     * Adjust list of members according to their names. Check the first
-     * character in a member name, and then add the member to a list of members
-     * for that particular unicode character.
+     * Indexes the provided elements.
      *
-     * @param elements Array of members.
+     * @param elements a collection of elements
      */
-    protected void adjustIndexMap(Iterable<? extends Element> elements) {
+    private void indexElements(Iterable<? extends Element> elements, TypeElement typeElement) {
         for (Element element : elements) {
-            if (shouldAddToIndexMap(element)) {
-                String name = utils.isPackage(element)
-                        ? utils.getPackageName((PackageElement)element)
-                        : utils.getSimpleName(element);
-                char ch = (name.length() == 0) ?
-                          '*' :
-                          Character.toUpperCase(name.charAt(0));
-                Character unicode = ch;
-                SortedSet<Element> list = indexmap.computeIfAbsent(unicode,
-                        c -> new TreeSet<>(comparator));
-                list.add(element);
+            if (shouldIndex(element)) {
+                String name = utils.getSimpleName(element);
+                Character ch = keyCharacter(name);
+                SortedSet<IndexItem> set = indexMap.computeIfAbsent(ch, c -> new TreeSet<>(comparator));
+                set.add(new IndexItem(element, typeElement, configuration.utils));
             }
         }
     }
 
     /**
-     * Add all the modules to index map.
+     * Index the given type elements.
+     *
+     * @param elements type elements
      */
-    protected void addModulesToIndexMap() {
-        for (ModuleElement mdle : configuration.modules) {
-            String mdleName = mdle.getQualifiedName().toString();
-            char ch = (mdleName.length() == 0)
-                    ? '*'
-                    : Character.toUpperCase(mdleName.charAt(0));
-            Character unicode = ch;
-            SortedSet<Element> list = indexmap.computeIfAbsent(unicode,
-                    c -> new TreeSet<>(comparator));
-            list.add(mdle);
+    private void indexTypeElements(Iterable<TypeElement> elements) {
+        for (TypeElement typeElement : elements) {
+            if (shouldIndex(typeElement)) {
+                String name = utils.getSimpleName(typeElement);
+                Character ch = keyCharacter(name);
+                SortedSet<IndexItem> set = indexMap.computeIfAbsent(ch, c -> new TreeSet<>(comparator));
+                set.add(new IndexItem(typeElement, configuration.utils));
+            }
+        }
+    }
+
+    private static Character keyCharacter(String s) {
+        return s.isEmpty() ? '*' : Character.toUpperCase(s.charAt(0));
+    }
+
+    /**
+     * Indexes all the modules.
+     */
+    private void indexModules() {
+        for (ModuleElement m : configuration.modules) {
+            Character ch = keyCharacter(m.getQualifiedName().toString());
+            SortedSet<IndexItem> set = indexMap.computeIfAbsent(ch, c -> new TreeSet<>(comparator));
+            set.add(new IndexItem(m, configuration.utils));
         }
     }
 
     /**
-     * Should this element be added to the index map?
+     * Index the given package element.
+     *
+     * @param packageElement the package element
      */
-    protected boolean shouldAddToIndexMap(Element element) {
+    private void indexPackage(PackageElement packageElement) {
+        if (shouldIndex(packageElement)) {
+            Character ch = keyCharacter(utils.getPackageName(packageElement));
+            SortedSet<IndexItem> set = indexMap.computeIfAbsent(ch, c -> new TreeSet<>(comparator));
+            set.add(new IndexItem(packageElement, configuration.utils));
+        }
+    }
+
+    /**
+     * Should this element be added to the index?
+     */
+    private boolean shouldIndex(Element element) {
         if (utils.hasHiddenTag(element)) {
             return false;
         }
 
-        if (utils.isPackage(element))
+        if (utils.isPackage(element)) {
             // Do not add to index map if -nodeprecated option is set and the
             // package is marked as deprecated.
             return !(noDeprecated && configuration.utils.isDeprecated(element));
-        else
+        } else {
             // Do not add to index map if -nodeprecated option is set and if the
             // element is marked as deprecated or the containing package is marked as
             // deprecated.
             return !(noDeprecated &&
                     (configuration.utils.isDeprecated(element) ||
                     configuration.utils.isDeprecated(utils.containingPackage(element))));
+        }
     }
 
     /**
-     * Return a map of all the individual member lists with Unicode character.
+     * Returns a map representation of this index.
      *
-     * @return Map index map.
+     * @return map
      */
-    public Map<Character, SortedSet<Element>> getIndexMap() {
-        return indexmap;
+    public Map<Character, SortedSet<IndexItem>> asMap() {
+        return indexMap;
     }
 
     /**
-     * Return the sorted list of members, for passed Unicode Character.
+     * Returns a sorted list of elements whose names start with the
+     * provided character.
      *
-     * @param index index Unicode character.
-     * @return List member list for specific Unicode character.
+     * @param key index key
+     * @return list of elements keyed by the provided character
      */
-    public List<? extends Element> getMemberList(Character index) {
-        SortedSet<Element> set = indexmap.get(index);
-        if (set == null)
+    public List<IndexItem> getMemberList(Character key) {
+        SortedSet<IndexItem> set = indexMap.get(key);
+        if (set == null) {
             return null;
-        List<Element> out = new ArrayList<>();
-        out.addAll(set);
-        return out;
+        }
+        return new ArrayList<>(set);
     }
 
     /**
-     * Array of IndexMap keys, Unicode characters.
+     * Returns a list of index keys.
      */
-    public List<Character> index() {
-        return new ArrayList<>(indexmap.keySet());
+    public List<Character> keys() {
+        return new ArrayList<>(indexMap.keySet());
     }
+
+    /**
+     * Add search tags for the key {@code key}.
+     *
+     * @param key the index key
+     * @param searchTags the search tags
+     */
+    public void addSearchTags(char key, List<SearchIndexItem> searchTags) {
+        searchTags.forEach(searchTag -> {
+            SortedSet<IndexItem> set = indexMap.computeIfAbsent(key, c -> new TreeSet<>(comparator));
+            set.add(new IndexItem(searchTag));
+        });
+    }
+
 }

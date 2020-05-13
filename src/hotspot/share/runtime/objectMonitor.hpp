@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 
 #include "memory/allocation.hpp"
 #include "memory/padded.hpp"
+#include "oops/markWord.hpp"
 #include "runtime/os.hpp"
 #include "runtime/park.hpp"
 #include "runtime/perfData.hpp"
@@ -42,15 +43,13 @@ class ObjectMonitor;
 class ObjectWaiter : public StackObj {
  public:
   enum TStates { TS_UNDEF, TS_READY, TS_RUN, TS_WAIT, TS_ENTER, TS_CXQ };
-  enum Sorted  { PREPEND, APPEND, SORTED };
-  ObjectWaiter * volatile _next;
-  ObjectWaiter * volatile _prev;
+  ObjectWaiter* volatile _next;
+  ObjectWaiter* volatile _prev;
   Thread*       _thread;
   jlong         _notifier_tid;
   ParkEvent *   _event;
   volatile int  _notified;
   volatile TStates TState;
-  Sorted        _Sorted;           // List placement disposition
   bool          _active;           // Contention monitoring is enabled
  public:
   ObjectWaiter(Thread* thread);
@@ -67,14 +66,10 @@ class ObjectWaiter : public StackObj {
 // WARNING: This is a very sensitive and fragile class. DO NOT make any
 // changes unless you are fully aware of the underlying semantics.
 //
-// Class JvmtiRawMonitor currently inherits from ObjectMonitor so
-// changes in this class must be careful to not break JvmtiRawMonitor.
-// These two subsystems should be separated.
-//
 // ObjectMonitor Layout Overview/Highlights/Restrictions:
 //
 // - The _header field must be at offset 0 because the displaced header
-//   from markOop is stored there. We do not want markOop.hpp to include
+//   from markWord is stored there. We do not want markWord.hpp to include
 //   ObjectMonitor.hpp to avoid exposing ObjectMonitor everywhere. This
 //   means that ObjectMonitor cannot inherit from any other class nor can
 //   it use any virtual member functions. This restriction is critical to
@@ -125,49 +120,55 @@ class ObjectWaiter : public StackObj {
 //     intptr_t. There's no reason to use a 64-bit type for this field
 //     in a 64-bit JVM.
 
-class ObjectMonitor {
- public:
-  enum {
-    OM_OK,                    // no error
-    OM_SYSTEM_ERROR,          // operating system error
-    OM_ILLEGAL_MONITOR_STATE, // IllegalMonitorStateException
-    OM_INTERRUPTED,           // Thread.interrupt()
-    OM_TIMED_OUT              // Object.wait() timed out
-  };
+#ifndef OM_CACHE_LINE_SIZE
+// Use DEFAULT_CACHE_LINE_SIZE if not already specified for
+// the current build platform.
+#define OM_CACHE_LINE_SIZE DEFAULT_CACHE_LINE_SIZE
+#endif
 
- private:
+class ObjectMonitor {
   friend class ObjectSynchronizer;
   friend class ObjectWaiter;
   friend class VMStructs;
+  JVMCI_ONLY(friend class JVMCIVMStructs;)
 
-  volatile markOop   _header;       // displaced object header word - mark
-  void*     volatile _object;       // backward object pointer - strong root
- public:
-  ObjectMonitor*     FreeNext;      // Free list linkage
+  // The sync code expects the header field to be at offset zero (0).
+  // Enforced by the assert() in header_addr().
+  volatile markWord _header;        // displaced object header word - mark
+  void* volatile _object;           // backward object pointer - strong root
  private:
-  DEFINE_PAD_MINUS_SIZE(0, DEFAULT_CACHE_LINE_SIZE,
-                        sizeof(volatile markOop) + sizeof(void * volatile) +
-                        sizeof(ObjectMonitor *));
- protected:                         // protected for JvmtiRawMonitor
-  void *  volatile _owner;          // pointer to owning thread OR BasicLock
+  // Separate _header and _owner on different cache lines since both can
+  // have busy multi-threaded access. _header and _object are set at
+  // initial inflation and _object doesn't change until deflation so
+  // _object is a good choice to share the cache line with _header.
+  DEFINE_PAD_MINUS_SIZE(0, OM_CACHE_LINE_SIZE,
+                        sizeof(volatile markWord) + sizeof(void* volatile));
+  void* volatile _owner;            // pointer to owning thread OR BasicLock
   volatile jlong _previous_owner_tid;  // thread id of the previous owner of the monitor
-  volatile intptr_t  _recursions;   // recursion count, 0 for first entry
-  ObjectWaiter * volatile _EntryList; // Threads blocked on entry or reentry.
+  // Separate _owner and _next_om on different cache lines since
+  // both can have busy multi-threaded access. _previous_owner_tid is only
+  // changed by ObjectMonitor::exit() so it is a good choice to share the
+  // cache line with _owner.
+  DEFINE_PAD_MINUS_SIZE(1, OM_CACHE_LINE_SIZE, sizeof(void* volatile) +
+                        sizeof(volatile jlong));
+  ObjectMonitor* _next_om;          // Next ObjectMonitor* linkage
+  volatile intx _recursions;        // recursion count, 0 for first entry
+  ObjectWaiter* volatile _EntryList;  // Threads blocked on entry or reentry.
                                       // The list is actually composed of WaitNodes,
                                       // acting as proxies for Threads.
- private:
-  ObjectWaiter * volatile _cxq;     // LL of recently-arrived threads blocked on entry.
-  Thread * volatile _succ;          // Heir presumptive thread - used for futile wakeup throttling
-  Thread * volatile _Responsible;
+
+  ObjectWaiter* volatile _cxq;      // LL of recently-arrived threads blocked on entry.
+  Thread* volatile _succ;           // Heir presumptive thread - used for futile wakeup throttling
+  Thread* volatile _Responsible;
 
   volatile int _Spinner;            // for exit->spinner handoff optimization
   volatile int _SpinDuration;
 
-  volatile jint  _count;            // reference count to prevent reclamation/deflation
-                                    // at stop-the-world time. See ObjectSynchronizer::deflate_monitor().
-                                    // _count is approximately |_WaitSet| + |_EntryList|
+  volatile jint  _contentions;      // Number of active contentions in enter(). It is used by is_busy()
+                                    // along with other fields to determine if an ObjectMonitor can be
+                                    // deflated. See ObjectSynchronizer::deflate_monitor().
  protected:
-  ObjectWaiter * volatile _WaitSet; // LL of threads wait()ing on the monitor
+  ObjectWaiter* volatile _WaitSet;  // LL of threads wait()ing on the monitor
   volatile jint  _waiters;          // number of waiting threads
  private:
   volatile int _WaitSetLock;        // protects Wait Queue - simple spinlock
@@ -200,20 +201,19 @@ class ObjectMonitor {
   void* operator new (size_t size) throw();
   void* operator new[] (size_t size) throw();
   void operator delete(void* p);
-  void operator delete[] (void *p);
+  void operator delete[] (void* p);
 
   // TODO-FIXME: the "offset" routines should return a type of off_t instead of int ...
   // ByteSize would also be an appropriate type.
   static int header_offset_in_bytes()      { return offset_of(ObjectMonitor, _header); }
   static int object_offset_in_bytes()      { return offset_of(ObjectMonitor, _object); }
   static int owner_offset_in_bytes()       { return offset_of(ObjectMonitor, _owner); }
-  static int count_offset_in_bytes()       { return offset_of(ObjectMonitor, _count); }
   static int recursions_offset_in_bytes()  { return offset_of(ObjectMonitor, _recursions); }
   static int cxq_offset_in_bytes()         { return offset_of(ObjectMonitor, _cxq); }
   static int succ_offset_in_bytes()        { return offset_of(ObjectMonitor, _succ); }
   static int EntryList_offset_in_bytes()   { return offset_of(ObjectMonitor, _EntryList); }
 
-  // ObjectMonitor references can be ORed with markOopDesc::monitor_value
+  // ObjectMonitor references can be ORed with markWord::monitor_value
   // as part of the ObjectMonitor tagging mechanism. When we combine an
   // ObjectMonitor reference with an offset, we need to remove the tag
   // value in order to generate the proper address.
@@ -225,30 +225,44 @@ class ObjectMonitor {
   // to the ObjectMonitor reference manipulation code:
   //
   #define OM_OFFSET_NO_MONITOR_VALUE_TAG(f) \
-    ((ObjectMonitor::f ## _offset_in_bytes()) - markOopDesc::monitor_value)
+    ((ObjectMonitor::f ## _offset_in_bytes()) - markWord::monitor_value)
 
-  markOop   header() const;
-  volatile markOop* header_addr();
-  void      set_header(markOop hdr);
+  markWord           header() const;
+  volatile markWord* header_addr();
+  void               set_header(markWord hdr);
 
   intptr_t is_busy() const {
-    // TODO-FIXME: merge _count and _waiters.
     // TODO-FIXME: assert _owner == null implies _recursions = 0
-    // TODO-FIXME: assert _WaitSet != null implies _count > 0
-    return _count|_waiters|intptr_t(_owner)|intptr_t(_cxq)|intptr_t(_EntryList);
+    return _contentions|_waiters|intptr_t(_owner)|intptr_t(_cxq)|intptr_t(_EntryList);
   }
+  const char* is_busy_to_string(stringStream* ss);
 
   intptr_t  is_entered(Thread* current) const;
 
   void*     owner() const;
-  void      set_owner(void* owner);
+  // Clear _owner field; current value must match old_value.
+  void      release_clear_owner(void* old_value);
+  // Simply set _owner field to new_value; current value must match old_value.
+  void      set_owner_from(void* old_value, void* new_value);
+  // Simply set _owner field to self; current value must match basic_lock_p.
+  void      set_owner_from_BasicLock(void* basic_lock_p, Thread* self);
+  // Try to set _owner field to new_value if the current value matches
+  // old_value, using Atomic::cmpxchg(). Otherwise, does not change the
+  // _owner field. Returns the prior value of the _owner field.
+  void*     try_set_owner_from(void* old_value, void* new_value);
+
+  ObjectMonitor* next_om() const;
+  // Simply set _next_om field to new_value.
+  void set_next_om(ObjectMonitor* new_value);
+  // Try to set _next_om field to new_value if the current value matches
+  // old_value, using Atomic::cmpxchg(). Otherwise, does not change the
+  // _next_om field. Returns the prior value of the _next_om field.
+  ObjectMonitor* try_set_next_om(ObjectMonitor* old_value, ObjectMonitor* new_value);
 
   jint      waiters() const;
 
-  jint      count() const;
-  void      set_count(jint count);
   jint      contentions() const;
-  intptr_t  recursions() const                                         { return _recursions; }
+  intx      recursions() const                                         { return _recursions; }
 
   // JVM/TI GetObjectMonitorUsage() needs this:
   ObjectWaiter* first_waiter()                                         { return _WaitSet; }
@@ -258,21 +272,23 @@ class ObjectMonitor {
  protected:
   // We don't typically expect or want the ctors or dtors to run.
   // normal ObjectMonitors are type-stable and immortal.
-  ObjectMonitor() { ::memset((void *)this, 0, sizeof(*this)); }
+  ObjectMonitor() { ::memset((void*)this, 0, sizeof(*this)); }
 
   ~ObjectMonitor() {
     // TODO: Add asserts ...
     // _cxq == 0 _succ == NULL _owner == NULL _waiters == 0
-    // _count == 0 _EntryList  == NULL etc
+    // _contentions == 0 _EntryList  == NULL etc
   }
 
  private:
   void Recycle() {
     // TODO: add stronger asserts ...
     // _cxq == 0 _succ == NULL _owner == NULL _waiters == 0
-    // _count == 0 EntryList  == NULL
+    // _contentions == 0 EntryList  == NULL
     // _recursions == 0 _WaitSet == NULL
-    assert(((is_busy()|_recursions) == 0), "freeing inuse monitor");
+    DEBUG_ONLY(stringStream ss;)
+    assert((is_busy() | _recursions) == 0, "freeing in-use monitor: %s, "
+           "recursions=" INTX_FORMAT, is_busy_to_string(&ss), _recursions);
     _succ          = NULL;
     _EntryList     = NULL;
     _cxq           = NULL;
@@ -286,8 +302,9 @@ class ObjectMonitor {
   void*     object_addr();
   void      set_object(void* obj);
 
-  bool      check(TRAPS);       // true if the thread owns the monitor.
-  void      check_slow(TRAPS);
+  // Returns true if the specified thread owns the ObjectMonitor. Otherwise
+  // returns false and throws IllegalMonitorStateException (IMSE).
+  bool      check_owner(Thread* THREAD);
   void      clear();
 
   void      enter(TRAPS);
@@ -296,23 +313,29 @@ class ObjectMonitor {
   void      notify(TRAPS);
   void      notifyAll(TRAPS);
 
+  void      print() const;
+#ifdef ASSERT
+  void      print_debug_style_on(outputStream* st) const;
+#endif
+  void      print_on(outputStream* st) const;
+
 // Use the following at your own risk
-  intptr_t  complete_exit(TRAPS);
-  void      reenter(intptr_t recursions, TRAPS);
+  intx      complete_exit(TRAPS);
+  void      reenter(intx recursions, TRAPS);
 
  private:
-  void      AddWaiter(ObjectWaiter * waiter);
-  void      INotify(Thread * Self);
-  ObjectWaiter * DequeueWaiter();
-  void      DequeueSpecificWaiter(ObjectWaiter * waiter);
+  void      AddWaiter(ObjectWaiter* waiter);
+  void      INotify(Thread* self);
+  ObjectWaiter* DequeueWaiter();
+  void      DequeueSpecificWaiter(ObjectWaiter* waiter);
   void      EnterI(TRAPS);
-  void      ReenterI(Thread * Self, ObjectWaiter * SelfNode);
-  void      UnlinkAfterAcquire(Thread * Self, ObjectWaiter * SelfNode);
-  int       TryLock(Thread * Self);
-  int       NotRunnable(Thread * Self, Thread * Owner);
-  int       TrySpin(Thread * Self);
-  void      ExitEpilog(Thread * Self, ObjectWaiter * Wakee);
-  bool      ExitSuspendEquivalent(JavaThread * Self);
+  void      ReenterI(Thread* self, ObjectWaiter* self_node);
+  void      UnlinkAfterAcquire(Thread* self, ObjectWaiter* self_node);
+  int       TryLock(Thread* self);
+  int       NotRunnable(Thread* self, Thread * Owner);
+  int       TrySpin(Thread* self);
+  void      ExitEpilog(Thread* self, ObjectWaiter* Wakee);
+  bool      ExitSuspendEquivalent(JavaThread* self);
 };
 
 #endif // SHARE_RUNTIME_OBJECTMONITOR_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import static java.util.FormattableFlags.LEFT_JUSTIFY;
 import static java.util.FormattableFlags.UPPERCASE;
 import static org.graalvm.compiler.debug.DebugOptions.Count;
 import static org.graalvm.compiler.debug.DebugOptions.Counters;
+import static org.graalvm.compiler.debug.DebugOptions.DisableIntercept;
 import static org.graalvm.compiler.debug.DebugOptions.Dump;
 import static org.graalvm.compiler.debug.DebugOptions.DumpOnError;
 import static org.graalvm.compiler.debug.DebugOptions.DumpOnPhaseChange;
@@ -53,6 +54,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Formatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -239,15 +241,9 @@ public final class DebugContext implements AutoCloseable {
             this.unscopedTimers = parseUnscopedMetricSpec(Timers.getValue(options), "".equals(timeValue), true);
             this.unscopedMemUseTrackers = parseUnscopedMetricSpec(MemUseTrackers.getValue(options), "".equals(trackMemUseValue), true);
 
-            if (unscopedTimers != null || timeValue != null) {
-                if (!GraalServices.isCurrentThreadCpuTimeSupported()) {
-                    throw new IllegalArgumentException("Time and Timers options require VM support for querying CPU time");
-                }
-            }
-
             if (unscopedMemUseTrackers != null || trackMemUseValue != null) {
                 if (!GraalServices.isThreadAllocatedMemorySupported()) {
-                    throw new IllegalArgumentException("MemUseTrackers and TrackMemUse options require VM support for querying thread allocated memory");
+                    TTY.println("WARNING: Missing VM support for MemUseTrackers and TrackMemUse options so all reported memory usage will be 0");
                 }
             }
 
@@ -317,9 +313,19 @@ public final class DebugContext implements AutoCloseable {
     }
 
     /**
-     * Shared object used to represent a disabled debug context.
+     * Singleton used to represent a disabled debug context.
      */
-    public static final DebugContext DISABLED = new DebugContext(NO_DESCRIPTION, NO_GLOBAL_METRIC_VALUES, DEFAULT_LOG_STREAM, new Immutable(), NO_CONFIG_CUSTOMIZERS);
+    private static final DebugContext DISABLED = new DebugContext(NO_DESCRIPTION, NO_GLOBAL_METRIC_VALUES, DEFAULT_LOG_STREAM, new Immutable(), NO_CONFIG_CUSTOMIZERS);
+
+    /**
+     * Create a DebugContext with debugging disabled.
+     */
+    public static DebugContext disabled(OptionValues options) {
+        if (options == null || options.getMap().isEmpty()) {
+            return DISABLED;
+        }
+        return new DebugContext(NO_DESCRIPTION, NO_GLOBAL_METRIC_VALUES, DEFAULT_LOG_STREAM, Immutable.create(options), NO_CONFIG_CUSTOMIZERS);
+    }
 
     /**
      * Gets the debug context for the current thread. This should only be used when there is no
@@ -442,7 +448,7 @@ public final class DebugContext implements AutoCloseable {
                 }
             }
             currentConfig = new DebugConfigImpl(options, logStream, dumpHandlers, verifyHandlers);
-            currentScope = new ScopeImpl(this, Thread.currentThread());
+            currentScope = new ScopeImpl(this, Thread.currentThread(), DisableIntercept.getValue(options));
             currentScope.updateFlags(currentConfig);
             metricsEnabled = true;
         } else {
@@ -450,11 +456,11 @@ public final class DebugContext implements AutoCloseable {
         }
     }
 
-    public Path getDumpPath(String extension, boolean directory) {
+    public Path getDumpPath(String extension, boolean createMissingDirectory) {
         try {
             String id = description == null ? null : description.identifier;
             String label = description == null ? null : description.getLabel();
-            Path result = PathUtilities.createUnique(immutable.options, DumpPath, id, label, extension, directory);
+            Path result = PathUtilities.createUnique(immutable.options, DumpPath, id, label, extension, createMissingDirectory);
             if (ShowDumpFiles.getValue(immutable.options)) {
                 TTY.println("Dumping debug output to %s", result.toAbsolutePath().toString());
             }
@@ -807,8 +813,9 @@ public final class DebugContext implements AutoCloseable {
                 return true;
             }
             return !currentScope.isTopLevel();
+        } else {
+            return false;
         }
-        return immutable.scopesEnabled && currentScope == null;
     }
 
     class DisabledScope implements DebugContext.Scope {
@@ -1837,23 +1844,46 @@ public final class DebugContext implements AutoCloseable {
     }
 
     /**
+     * Gets the name to use for a class based on whether it appears to be an obfuscated name. The
+     * heuristic for an obfuscated name is that it is less than 6 characters in length and consists
+     * only of lower case letters.
+     */
+    private static String getBaseName(Class<?> c) {
+        String simpleName = c.getSimpleName();
+        if (simpleName.length() < 6) {
+            for (int i = 0; i < simpleName.length(); i++) {
+                if (!Character.isLowerCase(simpleName.charAt(0))) {
+                    return simpleName;
+                }
+            }
+            // Looks like an obfuscated simple class name so use qualified class name
+            return c.getName();
+        }
+        return simpleName;
+    }
+
+    /**
      * There are paths where construction of formatted class names are common and the code below is
      * surprisingly expensive, so compute it once and cache it.
      */
     private static final ClassValue<String> formattedClassName = new ClassValue<String>() {
         @Override
         protected String computeValue(Class<?> c) {
-            final String simpleName = c.getSimpleName();
+            String baseName = getBaseName(c);
+            if (Character.isLowerCase(baseName.charAt(0))) {
+                // Looks like an obfuscated simple class name so use qualified class name
+                baseName = c.getName();
+            }
             Class<?> enclosingClass = c.getEnclosingClass();
             if (enclosingClass != null) {
                 String prefix = "";
                 while (enclosingClass != null) {
-                    prefix = enclosingClass.getSimpleName() + "_" + prefix;
+                    prefix = getBaseName(enclosingClass) + "_" + prefix;
                     enclosingClass = enclosingClass.getEnclosingClass();
                 }
-                return prefix + simpleName;
+                return prefix + baseName;
             } else {
-                return simpleName;
+                return baseName;
             }
         }
     };
@@ -2131,6 +2161,18 @@ public final class DebugContext implements AutoCloseable {
             out.printf("%-" + String.valueOf(maxKeyWidth) + "s = %20s%n", e.getKey(), e.getValue());
         }
         out.println();
+    }
+
+    public Map<MetricKey, Long> getMetricsSnapshot() {
+        Map<MetricKey, Long> res = new HashMap<>();
+        for (MetricKey key : KeyRegistry.getKeys()) {
+            int index = ((AbstractKey) key).getIndex();
+            if (index < metricValues.length && metricValues[index] != 0) {
+                long value = metricValues[index];
+                res.put(key, value);
+            }
+        }
+        return res;
     }
 
     @SuppressWarnings({"unused", "unchecked"})

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,14 +75,14 @@ size_t SpaceManager::get_initial_chunk_size(Metaspace::MetaspaceType type) const
   if (is_class()) {
     switch (type) {
     case Metaspace::BootMetaspaceType:              requested = Metaspace::first_class_chunk_word_size(); break;
-    case Metaspace::UnsafeAnonymousMetaspaceType:   requested = ClassSpecializedChunk; break;
+    case Metaspace::ClassMirrorHolderMetaspaceType: requested = ClassSpecializedChunk; break;
     case Metaspace::ReflectionMetaspaceType:        requested = ClassSpecializedChunk; break;
     default:                                        requested = ClassSmallChunk; break;
     }
   } else {
     switch (type) {
     case Metaspace::BootMetaspaceType:              requested = Metaspace::first_chunk_word_size(); break;
-    case Metaspace::UnsafeAnonymousMetaspaceType:   requested = SpecializedChunk; break;
+    case Metaspace::ClassMirrorHolderMetaspaceType: requested = SpecializedChunk; break;
     case Metaspace::ReflectionMetaspaceType:        requested = SpecializedChunk; break;
     default:                                        requested = SmallChunk; break;
     }
@@ -114,15 +114,15 @@ size_t SpaceManager::calc_chunk_size(size_t word_size) {
   // After that a medium chunk is preferred.
   size_t chunk_word_size;
 
-  // Special case for unsafe anonymous metadata space.
-  // UnsafeAnonymous metadata space is usually small since it is used for
-  // class loader data's whose life cycle is governed by one class such as an
-  // unsafe anonymous class.  The majority within 1K - 2K range and
+  // Special case for hidden metadata space.
+  // ClassMirrorHolder metadata space is usually small since it is used for
+  // class loader data's whose life cycle is governed by one class such as a
+  // non-strong hidden class or unsafe anonymous class.  The majority within 1K - 2K range and
   // rarely about 4K (64-bits JVM).
   // Instead of jumping to SmallChunk after initial chunk exhausted, keeping allocation
   // from SpecializeChunk up to _anon_or_delegating_metadata_specialize_chunk_limit (4)
   // reduces space waste from 60+% to around 30%.
-  if ((_space_type == Metaspace::UnsafeAnonymousMetaspaceType || _space_type == Metaspace::ReflectionMetaspaceType) &&
+  if ((_space_type == Metaspace::ClassMirrorHolderMetaspaceType || _space_type == Metaspace::ReflectionMetaspaceType) &&
       _mdtype == Metaspace::NonClassType &&
       num_chunks_by_type(SpecializedIndex) < anon_and_delegating_metadata_specialize_chunk_limit &&
       word_size + Metachunk::overhead() <= SpecializedChunk) {
@@ -179,7 +179,7 @@ MetaWord* SpaceManager::grow_and_allocate(size_t word_size) {
   assert(current_chunk() == NULL ||
          current_chunk()->allocate(word_size) == NULL,
          "Don't need to expand");
-  MutexLockerEx cl(MetaspaceExpand_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker cl(MetaspaceExpand_lock, Mutex::_no_safepoint_check_flag);
 
   if (log_is_enabled(Trace, gc, metaspace, freelist)) {
     size_t words_left = 0;
@@ -284,10 +284,7 @@ SpaceManager::~SpaceManager() {
   // This call this->_lock which can't be done while holding MetaspaceExpand_lock
   DEBUG_ONLY(verify_metrics());
 
-  MutexLockerEx fcl(MetaspaceExpand_lock,
-                    Mutex::_no_safepoint_check_flag);
-
-  chunk_manager()->slow_locked_verify();
+  MutexLocker fcl(MetaspaceExpand_lock, Mutex::_no_safepoint_check_flag);
 
   account_for_spacemanager_death();
 
@@ -313,7 +310,11 @@ SpaceManager::~SpaceManager() {
   _current_chunk = NULL;
 #endif
 
-  chunk_manager()->slow_locked_verify();
+#ifdef ASSERT
+  EVERY_NTH(VerifyMetaspaceInterval)
+    chunk_manager()->locked_verify(true);
+  END_EVERY_NTH
+#endif
 
   if (_block_freelists != NULL) {
     delete _block_freelists;
@@ -400,12 +401,10 @@ Metachunk* SpaceManager::get_new_chunk(size_t chunk_word_size) {
 }
 
 MetaWord* SpaceManager::allocate(size_t word_size) {
-  MutexLockerEx cl(lock(), Mutex::_no_safepoint_check_flag);
+  MutexLocker cl(lock(), Mutex::_no_safepoint_check_flag);
   size_t raw_word_size = get_allocation_word_size(word_size);
   BlockFreelist* fl =  block_freelists();
   MetaWord* p = NULL;
-
-  DEBUG_ONLY(if (VerifyMetaspace) verify_metrics_locked());
 
   // Allocation from the dictionary is expensive in the sense that
   // the dictionary has to be searched for a size.  Don't allocate
@@ -421,6 +420,12 @@ MetaWord* SpaceManager::allocate(size_t word_size) {
   if (p == NULL) {
     p = allocate_work(raw_word_size);
   }
+
+#ifdef ASSERT
+  EVERY_NTH(VerifyMetaspaceInterval)
+    verify_metrics_locked();
+  END_EVERY_NTH
+#endif
 
   return p;
 }
@@ -492,7 +497,7 @@ void SpaceManager::add_to_statistics_locked(SpaceManagerStatistics* out) const {
 }
 
 void SpaceManager::add_to_statistics(SpaceManagerStatistics* out) const {
-  MutexLockerEx cl(lock(), Mutex::_no_safepoint_check_flag);
+  MutexLocker cl(lock(), Mutex::_no_safepoint_check_flag);
   add_to_statistics_locked(out);
 }
 
@@ -513,7 +518,7 @@ void SpaceManager::verify_metrics_locked() const {
 }
 
 void SpaceManager::verify_metrics() const {
-  MutexLockerEx cl(lock(), Mutex::_no_safepoint_check_flag);
+  MutexLocker cl(lock(), Mutex::_no_safepoint_check_flag);
   verify_metrics_locked();
 }
 #endif // ASSERT

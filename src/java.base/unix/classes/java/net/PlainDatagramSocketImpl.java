@@ -37,48 +37,12 @@ import sun.net.ext.ExtendedSocketOptions;
 
 class PlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
 {
+    PlainDatagramSocketImpl(boolean isMulticast) {
+        super(isMulticast);
+    }
+
     static {
         init();
-    }
-
-    static final ExtendedSocketOptions extendedOptions =
-            ExtendedSocketOptions.getInstance();
-
-    protected <T> void setOption(SocketOption<T> name, T value) throws IOException {
-        if (isClosed()) {
-            throw new SocketException("Socket closed");
-        }
-        if (supportedOptions().contains(name)) {
-            if (extendedOptions.isOptionSupported(name)) {
-                extendedOptions.setOption(fd, name, value);
-            } else {
-                super.setOption(name, value);
-            }
-        } else {
-            throw new UnsupportedOperationException("unsupported option");
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    protected <T> T getOption(SocketOption<T> name) throws IOException {
-        if (isClosed()) {
-            throw new SocketException("Socket closed");
-        }
-        if (supportedOptions().contains(name)) {
-            if (extendedOptions.isOptionSupported(name)) {
-                return (T) extendedOptions.getOption(fd, name);
-            } else {
-                return super.getOption(name);
-            }
-        } else {
-            throw new UnsupportedOperationException("unsupported option");
-        }
-    }
-
-    protected Set<SocketOption<?>> supportedOptions() {
-        HashSet<SocketOption<?>> options = new HashSet<>(super.supportedOptions());
-        options.addAll(ExtendedSocketOptions.datagramSocketOptions());
-        return options;
     }
 
     protected void socketSetOption(int opt, Object val) throws SocketException {
@@ -97,7 +61,7 @@ class PlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
     protected synchronized native void bind0(int lport, InetAddress laddr)
         throws SocketException;
 
-    protected native void send(DatagramPacket p) throws IOException;
+    protected native void send0(DatagramPacket p) throws IOException;
 
     protected synchronized native int peek(InetAddress i) throws IOException;
 

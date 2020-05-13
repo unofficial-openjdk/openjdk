@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 
 package gc.arguments;
 
+import jdk.test.lib.Platform;
 import jdk.test.lib.process.ExitCode;
 import jdk.test.lib.cli.CommandLineOptionTest;
 
@@ -38,7 +39,7 @@ import jdk.test.lib.cli.CommandLineOptionTest;
  *              | vm.opt.IgnoreUnrecognizedVMOptions == "false")
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @run main gc.arguments.TestSurvivorAlignmentInBytesOption
+ * @run driver gc.arguments.TestSurvivorAlignmentInBytesOption
  */
 public class TestSurvivorAlignmentInBytesOption {
     public static void main(String args[]) throws Throwable {
@@ -86,15 +87,18 @@ public class TestSurvivorAlignmentInBytesOption {
         // Verify that if specified SurvivorAlignmentInBytes is lower than
         // ObjectAlignmentInBytes, then the JVM startup will fail with
         // appropriate error message.
-        shouldFailMessage = String.format("JVM startup should fail with "
-                + "'%s' option value lower than ObjectAlignmentInBytes", optionName);
-        CommandLineOptionTest.verifyJVMStartup(
-                new String[]{valueIsTooSmall}, null,
-                shouldFailMessage, shouldFailMessage,
-                ExitCode.FAIL, false,
-                CommandLineOptionTest.prepareBooleanFlag(
-                        unlockExperimentalVMOpts, true),
-                CommandLineOptionTest.prepareNumericFlag(optionName, 2));
+        if (Platform.is64bit()) {
+            shouldFailMessage = String.format("JVM startup should fail with "
+                    + "'%s' option value lower than ObjectAlignmentInBytes", optionName);
+            CommandLineOptionTest.verifyJVMStartup(
+                    new String[]{valueIsTooSmall}, null,
+                    shouldFailMessage, shouldFailMessage,
+                    ExitCode.FAIL, false,
+                    CommandLineOptionTest.prepareBooleanFlag(
+                            unlockExperimentalVMOpts, true),
+                    CommandLineOptionTest.prepareNumericFlag(optionName, 8),
+                    CommandLineOptionTest.prepareNumericFlag("ObjectAlignmentInBytes", 16));
+        }
 
         // Verify that if specified SurvivorAlignmentInBytes value is not
         // a power of 2 then the JVM startup will fail with appropriate error

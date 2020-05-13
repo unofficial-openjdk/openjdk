@@ -74,7 +74,7 @@ import static sun.font.EAttribute.*;
  * and to render sequences of glyphs on {@code Graphics} and
  * {@code Component} objects.
  *
- * <h3>Characters and Glyphs</h3>
+ * <h2>Characters and Glyphs</h2>
  *
  * A <em>character</em> is a symbol that represents an item such as a letter,
  * a digit, or punctuation in an abstract way. For example, {@code 'g'},
@@ -96,7 +96,7 @@ import static sun.font.EAttribute.*;
  * of characters as well as the tables needed to map sequences of characters to
  * corresponding sequences of glyphs.
  *
- * <h3>Physical and Logical Fonts</h3>
+ * <h2>Physical and Logical Fonts</h2>
  *
  * The Java Platform distinguishes between two kinds of fonts:
  * <em>physical</em> fonts and <em>logical</em> fonts.
@@ -135,7 +135,7 @@ import static sun.font.EAttribute.*;
  * in <a href="https://docs.oracle.com/javase/tutorial/index.html">The Java Tutorials</a>
  * document.
  *
- * <h3>Font Faces and Names</h3>
+ * <h2>Font Faces and Names</h2>
  *
  * A {@code Font}
  * can have many faces, such as heavy, medium, oblique, gothic and
@@ -169,7 +169,7 @@ import static sun.font.EAttribute.*;
  * with varying sizes, styles, transforms and font features via the
  * {@code deriveFont} methods in this class.
  *
- * <h3>Font and TextAttribute</h3>
+ * <h2>Font and TextAttribute</h2>
  *
  * <p>{@code Font} supports most
  * {@code TextAttribute}s.  This makes some operations, such as
@@ -1929,6 +1929,7 @@ public class Font implements java.io.Serializable
         // value is the default.
 
         if (fRequestedAttributes != null) {
+            try {
             values = getAttributeValues(); // init
             AttributeValues extras =
                 AttributeValues.fromSerializableHashtable(fRequestedAttributes);
@@ -1938,9 +1939,12 @@ public class Font implements java.io.Serializable
             values = getAttributeValues().merge(extras);
             this.nonIdentityTx = values.anyNonDefault(EXTRA_MASK);
             this.hasLayoutAttributes =  values.anyNonDefault(LAYOUT_MASK);
-
+            } catch (Throwable t) {
+                throw new IOException(t);
+            } finally {
             fRequestedAttributes = null; // don't need it any more
         }
+    }
     }
 
     /**
@@ -2144,9 +2148,10 @@ public class Font implements java.io.Serializable
      * Checks if this {@code Font} has a glyph for the specified
      * character.
      *
-     * <p> <b>Note:</b> This method cannot handle <a
-     * href="../../java/lang/Character.html#supplementary"> supplementary
-     * characters</a>. To support all Unicode characters, including
+     * <p> <b>Note:</b> This method cannot handle
+     * <a href="../../../java.base/java/lang/Character.html#supplementary">
+     * supplementary characters</a>.
+     * To support all Unicode characters, including
      * supplementary characters, use the {@link #canDisplay(int)}
      * method or {@code canDisplayUpTo} methods.
      *

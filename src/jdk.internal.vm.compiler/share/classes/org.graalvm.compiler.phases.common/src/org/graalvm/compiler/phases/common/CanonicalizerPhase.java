@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,12 @@
 
 package org.graalvm.compiler.phases.common;
 
+import static org.graalvm.compiler.phases.common.CanonicalizerPhase.CanonicalizerFeature.CFG_SIMPLIFICATION;
+import static org.graalvm.compiler.phases.common.CanonicalizerPhase.CanonicalizerFeature.GVN;
+import static org.graalvm.compiler.phases.common.CanonicalizerPhase.CanonicalizerFeature.READ_CANONICALIZATION;
+
+import java.util.EnumSet;
+
 import org.graalvm.compiler.core.common.spi.ConstantFieldProvider;
 import org.graalvm.compiler.core.common.type.Stamp;
 import org.graalvm.compiler.debug.CounterKey;
@@ -42,6 +48,7 @@ import org.graalvm.compiler.graph.spi.Canonicalizable;
 import org.graalvm.compiler.graph.spi.Canonicalizable.BinaryCommutative;
 import org.graalvm.compiler.graph.spi.SimplifierTool;
 import org.graalvm.compiler.nodeinfo.InputType;
+import org.graalvm.compiler.nodes.AbstractBeginNode;
 import org.graalvm.compiler.nodes.AbstractMergeNode;
 import org.graalvm.compiler.nodes.ConstantNode;
 import org.graalvm.compiler.nodes.ControlSinkNode;
@@ -52,18 +59,24 @@ import org.graalvm.compiler.nodes.StartNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.calc.FloatingNode;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.nodes.util.GraphUtil;
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.BasePhase;
 import org.graalvm.compiler.phases.Phase;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 
 import jdk.vm.ci.meta.Assumptions;
 import jdk.vm.ci.meta.Constant;
 import jdk.vm.ci.meta.ConstantReflectionProvider;
 import jdk.vm.ci.meta.MetaAccessProvider;
 
-public class CanonicalizerPhase extends BasePhase<PhaseContext> {
+public class CanonicalizerPhase extends BasePhase<CoreProviders> {
+
+    public enum CanonicalizerFeature {
+        READ_CANONICALIZATION,
+        CFG_SIMPLIFICATION,
+        GVN
+    }
 
     private static final int MAX_ITERATION_PER_NODE = 10;
     private static final CounterKey COUNTER_CANONICALIZED_NODES = DebugContext.counter("CanonicalizedNodes");
@@ -74,40 +87,79 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
     private static final CounterKey COUNTER_SIMPLIFICATION_CONSIDERED_NODES = DebugContext.counter("SimplificationConsideredNodes");
     private static final CounterKey COUNTER_GLOBAL_VALUE_NUMBERING_HITS = DebugContext.counter("GlobalValueNumberingHits");
 
-    private boolean globalValueNumber = true;
-    private boolean canonicalizeReads = true;
-    private boolean simplify = true;
-    private final CustomCanonicalizer customCanonicalizer;
+    private final EnumSet<CanonicalizerFeature> features;
+    private final CustomCanonicalization customCanonicalization;
+    private final CustomSimplification customSimplification;
 
-    public abstract static class CustomCanonicalizer {
-
-        public Node canonicalize(Node node) {
-            return node;
-        }
-
-        @SuppressWarnings("unused")
-        public void simplify(Node node, SimplifierTool tool) {
-        }
+    public interface CustomCanonicalization {
+        /**
+         * @param node the node to be canonicalized
+         * @return the same node if no action should be taken, {@code null} if the node should be
+         *         deleted, or a new node that should replace the given node
+         */
+        Node canonicalize(Node node);
     }
 
-    public CanonicalizerPhase() {
-        this(null);
+    public interface CustomSimplification {
+        /**
+         * @param node the node to be simplified
+         * @param tool utility available during the simplification process
+         */
+        void simplify(Node node, SimplifierTool tool);
     }
 
-    public CanonicalizerPhase(CustomCanonicalizer customCanonicalizer) {
-        this.customCanonicalizer = customCanonicalizer;
+    protected CanonicalizerPhase(EnumSet<CanonicalizerFeature> features) {
+        this(null, null, features);
     }
 
-    public void disableGVN() {
-        globalValueNumber = false;
+    protected CanonicalizerPhase() {
+        this(null, null, EnumSet.allOf(CanonicalizerFeature.class));
     }
 
-    public void disableReadCanonicalization() {
-        canonicalizeReads = false;
+    protected CanonicalizerPhase(CustomCanonicalization customCanonicalization, CustomSimplification customSimplification) {
+        this(customCanonicalization, customSimplification, EnumSet.allOf(CanonicalizerFeature.class));
     }
 
-    public void disableSimplification() {
-        simplify = false;
+    protected CanonicalizerPhase(CustomCanonicalization customCanonicalization, CustomSimplification customSimplification, EnumSet<CanonicalizerFeature> features) {
+        this.customCanonicalization = customCanonicalization;
+        this.customSimplification = customSimplification;
+        this.features = features;
+    }
+
+    public CanonicalizerPhase copyWithCustomCanonicalization(CustomCanonicalization newCanonicalization) {
+        return new CanonicalizerPhase(newCanonicalization, customSimplification, features);
+    }
+
+    public CanonicalizerPhase copyWithCustomSimplification(CustomSimplification newSimplification) {
+        return new CanonicalizerPhase(customCanonicalization, newSimplification, features);
+    }
+
+    public CanonicalizerPhase copyWithoutGVN() {
+        EnumSet<CanonicalizerFeature> newFeatures = EnumSet.copyOf(features);
+        newFeatures.remove(GVN);
+        return new CanonicalizerPhase(customCanonicalization, customSimplification, newFeatures);
+    }
+
+    public CanonicalizerPhase copyWithoutSimplification() {
+        EnumSet<CanonicalizerFeature> newFeatures = EnumSet.copyOf(features);
+        newFeatures.remove(CFG_SIMPLIFICATION);
+        return new CanonicalizerPhase(customCanonicalization, customSimplification, newFeatures);
+    }
+
+    public static CanonicalizerPhase create() {
+        return new CanonicalizerPhase(null, null, EnumSet.allOf(CanonicalizerFeature.class));
+    }
+
+    public static CanonicalizerPhase createWithoutReadCanonicalization() {
+        return new CanonicalizerPhase(EnumSet.complementOf(EnumSet.of(READ_CANONICALIZATION)));
+    }
+
+    public static CanonicalizerPhase createWithoutGVN() {
+        return new CanonicalizerPhase(EnumSet.complementOf(EnumSet.of(GVN)));
+    }
+
+    public static CanonicalizerPhase createWithoutCFGSimplification() {
+        return new CanonicalizerPhase(EnumSet.complementOf(EnumSet.of(CFG_SIMPLIFICATION)));
     }
 
     @Override
@@ -121,7 +173,7 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
     }
 
     @Override
-    protected void run(StructuredGraph graph, PhaseContext context) {
+    protected void run(StructuredGraph graph, CoreProviders context) {
         new Instance(context).run(graph);
     }
 
@@ -129,11 +181,11 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
      * @param newNodesMark only the {@linkplain Graph#getNewNodes(Mark) new nodes} specified by this
      *            mark are processed
      */
-    public void applyIncremental(StructuredGraph graph, PhaseContext context, Mark newNodesMark) {
+    public void applyIncremental(StructuredGraph graph, CoreProviders context, Mark newNodesMark) {
         applyIncremental(graph, context, newNodesMark, true);
     }
 
-    public void applyIncremental(StructuredGraph graph, PhaseContext context, Mark newNodesMark, boolean dumpGraph) {
+    public void applyIncremental(StructuredGraph graph, CoreProviders context, Mark newNodesMark, boolean dumpGraph) {
         new Instance(context, newNodesMark).apply(graph, dumpGraph);
     }
 
@@ -141,19 +193,19 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
      * @param workingSet the initial working set of nodes on which the canonicalizer works, should
      *            be an auto-grow node bitmap
      */
-    public void applyIncremental(StructuredGraph graph, PhaseContext context, Iterable<? extends Node> workingSet) {
+    public void applyIncremental(StructuredGraph graph, CoreProviders context, Iterable<? extends Node> workingSet) {
         applyIncremental(graph, context, workingSet, true);
     }
 
-    public void applyIncremental(StructuredGraph graph, PhaseContext context, Iterable<? extends Node> workingSet, boolean dumpGraph) {
+    public void applyIncremental(StructuredGraph graph, CoreProviders context, Iterable<? extends Node> workingSet, boolean dumpGraph) {
         new Instance(context, workingSet).apply(graph, dumpGraph);
     }
 
-    public void applyIncremental(StructuredGraph graph, PhaseContext context, Iterable<? extends Node> workingSet, Mark newNodesMark) {
+    public void applyIncremental(StructuredGraph graph, CoreProviders context, Iterable<? extends Node> workingSet, Mark newNodesMark) {
         applyIncremental(graph, context, workingSet, newNodesMark, true);
     }
 
-    public void applyIncremental(StructuredGraph graph, PhaseContext context, Iterable<? extends Node> workingSet, Mark newNodesMark, boolean dumpGraph) {
+    public void applyIncremental(StructuredGraph graph, CoreProviders context, Iterable<? extends Node> workingSet, Mark newNodesMark, boolean dumpGraph) {
         new Instance(context, workingSet, newNodesMark).apply(graph, dumpGraph);
     }
 
@@ -164,26 +216,26 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
     private final class Instance extends Phase {
 
         private final Mark newNodesMark;
-        private final PhaseContext context;
+        private final CoreProviders context;
         private final Iterable<? extends Node> initWorkingSet;
 
         private NodeWorkList workList;
         private Tool tool;
         private DebugContext debug;
 
-        private Instance(PhaseContext context) {
+        private Instance(CoreProviders context) {
             this(context, null, null);
         }
 
-        private Instance(PhaseContext context, Iterable<? extends Node> workingSet) {
+        private Instance(CoreProviders context, Iterable<? extends Node> workingSet) {
             this(context, workingSet, null);
         }
 
-        private Instance(PhaseContext context, Mark newNodesMark) {
+        private Instance(CoreProviders context, Mark newNodesMark) {
             this(context, null, newNodesMark);
         }
 
-        private Instance(PhaseContext context, Iterable<? extends Node> workingSet, Mark newNodesMark) {
+        private Instance(CoreProviders context, Iterable<? extends Node> workingSet, Mark newNodesMark) {
             this.newNodesMark = newNodesMark;
             this.context = context;
             this.initWorkingSet = workingSet;
@@ -207,12 +259,14 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
             if (!wholeGraph) {
                 workList.addAll(graph.getNewNodes(newNodesMark));
             }
+
             tool = new Tool(graph.getAssumptions(), graph.getOptions());
             processWorkSet(graph);
         }
 
         @SuppressWarnings("try")
-        private void processWorkSet(StructuredGraph graph) {
+        private int processWorkSet(StructuredGraph graph) {
+            int sum = 0;
             NodeEventListener listener = new NodeEventListener() {
 
                 @Override
@@ -226,6 +280,13 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
                     if (node instanceof IndirectCanonicalization) {
                         for (Node usage : node.usages()) {
                             workList.add(usage);
+                        }
+                    }
+
+                    if (node instanceof AbstractBeginNode) {
+                        AbstractBeginNode abstractBeginNode = (AbstractBeginNode) node;
+                        if (abstractBeginNode.predecessor() != null) {
+                            workList.add(abstractBeginNode.predecessor());
                         }
                     }
                 }
@@ -242,8 +303,10 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
                     if (changed && debug.isDumpEnabled(DebugContext.DETAILED_LEVEL)) {
                         debug.dump(DebugContext.DETAILED_LEVEL, graph, "CanonicalizerPhase %s", n);
                     }
+                    ++sum;
                 }
             }
+            return sum;
         }
 
         /**
@@ -262,7 +325,7 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
             if (tryCanonicalize(node, nodeClass)) {
                 return true;
             }
-            if (globalValueNumber && tryGlobalValueNumbering(node, nodeClass)) {
+            if (features.contains(GVN) && tryGlobalValueNumbering(node, nodeClass)) {
                 return true;
             }
             if (node instanceof ValueNode) {
@@ -317,24 +380,18 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
         @SuppressWarnings("try")
         public boolean tryCanonicalize(final Node node, NodeClass<?> nodeClass) {
             try (DebugCloseable position = node.withNodeSourcePosition(); DebugContext.Scope scope = debug.withContext(node)) {
-                if (customCanonicalizer != null) {
-                    Node canonical = customCanonicalizer.canonicalize(node);
-                    if (performReplacement(node, canonical)) {
-                        return true;
-                    } else {
-                        customCanonicalizer.simplify(node, tool);
-                        if (node.isDeleted()) {
-                            return true;
-                        }
-                    }
-                }
                 if (nodeClass.isCanonicalizable()) {
                     COUNTER_CANONICALIZATION_CONSIDERED_NODES.increment(debug);
-                    Node canonical;
+                    Node canonical = node;
                     try (AutoCloseable verify = getCanonicalizeableContractAssertion(node)) {
-                        canonical = ((Canonicalizable) node).canonical(tool);
-                        if (canonical == node && nodeClass.isCommutative()) {
-                            canonical = ((BinaryCommutative<?>) node).maybeCommuteInputs();
+                        if (customCanonicalization != null) {
+                            canonical = customCanonicalization.canonicalize(node);
+                        }
+                        if (canonical == node) {
+                            canonical = ((Canonicalizable) node).canonical(tool);
+                            if (canonical == node && nodeClass.isCommutative()) {
+                                canonical = ((BinaryCommutative<?>) node).maybeCommuteInputs();
+                            }
                         }
                     } catch (Throwable e) {
                         throw new GraalGraphError(e).addContext(node);
@@ -344,12 +401,17 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
                     }
                 }
 
-                if (nodeClass.isSimplifiable() && simplify) {
+                if (features.contains(CFG_SIMPLIFICATION) && nodeClass.isSimplifiable()) {
                     debug.log(DebugContext.VERBOSE_LEVEL, "Canonicalizer: simplifying %s", node);
                     COUNTER_SIMPLIFICATION_CONSIDERED_NODES.increment(debug);
-                    node.simplify(tool);
-                    if (node.isDeleted()) {
-                        debug.log("Canonicalizer: simplified %s", node);
+                    if (customSimplification != null) {
+                        customSimplification.simplify(node, tool);
+                    }
+                    if (node.isAlive()) {
+                        node.simplify(tool);
+                        if (node.isDeleted()) {
+                            debug.log("Canonicalizer: simplified %s", node);
+                        }
                     }
                     return node.isDeleted();
                 }
@@ -506,7 +568,7 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
 
             @Override
             public boolean canonicalizeReads() {
-                return canonicalizeReads;
+                return features.contains(READ_CANONICALIZATION);
             }
 
             @Override
@@ -537,7 +599,7 @@ public class CanonicalizerPhase extends BasePhase<PhaseContext> {
     }
 
     public boolean getCanonicalizeReads() {
-        return canonicalizeReads;
+        return features.contains(READ_CANONICALIZATION);
     }
 
 }

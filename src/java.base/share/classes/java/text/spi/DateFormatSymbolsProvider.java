@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,16 +46,16 @@ public abstract class DateFormatSymbolsProvider extends LocaleServiceProvider {
     }
 
     /**
-     * Returns a new <code>DateFormatSymbols</code> instance for the
+     * Returns a new {@code DateFormatSymbols} instance for the
      * specified locale.
      *
      * @param locale the desired locale
-     * @exception NullPointerException if <code>locale</code> is null
-     * @exception IllegalArgumentException if <code>locale</code> isn't
+     * @throws    NullPointerException if {@code locale} is null
+     * @throws    IllegalArgumentException if {@code locale} isn't
      *     one of the locales returned from
      *     {@link java.util.spi.LocaleServiceProvider#getAvailableLocales()
      *     getAvailableLocales()}.
-     * @return a <code>DateFormatSymbols</code> instance.
+     * @return a {@code DateFormatSymbols} instance.
      * @see java.text.DateFormatSymbols#getInstance(java.util.Locale)
      */
     public abstract DateFormatSymbols getInstance(Locale locale);

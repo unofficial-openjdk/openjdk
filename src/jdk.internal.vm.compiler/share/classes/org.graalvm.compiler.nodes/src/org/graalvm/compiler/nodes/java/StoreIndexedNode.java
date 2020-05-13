@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,9 +29,13 @@ import static org.graalvm.compiler.nodeinfo.NodeCycles.CYCLES_8;
 import static org.graalvm.compiler.nodeinfo.NodeSize.SIZE_8;
 
 import org.graalvm.compiler.core.common.type.StampFactory;
+import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.graph.NodeClass;
+import org.graalvm.compiler.graph.spi.Canonicalizable;
+import org.graalvm.compiler.graph.spi.CanonicalizerTool;
 import org.graalvm.compiler.nodeinfo.InputType;
 import org.graalvm.compiler.nodeinfo.NodeInfo;
+import org.graalvm.compiler.nodes.DeoptimizeNode;
 import org.graalvm.compiler.nodes.FrameState;
 import org.graalvm.compiler.nodes.StateSplit;
 import org.graalvm.compiler.nodes.ValueNode;
@@ -43,6 +47,8 @@ import org.graalvm.compiler.nodes.type.StampTool;
 import org.graalvm.compiler.nodes.virtual.VirtualArrayNode;
 import org.graalvm.compiler.nodes.virtual.VirtualObjectNode;
 
+import jdk.vm.ci.meta.DeoptimizationAction;
+import jdk.vm.ci.meta.DeoptimizationReason;
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.ResolvedJavaType;
 
@@ -50,7 +56,7 @@ import jdk.vm.ci.meta.ResolvedJavaType;
  * The {@code StoreIndexedNode} represents a write to an array element.
  */
 @NodeInfo(cycles = CYCLES_8, size = SIZE_8)
-public final class StoreIndexedNode extends AccessIndexedNode implements StateSplit, Lowerable, Virtualizable {
+public final class StoreIndexedNode extends AccessIndexedNode implements StateSplit, Lowerable, Virtualizable, Canonicalizable {
 
     public static final NodeClass<StoreIndexedNode> TYPE = NodeClass.create(StoreIndexedNode.class);
 
@@ -109,5 +115,13 @@ public final class StoreIndexedNode extends AccessIndexedNode implements StateSp
 
     public FrameState getState() {
         return stateAfter;
+    }
+
+    @Override
+    public Node canonical(CanonicalizerTool tool) {
+        if (array().isNullConstant()) {
+            return new DeoptimizeNode(DeoptimizationAction.InvalidateReprofile, DeoptimizationReason.NullCheckException);
+        }
+        return this;
     }
 }

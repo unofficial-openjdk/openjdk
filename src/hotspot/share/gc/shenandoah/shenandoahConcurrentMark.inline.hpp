@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,21 +26,22 @@
 #define SHARE_GC_SHENANDOAH_SHENANDOAHCONCURRENTMARK_INLINE_HPP
 
 #include "gc/shenandoah/shenandoahAsserts.hpp"
-#include "gc/shenandoah/shenandoahBrooksPointer.hpp"
 #include "gc/shenandoah/shenandoahBarrierSet.inline.hpp"
 #include "gc/shenandoah/shenandoahConcurrentMark.hpp"
+#include "gc/shenandoah/shenandoahHeap.inline.hpp"
 #include "gc/shenandoah/shenandoahMarkingContext.inline.hpp"
 #include "gc/shenandoah/shenandoahStringDedup.inline.hpp"
 #include "gc/shenandoah/shenandoahTaskqueue.inline.hpp"
 #include "memory/iterator.inline.hpp"
+#include "oops/compressedOops.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/prefetch.inline.hpp"
 
 template <class T>
-void ShenandoahConcurrentMark::do_task(ShenandoahObjToScanQueue* q, T* cl, jushort* live_data, ShenandoahMarkTask* task) {
+void ShenandoahConcurrentMark::do_task(ShenandoahObjToScanQueue* q, T* cl, ShenandoahLiveData* live_data, ShenandoahMarkTask* task) {
   oop obj = task->obj();
 
-  shenandoah_assert_not_forwarded_except(NULL, obj, _heap->is_concurrent_traversal_in_progress() && _heap->cancelled_gc());
+  shenandoah_assert_not_forwarded(NULL, obj);
   shenandoah_assert_marked(NULL, obj);
   shenandoah_assert_not_in_cset_except(NULL, obj, _heap->cancelled_gc());
 
@@ -66,28 +68,22 @@ void ShenandoahConcurrentMark::do_task(ShenandoahObjToScanQueue* q, T* cl, jusho
   }
 }
 
-inline void ShenandoahConcurrentMark::count_liveness(jushort* live_data, oop obj) {
+inline void ShenandoahConcurrentMark::count_liveness(ShenandoahLiveData* live_data, oop obj) {
   size_t region_idx = _heap->heap_region_index_containing(obj);
   ShenandoahHeapRegion* region = _heap->get_region(region_idx);
-  size_t size = obj->size() + ShenandoahBrooksPointer::word_size();
+  size_t size = obj->size();
 
   if (!region->is_humongous_start()) {
     assert(!region->is_humongous(), "Cannot have continuations here");
-    size_t max = (1 << (sizeof(jushort) * 8)) - 1;
-    if (size >= max) {
-      // too big, add to region data directly
-      region->increase_live_data_gc_words(size);
+    ShenandoahLiveData cur = live_data[region_idx];
+    size_t new_val = size + cur;
+    if (new_val >= SHENANDOAH_LIVEDATA_MAX) {
+      // overflow, flush to region data
+      region->increase_live_data_gc_words(new_val);
+      live_data[region_idx] = 0;
     } else {
-      jushort cur = live_data[region_idx];
-      size_t new_val = cur + size;
-      if (new_val >= max) {
-        // overflow, flush to region data
-        region->increase_live_data_gc_words(new_val);
-        live_data[region_idx] = 0;
-      } else {
-        // still good, remember in locals
-        live_data[region_idx] = (jushort) new_val;
-      }
+      // still good, remember in locals
+      live_data[region_idx] = (ShenandoahLiveData) new_val;
     }
   } else {
     shenandoah_assert_in_correct_region(NULL, obj);
@@ -253,9 +249,12 @@ inline void ShenandoahConcurrentMark::mark_through_ref(T *p, ShenandoahHeap* hea
       ShouldNotReachHere();
     }
 
-    // Note: Only when concurrently updating references can obj become NULL here.
-    // It happens when a mutator thread beats us by writing another value. In that
-    // case we don't need to do anything else.
+    // Note: Only when concurrently updating references can obj be different
+    // (that is, really different, not just different from-/to-space copies of the same)
+    // from the one we originally loaded. Mutator thread can beat us by writing something
+    // else into the location. In that case, we would mark through that updated value,
+    // on the off-chance it is not handled by other means (e.g. via SATB). However,
+    // if that write was NULL, we don't need to do anything else.
     if (UPDATE_REFS != CONCURRENT || !CompressedOops::is_null(obj)) {
       shenandoah_assert_not_forwarded(p, obj);
       shenandoah_assert_not_in_cset_except(p, obj, heap->cancelled_gc());

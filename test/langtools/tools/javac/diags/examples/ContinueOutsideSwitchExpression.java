@@ -22,15 +22,13 @@
  */
 
 // key: compiler.err.continue.outside.switch.expression
-// key: compiler.note.preview.filename
-// key: compiler.note.preview.recompile
-// options: --enable-preview -source ${jdk.version}
 
 class ContinueOutsideSwitchExpression {
     int t(int i) {
         OUT: while (true) {
             return switch (i) {
-                default: continue OUT;
+                case 0: continue OUT;
+                default: yield 0;
             };
         }
     }

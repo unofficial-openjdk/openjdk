@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,28 +38,33 @@ import jdk.internal.vm.compiler.collections.EconomicMap;
 import jdk.internal.vm.compiler.collections.Equivalence;
 import org.graalvm.compiler.asm.AbstractAddress;
 import org.graalvm.compiler.asm.Assembler;
+import org.graalvm.compiler.asm.Label;
 import org.graalvm.compiler.code.CompilationResult;
 import org.graalvm.compiler.code.CompilationResult.CodeAnnotation;
+import org.graalvm.compiler.code.CompilationResult.JumpTable;
 import org.graalvm.compiler.code.DataSection.Data;
 import org.graalvm.compiler.code.DataSection.RawData;
 import org.graalvm.compiler.core.common.NumUtil;
 import org.graalvm.compiler.core.common.cfg.AbstractBlockBase;
 import org.graalvm.compiler.core.common.spi.ForeignCallsProvider;
 import org.graalvm.compiler.core.common.type.DataPointerConstant;
-import org.graalvm.compiler.debug.Assertions;
 import org.graalvm.compiler.debug.DebugContext;
 import org.graalvm.compiler.debug.GraalError;
 import org.graalvm.compiler.graph.NodeSourcePosition;
 import org.graalvm.compiler.lir.LIR;
 import org.graalvm.compiler.lir.LIRFrameState;
 import org.graalvm.compiler.lir.LIRInstruction;
+import org.graalvm.compiler.lir.LIRInstructionVerifier;
 import org.graalvm.compiler.lir.LabelRef;
+import org.graalvm.compiler.lir.StandardOp.LabelHoldingOp;
 import org.graalvm.compiler.lir.framemap.FrameMap;
 import org.graalvm.compiler.options.Option;
 import org.graalvm.compiler.options.OptionKey;
 import org.graalvm.compiler.options.OptionType;
 import org.graalvm.compiler.options.OptionValues;
+import org.graalvm.compiler.serviceprovider.GraalServices;
 
+import jdk.vm.ci.code.BailoutException;
 import jdk.vm.ci.code.CodeCacheProvider;
 import jdk.vm.ci.code.DebugInfo;
 import jdk.vm.ci.code.Register;
@@ -67,6 +72,7 @@ import jdk.vm.ci.code.StackSlot;
 import jdk.vm.ci.code.TargetDescription;
 import jdk.vm.ci.code.site.ConstantReference;
 import jdk.vm.ci.code.site.DataSectionReference;
+import jdk.vm.ci.code.site.Infopoint;
 import jdk.vm.ci.code.site.InfopointReason;
 import jdk.vm.ci.code.site.Mark;
 import jdk.vm.ci.meta.Constant;
@@ -82,6 +88,16 @@ import jdk.vm.ci.meta.Value;
  * @see CompilationResultBuilderFactory
  */
 public class CompilationResultBuilder {
+
+    private static final List<LIRInstructionVerifier> LIR_INSTRUCTION_VERIFIERS = new ArrayList<>();
+
+    static {
+        for (LIRInstructionVerifier verifier : GraalServices.load(LIRInstructionVerifier.class)) {
+            if (verifier.isEnabled()) {
+                LIR_INSTRUCTION_VERIFIERS.add(verifier);
+            }
+        }
+    }
 
     public static class Options {
         @Option(help = "Include the LIR as comments with the final assembly.", type = OptionType.Debug) //
@@ -125,7 +141,7 @@ public class CompilationResultBuilder {
     public final Assembler asm;
     public final DataBuilder dataBuilder;
     public final CompilationResult compilationResult;
-    public final Register nullRegister;
+    public final Register uncompressedNullRegister;
     public final TargetDescription target;
     public final CodeCacheProvider codeCache;
     public final ForeignCallsProvider foreignCalls;
@@ -155,17 +171,58 @@ public class CompilationResultBuilder {
     private Consumer<LIRInstruction> beforeOp;
     private Consumer<LIRInstruction> afterOp;
 
-    public final boolean mustReplaceWithNullRegister(JavaConstant nullConstant) {
-        return !nullRegister.equals(Register.None) && JavaConstant.NULL_POINTER.equals(nullConstant);
+    /**
+     * These position maps are used for estimating offsets of forward branches. Used for
+     * architectures where certain branch instructions have limited displacement such as ARM tbz or
+     * SPARC cbcond.
+     */
+    private EconomicMap<Label, Integer> labelBindLirPositions;
+    private EconomicMap<LIRInstruction, Integer> lirPositions;
+    /**
+     * This flag is for setting the
+     * {@link CompilationResultBuilder#labelWithinRange(LIRInstruction, Label, int)} into a
+     * conservative mode and always answering false.
+     */
+    private boolean conservativeLabelOffsets = false;
+
+    public final boolean mustReplaceWithUncompressedNullRegister(JavaConstant nullConstant) {
+        return !uncompressedNullRegister.equals(Register.None) && JavaConstant.NULL_POINTER.equals(nullConstant);
     }
 
-    public CompilationResultBuilder(CodeCacheProvider codeCache, ForeignCallsProvider foreignCalls, FrameMap frameMap, Assembler asm, DataBuilder dataBuilder, FrameContext frameContext,
-                    OptionValues options, DebugContext debug, CompilationResult compilationResult, Register nullRegister) {
-        this(codeCache, foreignCalls, frameMap, asm, dataBuilder, frameContext, options, debug, compilationResult, nullRegister, EconomicMap.create(Equivalence.DEFAULT));
+    public CompilationResultBuilder(CodeCacheProvider codeCache,
+                    ForeignCallsProvider foreignCalls,
+                    FrameMap frameMap,
+                    Assembler asm,
+                    DataBuilder dataBuilder,
+                    FrameContext frameContext,
+                    OptionValues options,
+                    DebugContext debug,
+                    CompilationResult compilationResult,
+                    Register uncompressedNullRegister) {
+        this(codeCache,
+                        foreignCalls,
+                        frameMap,
+                        asm,
+                        dataBuilder,
+                        frameContext,
+                        options,
+                        debug,
+                        compilationResult,
+                        uncompressedNullRegister,
+                        EconomicMap.create(Equivalence.DEFAULT));
     }
 
-    public CompilationResultBuilder(CodeCacheProvider codeCache, ForeignCallsProvider foreignCalls, FrameMap frameMap, Assembler asm, DataBuilder dataBuilder, FrameContext frameContext,
-                    OptionValues options, DebugContext debug, CompilationResult compilationResult, Register nullRegister, EconomicMap<Constant, Data> dataCache) {
+    public CompilationResultBuilder(CodeCacheProvider codeCache,
+                    ForeignCallsProvider foreignCalls,
+                    FrameMap frameMap,
+                    Assembler asm,
+                    DataBuilder dataBuilder,
+                    FrameContext frameContext,
+                    OptionValues options,
+                    DebugContext debug,
+                    CompilationResult compilationResult,
+                    Register uncompressedNullRegister,
+                    EconomicMap<Constant, Data> dataCache) {
         this.target = codeCache.getTarget();
         this.codeCache = codeCache;
         this.foreignCalls = foreignCalls;
@@ -173,20 +230,12 @@ public class CompilationResultBuilder {
         this.asm = asm;
         this.dataBuilder = dataBuilder;
         this.compilationResult = compilationResult;
-        this.nullRegister = nullRegister;
+        this.uncompressedNullRegister = uncompressedNullRegister;
         this.frameContext = frameContext;
         this.options = options;
         this.debug = debug;
         assert frameContext != null;
         this.dataCache = dataCache;
-
-        if (dataBuilder.needDetailedPatchingInformation() || Assertions.assertionsEnabled()) {
-            /*
-             * Always enabled in debug mode, even when the VM does not request detailed information,
-             * to increase test coverage.
-             */
-            asm.setCodePatchingAnnotationConsumer(assemblerCodeAnnotation -> compilationResult.addAnnotation(new AssemblerAnnotation(assemblerCodeAnnotation)));
-        }
     }
 
     public void setTotalFrameSize(int frameSize) {
@@ -245,6 +294,16 @@ public class CompilationResultBuilder {
     public void recordImplicitException(int pcOffset, LIRFrameState info) {
         compilationResult.recordInfopoint(pcOffset, info.debugInfo(), InfopointReason.IMPLICIT_EXCEPTION);
         assert info.exceptionEdge == null;
+    }
+
+    public boolean isImplicitExceptionExist(int pcOffset) {
+        List<Infopoint> infopoints = compilationResult.getInfopoints();
+        for (Infopoint infopoint : infopoints) {
+            if (infopoint.pcOffset == pcOffset && infopoint.reason == InfopointReason.IMPLICIT_EXCEPTION) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void recordDirectCall(int posBefore, int posAfter, InvokeTarget callTarget, LIRFrameState info) {
@@ -330,35 +389,6 @@ public class CompilationResultBuilder {
             debug.log("Data reference in code: pos = %d, data = %s", asm.position(), Arrays.toString(data));
         }
         return recordDataSectionReference(new RawData(data, alignment));
-    }
-
-    /**
-     * Notifies this object of a branch instruction at offset {@code pcOffset} in the code.
-     *
-     * @param isNegated negation status of the branch's condition.
-     */
-    @SuppressWarnings("unused")
-    public void recordBranch(int pcOffset, boolean isNegated) {
-    }
-
-    /**
-     * Notifies this object of a call instruction belonging to an INVOKEVIRTUAL or INVOKEINTERFACE
-     * at offset {@code pcOffset} in the code.
-     *
-     * @param nodeSourcePosition source position of the corresponding invoke.
-     */
-    @SuppressWarnings("unused")
-    public void recordInvokeVirtualOrInterfaceCallOp(int pcOffset, NodeSourcePosition nodeSourcePosition) {
-    }
-
-    /**
-     * Notifies this object of a call instruction belonging to an INLINE_INVOKE at offset
-     * {@code pcOffset} in the code.
-     *
-     * @param nodeSourcePosition source position of the corresponding invoke.
-     */
-    @SuppressWarnings("unused")
-    public void recordInlineInvokeCallOp(int pcOffset, NodeSourcePosition nodeSourcePosition) {
     }
 
     /**
@@ -526,7 +556,7 @@ public class CompilationResultBuilder {
                 if (beforeOp != null) {
                     beforeOp.accept(op);
                 }
-                emitOp(this, op);
+                emitOp(op);
                 if (afterOp != null) {
                     afterOp.accept(op);
                 }
@@ -536,13 +566,32 @@ public class CompilationResultBuilder {
         }
     }
 
-    private static void emitOp(CompilationResultBuilder crb, LIRInstruction op) {
+    private void emitOp(LIRInstruction op) {
         try {
-            int start = crb.asm.position();
-            op.emitCode(crb);
+            int start = asm.position();
+            op.emitCode(this);
             if (op.getPosition() != null) {
-                crb.recordSourceMapping(start, crb.asm.position(), op.getPosition());
+                recordSourceMapping(start, asm.position(), op.getPosition());
             }
+            if (LIR_INSTRUCTION_VERIFIERS.size() > 0 && start < asm.position()) {
+                int end = asm.position();
+                for (CodeAnnotation codeAnnotation : compilationResult.getCodeAnnotations()) {
+                    if (codeAnnotation instanceof JumpTable) {
+                        // Skip jump table. Here we assume the jump table is at the tail of the
+                        // emitted code.
+                        int jumpTableStart = codeAnnotation.getPosition();
+                        if (jumpTableStart >= start && jumpTableStart < end) {
+                            end = jumpTableStart;
+                        }
+                    }
+                }
+                byte[] emittedCode = asm.copy(start, end);
+                for (LIRInstructionVerifier verifier : LIR_INSTRUCTION_VERIFIERS) {
+                    verifier.verify(op, emittedCode);
+                }
+            }
+        } catch (BailoutException e) {
+            throw e;
         } catch (AssertionError t) {
             throw new GraalError(t);
         } catch (RuntimeException t) {
@@ -559,6 +608,8 @@ public class CompilationResultBuilder {
         if (dataCache != null) {
             dataCache.clear();
         }
+        lir = null;
+        currentBlockIndex = 0;
     }
 
     public void setOpCallback(Consumer<LIRInstruction> beforeOp, Consumer<LIRInstruction> afterOp) {
@@ -570,4 +621,71 @@ public class CompilationResultBuilder {
         return options;
     }
 
+    /**
+     * Builds up a map for label and LIR instruction positions where labels are or labels pointing
+     * to.
+     */
+    public void buildLabelOffsets(LIR generatedLIR) {
+        labelBindLirPositions = EconomicMap.create(Equivalence.IDENTITY);
+        lirPositions = EconomicMap.create(Equivalence.IDENTITY);
+        int instructionPosition = 0;
+        for (AbstractBlockBase<?> block : generatedLIR.codeEmittingOrder()) {
+            if (block != null) {
+                for (LIRInstruction op : generatedLIR.getLIRforBlock(block)) {
+                    if (op instanceof LabelHoldingOp) {
+                        Label label = ((LabelHoldingOp) op).getLabel();
+                        if (label != null) {
+                            labelBindLirPositions.put(label, instructionPosition);
+                        }
+                    }
+                    lirPositions.put(op, instructionPosition);
+                    instructionPosition++;
+                }
+            }
+        }
+    }
+
+    /**
+     * Answers the code generator whether the jump from instruction to label is within disp LIR
+     * instructions.
+     *
+     * @param disp Maximum number of LIR instructions between label and instruction
+     */
+    public boolean labelWithinRange(LIRInstruction instruction, Label label, int disp) {
+        if (conservativeLabelOffsets) {
+            return false;
+        }
+        Integer labelPosition = labelBindLirPositions.get(label);
+        Integer instructionPosition = lirPositions.get(instruction);
+        boolean result;
+        if (labelPosition != null && instructionPosition != null) {
+            result = Math.abs(labelPosition - instructionPosition) < disp;
+        } else {
+            result = false;
+        }
+        return result;
+    }
+
+    /**
+     * Sets this CompilationResultBuilder into conservative mode. If set,
+     * {@link CompilationResultBuilder#labelWithinRange(LIRInstruction, Label, int)} always returns
+     * false.
+     */
+    public void setConservativeLabelRanges() {
+        this.conservativeLabelOffsets = true;
+    }
+
+    public final boolean needsClearUpperVectorRegisters() {
+        for (AbstractBlockBase<?> block : lir.codeEmittingOrder()) {
+            if (block == null) {
+                continue;
+            }
+            for (LIRInstruction op : lir.getLIRforBlock(block)) {
+                if (op.needsClearUpperVectorRegisters()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

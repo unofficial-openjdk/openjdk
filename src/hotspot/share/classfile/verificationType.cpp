@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
 #include "classfile/verificationType.hpp"
 #include "classfile/verifier.hpp"
 #include "logging/log.hpp"
+#include "oops/klass.inline.hpp"
 #include "runtime/handles.inline.hpp"
 
 VerificationType VerificationType::from_tag(u1 tag) {
@@ -47,11 +48,16 @@ VerificationType VerificationType::from_tag(u1 tag) {
 bool VerificationType::resolve_and_check_assignability(InstanceKlass* klass, Symbol* name,
          Symbol* from_name, bool from_field_is_protected, bool from_is_array, bool from_is_object, TRAPS) {
   HandleMark hm(THREAD);
-  Klass* this_class = SystemDictionary::resolve_or_fail(
+  Klass* this_class;
+  if (klass->is_hidden() && klass->name() == name) {
+    this_class = klass;
+  } else {
+    this_class = SystemDictionary::resolve_or_fail(
       name, Handle(THREAD, klass->class_loader()),
       Handle(THREAD, klass->protection_domain()), true, CHECK_false);
-  if (log_is_enabled(Debug, class, resolve)) {
-    Verifier::trace_class_resolution(this_class, klass);
+    if (log_is_enabled(Debug, class, resolve)) {
+      Verifier::trace_class_resolution(this_class, klass);
+    }
   }
 
   if (this_class->is_interface() && (!from_field_is_protected ||
@@ -64,13 +70,18 @@ bool VerificationType::resolve_and_check_assignability(InstanceKlass* klass, Sym
       this_class == SystemDictionary::Cloneable_klass() ||
       this_class == SystemDictionary::Serializable_klass();
   } else if (from_is_object) {
-    Klass* from_class = SystemDictionary::resolve_or_fail(
+    Klass* from_class;
+    if (klass->is_hidden() && klass->name() == from_name) {
+      from_class = klass;
+    } else {
+      from_class = SystemDictionary::resolve_or_fail(
         from_name, Handle(THREAD, klass->class_loader()),
         Handle(THREAD, klass->protection_domain()), true, CHECK_false);
-    if (log_is_enabled(Debug, class, resolve)) {
-      Verifier::trace_class_resolution(from_class, klass);
+      if (log_is_enabled(Debug, class, resolve)) {
+        Verifier::trace_class_resolution(from_class, klass);
+      }
     }
-    return InstanceKlass::cast(from_class)->is_subclass_of(this_class);
+    return from_class->is_subclass_of(this_class);
   }
 
   return false;
@@ -94,12 +105,14 @@ bool VerificationType::is_reference_assignable_from(
       return true;
     }
 
-    if (DumpSharedSpaces && SystemDictionaryShared::add_verification_constraint(klass,
+    if (Arguments::is_dumping_archive()) {
+      if (SystemDictionaryShared::add_verification_constraint(klass,
               name(), from.name(), from_field_is_protected, from.is_array(),
               from.is_object())) {
-      // If add_verification_constraint() returns true, the resolution/check should be
-      // delayed until runtime.
-      return true;
+        // If add_verification_constraint() returns true, the resolution/check should be
+        // delayed until runtime.
+        return true;
+      }
     }
 
     return resolve_and_check_assignability(klass, name(), from.name(),
@@ -117,29 +130,29 @@ bool VerificationType::is_reference_assignable_from(
 
 VerificationType VerificationType::get_component(ClassVerifier *context, TRAPS) const {
   assert(is_array() && name()->utf8_length() >= 2, "Must be a valid array");
-  Symbol* component;
-  switch (name()->char_at(1)) {
-    case 'Z': return VerificationType(Boolean);
-    case 'B': return VerificationType(Byte);
-    case 'C': return VerificationType(Char);
-    case 'S': return VerificationType(Short);
-    case 'I': return VerificationType(Integer);
-    case 'J': return VerificationType(Long);
-    case 'F': return VerificationType(Float);
-    case 'D': return VerificationType(Double);
-    case '[':
-      component = context->create_temporary_symbol(
-        name(), 1, name()->utf8_length(),
-        CHECK_(VerificationType::bogus_type()));
-      return VerificationType::reference_type(component);
-    case 'L':
-      component = context->create_temporary_symbol(
-        name(), 2, name()->utf8_length() - 1,
-        CHECK_(VerificationType::bogus_type()));
-      return VerificationType::reference_type(component);
-    default:
-      // Met an invalid type signature, e.g. [X
-      return VerificationType::bogus_type();
+  SignatureStream ss(name(), false);
+  ss.skip_array_prefix(1);
+  switch (ss.type()) {
+    case T_BOOLEAN: return VerificationType(Boolean);
+    case T_BYTE:    return VerificationType(Byte);
+    case T_CHAR:    return VerificationType(Char);
+    case T_SHORT:   return VerificationType(Short);
+    case T_INT:     return VerificationType(Integer);
+    case T_LONG:    return VerificationType(Long);
+    case T_FLOAT:   return VerificationType(Float);
+    case T_DOUBLE:  return VerificationType(Double);
+    case T_ARRAY:
+    case T_OBJECT: {
+      guarantee(ss.is_reference(), "unchecked verifier input?");
+      Symbol* component = ss.as_symbol();
+      // Create another symbol to save as signature stream unreferences this symbol.
+      Symbol* component_copy = context->create_temporary_symbol(component);
+      assert(component_copy == component, "symbols don't match");
+      return VerificationType::reference_type(component_copy);
+   }
+   default:
+     // Met an invalid type signature, e.g. [X
+     return VerificationType::bogus_type();
   }
 }
 

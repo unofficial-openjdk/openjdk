@@ -24,7 +24,6 @@ package com.sun.org.apache.bcel.internal.generic;
 /**
  * Super class for JSR - Jump to subroutine
  *
- * @version $Id: JsrInstruction.java 1749603 2016-06-21 20:50:19Z ggregory $
  */
 public abstract class JsrInstruction extends BranchInstruction implements UnconditionalBranch,
         TypedInstruction, StackProducer {
@@ -35,8 +34,8 @@ public abstract class JsrInstruction extends BranchInstruction implements Uncond
 
 
     /**
-     * Empty constructor needed for the Class.newInstance() statement in
-     * Instruction.readInstruction(). Not to be used otherwise.
+     * Empty constructor needed for Instruction.readInstruction.
+     * Not to be used otherwise.
      */
     JsrInstruction() {
     }

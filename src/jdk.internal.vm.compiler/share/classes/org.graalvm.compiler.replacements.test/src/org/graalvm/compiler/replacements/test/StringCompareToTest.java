@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,21 +24,23 @@
 
 package org.graalvm.compiler.replacements.test;
 
-import jdk.vm.ci.aarch64.AArch64;
-import jdk.vm.ci.amd64.AMD64;
-import jdk.vm.ci.meta.ResolvedJavaMethod;
+import static org.graalvm.compiler.core.common.GraalOptions.RemoveNeverExecutedCode;
+
+import java.util.List;
+
 import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.replacements.nodes.ArrayCompareToNode;
 import org.graalvm.compiler.serviceprovider.GraalServices;
+import org.graalvm.compiler.serviceprovider.JavaVersionUtil;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
-import java.util.List;
-
-import static org.graalvm.compiler.core.common.GraalOptions.RemoveNeverExecutedCode;
+import jdk.vm.ci.aarch64.AArch64;
+import jdk.vm.ci.amd64.AMD64;
+import jdk.vm.ci.meta.ResolvedJavaMethod;
 
 /**
  * Tests compareTo method intrinsic.
@@ -81,7 +83,7 @@ public class StringCompareToTest extends StringSubstitutionTestBase {
         StructuredGraph graph = testGraph(testMethod.getName());
 
         // Check to see if the resulting graph contains the expected node
-        StructuredGraph replacement = getReplacements().getSubstitution(realMethod, -1, false, null);
+        StructuredGraph replacement = getReplacements().getSubstitution(realMethod, -1, false, null, graph.getOptions());
         if (replacement == null) {
             assertInGraph(graph, expectedNode);
         }
@@ -89,7 +91,7 @@ public class StringCompareToTest extends StringSubstitutionTestBase {
         OptionValues options;
         boolean needCheckNode = true;
 
-        if (GraalServices.Java8OrEarlier) {
+        if (JavaVersionUtil.JAVA_SPEC <= 8) {
             needCheckNode = false;
         } else {
             List<String> vmArgs = GraalServices.getInputArguments();

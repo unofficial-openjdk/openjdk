@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,10 +51,11 @@ import org.graalvm.compiler.nodes.NodeView;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.extended.ForeignCallNode;
 import org.graalvm.compiler.nodes.extended.LoadHubNode;
+import org.graalvm.compiler.nodes.extended.LoadHubOrNullNode;
 import org.graalvm.compiler.nodes.extended.RawLoadNode;
 import org.graalvm.compiler.nodes.extended.StoreHubNode;
 import org.graalvm.compiler.nodes.graphbuilderconf.IntrinsicContext;
-import org.graalvm.compiler.nodes.memory.Access;
+import org.graalvm.compiler.nodes.memory.AddressableMemoryAccess;
 import org.graalvm.compiler.nodes.memory.address.AddressNode;
 import org.graalvm.compiler.nodes.memory.address.OffsetAddressNode;
 import org.graalvm.compiler.nodes.type.StampTool;
@@ -98,8 +99,8 @@ public class HotSpotReplacementsUtil {
             if (base instanceof CompressionNode) {
                 base = ((CompressionNode) base).getValue();
             }
-            if (base instanceof Access) {
-                Access access = (Access) base;
+            if (base instanceof AddressableMemoryAccess) {
+                AddressableMemoryAccess access = (AddressableMemoryAccess) base;
                 if (access.getLocationIdentity().equals(HUB_LOCATION) || access.getLocationIdentity().equals(COMPRESSED_HUB_LOCATION)) {
                     AddressNode address = access.getAddress();
                     if (address instanceof OffsetAddressNode) {
@@ -123,8 +124,8 @@ public class HotSpotReplacementsUtil {
          * @return an earlier read or the original {@code read}
          */
         protected static ValueNode foldIndirection(ValueNode read, ValueNode object, LocationIdentity otherLocation) {
-            if (object instanceof Access) {
-                Access access = (Access) object;
+            if (object instanceof AddressableMemoryAccess) {
+                AddressableMemoryAccess access = (AddressableMemoryAccess) object;
                 if (access.getLocationIdentity().equals(otherLocation)) {
                     AddressNode address = access.getAddress();
                     if (address instanceof OffsetAddressNode) {
@@ -138,10 +139,12 @@ public class HotSpotReplacementsUtil {
         }
     }
 
-    public static ResolvedJavaType methodHolderClass(@Fold.InjectedParameter IntrinsicContext context) {
+    @Fold
+    public static ResolvedJavaType methodHolderClass(@InjectedParameter IntrinsicContext context) {
         return context.getOriginalMethod().getDeclaringClass();
     }
 
+    @Fold
     static ResolvedJavaType getType(@Fold.InjectedParameter IntrinsicContext context, String typeName) {
         try {
             UnresolvedJavaType unresolved = UnresolvedJavaType.create(typeName);
@@ -151,13 +154,18 @@ public class HotSpotReplacementsUtil {
         }
     }
 
-    static int getFieldOffset(ResolvedJavaType type, String fieldName) {
+    @Fold
+    public static int getFieldOffset(ResolvedJavaType type, String fieldName) {
+        return getField(type, fieldName).getOffset();
+    }
+
+    private static ResolvedJavaField getField(ResolvedJavaType type, String fieldName) {
         for (ResolvedJavaField field : type.getInstanceFields(true)) {
             if (field.getName().equals(fieldName)) {
-                return field.getOffset();
+                return field;
             }
         }
-        throw new GraalError("missing field " + fieldName);
+        throw new GraalError("missing field " + fieldName + " in type " + type);
     }
 
     public static HotSpotJVMCIRuntime runtime() {
@@ -180,8 +188,21 @@ public class HotSpotReplacementsUtil {
     }
 
     @Fold
+    public static boolean useG1GC(@InjectedParameter GraalHotSpotVMConfig config) {
+        return config.useG1GC;
+    }
+
+    @Fold
     public static boolean verifyOops(@InjectedParameter GraalHotSpotVMConfig config) {
         return config.verifyOops;
+    }
+
+    /**
+     * @see GraalHotSpotVMConfig#doingUnsafeAccessOffset
+     */
+    @Fold
+    public static int doingUnsafeAccessOffset(@InjectedParameter GraalHotSpotVMConfig config) {
+        return config.doingUnsafeAccessOffset;
     }
 
     public static final LocationIdentity EXCEPTION_OOP_LOCATION = NamedLocationIdentity.mutable("ExceptionOop");
@@ -296,11 +317,13 @@ public class HotSpotReplacementsUtil {
 
     @Fold
     public static int osThreadOffset(@InjectedParameter GraalHotSpotVMConfig config) {
+        assert config.osThreadOffset != Integer.MAX_VALUE;
         return config.osThreadOffset;
     }
 
     @Fold
     public static int osThreadInterruptedOffset(@InjectedParameter GraalHotSpotVMConfig config) {
+        assert config.osThreadInterruptedOffset != Integer.MAX_VALUE;
         return config.osThreadInterruptedOffset;
     }
 
@@ -336,6 +359,11 @@ public class HotSpotReplacementsUtil {
     @Fold
     public static int jvmAccWrittenFlags(@InjectedParameter GraalHotSpotVMConfig config) {
         return config.jvmAccWrittenFlags;
+    }
+
+    @Fold
+    public static int jvmAccIsHiddenClass(@InjectedParameter GraalHotSpotVMConfig config) {
+        return config.jvmAccIsHiddenClass;
     }
 
     public static final LocationIdentity KLASS_LAYOUT_HELPER_LOCATION = new HotSpotOptimizingLocationIdentity("Klass::_layout_helper") {
@@ -513,6 +541,11 @@ public class HotSpotReplacementsUtil {
         return config.objectMonitorEntryList;
     }
 
+    @Fold
+    public static int objectMonitorSuccOffset(@InjectedParameter GraalHotSpotVMConfig config) {
+        return config.objectMonitorSucc;
+    }
+
     /**
      * Mask for a biasable, locked or unlocked mark word.
      *
@@ -578,32 +611,6 @@ public class HotSpotReplacementsUtil {
     @Fold
     public static int objectAlignment(@InjectedParameter GraalHotSpotVMConfig config) {
         return config.objectAlignment;
-    }
-
-    /**
-     * Calls {@link #arrayAllocationSize(int, int, int, int)} using an injected VM configuration
-     * object.
-     */
-    public static int arrayAllocationSize(int length, int headerSize, int log2ElementSize) {
-        return arrayAllocationSize(length, headerSize, log2ElementSize, objectAlignment(INJECTED_VMCONFIG));
-    }
-
-    /**
-     * Computes the size of the memory chunk allocated for an array. This size accounts for the
-     * array header size, body size and any padding after the last element to satisfy object
-     * alignment requirements.
-     *
-     * @param length the number of elements in the array
-     * @param headerSize the size of the array header
-     * @param log2ElementSize log2 of the size of an element in the array
-     * @param alignment the {@linkplain GraalHotSpotVMConfig#objectAlignment object alignment
-     *            requirement}
-     * @return the size of the memory chunk
-     */
-    public static int arrayAllocationSize(int length, int headerSize, int log2ElementSize, int alignment) {
-        int size = (length << log2ElementSize) + headerSize + (alignment - 1);
-        int mask = ~(alignment - 1);
-        return size & mask;
     }
 
     @Fold
@@ -682,6 +689,8 @@ public class HotSpotReplacementsUtil {
 
     public static final LocationIdentity OBJECT_MONITOR_ENTRY_LIST_LOCATION = NamedLocationIdentity.mutable("ObjectMonitor::_EntryList");
 
+    public static final LocationIdentity OBJECT_MONITOR_SUCC_LOCATION = NamedLocationIdentity.mutable("ObjectMonitor::_succ");
+
     @Fold
     public static int lockDisplacedMarkOffset(@InjectedParameter GraalHotSpotVMConfig config) {
         return config.basicLockDisplacedHeaderOffset;
@@ -730,7 +739,7 @@ public class HotSpotReplacementsUtil {
     }
 
     public static KlassPointer loadKlassFromObject(Object object, int offset, LocationIdentity identity) {
-        ReplacementsUtil.staticAssert(offset != hubOffset(INJECTED_VMCONFIG), "Use loadHubIntrinsic instead of loadWordFromObject");
+        ReplacementsUtil.staticAssert(offset != hubOffset(INJECTED_VMCONFIG), "Use loadHubIntrinsic instead of loadKlassFromObject");
         return loadKlassFromObjectIntrinsic(object, offset, identity, getWordKind());
     }
 
@@ -759,16 +768,33 @@ public class HotSpotReplacementsUtil {
     @NodeIntrinsic(value = LoadHubNode.class)
     public static native KlassPointer loadHubIntrinsic(Object object);
 
-    public static final LocationIdentity CLASS_STATE_LOCATION = NamedLocationIdentity.mutable("ClassState");
+    @NodeIntrinsic(value = LoadHubOrNullNode.class)
+    public static native KlassPointer loadHubOrNullIntrinsic(Object object);
+
+    static final LocationIdentity CLASS_INIT_STATE_LOCATION = NamedLocationIdentity.mutable("ClassInitState");
+
+    static final LocationIdentity CLASS_INIT_THREAD_LOCATION = NamedLocationIdentity.mutable("ClassInitThread");
 
     @Fold
-    public static int instanceKlassInitStateOffset(@InjectedParameter GraalHotSpotVMConfig config) {
+    static int instanceKlassInitStateOffset(@InjectedParameter GraalHotSpotVMConfig config) {
         return config.instanceKlassInitStateOffset;
+    }
+
+    @Fold
+    static int instanceKlassInitThreadOffset(@InjectedParameter GraalHotSpotVMConfig config) {
+        assert config.instanceKlassInitThreadOffset != -1;
+        return config.instanceKlassInitThreadOffset;
     }
 
     @Fold
     public static int instanceKlassStateFullyInitialized(@InjectedParameter GraalHotSpotVMConfig config) {
         return config.instanceKlassStateFullyInitialized;
+    }
+
+    @Fold
+    public static int instanceKlassStateBeingInitialized(@InjectedParameter GraalHotSpotVMConfig config) {
+        assert config.instanceKlassStateBeingInitialized != -1;
+        return config.instanceKlassStateBeingInitialized;
     }
 
     /**
@@ -777,11 +803,15 @@ public class HotSpotReplacementsUtil {
      * @return true is the InstanceKlass represented by hub is fully initialized
      */
     public static boolean isInstanceKlassFullyInitialized(KlassPointer hub) {
-        return readInstanceKlassState(hub) == instanceKlassStateFullyInitialized(INJECTED_VMCONFIG);
+        return readInstanceKlassInitState(hub) == instanceKlassStateFullyInitialized(INJECTED_VMCONFIG);
     }
 
-    private static byte readInstanceKlassState(KlassPointer hub) {
-        return hub.readByte(instanceKlassInitStateOffset(INJECTED_VMCONFIG), CLASS_STATE_LOCATION);
+    static byte readInstanceKlassInitState(KlassPointer hub) {
+        return hub.readByte(instanceKlassInitStateOffset(INJECTED_VMCONFIG), CLASS_INIT_STATE_LOCATION);
+    }
+
+    static Word readInstanceKlassInitThread(KlassPointer hub) {
+        return hub.readWord(instanceKlassInitThreadOffset(INJECTED_VMCONFIG), CLASS_INIT_THREAD_LOCATION);
     }
 
     public static final LocationIdentity KLASS_MODIFIER_FLAGS_LOCATION = NamedLocationIdentity.immutable("Klass::_modifier_flags");
@@ -844,7 +874,17 @@ public class HotSpotReplacementsUtil {
 
     @Fold
     public static long referentOffset(@InjectedParameter MetaAccessProvider metaAccessProvider) {
-        return getFieldOffset(metaAccessProvider.lookupJavaType(Reference.class), "referent");
+        return referentField(metaAccessProvider).getOffset();
+    }
+
+    @Fold
+    public static ResolvedJavaField referentField(@InjectedParameter MetaAccessProvider metaAccessProvider) {
+        return getField(metaAccessProvider.lookupJavaType(Reference.class), "referent");
+    }
+
+    @Fold
+    public static ResolvedJavaType referenceType(@InjectedParameter MetaAccessProvider metaAccessProvider) {
+        return metaAccessProvider.lookupJavaType(Reference.class);
     }
 
     public static final LocationIdentity OBJ_ARRAY_KLASS_ELEMENT_KLASS_LOCATION = new HotSpotOptimizingLocationIdentity("ObjArrayKlass::_element_klass") {

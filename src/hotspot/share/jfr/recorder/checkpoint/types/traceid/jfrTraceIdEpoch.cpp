@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,15 +25,21 @@
 #include "precompiled.hpp"
 #include "jfr/recorder/checkpoint/types/traceid/jfrTraceIdEpoch.hpp"
 #include "runtime/safepoint.hpp"
-#include "runtime/orderAccess.hpp"
 
-// Alternating epochs on each rotation allow for concurrent tagging.
-// The regular epoch shift happens only during a safepoint.
-// The fence is there only for the emergency dump case which happens outside of safepoint.
 bool JfrTraceIdEpoch::_epoch_state = false;
-void JfrTraceIdEpoch::shift_epoch() {
+bool JfrTraceIdEpoch::_synchronizing = false;
+volatile bool JfrTraceIdEpoch::_changed_tag_state = false;
+
+void JfrTraceIdEpoch::begin_epoch_shift() {
+  assert(SafepointSynchronize::is_at_safepoint(), "invariant");
+  _synchronizing = true;
+  OrderAccess::fence();
+}
+
+void JfrTraceIdEpoch::end_epoch_shift() {
+  assert(SafepointSynchronize::is_at_safepoint(), "invariant");
+  assert(_synchronizing, "invariant");
   _epoch_state = !_epoch_state;
-  if (!SafepointSynchronize::is_at_safepoint()) {
-    OrderAccess::fence();
-  }
+  OrderAccess::storestore();
+  _synchronizing = false;
 }

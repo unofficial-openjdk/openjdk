@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2007, 2008, 2009, 2010, 2011 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -31,9 +31,6 @@
 
 // Set the default values for platform dependent flags used by the
 // runtime system.  See globals.hpp for details of what they do.
-
-define_pd_global(bool,  ShareVtableStubs,     true);
-define_pd_global(bool,  NeedsDeoptSuspend,    false);
 
 define_pd_global(bool,  ImplicitNullChecks,   true);
 define_pd_global(bool,  TrapBasedNullChecks,  false);
@@ -69,9 +66,6 @@ define_pd_global(intx,  StackReservedPages,   DEFAULT_STACK_RESERVED_PAGES);
 define_pd_global(bool,  RewriteBytecodes,     true);
 define_pd_global(bool,  RewriteFrequentPairs, true);
 
-// GC Ergo Flags
-define_pd_global(size_t, CMSYoungGenPerWorker, 16*M);  // default max size of CMS young gen, per GC worker thread
-
 define_pd_global(uintx, TypeProfileLevel, 0);
 
 define_pd_global(bool, PreserveFramePointer, false);
@@ -79,16 +73,13 @@ define_pd_global(bool, PreserveFramePointer, false);
 // No performance work done here yet.
 define_pd_global(bool, CompactStrings, false);
 
-define_pd_global(bool, ThreadLocalHandshakes, false);
-
 #define ARCH_FLAGS(develop, \
                    product, \
                    diagnostic, \
                    experimental, \
                    notproduct, \
                    range, \
-                   constraint, \
-                   writeable)  \
+                   constraint)  \
                                                                             \
   product(bool, UseFastEmptyMethods, true,                                  \
           "Use fast method entry code for empty methods")                   \

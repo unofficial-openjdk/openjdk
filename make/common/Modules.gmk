@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -58,12 +58,14 @@ BOOT_MODULES += \
     java.rmi \
     java.security.sasl \
     java.xml \
+    jdk.incubator.foreign \
     jdk.internal.vm.ci \
     jdk.jfr \
     jdk.management \
     jdk.management.jfr \
     jdk.management.agent \
     jdk.net \
+    jdk.nio.mapmode \
     jdk.sctp \
     jdk.unsupported \
     #
@@ -110,7 +112,6 @@ PLATFORM_MODULES += \
     jdk.jsobject \
     jdk.localedata \
     jdk.naming.dns \
-    jdk.scripting.nashorn \
     jdk.security.auth \
     jdk.security.jgss \
     jdk.xml.dom \
@@ -127,8 +128,7 @@ endif
 
 JRE_TOOL_MODULES += \
     jdk.jdwp.agent \
-    jdk.pack \
-    jdk.scripting.nashorn.shell \
+    jdk.incubator.jpackage \
     #
 
 ################################################################################
@@ -148,6 +148,7 @@ DOCS_MODULES += \
     jdk.editpad \
     jdk.hotspot.agent \
     jdk.httpserver \
+    jdk.incubator.jpackage \
     jdk.jartool \
     jdk.javadoc \
     jdk.jcmd \
@@ -160,6 +161,7 @@ DOCS_MODULES += \
     jdk.jsobject \
     jdk.jshell \
     jdk.jstatd \
+    jdk.incubator.foreign \
     jdk.localedata \
     jdk.management \
     jdk.management.agent \
@@ -167,9 +169,7 @@ DOCS_MODULES += \
     jdk.naming.dns \
     jdk.naming.rmi \
     jdk.net \
-    jdk.pack \
-    jdk.rmic \
-    jdk.scripting.nashorn \
+    jdk.nio.mapmode \
     jdk.sctp \
     jdk.security.auth \
     jdk.security.jgss \
@@ -195,6 +195,21 @@ HOTSPOT_MODULES := \
     jdk.internal.vm.ci \
     jdk.internal.vm.compiler \
     jdk.internal.vm.compiler.management \
+    #
+
+# The native dynamic libraries in these modules will also get built into static
+# libraries for consumption by downstream projects that need to statically link
+# the JDK libraries. Those static libraries are not part of the main JDK
+# distribution. 
+STATIC_LIBS_MODULES := \
+    java.base \
+    jdk.crypto.ec \
+    jdk.security.auth \
+    java.prefs \
+    java.security.jgss \
+    java.smartcardio \
+    jdk.crypto.cryptoki \
+    jdk.net \
     #
 
 ################################################################################
@@ -224,6 +239,13 @@ endif
 
 ifeq ($(ENABLE_AOT), false)
   MODULES_FILTER += jdk.aot
+endif
+
+################################################################################
+# jpackage is only on windows, macosx, and linux
+
+ifeq ($(call isTargetOs, windows macosx linux), false)
+  MODULES_FILTER += jdk.incubator.jpackage
 endif
 
 ################################################################################

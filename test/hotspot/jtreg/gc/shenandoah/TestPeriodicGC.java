@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2017, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,7 +26,7 @@
  * @test TestPeriodicGC
  * @summary Test that periodic GC is working
  * @key gc
- * @requires vm.gc.Shenandoah
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
  * @library /test/lib
  * @run driver TestPeriodicGC
  */
@@ -64,16 +65,20 @@ public class TestPeriodicGC {
                 "adaptive",
                 "compact",
                 "static",
-                "traversal",
-        };
-
-        String[] disabled = new String[] {
-                "aggressive",
-                "passive",
         };
 
         for (String h : enabled) {
-            testWith("Short period with " + h,
+            testWith("Zero interval with " + h,
+                    false,
+                    "-Xlog:gc",
+                    "-XX:+UnlockDiagnosticVMOptions",
+                    "-XX:+UnlockExperimentalVMOptions",
+                    "-XX:+UseShenandoahGC",
+                    "-XX:ShenandoahGCHeuristics=" + h,
+                    "-XX:ShenandoahGuaranteedGCInterval=0"
+            );
+
+            testWith("Short interval with " + h,
                     true,
                     "-Xlog:gc",
                     "-XX:+UnlockDiagnosticVMOptions",
@@ -83,7 +88,7 @@ public class TestPeriodicGC {
                     "-XX:ShenandoahGuaranteedGCInterval=1000"
             );
 
-            testWith("Long period with " + h,
+            testWith("Long interval with " + h,
                     false,
                     "-Xlog:gc",
                     "-XX:+UnlockDiagnosticVMOptions",
@@ -94,17 +99,65 @@ public class TestPeriodicGC {
             );
         }
 
-        for (String h : disabled) {
-            testWith("Short period with " + h,
-                    false,
-                    "-Xlog:gc",
-                    "-XX:+UnlockDiagnosticVMOptions",
-                    "-XX:+UnlockExperimentalVMOptions",
-                    "-XX:+UseShenandoahGC",
-                    "-XX:ShenandoahGCHeuristics=" + h,
-                    "-XX:ShenandoahGuaranteedGCInterval=1000"
-            );
-        }
+        testWith("Zero interval with iu mode",
+                 false,
+                 "-Xlog:gc",
+                 "-XX:+UnlockDiagnosticVMOptions",
+                 "-XX:+UnlockExperimentalVMOptions",
+                 "-XX:+UseShenandoahGC",
+                 "-XX:ShenandoahGCMode=iu",
+                 "-XX:ShenandoahGuaranteedGCInterval=0"
+        );
+
+        testWith("Short interval with iu mode",
+                 true,
+                 "-Xlog:gc",
+                 "-XX:+UnlockDiagnosticVMOptions",
+                 "-XX:+UnlockExperimentalVMOptions",
+                 "-XX:+UseShenandoahGC",
+                 "-XX:ShenandoahGCMode=iu",
+                 "-XX:ShenandoahGuaranteedGCInterval=1000"
+        );
+
+        testWith("Long interval with iu mode",
+                 false,
+                 "-Xlog:gc",
+                 "-XX:+UnlockDiagnosticVMOptions",
+                 "-XX:+UnlockExperimentalVMOptions",
+                 "-XX:+UseShenandoahGC",
+                 "-XX:ShenandoahGCMode=iu",
+                 "-XX:ShenandoahGuaranteedGCInterval=100000" // deliberately too long
+        );
+
+        testWith("Short interval with aggressive",
+                 false,
+                 "-Xlog:gc",
+                 "-XX:+UnlockDiagnosticVMOptions",
+                 "-XX:+UnlockExperimentalVMOptions",
+                 "-XX:+UseShenandoahGC",
+                 "-XX:ShenandoahGCHeuristics=aggressive",
+                 "-XX:ShenandoahGuaranteedGCInterval=1000"
+        );
+
+        testWith("Zero interval with passive",
+                 false,
+                 "-Xlog:gc",
+                 "-XX:+UnlockDiagnosticVMOptions",
+                 "-XX:+UnlockExperimentalVMOptions",
+                 "-XX:+UseShenandoahGC",
+                 "-XX:ShenandoahGCMode=passive",
+                 "-XX:ShenandoahGuaranteedGCInterval=0"
+        );
+
+        testWith("Short interval with passive",
+                 false,
+                 "-Xlog:gc",
+                 "-XX:+UnlockDiagnosticVMOptions",
+                 "-XX:+UnlockExperimentalVMOptions",
+                 "-XX:+UseShenandoahGC",
+                 "-XX:ShenandoahGCMode=passive",
+                 "-XX:ShenandoahGuaranteedGCInterval=1000"
+        );
     }
 
 }

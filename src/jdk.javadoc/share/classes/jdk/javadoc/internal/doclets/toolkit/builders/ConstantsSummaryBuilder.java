@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,9 +46,6 @@ import static jdk.javadoc.internal.doclets.toolkit.util.VisibleMemberTable.Kind.
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
- * @author Bhavesh Patel (Modified)
  */
 public class ConstantsSummaryBuilder extends AbstractBuilder {
 
@@ -84,11 +81,6 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
     private TypeElement currentClass;
 
     /**
-     * The content tree for the constant summary documentation.
-     */
-    private Content contentTree;
-
-    /**
      * True if first package is listed.
      */
     private boolean first = true;
@@ -104,7 +96,7 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
         super(context);
         this.writer = writer;
         this.typeElementsWithConstFields = new HashSet<>();
-        this.printedPackageHeaders = new TreeSet<>(utils.makePackageComparator());
+        this.printedPackageHeaders = new TreeSet<>(utils.comparators.makePackageComparator());
     }
 
     /**
@@ -119,41 +111,34 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
         return new ConstantsSummaryBuilder(context, writer);
     }
 
-    /**
-     * {@inheritDoc}
-     * @throws DocletException if there is a problem while building the documentation
-     */
     @Override
     public void build() throws DocletException {
         if (writer == null) {
             //Doclet does not support this output.
             return;
         }
-        buildConstantSummary(contentTree);
+        buildConstantSummary();
     }
 
     /**
      * Build the constant summary.
      *
-     * @param contentTree the content tree to which the documentation will be added
      * @throws DocletException if there is a problem while building the documentation
      */
-    protected void buildConstantSummary(Content contentTree) throws DocletException {
-        contentTree = writer.getHeader();
+    protected void buildConstantSummary() throws DocletException {
+        Content contentTree = writer.getHeader();
 
-        buildContents(contentTree);
-        buildConstantSummaries(contentTree);
+        buildContents();
+        buildConstantSummaries();
 
-        writer.addFooter(contentTree);
+        writer.addFooter();
         writer.printDocument(contentTree);
     }
 
     /**
      * Build the list of packages.
-     *
-     * @param contentTree the content tree to which the content list will be added
      */
-    protected void buildContents(Content contentTree) {
+    protected void buildContents() {
         Content contentListTree = writer.getContentsHeader();
         printedPackageHeaders.clear();
         for (PackageElement pkg : configuration.packages) {
@@ -161,16 +146,15 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
                 writer.addLinkToPackageContent(pkg, printedPackageHeaders, contentListTree);
             }
         }
-        writer.addContentsList(contentTree, contentListTree);
+        writer.addContentsList(contentListTree);
     }
 
     /**
      * Build the summary for each documented package.
      *
-     * @param contentTree the tree to which the summaries will be added
      * @throws DocletException if there is a problem while building the documentation
      */
-    protected void buildConstantSummaries(Content contentTree) throws DocletException {
+    protected void buildConstantSummaries() throws DocletException {
         printedPackageHeaders.clear();
         Content summariesTree = writer.getConstantSummaries();
         for (PackageElement aPackage : configuration.packages) {
@@ -184,7 +168,7 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
                 first = false;
             }
         }
-        writer.addConstantSummaries(contentTree, summariesTree);
+        writer.addConstantSummaries(summariesTree);
     }
 
     /**
@@ -292,8 +276,6 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
 
     /**
      * Print the table of constants.
-     *
-     * @author Jamie Ho
      */
     private class ConstantFieldBuilder {
 
@@ -333,7 +315,7 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
             members.addAll(vmt.getVisibleMembers(FIELDS));
             members.addAll(vmt.getVisibleMembers(ENUM_CONSTANTS));
             SortedSet<VariableElement> includes =
-                    new TreeSet<>(utils.makeGeneralPurposeComparator());
+                    new TreeSet<>(utils.comparators.makeGeneralPurposeComparator());
             for (Element element : members) {
                 VariableElement member = (VariableElement)element;
                 if (member.getConstantValue() != null) {

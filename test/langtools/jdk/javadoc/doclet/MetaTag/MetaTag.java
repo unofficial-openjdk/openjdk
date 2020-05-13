@@ -26,7 +26,6 @@
  * @bug      4034096 4764726 6235799 8182765 8196202
  * @summary  Add support for HTML keywords via META tag for
  *           class and member names to improve API search
- * @author   dkramer
  * @library ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build    javadoc.tester.*
@@ -55,7 +54,6 @@ public class MetaTag extends JavadocTester {
         javadoc("-d", "out-1",
                 "-sourcepath", testSrc,
                 "-keywords",
-                "--frames",
                 "-doctitle", "Sample Packages",
                 "p1", "p2");
 
@@ -69,7 +67,6 @@ public class MetaTag extends JavadocTester {
         javadoc("-d", "out-2",
                 "-sourcepath", testSrc,
                 "-notimestamp",
-                "--frames",
                 "-doctitle", "Sample Packages",
                 "p1", "p2");
         checkExit(Exit.OK);
@@ -80,27 +77,39 @@ public class MetaTag extends JavadocTester {
 
     void checkMeta(String metaNameDate, boolean found) {
         checkOutput("p1/C1.html", found,
-                "<meta name=\"keywords\" content=\"p1.C1 class\">",
-                "<meta name=\"keywords\" content=\"field1\">",
-                "<meta name=\"keywords\" content=\"field2\">",
-                "<meta name=\"keywords\" content=\"method1()\">",
-                "<meta name=\"keywords\" content=\"method2()\">");
+                """
+                    <meta name="keywords" content="p1.C1 class">""",
+                """
+                    <meta name="keywords" content="field1">""",
+                """
+                    <meta name="keywords" content="field2">""",
+                """
+                    <meta name="keywords" content="method1()">""",
+                """
+                    <meta name="keywords" content="method2()">""");
 
         checkOutput("p1/package-summary.html", found,
-                "<meta name=\"keywords\" content=\"p1 package\">");
+                """
+                    <meta name="keywords" content="p1 package">""");
 
-        checkOutput("overview-summary.html", found,
-                "<meta name=\"keywords\" content=\"Overview, Sample Packages\">");
+        checkOutput("index.html", found,
+                """
+                    <meta name="keywords" content="Overview, Sample Packages">""");
 
         // NOTE: Hopefully, this regression test is not run at midnight.  If the output
-        // was generated yesterday and this test is run today, the test will fail.
-        checkOutput("overview-summary.html", found,
-                "<meta name=\"" + metaNameDate + "\" content=\"" + date() + "\">");
+        // was generated yesterday and this test is run today, this check could fail ...
+        // so make sure the date has not changed since the test started
+        String date = date();
+        if (date.equals(startDate)) {
+            checkOutput("index.html", found,
+                    "<meta name=\"" + metaNameDate + "\" content=\"" + date + "\">");
+        }
     }
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    private static final String startDate = date();
 
-    String date() {
+    static String date() {
         return dateFormat.format(new Date());
     }
 }

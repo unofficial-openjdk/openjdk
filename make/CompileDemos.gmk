@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ include $(SPEC)
 include MakeBase.gmk
 include JavaCompilation.gmk
 include NativeCompilation.gmk
-include SetupJavaCompilers.gmk
 include TextFileProcessing.gmk
 include ZipArchive.gmk
 
@@ -43,7 +42,7 @@ $(eval $(call IncludeCustomExtension, CompileDemos-pre.gmk))
 # Prepare the find cache.
 DEMO_SRC_DIRS += $(TOPDIR)/src/demo
 
-$(eval $(call FillCacheFind, $(wildcard $(DEMO_SRC_DIRS))))
+$(call FillFindCache, $(DEMO_SRC_DIRS))
 
 # Append demo goals to this variable.
 TARGETS =
@@ -93,7 +92,7 @@ COPY_TO_IMAGE := *.html *.txt *.png *.xml README*
 # EXTRA_COPY_TO_IMAGE   Additional files to copy to images (as wildcards)
 # EXTRA_MANIFEST_ATTR   Extra manifest attribute
 # SKIP_COMPILATION   Skip Java compilation iff true
-# DISABLE_SJAVAC   Passed to SetupJavaCompilation
+# DISABLED_WARNINGS Additional disabled warnings
 SetupBuildDemo = $(NamedParamsMacroTemplate)
 define SetupBuildDemoBody
   ifeq ($$($1_SRC_DIR), )
@@ -125,7 +124,7 @@ define SetupBuildDemoBody
 
   ifneq ($$($1_SKIP_COMPILATION), true)
     $$(eval $$(call SetupJavaCompilation, BUILD_DEMO_$1, \
-        SETUP := GENERATE_USINGJDKBYTECODE, \
+        TARGET_RELEASE := $(TARGET_RELEASE_NEWJDK_UPGRADED), \
         SRC := $$($1_MAIN_SRC) $$($1_EXTRA_SRC_DIR), \
         BIN := $(SUPPORT_OUTPUTDIR)/demos/classes/$$($1_DEMO_SUBDIR)/$1, \
         COPY := $(COPY_TO_JAR) $$($1_EXTRA_COPY_TO_JAR), \
@@ -135,7 +134,7 @@ define SetupBuildDemoBody
         EXTRA_MANIFEST_ATTR := $$($1_EXTRA_MANIFEST_ATTR), \
         SRCZIP := $(SUPPORT_OUTPUTDIR)/demos/image/$$($1_DEMO_SUBDIR)/$1/src.zip, \
         EXCLUDE_FILES := $$($1_EXCLUDE_FILES), \
-        DISABLE_SJAVAC := $$($1_DISABLE_SJAVAC), \
+        DISABLED_WARNINGS := $$($1_DISABLED_WARNINGS), \
     ))
 
     $1 += $$(BUILD_DEMO_$1)
@@ -173,35 +172,41 @@ $(BUILD_DEMO_CodePointIM_JAR): $(CODEPOINT_METAINF_SERVICE_FILE)
 
 $(eval $(call SetupBuildDemo, FileChooserDemo, \
     DEMO_SUBDIR := jfc, \
+    DISABLED_WARNINGS := rawtypes deprecation unchecked, \
 ))
 
 $(eval $(call SetupBuildDemo, SwingSet2, \
     DEMO_SUBDIR := jfc, \
     EXTRA_COPY_TO_JAR := .java, \
     EXTRA_MANIFEST_ATTR := SplashScreen-Image: resources/images/splash.png, \
-    DISABLE_SJAVAC := true, \
+    DISABLED_WARNINGS := rawtypes deprecation unchecked static serial cast, \
 ))
 
 $(eval $(call SetupBuildDemo, Font2DTest, \
+    DISABLED_WARNINGS := rawtypes deprecation unchecked serial cast, \
     DEMO_SUBDIR := jfc, \
 ))
 
 $(eval $(call SetupBuildDemo, J2Ddemo, \
     DEMO_SUBDIR := jfc, \
     MAIN_CLASS := java2d.J2Ddemo, \
+    DISABLED_WARNINGS := rawtypes deprecation unchecked cast, \
     JAR_NAME := J2Ddemo, \
 ))
 
 $(eval $(call SetupBuildDemo, Metalworks, \
+    DISABLED_WARNINGS := rawtypes unchecked, \
     DEMO_SUBDIR := jfc, \
 ))
 
 $(eval $(call SetupBuildDemo, Notepad, \
+    DISABLED_WARNINGS := rawtypes, \
     DEMO_SUBDIR := jfc, \
 ))
 
 $(eval $(call SetupBuildDemo, Stylepad, \
     DEMO_SUBDIR := jfc, \
+    DISABLED_WARNINGS := rawtypes unchecked, \
     EXTRA_SRC_DIR := $(DEMO_SHARE_SRC)/jfc/Notepad, \
     EXCLUDE_FILES := $(DEMO_SHARE_SRC)/jfc/Notepad/README.txt, \
 ))
@@ -211,6 +216,7 @@ $(eval $(call SetupBuildDemo, SampleTree, \
 ))
 
 $(eval $(call SetupBuildDemo, TableExample, \
+    DISABLED_WARNINGS := rawtypes unchecked deprecation, \
     DEMO_SUBDIR := jfc, \
 ))
 
@@ -237,11 +243,11 @@ $(SUPPORT_OUTPUTDIR)/demos/image/nbproject/%: $(DEMO_SHARE_SRC)/nbproject/%
 ifeq ($(call isTargetOs, solaris), true)
   TARGETS += $(patsubst $(DEMO_SHARE_SRC)/nbproject/%, \
     $(SUPPORT_OUTPUTDIR)/demos/image/nbproject/%, \
-    $(call CacheFind, $(DEMO_SHARE_SRC)/nbproject))
+    $(call FindFiles, $(DEMO_SHARE_SRC)/nbproject))
 else
   TARGETS += $(patsubst $(DEMO_SHARE_SRC)/nbproject/%, \
     $(SUPPORT_OUTPUTDIR)/demos/image/nbproject/%, \
-    $(call CacheFind, $(DEMO_SHARE_SRC)/nbproject))
+    $(call FindFiles, $(DEMO_SHARE_SRC)/nbproject))
 endif
 
 ################################################################################
@@ -250,7 +256,7 @@ ifneq ($(filter images, $(MAKECMDGOALS)), )
   $(eval $(call SetupCopyFiles, COPY_TO_TEST_IMAGE, \
       SRC := $(SUPPORT_OUTPUTDIR)/demos/image, \
       DEST := $(TEST_IMAGE_DIR)/jdk/demos, \
-      FILES := $(call CacheFind, $(SUPPORT_OUTPUTDIR)/demos/image), \
+      FILES := $(call FindFiles, $(SUPPORT_OUTPUTDIR)/demos/image), \
   ))
 
   IMAGES_TARGETS := $(COPY_TO_TEST_IMAGE)

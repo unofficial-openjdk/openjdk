@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2017, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,23 +26,75 @@
  * @test TestGCThreadGroups
  * @summary Test Shenandoah GC uses concurrent/parallel threads correctly
  * @key gc
- * @requires vm.gc.Shenandoah
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
  *
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4 -Xmx16m                                         -Dtarget=1000 TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:-UseDynamicNumberOfGCThreads            -Xmx16m                                         -Dtarget=1000 TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:+UnlockDiagnosticVMOptions -XX:+ForceDynamicNumberOfGCThreads -Xmx16m                   -Dtarget=1000 TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4 -Xmx16m -XX:ShenandoahGCHeuristics=passive      -Dtarget=1000 TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4 -Xmx16m -XX:ShenandoahGCHeuristics=adaptive     -Dtarget=1000 TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4 -Xmx16m -XX:ShenandoahGCHeuristics=static       -Dtarget=1000 TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4 -Xmx16m -XX:ShenandoahGCHeuristics=compact      -Dtarget=100  TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4 -Xmx16m -XX:ShenandoahGCHeuristics=aggressive   -Dtarget=100  TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4 -Xmx16m -XX:ShenandoahGCHeuristics=traversal    -Dtarget=1000 TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=4 -XX:ParallelGCThreads=2 -Xmx16m -XX:ShenandoahGCHeuristics=passive      -Dtarget=1000 TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=4 -XX:ParallelGCThreads=2 -Xmx16m -XX:ShenandoahGCHeuristics=adaptive     -Dtarget=1000 TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=4 -XX:ParallelGCThreads=2 -Xmx16m -XX:ShenandoahGCHeuristics=static       -Dtarget=1000 TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=4 -XX:ParallelGCThreads=2 -Xmx16m -XX:ShenandoahGCHeuristics=compact      -Dtarget=100  TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=4 -XX:ParallelGCThreads=2 -Xmx16m -XX:ShenandoahGCHeuristics=aggressive   -Dtarget=100  TestGCThreadGroups
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ConcGCThreads=4 -XX:ParallelGCThreads=2 -Xmx16m -XX:ShenandoahGCHeuristics=traversal    -Dtarget=1000 TestGCThreadGroups
+ * @run main/othervm -Xmx16m -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions
+ *      -XX:+UseShenandoahGC -XX:ShenandoahGCMode=passive
+ *      -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4
+ *      -Dtarget=1000
+ *      TestGCThreadGroups
+ */
+
+/**
+ * @test TestGCThreadGroups
+ * @summary Test Shenandoah GC uses concurrent/parallel threads correctly
+ * @key gc
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
+ *
+ * @run main/othervm -Xmx16m -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions
+ *      -XX:+UseShenandoahGC
+ *      -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4
+ *      -Dtarget=1000
+ *      TestGCThreadGroups
+ *
+ * @run main/othervm -Xmx16m -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions
+ *      -XX:+UseShenandoahGC
+ *      -XX:-UseDynamicNumberOfGCThreads
+ *      -Dtarget=1000
+ *      TestGCThreadGroups
+ *
+ * @run main/othervm -Xmx16m -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions
+ *      -XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=adaptive
+ *      -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4
+ *      -Dtarget=1000
+ *      TestGCThreadGroups
+ *
+ * @run main/othervm -Xmx16m -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions
+ *      -XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=static
+ *      -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4
+ *      -Dtarget=1000
+ *      TestGCThreadGroups
+ *
+ * @run main/othervm -Xmx16m -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions
+ *      -XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=compact
+ *      -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4
+ *      -Dtarget=100
+ *      TestGCThreadGroups
+ *
+ * @run main/othervm -Xmx16m -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions
+ *      -XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=aggressive
+ *      -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4
+ *      -Dtarget=100
+ *      TestGCThreadGroups
+ */
+
+/**
+ * @test TestGCThreadGroups
+ * @summary Test Shenandoah GC uses concurrent/parallel threads correctly
+ * @key gc
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
+ *
+ * @run main/othervm -Xmx16m -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions
+ *      -XX:+UseShenandoahGC -XX:ShenandoahGCMode=iu
+ *      -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4
+ *      -Dtarget=1000
+ *      TestGCThreadGroups
+ *
+ * @run main/othervm -Xmx16m -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions
+ *      -XX:+UseShenandoahGC -XX:ShenandoahGCMode=iu -XX:ShenandoahGCHeuristics=aggressive
+ *      -XX:ConcGCThreads=2 -XX:ParallelGCThreads=4
+ *      -Dtarget=1000
+ *      TestGCThreadGroups
 */
 
 public class TestGCThreadGroups {

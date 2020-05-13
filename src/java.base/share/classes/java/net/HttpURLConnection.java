@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -381,7 +381,7 @@ public abstract class HttpURLConnection extends URLConnection {
      *
      * @param set a {@code boolean} indicating whether or not
      * to follow HTTP redirects.
-     * @exception  SecurityException  if a security manager exists and its
+     * @throws     SecurityException  if a security manager exists and its
      *             {@code checkSetFactory} method doesn't
      *             allow the operation.
      * @see        SecurityManager#checkSetFactory
@@ -424,11 +424,11 @@ public abstract class HttpURLConnection extends URLConnection {
      * @see #getInstanceFollowRedirects
      * @since 1.3
      */
-     public void setInstanceFollowRedirects(boolean followRedirects) {
+    public void setInstanceFollowRedirects(boolean followRedirects) {
         instanceFollowRedirects = followRedirects;
-     }
+    }
 
-     /**
+    /**
      * Returns the value of this {@code HttpURLConnection}'s
      * {@code instanceFollowRedirects} field.
      *
@@ -438,9 +438,9 @@ public abstract class HttpURLConnection extends URLConnection {
      * @see #setInstanceFollowRedirects(boolean)
      * @since 1.3
      */
-     public boolean getInstanceFollowRedirects() {
-         return instanceFollowRedirects;
-     }
+    public boolean getInstanceFollowRedirects() {
+        return instanceFollowRedirects;
+    }
 
     /**
      * Set the method for the URL request, one of:
@@ -456,9 +456,9 @@ public abstract class HttpURLConnection extends URLConnection {
      * method is GET.
      *
      * @param method the HTTP method
-     * @exception ProtocolException if the method cannot be reset or if
+     * @throws    ProtocolException if the method cannot be reset or if
      *              the requested method isn't valid for HTTP.
-     * @exception SecurityException if a security manager is set and the
+     * @throws    SecurityException if a security manager is set and the
      *              method is "TRACE", but the "allowHttpTrace"
      *              NetPermission is not granted.
      * @see #getRequestMethod()
@@ -618,8 +618,13 @@ public abstract class HttpURLConnection extends URLConnection {
 
     /**
      * Indicates if the connection is going through a proxy.
-     * @return a boolean indicating if the connection is
-     * using a proxy.
+     *
+     * This method returns {@code true} if the connection is known
+     * to be going or has gone through proxies, and returns {@code false}
+     * if the connection will never go through a proxy or if
+     * the use of a proxy cannot be determined.
+     *
+     * @return a boolean indicating if the connection is using a proxy.
      */
     public abstract boolean usingProxy();
 
@@ -627,7 +632,7 @@ public abstract class HttpURLConnection extends URLConnection {
      * Returns a {@link SocketPermission} object representing the
      * permission necessary to connect to the destination host and port.
      *
-     * @exception IOException if an error occurs while computing
+     * @throws    IOException if an error occurs while computing
      *            the permission.
      *
      * @return a {@code SocketPermission} object representing the

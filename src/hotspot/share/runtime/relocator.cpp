@@ -27,7 +27,7 @@
 #include "interpreter/bytecodes.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/oopFactory.hpp"
-#include "memory/universe.hpp"
+#include "oops/method.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/relocator.hpp"

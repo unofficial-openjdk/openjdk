@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,7 @@
 #ifndef SHARE_OOPS_INSTANCEKLASS_HPP
 #define SHARE_OOPS_INSTANCEKLASS_HPP
 
-#include "classfile/classLoader.hpp"
 #include "classfile/classLoaderData.hpp"
-#include "classfile/moduleEntry.hpp"
-#include "classfile/packageEntry.hpp"
 #include "memory/referenceType.hpp"
 #include "oops/annotations.hpp"
 #include "oops/constMethod.hpp"
@@ -44,6 +41,7 @@
 #include "jfr/support/jfrKlassExtension.hpp"
 #endif
 
+class RecordComponent;
 
 // An InstanceKlass is the VM level representation of a Java class.
 // It contains all information needed for at class at execution runtime.
@@ -63,6 +61,7 @@
 class BreakpointInfo;
 #endif
 class ClassFileParser;
+class ClassFileStream;
 class KlassDepChange;
 class DependencyContext;
 class fieldDescriptor;
@@ -70,9 +69,10 @@ class jniIdMapBase;
 class JNIid;
 class JvmtiCachedClassFieldMap;
 class nmethodBucket;
-class SuperTypeClosure;
 class OopMapCache;
 class InterpreterOopMap;
+class PackageEntry;
+class ModuleEntry;
 
 // This is used in iterators below.
 class FieldClosure: public StackObj {
@@ -103,10 +103,26 @@ class OopMapBlock {
   uint count() const         { return _count; }
   void set_count(uint count) { _count = count; }
 
+  void increment_count(int diff) { _count += diff; }
+
+  int offset_span() const { return _count * heapOopSize; }
+
+  int end_offset() const {
+    return offset() + offset_span();
+  }
+
+  bool is_contiguous(int another_offset) const {
+    return another_offset == end_offset();
+  }
+
   // sizeof(OopMapBlock) in words.
   static const int size_in_words() {
     return align_up((int)sizeof(OopMapBlock), wordSize) >>
       LogBytesPerWord;
+  }
+
+  static int compare_offset(const OopMapBlock* a, const OopMapBlock* b) {
+    return a->offset() - b->offset();
   }
 
  private:
@@ -154,7 +170,7 @@ class InstanceKlass: public Klass {
   // Package this class is defined in
   PackageEntry*   _package_entry;
   // Array classes holding elements of this class.
-  Klass* volatile _array_klasses;
+  ObjArrayKlass* volatile _array_klasses;
   // Constant pool for this class.
   ConstantPool* _constants;
   // The InnerClasses attribute and EnclosingMethod attribute. The
@@ -175,80 +191,83 @@ class InstanceKlass: public Klass {
   // has not been validated.
   Array<jushort>* _nest_members;
 
-  // The NestHost attribute. The class info index for the class
-  // that is the nest-host of this class. This data has not been validated.
-  jushort _nest_host_index;
-
-  // Resolved nest-host klass: either true nest-host or self if we are not nested.
+  // Resolved nest-host klass: either true nest-host or self if we are not
+  // nested, or an error occurred resolving or validating the nominated
+  // nest-host. Can also be set directly by JDK API's that establish nest
+  // relationships.
   // By always being set it makes nest-member access checks simpler.
   InstanceKlass* _nest_host;
+
+  // The contents of the Record attribute.
+  Array<RecordComponent*>* _record_components;
 
   // the source debug extension for this klass, NULL if not specified.
   // Specified as UTF-8 string without terminating zero byte in the classfile,
   // it is stored in the instanceklass as a NULL-terminated UTF-8 string
   const char*     _source_debug_extension;
-  // Array name derived from this class which needs unreferencing
-  // if this class is unloaded.
-  Symbol*         _array_name;
 
   // Number of heapOopSize words used by non-static fields in this klass
   // (including inherited fields but after header_size()).
   int             _nonstatic_field_size;
   int             _static_field_size;    // number words used by static fields (oop and non-oop) in this klass
-  // Constant pool index to the utf8 entry of the Generic signature,
-  // or 0 if none.
-  u2              _generic_signature_index;
-  // Constant pool index to the utf8 entry for the name of source file
-  // containing this klass, 0 if not specified.
-  u2              _source_file_name_index;
+
+  int             _nonstatic_oop_map_size;// size in words of nonstatic oop map blocks
+  int             _itable_len;           // length of Java itable (in words)
+
+  // The NestHost attribute. The class info index for the class
+  // that is the nest-host of this class. This data has not been validated.
+  u2              _nest_host_index;
+  u2              _this_class_index;              // constant pool entry
+
   u2              _static_oop_field_count;// number of static oop fields in this klass
   u2              _java_fields_count;    // The number of declared Java fields
-  int             _nonstatic_oop_map_size;// size in words of nonstatic oop map blocks
 
-  int             _itable_len;           // length of Java itable (in words)
+  volatile u2     _idnum_allocated_count;         // JNI/JVMTI: increments with the addition of methods, old ids don't change
+
   // _is_marked_dependent can be set concurrently, thus cannot be part of the
   // _misc_flags.
   bool            _is_marked_dependent;  // used for marking during flushing and deoptimization
-  bool            _is_being_redefined;   // used for locking redefinition
 
-  // The low two bits of _misc_flags contains the kind field.
+  // Class states are defined as ClassState (see above).
+  // Place the _init_state here to utilize the unused 2-byte after
+  // _idnum_allocated_count.
+  u1              _init_state;                    // state of class
+
   // This can be used to quickly discriminate among the four kinds of
-  // InstanceKlass.
+  // InstanceKlass. This should be an enum (?)
+  static const unsigned _kind_other        = 0; // concrete InstanceKlass
+  static const unsigned _kind_reference    = 1; // InstanceRefKlass
+  static const unsigned _kind_class_loader = 2; // InstanceClassLoaderKlass
+  static const unsigned _kind_mirror       = 3; // InstanceMirrorKlass
 
-  static const unsigned _misc_kind_field_size = 2;
-  static const unsigned _misc_kind_field_pos  = 0;
-  static const unsigned _misc_kind_field_mask = (1u << _misc_kind_field_size) - 1u;
+  u1              _reference_type;                // reference type
+  u1              _kind;                          // kind of InstanceKlass
 
-  static const unsigned _misc_kind_other        = 0; // concrete InstanceKlass
-  static const unsigned _misc_kind_reference    = 1; // InstanceRefKlass
-  static const unsigned _misc_kind_class_loader = 2; // InstanceClassLoaderKlass
-  static const unsigned _misc_kind_mirror       = 3; // InstanceMirrorKlass
-
-  // Start after _misc_kind field.
   enum {
-    _misc_rewritten                           = 1 << 2,  // methods rewritten.
-    _misc_has_nonstatic_fields                = 1 << 3,  // for sizing with UseCompressedOops
-    _misc_should_verify_class                 = 1 << 4,  // allow caching of preverification
-    _misc_is_unsafe_anonymous                 = 1 << 5,  // has embedded _unsafe_anonymous_host field
-    _misc_is_contended                        = 1 << 6,  // marked with contended annotation
-    _misc_has_nonstatic_concrete_methods      = 1 << 7,  // class/superclass/implemented interfaces has non-static, concrete methods
-    _misc_declares_nonstatic_concrete_methods = 1 << 8,  // directly declares non-static, concrete methods
-    _misc_has_been_redefined                  = 1 << 9,  // class has been redefined
-    _misc_has_passed_fingerprint_check        = 1 << 10, // when this class was loaded, the fingerprint computed from its
+    _misc_rewritten                           = 1 << 0,  // methods rewritten.
+    _misc_has_nonstatic_fields                = 1 << 1,  // for sizing with UseCompressedOops
+    _misc_should_verify_class                 = 1 << 2,  // allow caching of preverification
+    _misc_is_unsafe_anonymous                 = 1 << 3,  // has embedded _unsafe_anonymous_host field
+    _misc_is_contended                        = 1 << 4,  // marked with contended annotation
+    _misc_has_nonstatic_concrete_methods      = 1 << 5,  // class/superclass/implemented interfaces has non-static, concrete methods
+    _misc_declares_nonstatic_concrete_methods = 1 << 6,  // directly declares non-static, concrete methods
+    _misc_has_been_redefined                  = 1 << 7,  // class has been redefined
+    _misc_has_passed_fingerprint_check        = 1 << 8,  // when this class was loaded, the fingerprint computed from its
                                                          // code source was found to be matching the value recorded by AOT.
-    _misc_is_scratch_class                    = 1 << 11, // class is the redefined scratch class
-    _misc_is_shared_boot_class                = 1 << 12, // defining class loader is boot class loader
-    _misc_is_shared_platform_class            = 1 << 13, // defining class loader is platform class loader
-    _misc_is_shared_app_class                 = 1 << 14, // defining class loader is app class loader
-    _misc_has_resolved_methods                = 1 << 15  // resolved methods table entries added for this class
+    _misc_is_scratch_class                    = 1 << 9,  // class is the redefined scratch class
+    _misc_is_shared_boot_class                = 1 << 10, // defining class loader is boot class loader
+    _misc_is_shared_platform_class            = 1 << 11, // defining class loader is platform class loader
+    _misc_is_shared_app_class                 = 1 << 12, // defining class loader is app class loader
+    _misc_has_resolved_methods                = 1 << 13, // resolved methods table entries added for this class
+    _misc_is_being_redefined                  = 1 << 14, // used for locking redefinition
+    _misc_has_contended_annotations           = 1 << 15  // has @Contended annotation
   };
-  u2 loader_type_bits() {
+  u2 shared_loader_type_bits() const {
     return _misc_is_shared_boot_class|_misc_is_shared_platform_class|_misc_is_shared_app_class;
   }
-  u2              _misc_flags;
-  u2              _minor_version;        // minor version number of class file
-  u2              _major_version;        // major version number of class file
-  Thread*         _init_thread;          // Pointer to current thread doing initialization (to handle recusive initialization)
+  u2              _misc_flags;           // There is more space in access_flags for more flags.
+
+  Thread*         _init_thread;          // Pointer to current thread doing initialization (to handle recursive initialization)
   OopMapCache*    volatile _oop_map_cache;   // OopMapCache for all methods in the klass (allocated lazily)
   JNIid*          _jni_ids;              // First JNI identifier for static fields in this class
   jmethodID*      volatile _methods_jmethod_ids;  // jmethodIDs corresponding to method_idnum, or NULL if none
@@ -264,15 +283,6 @@ class InstanceKlass: public Klass {
   JvmtiCachedClassFileData* _cached_class_file;
 #endif
 
-  volatile u2     _idnum_allocated_count;         // JNI/JVMTI: increments with the addition of methods, old ids don't change
-
-  // Class states are defined as ClassState (see above).
-  // Place the _init_state here to utilize the unused 2-byte after
-  // _idnum_allocated_count.
-  u1              _init_state;                    // state of class
-  u1              _reference_type;                // reference type
-
-  u2              _this_class_index;              // constant pool entry
 #if INCLUDE_JVMTI
   JvmtiCachedClassFieldMap* _jvmti_cached_class_field_map;  // JVMTI: used during heap iteration
 #endif
@@ -330,11 +340,10 @@ class InstanceKlass: public Klass {
 
   friend class SystemDictionary;
 
- public:
-  u2 loader_type() {
-    return _misc_flags & loader_type_bits();
-  }
+  static bool _disable_method_binary_search;
 
+ public:
+  // The three BUILTIN class loader types
   bool is_shared_boot_class() const {
     return (_misc_flags & _misc_is_shared_boot_class) != 0;
   }
@@ -344,27 +353,16 @@ class InstanceKlass: public Klass {
   bool is_shared_app_class() const {
     return (_misc_flags & _misc_is_shared_app_class) != 0;
   }
-
-  void clear_class_loader_type() {
-    _misc_flags &= ~loader_type_bits();
+  // The UNREGISTERED class loader type
+  bool is_shared_unregistered_class() const {
+    return (_misc_flags & shared_loader_type_bits()) == 0;
   }
 
-  void set_class_loader_type(s2 loader_type) {
-    switch (loader_type) {
-    case ClassLoader::BOOT_LOADER:
-      _misc_flags |= _misc_is_shared_boot_class;
-       break;
-    case ClassLoader::PLATFORM_LOADER:
-      _misc_flags |= _misc_is_shared_platform_class;
-      break;
-    case ClassLoader::APP_LOADER:
-      _misc_flags |= _misc_is_shared_app_class;
-      break;
-    default:
-      ShouldNotReachHere();
-      break;
-    }
+  void clear_shared_class_loader_type() {
+    _misc_flags &= ~shared_loader_type_bits();
   }
+
+  void set_shared_class_loader_type(s2 loader_type);
 
   bool has_nonstatic_fields() const        {
     return (_misc_flags & _misc_has_nonstatic_fields) != 0;
@@ -392,10 +390,10 @@ class InstanceKlass: public Klass {
   void set_itable_length(int len)          { _itable_len = len; }
 
   // array klasses
-  Klass* array_klasses() const             { return _array_klasses; }
-  inline Klass* array_klasses_acquire() const; // load with acquire semantics
-  void set_array_klasses(Klass* k)         { _array_klasses = k; }
-  inline void release_set_array_klasses(Klass* k); // store with release semantics
+  ObjArrayKlass* array_klasses() const     { return _array_klasses; }
+  inline ObjArrayKlass* array_klasses_acquire() const; // load with acquire semantics
+  void set_array_klasses(ObjArrayKlass* k) { _array_klasses = k; }
+  inline void release_set_array_klasses(ObjArrayKlass* k); // store with release semantics
 
   // methods
   Array<Method*>* methods() const          { return _methods; }
@@ -461,14 +459,28 @@ class InstanceKlass: public Klass {
   // nest-host index
   jushort nest_host_index() const { return _nest_host_index; }
   void set_nest_host_index(u2 i)  { _nest_host_index = i; }
+  // dynamic nest member support
+  void set_nest_host(InstanceKlass* host, TRAPS);
+
+  // record components
+  Array<RecordComponent*>* record_components() const { return _record_components; }
+  void set_record_components(Array<RecordComponent*>* record_components) {
+    _record_components = record_components;
+  }
+  bool is_record() const { return _record_components != NULL; }
 
 private:
   // Called to verify that k is a member of this nest - does not look at k's nest-host
   bool has_nest_member(InstanceKlass* k, TRAPS) const;
+
 public:
-  // Returns nest-host class, resolving and validating it if needed
-  // Returns NULL if an exception occurs during loading, or validation fails
-  InstanceKlass* nest_host(Symbol* validationException, TRAPS);
+  // Used to construct informative IllegalAccessError messages at a higher level,
+  // if there was an issue resolving or validating the nest host.
+  // Returns NULL if there was no error.
+  const char* nest_host_error(TRAPS);
+  // Returns nest-host class, resolving and validating it if needed.
+  // Returns NULL if resolution is not possible from the calling context.
+  InstanceKlass* nest_host(TRAPS);
   // Check if this klass is a nestmate of k - resolves this nest-host and k's
   bool has_nestmate_access_to(InstanceKlass* k, TRAPS);
 
@@ -494,8 +506,15 @@ public:
   PackageEntry* package() const     { return _package_entry; }
   ModuleEntry* module() const;
   bool in_unnamed_package() const   { return (_package_entry == NULL); }
-  void set_package(PackageEntry* p) { _package_entry = p; }
-  void set_package(ClassLoaderData* loader_data, TRAPS);
+  void set_package(ClassLoaderData* loader_data, PackageEntry* pkg_entry, TRAPS);
+  // If the package for the InstanceKlass is in the boot loader's package entry
+  // table then sets the classpath_index field so that
+  // get_system_package() will know to return a non-null value for the
+  // package's location.  And, so that the package will be added to the list of
+  // packages returned by get_system_packages().
+  // For packages whose classes are loaded from the boot loader class path, the
+  // classpath_index indicates which entry on the boot loader class path.
+  void set_classpath_index(s2 path_index, TRAPS);
   bool is_same_class_package(const Klass* class2) const;
   bool is_same_class_package(oop other_class_loader, const Symbol* other_class_name) const;
 
@@ -573,12 +592,18 @@ public:
   Klass* find_field(Symbol* name, Symbol* sig, bool is_static, fieldDescriptor* fd) const;
 
   // find a non-static or static field given its offset within the class.
-  bool contains_field_offset(int offset) {
-    return instanceOopDesc::contains_field_offset(offset, nonstatic_field_size());
-  }
+  bool contains_field_offset(int offset);
 
   bool find_local_field_from_offset(int offset, bool is_static, fieldDescriptor* fd) const;
   bool find_field_from_offset(int offset, bool is_static, fieldDescriptor* fd) const;
+
+ private:
+  inline static int quick_search(const Array<Method*>* methods, const Symbol* name);
+
+ public:
+  static void disable_method_binary_search() {
+    _disable_method_binary_search = true;
+  }
 
   // find a local method (returns NULL if not found)
   Method* find_method(const Symbol* name, const Symbol* signature) const;
@@ -588,11 +613,11 @@ public:
 
   // find a local method, but skip static methods
   Method* find_instance_method(const Symbol* name, const Symbol* signature,
-                               PrivateLookupMode private_mode = find_private) const;
+                               PrivateLookupMode private_mode) const;
   static Method* find_instance_method(const Array<Method*>* methods,
                                       const Symbol* name,
                                       const Symbol* signature,
-                                      PrivateLookupMode private_mode = find_private);
+                                      PrivateLookupMode private_mode);
 
   // find a local method (returns NULL if not found)
   Method* find_local_method(const Symbol* name,
@@ -692,30 +717,19 @@ public:
   }
 
   // source file name
-  Symbol* source_file_name() const               {
-    return (_source_file_name_index == 0) ?
-      (Symbol*)NULL : _constants->symbol_at(_source_file_name_index);
-  }
-  u2 source_file_name_index() const              {
-    return _source_file_name_index;
-  }
-  void set_source_file_name_index(u2 sourcefile_index) {
-    _source_file_name_index = sourcefile_index;
-  }
+  Symbol* source_file_name() const               { return _constants->source_file_name(); }
+  u2 source_file_name_index() const              { return _constants->source_file_name_index(); }
+  void set_source_file_name_index(u2 sourcefile_index) { _constants->set_source_file_name_index(sourcefile_index); }
 
   // minor and major version numbers of class file
-  u2 minor_version() const                 { return _minor_version; }
-  void set_minor_version(u2 minor_version) { _minor_version = minor_version; }
-  u2 major_version() const                 { return _major_version; }
-  void set_major_version(u2 major_version) { _major_version = major_version; }
+  u2 minor_version() const                 { return _constants->minor_version(); }
+  void set_minor_version(u2 minor_version) { _constants->set_minor_version(minor_version); }
+  u2 major_version() const                 { return _constants->major_version(); }
+  void set_major_version(u2 major_version) { _constants->set_major_version(major_version); }
 
   // source debug extension
   const char* source_debug_extension() const { return _source_debug_extension; }
   void set_source_debug_extension(const char* array, int length);
-
-  // symbol unloading support (refcount already added)
-  Symbol* array_name()                     { return _array_name; }
-  void set_array_name(Symbol* name)        { assert(_array_name == NULL  || name == NULL, "name already created"); _array_name = name; }
 
   // nonstatic oop-map blocks
   static int nonstatic_oop_map_size(unsigned int oop_map_count) {
@@ -729,10 +743,29 @@ public:
     _nonstatic_oop_map_size = words;
   }
 
+  bool has_contended_annotations() const {
+    return ((_misc_flags & _misc_has_contended_annotations) != 0);
+  }
+  void set_has_contended_annotations(bool value)  {
+    if (value) {
+      _misc_flags |= _misc_has_contended_annotations;
+    } else {
+      _misc_flags &= ~_misc_has_contended_annotations;
+    }
+  }
+
 #if INCLUDE_JVMTI
   // Redefinition locking.  Class can only be redefined by one thread at a time.
-  bool is_being_redefined() const          { return _is_being_redefined; }
-  void set_is_being_redefined(bool value)  { _is_being_redefined = value; }
+  bool is_being_redefined() const          {
+    return ((_misc_flags & _misc_is_being_redefined) != 0);
+  }
+  void set_is_being_redefined(bool value)  {
+    if (value) {
+      _misc_flags |= _misc_is_being_redefined;
+    } else {
+      _misc_flags &= ~_misc_is_being_redefined;
+    }
+  }
 
   // RedefineClasses() support for previous versions:
   void add_previous_version(InstanceKlass* ik, int emcp_method_count);
@@ -771,8 +804,8 @@ public:
   }
   bool supers_have_passed_fingerprint_checks();
 
-  static bool should_store_fingerprint(bool is_unsafe_anonymous);
-  bool should_store_fingerprint() const { return should_store_fingerprint(is_unsafe_anonymous()); }
+  static bool should_store_fingerprint(bool is_hidden_or_anonymous);
+  bool should_store_fingerprint() const { return should_store_fingerprint(is_hidden() || is_unsafe_anonymous()); }
   bool has_stored_fingerprint() const;
   uint64_t get_stored_fingerprint() const;
   void store_fingerprint(uint64_t fingerprint);
@@ -795,24 +828,20 @@ public:
 private:
 
   void set_kind(unsigned kind) {
-    assert(kind <= _misc_kind_field_mask, "Invalid InstanceKlass kind");
-    unsigned fmask = _misc_kind_field_mask << _misc_kind_field_pos;
-    unsigned flags = _misc_flags & ~fmask;
-    _misc_flags = (flags | (kind << _misc_kind_field_pos));
+    _kind = (u1)kind;
   }
 
   bool is_kind(unsigned desired) const {
-    unsigned kind = (_misc_flags >> _misc_kind_field_pos) & _misc_kind_field_mask;
-    return kind == desired;
+    return _kind == (u1)desired;
   }
 
 public:
 
   // Other is anything that is not one of the more specialized kinds of InstanceKlass.
-  bool is_other_instance_klass() const        { return is_kind(_misc_kind_other); }
-  bool is_reference_instance_klass() const    { return is_kind(_misc_kind_reference); }
-  bool is_mirror_instance_klass() const       { return is_kind(_misc_kind_mirror); }
-  bool is_class_loader_instance_klass() const { return is_kind(_misc_kind_class_loader); }
+  bool is_other_instance_klass() const        { return is_kind(_kind_other); }
+  bool is_reference_instance_klass() const    { return is_kind(_kind_reference); }
+  bool is_mirror_instance_klass() const       { return is_kind(_kind_mirror); }
+  bool is_class_loader_instance_klass() const { return is_kind(_kind_class_loader); }
 
 #if INCLUDE_JVMTI
 
@@ -886,16 +915,9 @@ public:
   void set_initial_method_idnum(u2 value)             { _idnum_allocated_count = value; }
 
   // generics support
-  Symbol* generic_signature() const                   {
-    return (_generic_signature_index == 0) ?
-      (Symbol*)NULL : _constants->symbol_at(_generic_signature_index);
-  }
-  u2 generic_signature_index() const                  {
-    return _generic_signature_index;
-  }
-  void set_generic_signature_index(u2 sig_index)      {
-    _generic_signature_index = sig_index;
-  }
+  Symbol* generic_signature() const                   { return _constants->generic_signature(); }
+  u2 generic_signature_index() const                  { return _constants->generic_signature_index(); }
+  void set_generic_signature_index(u2 sig_index)      { _constants->set_generic_signature_index(sig_index); }
 
   u2 enclosing_method_data(int offset) const;
   u2 enclosing_method_class_index() const {
@@ -936,6 +958,7 @@ public:
   }
   // allocation
   instanceOop allocate_instance(TRAPS);
+  static instanceOop allocate_instance(oop cls, TRAPS);
 
   // additional member function to return a handle
   instanceHandle allocate_instance_handle(TRAPS);
@@ -1008,7 +1031,6 @@ public:
   void process_interfaces(Thread *thread);
 
   // virtual operations from Klass
-  bool is_leaf_class() const               { return _subklass == NULL; }
   GrowableArray<Klass*>* compute_secondary_supers(int num_extra_slots,
                                                   Array<InstanceKlass*>* transitive_interfaces);
   bool can_be_primary_super_slow() const;
@@ -1025,7 +1047,6 @@ public:
   void methods_do(void f(Method* method));
   void array_klasses_do(void f(Klass* k));
   void array_klasses_do(void f(Klass* k, TRAPS), TRAPS);
-  bool super_types_do(SuperTypeClosure* blk);
 
   static InstanceKlass* cast(Klass* k) {
     return const_cast<InstanceKlass*>(cast(const_cast<const Klass*>(k)));
@@ -1062,9 +1083,6 @@ public:
                                                is_unsafe_anonymous(),
                                                has_stored_fingerprint());
   }
-#if INCLUDE_SERVICES
-  virtual void collect_statistics(KlassSizeStats *sz) const;
-#endif
 
   intptr_t* start_of_itable()   const { return (intptr_t*)start_of_vtable() + vtable_length(); }
   intptr_t* end_of_itable()     const { return start_of_itable() + itable_length(); }
@@ -1160,6 +1178,8 @@ public:
                                     const Klass* super_klass,
                                     Array<InstanceKlass*>* local_interfaces,
                                     Array<InstanceKlass*>* transitive_interfaces);
+  void static deallocate_record_components(ClassLoaderData* loader_data,
+                                           Array<RecordComponent*>* record_component);
 
   // The constant pool is on stack if any of the methods are executing or
   // referenced by handles.
@@ -1167,11 +1187,11 @@ public:
 
   // callbacks for actions during class unloading
   static void unload_class(InstanceKlass* ik);
-  static void release_C_heap_structures(InstanceKlass* ik);
+
+  virtual void release_C_heap_structures();
 
   // Naming
   const char* signature_name() const;
-  static Symbol* package_from_name(const Symbol* name, TRAPS);
 
   // Oop fields (and metadata) iterators
   //
@@ -1226,13 +1246,6 @@ public:
  public:
   u2 idnum_allocated_count() const      { return _idnum_allocated_count; }
 
-public:
-  void set_in_error_state() {
-    assert(DumpSharedSpaces, "only call this when dumping archive");
-    _init_state = initialization_error;
-  }
-  bool check_sharing_error_state();
-
 private:
   // initialization state
   void set_init_state(ClassState state);
@@ -1286,7 +1299,7 @@ private:
                                   PrivateLookupMode private_mode);
 
   // Free CHeap allocated fields.
-  void release_C_heap_structures();
+  void release_C_heap_structures_internal();
 
 #if INCLUDE_JVMTI
   // RedefineClasses support
@@ -1297,7 +1310,7 @@ public:
   // CDS support - remove and restore oops from metadata. Oops are not shared.
   virtual void remove_unshareable_info();
   virtual void remove_java_mirror();
-  virtual void restore_unshareable_info(ClassLoaderData* loader_data, Handle protection_domain, TRAPS);
+  void restore_unshareable_info(ClassLoaderData* loader_data, Handle protection_domain, PackageEntry* pkg_entry, TRAPS);
 
   // jvm support
   jint compute_modifier_flags(TRAPS) const;

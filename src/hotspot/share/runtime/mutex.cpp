@@ -32,41 +32,63 @@
 #include "utilities/events.hpp"
 #include "utilities/macros.hpp"
 
-
-void Monitor::lock(Thread * self) {
-  // Ensure that the Monitor requires/allows safepoint checks.
-  assert(_safepoint_check_required != Monitor::_safepoint_check_never,
-         "This lock should never have a safepoint check: %s", name());
-
-#ifdef CHECK_UNHANDLED_OOPS
-  // Clear unhandled oops in JavaThreads so we get a crash right away.
-  if (self->is_Java_thread()) {
-    self->clear_unhandled_oops();
+#ifdef ASSERT
+void Mutex::check_block_state(Thread* thread) {
+  if (!_allow_vm_block && thread->is_VM_thread()) {
+    // JavaThreads are checked to make sure that they do not hold _allow_vm_block locks during operations
+    // that could safepoint.  Make sure the vm thread never uses locks with _allow_vm_block == false.
+    fatal("VM thread could block on lock that may be held by a JavaThread during safepoint: %s", name());
   }
-#endif // CHECK_UNHANDLED_OOPS
 
-  DEBUG_ONLY(check_prelock_state(self, StrictSafepointChecks));
-  assert(_owner != self, "invariant");
+  assert(!os::ThreadCrashProtection::is_crash_protected(thread),
+         "locking not allowed when crash protection is set");
+}
 
-  Monitor* in_flight_monitor = NULL;
+void Mutex::check_safepoint_state(Thread* thread) {
+  check_block_state(thread);
+
+  // If the JavaThread checks for safepoint, verify that the lock wasn't created with safepoint_check_never.
+  if (thread->is_active_Java_thread()) {
+    assert(_safepoint_check_required != _safepoint_check_never,
+           "This lock should %s have a safepoint check for Java threads: %s",
+           _safepoint_check_required ? "always" : "never", name());
+
+    // Also check NoSafepointVerifier, and thread state is _thread_in_vm
+    thread->check_for_valid_safepoint_state();
+  } else {
+    // If initialized with safepoint_check_never, a NonJavaThread should never ask to safepoint check either.
+    assert(_safepoint_check_required != _safepoint_check_never,
+           "NonJavaThread should not check for safepoint");
+  }
+}
+
+void Mutex::check_no_safepoint_state(Thread* thread) {
+  check_block_state(thread);
+  assert(!thread->is_active_Java_thread() || _safepoint_check_required != _safepoint_check_always,
+         "This lock should %s have a safepoint check for Java threads: %s",
+         _safepoint_check_required ? "always" : "never", name());
+}
+#endif // ASSERT
+
+void Mutex::lock_contended(Thread* self) {
+  Mutex *in_flight_mutex = NULL;
   DEBUG_ONLY(int retry_cnt = 0;)
-  while (!_lock.try_lock()) {
-    // The lock is contended
-
-  #ifdef ASSERT
-    check_block_state(self);
+  bool is_active_Java_thread = self->is_active_Java_thread();
+  do {
+    #ifdef ASSERT
     if (retry_cnt++ > 3) {
-      log_trace(vmmonitor)("JavaThread " INTPTR_FORMAT " on %d attempt trying to acquire vmmonitor %s", p2i(self), retry_cnt, _name);
+      log_trace(vmmutex)("JavaThread " INTPTR_FORMAT " on %d attempt trying to acquire vmmutex %s", p2i(self), retry_cnt, _name);
     }
-  #endif // ASSERT
+    #endif // ASSERT
 
-    if (self->is_Java_thread()) {
+    // Is it a JavaThread participating in the safepoint protocol.
+    if (is_active_Java_thread) {
       assert(rank() > Mutex::special, "Potential deadlock with special or lesser rank mutex");
-      { ThreadBlockInVMWithDeadlockCheck tbivmdc((JavaThread *) self, &in_flight_monitor);
-        in_flight_monitor = this;  // save for ~ThreadBlockInVMWithDeadlockCheck
+      { ThreadBlockInVMWithDeadlockCheck tbivmdc((JavaThread *) self, &in_flight_mutex);
+        in_flight_mutex = this;  // save for ~ThreadBlockInVMWithDeadlockCheck
         _lock.lock();
       }
-      if (in_flight_monitor != NULL) {
+      if (in_flight_mutex != NULL) {
         // Not unlocked by ~ThreadBlockInVMWithDeadlockCheck
         break;
       }
@@ -74,14 +96,25 @@ void Monitor::lock(Thread * self) {
       _lock.lock();
       break;
     }
+  } while (!_lock.try_lock());
+}
+
+void Mutex::lock(Thread* self) {
+  check_safepoint_state(self);
+
+  assert(_owner != self, "invariant");
+
+  if (!_lock.try_lock()) {
+    // The lock is contended, use contended slow-path function to lock
+    lock_contended(self);
   }
 
   assert_owner(NULL);
   set_owner(self);
 }
 
-void Monitor::lock() {
-  this->lock(Thread::current());
+void Mutex::lock() {
+  lock(Thread::current());
 }
 
 // Lock without safepoint check - a degenerate variant of lock() for use by
@@ -90,27 +123,26 @@ void Monitor::lock() {
 // safepoint-safe and so will prevent a safepoint from being reached. If used
 // in the wrong way this can lead to a deadlock with the safepoint code.
 
-void Monitor::lock_without_safepoint_check(Thread * self) {
-  // Ensure that the Monitor does not require safepoint checks.
-  assert(_safepoint_check_required != Monitor::_safepoint_check_always,
-         "This lock should always have a safepoint check: %s", name());
+void Mutex::lock_without_safepoint_check(Thread * self) {
+  check_no_safepoint_state(self);
   assert(_owner != self, "invariant");
   _lock.lock();
   assert_owner(NULL);
   set_owner(self);
 }
 
-void Monitor::lock_without_safepoint_check() {
+void Mutex::lock_without_safepoint_check() {
   lock_without_safepoint_check(Thread::current());
 }
 
 
 // Returns true if thread succeeds in grabbing the lock, otherwise false.
 
-bool Monitor::try_lock() {
+bool Mutex::try_lock() {
   Thread * const self = Thread::current();
-  DEBUG_ONLY(check_prelock_state(self, false);)
-
+  // Some safepoint_check_always locks use try_lock, so cannot check
+  // safepoint state, but can check blocking state.
+  check_block_state(self);
   if (_lock.try_lock()) {
     assert_owner(NULL);
     set_owner(self);
@@ -119,48 +151,30 @@ bool Monitor::try_lock() {
   return false;
 }
 
-void Monitor::release_for_safepoint() {
+void Mutex::release_for_safepoint() {
   assert_owner(NULL);
   _lock.unlock();
 }
 
-void Monitor::unlock() {
-  assert_owner(Thread::current());
+void Mutex::unlock() {
+  DEBUG_ONLY(assert_owner(Thread::current()));
   set_owner(NULL);
   _lock.unlock();
 }
 
 void Monitor::notify() {
-  assert_owner(Thread::current());
+  DEBUG_ONLY(assert_owner(Thread::current()));
   _lock.notify();
 }
 
 void Monitor::notify_all() {
-  assert_owner(Thread::current());
+  DEBUG_ONLY(assert_owner(Thread::current()));
   _lock.notify_all();
 }
 
-bool Monitor::wait(bool no_safepoint_check, long timeout,
-                   bool as_suspend_equivalent) {
-  // Make sure safepoint checking is used properly.
-  assert(!(_safepoint_check_required == Monitor::_safepoint_check_never && no_safepoint_check == false),
-         "This lock should never have a safepoint check: %s", name());
-  assert(!(_safepoint_check_required == Monitor::_safepoint_check_always && no_safepoint_check == true),
-         "This lock should always have a safepoint check: %s", name());
-
-  // timeout is in milliseconds - with zero meaning never timeout
-  assert(timeout >= 0, "negative timeout");
-
-  Thread * const self = Thread::current();
-  assert_owner(self);
-
-  // as_suspend_equivalent logically implies !no_safepoint_check
-  guarantee(!as_suspend_equivalent || !no_safepoint_check, "invariant");
-  // !no_safepoint_check logically implies java_thread
-  guarantee(no_safepoint_check || self->is_Java_thread(), "invariant");
-
-  #ifdef ASSERT
-  Monitor * least = get_least_ranked_lock_besides_this(self->owned_locks());
+#ifdef ASSERT
+void Monitor::assert_wait_lock_state(Thread* self) {
+  Mutex* least = get_least_ranked_lock_besides_this(self->owned_locks());
   assert(least != this, "Specification of get_least_... call above");
   if (least != NULL && least->rank() <= special) {
     ::tty->print("Attempting to wait on monitor %s/%d while holding"
@@ -168,119 +182,126 @@ bool Monitor::wait(bool no_safepoint_check, long timeout,
                name(), rank(), least->name(), least->rank());
     assert(false, "Shouldn't block(wait) while holding a lock of rank special");
   }
-  #endif // ASSERT
+}
+#endif // ASSERT
+
+bool Monitor::wait_without_safepoint_check(long timeout) {
+  Thread* const self = Thread::current();
+
+  // timeout is in milliseconds - with zero meaning never timeout
+  assert(timeout >= 0, "negative timeout");
+
+  assert_owner(self);
+  assert_wait_lock_state(self);
+
+  // conceptually set the owner to NULL in anticipation of
+  // abdicating the lock in wait
+  set_owner(NULL);
+  // Check safepoint state after resetting owner and possible NSV.
+  check_no_safepoint_state(self);
+
+  int wait_status = _lock.wait(timeout);
+  set_owner(self);
+  return wait_status != 0;          // return true IFF timeout
+}
+
+bool Monitor::wait(long timeout, bool as_suspend_equivalent) {
+  Thread* const self = Thread::current();
+
+  // timeout is in milliseconds - with zero meaning never timeout
+  assert(timeout >= 0, "negative timeout");
+
+  assert_owner(self);
+
+  // Safepoint checking logically implies an active JavaThread.
+  guarantee(self->is_active_Java_thread(), "invariant");
+  assert_wait_lock_state(self);
 
   int wait_status;
   // conceptually set the owner to NULL in anticipation of
   // abdicating the lock in wait
   set_owner(NULL);
-  if (no_safepoint_check) {
-    wait_status = _lock.wait(timeout);
-    set_owner(self);
-  } else {
-    assert(self->is_Java_thread(), "invariant");
-    JavaThread *jt = (JavaThread *)self;
-    Monitor* in_flight_monitor = NULL;
+  // Check safepoint state after resetting owner and possible NSV.
+  check_safepoint_state(self);
+  JavaThread *jt = (JavaThread *)self;
+  Mutex* in_flight_mutex = NULL;
 
-    {
-      ThreadBlockInVMWithDeadlockCheck tbivmdc(jt, &in_flight_monitor);
-      OSThreadWaitState osts(self->osthread(), false /* not Object.wait() */);
-      if (as_suspend_equivalent) {
-        jt->set_suspend_equivalent();
-        // cleared by handle_special_suspend_equivalent_condition() or
-        // java_suspend_self()
-      }
-
-      wait_status = _lock.wait(timeout);
-      in_flight_monitor = this;  // save for ~ThreadBlockInVMWithDeadlockCheck
-
-      // were we externally suspended while we were waiting?
-      if (as_suspend_equivalent && jt->handle_special_suspend_equivalent_condition()) {
-        // Our event wait has finished and we own the lock, but
-        // while we were waiting another thread suspended us. We don't
-        // want to hold the lock while suspended because that
-        // would surprise the thread that suspended us.
-        _lock.unlock();
-        jt->java_suspend_self();
-        _lock.lock();
-      }
+  {
+    ThreadBlockInVMWithDeadlockCheck tbivmdc(jt, &in_flight_mutex);
+    OSThreadWaitState osts(self->osthread(), false /* not Object.wait() */);
+    if (as_suspend_equivalent) {
+      jt->set_suspend_equivalent();
+      // cleared by handle_special_suspend_equivalent_condition() or
+      // java_suspend_self()
     }
 
-    if (in_flight_monitor != NULL) {
-      // Not unlocked by ~ThreadBlockInVMWithDeadlockCheck
-      assert_owner(NULL);
-      // Conceptually reestablish ownership of the lock.
-      set_owner(self);
-    } else {
-      lock(self);
+    wait_status = _lock.wait(timeout);
+    in_flight_mutex = this;  // save for ~ThreadBlockInVMWithDeadlockCheck
+
+    // were we externally suspended while we were waiting?
+    if (as_suspend_equivalent && jt->handle_special_suspend_equivalent_condition()) {
+      // Our event wait has finished and we own the lock, but
+      // while we were waiting another thread suspended us. We don't
+      // want to hold the lock while suspended because that
+      // would surprise the thread that suspended us.
+      _lock.unlock();
+      jt->java_suspend_self();
+      _lock.lock();
     }
   }
+
+  if (in_flight_mutex != NULL) {
+    // Not unlocked by ~ThreadBlockInVMWithDeadlockCheck
+    assert_owner(NULL);
+    // Conceptually reestablish ownership of the lock.
+    set_owner(self);
+  } else {
+    lock(self);
+  }
+
   return wait_status != 0;          // return true IFF timeout
 }
 
-
-// Temporary JVM_RawMonitor* support.
-// Yet another degenerate version of Monitor::lock() or lock_without_safepoint_check()
-// jvm_raw_lock() and _unlock() can be called by non-Java threads via JVM_RawMonitorEnter.
-// There's no expectation that JVM_RawMonitors will interoperate properly with the native
-// Mutex-Monitor constructs.  We happen to implement JVM_RawMonitors in terms of
-// native Mutex-Monitors simply as a matter of convenience.
-
-void Monitor::jvm_raw_lock() {
-  _lock.lock();
+Mutex::~Mutex() {
   assert_owner(NULL);
 }
 
-void Monitor::jvm_raw_unlock() {
-  assert_owner(NULL);
-  _lock.unlock();
-}
-
-Monitor::~Monitor() {
-  assert_owner(NULL);
-}
-
-void Monitor::ClearMonitor(Monitor * m, const char *name) {
-  m->_owner             = NULL;
-  if (name == NULL) {
-    strcpy(m->_name, "UNKNOWN");
-  } else {
-    strncpy(m->_name, name, MONITOR_NAME_LEN - 1);
-    m->_name[MONITOR_NAME_LEN - 1] = '\0';
-  }
-}
-
-Monitor::Monitor() {
-  assert(os::mutex_init_done(), "Too early!");
-  ClearMonitor(this);
-}
-
-Monitor::Monitor(int Rank, const char * name, bool allow_vm_block,
-                 SafepointCheckRequired safepoint_check_required) {
-  assert(os::mutex_init_done(), "Too early!");
-  ClearMonitor(this, name);
-#ifdef ASSERT
-  _allow_vm_block  = allow_vm_block;
-  _rank            = Rank;
-  NOT_PRODUCT(_safepoint_check_required = safepoint_check_required;)
-#endif
+// Only Threads_lock, Heap_lock and SR_lock may be safepoint_check_sometimes.
+bool is_sometimes_ok(const char* name) {
+  return (strcmp(name, "Threads_lock") == 0 || strcmp(name, "Heap_lock") == 0 || strcmp(name, "SR_lock") == 0);
 }
 
 Mutex::Mutex(int Rank, const char * name, bool allow_vm_block,
-             SafepointCheckRequired safepoint_check_required) {
-  ClearMonitor((Monitor *) this, name);
+             SafepointCheckRequired safepoint_check_required) : _owner(NULL) {
+  assert(os::mutex_init_done(), "Too early!");
+  if (name == NULL) {
+    strcpy(_name, "UNKNOWN");
+  } else {
+    strncpy(_name, name, MUTEX_NAME_LEN - 1);
+    _name[MUTEX_NAME_LEN - 1] = '\0';
+  }
 #ifdef ASSERT
-  _allow_vm_block   = allow_vm_block;
-  _rank             = Rank;
-  NOT_PRODUCT(_safepoint_check_required = safepoint_check_required;)
+  _allow_vm_block  = allow_vm_block;
+  _rank            = Rank;
+  _safepoint_check_required = safepoint_check_required;
+
+  assert(_safepoint_check_required != _safepoint_check_sometimes || is_sometimes_ok(name),
+         "Lock has _safepoint_check_sometimes %s", name);
+
+  assert(_rank > special || _safepoint_check_required == _safepoint_check_never,
+         "Special locks or below should never safepoint");
 #endif
 }
 
-bool Monitor::owned_by_self() const {
+Monitor::Monitor(int Rank, const char * name, bool allow_vm_block,
+             SafepointCheckRequired safepoint_check_required) :
+  Mutex(Rank, name, allow_vm_block, safepoint_check_required) {}
+
+bool Mutex::owned_by_self() const {
   return _owner == Thread::current();
 }
 
-void Monitor::print_on_error(outputStream* st) const {
+void Mutex::print_on_error(outputStream* st) const {
   st->print("[" PTR_FORMAT, p2i(this));
   st->print("] %s", _name);
   st->print(" - owner thread: " PTR_FORMAT, p2i(_owner));
@@ -290,16 +311,28 @@ void Monitor::print_on_error(outputStream* st) const {
 // Non-product code
 
 #ifndef PRODUCT
-void Monitor::print_on(outputStream* st) const {
-  st->print_cr("Mutex: [" PTR_FORMAT "] %s - owner: " PTR_FORMAT,
-               p2i(this), _name, p2i(_owner));
+const char* print_safepoint_check(Mutex::SafepointCheckRequired safepoint_check) {
+  switch (safepoint_check) {
+  case Mutex::_safepoint_check_never:     return "safepoint_check_never";
+  case Mutex::_safepoint_check_sometimes: return "safepoint_check_sometimes";
+  case Mutex::_safepoint_check_always:    return "safepoint_check_always";
+  default: return "";
+  }
+}
+
+void Mutex::print_on(outputStream* st) const {
+  st->print("Mutex: [" PTR_FORMAT "] %s - owner: " PTR_FORMAT,
+            p2i(this), _name, p2i(_owner));
+  if (_allow_vm_block) {
+    st->print("%s", " allow_vm_block");
+  }
+  st->print(" %s", print_safepoint_check(_safepoint_check_required));
+  st->cr();
 }
 #endif
 
-#ifndef PRODUCT
 #ifdef ASSERT
-
-void Monitor::assert_owner(Thread * expected) {
+void Mutex::assert_owner(Thread * expected) {
   const char* msg = "invalid owner";
   if (expected == NULL) {
     msg = "should be un-owned";
@@ -312,8 +345,8 @@ void Monitor::assert_owner(Thread * expected) {
          msg, p2i(_owner), p2i(expected));
 }
 
-Monitor * Monitor::get_least_ranked_lock(Monitor * locks) {
-  Monitor *res, *tmp;
+Mutex* Mutex::get_least_ranked_lock(Mutex* locks) {
+  Mutex *res, *tmp;
   for (res = tmp = locks; tmp != NULL; tmp = tmp->next()) {
     if (tmp->rank() < res->rank()) {
       res = tmp;
@@ -332,8 +365,8 @@ Monitor * Monitor::get_least_ranked_lock(Monitor * locks) {
   return res;
 }
 
-Monitor* Monitor::get_least_ranked_lock_besides_this(Monitor* locks) {
-  Monitor *res, *tmp;
+Mutex* Mutex::get_least_ranked_lock_besides_this(Mutex* locks) {
+  Mutex *res, *tmp;
   for (res = NULL, tmp = locks; tmp != NULL; tmp = tmp->next()) {
     if (tmp != this && (res == NULL || tmp->rank() < res->rank())) {
       res = tmp;
@@ -352,8 +385,7 @@ Monitor* Monitor::get_least_ranked_lock_besides_this(Monitor* locks) {
   return res;
 }
 
-
-bool Monitor::contains(Monitor* locks, Monitor * lock) {
+bool Mutex::contains(Mutex* locks, Mutex* lock) {
   for (; locks != NULL; locks = locks->next()) {
     if (locks == lock) {
       return true;
@@ -361,14 +393,30 @@ bool Monitor::contains(Monitor* locks, Monitor * lock) {
   }
   return false;
 }
-#endif
+
+// NSV implied with locking allow_vm_block or !safepoint_check locks.
+void Mutex::no_safepoint_verifier(Thread* thread, bool enable) {
+  // The tty_lock is special because it is released for the safepoint by
+  // the safepoint mechanism.
+  if (this == tty_lock) {
+    return;
+  }
+
+  if (_allow_vm_block) {
+    if (enable) {
+      thread->_no_safepoint_count++;
+    } else {
+      thread->_no_safepoint_count--;
+    }
+  }
+}
 
 // Called immediately after lock acquisition or release as a diagnostic
 // to track the lock-set of the thread and test for rank violations that
 // might indicate exposure to deadlock.
 // Rather like an EventListener for _owner (:>).
 
-void Monitor::set_owner_implementation(Thread *new_owner) {
+void Mutex::set_owner_implementation(Thread *new_owner) {
   // This function is solely responsible for maintaining
   // and checking the invariant that threads and locks
   // are in a 1/N relation, with some some locks unowned.
@@ -388,8 +436,7 @@ void Monitor::set_owner_implementation(Thread *new_owner) {
 
     // link "this" into the owned locks list
 
-#ifdef ASSERT  // Thread::_owned_locks is under the same ifdef
-    Monitor* locks = get_least_ranked_lock(new_owner->owned_locks());
+    Mutex* locks = get_least_ranked_lock(new_owner->owned_locks());
     // Mutex::set_owner_implementation is a friend of Thread
 
     assert(this->rank() >= 0, "bad lock rank");
@@ -413,25 +460,26 @@ void Monitor::set_owner_implementation(Thread *new_owner) {
 
     this->_next = new_owner->_owned_locks;
     new_owner->_owned_locks = this;
-#endif
+
+    // NSV implied with locking allow_vm_block flag.
+    no_safepoint_verifier(new_owner, true);
 
   } else {
     // the thread is releasing this lock
 
     Thread* old_owner = _owner;
-    DEBUG_ONLY(_last_owner = old_owner;)
+    _last_owner = old_owner;
 
     assert(old_owner != NULL, "removing the owner thread of an unowned mutex");
     assert(old_owner == Thread::current(), "removing the owner thread of an unowned mutex");
 
     _owner = NULL; // set the owner
 
-#ifdef ASSERT
-    Monitor *locks = old_owner->owned_locks();
+    Mutex* locks = old_owner->owned_locks();
 
     // remove "this" from the owned locks list
 
-    Monitor *prev = NULL;
+    Mutex* prev = NULL;
     bool found = false;
     for (; locks != NULL; prev = locks, locks = locks->next()) {
       if (locks == this) {
@@ -446,33 +494,9 @@ void Monitor::set_owner_implementation(Thread *new_owner) {
       prev->_next = _next;
     }
     _next = NULL;
-#endif
+
+    // ~NSV implied with locking allow_vm_block flag.
+    no_safepoint_verifier(old_owner, false);
   }
 }
-
-
-// Factored out common sanity checks for locking mutex'es. Used by lock() and try_lock()
-void Monitor::check_prelock_state(Thread *thread, bool safepoint_check) {
-  if (safepoint_check) {
-    assert((!thread->is_Java_thread() || ((JavaThread *)thread)->thread_state() == _thread_in_vm)
-           || rank() == Mutex::special, "wrong thread state for using locks");
-    if (thread->is_VM_thread() && !allow_vm_block()) {
-      fatal("VM thread using lock %s (not allowed to block on)", name());
-    }
-    DEBUG_ONLY(if (rank() != Mutex::special) \
-               thread->check_for_valid_safepoint_state(false);)
-  }
-  assert(!os::ThreadCrashProtection::is_crash_protected(thread),
-         "locking not allowed when crash protection is set");
-}
-
-void Monitor::check_block_state(Thread *thread) {
-  if (!_allow_vm_block && thread->is_VM_thread()) {
-    warning("VM thread blocked on lock");
-    print();
-    BREAKPOINT;
-  }
-  assert(_owner != thread, "deadlock: blocking on monitor owned by current thread");
-}
-
-#endif // PRODUCT
+#endif // ASSERT

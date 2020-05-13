@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
 #include "gc/shared/workerManager.hpp"
 #include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
+#include "memory/iterator.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/os.hpp"
 #include "runtime/semaphore.hpp"
@@ -40,10 +41,6 @@
 void  AbstractWorkGang::initialize_workers() {
   log_develop_trace(gc, workgang)("Constructing work gang %s with %u threads", name(), total_workers());
   _workers = NEW_C_HEAP_ARRAY(AbstractGangWorker*, total_workers(), mtInternal);
-  if (_workers == NULL) {
-    vm_exit_out_of_memory(0, OOM_MALLOC_ERROR, "Cannot create GangWorker array.");
-  }
-
   add_workers(true);
 }
 
@@ -157,7 +154,7 @@ public:
     // Wait for the coordinator to dispatch a task.
     _start_semaphore->wait();
 
-    uint num_started = Atomic::add(1u, &_started);
+    uint num_started = Atomic::add(&_started, 1u);
 
     // Subtract one to get a zero-indexed worker id.
     uint worker_id = num_started - 1;
@@ -168,7 +165,7 @@ public:
   void worker_done_with_task() {
     // Mark that the worker is done with the task.
     // The worker is not allowed to read the state variables after this line.
-    uint not_finished = Atomic::sub(1u, &_not_finished);
+    uint not_finished = Atomic::sub(&_not_finished, 1u);
 
     // The last worker signals to the coordinator that all work is completed.
     if (not_finished == 0) {
@@ -200,7 +197,7 @@ class MutexGangTaskDispatcher : public GangTaskDispatcher {
   }
 
   void coordinator_execute_on_workers(AbstractGangTask* task, uint num_workers) {
-    MutexLockerEx ml(_monitor, Mutex::_no_safepoint_check_flag);
+    MonitorLocker ml(_monitor, Mutex::_no_safepoint_check_flag);
 
     _task        = task;
     _num_workers = num_workers;
@@ -210,7 +207,7 @@ class MutexGangTaskDispatcher : public GangTaskDispatcher {
 
     // Wait for them to finish.
     while (_finished < _num_workers) {
-      _monitor->wait(/* no_safepoint_check */ true);
+      ml.wait();
     }
 
     _task        = NULL;
@@ -220,10 +217,10 @@ class MutexGangTaskDispatcher : public GangTaskDispatcher {
   }
 
   WorkData worker_wait_for_task() {
-    MonitorLockerEx ml(_monitor, Mutex::_no_safepoint_check_flag);
+    MonitorLocker ml(_monitor, Mutex::_no_safepoint_check_flag);
 
     while (_num_workers == 0 || _started == _num_workers) {
-      _monitor->wait(/* no_safepoint_check */ true);
+      _monitor->wait();
     }
 
     _started++;
@@ -235,7 +232,7 @@ class MutexGangTaskDispatcher : public GangTaskDispatcher {
   }
 
   void worker_done_with_task() {
-    MonitorLockerEx ml(_monitor, Mutex::_no_safepoint_check_flag);
+    MonitorLocker ml(_monitor, Mutex::_no_safepoint_check_flag);
 
     _finished++;
 
@@ -300,8 +297,6 @@ void AbstractGangWorker::initialize() {
   assert(_gang != NULL, "No gang to run in");
   os::set_priority(this, NearMaxPriority);
   log_develop_trace(gc, workgang)("Running gang worker for gang %s id %u", gang()->name(), id());
-  // The VM thread should not execute here because MutexLocker's are used
-  // as (opposed to MutexLockerEx's).
   assert(!Thread::current()->is_VM_thread(), "VM thread should not be part"
          " of a work gang");
 }
@@ -319,6 +314,8 @@ void AbstractGangWorker::print_on(outputStream* st) const {
   Thread::print_on(st);
   st->cr();
 }
+
+void AbstractGangWorker::print() const { print_on(tty); }
 
 WorkData GangWorker::wait_for_task() {
   return gang()->dispatcher()->worker_wait_for_task();
@@ -369,7 +366,7 @@ void WorkGangBarrierSync::set_n_workers(uint n_workers) {
 }
 
 bool WorkGangBarrierSync::enter() {
-  MutexLockerEx x(monitor(), Mutex::_no_safepoint_check_flag);
+  MonitorLocker ml(monitor(), Mutex::_no_safepoint_check_flag);
   if (should_reset()) {
     // The should_reset() was set and we are the first worker to enter
     // the sync barrier. We will zero the n_completed() count which
@@ -389,17 +386,17 @@ bool WorkGangBarrierSync::enter() {
     // should_reset() flag and the barrier will be reset the first
     // time a worker enters it again.
     set_should_reset(true);
-    monitor()->notify_all();
+    ml.notify_all();
   } else {
     while (n_completed() != n_workers() && !aborted()) {
-      monitor()->wait(/* no_safepoint_check */ true);
+      ml.wait();
     }
   }
   return !aborted();
 }
 
 void WorkGangBarrierSync::abort() {
-  MutexLockerEx x(monitor(), Mutex::_no_safepoint_check_flag);
+  MutexLocker x(monitor(), Mutex::_no_safepoint_check_flag);
   set_aborted();
   monitor()->notify_all();
 }
@@ -409,7 +406,6 @@ void WorkGangBarrierSync::abort() {
 SubTasksDone::SubTasksDone(uint n) :
   _tasks(NULL), _n_tasks(n), _threads_completed(0) {
   _tasks = NEW_C_HEAP_ARRAY(uint, n, mtInternal);
-  guarantee(_tasks != NULL, "alloc failure");
   clear();
 }
 
@@ -431,9 +427,8 @@ bool SubTasksDone::try_claim_task(uint t) {
   assert(t < _n_tasks, "bad task id.");
   uint old = _tasks[t];
   if (old == 0) {
-    old = Atomic::cmpxchg(1u, &_tasks[t], 0u);
+    old = Atomic::cmpxchg(&_tasks[t], 0u, 1u);
   }
-  assert(_tasks[t] == 1, "What else?");
   bool res = old == 0;
 #ifdef ASSERT
   if (res) {
@@ -449,7 +444,7 @@ void SubTasksDone::all_tasks_completed(uint n_threads) {
   uint old;
   do {
     old = observed;
-    observed = Atomic::cmpxchg(old+1, &_threads_completed, old);
+    observed = Atomic::cmpxchg(&_threads_completed, old, old+1);
   } while (observed != old);
   // If this was the last thread checking in, clear the tasks.
   uint adjusted_thread_count = (n_threads == 0 ? 1 : n_threads);
@@ -460,7 +455,7 @@ void SubTasksDone::all_tasks_completed(uint n_threads) {
 
 
 SubTasksDone::~SubTasksDone() {
-  if (_tasks != NULL) FREE_C_HEAP_ARRAY(uint, _tasks);
+  FREE_C_HEAP_ARRAY(uint, _tasks);
 }
 
 // *** SequentialSubTasksDone
@@ -477,7 +472,7 @@ bool SequentialSubTasksDone::valid() {
 bool SequentialSubTasksDone::try_claim_task(uint& t) {
   t = _n_claimed;
   while (t < _n_tasks) {
-    uint res = Atomic::cmpxchg(t+1, &_n_claimed, t);
+    uint res = Atomic::cmpxchg(&_n_claimed, t, t+1);
     if (res == t) {
       return true;
     }
@@ -489,7 +484,7 @@ bool SequentialSubTasksDone::try_claim_task(uint& t) {
 bool SequentialSubTasksDone::all_tasks_completed() {
   uint complete = _n_completed;
   while (true) {
-    uint res = Atomic::cmpxchg(complete+1, &_n_completed, complete);
+    uint res = Atomic::cmpxchg(&_n_completed, complete, complete+1);
     if (res == complete) {
       break;
     }

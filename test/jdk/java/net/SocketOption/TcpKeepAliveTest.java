@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,8 @@
  */
 import java.io.IOException;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -37,15 +39,14 @@ import jdk.net.ExtendedSocketOptions;
 
 public class TcpKeepAliveTest {
 
-    private static final String LOCAL_HOST = "127.0.0.1";
     private static final int DEFAULT_KEEP_ALIVE_PROBES = 7;
     private static final int DEFAULT_KEEP_ALIVE_TIME = 1973;
     private static final int DEFAULT_KEEP_ALIVE_INTVL = 53;
 
     public static void main(String args[]) throws IOException {
-
-        try (ServerSocket ss = new ServerSocket(0);
-                Socket s = new Socket(LOCAL_HOST, ss.getLocalPort());
+        var loopback = InetAddress.getLoopbackAddress();
+        try (ServerSocket ss = boundServer(loopback);
+                Socket s = new Socket(loopback, ss.getLocalPort());
                 DatagramSocket ds = new DatagramSocket(0);
                 MulticastSocket mc = new MulticastSocket(0)) {
             if (ss.supportedOptions().contains(ExtendedSocketOptions.TCP_KEEPIDLE)) {
@@ -109,5 +110,12 @@ public class TcpKeepAliveTest {
                         + " for TCP Sockets only");
             }
         }
+    }
+
+    private static ServerSocket boundServer(InetAddress address) throws IOException {
+        var socketAddress = new InetSocketAddress(address, 0);
+        var server = new ServerSocket();
+        server.bind(socketAddress);
+        return server;
     }
 }

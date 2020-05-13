@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,9 @@ DEBUG_ONLY(class ResourceMark;)
 // This allows for redirection via -XX:+DisplayVMOutputToStdout and
 // -XX:+DisplayVMOutputToStderr
 class outputStream : public ResourceObj {
+ private:
+   NONCOPYABLE(outputStream);
+
  protected:
    int _indentation; // current indentation
    int _width;       // width of the page
@@ -186,23 +189,34 @@ class ttyUnlocker: StackObj {
   }
 };
 
-// for writing to strings; buffer will expand automatically
+// for writing to strings; buffer will expand automatically.
+// Buffer will always be zero-terminated.
 class stringStream : public outputStream {
  protected:
   char*  buffer;
   size_t buffer_pos;
   size_t buffer_length;
   bool   buffer_fixed;
-  DEBUG_ONLY(ResourceMark* rm;)
+
+  // zero terminate at buffer_pos.
+  void zero_terminate();
+
  public:
+  // Create a stringStream using an internal buffer of initially initial_bufsize size;
+  // will be enlarged on demand. There is no maximum cap.
   stringStream(size_t initial_bufsize = 256);
+  // Creates a stringStream using a caller-provided buffer. Will truncate silently if
+  // it overflows.
   stringStream(char* fixed_buffer, size_t fixed_buffer_size);
   ~stringStream();
   virtual void write(const char* c, size_t len);
-  size_t      size() { return buffer_pos; }
-  const char* base() { return buffer; }
-  void  reset() { buffer_pos = 0; _precount = 0; _position = 0; }
-  char* as_string();
+  // Return number of characters written into buffer, excluding terminating zero and
+  // subject to truncation in static buffer mode.
+  size_t      size() const { return buffer_pos; }
+  const char* base() const { return buffer; }
+  void  reset();
+  // copy to a resource, or C-heap, array as requested
+  char* as_string(bool c_heap = false) const;
 };
 
 class fileStream : public outputStream {
@@ -216,13 +230,12 @@ class fileStream : public outputStream {
   fileStream(FILE* file, bool need_close = false) { _file = file; _need_close = need_close; }
   ~fileStream();
   bool is_open() const { return _file != NULL; }
-  void set_need_close(bool b) { _need_close = b;}
   virtual void write(const char* c, size_t len);
-  size_t read(void *data, size_t size, size_t count) { return ::fread(data, size, count, _file); }
+  size_t read(void *data, size_t size, size_t count) { return _file != NULL ? ::fread(data, size, count, _file) : 0; }
   char* readln(char *data, int count);
-  int eof() { return feof(_file); }
+  int eof() { return _file != NULL ? feof(_file) : -1; }
   long fileSize();
-  void rewind() { ::rewind(_file); }
+  void rewind() { if (_file != NULL) ::rewind(_file); }
   void flush();
 };
 
@@ -235,13 +248,10 @@ CDS_ONLY(extern fileStream*   classlist_file;)
 class fdStream : public outputStream {
  protected:
   int  _fd;
-  bool _need_close;
  public:
-  fdStream(const char* file_name);
-  fdStream(int fd = -1) { _fd = fd; _need_close = false; }
-  ~fdStream();
+  fdStream(int fd = -1) : _fd(fd) { }
   bool is_open() const { return _fd != -1; }
-  void set_fd(int fd) { _fd = fd; _need_close = false; }
+  void set_fd(int fd) { _fd = fd; }
   int fd() const { return _fd; }
   virtual void write(const char* c, size_t len);
   void flush() {};
@@ -261,6 +271,7 @@ class bufferedStream : public outputStream {
   size_t buffer_max;
   size_t buffer_length;
   bool   buffer_fixed;
+  bool   truncated;
  public:
   bufferedStream(size_t initial_bufsize = 256, size_t bufmax = 1024*1024*10);
   bufferedStream(char* fixed_buffer, size_t fixed_buffer_size, size_t bufmax = 1024*1024*10);

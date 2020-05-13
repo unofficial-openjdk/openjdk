@@ -25,7 +25,6 @@
 #ifndef SHARE_OOPS_ARRAYOOP_HPP
 #define SHARE_OOPS_ARRAYOOP_HPP
 
-#include "memory/universe.hpp"
 #include "oops/oop.hpp"
 #include "utilities/align.hpp"
 
@@ -35,7 +34,7 @@
 
 // The layout of array Oops is:
 //
-//  markOop
+//  markWord
 //  Klass*    // 32 bits if compressed but declared 64 in LP64.
 //  length    // shares klass memory or allocated after declared fields.
 

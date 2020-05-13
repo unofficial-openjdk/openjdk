@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,10 +54,10 @@ import sun.security.util.SecurityConstants;
  *
  * <DL>
  *    <DT> read
- *    <DD> read permission. Allows <code>System.getProperty</code> to
+ *    <DD> read permission. Allows {@code System.getProperty} to
  *         be called.
  *    <DT> write
- *    <DD> write permission. Allows <code>System.setProperty</code> to
+ *    <DD> write permission. Allows {@code System.setProperty} to
  *         be called.
  * </DL>
  * <P>
@@ -149,9 +149,9 @@ public final class PropertyPermission extends BasicPermission {
      * @param name the name of the PropertyPermission.
      * @param actions the actions string.
      *
-     * @throws NullPointerException if <code>name</code> is <code>null</code>.
-     * @throws IllegalArgumentException if <code>name</code> is empty or if
-     * <code>actions</code> is invalid.
+     * @throws NullPointerException if {@code name} is {@code null}.
+     * @throws IllegalArgumentException if {@code name} is empty or if
+     * {@code actions} is invalid.
      */
     public PropertyPermission(String name, String actions) {
         super(name,actions);
@@ -223,7 +223,7 @@ public final class PropertyPermission extends BasicPermission {
     /**
      * Returns the hash code value for this object.
      * The hash code used is the hash code of this permissions name, that is,
-     * <code>getName().hashCode()</code>, where <code>getName</code> is
+     * {@code getName().hashCode()}, where {@code getName} is
      * from the Permission superclass.
      *
      * @return a hash code value for this object.
@@ -350,7 +350,7 @@ public final class PropertyPermission extends BasicPermission {
      * Returns the "canonical string representation" of the actions.
      * That is, this method always returns present actions in the following order:
      * read, write. For example, if this PropertyPermission object
-     * allows both write and read actions, a call to <code>getActions</code>
+     * allows both write and read actions, a call to {@code getActions}
      * will return the string "read,write".
      *
      * @return the canonical string representation of the actions.
@@ -385,7 +385,7 @@ public final class PropertyPermission extends BasicPermission {
         return new PropertyPermissionCollection();
     }
 
-
+    @java.io.Serial
     private static final long serialVersionUID = 885438825399942851L;
 
     /**
@@ -393,6 +393,7 @@ public final class PropertyPermission extends BasicPermission {
      * to a stream. The actions are serialized, and the superclass
      * takes care of the name.
      */
+    @java.io.Serial
     private synchronized void writeObject(java.io.ObjectOutputStream s)
         throws IOException
     {
@@ -407,6 +408,7 @@ public final class PropertyPermission extends BasicPermission {
      * readObject is called to restore the state of the PropertyPermission from
      * a stream.
      */
+    @java.io.Serial
     private synchronized void readObject(java.io.ObjectInputStream s)
          throws IOException, ClassNotFoundException
     {
@@ -461,10 +463,10 @@ final class PropertyPermissionCollection extends PermissionCollection
      *
      * @param permission the Permission object to add.
      *
-     * @exception IllegalArgumentException - if the permission is not a
+     * @throws    IllegalArgumentException   if the permission is not a
      *                                       PropertyPermission
      *
-     * @exception SecurityException - if this PropertyPermissionCollection
+     * @throws    SecurityException   if this PropertyPermissionCollection
      *                                object has been marked readonly
      */
     @Override
@@ -596,6 +598,7 @@ final class PropertyPermissionCollection extends PermissionCollection
         return (Enumeration)perms.elements();
     }
 
+    @java.io.Serial
     private static final long serialVersionUID = 7015263904581634791L;
 
     // Need to maintain serialization interoperability with earlier releases,
@@ -625,6 +628,7 @@ final class PropertyPermissionCollection extends PermissionCollection
      * serialization compatibility with earlier releases. all_allowed
      * unchanged.
      */
+    @java.io.Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
         // Don't call out.defaultWriteObject()
 
@@ -644,6 +648,7 @@ final class PropertyPermissionCollection extends PermissionCollection
      * Reads in a Hashtable of PropertyPermissions and saves them in the
      * perms field. Reads in all_allowed.
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream in)
         throws IOException, ClassNotFoundException
     {

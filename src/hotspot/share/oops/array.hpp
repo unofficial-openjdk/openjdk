@@ -27,8 +27,9 @@
 
 #include "memory/allocation.hpp"
 #include "memory/metaspace.hpp"
-#include "runtime/orderAccess.hpp"
+#include "runtime/atomic.hpp"
 #include "utilities/align.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 // Array for metadata allocation
 
@@ -49,9 +50,7 @@ protected:
   }
 
  private:
-  // Turn off copy constructor and assignment operator.
-  Array(const Array<T>&);
-  void operator=(const Array<T>&);
+  NONCOPYABLE(Array);
 
   void* operator new(size_t size, ClassLoaderData* loader_data, int length, TRAPS) throw() {
     size_t word_size = Array::size(length);
@@ -122,8 +121,8 @@ protected:
   T*   adr_at(const int i)             { assert(i >= 0 && i< _length, "oob: 0 <= %d < %d", i, _length); return &_data[i]; }
   int  find(const T& x)                { return index_of(x); }
 
-  T at_acquire(const int i)            { return OrderAccess::load_acquire(adr_at(i)); }
-  void release_at_put(int i, T x)      { OrderAccess::release_store(adr_at(i), x); }
+  T at_acquire(const int i)            { return Atomic::load_acquire(adr_at(i)); }
+  void release_at_put(int i, T x)      { Atomic::release_store(adr_at(i), x); }
 
   static int size(int length) {
     size_t bytes = align_up(byte_sizeof(length), BytesPerWord);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,7 @@ public final class FontUtilities {
     public static boolean isLinux;
 
     public static boolean isMacOSX;
+    public static boolean isMacOSX14;
 
     public static boolean useJDKScaler;
 
@@ -71,7 +72,25 @@ public final class FontUtilities {
                 isLinux = osName.startsWith("Linux");
 
                 isMacOSX = osName.contains("OS X"); // TODO: MacOSX
-
+                if (isMacOSX) {
+                    // os.version has values like 10.13.6, 10.14.6
+                    // If it is not positively recognised as 10.13 or less,
+                    // assume it means 10.14 or some later version.
+                    isMacOSX14 = true;
+                    String version = System.getProperty("os.version", "");
+                    if (version.startsWith("10.")) {
+                        version = version.substring(3);
+                        int periodIndex = version.indexOf('.');
+                        if (periodIndex != -1) {
+                            version = version.substring(0, periodIndex);
+                        }
+                        try {
+                            int v = Integer.parseInt(version);
+                            isMacOSX14 = (v >= 14);
+                        } catch (NumberFormatException e) {
+                        }
+                     }
+                 }
                 /* If set to "jdk", use the JDK's scaler rather than
                  * the platform one. This may be a no-op on platforms where
                  * JDK has been configured so that it always relies on the
@@ -264,6 +283,9 @@ public final class FontUtilities {
             return false;
         }
         else if (code <= 0x0fff) { // U+0F00 - U+0FFF Tibetan
+            return true;
+        }
+        else if (code < 0x10A0) {  // U+1000 - U+109F Myanmar
             return true;
         }
         else if (code < 0x1100) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,18 +27,17 @@
  * @library /test/lib /testlibrary /
  * @modules java.base/jdk.internal.misc
  * @build compiler.calls.common.InvokeStatic
- *        compiler.aot.AotCompiler
+ *        sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *      sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run driver compiler.aot.AotCompiler -libname AotInvokeStatic2CompiledTest.so
  *      -class compiler.calls.common.InvokeStatic
  *      -compile compiler.calls.common.InvokeStatic.caller()V
- * @run main/othervm -Xbatch -XX:+UseAOT
+ * @run main/othervm -Xbatch -XX:+UnlockExperimentalVMOptions -XX:+UseAOT
  *      -XX:AOTLibrary=./AotInvokeStatic2CompiledTest.so
  *      -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
  *      compiler.calls.common.InvokeStatic -compileCallee 1
  *      -checkCalleeCompileLevel 1
- * @run main/othervm -Xbatch -XX:+UseAOT
+ * @run main/othervm -Xbatch -XX:+UnlockExperimentalVMOptions -XX:+UseAOT
  *      -XX:AOTLibrary=./AotInvokeStatic2CompiledTest.so
  *      -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
  *      compiler.calls.common.InvokeStatic -compileCallee 4

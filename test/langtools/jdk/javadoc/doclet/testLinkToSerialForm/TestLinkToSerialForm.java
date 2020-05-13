@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
  * @bug 4521661 8081854 8182765
  * @summary Test to make sure that there is a link with a proper anchor
  * from a serializable class to serialized-form.html.
- * @author jamieh
  * @library ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build javadoc.tester.*
@@ -50,8 +49,10 @@ public class TestLinkToSerialForm extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOutput("serialized-form.html", true,
-                "<a id=\"pkg.C\">");
+                """
+                    <section class="serialized-class-details" id="pkg.C">""");
         checkOutput("pkg/C.html", true,
-                "<a href=\"../serialized-form.html#pkg.C\">");
+                """
+                    <a href="../serialized-form.html#pkg.C">""");
     }
 }

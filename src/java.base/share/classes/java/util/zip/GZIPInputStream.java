@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,8 +41,7 @@ import java.io.EOFException;
  * @since 1.1
  *
  */
-public
-class GZIPInputStream extends InflaterInputStream {
+public class GZIPInputStream extends InflaterInputStream {
     /**
      * CRC-32 for uncompressed data.
      */
@@ -69,10 +68,10 @@ class GZIPInputStream extends InflaterInputStream {
      * @param in the input stream
      * @param size the input buffer size
      *
-     * @exception ZipException if a GZIP format error has occurred or the
+     * @throws    ZipException if a GZIP format error has occurred or the
      *                         compression method used is unsupported
-     * @exception IOException if an I/O error has occurred
-     * @exception IllegalArgumentException if {@code size <= 0}
+     * @throws    IOException if an I/O error has occurred
+     * @throws    IllegalArgumentException if {@code size <= 0}
      */
     public GZIPInputStream(InputStream in, int size) throws IOException {
         super(in, new Inflater(true), size);
@@ -84,30 +83,30 @@ class GZIPInputStream extends InflaterInputStream {
      * Creates a new input stream with a default buffer size.
      * @param in the input stream
      *
-     * @exception ZipException if a GZIP format error has occurred or the
+     * @throws    ZipException if a GZIP format error has occurred or the
      *                         compression method used is unsupported
-     * @exception IOException if an I/O error has occurred
+     * @throws    IOException if an I/O error has occurred
      */
     public GZIPInputStream(InputStream in) throws IOException {
         this(in, 512);
     }
 
     /**
-     * Reads uncompressed data into an array of bytes. If <code>len</code> is not
+     * Reads uncompressed data into an array of bytes. If {@code len} is not
      * zero, the method will block until some input can be decompressed; otherwise,
-     * no bytes are read and <code>0</code> is returned.
+     * no bytes are read and {@code 0} is returned.
      * @param buf the buffer into which the data is read
-     * @param off the start offset in the destination array <code>b</code>
+     * @param off the start offset in the destination array {@code b}
      * @param len the maximum number of bytes read
      * @return  the actual number of bytes read, or -1 if the end of the
      *          compressed input stream is reached
      *
-     * @exception  NullPointerException If <code>buf</code> is <code>null</code>.
-     * @exception  IndexOutOfBoundsException If <code>off</code> is negative,
-     * <code>len</code> is negative, or <code>len</code> is greater than
-     * <code>buf.length - off</code>
-     * @exception ZipException if the compressed input data is corrupt.
-     * @exception IOException if an I/O error has occurred.
+     * @throws     NullPointerException If {@code buf} is {@code null}.
+     * @throws     IndexOutOfBoundsException If {@code off} is negative,
+     * {@code len} is negative, or {@code len} is greater than
+     * {@code buf.length - off}
+     * @throws    ZipException if the compressed input data is corrupt.
+     * @throws    IOException if an I/O error has occurred.
      *
      */
     public int read(byte[] buf, int off, int len) throws IOException {
@@ -130,7 +129,7 @@ class GZIPInputStream extends InflaterInputStream {
     /**
      * Closes this input stream and releases any system resources associated
      * with the stream.
-     * @exception IOException if an I/O error has occurred
+     * @throws    IOException if an I/O error has occurred
      */
     public void close() throws IOException {
         if (!closed) {

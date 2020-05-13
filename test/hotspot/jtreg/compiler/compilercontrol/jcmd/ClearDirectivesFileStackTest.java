@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @key randomness
  * @bug 8137167
  * @summary Tests jcmd to be able to clear directives added via options
  * @modules java.base/jdk.internal.misc
@@ -30,8 +31,10 @@
  *
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                                sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run driver compiler.compilercontrol.jcmd.ClearDirectivesFileStackTest
+ *
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.compilercontrol.jcmd.ClearDirectivesFileStackTest
  */
 
 package compiler.compilercontrol.jcmd;
@@ -44,11 +47,14 @@ import compiler.compilercontrol.share.scenario.CompileCommand;
 import compiler.compilercontrol.share.scenario.JcmdCommand;
 import compiler.compilercontrol.share.scenario.Scenario;
 import jdk.test.lib.Utils;
+import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Executable;
 
 public class ClearDirectivesFileStackTest extends AbstractTestBase {
-    private static final int AMOUNT = Utils.getRandomInstance().nextInt(100);
+    private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
+    private static final int LIMIT = WHITE_BOX.getIntVMFlag("CompilerDirectivesLimit").intValue();
+    private static final int AMOUNT = Utils.getRandomInstance().nextInt(LIMIT);
     private final CommandGenerator cmdGen = new CommandGenerator();
 
     public static void main(String[] args) {
@@ -70,7 +76,6 @@ public class ClearDirectivesFileStackTest extends AbstractTestBase {
             CompileCommand compileCommand = new CompileCommand(command,
                     methodDescriptor, cmdGen.generateCompiler(),
                     Scenario.Type.DIRECTIVE);
-            compileCommand.print();
             builder.add(compileCommand);
         }
         // clear the stack

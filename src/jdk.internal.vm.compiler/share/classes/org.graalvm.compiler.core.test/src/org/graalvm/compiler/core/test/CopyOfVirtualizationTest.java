@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,9 +35,9 @@ import org.graalvm.compiler.nodes.java.NewArrayNode;
 public class CopyOfVirtualizationTest extends GraalCompilerTest {
 
     @Override
-    protected boolean checkMidTierGraph(StructuredGraph graph) {
+    protected void checkMidTierGraph(StructuredGraph graph) {
         assertTrue(graph.getNodes().filter(node -> node instanceof NewArrayNode).count() == 0, "shouldn't require allocation in %s", graph);
-        return super.checkMidTierGraph(graph);
+        super.checkMidTierGraph(graph);
     }
 
     public byte byteCopyOfVirtualization(int index) {

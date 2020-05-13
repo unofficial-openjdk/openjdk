@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,14 +26,14 @@
 #define SHARE_CLASSFILE_CLASSLOADER_INLINE_HPP
 
 #include "classfile/classLoader.hpp"
-#include "runtime/orderAccess.hpp"
+#include "runtime/atomic.hpp"
 
 // Next entry in class path
-inline ClassPathEntry* ClassPathEntry::next() const { return OrderAccess::load_acquire(&_next); }
+inline ClassPathEntry* ClassPathEntry::next() const { return Atomic::load_acquire(&_next); }
 
 inline void ClassPathEntry::set_next(ClassPathEntry* next) {
   // may have unlocked readers, so ensure visibility.
-  OrderAccess::release_store(&_next, next);
+  Atomic::release_store(&_next, next);
 }
 
 inline ClassPathEntry* ClassLoader::classpath_entry(int n) {
@@ -56,13 +56,19 @@ inline ClassPathEntry* ClassLoader::classpath_entry(int n) {
   }
 }
 
+inline void ClassLoader::load_zip_library_if_needed() {
+  if (Atomic::load_acquire(&_libzip_loaded) == 0) {
+    release_load_zip_library();
+  }
+}
+
 #if INCLUDE_CDS
 
 // Helper function used by CDS code to get the number of boot classpath
 // entries during shared classpath setup time.
 
 inline int ClassLoader::num_boot_classpath_entries() {
-  assert(DumpSharedSpaces, "Should only be called at CDS dump time");
+  Arguments::assert_is_dumping_archive();
   assert(has_jrt_entry(), "must have a java runtime image");
   int num_entries = 1; // count the runtime image
   ClassPathEntry* e = ClassLoader::_first_append_entry;
@@ -84,7 +90,7 @@ inline ClassPathEntry* ClassLoader::get_next_boot_classpath_entry(ClassPathEntry
 // Helper function used by CDS code to get the number of app classpath
 // entries during shared classpath setup time.
 inline int ClassLoader::num_app_classpath_entries() {
-  assert(DumpSharedSpaces, "Should only be called at CDS dump time");
+  Arguments::assert_is_dumping_archive();
   int num_entries = 0;
   ClassPathEntry* e= ClassLoader::_app_classpath_entries;
   while (e != NULL) {

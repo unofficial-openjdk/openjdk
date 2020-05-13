@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import jdk.internal.vm.compiler.collections.EconomicMap;
+import jdk.internal.vm.compiler.collections.Equivalence;
 import org.graalvm.compiler.core.common.cfg.BlockMap;
 import org.graalvm.compiler.core.common.type.ObjectStamp;
 import org.graalvm.compiler.core.common.type.Stamp;
@@ -61,12 +62,12 @@ import org.graalvm.compiler.nodes.StructuredGraph.ScheduleResult;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.calc.FloatingNode;
 import org.graalvm.compiler.nodes.cfg.Block;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.phases.BasePhase;
 import org.graalvm.compiler.phases.graph.ReentrantNodeIterator;
 import org.graalvm.compiler.phases.graph.ReentrantNodeIterator.NodeIteratorClosure;
 import org.graalvm.compiler.phases.schedule.SchedulePhase;
 import org.graalvm.compiler.phases.schedule.SchedulePhase.SchedulingStrategy;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 
 import jdk.vm.ci.code.BytecodeFrame;
 import jdk.vm.ci.hotspot.HotSpotMetaspaceConstant;
@@ -78,7 +79,7 @@ import jdk.vm.ci.meta.ConstantReflectionProvider;
 import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.meta.ResolvedJavaType;
 
-public class ReplaceConstantNodesPhase extends BasePhase<PhaseContext> {
+public class ReplaceConstantNodesPhase extends BasePhase<CoreProviders> {
 
     private final boolean verifyFingerprints;
 
@@ -318,7 +319,7 @@ public class ReplaceConstantNodesPhase extends BasePhase<PhaseContext> {
         NodeMap<Block> nodeToBlock = schedule.getNodeToBlockMap();
         BlockMap<List<Node>> blockToNodes = schedule.getBlockToNodesMap();
 
-        EconomicMap<Block, Node> blockToExisting = EconomicMap.create();
+        EconomicMap<Block, Node> blockToExisting = EconomicMap.create(Equivalence.IDENTITY);
         for (Node n : node.usages().filter(n -> isReplacementNode(n))) {
             blockToExisting.put(nodeToBlock.get(n), n);
         }
@@ -448,7 +449,7 @@ public class ReplaceConstantNodesPhase extends BasePhase<PhaseContext> {
      * @param node
      * @param context
      */
-    private static void handleLoadMethodCounters(StructuredGraph graph, FrameStateMapperClosure stateMapper, LoadMethodCountersNode node, PhaseContext context) {
+    private static void handleLoadMethodCounters(StructuredGraph graph, FrameStateMapperClosure stateMapper, LoadMethodCountersNode node, CoreProviders context) {
         ResolvedJavaType type = node.getMethod().getDeclaringClass();
         Stamp hubStamp = context.getStampProvider().createHubStamp((ObjectStamp) StampFactory.objectNonNull());
         ConstantReflectionProvider constantReflection = context.getConstantReflection();
@@ -466,7 +467,7 @@ public class ReplaceConstantNodesPhase extends BasePhase<PhaseContext> {
      * @param stateMapper
      * @param context
      */
-    private static void replaceLoadMethodCounters(StructuredGraph graph, FrameStateMapperClosure stateMapper, PhaseContext context) {
+    private static void replaceLoadMethodCounters(StructuredGraph graph, FrameStateMapperClosure stateMapper, CoreProviders context) {
         new SchedulePhase(SchedulingStrategy.LATEST_OUT_OF_LOOPS, true).apply(graph, false);
 
         for (LoadMethodCountersNode node : getLoadMethodCountersNodes(graph)) {
@@ -496,7 +497,7 @@ public class ReplaceConstantNodesPhase extends BasePhase<PhaseContext> {
     }
 
     @Override
-    protected void run(StructuredGraph graph, PhaseContext context) {
+    protected void run(StructuredGraph graph, CoreProviders context) {
         FrameStateMapperClosure stateMapper = new FrameStateMapperClosure(graph);
         ReentrantNodeIterator.apply(stateMapper, graph.start(), null);
 

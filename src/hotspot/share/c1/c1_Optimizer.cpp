@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -366,6 +366,8 @@ class BlockMerger: public BlockClosure {
           assert(sux_value == end_state->stack_at(index), "stack not equal");
         }
         for_each_local_value(sux_state, index, sux_value) {
+          Phi* sux_phi = sux_value->as_Phi();
+          if (sux_phi != NULL && sux_phi->is_illegal()) continue;
           assert(sux_value == end_state->local_at(index), "locals not equal");
         }
         assert(sux_state->caller_state() == end_state->caller_state(), "caller not equal");
@@ -868,7 +870,7 @@ void NullCheckEliminator::handle_AccessField(AccessField* x) {
       if (field->is_constant()) {
         ciConstant field_val = field->constant_value();
         BasicType field_type = field_val.basic_type();
-        if (field_type == T_OBJECT || field_type == T_ARRAY) {
+        if (is_reference_type(field_type)) {
           ciObject* obj_val = field_val.as_object();
           if (!obj_val->is_null_object()) {
             if (PrintNullCheckElimination) {

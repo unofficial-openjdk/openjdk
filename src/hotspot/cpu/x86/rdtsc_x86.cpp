@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "rdtsc_x86.hpp"
+#include "runtime/orderAccess.hpp"
 #include "runtime/thread.inline.hpp"
 #include "vm_version_ext_x86.hpp"
 
@@ -62,7 +63,7 @@ static void do_time_measurements(volatile jlong& time_base,
     fstart = os::rdtsc();
 
     // use sleep to prevent compiler from optimizing
-    os::sleep(Thread::current(), FT_SLEEP_MILLISECS, true);
+    JavaThread::current()->sleep(FT_SLEEP_MILLISECS);
 
     end = os::elapsed_counter();
     OrderAccess::fence();
@@ -145,7 +146,7 @@ static bool initialize_elapsed_counter() {
 static bool ergonomics() {
   const bool invtsc_support = Rdtsc::is_supported();
   if (FLAG_IS_DEFAULT(UseFastUnorderedTimeStamps) && invtsc_support) {
-    FLAG_SET_ERGO(bool, UseFastUnorderedTimeStamps, true);
+    FLAG_SET_ERGO(UseFastUnorderedTimeStamps, true);
   }
 
   bool ft_enabled = UseFastUnorderedTimeStamps && invtsc_support;

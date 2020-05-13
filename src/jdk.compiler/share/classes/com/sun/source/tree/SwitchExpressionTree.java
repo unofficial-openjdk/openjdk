@@ -37,15 +37,10 @@ import java.util.List;
  *   }
  * </pre>
  *
- * @jls section 15.29
+ * @jls 15.29 Switch Expressions
  *
  * @since 12
- *
- * @deprecated This method is modeling switch expressions,
- * which are part of a preview feature and may be removed
- * if the preview feature is removed.
  */
-@Deprecated(forRemoval=true, since="12")
 public interface SwitchExpressionTree extends ExpressionTree {
     /**
      * Returns the expression for the {@code switch} expression.

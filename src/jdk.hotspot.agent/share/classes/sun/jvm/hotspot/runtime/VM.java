@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,8 @@ import sun.jvm.hotspot.types.*;
 import sun.jvm.hotspot.utilities.*;
 import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.classfile.*;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
 /** <P> This class encapsulates the global state of the VM; the
     universe, object heap, interpreter, etc. It is a Singleton and
@@ -67,9 +69,9 @@ import sun.jvm.hotspot.classfile.*;
 
 public class VM {
   private static VM    soleInstance;
-  private static List  vmInitializedObservers = new ArrayList();
-  private List         vmResumedObservers   = new ArrayList();
-  private List         vmSuspendedObservers = new ArrayList();
+  private static List<Observer> vmInitializedObservers = new ArrayList<>();
+  private List<Observer> vmResumedObservers   = new ArrayList<>();
+  private List<Observer> vmSuspendedObservers = new ArrayList<>();
   private TypeDataBase db;
   private boolean      isBigEndian;
   /** This is only present if in a debugging system */
@@ -104,7 +106,6 @@ public class VM {
   private int          heapOopSize;
   private int          klassPtrSize;
   private int          oopSize;
-  private final int    IndexSetSize;
   /** -XX flags (value origin) */
   public static int    Flags_DEFAULT;
   public static int    Flags_COMMAND_LINE;
@@ -114,6 +115,7 @@ public class VM {
   public static int    Flags_ERGONOMIC;
   public static int    Flags_ATTACH_ON_DEMAND;
   public static int    Flags_INTERNAL;
+  public static int    Flags_JIMAGE_RESOURCE;
   private static int   Flags_VALUE_ORIGIN_MASK;
   private static int   Flags_ORIG_COMMAND_LINE;
   /** This is only present in a non-core build */
@@ -134,7 +136,7 @@ public class VM {
   private String       vmInternalInfo;
 
   private Flag[] commandLineFlags;
-  private Map flagsMap;
+  private Map<String, Flag> flagsMap;
 
   private static Type intType;
   private static Type uintType;
@@ -200,6 +202,8 @@ public class VM {
             return "attach";
         } else if (origin == Flags_INTERNAL) {
             return "internal";
+        } else if (origin == Flags_JIMAGE_RESOURCE) {
+            return "jimage";
         } else {
             throw new IllegalStateException(
                 "Unknown flag origin " + origin + " is detected in " + name);
@@ -484,10 +488,10 @@ public class VM {
     Flags_ERGONOMIC = db.lookupIntConstant("JVMFlag::ERGONOMIC").intValue();
     Flags_ATTACH_ON_DEMAND = db.lookupIntConstant("JVMFlag::ATTACH_ON_DEMAND").intValue();
     Flags_INTERNAL = db.lookupIntConstant("JVMFlag::INTERNAL").intValue();
+    Flags_JIMAGE_RESOURCE = db.lookupIntConstant("JVMFlag::JIMAGE_RESOURCE").intValue();
     Flags_VALUE_ORIGIN_MASK = db.lookupIntConstant("JVMFlag::VALUE_ORIGIN_MASK").intValue();
     Flags_ORIG_COMMAND_LINE = db.lookupIntConstant("JVMFlag::ORIG_COMMAND_LINE").intValue();
     oopSize  = db.lookupIntConstant("oopSize").intValue();
-    IndexSetSize = db.lookupIntConstant("CompactibleFreeListSpace::IndexSetSize").intValue();
 
     intType = db.lookupType("int");
     uintType = db.lookupType("uint");
@@ -544,8 +548,8 @@ public class VM {
     }
 
     debugger.putHeapConst(soleInstance.getHeapOopSize(), soleInstance.getKlassPtrSize(),
-                          Universe.getNarrowOopBase(), Universe.getNarrowOopShift(),
-                          Universe.getNarrowKlassBase(), Universe.getNarrowKlassShift());
+                          CompressedOops.getBase(), CompressedOops.getShift(),
+                          CompressedKlassPointers.getBase(), CompressedKlassPointers.getShift());
   }
 
   /** This is used by the debugging system */
@@ -705,10 +709,6 @@ public class VM {
 
   public int getHeapOopSize() {
     return heapOopSize;
-  }
-
-  public int getIndexSetSize() {
-    return IndexSetSize;
   }
 
   public int getKlassPtrSize() {
@@ -1000,7 +1000,7 @@ public class VM {
 
   public Flag getCommandLineFlag(String name) {
     if (flagsMap == null) {
-      flagsMap = new HashMap();
+      flagsMap = new HashMap<>();
       Flag[] flags = getCommandLineFlags();
       for (int i = 0; i < flags.length; i++) {
         flagsMap.put(flags[i].getName(), flags[i]);
@@ -1037,10 +1037,8 @@ public class VM {
     }
 
     // sort flags by name
-    Arrays.sort(commandLineFlags, new Comparator() {
-        public int compare(Object o1, Object o2) {
-          Flag f1 = (Flag) o1;
-          Flag f2 = (Flag) o2;
+    Arrays.sort(commandLineFlags, new Comparator<>() {
+        public int compare(Flag f1, Flag f2) {
           return f1.getName().compareTo(f2.getName());
         }
       });

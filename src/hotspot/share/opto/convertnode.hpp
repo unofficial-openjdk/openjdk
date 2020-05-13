@@ -212,5 +212,22 @@ class RoundDoubleNode: public Node {
   virtual const Type* Value(PhaseGVN* phase) const;
 };
 
+//-----------------------------RoundDoubleModeNode-----------------------------
+class RoundDoubleModeNode: public Node {
+  public:
+  enum RoundingMode {
+    rmode_rint  = 0,
+    rmode_floor = 1,
+    rmode_ceil  = 2
+  };
+  RoundDoubleModeNode(Node *in1, Node * rmode): Node(0, in1, rmode) {}
+  static RoundDoubleModeNode* make(PhaseGVN& gvn, Node* arg, RoundDoubleModeNode::RoundingMode rmode);
+  virtual int   Opcode() const;
+  virtual const Type *bottom_type() const { return Type::DOUBLE; }
+  virtual uint  ideal_reg() const { return Op_RegD; }
+  virtual Node* Identity(PhaseGVN* phase);
+  virtual const Type* Value(PhaseGVN* phase) const;
+};
+
 
 #endif // SHARE_OPTO_CONVERTNODE_HPP

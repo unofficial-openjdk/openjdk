@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -591,7 +591,7 @@ static char* get_user_name_slow(int vmid, TRAPS) {
           if (statbuf.st_ctime > oldest_ctime) {
             char* user = strchr(dentry->d_name, '_') + 1;
 
-            if (oldest_user != NULL) FREE_C_HEAP_ARRAY(char, oldest_user);
+            FREE_C_HEAP_ARRAY(char, oldest_user);
             oldest_user = NEW_C_HEAP_ARRAY(char, strlen(user)+1, mtInternal);
 
             strcpy(oldest_user, user);
@@ -1028,7 +1028,7 @@ static size_t sharedmem_filesize(int fd, TRAPS) {
 
   if ((statbuf.st_size == 0) ||
      ((size_t)statbuf.st_size % os::vm_page_size() != 0)) {
-    THROW_MSG_0(vmSymbols::java_lang_Exception(),
+    THROW_MSG_0(vmSymbols::java_io_IOException(),
                 "Invalid PerfMemory size");
   }
 

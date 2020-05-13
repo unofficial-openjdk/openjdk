@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
  * @bug 4638723 8015882 8176131 8176331
  * @summary Test to ensure that the refactored version of the standard
  * doclet still works with Taglets that implement the 1.4.0 interface.
- * @author jamieh
  * @library ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build javadoc.tester.* ToDoTaglet UnderlineTaglet Check
@@ -54,10 +53,12 @@ public class TestLegacyTaglet extends JavadocTester {
         checkExit(Exit.OK);
         checkOutput("C.html", true,
                 "This is an <u>underline</u>",
-                "<DT><B>To Do:</B><DD><table summary=\"Summary\" cellpadding=2 cellspacing=0><tr>" +
-                "<td bgcolor=\"yellow\">Finish this class.</td></tr></table></DD>",
-                "<DT><B>To Do:</B><DD><table summary=\"Summary\" cellpadding=2 cellspacing=0><tr>" +
-                "<td bgcolor=\"yellow\">Tag in Method.</td></tr></table></DD>");
+                """
+                    <DT><B>To Do:</B><DD><table summary="Summary" cellpadding=2 cellspacing=0><tr><t\
+                    d bgcolor="yellow">Finish this class.</td></tr></table></DD>""",
+                """
+                    <DT><B>To Do:</B><DD><table summary="Summary" cellpadding=2 cellspacing=0><tr><t\
+                    d bgcolor="yellow">Tag in Method.</td></tr></table></DD>""");
         checkOutput(Output.STDERR, false,
                 "NullPointerException");
     }

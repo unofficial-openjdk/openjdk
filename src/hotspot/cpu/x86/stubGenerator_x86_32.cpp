@@ -27,7 +27,9 @@
 #include "asm/macroAssembler.inline.hpp"
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/barrierSetAssembler.hpp"
+#include "gc/shared/barrierSetNMethod.hpp"
 #include "interpreter/interpreter.hpp"
+#include "memory/universe.hpp"
 #include "nativeInst_x86.hpp"
 #include "oops/instanceOop.hpp"
 #include "oops/method.hpp"
@@ -429,7 +431,8 @@ class StubGenerator: public StubCodeGenerator {
 
 
   //----------------------------------------------------------------------------------------------------
-  // Support for int32_t Atomic::xchg(int32_t exchange_value, volatile int32_t* dest)
+  // Implementation of int32_t atomic_xchg(int32_t exchange_value, volatile int32_t* dest)
+  // used by Atomic::xchg(volatile int32_t* dest, int32_t exchange_value)
   //
   // xchg exists as far back as 8086, lock needed for MP only
   // Stack layout immediately after call:
@@ -602,7 +605,59 @@ class StubGenerator: public StubCodeGenerator {
 
     return start;
   }
+  //---------------------------------------------------------------------------------------------------
 
+  address generate_vector_mask(const char *stub_name, int32_t mask) {
+    __ align(CodeEntryAlignment);
+    StubCodeMark mark(this, "StubRoutines", stub_name);
+    address start = __ pc();
+
+    for (int i = 0; i < 16; i++) {
+      __ emit_data(mask, relocInfo::none, 0);
+    }
+
+    return start;
+  }
+
+  address generate_vector_mask_long_double(const char *stub_name, int32_t maskhi, int32_t masklo) {
+    __ align(CodeEntryAlignment);
+    StubCodeMark mark(this, "StubRoutines", stub_name);
+    address start = __ pc();
+
+    for (int i = 0; i < 8; i++) {
+      __ emit_data(masklo, relocInfo::none, 0);
+      __ emit_data(maskhi, relocInfo::none, 0);
+    }
+
+    return start;
+  }
+
+  //----------------------------------------------------------------------------------------------------
+
+  address generate_vector_byte_perm_mask(const char *stub_name) {
+    __ align(CodeEntryAlignment);
+    StubCodeMark mark(this, "StubRoutines", stub_name);
+    address start = __ pc();
+
+    __ emit_data(0x00000001, relocInfo::none, 0);
+    __ emit_data(0x00000000, relocInfo::none, 0);
+    __ emit_data(0x00000003, relocInfo::none, 0);
+    __ emit_data(0x00000000, relocInfo::none, 0);
+    __ emit_data(0x00000005, relocInfo::none, 0);
+    __ emit_data(0x00000000, relocInfo::none, 0);
+    __ emit_data(0x00000007, relocInfo::none, 0);
+    __ emit_data(0x00000000, relocInfo::none, 0);
+    __ emit_data(0x00000000, relocInfo::none, 0);
+    __ emit_data(0x00000000, relocInfo::none, 0);
+    __ emit_data(0x00000002, relocInfo::none, 0);
+    __ emit_data(0x00000000, relocInfo::none, 0);
+    __ emit_data(0x00000004, relocInfo::none, 0);
+    __ emit_data(0x00000000, relocInfo::none, 0);
+    __ emit_data(0x00000006, relocInfo::none, 0);
+    __ emit_data(0x00000000, relocInfo::none, 0);
+
+    return start;
+  }
 
   //----------------------------------------------------------------------------------------------------
   // Non-destructive plausibility checks for oops
@@ -657,8 +712,7 @@ class StubGenerator: public StubCodeGenerator {
     __ pusha();                                  // push registers (eip = return address & msg are already pushed)
     BLOCK_COMMENT("call MacroAssembler::debug");
     __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, MacroAssembler::debug32)));
-    __ popa();
-    __ ret(3 * wordSize);                        // pop arguments
+    __ hlt();
     return start;
   }
 
@@ -741,55 +795,6 @@ class StubGenerator: public StubCodeGenerator {
   __ BIND(L_exit);
   }
 
-  // Copy 64 bytes chunks
-  //
-  // Inputs:
-  //   from        - source array address
-  //   to_from     - destination array address - from
-  //   qword_count - 8-bytes element count, negative
-  //
-  void mmx_copy_forward(Register from, Register to_from, Register qword_count) {
-    assert( VM_Version::supports_mmx(), "supported cpu only" );
-    Label L_copy_64_bytes_loop, L_copy_64_bytes, L_copy_8_bytes, L_exit;
-    // Copy 64-byte chunks
-    __ jmpb(L_copy_64_bytes);
-    __ align(OptoLoopAlignment);
-  __ BIND(L_copy_64_bytes_loop);
-    __ movq(mmx0, Address(from, 0));
-    __ movq(mmx1, Address(from, 8));
-    __ movq(mmx2, Address(from, 16));
-    __ movq(Address(from, to_from, Address::times_1, 0), mmx0);
-    __ movq(mmx3, Address(from, 24));
-    __ movq(Address(from, to_from, Address::times_1, 8), mmx1);
-    __ movq(mmx4, Address(from, 32));
-    __ movq(Address(from, to_from, Address::times_1, 16), mmx2);
-    __ movq(mmx5, Address(from, 40));
-    __ movq(Address(from, to_from, Address::times_1, 24), mmx3);
-    __ movq(mmx6, Address(from, 48));
-    __ movq(Address(from, to_from, Address::times_1, 32), mmx4);
-    __ movq(mmx7, Address(from, 56));
-    __ movq(Address(from, to_from, Address::times_1, 40), mmx5);
-    __ movq(Address(from, to_from, Address::times_1, 48), mmx6);
-    __ movq(Address(from, to_from, Address::times_1, 56), mmx7);
-    __ addptr(from, 64);
-  __ BIND(L_copy_64_bytes);
-    __ subl(qword_count, 8);
-    __ jcc(Assembler::greaterEqual, L_copy_64_bytes_loop);
-    __ addl(qword_count, 8);
-    __ jccb(Assembler::zero, L_exit);
-    //
-    // length is too short, just copy qwords
-    //
-  __ BIND(L_copy_8_bytes);
-    __ movq(mmx0, Address(from, 0));
-    __ movq(Address(from, to_from, Address::times_1), mmx0);
-    __ addptr(from, 8);
-    __ decrement(qword_count);
-    __ jcc(Assembler::greater, L_copy_8_bytes);
-  __ BIND(L_exit);
-    __ emms();
-  }
-
   address generate_disjoint_copy(BasicType t, bool aligned,
                                  Address::ScaleFactor sf,
                                  address* entry, const char *name,
@@ -836,89 +841,89 @@ class StubGenerator: public StubCodeGenerator {
 
     BarrierSetAssembler *bs = BarrierSet::barrier_set()->barrier_set_assembler();
     bs->arraycopy_prologue(_masm, decorators, t, from, to, count);
-
-    __ subptr(to, from); // to --> to_from
-    __ cmpl(count, 2<<shift); // Short arrays (< 8 bytes) copy by element
-    __ jcc(Assembler::below, L_copy_4_bytes); // use unsigned cmp
-    if (!UseUnalignedLoadStores && !aligned && (t == T_BYTE || t == T_SHORT)) {
-      // align source address at 4 bytes address boundary
-      if (t == T_BYTE) {
-        // One byte misalignment happens only for byte arrays
-        __ testl(from, 1);
-        __ jccb(Assembler::zero, L_skip_align1);
-        __ movb(rax, Address(from, 0));
-        __ movb(Address(from, to_from, Address::times_1, 0), rax);
-        __ increment(from);
-        __ decrement(count);
-      __ BIND(L_skip_align1);
-      }
-      // Two bytes misalignment happens only for byte and short (char) arrays
-      __ testl(from, 2);
-      __ jccb(Assembler::zero, L_skip_align2);
-      __ movw(rax, Address(from, 0));
-      __ movw(Address(from, to_from, Address::times_1, 0), rax);
-      __ addptr(from, 2);
-      __ subl(count, 1<<(shift-1));
-    __ BIND(L_skip_align2);
-    }
-    if (!VM_Version::supports_mmx()) {
-      __ mov(rax, count);      // save 'count'
-      __ shrl(count, shift); // bytes count
-      __ addptr(to_from, from);// restore 'to'
-      __ rep_mov();
-      __ subptr(to_from, from);// restore 'to_from'
-      __ mov(count, rax);      // restore 'count'
-      __ jmpb(L_copy_2_bytes); // all dwords were copied
-    } else {
-      if (!UseUnalignedLoadStores) {
-        // align to 8 bytes, we know we are 4 byte aligned to start
-        __ testptr(from, 4);
-        __ jccb(Assembler::zero, L_copy_64_bytes);
-        __ movl(rax, Address(from, 0));
-        __ movl(Address(from, to_from, Address::times_1, 0), rax);
-        __ addptr(from, 4);
-        __ subl(count, 1<<shift);
-      }
-    __ BIND(L_copy_64_bytes);
-      __ mov(rax, count);
-      __ shrl(rax, shift+1);  // 8 bytes chunk count
-      //
-      // Copy 8-byte chunks through MMX registers, 8 per iteration of the loop
-      //
-      if (UseXMMForArrayCopy) {
-        xmm_copy_forward(from, to_from, rax);
-      } else {
-        mmx_copy_forward(from, to_from, rax);
-      }
-    }
-    // copy tailing dword
-  __ BIND(L_copy_4_bytes);
-    __ testl(count, 1<<shift);
-    __ jccb(Assembler::zero, L_copy_2_bytes);
-    __ movl(rax, Address(from, 0));
-    __ movl(Address(from, to_from, Address::times_1, 0), rax);
-    if (t == T_BYTE || t == T_SHORT) {
-      __ addptr(from, 4);
-    __ BIND(L_copy_2_bytes);
-      // copy tailing word
-      __ testl(count, 1<<(shift-1));
-      __ jccb(Assembler::zero, L_copy_byte);
-      __ movw(rax, Address(from, 0));
-      __ movw(Address(from, to_from, Address::times_1, 0), rax);
-      if (t == T_BYTE) {
+    {
+      bool add_entry = (t != T_OBJECT && (!aligned || t == T_INT));
+      // UnsafeCopyMemory page error: continue after ucm
+      UnsafeCopyMemoryMark ucmm(this, add_entry, true);
+      __ subptr(to, from); // to --> to_from
+      __ cmpl(count, 2<<shift); // Short arrays (< 8 bytes) copy by element
+      __ jcc(Assembler::below, L_copy_4_bytes); // use unsigned cmp
+      if (!UseUnalignedLoadStores && !aligned && (t == T_BYTE || t == T_SHORT)) {
+        // align source address at 4 bytes address boundary
+        if (t == T_BYTE) {
+          // One byte misalignment happens only for byte arrays
+          __ testl(from, 1);
+          __ jccb(Assembler::zero, L_skip_align1);
+          __ movb(rax, Address(from, 0));
+          __ movb(Address(from, to_from, Address::times_1, 0), rax);
+          __ increment(from);
+          __ decrement(count);
+        __ BIND(L_skip_align1);
+        }
+        // Two bytes misalignment happens only for byte and short (char) arrays
+        __ testl(from, 2);
+        __ jccb(Assembler::zero, L_skip_align2);
+        __ movw(rax, Address(from, 0));
+        __ movw(Address(from, to_from, Address::times_1, 0), rax);
         __ addptr(from, 2);
-      __ BIND(L_copy_byte);
-        // copy tailing byte
-        __ testl(count, 1);
-        __ jccb(Assembler::zero, L_exit);
-        __ movb(rax, Address(from, 0));
-        __ movb(Address(from, to_from, Address::times_1, 0), rax);
-      __ BIND(L_exit);
-      } else {
-      __ BIND(L_copy_byte);
+        __ subl(count, 1<<(shift-1));
+      __ BIND(L_skip_align2);
       }
-    } else {
-    __ BIND(L_copy_2_bytes);
+      if (!UseXMMForArrayCopy) {
+        __ mov(rax, count);      // save 'count'
+        __ shrl(count, shift); // bytes count
+        __ addptr(to_from, from);// restore 'to'
+        __ rep_mov();
+        __ subptr(to_from, from);// restore 'to_from'
+        __ mov(count, rax);      // restore 'count'
+        __ jmpb(L_copy_2_bytes); // all dwords were copied
+      } else {
+        if (!UseUnalignedLoadStores) {
+          // align to 8 bytes, we know we are 4 byte aligned to start
+          __ testptr(from, 4);
+          __ jccb(Assembler::zero, L_copy_64_bytes);
+          __ movl(rax, Address(from, 0));
+          __ movl(Address(from, to_from, Address::times_1, 0), rax);
+          __ addptr(from, 4);
+          __ subl(count, 1<<shift);
+        }
+      __ BIND(L_copy_64_bytes);
+        __ mov(rax, count);
+        __ shrl(rax, shift+1);  // 8 bytes chunk count
+        //
+        // Copy 8-byte chunks through XMM registers, 8 per iteration of the loop
+        //
+        xmm_copy_forward(from, to_from, rax);
+      }
+      // copy tailing dword
+    __ BIND(L_copy_4_bytes);
+      __ testl(count, 1<<shift);
+      __ jccb(Assembler::zero, L_copy_2_bytes);
+      __ movl(rax, Address(from, 0));
+      __ movl(Address(from, to_from, Address::times_1, 0), rax);
+      if (t == T_BYTE || t == T_SHORT) {
+        __ addptr(from, 4);
+      __ BIND(L_copy_2_bytes);
+        // copy tailing word
+        __ testl(count, 1<<(shift-1));
+        __ jccb(Assembler::zero, L_copy_byte);
+        __ movw(rax, Address(from, 0));
+        __ movw(Address(from, to_from, Address::times_1, 0), rax);
+        if (t == T_BYTE) {
+          __ addptr(from, 2);
+        __ BIND(L_copy_byte);
+          // copy tailing byte
+          __ testl(count, 1);
+          __ jccb(Assembler::zero, L_exit);
+          __ movb(rax, Address(from, 0));
+          __ movb(Address(from, to_from, Address::times_1, 0), rax);
+        __ BIND(L_exit);
+        } else {
+        __ BIND(L_copy_byte);
+        }
+      } else {
+      __ BIND(L_copy_2_bytes);
+      }
     }
 
     __ movl(count, Address(rsp, 12+12)); // reread 'count'
@@ -1026,102 +1031,99 @@ class StubGenerator: public StubCodeGenerator {
     BarrierSetAssembler *bs = BarrierSet::barrier_set()->barrier_set_assembler();
     bs->arraycopy_prologue(_masm, decorators, t, from, to, count);
 
-    // copy from high to low
-    __ cmpl(count, 2<<shift); // Short arrays (< 8 bytes) copy by element
-    __ jcc(Assembler::below, L_copy_4_bytes); // use unsigned cmp
-    if (t == T_BYTE || t == T_SHORT) {
-      // Align the end of destination array at 4 bytes address boundary
-      __ lea(end, Address(dst, count, sf, 0));
-      if (t == T_BYTE) {
-        // One byte misalignment happens only for byte arrays
-        __ testl(end, 1);
-        __ jccb(Assembler::zero, L_skip_align1);
-        __ decrement(count);
-        __ movb(rdx, Address(from, count, sf, 0));
-        __ movb(Address(to, count, sf, 0), rdx);
-      __ BIND(L_skip_align1);
-      }
-      // Two bytes misalignment happens only for byte and short (char) arrays
-      __ testl(end, 2);
-      __ jccb(Assembler::zero, L_skip_align2);
-      __ subptr(count, 1<<(shift-1));
-      __ movw(rdx, Address(from, count, sf, 0));
-      __ movw(Address(to, count, sf, 0), rdx);
-    __ BIND(L_skip_align2);
+    {
+      bool add_entry = (t != T_OBJECT && (!aligned || t == T_INT));
+      // UnsafeCopyMemory page error: continue after ucm
+      UnsafeCopyMemoryMark ucmm(this, add_entry, true);
+      // copy from high to low
       __ cmpl(count, 2<<shift); // Short arrays (< 8 bytes) copy by element
-      __ jcc(Assembler::below, L_copy_4_bytes);
-    }
+      __ jcc(Assembler::below, L_copy_4_bytes); // use unsigned cmp
+      if (t == T_BYTE || t == T_SHORT) {
+        // Align the end of destination array at 4 bytes address boundary
+        __ lea(end, Address(dst, count, sf, 0));
+        if (t == T_BYTE) {
+          // One byte misalignment happens only for byte arrays
+          __ testl(end, 1);
+          __ jccb(Assembler::zero, L_skip_align1);
+          __ decrement(count);
+          __ movb(rdx, Address(from, count, sf, 0));
+          __ movb(Address(to, count, sf, 0), rdx);
+        __ BIND(L_skip_align1);
+        }
+        // Two bytes misalignment happens only for byte and short (char) arrays
+        __ testl(end, 2);
+        __ jccb(Assembler::zero, L_skip_align2);
+        __ subptr(count, 1<<(shift-1));
+        __ movw(rdx, Address(from, count, sf, 0));
+        __ movw(Address(to, count, sf, 0), rdx);
+      __ BIND(L_skip_align2);
+        __ cmpl(count, 2<<shift); // Short arrays (< 8 bytes) copy by element
+        __ jcc(Assembler::below, L_copy_4_bytes);
+      }
 
-    if (!VM_Version::supports_mmx()) {
-      __ std();
-      __ mov(rax, count); // Save 'count'
-      __ mov(rdx, to);    // Save 'to'
-      __ lea(rsi, Address(from, count, sf, -4));
-      __ lea(rdi, Address(to  , count, sf, -4));
-      __ shrptr(count, shift); // bytes count
-      __ rep_mov();
-      __ cld();
-      __ mov(count, rax); // restore 'count'
-      __ andl(count, (1<<shift)-1);      // mask the number of rest elements
-      __ movptr(from, Address(rsp, 12+4)); // reread 'from'
-      __ mov(to, rdx);   // restore 'to'
-      __ jmpb(L_copy_2_bytes); // all dword were copied
-   } else {
-      // Align to 8 bytes the end of array. It is aligned to 4 bytes already.
-      __ testptr(end, 4);
-      __ jccb(Assembler::zero, L_copy_8_bytes);
-      __ subl(count, 1<<shift);
-      __ movl(rdx, Address(from, count, sf, 0));
-      __ movl(Address(to, count, sf, 0), rdx);
-      __ jmpb(L_copy_8_bytes);
+      if (!UseXMMForArrayCopy) {
+        __ std();
+        __ mov(rax, count); // Save 'count'
+        __ mov(rdx, to);    // Save 'to'
+        __ lea(rsi, Address(from, count, sf, -4));
+        __ lea(rdi, Address(to  , count, sf, -4));
+        __ shrptr(count, shift); // bytes count
+        __ rep_mov();
+        __ cld();
+        __ mov(count, rax); // restore 'count'
+        __ andl(count, (1<<shift)-1);      // mask the number of rest elements
+        __ movptr(from, Address(rsp, 12+4)); // reread 'from'
+        __ mov(to, rdx);   // restore 'to'
+        __ jmpb(L_copy_2_bytes); // all dword were copied
+      } else {
+        // Align to 8 bytes the end of array. It is aligned to 4 bytes already.
+        __ testptr(end, 4);
+        __ jccb(Assembler::zero, L_copy_8_bytes);
+        __ subl(count, 1<<shift);
+        __ movl(rdx, Address(from, count, sf, 0));
+        __ movl(Address(to, count, sf, 0), rdx);
+        __ jmpb(L_copy_8_bytes);
 
-      __ align(OptoLoopAlignment);
-      // Move 8 bytes
-    __ BIND(L_copy_8_bytes_loop);
-      if (UseXMMForArrayCopy) {
+        __ align(OptoLoopAlignment);
+        // Move 8 bytes
+      __ BIND(L_copy_8_bytes_loop);
         __ movq(xmm0, Address(from, count, sf, 0));
         __ movq(Address(to, count, sf, 0), xmm0);
-      } else {
-        __ movq(mmx0, Address(from, count, sf, 0));
-        __ movq(Address(to, count, sf, 0), mmx0);
+      __ BIND(L_copy_8_bytes);
+        __ subl(count, 2<<shift);
+        __ jcc(Assembler::greaterEqual, L_copy_8_bytes_loop);
+        __ addl(count, 2<<shift);
       }
-    __ BIND(L_copy_8_bytes);
-      __ subl(count, 2<<shift);
-      __ jcc(Assembler::greaterEqual, L_copy_8_bytes_loop);
-      __ addl(count, 2<<shift);
-      if (!UseXMMForArrayCopy) {
-        __ emms();
-      }
-    }
-  __ BIND(L_copy_4_bytes);
-    // copy prefix qword
-    __ testl(count, 1<<shift);
-    __ jccb(Assembler::zero, L_copy_2_bytes);
-    __ movl(rdx, Address(from, count, sf, -4));
-    __ movl(Address(to, count, sf, -4), rdx);
+    __ BIND(L_copy_4_bytes);
+      // copy prefix qword
+      __ testl(count, 1<<shift);
+      __ jccb(Assembler::zero, L_copy_2_bytes);
+      __ movl(rdx, Address(from, count, sf, -4));
+      __ movl(Address(to, count, sf, -4), rdx);
 
-    if (t == T_BYTE || t == T_SHORT) {
-        __ subl(count, (1<<shift));
+      if (t == T_BYTE || t == T_SHORT) {
+          __ subl(count, (1<<shift));
+        __ BIND(L_copy_2_bytes);
+          // copy prefix dword
+          __ testl(count, 1<<(shift-1));
+          __ jccb(Assembler::zero, L_copy_byte);
+          __ movw(rdx, Address(from, count, sf, -2));
+          __ movw(Address(to, count, sf, -2), rdx);
+          if (t == T_BYTE) {
+            __ subl(count, 1<<(shift-1));
+          __ BIND(L_copy_byte);
+            // copy prefix byte
+            __ testl(count, 1);
+            __ jccb(Assembler::zero, L_exit);
+            __ movb(rdx, Address(from, 0));
+            __ movb(Address(to, 0), rdx);
+          __ BIND(L_exit);
+          } else {
+          __ BIND(L_copy_byte);
+          }
+      } else {
       __ BIND(L_copy_2_bytes);
-        // copy prefix dword
-        __ testl(count, 1<<(shift-1));
-        __ jccb(Assembler::zero, L_copy_byte);
-        __ movw(rdx, Address(from, count, sf, -2));
-        __ movw(Address(to, count, sf, -2), rdx);
-        if (t == T_BYTE) {
-          __ subl(count, 1<<(shift-1));
-        __ BIND(L_copy_byte);
-          // copy prefix byte
-          __ testl(count, 1);
-          __ jccb(Assembler::zero, L_exit);
-          __ movb(rdx, Address(from, 0));
-          __ movb(Address(to, 0), rdx);
-        __ BIND(L_exit);
-        } else {
-        __ BIND(L_copy_byte);
-        }
-    } else {
-    __ BIND(L_copy_2_bytes);
+      }
     }
 
     __ movl2ptr(count, Address(rsp, 12+12)); // reread count
@@ -1159,23 +1161,23 @@ class StubGenerator: public StubCodeGenerator {
     *entry = __ pc(); // Entry point from conjoint arraycopy stub.
     BLOCK_COMMENT("Entry:");
 
-    __ subptr(to, from); // to --> to_from
-    if (VM_Version::supports_mmx()) {
+    {
+      // UnsafeCopyMemory page error: continue after ucm
+      UnsafeCopyMemoryMark ucmm(this, true, true);
+      __ subptr(to, from); // to --> to_from
       if (UseXMMForArrayCopy) {
         xmm_copy_forward(from, to_from, count);
       } else {
-        mmx_copy_forward(from, to_from, count);
+        __ jmpb(L_copy_8_bytes);
+        __ align(OptoLoopAlignment);
+      __ BIND(L_copy_8_bytes_loop);
+        __ fild_d(Address(from, 0));
+        __ fistp_d(Address(from, to_from, Address::times_1));
+        __ addptr(from, 8);
+      __ BIND(L_copy_8_bytes);
+        __ decrement(count);
+        __ jcc(Assembler::greaterEqual, L_copy_8_bytes_loop);
       }
-    } else {
-      __ jmpb(L_copy_8_bytes);
-      __ align(OptoLoopAlignment);
-    __ BIND(L_copy_8_bytes_loop);
-      __ fild_d(Address(from, 0));
-      __ fistp_d(Address(from, to_from, Address::times_1));
-      __ addptr(from, 8);
-    __ BIND(L_copy_8_bytes);
-      __ decrement(count);
-      __ jcc(Assembler::greaterEqual, L_copy_8_bytes_loop);
     }
     inc_copy_counter_np(T_LONG);
     __ leave(); // required for proper stackwalking of RuntimeStub frame
@@ -1214,28 +1216,25 @@ class StubGenerator: public StubCodeGenerator {
     __ movptr(from, Address(rsp, 8));  // from
     __ jump_cc(Assembler::aboveEqual, nooverlap);
 
-    __ jmpb(L_copy_8_bytes);
+    {
+      // UnsafeCopyMemory page error: continue after ucm
+      UnsafeCopyMemoryMark ucmm(this, true, true);
 
-    __ align(OptoLoopAlignment);
-  __ BIND(L_copy_8_bytes_loop);
-    if (VM_Version::supports_mmx()) {
+      __ jmpb(L_copy_8_bytes);
+
+      __ align(OptoLoopAlignment);
+    __ BIND(L_copy_8_bytes_loop);
       if (UseXMMForArrayCopy) {
         __ movq(xmm0, Address(from, count, Address::times_8));
         __ movq(Address(to, count, Address::times_8), xmm0);
       } else {
-        __ movq(mmx0, Address(from, count, Address::times_8));
-        __ movq(Address(to, count, Address::times_8), mmx0);
+        __ fild_d(Address(from, count, Address::times_8));
+        __ fistp_d(Address(to, count, Address::times_8));
       }
-    } else {
-      __ fild_d(Address(from, count, Address::times_8));
-      __ fistp_d(Address(to, count, Address::times_8));
-    }
-  __ BIND(L_copy_8_bytes);
-    __ decrement(count);
-    __ jcc(Assembler::greaterEqual, L_copy_8_bytes_loop);
+    __ BIND(L_copy_8_bytes);
+      __ decrement(count);
+      __ jcc(Assembler::greaterEqual, L_copy_8_bytes_loop);
 
-    if (VM_Version::supports_mmx() && !UseXMMForArrayCopy) {
-      __ emms();
     }
     inc_copy_counter_np(T_LONG);
     __ leave(); // required for proper stackwalking of RuntimeStub frame
@@ -2968,9 +2967,8 @@ class StubGenerator: public StubCodeGenerator {
 
     __ enter();
     __ subptr(rsp, 8 * wordSize);
-    if (multi_block) {
-      __ push(limit);
-    }
+    handleSOERegisters(true /*saving*/);
+
     __ movptr(buf, buf_param);
     __ movptr(state, state_param);
     if (multi_block) {
@@ -2981,9 +2979,7 @@ class StubGenerator: public StubCodeGenerator {
     __ fast_sha1(abcd, e0, e1, msg0, msg1, msg2, msg3, shuf_mask,
       buf, state, ofs, limit, rsp, multi_block);
 
-    if (multi_block) {
-      __ pop(limit);
-    }
+    handleSOERegisters(false /*restoring*/);
     __ addptr(rsp, 8 * wordSize);
     __ leave();
     __ ret(0);
@@ -3586,6 +3582,68 @@ class StubGenerator: public StubCodeGenerator {
     __ ret(0);
   }
 
+  address generate_method_entry_barrier() {
+    __ align(CodeEntryAlignment);
+    StubCodeMark mark(this, "StubRoutines", "nmethod_entry_barrier");
+
+    Label deoptimize_label;
+
+    address start = __ pc();
+
+    __ push(-1); // cookie, this is used for writing the new rsp when deoptimizing
+
+    BLOCK_COMMENT("Entry:");
+    __ enter(); // save rbp
+
+    // save rbx, because we want to use that value.
+    // We could do without it but then we depend on the number of slots used by pusha
+    __ push(rbx);
+
+    __ lea(rbx, Address(rsp, wordSize * 3)); // 1 for cookie, 1 for rbp, 1 for rbx - this should be the return address
+
+    __ pusha();
+
+    // xmm0 and xmm1 may be used for passing float/double arguments
+    const int xmm_size = wordSize * 2;
+    const int xmm_spill_size = xmm_size * 2;
+    __ subptr(rsp, xmm_spill_size);
+    __ movdqu(Address(rsp, xmm_size * 1), xmm1);
+    __ movdqu(Address(rsp, xmm_size * 0), xmm0);
+
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, static_cast<int (*)(address*)>(BarrierSetNMethod::nmethod_stub_entry_barrier)), rbx);
+
+    __ movdqu(xmm0, Address(rsp, xmm_size * 0));
+    __ movdqu(xmm1, Address(rsp, xmm_size * 1));
+    __ addptr(rsp, xmm_spill_size);
+
+    __ cmpl(rax, 1); // 1 means deoptimize
+    __ jcc(Assembler::equal, deoptimize_label);
+
+    __ popa();
+    __ pop(rbx);
+
+    __ leave();
+
+    __ addptr(rsp, 1 * wordSize); // cookie
+    __ ret(0);
+
+    __ BIND(deoptimize_label);
+
+    __ popa();
+    __ pop(rbx);
+
+    __ leave();
+
+    // this can be taken out, but is good for verification purposes. getting a SIGSEGV
+    // here while still having a correct stack is valuable
+    __ testptr(rsp, Address(rsp, 0));
+
+    __ movptr(rsp, Address(rsp, 0)); // new rsp was written in the barrier
+    __ jmp(Address(rsp, -1 * wordSize)); // jmp target should be callers verified_entry_point
+
+    return start;
+  }
+
  public:
   // Information about frame layout at time of blocking runtime call.
   // Note that we only have to preserve callee-saved registers since
@@ -3826,6 +3884,14 @@ class StubGenerator: public StubCodeGenerator {
     //------------------------------------------------------------------------------------------------------------------------
     // entry points that are platform specific
 
+    StubRoutines::x86::_vector_float_sign_mask = generate_vector_mask("vector_float_sign_mask", 0x7FFFFFFF);
+    StubRoutines::x86::_vector_float_sign_flip = generate_vector_mask("vector_float_sign_flip", 0x80000000);
+    StubRoutines::x86::_vector_double_sign_mask = generate_vector_mask_long_double("vector_double_sign_mask", 0x7FFFFFFF, 0xFFFFFFFF);
+    StubRoutines::x86::_vector_double_sign_flip = generate_vector_mask_long_double("vector_double_sign_flip", 0x80000000, 0x00000000);
+    StubRoutines::x86::_vector_short_to_byte_mask = generate_vector_mask("vector_short_to_byte_mask", 0x00ff00ff);
+    StubRoutines::x86::_vector_byte_perm_mask = generate_vector_byte_perm_mask("vector_byte_perm_mask");
+    StubRoutines::x86::_vector_long_sign_mask = generate_vector_mask_long_double("vector_long_sign_mask", 0x80000000, 0x00000000);
+
     // support for verify_oop (must happen after universe_init)
     StubRoutines::_verify_oop_subroutine_entry     = generate_verify_oop();
 
@@ -3874,6 +3940,11 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::_safefetchN_entry           = StubRoutines::_safefetch32_entry;
     StubRoutines::_safefetchN_fault_pc        = StubRoutines::_safefetch32_fault_pc;
     StubRoutines::_safefetchN_continuation_pc = StubRoutines::_safefetch32_continuation_pc;
+
+    BarrierSetNMethod* bs_nm = BarrierSet::barrier_set()->barrier_set_nmethod();
+    if (bs_nm != NULL) {
+      StubRoutines::x86::_method_entry_barrier = generate_method_entry_barrier();
+    }
   }
 
 
@@ -3887,7 +3958,10 @@ class StubGenerator: public StubCodeGenerator {
   }
 }; // end class declaration
 
-
+#define UCM_TABLE_MAX_ENTRIES 8
 void StubGenerator_generate(CodeBuffer* code, bool all) {
+  if (UnsafeCopyMemory::_table == NULL) {
+    UnsafeCopyMemory::create_table(UCM_TABLE_MAX_ENTRIES);
+  }
   StubGenerator g(code, all);
 }

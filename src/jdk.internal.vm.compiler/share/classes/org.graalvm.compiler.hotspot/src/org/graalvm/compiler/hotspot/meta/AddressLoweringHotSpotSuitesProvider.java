@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2017, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,8 +32,8 @@ import org.graalvm.compiler.hotspot.HotSpotGraalRuntimeProvider;
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.BasePhase;
 import org.graalvm.compiler.phases.Phase;
-import org.graalvm.compiler.phases.common.ExpandLogicPhase;
-import org.graalvm.compiler.phases.common.FixReadsPhase;
+import org.graalvm.compiler.phases.common.UseTrappingNullChecksPhase;
+import org.graalvm.compiler.phases.schedule.SchedulePhase;
 import org.graalvm.compiler.phases.tiers.LowTierContext;
 import org.graalvm.compiler.phases.tiers.Suites;
 import org.graalvm.compiler.phases.tiers.SuitesCreator;
@@ -55,10 +55,11 @@ public class AddressLoweringHotSpotSuitesProvider extends HotSpotSuitesProvider 
     public Suites createSuites(OptionValues options) {
         Suites suites = super.createSuites(options);
 
-        ListIterator<BasePhase<? super LowTierContext>> findPhase = suites.getLowTier().findPhase(FixReadsPhase.class);
+        ListIterator<BasePhase<? super LowTierContext>> findPhase = suites.getLowTier().findPhase(UseTrappingNullChecksPhase.class);
         if (findPhase == null) {
-            findPhase = suites.getLowTier().findPhase(ExpandLogicPhase.class);
+            findPhase = suites.getLowTier().findPhase(SchedulePhase.class);
         }
+        findPhase.previous();
         findPhase.add(addressLowering);
 
         return suites;

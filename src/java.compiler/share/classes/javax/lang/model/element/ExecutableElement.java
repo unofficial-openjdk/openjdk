@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,17 @@ import javax.lang.model.type.*;
  * @since 1.6
  */
 public interface ExecutableElement extends Element, Parameterizable {
+    /**
+     * Returns the {@linkplain ExecutableType executable type} defined
+     * by this executable element.
+     *
+     * @return the executable type defined by this executable element
+     *
+     * @see ExecutableType
+     */
+    @Override
+    TypeMirror asType();
+
     /**
      * Returns the formal type parameters of this executable
      * in declaration order.
@@ -84,6 +95,10 @@ public interface ExecutableElement extends Element, Parameterizable {
      *
      * @return the receiver type of this executable
      * @since 1.8
+     *
+     * @jls 8.4 Method Declarations
+     * @jls 8.4.1 Formal Parameters
+     * @jls 8.8 Constructor Declarations
      */
     TypeMirror getReceiverType();
 

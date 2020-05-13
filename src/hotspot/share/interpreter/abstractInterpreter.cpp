@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
 #include "compiler/disassembler.hpp"
 #include "interpreter/bytecodeHistogram.hpp"
 #include "interpreter/bytecodeInterpreter.hpp"
+#include "interpreter/bytecodeStream.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterRuntime.hpp"
 #include "interpreter/interp_masm.hpp"
@@ -36,6 +37,8 @@
 #include "memory/metaspaceShared.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/arrayOop.hpp"
+#include "oops/constantPool.hpp"
+#include "oops/cpCache.inline.hpp"
 #include "oops/methodData.hpp"
 #include "oops/method.hpp"
 #include "oops/oop.inline.hpp"
@@ -53,15 +56,12 @@
 // Implementation of platform independent aspects of Interpreter
 
 void AbstractInterpreter::initialize() {
-  if (_code != NULL) return;
+  assert(_code == NULL, "must only initialize once");
 
   // make sure 'imported' classes are initialized
   if (CountBytecodes || TraceBytecodes || StopInterpreterAt) BytecodeCounter::reset();
   if (PrintBytecodeHistogram)                                BytecodeHistogram::reset();
   if (PrintBytecodePairHistogram)                            BytecodePairHistogram::reset();
-
-  InvocationCounter::reinitialize();
-
 }
 
 void AbstractInterpreter::print() {
@@ -205,7 +205,7 @@ AbstractInterpreter::MethodKind AbstractInterpreter::method_kind(const methodHan
 
 address AbstractInterpreter::get_trampoline_code_buffer(AbstractInterpreter::MethodKind kind) {
   const size_t trampoline_size = SharedRuntime::trampoline_size();
-  address addr = MetaspaceShared::cds_i2i_entry_code_buffers((size_t)(AbstractInterpreter::number_of_method_entries) * trampoline_size);
+  address addr = MetaspaceShared::i2i_entry_code_buffers((size_t)(AbstractInterpreter::number_of_method_entries) * trampoline_size);
   addr += (size_t)(kind) * trampoline_size;
 
   return addr;
@@ -219,6 +219,7 @@ void AbstractInterpreter::update_cds_entry_table(AbstractInterpreter::MethodKind
     CodeBuffer buffer(trampoline, (int)(SharedRuntime::trampoline_size()));
     MacroAssembler _masm(&buffer);
     SharedRuntime::generate_trampoline(&_masm, _entry_table[kind]);
+    _masm.flush();
 
     if (PrintInterpreter) {
       Disassembler::decode(buffer.insts_begin(), buffer.insts_end());
@@ -240,9 +241,37 @@ void AbstractInterpreter::set_entry_for_kind(AbstractInterpreter::MethodKind kin
 // Return true if the interpreter can prove that the given bytecode has
 // not yet been executed (in Java semantics, not in actual operation).
 bool AbstractInterpreter::is_not_reached(const methodHandle& method, int bci) {
-  Bytecodes::Code code = method()->code_at(bci);
+  BytecodeStream s(method, bci);
+  Bytecodes::Code code = s.next();
 
-  if (!Bytecodes::must_rewrite(code)) {
+  if (Bytecodes::is_invoke(code)) {
+    assert(!Bytecodes::must_rewrite(code), "invokes aren't rewritten");
+    ConstantPool* cpool = method()->constants();
+
+    Bytecode invoke_bc(s.bytecode());
+
+    switch (code) {
+      case Bytecodes::_invokedynamic: {
+        assert(invoke_bc.has_index_u4(code), "sanity");
+        int method_index = invoke_bc.get_index_u4(code);
+        return cpool->invokedynamic_cp_cache_entry_at(method_index)->is_f1_null();
+      }
+      case Bytecodes::_invokevirtual:   // fall-through
+      case Bytecodes::_invokeinterface: // fall-through
+      case Bytecodes::_invokespecial:   // fall-through
+      case Bytecodes::_invokestatic: {
+        if (cpool->has_preresolution()) {
+          return false; // might have been reached
+        }
+        assert(!invoke_bc.has_index_u4(code), "sanity");
+        int method_index = invoke_bc.get_index_u2_cpcache(code);
+        constantPoolHandle cp(Thread::current(), cpool);
+        Method* resolved_method = ConstantPool::method_at_if_loaded(cp, method_index);
+        return (resolved_method == NULL);
+      }
+      default: ShouldNotReachHere();
+    }
+  } else if (!Bytecodes::must_rewrite(code)) {
     // might have been reached
     return false;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,22 +36,13 @@
                    product_rw,                                              \
                    lp64_product,                                            \
                    range,                                                   \
-                   constraint,                                              \
-                   writeable)                                               \
-                                                                            \
-  product(ccstr, ZPath, NULL,                                               \
-          "Filesystem path for Java heap backing storage "                  \
-          "(must be a tmpfs or a hugetlbfs filesystem)")                    \
+                   constraint)                                              \
                                                                             \
   product(double, ZAllocationSpikeTolerance, 2.0,                           \
           "Allocation spike tolerance factor")                              \
                                                                             \
   product(double, ZFragmentationLimit, 25.0,                                \
           "Maximum allowed heap fragmentation")                             \
-                                                                            \
-  product(bool, ZStallOnOutOfMemory, true,                                  \
-          "Allow Java threads to stall and wait for GC to complete "        \
-          "instead of immediately throwing an OutOfMemoryError")            \
                                                                             \
   product(size_t, ZMarkStackSpaceLimit, 8*G,                                \
           "Maximum number of bytes allocated for mark stacks")              \
@@ -60,29 +51,33 @@
   product(uint, ZCollectionInterval, 0,                                     \
           "Force GC at a fixed time interval (in seconds)")                 \
                                                                             \
-  product(uint, ZStatisticsInterval, 10,                                    \
+  product(bool, ZProactive, true,                                           \
+          "Enable proactive GC cycles")                                     \
+                                                                            \
+  product(bool, ZUncommit, true,                                            \
+          "Uncommit unused memory")                                         \
+                                                                            \
+  product(uintx, ZUncommitDelay, 5 * 60,                                    \
+          "Uncommit memory if it has been unused for the specified "        \
+          "amount of time (in seconds)")                                    \
+                                                                            \
+  diagnostic(uint, ZStatisticsInterval, 10,                                 \
           "Time between statistics print outs (in seconds)")                \
           range(1, (uint)-1)                                                \
                                                                             \
-  diagnostic(bool, ZStatisticsForceTrace, false,                            \
-          "Force tracing of ZStats")                                        \
+  diagnostic(bool, ZVerifyViews, false,                                     \
+          "Verify heap view accesses")                                      \
                                                                             \
-  diagnostic(bool, ZProactive, true,                                        \
-          "Enable proactive GC cycles")                                     \
+  diagnostic(bool, ZVerifyRoots, trueInDebug,                               \
+          "Verify roots")                                                   \
                                                                             \
-  diagnostic(bool, ZUnmapBadViews, false,                                   \
-          "Unmap bad (inactive) heap views")                                \
+  diagnostic(bool, ZVerifyObjects, false,                                   \
+          "Verify objects")                                                 \
                                                                             \
-  diagnostic(bool, ZVerifyMarking, false,                                   \
+  diagnostic(bool, ZVerifyMarking, trueInDebug,                             \
           "Verify marking stacks")                                          \
                                                                             \
   diagnostic(bool, ZVerifyForwarding, false,                                \
-          "Verify forwarding tables")                                       \
-                                                                            \
-  diagnostic(bool, ZOptimizeLoadBarriers, true,                             \
-          "Apply load barrier optimizations")                               \
-                                                                            \
-  develop(bool, ZVerifyLoadBarriers, false,                                 \
-          "Verify that reference loads are followed by barriers")
+          "Verify forwarding tables")
 
 #endif // SHARE_GC_Z_Z_GLOBALS_HPP

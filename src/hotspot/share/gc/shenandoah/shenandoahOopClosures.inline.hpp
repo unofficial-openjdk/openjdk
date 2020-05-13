@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2015, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2015, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -26,7 +27,6 @@
 
 #include "gc/shenandoah/shenandoahHeap.inline.hpp"
 #include "gc/shenandoah/shenandoahConcurrentMark.inline.hpp"
-#include "gc/shenandoah/shenandoahTraversalGC.inline.hpp"
 
 template<class T, UpdateRefsMode UPDATE_REFS, StringDedupMode STRING_DEDUP>
 inline void ShenandoahMarkRefsSuperClosure::work(T *p) {
@@ -34,13 +34,8 @@ inline void ShenandoahMarkRefsSuperClosure::work(T *p) {
 }
 
 template <class T>
-inline void ShenandoahUpdateHeapRefsSuperClosure::work(T* p) {
+inline void ShenandoahUpdateHeapRefsClosure::do_oop_work(T* p) {
   _heap->maybe_update_with_forwarded(p);
-}
-
-template <class T, bool STRING_DEDUP, bool DEGEN>
-inline void ShenandoahTraversalSuperClosure::work(T* p) {
-  _traversal_gc->process_oop<T, STRING_DEDUP, DEGEN>(p, _thread, _queue, _mark_context);
 }
 
 #endif // SHARE_GC_SHENANDOAH_SHENANDOAHOOPCLOSURES_INLINE_HPP

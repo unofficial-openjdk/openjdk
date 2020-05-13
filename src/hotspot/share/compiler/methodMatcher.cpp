@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/symbolTable.hpp"
 #include "compiler/methodMatcher.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
@@ -263,12 +264,15 @@ void MethodMatcher::parse_method_pattern(char*& line, const char*& error_msg, Me
     c_match = check_mode(class_name, error_msg);
     m_match = check_mode(method_name, error_msg);
 
-    if ((strchr(class_name, '<') != NULL) || (strchr(class_name, '>') != NULL)) {
+    if ((strchr(class_name, JVM_SIGNATURE_SPECIAL) != NULL) ||
+        (strchr(class_name, JVM_SIGNATURE_ENDSPECIAL) != NULL)) {
       error_msg = "Chars '<' and '>' not allowed in class name";
       return;
     }
-    if ((strchr(method_name, '<') != NULL) || (strchr(method_name, '>') != NULL)) {
-      if ((strncmp("<init>", method_name, 255) != 0) && (strncmp("<clinit>", method_name, 255) != 0)) {
+    if ((strchr(method_name, JVM_SIGNATURE_SPECIAL) != NULL) ||
+        (strchr(method_name, JVM_SIGNATURE_ENDSPECIAL) != NULL)) {
+      if (!vmSymbols::object_initializer_name()->equals(method_name) &&
+          !vmSymbols::class_initializer_name()->equals(method_name)) {
         error_msg = "Chars '<' and '>' only allowed in <init> and <clinit>";
         return;
       }
@@ -299,10 +303,10 @@ void MethodMatcher::parse_method_pattern(char*& line, const char*& error_msg, Me
         }
         line += bytes_read;
       }
-      signature = SymbolTable::new_symbol(sig, CHECK);
+      signature = SymbolTable::new_symbol(sig);
     }
-    Symbol* c_name = SymbolTable::new_symbol(class_name, CHECK);
-    Symbol* m_name = SymbolTable::new_symbol(method_name, CHECK);
+    Symbol* c_name = SymbolTable::new_symbol(class_name);
+    Symbol* m_name = SymbolTable::new_symbol(method_name);
 
     matcher->init(c_name, c_match, m_name, m_match, signature);
     return;

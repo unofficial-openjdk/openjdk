@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,9 +77,9 @@ public:
   size_t            _block_sz;
   uintx             _classes_count;
 
-  size_t            _anon_chunk_sz;
-  size_t            _anon_block_sz;
-  uintx             _anon_classes_count;
+  size_t            _hidden_chunk_sz;
+  size_t            _hidden_block_sz;
+  uintx             _hidden_classes_count;
 
   ClassLoaderStats() :
     _cld(0),
@@ -88,9 +88,9 @@ public:
     _chunk_sz(0),
     _block_sz(0),
     _classes_count(0),
-    _anon_chunk_sz(0),
-    _anon_block_sz(0),
-    _anon_classes_count(0) {
+    _hidden_chunk_sz(0),
+    _hidden_block_sz(0),
+    _hidden_classes_count(0) {
   }
 };
 
@@ -98,7 +98,7 @@ public:
 class ClassLoaderStatsClosure : public CLDClosure {
 protected:
   static bool oop_equals(oop const& s1, oop const& s2) {
-    return oopDesc::equals(s1, s2);
+    return s1 == s2;
   }
 
   static unsigned oop_hash(oop const& s1) {

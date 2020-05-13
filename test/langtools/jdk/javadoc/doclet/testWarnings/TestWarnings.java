@@ -29,7 +29,6 @@
  *           Make sure that links to private/unincluded methods do not cause
  *           a "link unresolved" warning.
  *           Make sure error message starts with "error -".
- * @author   jamieh
  * @library  ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build    javadoc.tester.*
@@ -80,8 +79,11 @@ public class TestWarnings extends JavadocTester {
         checkExit(Exit.ERROR);
 
         checkOutput("pkg/X.html", true,
-            "<a href=\"#m()\"><code>m()</code></a><br/>",
-            "<a href=\"#%3Cinit%3E()\"><code>X()</code></a><br/>",
-            "<a href=\"#f\"><code>f</code></a><br/>");
+            """
+                <a href="#m()"><code>m()</code></a><br/>""",
+            """
+                <a href="#%3Cinit%3E()"><code>X()</code></a><br/>""",
+            """
+                <a href="#f"><code>f</code></a><br/>""");
     }
 }

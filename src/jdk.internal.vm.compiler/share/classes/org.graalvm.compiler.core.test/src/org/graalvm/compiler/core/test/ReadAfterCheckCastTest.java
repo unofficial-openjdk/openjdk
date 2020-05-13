@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,11 +30,11 @@ import org.graalvm.compiler.nodes.ParameterNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
 import org.graalvm.compiler.nodes.memory.FloatingReadNode;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.nodes.spi.LoweringTool;
 import org.graalvm.compiler.phases.common.CanonicalizerPhase;
 import org.graalvm.compiler.phases.common.FloatingReadPhase;
 import org.graalvm.compiler.phases.common.LoweringPhase;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -89,8 +89,8 @@ public class ReadAfterCheckCastTest extends GraphScheduleTest {
             // check shape of graph, with lots of assumptions. will probably fail if graph
             // structure changes significantly
             StructuredGraph graph = parseEager(snippet, AllowAssumptions.YES);
-            PhaseContext context = new PhaseContext(getProviders());
-            CanonicalizerPhase canonicalizer = new CanonicalizerPhase();
+            CoreProviders context = getProviders();
+            CanonicalizerPhase canonicalizer = createCanonicalizerPhase();
             new LoweringPhase(canonicalizer, LoweringTool.StandardLoweringStage.HIGH_TIER).apply(graph, context);
             new FloatingReadPhase().apply(graph);
             canonicalizer.apply(graph, context);

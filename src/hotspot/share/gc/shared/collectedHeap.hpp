@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 
 #include "gc/shared/gcCause.hpp"
 #include "gc/shared/gcWhen.hpp"
+#include "gc/shared/verifyOption.hpp"
 #include "memory/allocation.hpp"
 #include "runtime/handles.hpp"
 #include "runtime/perfData.hpp"
@@ -44,13 +45,13 @@
 
 class AdaptiveSizePolicy;
 class BarrierSet;
-class CollectorPolicy;
 class GCHeapSummary;
 class GCTimer;
 class GCTracer;
 class GCMemoryManager;
 class MemoryPool;
 class MetaspaceSummary;
+class ReservedHeapSpace;
 class SoftRefPolicy;
 class Thread;
 class ThreadClosure;
@@ -73,7 +74,7 @@ class GCHeapLog : public EventLogBase<GCMessage> {
   void log_heap(CollectedHeap* heap, bool before);
 
  public:
-  GCHeapLog() : EventLogBase<GCMessage>("GC Heap History") {}
+  GCHeapLog() : EventLogBase<GCMessage>("GC Heap History", "gc") {}
 
   void log_heap_before(CollectedHeap* heap) {
     log_heap(heap, true);
@@ -87,7 +88,6 @@ class GCHeapLog : public EventLogBase<GCMessage> {
 // CollectedHeap
 //   GenCollectedHeap
 //     SerialHeap
-//     CMSHeap
 //   G1CollectedHeap
 //   ParallelScavengeHeap
 //   ShenandoahHeap
@@ -102,9 +102,10 @@ class CollectedHeap : public CHeapObj<mtInternal> {
  private:
   GCHeapLog* _gc_heap_log;
 
+ protected:
+  // Not used by all GCs
   MemRegion _reserved;
 
- protected:
   bool _is_gc_active;
 
   // Used for filler objects (static, but initialized in ctor).
@@ -170,7 +171,6 @@ class CollectedHeap : public CHeapObj<mtInternal> {
     None,
     Serial,
     Parallel,
-    CMS,
     G1,
     Epsilon,
     Z,
@@ -203,12 +203,13 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   virtual void safepoint_synchronize_begin() {}
   virtual void safepoint_synchronize_end() {}
 
-  void initialize_reserved_region(HeapWord *start, HeapWord *end);
-  MemRegion reserved_region() const { return _reserved; }
-  address base() const { return (address)reserved_region().start(); }
+  void initialize_reserved_region(const ReservedHeapSpace& rs);
 
   virtual size_t capacity() const = 0;
   virtual size_t used() const = 0;
+
+  // Returns unused capacity.
+  virtual size_t unused() const;
 
   // Return "true" if the part of the heap that allocates Java
   // objects has reached the maximal committed limit that it can
@@ -223,15 +224,6 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // spaces).
   virtual size_t max_capacity() const = 0;
 
-  // Returns "TRUE" if "p" points into the reserved area of the heap.
-  bool is_in_reserved(const void* p) const {
-    return _reserved.contains(p);
-  }
-
-  bool is_in_reserved_or_null(const void* p) const {
-    return p == NULL || is_in_reserved(p);
-  }
-
   // Returns "TRUE" iff "p" points into the committed areas of the heap.
   // This method can be expensive so avoid using it in performance critical
   // code.
@@ -239,37 +231,7 @@ class CollectedHeap : public CHeapObj<mtInternal> {
 
   DEBUG_ONLY(bool is_in_or_null(const void* p) const { return p == NULL || is_in(p); })
 
-  // Let's define some terms: a "closed" subset of a heap is one that
-  //
-  // 1) contains all currently-allocated objects, and
-  //
-  // 2) is closed under reference: no object in the closed subset
-  //    references one outside the closed subset.
-  //
-  // Membership in a heap's closed subset is useful for assertions.
-  // Clearly, the entire heap is a closed subset, so the default
-  // implementation is to use "is_in_reserved".  But this may not be too
-  // liberal to perform useful checking.  Also, the "is_in" predicate
-  // defines a closed subset, but may be too expensive, since "is_in"
-  // verifies that its argument points to an object head.  The
-  // "closed_subset" method allows a heap to define an intermediate
-  // predicate, allowing more precise checking than "is_in_reserved" at
-  // lower cost than "is_in."
-
-  // One important case is a heap composed of disjoint contiguous spaces,
-  // such as the Garbage-First collector.  Such heaps have a convenient
-  // closed subset consisting of the allocated portions of those
-  // contiguous spaces.
-
-  // Return "TRUE" iff the given pointer points into the heap's defined
-  // closed subset (which defaults to the entire heap).
-  virtual bool is_in_closed_subset(const void* p) const {
-    return is_in_reserved(p);
-  }
-
-  bool is_in_closed_subset_or_null(const void* p) const {
-    return p == NULL || is_in_closed_subset(p);
-  }
+  virtual uint32_t hash_oop(oop obj) const;
 
   void set_gc_cause(GCCause::Cause v) {
      if (UsePerfData) {
@@ -281,9 +243,9 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   }
   GCCause::Cause gc_cause() { return _gc_cause; }
 
-  virtual oop obj_allocate(Klass* klass, int size, TRAPS);
+  oop obj_allocate(Klass* klass, int size, TRAPS);
   virtual oop array_allocate(Klass* klass, int size, int length, bool do_zero, TRAPS);
-  virtual oop class_allocate(Klass* klass, int size, TRAPS);
+  oop class_allocate(Klass* klass, int size, TRAPS);
 
   // Utilities for turning raw memory into filler objects.
   //
@@ -405,7 +367,6 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   unsigned int total_full_collections() const { return _total_full_collections;}
 
   // Increment total number of GC collections (started)
-  // Should be protected but used by PSMarkSweep - cleanup for 1.4.2
   void increment_total_collections(bool full = false) {
     _total_collections++;
     if (full) {
@@ -414,9 +375,6 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   }
 
   void increment_total_full_collections() { _total_full_collections++; }
-
-  // Return the CollectorPolicy for the heap
-  virtual CollectorPolicy* collector_policy() const = 0;
 
   // Return the SoftRefPolicy for the heap;
   virtual SoftRefPolicy* soft_ref_policy() = 0;
@@ -428,36 +386,8 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // Iterate over all objects, calling "cl.do_object" on each.
   virtual void object_iterate(ObjectClosure* cl) = 0;
 
-  // Similar to object_iterate() except iterates only
-  // over live objects.
-  virtual void safe_object_iterate(ObjectClosure* cl) = 0;
-
-  // NOTE! There is no requirement that a collector implement these
-  // functions.
-  //
-  // A CollectedHeap is divided into a dense sequence of "blocks"; that is,
-  // each address in the (reserved) heap is a member of exactly
-  // one block.  The defining characteristic of a block is that it is
-  // possible to find its size, and thus to progress forward to the next
-  // block.  (Blocks may be of different sizes.)  Thus, blocks may
-  // represent Java objects, or they might be free blocks in a
-  // free-list-based heap (or subheap), as long as the two kinds are
-  // distinguishable and the size of each is determinable.
-
-  // Returns the address of the start of the "block" that contains the
-  // address "addr".  We say "blocks" instead of "object" since some heaps
-  // may not pack objects densely; a chunk may either be an object or a
-  // non-object.
-  virtual HeapWord* block_start(const void* addr) const = 0;
-
-  // Requires "addr" to be the start of a chunk, and returns its size.
-  // "addr + size" is required to be the start of a new chunk, or the end
-  // of the active area of the heap.
-  virtual size_t block_size(const HeapWord* addr) const = 0;
-
-  // Requires "addr" to be the start of a block, and returns "TRUE" iff
-  // the block is an object.
-  virtual bool block_is_obj(const HeapWord* addr) const = 0;
+  // Keep alive an object that was loaded with AS_NO_KEEPALIVE.
+  virtual void keep_alive(oop obj) {}
 
   // Returns the longest time (in ms) that has elapsed since the last
   // time that any part of the heap was examined by a garbage collection.
@@ -484,9 +414,8 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // Print heap information on the given outputStream.
   virtual void print_on(outputStream* st) const = 0;
   // The default behavior is to call print_on() on tty.
-  virtual void print() const {
-    print_on(tty);
-  }
+  virtual void print() const;
+
   // Print more detailed heap information on the given
   // outputStream. The default behavior is to call print_on(). It is
   // up to each subclass to override it and add any additional output
@@ -496,6 +425,9 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   }
 
   virtual void print_on_error(outputStream* st) const;
+
+  // Used to print information about locations in the hs_err file.
+  virtual bool print_location(outputStream* st, void* addr) const = 0;
 
   // Print all GC threads (other than the VM thread)
   // used by this heap.
@@ -514,14 +446,12 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   void print_heap_before_gc();
   void print_heap_after_gc();
 
-  // An object is scavengable if its location may move during a scavenge.
-  // (A scavenge is a GC which is not a full GC.)
-  virtual bool is_scavengable(oop obj) = 0;
   // Registering and unregistering an nmethod (compiled code) with the heap.
-  // Override with specific mechanism for each specialized heap type.
-  virtual void register_nmethod(nmethod* nm) {}
-  virtual void unregister_nmethod(nmethod* nm) {}
-  virtual void verify_nmethod(nmethod* nmethod) {}
+  virtual void register_nmethod(nmethod* nm) = 0;
+  virtual void unregister_nmethod(nmethod* nm) = 0;
+  // Callback for when nmethod is about to be deleted.
+  virtual void flush_nmethod(nmethod* nm) = 0;
+  virtual void verify_nmethod(nmethod* nm) = 0;
 
   void trace_heap_before_gc(const GCTracer* gc_tracer);
   void trace_heap_after_gc(const GCTracer* gc_tracer);
@@ -529,24 +459,9 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // Heap verification
   virtual void verify(VerifyOption option) = 0;
 
-  // Return true if concurrent phase control (via
-  // request_concurrent_phase_control) is supported by this collector.
-  // The default implementation returns false.
-  virtual bool supports_concurrent_phase_control() const;
-
-  // Request the collector enter the indicated concurrent phase, and
-  // wait until it does so.  Supports WhiteBox testing.  Only one
-  // request may be active at a time.  Phases are designated by name;
-  // the set of names and their meaning is GC-specific.  Once the
-  // requested phase has been reached, the collector will attempt to
-  // avoid transitioning to a new phase until a new request is made.
-  // [Note: A collector might not be able to remain in a given phase.
-  // For example, a full collection might cancel an in-progress
-  // concurrent collection.]
-  //
-  // Returns true when the phase is reached.  Returns false for an
-  // unknown phase.  The default implementation returns false.
-  virtual bool request_concurrent_phase(const char* phase);
+  // Return true if concurrent gc control via WhiteBox is supported by
+  // this collector.  The default implementation returns false.
+  virtual bool supports_concurrent_gc_breakpoints() const;
 
   // Provides a thread pool to SafepointSynchronize to use
   // for parallel safepoint cleanup.
@@ -571,11 +486,6 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   virtual bool is_oop(oop object) const;
 
   virtual size_t obj_size(oop obj) const;
-
-  // Cells are memory slices allocated by the allocator. Objects are initialized
-  // in cells. The cell itself may have a header, found at a negative offset of
-  // oops. Usually, the size of the cell header is 0, but it may be larger.
-  virtual ptrdiff_t cell_header_size() const { return 0; }
 
   // Non product verification and debugging.
 #ifndef PRODUCT

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,10 +42,10 @@ import java.text.Normalizer;
 import jdk.internal.access.JavaNetUriAccess;
 import jdk.internal.access.SharedSecrets;
 import sun.nio.cs.ThreadLocalCoders;
+import sun.nio.cs.UTF_8;
 
 import java.lang.Character;             // for javadoc
 import java.lang.NullPointerException;  // for javadoc
-
 
 /**
  * Represents a Uniform Resource Identifier (URI) reference.
@@ -64,7 +64,7 @@ import java.lang.NullPointerException;  // for javadoc
  * and relativizing URI instances.  Instances of this class are immutable.
  *
  *
- * <h3> URI syntax and components </h3>
+ * <h2> URI syntax and components </h2>
  *
  * At the highest level a URI reference (hereinafter simply "URI") in string
  * form has the syntax
@@ -168,7 +168,7 @@ import java.lang.NullPointerException;  // for javadoc
  * will be defined and the user-information and port components may be defined.
  *
  *
- * <h4> Operations on URI instances </h4>
+ * <h3> Operations on URI instances </h3>
  *
  * The key operations supported by this class are those of
  * <i>normalization</i>, <i>resolution</i>, and <i>relativization</i>.
@@ -247,7 +247,7 @@ import java.lang.NullPointerException;  // for javadoc
  * yields the relative URI {@code sample/a/index.html#28}.
  *
  *
- * <h4> Character categories </h4>
+ * <h3> Character categories </h3>
  *
  * RFC&nbsp;2396 specifies precisely which characters are permitted in the
  * various components of a URI reference.  The following categories, most of
@@ -298,7 +298,7 @@ import java.lang.NullPointerException;  // for javadoc
  * characters.
  *
  *
- * <h4> Escaped octets, quotation, encoding, and decoding </h4>
+ * <h3> Escaped octets, quotation, encoding, and decoding </h3>
  *
  * RFC 2396 allows escaped octets to appear in the user-info, path, query, and
  * fragment components.  Escaping serves two purposes in URIs:
@@ -390,7 +390,7 @@ import java.lang.NullPointerException;  // for javadoc
  * </ul>
  *
  *
- * <h4> Identities </h4>
+ * <h3> Identities </h3>
  *
  * For any URI <i>u</i>, it is always the case that
  *
@@ -426,7 +426,7 @@ import java.lang.NullPointerException;  // for javadoc
  * authority.
  *
  *
- * <h4> URIs, URLs, and URNs </h4>
+ * <h3> URIs, URLs, and URNs </h3>
  *
  * A URI is a uniform resource <i>identifier</i> while a URL is a uniform
  * resource <i>locator</i>.  Hence every URL is a URI, abstractly speaking, but
@@ -503,7 +503,7 @@ public final class URI
     // Note: Comments containing the word "ASSERT" indicate places where a
     // throw of an InternalError should be replaced by an appropriate assertion
     // statement once asserts are enabled in the build.
-
+    @java.io.Serial
     static final long serialVersionUID = -6052424284110960213L;
 
 
@@ -1572,10 +1572,11 @@ public final class URI
      * component is undefined but the other is defined then the first is
      * considered to be less than the second.  Unless otherwise noted, string
      * components are ordered according to their natural, case-sensitive
-     * ordering as defined by the {@link java.lang.String#compareTo(Object)
+     * ordering as defined by the {@link java.lang.String#compareTo(String)
      * String.compareTo} method.  String components that are subject to
      * encoding are compared by comparing their raw forms rather than their
-     * encoded forms.
+     * encoded forms and the hexadecimal digits of escaped octets are compared
+     * without regard to case.
      *
      * <p> The ordering of URIs is defined as follows: </p>
      *
@@ -1777,6 +1778,7 @@ public final class URI
      * @param  os  The object-output stream to which this object
      *             is to be written
      */
+    @java.io.Serial
     private void writeObject(ObjectOutputStream os)
         throws IOException
     {
@@ -1794,6 +1796,7 @@ public final class URI
      * @param  is  The object-input stream from which this object
      *             is being read
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream is)
         throws ClassNotFoundException, IOException
     {
@@ -1836,35 +1839,9 @@ public final class URI
     }
 
     private static boolean equal(String s, String t) {
-        if (s == t) return true;
-        if ((s != null) && (t != null)) {
-            if (s.length() != t.length())
-                return false;
-            if (s.indexOf('%') < 0)
-                return s.equals(t);
-            int n = s.length();
-            for (int i = 0; i < n;) {
-                char c = s.charAt(i);
-                char d = t.charAt(i);
-                if (c != '%') {
-                    if (c != d)
-                        return false;
-                    i++;
-                    continue;
-                }
-                if (d != '%')
-                    return false;
-                i++;
-                if (toLower(s.charAt(i)) != toLower(t.charAt(i)))
-                    return false;
-                i++;
-                if (toLower(s.charAt(i)) != toLower(t.charAt(i)))
-                    return false;
-                i++;
-            }
-            return true;
-        }
-        return false;
+        boolean testForEquality = true;
+        int result = percentNormalizedComparison(s, t, testForEquality);
+        return result == 0;
     }
 
     // US-ASCII only
@@ -1918,11 +1895,61 @@ public final class URI
     }
 
     private static int compare(String s, String t) {
+        boolean testForEquality = false;
+        int result = percentNormalizedComparison(s, t, testForEquality);
+        return result;
+    }
+
+    // The percentNormalizedComparison method does not verify two
+    // characters that follow the % sign are hexadecimal digits.
+    // Reason being:
+    // 1) percentNormalizedComparison method is not called with
+    // 'decoded' strings
+    // 2) The only place where a percent can be followed by anything
+    // other than hexadecimal digits is in the authority component
+    // (for a IPv6 scope) and the whole authority component is case
+    // insensitive.
+    private static int percentNormalizedComparison(String s, String t,
+                                                   boolean testForEquality) {
+
         if (s == t) return 0;
         if (s != null) {
-            if (t != null)
-                return s.compareTo(t);
-            else
+            if (t != null) {
+                if (s.indexOf('%') < 0) {
+                    return s.compareTo(t);
+                }
+                int sn = s.length();
+                int tn = t.length();
+                if ((sn != tn) && testForEquality)
+                    return sn - tn;
+                int val = 0;
+                int n = sn < tn ? sn : tn;
+                for (int i = 0; i < n; ) {
+                    char c = s.charAt(i);
+                    char d = t.charAt(i);
+                    val = c - d;
+                    if (c != '%') {
+                        if (val != 0)
+                            return val;
+                        i++;
+                        continue;
+                    }
+                    if (d != '%') {
+                        if (val != 0)
+                            return val;
+                    }
+                    i++;
+                    val = toLower(s.charAt(i)) - toLower(t.charAt(i));
+                    if (val != 0)
+                        return val;
+                    i++;
+                    val = toLower(s.charAt(i)) - toLower(t.charAt(i));
+                    if (val != 0)
+                        return val;
+                    i++;
+                }
+                return sn - tn;
+            } else
                 return +1;
         } else {
             return -1;
@@ -2737,7 +2764,7 @@ public final class URI
     private static void appendEncoded(StringBuilder sb, char c) {
         ByteBuffer bb = null;
         try {
-            bb = ThreadLocalCoders.encoderFor("UTF-8")
+            bb = ThreadLocalCoders.encoderFor(UTF_8.INSTANCE)
                 .encode(CharBuffer.wrap("" + c));
         } catch (CharacterCodingException x) {
             assert false;
@@ -2805,7 +2832,7 @@ public final class URI
         String ns = Normalizer.normalize(s, Normalizer.Form.NFC);
         ByteBuffer bb = null;
         try {
-            bb = ThreadLocalCoders.encoderFor("UTF-8")
+            bb = ThreadLocalCoders.encoderFor(UTF_8.INSTANCE)
                 .encode(CharBuffer.wrap(ns));
         } catch (CharacterCodingException x) {
             assert false;
@@ -2863,7 +2890,7 @@ public final class URI
         StringBuilder sb = new StringBuilder(n);
         ByteBuffer bb = ByteBuffer.allocate(n);
         CharBuffer cb = CharBuffer.allocate(n);
-        CharsetDecoder dec = ThreadLocalCoders.decoderFor("UTF-8")
+        CharsetDecoder dec = ThreadLocalCoders.decoderFor(UTF_8.INSTANCE)
                 .onMalformedInput(CodingErrorAction.REPLACE)
                 .onUnmappableCharacter(CodingErrorAction.REPLACE);
 

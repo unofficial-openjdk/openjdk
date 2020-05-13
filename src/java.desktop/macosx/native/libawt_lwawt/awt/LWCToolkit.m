@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,13 +70,30 @@ static pthread_cond_t sAppKitStarted_cv = PTHREAD_COND_INITIALIZER;
 @implementation AWTToolkit
 
 static long eventCount;
+static BOOL inDoDragDropLoop;
+
++ (BOOL) inDoDragDropLoop {
+  @synchronized(self) {
+    return inDoDragDropLoop;
+  }
+}
+
++ (void) setInDoDragDropLoop:(BOOL)val {
+  @synchronized(self) {
+    inDoDragDropLoop = val;
+  }
+}
 
 + (long) getEventCount{
+  @synchronized(self) {
     return eventCount;
+  }
 }
 
 + (void) eventCountPlusPlus{
+  @synchronized(self) {
     eventCount++;
+  }
 }
 
 + (jint) scrollStateWithEvent: (NSEvent*) event {
@@ -420,10 +437,16 @@ JNIEXPORT jboolean JNICALL Java_sun_lwawt_macosx_LWCToolkit_nativeSyncQueue
         // immediately after this we will post the second event via
         // [NSApp postEvent] then sometimes the second event will be handled
         // first. The opposite isn't proved, but we use both here to be safer.
-        [theApp postDummyEvent:false];
-        [theApp waitForDummyEvent:timeout / 2.0];
-        [theApp postDummyEvent:true];
-        [theApp waitForDummyEvent:timeout / 2.0];
+
+        // If the native drag is in progress, skip native sync.
+        if (!AWTToolkit.inDoDragDropLoop) {
+            [theApp postDummyEvent:false];
+            [theApp waitForDummyEvent:timeout / 2.0];
+        }
+        if (!AWTToolkit.inDoDragDropLoop) {
+            [theApp postDummyEvent:true];
+            [theApp waitForDummyEvent:timeout / 2.0];
+        }
 
     } else {
         // could happen if we are embedded inside SWT application,
@@ -805,14 +828,14 @@ Java_sun_lwawt_macosx_LWCToolkit_isEmbedded
 }
 
 /*
- * Class:     sun_lwawt_macosx_LWCToolkit
+ * Class:     sun_awt_PlatformGraphicsInfo
  * Method:    isInAquaSession
  * Signature: ()Z
  */
 JNIEXPORT jboolean JNICALL
-Java_sun_lwawt_macosx_LWCToolkit_isInAquaSession
+Java_sun_awt_PlatformGraphicsInfo_isInAquaSession
 (JNIEnv *env, jclass klass) {
-    // copied from java.base/macosx/native/libjava/java_props_macosx.c
+    // originally from java.base/macosx/native/libjava/java_props_macosx.c
     // environment variable to bypass the aqua session check
     char *ev = getenv("AWT_FORCE_HEADFUL");
     if (ev && (strncasecmp(ev, "true", 4) == 0)) {
@@ -830,4 +853,20 @@ Java_sun_lwawt_macosx_LWCToolkit_isInAquaSession
         }
     }
     return JNI_FALSE;
+}
+
+/*
+ * Class:     sun_lwawt_macosx_LWCToolkit
+ * Method:    getMultiClickTime
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL
+Java_sun_lwawt_macosx_LWCToolkit_getMultiClickTime(JNIEnv *env, jclass klass) {
+    __block jint multiClickTime = 0;
+    JNF_COCOA_ENTER(env);
+    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
+        multiClickTime = (jint)([NSEvent doubleClickInterval] * 1000);
+    }];
+    JNF_COCOA_EXIT(env);
+    return multiClickTime;
 }

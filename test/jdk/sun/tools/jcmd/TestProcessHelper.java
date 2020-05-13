@@ -21,16 +21,13 @@
  * questions.
  */
 
-import jdk.internal.module.ModuleInfoWriter;
-import jdk.test.lib.JDKToolFinder;
-import jdk.test.lib.process.ProcessTools;
-import jdk.test.lib.util.JarUtils;
-import sun.tools.common.ProcessHelper;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.module.ModuleDescriptor;
+import java.lang.reflect.Method;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,6 +41,11 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jdk.internal.module.ModuleInfoWriter;
+import jdk.test.lib.JDKToolFinder;
+import jdk.test.lib.process.ProcessTools;
+import jdk.test.lib.util.JarUtils;
+
 /*
  * @test
  * @bug 8205654
@@ -52,14 +54,12 @@ import java.util.stream.Stream;
  *
  * @requires os.family == "linux"
  * @library /test/lib
- * @modules jdk.jcmd/sun.tools.common
+ * @modules jdk.jcmd/sun.tools.common:+open
  *          java.base/jdk.internal.module
  * @build test.TestProcess
  * @run main/othervm TestProcessHelper
  */
 public class TestProcessHelper {
-
-    private ProcessHelper PROCESS_HELPER = ProcessHelper.platformProcessHelper();
 
     private static final String TEST_PROCESS_MAIN_CLASS_NAME = "TestProcess";
     private static final String TEST_PROCESS_MAIN_CLASS_PACKAGE = "test";
@@ -73,13 +73,44 @@ public class TestProcessHelper {
             .resolve(TEST_PROCESS_MAIN_CLASS_NAME + ".class");
 
     private static final String[] CP_OPTIONS = {"-cp", "-classpath", "--class-path"};
-    private static final String[][] VM_ARGS = {{}, {"-Dtest1=aaa"}, {"-Dtest1=aaa", "-Dtest2=bbb"}};
+    private static final String[][] VM_ARGS = {{}, {"-Dtest1=aaa"}, {"-Dtest1=aaa", "-Dtest2=bbb ccc"}};
     private static final String[][] ARGS = {{}, {"param1"}, {"param1", "param2"}};
     private static final String[] MP_OPTIONS = {"-p", "--module-path"};
-    private static final String[] MODULE_OPTIONS = {"-m", "--module"};
+    private static final String[] MODULE_OPTIONS = {"-m", "--module", "--module="};
     private static final String JAR_OPTION = "-jar";
     private static final String MODULE_NAME = "module1";
+    private static final String[][] EXTRA_MODULAR_OPTIONS = {null,
+            {"--add-opens", "java.base/java.net=ALL-UNNAMED"},
+            {"--add-exports", "java.base/java.net=ALL-UNNAMED"},
+            {"--add-reads", "java.base/java.net=ALL-UNNAMED"},
+            {"--add-modules", "java.management"},
+            {"--limit-modules", "java.management"},
+            {"--upgrade-module-path", "test"}};
 
+    private static final String[] PATCH_MODULE_OPTIONS = {"--patch-module", null};
+
+    private static final MethodHandle MH_GET_MAIN_CLASS = resolveMainClassMH();
+
+    private static MethodHandle resolveMainClassMH() {
+        try {
+            Method getMainClassMethod = Class
+                .forName("sun.tools.common.ProcessHelper")
+                .getDeclaredMethod("getMainClass", String.class);
+            getMainClassMethod.setAccessible(true);
+            return MethodHandles.lookup().unreflect(getMainClassMethod);
+        } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String callGetMainClass(Process p) {
+        try {
+            return (String)MH_GET_MAIN_CLASS.invoke(Long.toString(p.pid()));
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+
+    }
 
     public static void main(String[] args) throws Exception {
         new TestProcessHelper().runTests();
@@ -97,18 +128,24 @@ public class TestProcessHelper {
         for (String cp : CP_OPTIONS) {
             for (String[] vma : VM_ARGS) {
                 for (String[] arg : ARGS) {
-                    List<String> cmd = new LinkedList<>();
-                    cmd.add(JAVA_PATH);
-                    cmd.add(cp);
-                    cmd.add(TEST_CLASSES.toAbsolutePath().toString());
-                    for (String v : vma) {
-                        cmd.add(v);
+                    for (String[] modularOptions : EXTRA_MODULAR_OPTIONS) {
+                        List<String> cmd = new LinkedList<>();
+                        cmd.add(JAVA_PATH);
+                        cmd.add(cp);
+                        cmd.add(TEST_CLASSES.toAbsolutePath().toString());
+                        for (String v : vma) {
+                            cmd.add(v);
+                        }
+                        if (modularOptions != null) {
+                            cmd.add(modularOptions[0]);
+                            cmd.add(modularOptions[1]);
+                        }
+                        cmd.add(TEST_PROCESS_MAIN_CLASS);
+                        for (String a : arg) {
+                            cmd.add(a);
+                        }
+                        testProcessHelper(cmd, TEST_PROCESS_MAIN_CLASS);
                     }
-                    cmd.add(TEST_PROCESS_MAIN_CLASS);
-                    for (String a : arg) {
-                        cmd.add(a);
-                    }
-                    testProcessHelper(cmd);
                 }
             }
         }
@@ -130,7 +167,7 @@ public class TestProcessHelper {
                 for (String a : arg) {
                     cmd.add(a);
                 }
-                testProcessHelper(cmd);
+                testProcessHelper(cmd, jarFile.getAbsolutePath());
             }
         }
 
@@ -144,19 +181,29 @@ public class TestProcessHelper {
             for (String m : MODULE_OPTIONS) {
                 for (String[] vma : VM_ARGS) {
                     for (String[] arg : ARGS) {
-                        List<String> cmd = new LinkedList<>();
-                        cmd.add(JAVA_PATH);
-                        cmd.add(mp);
-                        cmd.add(TEST_MODULES.toAbsolutePath().toString());
-                        for (String v : vma) {
-                            cmd.add(v);
+                        for(String patchModuleOption : PATCH_MODULE_OPTIONS) {
+                            List<String> cmd = new LinkedList<>();
+                            cmd.add(JAVA_PATH);
+                            cmd.add(mp);
+                            cmd.add(TEST_MODULES.toAbsolutePath().toString());
+                            if (patchModuleOption != null) {
+                                cmd.add(patchModuleOption);
+                                cmd.add(MODULE_NAME + "=" + TEST_MODULES.toAbsolutePath().toString());
+                            }
+                            for (String v : vma) {
+                                cmd.add(v);
+                            }
+                            if (m.endsWith("=")) {
+                                cmd.add(m + MODULE_NAME + "/" + TEST_PROCESS_MAIN_CLASS);
+                            } else {
+                                cmd.add(m);
+                                cmd.add(MODULE_NAME + "/" + TEST_PROCESS_MAIN_CLASS);
+                            }
+                            for (String a : arg) {
+                                cmd.add(a);
+                            }
+                            testProcessHelper(cmd, MODULE_NAME + "/" + TEST_PROCESS_MAIN_CLASS);
                         }
-                        cmd.add(m);
-                        cmd.add(MODULE_NAME + "/" + TEST_PROCESS_MAIN_CLASS);
-                        for (String a : arg) {
-                            cmd.add(a);
-                        }
-                        testProcessHelper(cmd);
                     }
                 }
             }
@@ -164,14 +211,34 @@ public class TestProcessHelper {
     }
 
     private void checkMainClass(Process p, String expectedMainClass) {
-        String mainClass = PROCESS_HELPER.getMainClass(Long.toString(p.pid()));
+        String mainClass = callGetMainClass(p);
+        // getMainClass() may return null, e.g. due to timing issues.
+        // Attempt some limited retries.
+        if (mainClass == null) {
+            System.err.println("Main class returned by ProcessHelper was null.");
+            // sleep time doubles each round, altogether, wait no longer than 1 sec
+            final int MAX_RETRIES = 10;
+            int retrycount = 0;
+            long sleepms = 1;
+            while (retrycount < MAX_RETRIES && mainClass == null) {
+                System.err.println("Retry " + retrycount + ", sleeping for " + sleepms + "ms.");
+                try {
+                    Thread.sleep(sleepms);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+                mainClass = callGetMainClass(p);
+                retrycount++;
+                sleepms *= 2;
+            }
+        }
         p.destroyForcibly();
         if (!expectedMainClass.equals(mainClass)) {
             throw new RuntimeException("Main class is wrong: " + mainClass);
         }
     }
 
-    private void testProcessHelper(List<String> args) throws Exception {
+    private void testProcessHelper(List<String> args, String expectedValue) throws Exception {
         ProcessBuilder pb = new ProcessBuilder(args);
         String cmd = pb.command().stream().collect(Collectors.joining(" "));
         System.out.println("Starting the process:" + cmd);
@@ -179,7 +246,7 @@ public class TestProcessHelper {
         if (!p.isAlive()) {
             throw new RuntimeException("Cannot start the process: " + cmd);
         }
-        checkMainClass(p, TEST_PROCESS_MAIN_CLASS);
+        checkMainClass(p, expectedValue);
     }
 
     private File prepareJar() throws Exception {

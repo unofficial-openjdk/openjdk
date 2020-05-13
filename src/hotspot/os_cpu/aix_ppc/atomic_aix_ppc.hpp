@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2018 SAP SE. All rights reserved.
+ * Copyright (c) 2012, 2019 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
 #error "Atomic currently only implemented for PPC64"
 #endif
 
+#include "orderAccess_aix_ppc.hpp"
 #include "utilities/debug.hpp"
 
 // Implementation of class atomic
@@ -70,22 +71,13 @@
 //                          Store|Load
 //
 
-#define strasm_sync                       "\n  sync    \n"
-#define strasm_lwsync                     "\n  lwsync  \n"
-#define strasm_isync                      "\n  isync   \n"
-#define strasm_release                    strasm_lwsync
-#define strasm_acquire                    strasm_lwsync
-#define strasm_fence                      strasm_sync
-#define strasm_nobarrier                  ""
-#define strasm_nobarrier_clobber_memory   ""
-
 inline void pre_membar(atomic_memory_order order) {
   switch (order) {
     case memory_order_relaxed:
     case memory_order_acquire: break;
     case memory_order_release:
-    case memory_order_acq_rel: __asm__ __volatile__ (strasm_lwsync); break;
-    default /*conservative*/ : __asm__ __volatile__ (strasm_sync); break;
+    case memory_order_acq_rel: __asm__ __volatile__ ("lwsync" : : : "memory"); break;
+    default /*conservative*/ : __asm__ __volatile__ ("sync"   : : : "memory"); break;
   }
 }
 
@@ -94,23 +86,26 @@ inline void post_membar(atomic_memory_order order) {
     case memory_order_relaxed:
     case memory_order_release: break;
     case memory_order_acquire:
-    case memory_order_acq_rel: __asm__ __volatile__ (strasm_isync); break;
-    default /*conservative*/ : __asm__ __volatile__ (strasm_sync); break;
+    case memory_order_acq_rel: __asm__ __volatile__ ("isync"  : : : "memory"); break;
+    default /*conservative*/ : __asm__ __volatile__ ("sync"   : : : "memory"); break;
   }
 }
 
 
 template<size_t byte_size>
-struct Atomic::PlatformAdd
-  : Atomic::AddAndFetch<Atomic::PlatformAdd<byte_size> >
-{
-  template<typename I, typename D>
-  D add_and_fetch(I add_value, D volatile* dest, atomic_memory_order order) const;
+struct Atomic::PlatformAdd {
+  template<typename D, typename I>
+  D add_and_fetch(D volatile* dest, I add_value, atomic_memory_order order) const;
+
+  template<typename D, typename I>
+  D fetch_and_add(D volatile* dest, I add_value, atomic_memory_order order) const {
+    return add_and_fetch(dest, add_value, order) - add_value;
+  }
 };
 
 template<>
-template<typename I, typename D>
-inline D Atomic::PlatformAdd<4>::add_and_fetch(I add_value, D volatile* dest,
+template<typename D, typename I>
+inline D Atomic::PlatformAdd<4>::add_and_fetch(D volatile* dest, I add_value,
                                                atomic_memory_order order) const {
   STATIC_ASSERT(4 == sizeof(I));
   STATIC_ASSERT(4 == sizeof(D));
@@ -135,8 +130,8 @@ inline D Atomic::PlatformAdd<4>::add_and_fetch(I add_value, D volatile* dest,
 
 
 template<>
-template<typename I, typename D>
-inline D Atomic::PlatformAdd<8>::add_and_fetch(I add_value, D volatile* dest,
+template<typename D, typename I>
+inline D Atomic::PlatformAdd<8>::add_and_fetch(D volatile* dest, I add_value,
                                                atomic_memory_order order) const {
   STATIC_ASSERT(8 == sizeof(I));
   STATIC_ASSERT(8 == sizeof(D));
@@ -161,8 +156,8 @@ inline D Atomic::PlatformAdd<8>::add_and_fetch(I add_value, D volatile* dest,
 
 template<>
 template<typename T>
-inline T Atomic::PlatformXchg<4>::operator()(T exchange_value,
-                                             T volatile* dest,
+inline T Atomic::PlatformXchg<4>::operator()(T volatile* dest,
+                                             T exchange_value,
                                              atomic_memory_order order) const {
   // Note that xchg doesn't necessarily do an acquire
   // (see synchronizer.cpp).
@@ -200,8 +195,8 @@ inline T Atomic::PlatformXchg<4>::operator()(T exchange_value,
 
 template<>
 template<typename T>
-inline T Atomic::PlatformXchg<8>::operator()(T exchange_value,
-                                             T volatile* dest,
+inline T Atomic::PlatformXchg<8>::operator()(T volatile* dest,
+                                             T exchange_value,
                                              atomic_memory_order order) const {
   STATIC_ASSERT(8 == sizeof(T));
   // Note that xchg doesn't necessarily do an acquire
@@ -240,9 +235,9 @@ inline T Atomic::PlatformXchg<8>::operator()(T exchange_value,
 
 template<>
 template<typename T>
-inline T Atomic::PlatformCmpxchg<1>::operator()(T exchange_value,
-                                                T volatile* dest,
+inline T Atomic::PlatformCmpxchg<1>::operator()(T volatile* dest,
                                                 T compare_value,
+                                                T exchange_value,
                                                 atomic_memory_order order) const {
   STATIC_ASSERT(1 == sizeof(T));
 
@@ -310,9 +305,9 @@ inline T Atomic::PlatformCmpxchg<1>::operator()(T exchange_value,
 
 template<>
 template<typename T>
-inline T Atomic::PlatformCmpxchg<4>::operator()(T exchange_value,
-                                                T volatile* dest,
+inline T Atomic::PlatformCmpxchg<4>::operator()(T volatile* dest,
                                                 T compare_value,
+                                                T exchange_value,
                                                 atomic_memory_order order) const {
   STATIC_ASSERT(4 == sizeof(T));
 
@@ -360,9 +355,9 @@ inline T Atomic::PlatformCmpxchg<4>::operator()(T exchange_value,
 
 template<>
 template<typename T>
-inline T Atomic::PlatformCmpxchg<8>::operator()(T exchange_value,
-                                                T volatile* dest,
+inline T Atomic::PlatformCmpxchg<8>::operator()(T volatile* dest,
                                                 T compare_value,
+                                                T exchange_value,
                                                 atomic_memory_order order) const {
   STATIC_ASSERT(8 == sizeof(T));
 
@@ -408,13 +403,15 @@ inline T Atomic::PlatformCmpxchg<8>::operator()(T exchange_value,
   return old_value;
 }
 
-#undef strasm_sync
-#undef strasm_lwsync
-#undef strasm_isync
-#undef strasm_release
-#undef strasm_acquire
-#undef strasm_fence
-#undef strasm_nobarrier
-#undef strasm_nobarrier_clobber_memory
+template<size_t byte_size>
+struct Atomic::PlatformOrderedLoad<byte_size, X_ACQUIRE> {
+  template <typename T>
+  T operator()(const volatile T* p) const {
+    T t = Atomic::load(p);
+    // Use twi-isync for load_acquire (faster than lwsync).
+    __asm__ __volatile__ ("twi 0,%0,0\n isync\n" : : "r" (t) : "memory");
+    return t;
+  }
+};
 
 #endif // OS_CPU_AIX_PPC_ATOMIC_AIX_PPC_HPP

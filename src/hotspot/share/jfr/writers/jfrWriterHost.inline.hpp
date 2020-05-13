@@ -114,10 +114,7 @@ void WriterHost<BE, IE, WriterPolicyImpl>::write_utf16(const jchar* value, jint 
 template <typename BE, typename IE, typename WriterPolicyImpl >
 template <typename T>
 inline void WriterHost<BE, IE, WriterPolicyImpl>::be_write(T value) {
-  u1* const pos = ensure_size(sizeof(T));
-  if (pos) {
-    this->set_current_pos(BE::be_write(&value, 1, pos));
-  }
+  be_write(&value, 1);
 }
 
 template <typename BE, typename IE, typename WriterPolicyImpl >
@@ -170,7 +167,7 @@ inline u1* WriterHost<BE, IE, WriterPolicyImpl>::ensure_size(size_t requested) {
   }
   if (this->available_size() < requested + size_safety_cushion) {
     if (!this->accommodate(this->used_size(), requested + size_safety_cushion)) {
-      this->cancel();
+      assert(!this->is_valid(), "invariant");
       return NULL;
     }
   }

@@ -4,11 +4,13 @@
  * This software is distributable under the BSD license. See the terms of the
  * BSD license in the documentation provided with this software.
  *
- * http://www.opensource.org/licenses/bsd-license.php
+ * https://opensource.org/licenses/BSD-3-Clause
  */
 package jdk.internal.org.jline.terminal.impl;
 
+import jdk.internal.org.jline.terminal.Attributes;
 import jdk.internal.org.jline.terminal.Cursor;
+import jdk.internal.org.jline.terminal.Size;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,17 +59,34 @@ public class ExternalTerminal extends LineDisciplineTerminal {
                             Charset encoding,
                             SignalHandler signalHandler,
                             boolean paused) throws IOException {
+        this(name, type, masterInput, masterOutput, encoding, signalHandler, paused, null, null);
+    }
+
+    public ExternalTerminal(String name, String type,
+                            InputStream masterInput,
+                            OutputStream masterOutput,
+                            Charset encoding,
+                            SignalHandler signalHandler,
+                            boolean paused,
+                            Attributes attributes,
+                            Size size) throws IOException {
         super(name, type, masterOutput, encoding, signalHandler);
         this.masterInput = masterInput;
+        if (attributes != null) {
+            setAttributes(attributes);
+        }
+        if (size != null) {
+            setSize(size);
+        }
         if (!paused) {
             resume();
         }
     }
 
-    public void close() throws IOException {
+    protected void doClose() throws IOException {
         if (closed.compareAndSet(false, true)) {
             pause();
-            super.close();
+            super.doClose();
         }
     }
 

@@ -2,7 +2,7 @@
  * @test /nodynamiccopyright/
  * @bug 8206986
  * @summary Verify behavior of not exhaustive switch expressions.
- * @compile/fail/ref=ExpressionSwitchNotExhaustive.out -XDrawDiagnostics --enable-preview -source ${jdk.version} ExpressionSwitchNotExhaustive.java
+ * @compile/fail/ref=ExpressionSwitchNotExhaustive.out -XDrawDiagnostics ExpressionSwitchNotExhaustive.java
  */
 
 public class ExpressionSwitchNotExhaustive {
@@ -26,9 +26,9 @@ public class ExpressionSwitchNotExhaustive {
                         s = "42";
                         break;
                 }
-                break s;
+                yield s;
             default:
-                break "43";
+                yield "43";
         };
     }
     enum E {

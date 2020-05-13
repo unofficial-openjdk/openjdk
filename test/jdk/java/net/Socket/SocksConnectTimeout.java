@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 /*
  * @test
  * @bug 6223635
+ * @library /test/lib
  * @summary Code hangs at connect call even when Timeout is specified
  * @run main SocksConnectTimeout
  * @run main/othervm -Djava.net.preferIPv4Stack=true SocksConnectTimeout
@@ -39,6 +40,7 @@ import java.io.IOException;
 import java.io.Closeable;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
+import jdk.test.lib.net.IPSupport;
 
 public class SocksConnectTimeout {
     static ServerSocket serverSocket;
@@ -48,8 +50,12 @@ public class SocksConnectTimeout {
     static int failed, passed;
 
     public static void main(String[] args) {
+        IPSupport.throwSkippedExceptionIfNonOperational();
+
         try {
-            serverSocket = new ServerSocket(0);
+            serverSocket = new ServerSocket();
+            InetAddress localHost = InetAddress.getLocalHost();
+            serverSocket.bind(new InetSocketAddress(localHost, 0));
 
             (new Thread() {
                 @Override
@@ -57,7 +63,7 @@ public class SocksConnectTimeout {
             }).start();
 
             Proxy socksProxy = new Proxy(Proxy.Type.SOCKS,
-                new InetSocketAddress(InetAddress.getLocalHost(), serverSocket.getLocalPort()));
+                    new InetSocketAddress(localHost, serverSocket.getLocalPort()));
 
             test(socksProxy);
         } catch (IOException e) {

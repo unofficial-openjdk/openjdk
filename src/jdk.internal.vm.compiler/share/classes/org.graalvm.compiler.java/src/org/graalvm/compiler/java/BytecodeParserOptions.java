@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,11 +63,5 @@ public class BytecodeParserOptions {
 
     @Option(help = "Maximum depth when inlining during bytecode parsing.", type = OptionType.Debug)
     public static final OptionKey<Integer> InlineDuringParsingMaxDepth = new OptionKey<>(10);
-
-    @Option(help = "When creating info points hide the methods of the substitutions.", type = OptionType.Debug)
-    public static final OptionKey<Boolean> HideSubstitutionStates = new OptionKey<>(false);
-
-    @Option(help = "Use intrinsics guarded by a virtual dispatch test at indirect call sites.", type = OptionType.Debug)
-    public static final OptionKey<Boolean> UseGuardedIntrinsics = new OptionKey<>(true);
     // @formatter:on
 }

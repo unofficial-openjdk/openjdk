@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,14 +34,16 @@ void ModRefBarrierSetAssembler::arraycopy_prologue(MacroAssembler* masm, Decorat
   bool disjoint = (decorators & ARRAYCOPY_DISJOINT) != 0;
   bool obj_int = type == T_OBJECT LP64_ONLY(&& UseCompressedOops);
 
-  if (type == T_OBJECT || type == T_ARRAY) {
+  if (is_reference_type(type)) {
 #ifdef _LP64
-    if (!checkcast && !obj_int) {
-      // Save count for barrier
-      __ movptr(r11, count);
-    } else if (disjoint && obj_int) {
-      // Save dst in r11 in the disjoint case
-      __ movq(r11, dst);
+    if (!checkcast) {
+      if (!obj_int) {
+        // Save count for barrier
+        __ movptr(r11, count);
+      } else if (disjoint) {
+        // Save dst in r11 in the disjoint case
+        __ movq(r11, dst);
+      }
     }
 #else
     if (disjoint) {
@@ -59,15 +61,17 @@ void ModRefBarrierSetAssembler::arraycopy_epilogue(MacroAssembler* masm, Decorat
   bool obj_int = type == T_OBJECT LP64_ONLY(&& UseCompressedOops);
   Register tmp = rax;
 
-  if (type == T_OBJECT || type == T_ARRAY) {
+  if (is_reference_type(type)) {
 #ifdef _LP64
-    if (!checkcast && !obj_int) {
-      // Save count for barrier
-      count = r11;
-    } else if (disjoint && obj_int) {
-      // Use the saved dst in the disjoint case
-      dst = r11;
-    } else if (checkcast) {
+    if (!checkcast) {
+      if (!obj_int) {
+        // Save count for barrier
+        count = r11;
+      } else if (disjoint) {
+        // Use the saved dst in the disjoint case
+        dst = r11;
+      }
+    } else {
       tmp = rscratch1;
     }
 #else
@@ -81,7 +85,7 @@ void ModRefBarrierSetAssembler::arraycopy_epilogue(MacroAssembler* masm, Decorat
 
 void ModRefBarrierSetAssembler::store_at(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
                                          Address dst, Register val, Register tmp1, Register tmp2) {
-  if (type == T_OBJECT || type == T_ARRAY) {
+  if (is_reference_type(type)) {
     oop_store_at(masm, decorators, type, dst, val, tmp1, tmp2);
   } else {
     BarrierSetAssembler::store_at(masm, decorators, type, dst, val, tmp1, tmp2);

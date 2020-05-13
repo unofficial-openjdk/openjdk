@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,10 +23,8 @@
 
 package jdk.test.lib.apps;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -34,11 +32,15 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.UUID;
+
+import jdk.test.lib.JDKToolFinder;
+import jdk.test.lib.Utils;
 import jdk.test.lib.process.OutputBuffer;
 import jdk.test.lib.process.StreamPumper;
 
@@ -47,24 +49,32 @@ import jdk.test.lib.process.StreamPumper;
  * to make further attach actions reliable across supported platforms
 
  * Caller example:
- *   SmartTestApp a = SmartTestApp.startApp(cmd);
+ *
+ *   LingeredApp a = LingeredApp.startApp(cmd);
+ *     // do something.
+ *     // a.getPid(). a.getProcess(), a.getProcessStdout() are available.
+ *   LingeredApp.stopApp(a);
+ *
+ *   for use custom LingeredApp (class SmartTestApp extends LingeredApp):
+ *
+ *   SmartTestApp = new SmartTestApp();
+ *   LingeredApp.startApp(a, cmd);
  *     // do something
- *   a.stopApp();
+ *   a.stopApp();   // LingeredApp.stopApp(a) can be used as well
  *
  *   or fine grained control
  *
  *   a = new SmartTestApp("MyLock.lck");
  *   a.createLock();
- *   a.runApp();
+ *   a.runAppExactJvmOpts(Utils.getTestJavaOpts());
  *   a.waitAppReady();
  *     // do something
  *   a.deleteLock();
  *   a.waitAppTerminate();
  *
- *  Then you can work with app output and process object
+ *  After app termination (stopApp/waitAppTermination) its output is available
  *
  *   output = a.getAppOutput();
- *   process = a.getProcess();
  *
  */
 public class LingeredApp {
@@ -107,14 +117,6 @@ public class LingeredApp {
 
     /**
      *
-     * @return name of testapp
-     */
-    public String getAppName() {
-        return this.getClass().getName();
-    }
-
-    /**
-     *
      *  @return pid of java process running testapp
      */
     public long getPid() {
@@ -150,7 +152,7 @@ public class LingeredApp {
             throw new RuntimeException("Process is still alive. Can't get its output.");
         }
         if (output == null) {
-            output = OutputBuffer.of(stdoutBuffer.toString(), stderrBuffer.toString());
+            output = OutputBuffer.of(stdoutBuffer.toString(), stderrBuffer.toString(), appProcess.exitValue());
         }
         return output;
     }
@@ -172,18 +174,6 @@ public class LingeredApp {
 
         outPumperThread.start();
         errPumperThread.start();
-    }
-
-    /**
-     *
-     * @return application output as List. Empty List if application produced no output
-     */
-    public List<String> getAppOutput() {
-        if (appProcess.isAlive()) {
-            throw new RuntimeException("Process is still alive. Can't get its output.");
-        }
-        BufferedReader bufReader = new BufferedReader(new StringReader(output.getStdout()));
-        return bufReader.lines().collect(Collectors.toList());
     }
 
     /* Make sure all part of the app use the same method to get dates,
@@ -247,14 +237,16 @@ public class LingeredApp {
      * The app touches the lock file when it's started
      * wait while it happens. Caller have to delete lock on wait error.
      *
-     * @param timeout
+     * @param timeout timeout in seconds
      * @throws java.io.IOException
      */
     public void waitAppReady(long timeout) throws IOException {
+        // adjust timeout for timeout_factor and convert to ms
+        timeout = Utils.adjustTimeout(timeout) * 1000;
         long here = epoch();
         while (true) {
             long epoch = epoch();
-            if (epoch - here > (timeout * 1000)) {
+            if (epoch - here > timeout) {
                 throw new IOException("App waiting timeout");
             }
 
@@ -278,42 +270,20 @@ public class LingeredApp {
     }
 
     /**
+     * Waits the application to start with the default timeout.
+     */
+    public void waitAppReady() throws IOException {
+        waitAppReady(appWaitTime);
+    }
+
+    /**
      * Analyze an environment and prepare a command line to
      * run the app, app name should be added explicitly
      */
-    public List<String> runAppPrepare(List<String> vmArguments) {
-        // We should always use testjava or throw an exception,
-        // so we can't use JDKToolFinder.getJDKTool("java");
-        // that falls back to compile java on error
-        String jdkPath = System.getProperty("test.jdk");
-        if (jdkPath == null) {
-            // we are not under jtreg, try env
-            Map<String, String> env = System.getenv();
-            jdkPath = env.get("TESTJAVA");
-        }
-
-        if (jdkPath == null) {
-            throw new RuntimeException("Can't determine jdk path neither test.jdk property no TESTJAVA env are set");
-        }
-
-        String osname = System.getProperty("os.name");
-        String javapath = jdkPath + ((osname.startsWith("window")) ? "/bin/java.exe" : "/bin/java");
-
-        List<String> cmd = new ArrayList<String>();
-        cmd.add(javapath);
-
-        if (vmArguments == null) {
-            // Propagate test.vm.options to LingeredApp, filter out possible empty options
-            String testVmOpts[] = System.getProperty("test.vm.opts","").split("\\s+");
-            for (String s : testVmOpts) {
-                if (!s.equals("")) {
-                    cmd.add(s);
-                }
-            }
-        } else {
-            // Lets user manage LingeredApp options
-            cmd.addAll(vmArguments);
-        }
+    private List<String> runAppPrepare(String[] vmArguments) {
+        List<String> cmd = new ArrayList<>();
+        cmd.add(JDKToolFinder.getTestJDKTool("java"));
+        Collections.addAll(cmd, vmArguments);
 
         // Make sure we set correct classpath to run the app
         cmd.add("-cp");
@@ -324,30 +294,35 @@ public class LingeredApp {
     }
 
     /**
+     * Adds application name to the command line.
+     * By default adds name of this class.
+     */
+    protected void runAddAppName(List<String> cmd) {
+        cmd.add(getClass().getName());
+    }
+
+    /**
      * Assemble command line to a printable string
      */
     public void printCommandLine(List<String> cmd) {
         // A bit of verbosity
-        StringBuilder cmdLine = new StringBuilder();
-        for (String strCmd : cmd) {
-            cmdLine.append("'").append(strCmd).append("' ");
-        }
-
-        System.err.println("Command line: [" + cmdLine.toString() + "]");
+        System.out.println(cmd.stream()
+                .map(s -> "'" + s + "'")
+                .collect(Collectors.joining(" ", "Command line: [", "]")));
     }
 
     /**
      * Run the app.
-     *
-     * @param vmArguments
+     * User should provide exact options to run app. Might use #Utils.getTestJavaOpts() to set default test options.
+     * @param vmOpts
      * @throws IOException
      */
-    public void runApp(List<String> vmArguments)
+    public void runAppExactJvmOpts(String[] vmOpts)
             throws IOException {
 
-        List<String> cmd = runAppPrepare(vmArguments);
+        List<String> cmd = runAppPrepare(vmOpts);
 
-        cmd.add(this.getAppName());
+        runAddAppName(cmd);
         cmd.add(lockFileName);
 
         printCommandLine(cmd);
@@ -360,13 +335,15 @@ public class LingeredApp {
     }
 
     private void finishApp() {
-        OutputBuffer output = getOutput();
-        String msg =
-            " LingeredApp stdout: [" + output.getStdout() + "];\n" +
-            " LingeredApp stderr: [" + output.getStderr() + "]\n" +
-            " LingeredApp exitValue = " + appProcess.exitValue();
+        if (appProcess != null) {
+            OutputBuffer output = getOutput();
+            String msg =
+                    " LingeredApp stdout: [" + output.getStdout() + "];\n" +
+                    " LingeredApp stderr: [" + output.getStderr() + "]\n" +
+                    " LingeredApp exitValue = " + appProcess.exitValue();
 
-        System.err.println(msg);
+            System.out.println(msg);
+        }
     }
 
     /**
@@ -380,62 +357,68 @@ public class LingeredApp {
         // an exception before the LA actually starts
         if (appProcess != null) {
             waitAppTerminate();
+
+            finishApp();
+
             int exitcode = appProcess.exitValue();
             if (exitcode != 0) {
                 throw new IOException("LingeredApp terminated with non-zero exit code " + exitcode);
             }
         }
-        finishApp();
     }
 
     /**
      *  High level interface for test writers
      */
-    /**
-     * Factory method that creates LingeredApp object with ready to use application
-     * lock name is autogenerated
-     * @param cmd - vm options, could be null to auto add testvm.options
-     * @return LingeredApp object
-     * @throws IOException
-     */
-    public static LingeredApp startApp(List<String> cmd) throws IOException {
-        LingeredApp a = new LingeredApp();
-        a.createLock();
-        try {
-            a.runApp(cmd);
-            a.waitAppReady(appWaitTime);
-        } catch (Exception ex) {
-            a.deleteLock();
-            System.err.println("LingeredApp failed to start: " + ex);
-            a.finishApp();
-            throw ex;
-        }
-
-        return a;
-    }
 
     /**
      * Factory method that starts pre-created LingeredApp
      * lock name is autogenerated
-     * @param cmd - vm options, could be null to auto add testvm.options
+     * User should provide exact options to run app. Might use #Utils.getTestJavaOpts() to set default test options.
+     * @param jvmOpts - the exact vm options used to start LingeredApp
      * @param theApp - app to start
-     * @return LingeredApp object
      * @throws IOException
      */
-
-    public static void startApp(List<String> cmd, LingeredApp theApp) throws IOException {
+    public static void startAppExactJvmOpts(LingeredApp theApp, String... jvmOpts) throws IOException {
         theApp.createLock();
         try {
-            theApp.runApp(cmd);
-            theApp.waitAppReady(appWaitTime);
+            theApp.runAppExactJvmOpts(jvmOpts);
+            theApp.waitAppReady();
         } catch (Exception ex) {
             theApp.deleteLock();
             throw ex;
         }
     }
 
-    public static LingeredApp startApp() throws IOException {
-        return startApp(null);
+    /**
+     * Factory method that starts pre-created LingeredApp
+     * lock name is autogenerated, additionalJvmOpts are appended to default test options
+     * @param additionalJvmOpts - additional Jvm options, appended to #Utils.getTestJavaOpts();
+     * @param theApp - app to start
+     * @throws IOException
+     */
+    public static void startApp(LingeredApp theApp, String... additionalJvmOpts) throws IOException {
+        startAppExactJvmOpts(theApp, Utils.prependTestJavaOpts(additionalJvmOpts));
+    }
+
+    /**
+     * Factory method that creates LingeredApp object with ready to use application
+     * lock name is autogenerated, additionalJvmOpts are appended to default test options
+     * @param additionalJvmOpts - additional Jvm options, appended to #Utils.getTestJavaOpts();
+     * @return LingeredApp object
+     * @throws IOException
+     */
+    public static LingeredApp startApp(String... additionalJvmOpts) throws IOException {
+        LingeredApp a = new LingeredApp();
+        try {
+            startApp(a, additionalJvmOpts);
+        } catch (Exception ex) {
+            System.out.println("LingeredApp failed to start: " + ex);
+            a.finishApp();
+            throw ex;
+        }
+
+        return a;
     }
 
     public static void stopApp(LingeredApp app) throws IOException {
@@ -492,18 +475,22 @@ public class LingeredApp {
         }
 
         String theLockFileName = args[0];
+        Path path = Paths.get(theLockFileName);
 
         try {
-            Path path = Paths.get(theLockFileName);
-
             while (Files.exists(path)) {
                 // Touch the lock to indicate our readiness
                 setLastModified(theLockFileName, epoch());
                 Thread.sleep(spinDelay);
             }
-        } catch (NoSuchFileException ex) {
+        } catch (IOException ex) {
             // Lock deleted while we are setting last modified time.
-            // Ignore error and lets the app exits
+            // Ignore the error and let the app exit.
+            if (Files.exists(path)) {
+                // If the lock file was not removed, return an error.
+                System.err.println("LingeredApp IOException: lock file still exists");
+                System.exit(4);
+            }
         } catch (Exception ex) {
             System.err.println("LingeredApp ERROR: " + ex);
             // Leave exit_code = 1 to Java launcher

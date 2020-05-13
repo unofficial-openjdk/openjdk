@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -219,6 +219,9 @@ public class TreeScanner extends Visitor {
     }
 
     public void visitBreak(JCBreak tree) {
+    }
+
+    public void visitYield(JCYield tree) {
         scan(tree.value);
     }
 
@@ -296,7 +299,12 @@ public class TreeScanner extends Visitor {
 
     public void visitTypeTest(JCInstanceOf tree) {
         scan(tree.expr);
-        scan(tree.clazz);
+        scan(tree.pattern);
+    }
+
+    public void visitBindingPattern(JCBindingPattern tree) {
+        if (tree.vartype != null)
+            scan(tree.vartype);
     }
 
     public void visitIndexed(JCArrayAccess tree) {

@@ -27,10 +27,11 @@
 #include "c1/c1_MacroAssembler.hpp"
 #include "c1/c1_Runtime1.hpp"
 #include "classfile/systemDictionary.hpp"
+#include "gc/shared/barrierSetAssembler.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "interpreter/interpreter.hpp"
 #include "oops/arrayOop.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
 #include "runtime/basicLock.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/os.hpp"
@@ -82,7 +83,7 @@ int C1_MacroAssembler::lock_object(Register hdr, Register obj, Register disp_hdr
   // Load object header
   ldr(hdr, Address(obj, hdr_offset));
   // and mark it as unlocked
-  orr(hdr, hdr, markOopDesc::unlocked_value);
+  orr(hdr, hdr, markWord::unlocked_value);
   // save unlocked object header into the displaced header location on the stack
   str(hdr, Address(disp_hdr, 0));
   // test if object header is still the same (i.e. unlocked), and if so, store the
@@ -176,7 +177,7 @@ void C1_MacroAssembler::initialize_header(Register obj, Register klass, Register
     ldr(t1, Address(klass, Klass::prototype_header_offset()));
   } else {
     // This assumes that all prototype bits fit in an int32_t
-    mov(t1, (int32_t)(intptr_t)markOopDesc::prototype());
+    mov(t1, (int32_t)(intptr_t)markWord::prototype().value());
   }
   str(t1, Address(obj, oopDesc::mark_offset_in_bytes()));
 
@@ -331,30 +332,28 @@ void C1_MacroAssembler::inline_cache_check(Register receiver, Register iCache) {
 
 
 void C1_MacroAssembler::build_frame(int framesize, int bang_size_in_bytes) {
-  // If we have to make this method not-entrant we'll overwrite its
-  // first instruction with a jump.  For this action to be legal we
-  // must ensure that this first instruction is a B, BL, NOP, BKPT,
-  // SVC, HVC, or SMC.  Make it a NOP.
-  nop();
   assert(bang_size_in_bytes >= framesize, "stack bang size incorrect");
   // Make sure there is enough stack space for this method's activation.
   // Note that we do this before doing an enter().
   generate_stack_overflow_check(bang_size_in_bytes);
   MacroAssembler::build_frame(framesize + 2 * wordSize);
-  if (NotifySimulator) {
-    notify(Assembler::method_entry);
-  }
+
+  // Insert nmethod entry barrier into frame.
+  BarrierSetAssembler* bs = BarrierSet::barrier_set()->barrier_set_assembler();
+  bs->nmethod_entry_barrier(this);
 }
 
 void C1_MacroAssembler::remove_frame(int framesize) {
   MacroAssembler::remove_frame(framesize + 2 * wordSize);
-  if (NotifySimulator) {
-    notify(Assembler::method_reentry);
-  }
 }
 
 
 void C1_MacroAssembler::verified_entry() {
+  // If we have to make this method not-entrant we'll overwrite its
+  // first instruction with a jump.  For this action to be legal we
+  // must ensure that this first instruction is a B, BL, NOP, BKPT,
+  // SVC, HVC, or SMC.  Make it a NOP.
+  nop();
 }
 
 void C1_MacroAssembler::load_parameter(int offset_in_words, Register reg) {

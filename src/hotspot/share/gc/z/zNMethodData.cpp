@@ -22,50 +22,38 @@
  */
 
 #include "precompiled.hpp"
+#include "gc/z/zAttachedArray.inline.hpp"
 #include "gc/z/zLock.inline.hpp"
-#include "gc/z/zNMethodAllocator.hpp"
 #include "gc/z/zNMethodData.hpp"
 #include "memory/allocation.hpp"
 #include "runtime/atomic.hpp"
-#include "runtime/orderAccess.hpp"
 #include "utilities/align.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/growableArray.hpp"
 
-size_t ZNMethodDataOops::header_size() {
-  const size_t size = sizeof(ZNMethodDataOops);
-  assert(is_aligned(size, sizeof(oop*)), "Header misaligned");
-  return size;
-}
-
 ZNMethodDataOops* ZNMethodDataOops::create(const GrowableArray<oop*>& immediates, bool has_non_immediates) {
-  // Allocate memory for the ZNMethodDataOops object
-  // plus the immediate oop* array that follows right after.
-  const size_t size = ZNMethodDataOops::header_size() + (sizeof(oop*) * immediates.length());
-  void* const mem = ZNMethodAllocator::allocate(size);
-  return ::new (mem) ZNMethodDataOops(immediates, has_non_immediates);
+  return ::new (AttachedArray::alloc(immediates.length())) ZNMethodDataOops(immediates, has_non_immediates);
 }
 
 void ZNMethodDataOops::destroy(ZNMethodDataOops* oops) {
-  ZNMethodAllocator::free(oops);
+  AttachedArray::free(oops);
 }
 
 ZNMethodDataOops::ZNMethodDataOops(const GrowableArray<oop*>& immediates, bool has_non_immediates) :
-    _nimmediates(immediates.length()),
+    _immediates(immediates.length()),
     _has_non_immediates(has_non_immediates) {
   // Save all immediate oops
-  for (size_t i = 0; i < _nimmediates; i++) {
-    immediates_begin()[i] = immediates.at(i);
+  for (size_t i = 0; i < immediates_count(); i++) {
+    immediates_begin()[i] = immediates.at(int(i));
   }
 }
 
 size_t ZNMethodDataOops::immediates_count() const {
-  return _nimmediates;
+  return _immediates.length();
 }
 
 oop** ZNMethodDataOops::immediates_begin() const {
-  // The immediate oop* array starts immediately after this object
-  return (oop**)((uintptr_t)this + header_size());
+  return _immediates(this);
 }
 
 oop** ZNMethodDataOops::immediates_end() const {
@@ -76,28 +64,25 @@ bool ZNMethodDataOops::has_non_immediates() const {
   return _has_non_immediates;
 }
 
-ZNMethodData* ZNMethodData::create(nmethod* nm) {
-  void* const mem = ZNMethodAllocator::allocate(sizeof(ZNMethodData));
-  return ::new (mem) ZNMethodData(nm);
-}
-
-void ZNMethodData::destroy(ZNMethodData* data) {
-  ZNMethodAllocator::free(data->oops());
-  ZNMethodAllocator::free(data);
-}
-
-ZNMethodData::ZNMethodData(nmethod* nm) :
+ZNMethodData::ZNMethodData() :
     _lock(),
     _oops(NULL) {}
+
+ZNMethodData::~ZNMethodData() {
+  ZNMethodDataOops::destroy(_oops);
+}
 
 ZReentrantLock* ZNMethodData::lock() {
   return &_lock;
 }
 
 ZNMethodDataOops* ZNMethodData::oops() const {
-  return OrderAccess::load_acquire(&_oops);
+  return Atomic::load_acquire(&_oops);
 }
 
 ZNMethodDataOops* ZNMethodData::swap_oops(ZNMethodDataOops* new_oops) {
-  return Atomic::xchg(new_oops, &_oops);
+  ZLocker<ZReentrantLock> locker(&_lock);
+  ZNMethodDataOops* const old_oops = _oops;
+  _oops = new_oops;
+  return old_oops;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import jdk.jfr.AnnotationElement;
 import jdk.jfr.DataAmount;
 import jdk.jfr.Frequency;
 import jdk.jfr.MemoryAddress;
+import jdk.jfr.Name;
 import jdk.jfr.Percentage;
 import jdk.jfr.ValueDescriptor;
 import jdk.jfr.consumer.RecordedClass;
@@ -143,15 +144,17 @@ public final class PrettyWriter extends EventPrintWriter {
 
     private void printAnnotations(int commentIndex, List<AnnotationElement> annotations) {
         for (AnnotationElement a : annotations) {
-            printIndent();
-            print("@");
-            print(makeSimpleType(a.getTypeName()));
-            List<ValueDescriptor> vs = a.getValueDescriptors();
-            if (!vs.isEmpty()) {
-                printAnnotation(a);
-                printCommentRef(commentIndex, a.getTypeId());
-            } else {
-                println();
+            if (!Name.class.getName().equals(a.getTypeName())) {
+                printIndent();
+                print("@");
+                print(makeSimpleType(a.getTypeName()));
+                List<ValueDescriptor> vs = a.getValueDescriptors();
+                if (!vs.isEmpty()) {
+                    printAnnotation(a);
+                    printCommentRef(commentIndex, a.getTypeId());
+                } else {
+                    println();
+                }
             }
         }
     }
@@ -235,14 +238,16 @@ public final class PrettyWriter extends EventPrintWriter {
         List<RecordedFrame> frames = stackTrace.getFrames();
         indent();
         int i = 0;
-        while (i < frames.size() && i < getStackDepth()) {
+        int depth = 0;
+        while (i < frames.size() && depth < getStackDepth()) {
             RecordedFrame frame = frames.get(i);
-            if (frame.isJavaFrame()) {
+            if (frame.isJavaFrame() && !frame.getMethod().isHidden()) {
                 printIndent();
                 printValue(frame, null, "");
                 println();
-                i++;
+                depth++;
             }
+            i++;
         }
         if (stackTrace.isTruncated() || i == getStackDepth()) {
             printIndent();
@@ -550,20 +555,7 @@ public final class PrettyWriter extends EventPrintWriter {
                 println("N/A");
                 return true;
             }
-            double s = d.toNanosPart() / 1000_000_000.0 + d.toSecondsPart();
-            if (s < 1.0) {
-                if (s < 0.001) {
-                    println(String.format("%.3f", s * 1_000_000) + " us");
-                } else {
-                    println(String.format("%.3f", s * 1_000) + " ms");
-                }
-            } else {
-                if (s < 1000.0) {
-                    println(String.format("%.3f", s) + " s");
-                } else {
-                    println(String.format("%.0f", s) + " s");
-                }
-            }
+            println(Utils.formatDuration(d));
             return true;
         }
         if (value instanceof OffsetDateTime) {

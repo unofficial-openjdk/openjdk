@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,12 +86,16 @@ public class CheckModuleTest {
             jdeps.appModulePath(MODS_DIR.toString());
 
             ModuleAnalyzer analyzer = jdeps.getModuleAnalyzer(Set.of(name));
-            assertTrue(analyzer.run());
+            assertTrue(analyzer.run(false));
             jdeps.dumpOutput(System.err);
 
             ModuleDescriptor[] descriptors = analyzer.descriptors(name);
             for (int i = 0; i < 3; i++) {
                 descriptors[i].requires().stream()
+                    /* jcov has a dependency on java.logging, just ignore it in case this test is being executed with jcov
+                     * this dependency from jcov should be fixed once bug: CODETOOLS-7902642 gets fixed
+                     */
+                    .filter(req -> !req.toString().equals("java.logging"))
                     .forEach(req -> data.checkRequires(req));
             }
         }
@@ -146,7 +150,7 @@ public class CheckModuleTest {
             jdeps.appModulePath(MODS_DIR.toString());
 
             ModuleAnalyzer analyzer = jdeps.getModuleAnalyzer(Set.of(name));
-            assertTrue(analyzer.run());
+            assertTrue(analyzer.run(false));
             jdeps.dumpOutput(System.err);
 
             // compare the module descriptors and the suggested versions

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2014, 2015, Red Hat Inc. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/barrierSetAssembler.hpp"
 #include "interpreter/interpreter.hpp"
+#include "memory/universe.hpp"
 #include "nativeInst_aarch64.hpp"
 #include "oops/instanceOop.hpp"
 #include "oops/method.hpp"
@@ -42,12 +43,12 @@
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.inline.hpp"
 #include "utilities/align.hpp"
+#include "utilities/powerOfTwo.hpp"
 #ifdef COMPILER2
 #include "opto/runtime.hpp"
 #endif
-
-#ifdef BUILTIN_SIM
-#include "../../../../../../simulator/simulator.hpp"
+#if INCLUDE_ZGC
+#include "gc/z/zThreadLocalData.hpp"
 #endif
 
 // Declaration and definition of StubGenerator (no .hpp file).
@@ -217,16 +218,8 @@ class StubGenerator: public StubCodeGenerator {
 
     // stub code
 
-    // we need a C prolog to bootstrap the x86 caller into the sim
-    __ c_stub_prolog(8, 0, MacroAssembler::ret_type_void);
-
     address aarch64_entry = __ pc();
 
-#ifdef BUILTIN_SIM
-    // Save sender's SP for stack traces.
-    __ mov(rscratch1, sp);
-    __ str(rscratch1, Address(__ pre(sp, -2 * wordSize)));
-#endif
     // set up frame and move sp to end of save area
     __ enter();
     __ sub(sp, rfp, -sp_after_call_off * wordSize);
@@ -297,8 +290,6 @@ class StubGenerator: public StubCodeGenerator {
     __ mov(r13, sp);
     __ blr(c_rarg4);
 
-    // tell the simulator we have returned to the stub
-
     // we do this here because the notify will already have been done
     // if we get to the next instruction via an exception
     //
@@ -308,9 +299,6 @@ class StubGenerator: public StubCodeGenerator {
     // pc against the address saved below. so we may need to allow for
     // this extra instruction in the check.
 
-    if (NotifySimulator) {
-      __ notify(Assembler::method_reentry);
-    }
     // save current address for use by exception handling code
 
     return_address = __ pc();
@@ -373,12 +361,6 @@ class StubGenerator: public StubCodeGenerator {
     __ ldp(c_rarg4, c_rarg5,  entry_point);
     __ ldp(c_rarg6, c_rarg7,  parameter_size);
 
-#ifndef PRODUCT
-    // tell the simulator we are about to end Java execution
-    if (NotifySimulator) {
-      __ notify(Assembler::method_exit);
-    }
-#endif
     // leave frame and return to caller
     __ leave();
     __ ret(lr);
@@ -411,13 +393,6 @@ class StubGenerator: public StubCodeGenerator {
   // rsp.
   //
   // r0: exception oop
-
-  // NOTE: this is used as a target from the signal handler so it
-  // needs an x86 prolog which returns into the current simulator
-  // executing the generated catch_exception code. so the prolog
-  // needs to install rax in a sim register and adjust the sim's
-  // restart pc to enter the generated code at the start position
-  // then return from native to simulated execution.
 
   address generate_catch_exception() {
     StubCodeMark mark(this, "StubRoutines", "catch_exception");
@@ -579,6 +554,16 @@ class StubGenerator: public StubCodeGenerator {
     // make sure object is 'reasonable'
     __ cbz(r0, exit); // if obj is NULL it is OK
 
+#if INCLUDE_ZGC
+    if (UseZGC) {
+      // Check if mask is good.
+      // verifies that ZAddressBadMask & r0 == 0
+      __ ldr(c_rarg3, Address(rthread, ZThreadLocalData::address_bad_mask_offset()));
+      __ andr(c_rarg2, r0, c_rarg3);
+      __ cbnz(c_rarg2, error);
+    }
+#endif
+
     // Check if the oop is in the right area of memory
     __ mov(c_rarg3, (intptr_t) Universe::verify_oop_mask());
     __ andr(c_rarg2, r0, c_rarg3);
@@ -613,7 +598,8 @@ class StubGenerator: public StubCodeGenerator {
 #endif
     BLOCK_COMMENT("call MacroAssembler::debug");
     __ mov(rscratch1, CAST_FROM_FN_PTR(address, MacroAssembler::debug64));
-    __ blrt(rscratch1, 3, 0, 1);
+    __ blr(rscratch1);
+    __ hlt(0);
 
     return start;
   }
@@ -1363,20 +1349,23 @@ class StubGenerator: public StubCodeGenerator {
     }
 
     BarrierSetAssembler *bs = BarrierSet::barrier_set()->barrier_set_assembler();
-    bs->arraycopy_prologue(_masm, decorators, is_oop, d, count, saved_reg);
+    bs->arraycopy_prologue(_masm, decorators, is_oop, s, d, count, saved_reg);
 
     if (is_oop) {
       // save regs before copy_memory
       __ push(RegSet::of(d, count), sp);
     }
-    copy_memory(aligned, s, d, count, rscratch1, size);
+    {
+      // UnsafeCopyMemory page error: continue after ucm
+      bool add_entry = !is_oop && (!aligned || sizeof(jlong) == size);
+      UnsafeCopyMemoryMark ucmm(this, add_entry, true);
+      copy_memory(aligned, s, d, count, rscratch1, size);
+    }
 
     if (is_oop) {
       __ pop(RegSet::of(d, count), sp);
       if (VerifyOops)
         verify_oop_array(size, d, count, r16);
-      __ sub(count, count, 1); // make an inclusive end pointer
-      __ lea(count, Address(d, count, Address::lsl(exact_log2(size))));
     }
 
     bs->arraycopy_epilogue(_masm, decorators, is_oop, d, count, rscratch1, RegSet());
@@ -1384,12 +1373,6 @@ class StubGenerator: public StubCodeGenerator {
     __ leave();
     __ mov(r0, zr); // return 0
     __ ret(lr);
-#ifdef BUILTIN_SIM
-    {
-      AArch64Simulator *sim = AArch64Simulator::get_current(UseSimulatorCache, DisableBCCheck);
-      sim->notifyCompile(const_cast<char*>(name), start);
-    }
-#endif
     return start;
   }
 
@@ -1437,30 +1420,27 @@ class StubGenerator: public StubCodeGenerator {
     }
 
     BarrierSetAssembler *bs = BarrierSet::barrier_set()->barrier_set_assembler();
-    bs->arraycopy_prologue(_masm, decorators, is_oop, d, count, saved_regs);
+    bs->arraycopy_prologue(_masm, decorators, is_oop, s, d, count, saved_regs);
 
     if (is_oop) {
       // save regs before copy_memory
       __ push(RegSet::of(d, count), sp);
     }
-    copy_memory(aligned, s, d, count, rscratch1, -size);
+    {
+      // UnsafeCopyMemory page error: continue after ucm
+      bool add_entry = !is_oop && (!aligned || sizeof(jlong) == size);
+      UnsafeCopyMemoryMark ucmm(this, add_entry, true);
+      copy_memory(aligned, s, d, count, rscratch1, -size);
+    }
     if (is_oop) {
       __ pop(RegSet::of(d, count), sp);
       if (VerifyOops)
         verify_oop_array(size, d, count, r16);
-      __ sub(count, count, 1); // make an inclusive end pointer
-      __ lea(count, Address(d, count, Address::lsl(exact_log2(size))));
     }
     bs->arraycopy_epilogue(_masm, decorators, is_oop, d, count, rscratch1, RegSet());
     __ leave();
     __ mov(r0, zr); // return 0
     __ ret(lr);
-#ifdef BUILTIN_SIM
-    {
-      AArch64Simulator *sim = AArch64Simulator::get_current(UseSimulatorCache, DisableBCCheck);
-      sim->notifyCompile(const_cast<char*>(name), start);
-    }
-#endif
     return start;
 }
 
@@ -1792,14 +1772,14 @@ class StubGenerator: public StubCodeGenerator {
     }
 #endif //ASSERT
 
-    DecoratorSet decorators = IN_HEAP | IS_ARRAY | ARRAYCOPY_CHECKCAST;
+    DecoratorSet decorators = IN_HEAP | IS_ARRAY | ARRAYCOPY_CHECKCAST | ARRAYCOPY_DISJOINT;
     bool is_oop = true;
     if (dest_uninitialized) {
       decorators |= IS_DEST_UNINITIALIZED;
     }
 
     BarrierSetAssembler *bs = BarrierSet::barrier_set()->barrier_set_assembler();
-    bs->arraycopy_prologue(_masm, decorators, is_oop, to, count, wb_pre_saved_regs);
+    bs->arraycopy_prologue(_masm, decorators, is_oop, from, to, count, wb_pre_saved_regs);
 
     // save the original count
     __ mov(count_save, count);
@@ -1842,8 +1822,7 @@ class StubGenerator: public StubCodeGenerator {
     __ br(Assembler::EQ, L_done_pop);
 
     __ BIND(L_do_card_marks);
-    __ add(to, to, -heapOopSize);         // make an inclusive end pointer
-    bs->arraycopy_epilogue(_masm, decorators, is_oop, start_to, to, rscratch1, wb_post_saved_regs);
+    bs->arraycopy_epilogue(_masm, decorators, is_oop, start_to, count_save, rscratch1, wb_post_saved_regs);
 
     __ bind(L_done_pop);
     __ pop(RegSet::of(r18, r19, r20, r21), sp);
@@ -2370,6 +2349,44 @@ class StubGenerator: public StubCodeGenerator {
     __ bind(L_exit2);
     __ leave();
     __ ret(lr);
+    return start;
+  }
+
+  address generate_data_cache_writeback() {
+    const Register line        = c_rarg0;  // address of line to write back
+
+    __ align(CodeEntryAlignment);
+
+    StubCodeMark mark(this, "StubRoutines", "_data_cache_writeback");
+
+    address start = __ pc();
+    __ enter();
+    __ cache_wb(Address(line, 0));
+    __ leave();
+    __ ret(lr);
+
+    return start;
+  }
+
+  address generate_data_cache_writeback_sync() {
+    const Register is_pre     = c_rarg0;  // pre or post sync
+
+    __ align(CodeEntryAlignment);
+
+    StubCodeMark mark(this, "StubRoutines", "_data_cache_writeback_sync");
+
+    // pre wbsync is a no-op
+    // post wbsync translates to an sfence
+
+    Label skip;
+    address start = __ pc();
+    __ enter();
+    __ cbnz(is_pre, skip);
+    __ cache_wbsync(false);
+    __ bind(skip);
+    __ leave();
+    __ ret(lr);
+
     return start;
   }
 
@@ -3109,7 +3126,6 @@ class StubGenerator: public StubCodeGenerator {
     return start;
   }
 
-#ifndef BUILTIN_SIM
   // Safefetch stubs.
   void generate_safefetch(const char* name, int size, address* entry,
                           address* fault_pc, address* continuation_pc) {
@@ -3149,7 +3165,6 @@ class StubGenerator: public StubCodeGenerator {
     __ mov(r0, c_rarg1);
     __ ret(lr);
   }
-#endif
 
   /**
    *  Arguments:
@@ -3257,11 +3272,14 @@ class StubGenerator: public StubCodeGenerator {
     Register buff   = c_rarg1;
     Register len    = c_rarg2;
     Register nmax  = r4;
-    Register base = r5;
+    Register base  = r5;
     Register count = r6;
     Register temp0 = rscratch1;
     Register temp1 = rscratch2;
-    Register temp2 = r7;
+    FloatRegister vbytes = v0;
+    FloatRegister vs1acc = v1;
+    FloatRegister vs2acc = v2;
+    FloatRegister vtable = v3;
 
     // Max number of bytes we can process before having to take the mod
     // 0x15B0 is 5552 in decimal, the largest n such that 255n(n+1)/2 + (n+1)(BASE-1) <= 2^32-1
@@ -3270,6 +3288,10 @@ class StubGenerator: public StubCodeGenerator {
 
     __ mov(base, BASE);
     __ mov(nmax, NMAX);
+
+    // Load accumulation coefficients for the upper 16 bits
+    __ lea(temp0, ExternalAddress((address) StubRoutines::aarch64::_adler_table));
+    __ ld1(vtable, __ T16B, Address(temp0));
 
     // s1 is initialized to the lower 16 bits of adler
     // s2 is initialized to the upper 16 bits of adler
@@ -3311,53 +3333,8 @@ class StubGenerator: public StubCodeGenerator {
 
     __ bind(L_nmax_loop);
 
-    __ ldp(temp0, temp1, Address(__ post(buff, 16)));
-
-    __ add(s1, s1, temp0, ext::uxtb);
-    __ ubfx(temp2, temp0, 8, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp0, 16, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp0, 24, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp0, 32, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp0, 40, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp0, 48, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp0, Assembler::LSR, 56);
-    __ add(s2, s2, s1);
-
-    __ add(s1, s1, temp1, ext::uxtb);
-    __ ubfx(temp2, temp1, 8, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp1, 16, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp1, 24, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp1, 32, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp1, 40, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp1, 48, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp1, Assembler::LSR, 56);
-    __ add(s2, s2, s1);
+    generate_updateBytesAdler32_accum(s1, s2, buff, temp0, temp1,
+                                      vbytes, vs1acc, vs2acc, vtable);
 
     __ subs(count, count, 16);
     __ br(Assembler::HS, L_nmax_loop);
@@ -3400,53 +3377,8 @@ class StubGenerator: public StubCodeGenerator {
 
     __ bind(L_by16_loop);
 
-    __ ldp(temp0, temp1, Address(__ post(buff, 16)));
-
-    __ add(s1, s1, temp0, ext::uxtb);
-    __ ubfx(temp2, temp0, 8, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp0, 16, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp0, 24, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp0, 32, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp0, 40, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp0, 48, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp0, Assembler::LSR, 56);
-    __ add(s2, s2, s1);
-
-    __ add(s1, s1, temp1, ext::uxtb);
-    __ ubfx(temp2, temp1, 8, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp1, 16, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp1, 24, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp1, 32, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp1, 40, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ ubfx(temp2, temp1, 48, 8);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp2);
-    __ add(s2, s2, s1);
-    __ add(s1, s1, temp1, Assembler::LSR, 56);
-    __ add(s2, s2, s1);
+    generate_updateBytesAdler32_accum(s1, s2, buff, temp0, temp1,
+                                      vbytes, vs1acc, vs2acc, vtable);
 
     __ subs(len, len, 16);
     __ br(Assembler::HS, L_by16_loop);
@@ -3498,6 +3430,43 @@ class StubGenerator: public StubCodeGenerator {
     __ ret(lr);
 
     return start;
+  }
+
+  void generate_updateBytesAdler32_accum(Register s1, Register s2, Register buff,
+          Register temp0, Register temp1, FloatRegister vbytes,
+          FloatRegister vs1acc, FloatRegister vs2acc, FloatRegister vtable) {
+    // Below is a vectorized implementation of updating s1 and s2 for 16 bytes.
+    // We use b1, b2, ..., b16 to denote the 16 bytes loaded in each iteration.
+    // In non-vectorized code, we update s1 and s2 as:
+    //   s1 <- s1 + b1
+    //   s2 <- s2 + s1
+    //   s1 <- s1 + b2
+    //   s2 <- s2 + b1
+    //   ...
+    //   s1 <- s1 + b16
+    //   s2 <- s2 + s1
+    // Putting above assignments together, we have:
+    //   s1_new = s1 + b1 + b2 + ... + b16
+    //   s2_new = s2 + (s1 + b1) + (s1 + b1 + b2) + ... + (s1 + b1 + b2 + ... + b16)
+    //          = s2 + s1 * 16 + (b1 * 16 + b2 * 15 + ... + b16 * 1)
+    //          = s2 + s1 * 16 + (b1, b2, ... b16) dot (16, 15, ... 1)
+    __ ld1(vbytes, __ T16B, Address(__ post(buff, 16)));
+
+    // s2 = s2 + s1 * 16
+    __ add(s2, s2, s1, Assembler::LSL, 4);
+
+    // vs1acc = b1 + b2 + b3 + ... + b16
+    // vs2acc = (b1 * 16) + (b2 * 15) + (b3 * 14) + ... + (b16 * 1)
+    __ umullv(vs2acc, __ T8B, vtable, vbytes);
+    __ umlalv(vs2acc, __ T16B, vtable, vbytes);
+    __ uaddlv(vs1acc, __ T16B, vbytes);
+    __ uaddlv(vs2acc, __ T8H, vs2acc);
+
+    // s1 = s1 + vs1acc, s2 = s2 + vs2acc
+    __ fmovd(temp0, vs1acc);
+    __ fmovd(temp1, vs2acc);
+    __ add(s1, s1, temp0);
+    __ add(s2, s2, temp1);
   }
 
   /**
@@ -4042,7 +4011,7 @@ class StubGenerator: public StubCodeGenerator {
   // code for comparing 16 characters of strings with Latin1 and Utf16 encoding
   void compare_string_16_x_LU(Register tmpL, Register tmpU, Label &DIFF1,
       Label &DIFF2) {
-    Register cnt1 = r2, tmp1 = r10, tmp2 = r11, tmp3 = r12;
+    Register cnt1 = r2, tmp2 = r11, tmp3 = r12;
     FloatRegister vtmp = v1, vtmpZ = v0, vtmp3 = v2;
 
     __ ldrq(vtmp, Address(__ post(tmp2, 16)));
@@ -4085,14 +4054,14 @@ class StubGenerator: public StubCodeGenerator {
         : "compare_long_string_different_encoding UL");
     address entry = __ pc();
     Label SMALL_LOOP, TAIL, TAIL_LOAD_16, LOAD_LAST, DIFF1, DIFF2,
-        DONE, CALCULATE_DIFFERENCE, LARGE_LOOP_PREFETCH, SMALL_LOOP_ENTER,
+        DONE, CALCULATE_DIFFERENCE, LARGE_LOOP_PREFETCH, NO_PREFETCH,
         LARGE_LOOP_PREFETCH_REPEAT1, LARGE_LOOP_PREFETCH_REPEAT2;
     Register result = r0, str1 = r1, cnt1 = r2, str2 = r3, cnt2 = r4,
         tmp1 = r10, tmp2 = r11, tmp3 = r12, tmp4 = r14;
     FloatRegister vtmpZ = v0, vtmp = v1, vtmp3 = v2;
     RegSet spilled_regs = RegSet::of(tmp3, tmp4);
 
-    int prefetchLoopExitCondition = MAX(32, SoftwarePrefetchHintDistance/2);
+    int prefetchLoopExitCondition = MAX(64, SoftwarePrefetchHintDistance/2);
 
     __ eor(vtmpZ, __ T16B, vtmpZ, vtmpZ);
     // cnt2 == amount of characters left to compare
@@ -4102,24 +4071,20 @@ class StubGenerator: public StubCodeGenerator {
     __ add(str2, str2, isLU ? wordSize : wordSize/2);
     __ fmovd(isLU ? tmp1 : tmp2, vtmp);
     __ subw(cnt2, cnt2, 8); // Already loaded 4 symbols. Last 4 is special case.
-    __ add(str1, str1, cnt2, __ LSL, isLU ? 0 : 1);
     __ eor(rscratch2, tmp1, tmp2);
-    __ add(str2, str2, cnt2, __ LSL, isLU ? 1 : 0);
     __ mov(rscratch1, tmp2);
     __ cbnz(rscratch2, CALCULATE_DIFFERENCE);
-    Register strU = isLU ? str2 : str1,
-             strL = isLU ? str1 : str2,
-             tmpU = isLU ? rscratch1 : tmp1, // where to keep U for comparison
+    Register tmpU = isLU ? rscratch1 : tmp1, // where to keep U for comparison
              tmpL = isLU ? tmp1 : rscratch1; // where to keep L for comparison
     __ push(spilled_regs, sp);
-    __ sub(tmp2, strL, cnt2); // strL pointer to load from
-    __ sub(cnt1, strU, cnt2, __ LSL, 1); // strU pointer to load from
+    __ mov(tmp2, isLU ? str1 : str2); // init the pointer to L next load
+    __ mov(cnt1, isLU ? str2 : str1); // init the pointer to U next load
 
     __ ldr(tmp3, Address(__ post(cnt1, 8)));
 
     if (SoftwarePrefetchHintDistance >= 0) {
       __ subs(rscratch2, cnt2, prefetchLoopExitCondition);
-      __ br(__ LT, SMALL_LOOP);
+      __ br(__ LT, NO_PREFETCH);
       __ bind(LARGE_LOOP_PREFETCH);
         __ prfm(Address(tmp2, SoftwarePrefetchHintDistance));
         __ mov(tmp4, 2);
@@ -4139,51 +4104,21 @@ class StubGenerator: public StubCodeGenerator {
           __ br(__ GE, LARGE_LOOP_PREFETCH);
     }
     __ cbz(cnt2, LOAD_LAST); // no characters left except last load
+    __ bind(NO_PREFETCH);
     __ subs(cnt2, cnt2, 16);
     __ br(__ LT, TAIL);
-    __ b(SMALL_LOOP_ENTER);
+    __ align(OptoLoopAlignment);
     __ bind(SMALL_LOOP); // smaller loop
       __ subs(cnt2, cnt2, 16);
-    __ bind(SMALL_LOOP_ENTER);
       compare_string_16_x_LU(tmpL, tmpU, DIFF1, DIFF2);
       __ br(__ GE, SMALL_LOOP);
-      __ cbz(cnt2, LOAD_LAST);
-    __ bind(TAIL); // 1..15 characters left
-      __ subs(zr, cnt2, -8);
-      __ br(__ GT, TAIL_LOAD_16);
-      __ ldrd(vtmp, Address(tmp2));
-      __ zip1(vtmp3, __ T8B, vtmp, vtmpZ);
-
-      __ ldr(tmpU, Address(__ post(cnt1, 8)));
-      __ fmovd(tmpL, vtmp3);
-      __ eor(rscratch2, tmp3, tmpL);
-      __ cbnz(rscratch2, DIFF2);
-      __ umov(tmpL, vtmp3, __ D, 1);
-      __ eor(rscratch2, tmpU, tmpL);
-      __ cbnz(rscratch2, DIFF1);
-      __ b(LOAD_LAST);
-    __ bind(TAIL_LOAD_16);
-      __ ldrq(vtmp, Address(tmp2));
-      __ ldr(tmpU, Address(__ post(cnt1, 8)));
-      __ zip1(vtmp3, __ T16B, vtmp, vtmpZ);
-      __ zip2(vtmp, __ T16B, vtmp, vtmpZ);
-      __ fmovd(tmpL, vtmp3);
-      __ eor(rscratch2, tmp3, tmpL);
-      __ cbnz(rscratch2, DIFF2);
-
-      __ ldr(tmp3, Address(__ post(cnt1, 8)));
-      __ umov(tmpL, vtmp3, __ D, 1);
-      __ eor(rscratch2, tmpU, tmpL);
-      __ cbnz(rscratch2, DIFF1);
-
-      __ ldr(tmpU, Address(__ post(cnt1, 8)));
-      __ fmovd(tmpL, vtmp);
-      __ eor(rscratch2, tmp3, tmpL);
-      __ cbnz(rscratch2, DIFF2);
-
-      __ umov(tmpL, vtmp, __ D, 1);
-      __ eor(rscratch2, tmpU, tmpL);
-      __ cbnz(rscratch2, DIFF1);
+      __ cmn(cnt2, (u1)16);
+      __ br(__ EQ, LOAD_LAST);
+    __ bind(TAIL); // 1..15 characters left until last load (last 4 characters)
+      __ add(cnt1, cnt1, cnt2, __ LSL, 1); // Address of 32 bytes before last 4 characters in UTF-16 string
+      __ add(tmp2, tmp2, cnt2); // Address of 16 bytes before last 4 characters in Latin1 string
+      __ ldr(tmp3, Address(cnt1, -8));
+      compare_string_16_x_LU(tmpL, tmpU, DIFF1, DIFF2); // last 16 characters before last load
       __ b(LOAD_LAST);
     __ bind(DIFF2);
       __ mov(tmpU, tmp3);
@@ -4191,10 +4126,13 @@ class StubGenerator: public StubCodeGenerator {
       __ pop(spilled_regs, sp);
       __ b(CALCULATE_DIFFERENCE);
     __ bind(LOAD_LAST);
+      // Last 4 UTF-16 characters are already pre-loaded into tmp3 by compare_string_16_x_LU.
+      // No need to load it again
+      __ mov(tmpU, tmp3);
       __ pop(spilled_regs, sp);
 
-      __ ldrs(vtmp, Address(strL));
-      __ ldr(tmpU, Address(strU));
+      // tmp2 points to the address of the last 4 Latin1 characters right now
+      __ ldrs(vtmp, Address(tmp2));
       __ zip1(vtmp, __ T8B, vtmp, vtmpZ);
       __ fmovd(tmpL, vtmp);
 
@@ -4215,6 +4153,50 @@ class StubGenerator: public StubCodeGenerator {
     __ bind(DONE);
       __ ret(lr);
     return entry;
+  }
+
+    address generate_method_entry_barrier() {
+    __ align(CodeEntryAlignment);
+    StubCodeMark mark(this, "StubRoutines", "nmethod_entry_barrier");
+
+    Label deoptimize_label;
+
+    address start = __ pc();
+
+    __ set_last_Java_frame(sp, rfp, lr, rscratch1);
+
+    __ enter();
+    __ add(rscratch2, sp, wordSize);  // rscratch2 points to the saved lr
+
+    __ sub(sp, sp, 4 * wordSize);  // four words for the returned {sp, fp, lr, pc}
+
+    __ push_call_clobbered_registers();
+
+    __ mov(c_rarg0, rscratch2);
+    __ call_VM_leaf
+         (CAST_FROM_FN_PTR
+          (address, BarrierSetNMethod::nmethod_stub_entry_barrier), 1);
+
+    __ reset_last_Java_frame(true);
+
+    __ mov(rscratch1, r0);
+
+    __ pop_call_clobbered_registers();
+
+    __ cbnz(rscratch1, deoptimize_label);
+
+    __ leave();
+    __ ret(lr);
+
+    __ BIND(deoptimize_label);
+
+    __ ldp(/* new sp */ rscratch1, rfp, Address(sp, 0 * wordSize));
+    __ ldp(lr, /* new pc*/ rscratch2, Address(sp, 2 * wordSize));
+
+    __ mov(sp, rscratch1);
+    __ br(rscratch2);
+
+    return start;
   }
 
   // r0  = result
@@ -4256,10 +4238,11 @@ class StubGenerator: public StubCodeGenerator {
         compare_string_16_bytes_same(DIFF, DIFF2);
         __ br(__ GT, LARGE_LOOP_PREFETCH);
         __ cbz(cnt2, LAST_CHECK_AND_LENGTH_DIFF); // no more chars left?
-        // less than 16 bytes left?
-        __ subs(cnt2, cnt2, isLL ? 16 : 8);
-        __ br(__ LT, TAIL);
     }
+    // less than 16 bytes left?
+    __ subs(cnt2, cnt2, isLL ? 16 : 8);
+    __ br(__ LT, TAIL);
+    __ align(OptoLoopAlignment);
     __ bind(SMALL_LOOP);
       compare_string_16_bytes_same(DIFF, DIFF2);
       __ subs(cnt2, cnt2, isLL ? 16 : 8);
@@ -4388,6 +4371,7 @@ class StubGenerator: public StubCodeGenerator {
     __ ldr(ch1, Address(str1));
     // Read whole register from str2. It is safe, because length >=8 here
     __ ldr(ch2, Address(str2));
+    __ sub(cnt2, cnt2, cnt1);
     __ andr(first, ch1, str1_isL ? 0xFF : 0xFFFF);
     if (str1_isL != str2_isL) {
       __ eor(v0, __ T16B, v0, v0);
@@ -4846,7 +4830,7 @@ class StubGenerator: public StubCodeGenerator {
 
     // Set up last_Java_sp and last_Java_fp
     address the_pc = __ pc();
-    __ set_last_Java_frame(sp, rfp, (address)NULL, rscratch1);
+    __ set_last_Java_frame(sp, rfp, the_pc, rscratch1);
 
     // Call runtime
     if (arg1 != noreg) {
@@ -4859,7 +4843,7 @@ class StubGenerator: public StubCodeGenerator {
     __ mov(c_rarg0, rthread);
     BLOCK_COMMENT("call runtime_entry");
     __ mov(rscratch1, runtime_entry);
-    __ blrt(rscratch1, 3 /* number_of_arguments */, 0, 1);
+    __ blr(rscratch1);
 
     // Generate oop map
     OopMap* map = new OopMap(framesize, 0);
@@ -5805,6 +5789,10 @@ class StubGenerator: public StubCodeGenerator {
     // byte_array_inflate stub for large arrays.
     StubRoutines::aarch64::_large_byte_array_inflate = generate_large_byte_array_inflate();
 
+    BarrierSetNMethod* bs_nm = BarrierSet::barrier_set()->barrier_set_nmethod();
+    if (bs_nm != NULL) {
+      StubRoutines::aarch64::_method_entry_barrier = generate_method_entry_barrier();
+    }
 #ifdef COMPILER2
     if (UseMultiplyToLenIntrinsic) {
       StubRoutines::_multiplyToLen = generate_multiplyToLen();
@@ -5833,11 +5821,14 @@ class StubGenerator: public StubCodeGenerator {
     }
 #endif // COMPILER2
 
-#ifndef BUILTIN_SIM
     // generate GHASH intrinsics code
     if (UseGHASHIntrinsics) {
       StubRoutines::_ghash_processBlocks = generate_ghash_processBlocks();
     }
+
+    // data cache line writeback
+    StubRoutines::_data_cache_writeback = generate_data_cache_writeback();
+    StubRoutines::_data_cache_writeback_sync = generate_data_cache_writeback_sync();
 
     if (UseAESIntrinsics) {
       StubRoutines::_aescrypt_encryptBlock = generate_aescrypt_encryptBlock();
@@ -5867,7 +5858,6 @@ class StubGenerator: public StubCodeGenerator {
     generate_safefetch("SafeFetchN", sizeof(intptr_t), &StubRoutines::_safefetchN_entry,
                                                        &StubRoutines::_safefetchN_fault_pc,
                                                        &StubRoutines::_safefetchN_continuation_pc);
-#endif
     StubRoutines::aarch64::set_completed();
   }
 
@@ -5881,6 +5871,10 @@ class StubGenerator: public StubCodeGenerator {
   }
 }; // end class declaration
 
+#define UCM_TABLE_MAX_ENTRIES 8
 void StubGenerator_generate(CodeBuffer* code, bool all) {
+  if (UnsafeCopyMemory::_table == NULL) {
+    UnsafeCopyMemory::create_table(UCM_TABLE_MAX_ENTRIES);
+  }
   StubGenerator g(code, all);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import static org.graalvm.compiler.test.SubprocessUtil.withoutDebuggerArguments;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -113,6 +114,12 @@ public class CompilationWrapperTest extends GraalCompilerTest {
     public void testVMCompilation3() throws IOException, InterruptedException {
         assumeManagementLibraryIsLoadable();
         final int maxProblems = 2;
+        Probe failurePatternProbe = new Probe("[[[Graal compilation failure]]]", maxProblems) {
+            @Override
+            String test() {
+                return actualOccurrences > 0 && actualOccurrences <= maxProblems ? null : String.format("expected occurrences to be in [1 .. %d]", maxProblems);
+            }
+        };
         Probe retryingProbe = new Probe("Retrying compilation of", maxProblems) {
             @Override
             String test() {
@@ -131,6 +138,7 @@ public class CompilationWrapperTest extends GraalCompilerTest {
             }
         };
         Probe[] probes = {
+                        failurePatternProbe,
                         retryingProbe,
                         adjustmentProbe
         };
@@ -152,6 +160,7 @@ public class CompilationWrapperTest extends GraalCompilerTest {
         assumeManagementLibraryIsLoadable();
         testHelper(Collections.emptyList(),
                         Arrays.asList(
+                                        SubprocessUtil.PACKAGE_OPENING_OPTIONS,
                                         "-Dgraal.CompilationFailureAction=ExitVM",
                                         "-Dgraal.TrufflePerformanceWarningsAreFatal=true",
                                         "-Dgraal.CrashAt=root test1"),
@@ -164,10 +173,11 @@ public class CompilationWrapperTest extends GraalCompilerTest {
     @Test
     public void testTruffleCompilation2() throws IOException, InterruptedException {
         Probe[] probes = {
-                        new Probe("Exiting VM due to TruffleCompilationExceptionsAreFatal=true", 1),
+                        new Probe("Exiting VM due to engine.CompilationExceptionsAreFatal=true", 1),
         };
         testHelper(Arrays.asList(probes),
                         Arrays.asList(
+                                        SubprocessUtil.PACKAGE_OPENING_OPTIONS,
                                         "-Dgraal.CompilationFailureAction=Silent",
                                         "-Dgraal.TruffleCompilationExceptionsAreFatal=true",
                                         "-Dgraal.CrashAt=root test1"),
@@ -181,10 +191,11 @@ public class CompilationWrapperTest extends GraalCompilerTest {
     public void testTruffleCompilation3() throws IOException, InterruptedException {
         assumeManagementLibraryIsLoadable();
         Probe[] probes = {
-                        new Probe("Exiting VM due to TrufflePerformanceWarningsAreFatal=true", 1),
+                        new Probe("Exiting VM due to engine.PerformanceWarningsAreFatal=true", 1),
         };
         testHelper(Arrays.asList(probes),
                         Arrays.asList(
+                                        SubprocessUtil.PACKAGE_OPENING_OPTIONS,
                                         "-Dgraal.CompilationFailureAction=Silent",
                                         "-Dgraal.TrufflePerformanceWarningsAreFatal=true",
                                         "-Dgraal.CrashAt=root test1:PermanentBailout"),
@@ -209,10 +220,9 @@ public class CompilationWrapperTest extends GraalCompilerTest {
             System.out.println(proc);
         }
 
-        List<Probe> probes = new ArrayList<>(initialProbes);
-        Probe diagnosticProbe = null;
-        if (!extraVmArgs.contains("-Dgraal.TruffleCompilationExceptionsAreFatal=true")) {
-            diagnosticProbe = new Probe("Graal diagnostic output saved in ", 1);
+        try {
+            List<Probe> probes = new ArrayList<>(initialProbes);
+            Probe diagnosticProbe = new Probe("Graal diagnostic output saved in ", 1);
             probes.add(diagnosticProbe);
             probes.add(new Probe("Forced crash after compiling", Integer.MAX_VALUE) {
                 @Override
@@ -220,22 +230,20 @@ public class CompilationWrapperTest extends GraalCompilerTest {
                     return actualOccurrences > 0 ? null : "expected at least 1 occurrence";
                 }
             });
-        }
 
-        for (String line : proc.output) {
-            for (Probe probe : probes) {
-                if (probe.matches(line)) {
-                    break;
+            for (String line : proc.output) {
+                for (Probe probe : probes) {
+                    if (probe.matches(line)) {
+                        break;
+                    }
                 }
             }
-        }
-        for (Probe probe : probes) {
-            String error = probe.test();
-            if (error != null) {
-                Assert.fail(String.format("Did not find expected occurences of '%s' in output of command: %s%n%s", probe.substring, error, proc));
+            for (Probe probe : probes) {
+                String error = probe.test();
+                if (error != null) {
+                    Assert.fail(String.format("Did not find expected occurrences of '%s' in output of command: %s%n%s", probe.substring, error, proc));
+                }
             }
-        }
-        if (diagnosticProbe != null) {
             String line = diagnosticProbe.lastMatchingLine;
             int substringStart = line.indexOf(diagnosticProbe.substring);
             int substringLength = diagnosticProbe.substring.length();
@@ -263,8 +271,10 @@ public class CompilationWrapperTest extends GraalCompilerTest {
                 }
             } finally {
                 zip.delete();
-                dumpPath.delete();
             }
+        } finally {
+            Path directory = dumpPath.toPath();
+            removeDirectory(directory);
         }
     }
 }

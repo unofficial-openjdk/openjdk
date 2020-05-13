@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 /*
  * @test
  * @bug 4176738
+ * @library /test/lib
  * @summary Make sure a deadlock situation
  *     would not occur
  * @run main DeadlockTest
@@ -32,10 +33,13 @@
 
 import java.net.*;
 import java.io.*;
+import jdk.test.lib.net.IPSupport;
 
 public class DeadlockTest {
     public static void main(String [] argv) throws Exception {
-        ServerSocket ss = new ServerSocket(0);
+        IPSupport.throwSkippedExceptionIfNonOperational();
+
+        ServerSocket ss = new ServerSocket(0, 0, InetAddress.getLoopbackAddress());
         Socket clientSocket = new Socket();
 
         try {
@@ -150,7 +154,7 @@ class ClientThread implements Runnable {
         try {
             System.out.println("About to connect the client socket");
             this.sock = sock;
-            this.sock.connect(new InetSocketAddress("localhost", serverPort));
+            this.sock.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), serverPort));
             System.out.println("connected");
 
             out = new ObjectOutputStream(sock.getOutputStream());

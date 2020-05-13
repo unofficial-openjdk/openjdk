@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,12 +33,11 @@
 #include "memory/resourceArea.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/mutexLocker.hpp"
-#include "runtime/safepoint.hpp"
 #include "runtime/thread.inline.hpp"
 #include "utilities/growableArray.hpp"
 #include "utilities/stack.inline.hpp"
 
- // incremented during class unloading (safepoint) for each unloaded event class
+ // incremented during class unloading for each unloaded event class
 static jlong unloaded_event_classes = 0;
 
 jlong JfrEventClasses::unloaded_event_classes_count() {
@@ -46,8 +45,7 @@ jlong JfrEventClasses::unloaded_event_classes_count() {
 }
 
 void JfrEventClasses::increment_unloaded_event_class() {
-  // incremented during class unloading (safepoint) for each unloaded event class
-  assert(SafepointSynchronize::is_at_safepoint(), "invariant");
+  assert_locked_or_safepoint(ClassLoaderDataGraph_lock);
   ++unloaded_event_classes;
 }
 
@@ -90,7 +88,7 @@ static void fill_klasses(GrowableArray<const void*>& event_subklasses, const Kla
   DEBUG_ONLY(JfrJavaSupport::check_java_thread_in_vm(thread));
 
   Stack<const Klass*, mtTracing> mark_stack;
-  MutexLocker ml(Compile_lock, thread);
+  MutexLocker ml(thread, Compile_lock);
   mark_stack.push(event_klass->subklass());
 
   while (!mark_stack.is_empty()) {
@@ -134,8 +132,7 @@ jobject JfrEventClasses::get_all_event_classes(TRAPS) {
   initialize(THREAD);
   assert(empty_java_util_arraylist != NULL, "should have been setup already!");
   static const char jdk_jfr_event_name[] = "jdk/internal/event/Event";
-  unsigned int unused_hash = 0;
-  Symbol* const event_klass_name = SymbolTable::lookup_only(jdk_jfr_event_name, sizeof jdk_jfr_event_name - 1, unused_hash);
+  Symbol* const event_klass_name = SymbolTable::probe(jdk_jfr_event_name, sizeof jdk_jfr_event_name - 1);
 
   if (NULL == event_klass_name) {
     // not loaded yet
@@ -168,10 +165,10 @@ jobject JfrEventClasses::get_all_event_classes(TRAPS) {
   const Klass* const array_list_klass = JfrJavaSupport::klass(empty_java_util_arraylist);
   assert(array_list_klass != NULL, "invariant");
 
-  const Symbol* const add_method_sym = SymbolTable::lookup(add_method_name, sizeof add_method_name - 1, THREAD);
+  const Symbol* const add_method_sym = SymbolTable::new_symbol(add_method_name);
   assert(add_method_sym != NULL, "invariant");
 
-  const Symbol* const add_method_sig_sym = SymbolTable::lookup(add_method_signature, sizeof add_method_signature - 1, THREAD);
+  const Symbol* const add_method_sig_sym = SymbolTable::new_symbol(add_method_signature);
   assert(add_method_signature != NULL, "invariant");
 
   JavaValue result(T_BOOLEAN);

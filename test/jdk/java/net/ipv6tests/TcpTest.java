@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,11 +25,14 @@
  * @test
  * @bug 4868820
  * @key intermittent
- * @summary IPv6 support for Windows XP and 2003 server
+ * @summary IPv6 support for Windows XP and 2003 server. This test requires
+ *          binding to the wildcard address, and as such is susceptible
+ *          of intermittent failures caused by port reuse policy.
  * @library /test/lib
  * @build jdk.test.lib.NetworkConfiguration
  *        jdk.test.lib.Platform
  * @run main TcpTest -d
+ * @run main/othervm -Djdk.net.usePlainSocketImpl TcpTest -d
  */
 
 import java.net.*;
@@ -58,6 +61,10 @@ public class TcpTest extends Tests {
 
     public static void main (String[] args) throws Exception {
         checkDebug(args);
+        if (ia4addr == null) {
+            System.out.println ("No IPV4 addresses: exiting test");
+            return;
+        }
         if (ia6addr == null) {
             System.out.println ("No IPV6 addresses: exiting test");
             return;
@@ -126,7 +133,19 @@ public class TcpTest extends Tests {
             dprintln ("connecting to " + ia6addr);
             c2 = new Socket ();
             c2.connect (sadr6, 1000);
-            throw new RuntimeException ("connect to IPv6 address should be refused");
+            dprintln ("Unexpected successful connection: " + c2);
+            // Connect should fail with timeout exception. However, if something else is
+            // accepting connections, verify it is not our server.
+            server.setSoTimeout(500);
+            // Ok if accept() fails because of timeout
+            while (true) {
+                // acceptedSocket could be connected to c1, but not c2
+                try (Socket acceptedSocket = server.accept()) {
+                    dprintln("accepted socket: " + acceptedSocket);
+                    if (acceptedSocket.getRemoteSocketAddress().equals(c2.getLocalSocketAddress()))
+                        throw new RuntimeException("connect to IPv6 address should be refused");
+                }
+            }
         } catch (IOException e) { }
         server.close ();
         c1.close ();
@@ -146,7 +165,19 @@ public class TcpTest extends Tests {
         try {
             dprintln ("connecting to " + ia4addr);
             c2 = new Socket (ia4addr, port);
-            throw new RuntimeException ("connect to IPv4 address should be refused");
+            dprintln ("Unexpected successful connection: " + c2);
+            // Connect should fail with timeout exception. However, if something else is
+            // accepting connections, verify it is not our server.
+            server.setSoTimeout(500);
+            // Ok if accept() fails because of timeout
+            while (true) {
+                // acceptedSocket could be connected to c1, but not c2
+                try (Socket acceptedSocket = server.accept()) {
+                    dprintln("accepted socket: " + acceptedSocket);
+                    if (acceptedSocket.getRemoteSocketAddress().equals(c2.getLocalSocketAddress()))
+                        throw new RuntimeException("connect to IPv4 address should be refused");
+                }
+            }
         } catch (IOException e) { }
         server.close ();
         c1.close ();
@@ -216,4 +247,3 @@ public class TcpTest extends Tests {
         System.out.println ("Test4: OK");
     }
 }
-

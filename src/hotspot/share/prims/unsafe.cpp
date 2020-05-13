@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,23 +26,26 @@
 #include "jni.h"
 #include "jvm.h"
 #include "classfile/classFileStream.hpp"
+#include "classfile/classLoader.hpp"
+#include "classfile/javaClasses.inline.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "jfr/jfrEvents.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/access.inline.hpp"
-#include "oops/fieldStreams.hpp"
+#include "oops/fieldStreams.inline.hpp"
+#include "oops/instanceKlass.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/typeArrayOop.inline.hpp"
 #include "prims/unsafe.hpp"
-#include "runtime/atomic.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/orderAccess.hpp"
 #include "runtime/reflection.hpp"
+#include "runtime/sharedRuntime.hpp"
 #include "runtime/thread.hpp"
 #include "runtime/threadSMR.hpp"
 #include "runtime/vm_version.hpp"
@@ -110,7 +113,7 @@ static inline void assert_field_offset_sane(oop p, jlong field_offset) {
   if (p != NULL) {
     assert(byte_offset >= 0 && byte_offset <= (jlong)MAX_OBJECT_SIZE, "sane offset");
     if (byte_offset == (jint)byte_offset) {
-      void* ptr_plus_disp = (address)p + byte_offset;
+      void* ptr_plus_disp = cast_from_oop<address>(p) + byte_offset;
       assert(p->field_addr_raw((jint)byte_offset) == ptr_plus_disp,
              "raw [ptr+disp] must be consistent with oop::field_addr_raw");
     }
@@ -129,9 +132,9 @@ static inline void* index_oop_from_field_offset_long(oop p, jlong field_offset) 
   }
 
   if (sizeof(char*) == sizeof(jint)) {   // (this constant folds!)
-    return (address)p + (jint) byte_offset;
+    return cast_from_oop<address>(p) + (jint) byte_offset;
   } else {
-    return (address)p +        byte_offset;
+    return cast_from_oop<address>(p) +        byte_offset;
   }
 }
 
@@ -146,6 +149,25 @@ jlong Unsafe_field_offset_from_byte_offset(jlong byte_offset) {
 
 
 ///// Data read/writes on the Java heap and in native (off-heap) memory
+
+/**
+ * Helper class to wrap memory accesses in JavaThread::doing_unsafe_access()
+ */
+class GuardUnsafeAccess {
+  JavaThread* _thread;
+
+public:
+  GuardUnsafeAccess(JavaThread* thread) : _thread(thread) {
+    // native/off-heap access which may raise SIGBUS if accessing
+    // memory mapped file data in a region of the file which has
+    // been truncated and is now invalid.
+    _thread->set_doing_unsafe_access(true);
+  }
+
+  ~GuardUnsafeAccess() {
+    _thread->set_doing_unsafe_access(false);
+  }
+};
 
 /**
  * Helper class for accessing memory.
@@ -187,25 +209,6 @@ class MemoryAccess : StackObj {
   jboolean normalize_for_read(jboolean x) {
     return x != 0;
   }
-
-  /**
-   * Helper class to wrap memory accesses in JavaThread::doing_unsafe_access()
-   */
-  class GuardUnsafeAccess {
-    JavaThread* _thread;
-
-  public:
-    GuardUnsafeAccess(JavaThread* thread) : _thread(thread) {
-      // native/off-heap access which may raise SIGBUS if accessing
-      // memory mapped file data in a region of the file which has
-      // been truncated and is now invalid
-      _thread->set_doing_unsafe_access(true);
-    }
-
-    ~GuardUnsafeAccess() {
-      _thread->set_doing_unsafe_access(false);
-    }
-  };
 
 public:
   MemoryAccess(JavaThread* thread, jobject obj, jlong offset)
@@ -291,18 +294,6 @@ UNSAFE_ENTRY(jobject, Unsafe_GetUncompressedObject(JNIEnv *env, jobject unsafe, 
   return JNIHandles::make_local(env, v);
 } UNSAFE_END
 
-UNSAFE_LEAF(jboolean, Unsafe_isBigEndian0(JNIEnv *env, jobject unsafe)) {
-#ifdef VM_LITTLE_ENDIAN
-  return false;
-#else
-  return true;
-#endif
-} UNSAFE_END
-
-UNSAFE_LEAF(jint, Unsafe_unalignedAccess0(JNIEnv *env, jobject unsafe)) {
-  return UseUnalignedAccesses;
-} UNSAFE_END
-
 #define DEFINE_GETSETOOP(java_type, Type) \
  \
 UNSAFE_ENTRY(java_type, Unsafe_Get##Type(JNIEnv *env, jobject unsafe, jobject obj, jlong offset)) { \
@@ -364,14 +355,15 @@ UNSAFE_LEAF(void, Unsafe_FullFence(JNIEnv *env, jobject unsafe)) {
 ////// Allocation requests
 
 UNSAFE_ENTRY(jobject, Unsafe_AllocateInstance(JNIEnv *env, jobject unsafe, jclass cls)) {
-  ThreadToNativeFromVM ttnfv(thread);
-  return env->AllocObject(cls);
+  instanceOop i = InstanceKlass::allocate_instance(JNIHandles::resolve_non_null(cls), CHECK_NULL);
+  return JNIHandles::make_local(env, i);
 } UNSAFE_END
 
 UNSAFE_ENTRY(jlong, Unsafe_AllocateMemory0(JNIEnv *env, jobject unsafe, jlong size)) {
   size_t sz = (size_t)size;
 
-  sz = align_up(sz, HeapWordSize);
+  assert(is_aligned(sz, HeapWordSize), "sz not aligned");
+
   void* x = os::malloc(sz, mtOther);
 
   return addr_to_java(x);
@@ -380,7 +372,8 @@ UNSAFE_ENTRY(jlong, Unsafe_AllocateMemory0(JNIEnv *env, jobject unsafe, jlong si
 UNSAFE_ENTRY(jlong, Unsafe_ReallocateMemory0(JNIEnv *env, jobject unsafe, jlong addr, jlong size)) {
   void* p = addr_from_java(addr);
   size_t sz = (size_t)size;
-  sz = align_up(sz, HeapWordSize);
+
+  assert(is_aligned(sz, HeapWordSize), "sz not aligned");
 
   void* x = os::realloc(p, sz, mtOther);
 
@@ -410,8 +403,14 @@ UNSAFE_ENTRY(void, Unsafe_CopyMemory0(JNIEnv *env, jobject unsafe, jobject srcOb
 
   void* src = index_oop_from_field_offset_long(srcp, srcOffset);
   void* dst = index_oop_from_field_offset_long(dstp, dstOffset);
-
-  Copy::conjoint_memory_atomic(src, dst, sz);
+  {
+    GuardUnsafeAccess guard(thread);
+    if (StubRoutines::unsafe_arraycopy() != NULL) {
+      StubRoutines::UnsafeArrayCopy_stub()(src, dst, sz);
+    } else {
+      Copy::conjoint_memory_atomic(src, dst, sz);
+    }
+  }
 } UNSAFE_END
 
 // This function is a leaf since if the source and destination are both in native memory
@@ -427,7 +426,11 @@ UNSAFE_LEAF(void, Unsafe_CopySwapMemory0(JNIEnv *env, jobject unsafe, jobject sr
     address src = (address)srcOffset;
     address dst = (address)dstOffset;
 
-    Copy::conjoint_swap(src, dst, sz, esz);
+    {
+      JavaThread* thread = JavaThread::thread_from_jni_environment(env);
+      GuardUnsafeAccess guard(thread);
+      Copy::conjoint_swap(src, dst, sz, esz);
+    }
   } else {
     // At least one of src/dst are on heap, transition to VM to access raw pointers
 
@@ -438,20 +441,55 @@ UNSAFE_LEAF(void, Unsafe_CopySwapMemory0(JNIEnv *env, jobject unsafe, jobject sr
       address src = (address)index_oop_from_field_offset_long(srcp, srcOffset);
       address dst = (address)index_oop_from_field_offset_long(dstp, dstOffset);
 
-      Copy::conjoint_swap(src, dst, sz, esz);
+      {
+        GuardUnsafeAccess guard(thread);
+        Copy::conjoint_swap(src, dst, sz, esz);
+      }
     } JVM_END
   }
 } UNSAFE_END
 
+UNSAFE_LEAF (void, Unsafe_WriteBack0(JNIEnv *env, jobject unsafe, jlong line)) {
+  assert(VM_Version::supports_data_cache_line_flush(), "should not get here");
+#ifdef ASSERT
+  if (TraceMemoryWriteback) {
+    tty->print_cr("Unsafe: writeback 0x%p", addr_from_java(line));
+  }
+#endif
+
+  assert(StubRoutines::data_cache_writeback() != NULL, "sanity");
+  (StubRoutines::DataCacheWriteback_stub())(addr_from_java(line));
+} UNSAFE_END
+
+static void doWriteBackSync0(bool is_pre)
+{
+  assert(StubRoutines::data_cache_writeback_sync() != NULL, "sanity");
+  (StubRoutines::DataCacheWritebackSync_stub())(is_pre);
+}
+
+UNSAFE_LEAF (void, Unsafe_WriteBackPreSync0(JNIEnv *env, jobject unsafe)) {
+  assert(VM_Version::supports_data_cache_line_flush(), "should not get here");
+#ifdef ASSERT
+  if (TraceMemoryWriteback) {
+      tty->print_cr("Unsafe: writeback pre-sync");
+  }
+#endif
+
+  doWriteBackSync0(true);
+} UNSAFE_END
+
+UNSAFE_LEAF (void, Unsafe_WriteBackPostSync0(JNIEnv *env, jobject unsafe)) {
+  assert(VM_Version::supports_data_cache_line_flush(), "should not get here");
+#ifdef ASSERT
+  if (TraceMemoryWriteback) {
+    tty->print_cr("Unsafe: writeback pre-sync");
+  }
+#endif
+
+  doWriteBackSync0(false);
+} UNSAFE_END
+
 ////// Random queries
-
-UNSAFE_LEAF(jint, Unsafe_AddressSize0(JNIEnv *env, jobject unsafe)) {
-  return sizeof(void*);
-} UNSAFE_END
-
-UNSAFE_LEAF(jint, Unsafe_PageSize()) {
-  return os::vm_page_size();
-} UNSAFE_END
 
 static jlong find_field_offset(jclass clazz, jstring name, TRAPS) {
   assert(clazz != NULL, "clazz must not be NULL");
@@ -634,7 +672,7 @@ static jclass Unsafe_DefineClass_impl(JNIEnv *env, jstring name, jbyteArray data
     ClassLoader::unsafe_defineClassCallCounter()->inc();
   }
 
-  body = NEW_C_HEAP_ARRAY(jbyte, length, mtInternal);
+  body = NEW_C_HEAP_ARRAY_RETURN_NULL(jbyte, length, mtInternal);
   if (body == NULL) {
     throw_new(env, "java/lang/OutOfMemoryError");
     return 0;
@@ -650,7 +688,7 @@ static jclass Unsafe_DefineClass_impl(JNIEnv *env, jstring name, jbyteArray data
     int unicode_len = env->GetStringLength(name);
 
     if (len >= sizeof(buf)) {
-      utfName = NEW_C_HEAP_ARRAY(char, len + 1, mtInternal);
+      utfName = NEW_C_HEAP_ARRAY_RETURN_NULL(char, len + 1, mtInternal);
       if (utfName == NULL) {
         throw_new(env, "java/lang/OutOfMemoryError");
         goto free_body;
@@ -755,7 +793,7 @@ Unsafe_DefineAnonymousClass_impl(JNIEnv *env,
 
   int class_bytes_length = (int) length;
 
-  u1* class_bytes = NEW_C_HEAP_ARRAY(u1, length, mtInternal);
+  u1* class_bytes = NEW_C_HEAP_ARRAY_RETURN_NULL(u1, length, mtInternal);
   if (class_bytes == NULL) {
     THROW_0(vmSymbols::java_lang_OutOfMemoryError());
   }
@@ -814,12 +852,19 @@ Unsafe_DefineAnonymousClass_impl(JNIEnv *env,
   ClassFileStream st(class_bytes, class_bytes_length, host_source, ClassFileStream::verify);
 
   Symbol* no_class_name = NULL;
+  ClassLoadInfo cl_info(host_domain,
+                        InstanceKlass::cast(host_klass),
+                        cp_patches,
+                        NULL,     // dynamic_nest_host
+                        Handle(), // classData
+                        false,    // is_hidden
+                        false,    // is_strong_hidden
+                        true);    // can_access_vm_annotations
+
   Klass* anonk = SystemDictionary::parse_stream(no_class_name,
                                                 host_loader,
-                                                host_domain,
                                                 &st,
-                                                InstanceKlass::cast(host_klass),
-                                                cp_patches,
+                                                cl_info,
                                                 CHECK_NULL);
   if (anonk == NULL) {
     return NULL;
@@ -840,9 +885,7 @@ UNSAFE_ENTRY(jclass, Unsafe_DefineAnonymousClass0(JNIEnv *env, jobject unsafe, j
   }
 
   // try/finally clause:
-  if (temp_alloc != NULL) {
-    FREE_C_HEAP_ARRAY(u1, temp_alloc);
-  }
+  FREE_C_HEAP_ARRAY(u1, temp_alloc);
 
   // The anonymous class loader data has been artificially been kept alive to
   // this point.   The mirror and any instances of this class have to keep
@@ -870,7 +913,7 @@ UNSAFE_ENTRY(jobject, Unsafe_CompareAndExchangeReference(JNIEnv *env, jobject un
   oop e = JNIHandles::resolve(e_h);
   oop p = JNIHandles::resolve(obj);
   assert_field_offset_sane(p, offset);
-  oop res = HeapAccess<ON_UNKNOWN_OOP_REF>::oop_atomic_cmpxchg_at(x, p, (ptrdiff_t)offset, e);
+  oop res = HeapAccess<ON_UNKNOWN_OOP_REF>::oop_atomic_cmpxchg_at(p, (ptrdiff_t)offset, e, x);
   return JNIHandles::make_local(env, res);
 } UNSAFE_END
 
@@ -878,10 +921,10 @@ UNSAFE_ENTRY(jint, Unsafe_CompareAndExchangeInt(JNIEnv *env, jobject unsafe, job
   oop p = JNIHandles::resolve(obj);
   if (p == NULL) {
     volatile jint* addr = (volatile jint*)index_oop_from_field_offset_long(p, offset);
-    return RawAccess<>::atomic_cmpxchg(x, addr, e);
+    return RawAccess<>::atomic_cmpxchg(addr, e, x);
   } else {
     assert_field_offset_sane(p, offset);
-    return HeapAccess<>::atomic_cmpxchg_at(x, p, (ptrdiff_t)offset, e);
+    return HeapAccess<>::atomic_cmpxchg_at(p, (ptrdiff_t)offset, e, x);
   }
 } UNSAFE_END
 
@@ -889,10 +932,10 @@ UNSAFE_ENTRY(jlong, Unsafe_CompareAndExchangeLong(JNIEnv *env, jobject unsafe, j
   oop p = JNIHandles::resolve(obj);
   if (p == NULL) {
     volatile jlong* addr = (volatile jlong*)index_oop_from_field_offset_long(p, offset);
-    return RawAccess<>::atomic_cmpxchg(x, addr, e);
+    return RawAccess<>::atomic_cmpxchg(addr, e, x);
   } else {
     assert_field_offset_sane(p, offset);
-    return HeapAccess<>::atomic_cmpxchg_at(x, p, (ptrdiff_t)offset, e);
+    return HeapAccess<>::atomic_cmpxchg_at(p, (ptrdiff_t)offset, e, x);
   }
 } UNSAFE_END
 
@@ -901,18 +944,18 @@ UNSAFE_ENTRY(jboolean, Unsafe_CompareAndSetReference(JNIEnv *env, jobject unsafe
   oop e = JNIHandles::resolve(e_h);
   oop p = JNIHandles::resolve(obj);
   assert_field_offset_sane(p, offset);
-  oop ret = HeapAccess<ON_UNKNOWN_OOP_REF>::oop_atomic_cmpxchg_at(x, p, (ptrdiff_t)offset, e);
-  return oopDesc::equals(ret, e);
+  oop ret = HeapAccess<ON_UNKNOWN_OOP_REF>::oop_atomic_cmpxchg_at(p, (ptrdiff_t)offset, e, x);
+  return ret == e;
 } UNSAFE_END
 
 UNSAFE_ENTRY(jboolean, Unsafe_CompareAndSetInt(JNIEnv *env, jobject unsafe, jobject obj, jlong offset, jint e, jint x)) {
   oop p = JNIHandles::resolve(obj);
   if (p == NULL) {
     volatile jint* addr = (volatile jint*)index_oop_from_field_offset_long(p, offset);
-    return RawAccess<>::atomic_cmpxchg(x, addr, e) == e;
+    return RawAccess<>::atomic_cmpxchg(addr, e, x) == e;
   } else {
     assert_field_offset_sane(p, offset);
-    return HeapAccess<>::atomic_cmpxchg_at(x, p, (ptrdiff_t)offset, e) == e;
+    return HeapAccess<>::atomic_cmpxchg_at(p, (ptrdiff_t)offset, e, x) == e;
   }
 } UNSAFE_END
 
@@ -920,10 +963,10 @@ UNSAFE_ENTRY(jboolean, Unsafe_CompareAndSetLong(JNIEnv *env, jobject unsafe, job
   oop p = JNIHandles::resolve(obj);
   if (p == NULL) {
     volatile jlong* addr = (volatile jlong*)index_oop_from_field_offset_long(p, offset);
-    return RawAccess<>::atomic_cmpxchg(x, addr, e) == e;
+    return RawAccess<>::atomic_cmpxchg(addr, e, x) == e;
   } else {
     assert_field_offset_sane(p, offset);
-    return HeapAccess<>::atomic_cmpxchg_at(x, p, (ptrdiff_t)offset, e) == e;
+    return HeapAccess<>::atomic_cmpxchg_at(p, (ptrdiff_t)offset, e, x) == e;
   }
 } UNSAFE_END
 
@@ -968,27 +1011,16 @@ UNSAFE_ENTRY(void, Unsafe_Unpark(JNIEnv *env, jobject unsafe, jobject jthread)) 
     (void) tlh.cv_internal_thread_to_JavaThread(jthread, &thr, &java_thread);
     if (java_thread != NULL) {
       // This is a valid oop.
-      jlong lp = java_lang_Thread::park_event(java_thread);
-      if (lp != 0) {
-        // This cast is OK even though the jlong might have been read
-        // non-atomically on 32bit systems, since there, one word will
-        // always be zero anyway and the value set is always the same
-        p = (Parker*)addr_from_java(lp);
-      } else {
-        // Not cached in the java.lang.Thread oop yet (could be an
-        // older version of library).
-        if (thr != NULL) {
-          // The JavaThread is alive.
-          p = thr->parker();
-          if (p != NULL) {
-            // Cache the Parker in the java.lang.Thread oop for next time.
-            java_lang_Thread::set_park_event(java_thread, addr_to_java(p));
-          }
-        }
+      if (thr != NULL) {
+        // The JavaThread is alive.
+        p = thr->parker();
       }
     }
   } // ThreadsListHandle is destroyed here.
 
+  // 'p' points to type-stable-memory if non-NULL. If the target
+  // thread terminates before we get here the new user of this
+  // Parker will get a 'spurious' unpark - which is perfectly valid.
   if (p != NULL) {
     HOTSPOT_THREAD_UNPARK((uintptr_t) p);
     p->unpark();
@@ -1072,8 +1104,6 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
     {CC "ensureClassInitialized0", CC "(" CLS ")V",      FN_PTR(Unsafe_EnsureClassInitialized0)},
     {CC "arrayBaseOffset0",   CC "(" CLS ")I",           FN_PTR(Unsafe_ArrayBaseOffset0)},
     {CC "arrayIndexScale0",   CC "(" CLS ")I",           FN_PTR(Unsafe_ArrayIndexScale0)},
-    {CC "addressSize0",       CC "()I",                  FN_PTR(Unsafe_AddressSize0)},
-    {CC "pageSize",           CC "()I",                  FN_PTR(Unsafe_PageSize)},
 
     {CC "defineClass0",       CC "(" DC_Args ")" CLS,    FN_PTR(Unsafe_DefineClass0)},
     {CC "allocateInstance",   CC "(" CLS ")" OBJ,        FN_PTR(Unsafe_AllocateInstance)},
@@ -1092,6 +1122,9 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
 
     {CC "copyMemory0",        CC "(" OBJ "J" OBJ "JJ)V", FN_PTR(Unsafe_CopyMemory0)},
     {CC "copySwapMemory0",    CC "(" OBJ "J" OBJ "JJJ)V", FN_PTR(Unsafe_CopySwapMemory0)},
+    {CC "writeback0",         CC "(" "J" ")V",           FN_PTR(Unsafe_WriteBack0)},
+    {CC "writebackPreSync0",  CC "()V",                  FN_PTR(Unsafe_WriteBackPreSync0)},
+    {CC "writebackPostSync0", CC "()V",                  FN_PTR(Unsafe_WriteBackPostSync0)},
     {CC "setMemory0",         CC "(" OBJ "JJB)V",        FN_PTR(Unsafe_SetMemory0)},
 
     {CC "defineAnonymousClass0", CC "(" DAC_Args ")" CLS, FN_PTR(Unsafe_DefineAnonymousClass0)},
@@ -1101,9 +1134,6 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
     {CC "loadFence",          CC "()V",                  FN_PTR(Unsafe_LoadFence)},
     {CC "storeFence",         CC "()V",                  FN_PTR(Unsafe_StoreFence)},
     {CC "fullFence",          CC "()V",                  FN_PTR(Unsafe_FullFence)},
-
-    {CC "isBigEndian0",       CC "()Z",                  FN_PTR(Unsafe_isBigEndian0)},
-    {CC "unalignedAccess0",   CC "()Z",                  FN_PTR(Unsafe_unalignedAccess0)}
 };
 
 #undef CC

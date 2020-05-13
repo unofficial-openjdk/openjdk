@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,13 +38,23 @@ import jdk.test.lib.process.ProcessTools;
  * @modules java.base/jdk.internal.misc
  * @library /test/lib
  * @requires (vm.debug == true) & (os.family != "windows")
+ * @run driver TimeoutInErrorHandlingTest
  * @author Thomas Stuefe (SAP)
  */
 
 public class TimeoutInErrorHandlingTest {
 
+    public static final boolean verbose = System.getProperty("verbose") != null;
+    // 16 seconds for hs_err generation timeout = 4 seconds per step timeout
+    public static final int ERROR_LOG_TIMEOUT = 16;
 
     public static void main(String[] args) throws Exception {
+
+        int error_log_timeout = ERROR_LOG_TIMEOUT;
+        if ("SunOS".equals(System.getProperty("os.name"))) {
+            // Give Solaris machines 3X as much time:
+            error_log_timeout *= 3;
+        }
 
         /* Start the VM and let it crash. Specify TestUnresponsiveErrorHandler which will
          * let five subsequent error reporting steps hang. The Timeout handling triggered
@@ -72,15 +82,21 @@ public class TimeoutInErrorHandlingTest {
             "-Xmx100M",
             "-XX:ErrorHandlerTest=14",
             "-XX:+TestUnresponsiveErrorHandler",
-            "-XX:ErrorLogTimeout=16", // 16 seconds big timeout = 4 seconds per little timeout
+            "-XX:ErrorLogTimeout=" + error_log_timeout,
             "-XX:-CreateCoredumpOnCrash",
             "-version");
 
         OutputAnalyzer output_detail = new OutputAnalyzer(pb.start());
 
+        if (verbose) {
+            System.err.println("<begin cmd output>");
+            System.err.println(output_detail.getOutput());
+            System.err.println("<end cmd output>");
+        }
+
         // we should have crashed with a SIGSEGV
         output_detail.shouldMatch("# A fatal error has been detected by the Java Runtime Environment:.*");
-        output_detail.shouldMatch("# +(?:SIGSEGV|EXCEPTION_ACCESS_VIOLATION).*");
+        output_detail.shouldMatch("# +(?:SIGSEGV|SIGBUS|EXCEPTION_ACCESS_VIOLATION).*");
 
         // VM should have been aborted by WatcherThread
         output_detail.shouldMatch(".*timer expired, abort.*");
@@ -88,11 +104,21 @@ public class TimeoutInErrorHandlingTest {
         // extract hs-err file
         String hs_err_file = output_detail.firstMatch("# *(\\S*hs_err_pid\\d+\\.log)", 1);
         if (hs_err_file == null) {
+            if (!verbose) {
+                System.err.println("<begin cmd output>");
+                System.err.println(output_detail.getOutput());
+                System.err.println("<end cmd output>");
+            }
             throw new RuntimeException("Did not find hs-err file in output.\n");
         }
 
         File f = new File(hs_err_file);
         if (!f.exists()) {
+            if (!verbose) {
+                System.err.println("<begin cmd output>");
+                System.err.println(output_detail.getOutput());
+                System.err.println("<end cmd output>");
+            }
             throw new RuntimeException("hs-err file missing at "
                 + f.getAbsolutePath() + ".\n");
         }
@@ -104,7 +130,6 @@ public class TimeoutInErrorHandlingTest {
         String line = null;
 
 
-
         Pattern [] pattern = new Pattern[] {
             Pattern.compile(".*timeout occurred during error reporting in step.*"),
             Pattern.compile(".*timeout occurred during error reporting in step.*")
@@ -112,18 +137,31 @@ public class TimeoutInErrorHandlingTest {
         int currentPattern = 0;
 
         String lastLine = null;
+        StringBuilder saved_hs_err = new StringBuilder();
         while ((line = br.readLine()) != null) {
+            saved_hs_err.append(line + System.lineSeparator());
             if (currentPattern < pattern.length) {
-              if (pattern[currentPattern].matcher(line).matches()) {
-                System.out.println("Found: " + line + ".");
-                currentPattern ++;
-              }
+                if (pattern[currentPattern].matcher(line).matches()) {
+                    System.out.println("Found: " + line + ".");
+                    currentPattern ++;
+                }
             }
             lastLine = line;
         }
         br.close();
 
+        if (verbose) {
+            System.err.println("<begin hs_err contents>");
+            System.err.print(saved_hs_err);
+            System.err.println("<end hs_err contents>");
+        }
+
         if (currentPattern < pattern.length) {
+            if (!verbose) {
+                System.err.println("<begin hs_err contents>");
+                System.err.print(saved_hs_err);
+                System.err.println("<end hs_err contents>");
+            }
             throw new RuntimeException("hs-err file incomplete (first missing pattern: " +  currentPattern + ")");
         }
 
@@ -132,4 +170,3 @@ public class TimeoutInErrorHandlingTest {
     }
 
 }
-

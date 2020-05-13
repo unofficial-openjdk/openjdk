@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,8 +46,8 @@ import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.java.MethodCallTargetNode;
 import org.graalvm.compiler.nodes.java.NewArrayNode;
 import org.graalvm.compiler.nodes.java.StoreIndexedNode;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.phases.VerifyPhase;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 
 import jdk.vm.ci.meta.Constant;
 import jdk.vm.ci.meta.MetaAccessProvider;
@@ -68,7 +68,7 @@ import jdk.vm.ci.meta.ResolvedJavaType;
  * {@link DebugContext#log(String)} , {@link DebugContext#dump(int, Object, String)},
  * {@link DebugContext#logAndIndent(String)} and {@link DebugContext#verify(Object, String)}.
  */
-public class VerifyDebugUsage extends VerifyPhase<PhaseContext> {
+public class VerifyDebugUsage extends VerifyPhase<CoreProviders> {
 
     @Override
     public boolean checkContract() {
@@ -78,7 +78,7 @@ public class VerifyDebugUsage extends VerifyPhase<PhaseContext> {
     MetaAccessProvider metaAccess;
 
     @Override
-    protected boolean verify(StructuredGraph graph, PhaseContext context) {
+    protected void verify(StructuredGraph graph, CoreProviders context) {
         metaAccess = context.getMetaAccess();
         ResolvedJavaType debugType = metaAccess.lookupJavaType(DebugContext.class);
         ResolvedJavaType nodeType = metaAccess.lookupJavaType(Node.class);
@@ -108,10 +108,9 @@ public class VerifyDebugUsage extends VerifyPhase<PhaseContext> {
                 }
             }
         }
-        return true;
     }
 
-    private void verifyParameters(MethodCallTargetNode callTarget, StructuredGraph callerGraph, NodeInputList<? extends ValueNode> args, ResolvedJavaType stringType, int startArgIdx) {
+    protected void verifyParameters(MethodCallTargetNode callTarget, StructuredGraph callerGraph, NodeInputList<? extends ValueNode> args, ResolvedJavaType stringType, int startArgIdx) {
         if (callTarget.targetMethod().isVarArgs() && args.get(args.count() - 1) instanceof NewArrayNode) {
             // unpack the arguments to the var args
             List<ValueNode> unpacked = new ArrayList<>(args.snapshot());
@@ -150,7 +149,9 @@ public class VerifyDebugUsage extends VerifyPhase<PhaseContext> {
                     "org.graalvm.compiler.truffle.compiler.TruffleCompilerImpl.compilePEGraph",
                     "org.graalvm.compiler.core.test.VerifyDebugUsageTest$ValidDumpUsagePhase.run",
                     "org.graalvm.compiler.core.test.VerifyDebugUsageTest$InvalidConcatDumpUsagePhase.run",
-                    "org.graalvm.compiler.core.test.VerifyDebugUsageTest$InvalidDumpUsagePhase.run"));
+                    "org.graalvm.compiler.core.test.VerifyDebugUsageTest$InvalidDumpUsagePhase.run",
+                    "org.graalvm.compiler.hotspot.SymbolicSnippetEncoder.verifySnippetEncodeDecode",
+                    "org.graalvm.compiler.truffle.compiler.phases.inlining.CallTree.dumpBasic"));
 
     /**
      * The set of methods allowed to call a {@code Debug.dump(...)} method with the {@code level}
@@ -165,7 +166,10 @@ public class VerifyDebugUsage extends VerifyPhase<PhaseContext> {
                     "org.graalvm.compiler.core.GraalCompiler.emitFrontEnd",
                     "org.graalvm.compiler.phases.BasePhase.dumpAfter",
                     "org.graalvm.compiler.replacements.ReplacementsImpl$GraphMaker.makeGraph",
-                    "org.graalvm.compiler.replacements.SnippetTemplate.instantiate"));
+                    "org.graalvm.compiler.replacements.SnippetTemplate.instantiate",
+                    "org.graalvm.compiler.replacements.SnippetTemplate.<init>",
+                    "org.graalvm.compiler.hotspot.SymbolicSnippetEncoder.verifySnippetEncodeDecode",
+                    "org.graalvm.compiler.truffle.compiler.phases.inlining.CallTree.dumpInfo"));
 
     private void verifyParameters(StructuredGraph callerGraph, MethodCallTargetNode debugCallTarget, List<? extends ValueNode> args, ResolvedJavaType stringType, int startArgIdx,
                     int varArgsIndex) {

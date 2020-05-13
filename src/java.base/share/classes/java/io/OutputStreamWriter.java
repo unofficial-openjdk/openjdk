@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,7 +87,7 @@ public class OutputStreamWriter extends Writer {
      *         The name of a supported
      *         {@link java.nio.charset.Charset charset}
      *
-     * @exception  UnsupportedEncodingException
+     * @throws     UnsupportedEncodingException
      *             If the named encoding is not supported
      */
     public OutputStreamWriter(OutputStream out, String charsetName)
@@ -106,11 +106,8 @@ public class OutputStreamWriter extends Writer {
      */
     public OutputStreamWriter(OutputStream out) {
         super(out);
-        try {
-            se = StreamEncoder.forOutputStreamWriter(out, this, (String)null);
-        } catch (UnsupportedEncodingException e) {
-            throw new Error(e);
-        }
+        se = StreamEncoder.forOutputStreamWriter(out, this,
+                Charset.defaultCharset());
     }
 
     /**
@@ -164,7 +161,7 @@ public class OutputStreamWriter extends Writer {
      * been closed. </p>
      *
      * @return The historical name of this encoding, or possibly
-     *         <code>null</code> if the stream has been closed
+     *         {@code null} if the stream has been closed
      *
      * @see java.nio.charset.Charset
      *
@@ -187,7 +184,7 @@ public class OutputStreamWriter extends Writer {
     /**
      * Writes a single character.
      *
-     * @exception  IOException  If an I/O error occurs
+     * @throws     IOException  If an I/O error occurs
      */
     public void write(int c) throws IOException {
         se.write(c);
@@ -248,7 +245,7 @@ public class OutputStreamWriter extends Writer {
     /**
      * Flushes the stream.
      *
-     * @exception  IOException  If an I/O error occurs
+     * @throws     IOException  If an I/O error occurs
      */
     public void flush() throws IOException {
         se.flush();

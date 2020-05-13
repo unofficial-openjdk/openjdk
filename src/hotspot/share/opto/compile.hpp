@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,12 +28,11 @@
 #include "asm/codeBuffer.hpp"
 #include "ci/compilerInterface.hpp"
 #include "code/debugInfoRec.hpp"
-#include "code/exceptionHandlerTable.hpp"
 #include "compiler/compilerOracle.hpp"
 #include "compiler/compileBroker.hpp"
+#include "compiler/compilerEvent.hpp"
 #include "libadt/dict.hpp"
 #include "libadt/vectset.hpp"
-#include "jfr/jfrEvents.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/methodData.hpp"
 #include "opto/idealGraphPrinter.hpp"
@@ -48,13 +47,12 @@
 class AddPNode;
 class Block;
 class Bundle;
-class C2Compiler;
 class CallGenerator;
 class CloneMap;
 class ConnectionGraph;
+class IdealGraphPrinter;
 class InlineTree;
 class Int_Array;
-class LoadBarrierNode;
 class Matcher;
 class MachConstantNode;
 class MachConstantBaseNode;
@@ -72,6 +70,7 @@ class PhaseIterGVN;
 class PhaseRegAlloc;
 class PhaseCCP;
 class PhaseCCP_DCE;
+class PhaseOutput;
 class RootNode;
 class relocInfo;
 class Scope;
@@ -84,6 +83,7 @@ class TypeInt;
 class TypePtr;
 class TypeOopPtr;
 class TypeFunc;
+class TypeVect;
 class Unique_Node_List;
 class nmethod;
 class WarmCallInfo;
@@ -93,11 +93,11 @@ struct Final_Reshape_Counts;
 enum LoopOptsMode {
   LoopOptsDefault,
   LoopOptsNone,
+  LoopOptsMaxUnroll,
   LoopOptsShenandoahExpand,
   LoopOptsShenandoahPostExpand,
   LoopOptsSkipSplitIf,
-  LoopOptsVerify,
-  LoopOptsLastRound
+  LoopOptsVerify
 };
 
 typedef unsigned int node_idx_t;
@@ -240,121 +240,6 @@ class Compile : public Phase {
     trapHistLength = MethodData::_trap_hist_limit
   };
 
-  // Constant entry of the constant table.
-  class Constant {
-  private:
-    BasicType _type;
-    union {
-      jvalue    _value;
-      Metadata* _metadata;
-    } _v;
-    int       _offset;         // offset of this constant (in bytes) relative to the constant table base.
-    float     _freq;
-    bool      _can_be_reused;  // true (default) if the value can be shared with other users.
-
-  public:
-    Constant() : _type(T_ILLEGAL), _offset(-1), _freq(0.0f), _can_be_reused(true) { _v._value.l = 0; }
-    Constant(BasicType type, jvalue value, float freq = 0.0f, bool can_be_reused = true) :
-      _type(type),
-      _offset(-1),
-      _freq(freq),
-      _can_be_reused(can_be_reused)
-    {
-      assert(type != T_METADATA, "wrong constructor");
-      _v._value = value;
-    }
-    Constant(Metadata* metadata, bool can_be_reused = true) :
-      _type(T_METADATA),
-      _offset(-1),
-      _freq(0.0f),
-      _can_be_reused(can_be_reused)
-    {
-      _v._metadata = metadata;
-    }
-
-    bool operator==(const Constant& other);
-
-    BasicType type()      const    { return _type; }
-
-    jint    get_jint()    const    { return _v._value.i; }
-    jlong   get_jlong()   const    { return _v._value.j; }
-    jfloat  get_jfloat()  const    { return _v._value.f; }
-    jdouble get_jdouble() const    { return _v._value.d; }
-    jobject get_jobject() const    { return _v._value.l; }
-
-    Metadata* get_metadata() const { return _v._metadata; }
-
-    int         offset()  const    { return _offset; }
-    void    set_offset(int offset) {        _offset = offset; }
-
-    float       freq()    const    { return _freq;         }
-    void    inc_freq(float freq)   {        _freq += freq; }
-
-    bool    can_be_reused() const  { return _can_be_reused; }
-  };
-
-  // Constant table.
-  class ConstantTable {
-  private:
-    GrowableArray<Constant> _constants;          // Constants of this table.
-    int                     _size;               // Size in bytes the emitted constant table takes (including padding).
-    int                     _table_base_offset;  // Offset of the table base that gets added to the constant offsets.
-    int                     _nof_jump_tables;    // Number of jump-tables in this constant table.
-
-    static int qsort_comparator(Constant* a, Constant* b);
-
-    // We use negative frequencies to keep the order of the
-    // jump-tables in which they were added.  Otherwise we get into
-    // trouble with relocation.
-    float next_jump_table_freq() { return -1.0f * (++_nof_jump_tables); }
-
-  public:
-    ConstantTable() :
-      _size(-1),
-      _table_base_offset(-1),  // We can use -1 here since the constant table is always bigger than 2 bytes (-(size / 2), see MachConstantBaseNode::emit).
-      _nof_jump_tables(0)
-    {}
-
-    int size() const { assert(_size != -1, "not calculated yet"); return _size; }
-
-    int calculate_table_base_offset() const;  // AD specific
-    void set_table_base_offset(int x)  { assert(_table_base_offset == -1 || x == _table_base_offset, "can't change"); _table_base_offset = x; }
-    int      table_base_offset() const { assert(_table_base_offset != -1, "not set yet");                      return _table_base_offset; }
-
-    void emit(CodeBuffer& cb);
-
-    // Returns the offset of the last entry (the top) of the constant table.
-    int  top_offset() const { assert(_constants.top().offset() != -1, "not bound yet"); return _constants.top().offset(); }
-
-    void calculate_offsets_and_size();
-    int  find_offset(Constant& con) const;
-
-    void     add(Constant& con);
-    Constant add(MachConstantNode* n, BasicType type, jvalue value);
-    Constant add(Metadata* metadata);
-    Constant add(MachConstantNode* n, MachOper* oper);
-    Constant add(MachConstantNode* n, jint i) {
-      jvalue value; value.i = i;
-      return add(n, T_INT, value);
-    }
-    Constant add(MachConstantNode* n, jlong j) {
-      jvalue value; value.j = j;
-      return add(n, T_LONG, value);
-    }
-    Constant add(MachConstantNode* n, jfloat f) {
-      jvalue value; value.f = f;
-      return add(n, T_FLOAT, value);
-    }
-    Constant add(MachConstantNode* n, jdouble d) {
-      jvalue value; value.d = d;
-      return add(n, T_DOUBLE, value);
-    }
-
-    // Jump-table
-    Constant  add_jump_table(MachConstantNode* n);
-    void     fill_jump_table(CodeBuffer& cb, MachConstantNode* n, GrowableArray<Label*> labels) const;
-  };
-
  private:
   // Fixed parameters to this compilation.
   const int             _compile_id;
@@ -376,9 +261,6 @@ class Compile : public Phase {
   int                   _fixed_slots;           // count of frame slots not allocated by the register
                                                 // allocator i.e. locks, original deopt pc, etc.
   uintx                 _max_node_limit;        // Max unique node count during a single compilation.
-  // For deopt
-  int                   _orig_pc_slot;
-  int                   _orig_pc_slot_offset_in_bytes;
 
   int                   _major_progress;        // Count of something big happening
   bool                  _inlining_progress;     // progress doing incremental inlining?
@@ -409,6 +291,7 @@ class Compile : public Phase {
   bool                  _print_intrinsics;      // True if we should print intrinsics for this compilation
 #ifndef PRODUCT
   bool                  _trace_opto_output;
+  bool                  _print_ideal;
   bool                  _parsed_irreducible_loop; // True if ciTypeFlow detected irreducible loops during parsing
 #endif
   bool                  _has_irreducible_loop;  // Found irreducible loops
@@ -416,6 +299,7 @@ class Compile : public Phase {
   bool                  _has_method_handle_invokes; // True if this method has MethodHandle invokes.
   RTMState              _rtm_state;             // State of Restricted Transactional Memory usage
   int                   _loop_opts_cnt;         // loop opts round
+  bool                  _clinit_barrier_on_entry; // True if clinit barrier is needed on nmethod entry
 
   // Compilation environment.
   Arena                 _comp_arena;            // Arena with lifetime equivalent to Compile
@@ -433,6 +317,8 @@ class Compile : public Phase {
   ConnectionGraph*      _congraph;
 #ifndef PRODUCT
   IdealGraphPrinter*    _printer;
+  static IdealGraphPrinter* _debug_file_printer;
+  static IdealGraphPrinter* _debug_network_printer;
 #endif
 
 
@@ -455,7 +341,6 @@ class Compile : public Phase {
   Node*                 _recent_alloc_ctl;
 
   // Constant table
-  ConstantTable         _constant_table;        // The constant table for this compile.
   MachConstantBaseNode* _mach_constant_base_node;  // Constant table base node singleton.
 
 
@@ -476,7 +361,6 @@ class Compile : public Phase {
   Arena*                _type_arena;            // Alias for _Compile_types except in Initialize_shared()
   Dict*                 _type_dict;             // Intern table
   CloneMap              _clone_map;             // used for recording history of cloned nodes
-  void*                 _type_hwm;              // Last allocation (see Type::operator new/delete)
   size_t                _type_last_size;        // Last allocation size (see Type::operator new/delete)
   ciMethod*             _last_tf_m;             // Cache for
   const TypeFunc*       _last_tf;               //  TypeFunc::make
@@ -512,6 +396,8 @@ class Compile : public Phase {
     PrintInliningBuffer()
       : _cg(NULL) { _ss = new stringStream(); }
 
+    void freeStream() { _ss->~stringStream(); _ss = NULL; }
+
     stringStream* ss() const { return _ss; }
     CallGenerator* cg() const { return _cg; }
     void set_cg(CallGenerator* cg) { _cg = cg; }
@@ -533,6 +419,7 @@ class Compile : public Phase {
 
   void* _replay_inline_data; // Pointer to data loaded from file
 
+  void print_inlining_stream_free();
   void print_inlining_init();
   void print_inlining_reinit();
   void print_inlining_commit();
@@ -578,34 +465,16 @@ class Compile : public Phase {
  private:
   // Matching, CFG layout, allocation, code generation
   PhaseCFG*             _cfg;                   // Results of CFG finding
-  bool                  _select_24_bit_instr;   // We selected an instruction with a 24-bit result
-  bool                  _in_24_bit_fp_mode;     // We are emitting instructions with 24-bit results
   int                   _java_calls;            // Number of java calls in the method
   int                   _inner_loops;           // Number of inner loops in the method
   Matcher*              _matcher;               // Engine to map ideal to machine instructions
   PhaseRegAlloc*        _regalloc;              // Results of register allocation.
-  int                   _frame_slots;           // Size of total frame in stack slots
-  CodeOffsets           _code_offsets;          // Offsets into the code for various interesting entries
   RegMask               _FIRST_STACK_mask;      // All stack slots usable for spills (depends on frame layout)
   Arena*                _indexSet_arena;        // control IndexSet allocation within PhaseChaitin
   void*                 _indexSet_free_block_list; // free list of IndexSet bit blocks
   int                   _interpreter_frame_size;
 
-  uint                  _node_bundling_limit;
-  Bundle*               _node_bundling_base;    // Information for instruction bundling
-
-  // Instruction bits passed off to the VM
-  int                   _method_size;           // Size of nmethod code segment in bytes
-  CodeBuffer            _code_buffer;           // Where the code is assembled
-  int                   _first_block_size;      // Size of unvalidated entry point code / OSR poison code
-  ExceptionHandlerTable _handler_table;         // Table of native-code exception handlers
-  ImplicitExceptionTable _inc_table;            // Table of implicit null checks in native code
-  OopMapSet*            _oop_map_set;           // Table of oop maps (one for each safepoint location)
-  static int            _CompiledZap_count;     // counter compared against CompileZap[First/Last]
-  BufferBlob*           _scratch_buffer_blob;   // For temporary code buffers.
-  relocInfo*            _scratch_locs_memory;   // For temporary code buffers.
-  int                   _scratch_const_size;    // For temporary code buffers.
-  bool                  _in_scratch_emit_size;  // true when in scratch_emit_size.
+  PhaseOutput*          _output;
 
   void reshape_address(AddPNode* n);
 
@@ -616,6 +485,11 @@ class Compile : public Phase {
   static Compile* current() {
     return (Compile*) ciEnv::current()->compiler_data();
   }
+
+  int interpreter_frame_size() const            { return _interpreter_frame_size; }
+
+  PhaseOutput*      output() const              { return _output; }
+  void              set_output(PhaseOutput* o)  { _output = o; }
 
   // ID for this compilation.  Useful for setting breakpoints in the debugger.
   int               compile_id() const          { return _compile_id; }
@@ -645,6 +519,7 @@ class Compile : public Phase {
   address           stub_function() const       { return _stub_function; }
   const char*       stub_name() const           { return _stub_name; }
   address           stub_entry_point() const    { return _stub_entry_point; }
+  void          set_stub_entry_point(address z) { _stub_entry_point = z; }
 
   // Control of this compilation.
   int               fixed_slots() const         { assert(_fixed_slots >= 0, "");         return _fixed_slots; }
@@ -657,6 +532,7 @@ class Compile : public Phase {
   void          set_do_cleanup(bool z)          { _do_cleanup = z; }
   int               do_cleanup() const          { return _do_cleanup; }
   void          set_major_progress()            { _major_progress++; }
+  void          restore_major_progress(int progress) { _major_progress += progress; }
   void        clear_major_progress()            { _major_progress = 0; }
   int               max_inline_size() const     { return _max_inline_size; }
   void          set_freq_inline_size(int n)     { _freq_inline_size = n; }
@@ -714,6 +590,8 @@ class Compile : public Phase {
   bool          profile_rtm() const              { return _rtm_state == ProfileRTM; }
   uint              max_node_limit() const       { return (uint)_max_node_limit; }
   void          set_max_node_limit(uint n)       { _max_node_limit = n; }
+  bool              clinit_barrier_on_entry()       { return _clinit_barrier_on_entry; }
+  void          set_clinit_barrier_on_entry(bool z) { _clinit_barrier_on_entry = z; }
 
   // check the CompilerOracle for special behaviours for this compile
   bool          method_has_option(const char * option) {
@@ -722,6 +600,7 @@ class Compile : public Phase {
 
 #ifndef PRODUCT
   bool          trace_opto_output() const       { return _trace_opto_output; }
+  bool          print_ideal() const             { return _print_ideal; }
   bool              parsed_irreducible_loop() const { return _parsed_irreducible_loop; }
   void          set_parsed_irreducible_loop(bool z) { _parsed_irreducible_loop = z; }
   int _in_dump_cnt;  // Required for dumping ir nodes.
@@ -744,34 +623,47 @@ class Compile : public Phase {
     C->_latest_stage_start_counter.stamp();
   }
 
-  void print_method(CompilerPhaseType cpt, int level = 1) {
+  bool should_print(int level = 1) {
+#ifndef PRODUCT
+    return (_printer && _printer->should_print(level));
+#else
+    return false;
+#endif
+  }
+
+  void print_method(CompilerPhaseType cpt, int level = 1, int idx = 0) {
     EventCompilerPhase event;
     if (event.should_commit()) {
-      event.set_starttime(C->_latest_stage_start_counter);
-      event.set_phase((u1) cpt);
-      event.set_compileId(C->_compile_id);
-      event.set_phaseLevel(level);
-      event.commit();
+      CompilerEvent::PhaseEvent::post(event, C->_latest_stage_start_counter, cpt, C->_compile_id, level);
     }
 
-
 #ifndef PRODUCT
-    if (_printer && _printer->should_print(level)) {
-      _printer->print_method(CompilerPhaseTypeHelper::to_string(cpt), level);
+    if (should_print(level)) {
+      char output[1024];
+      if (idx != 0) {
+        jio_snprintf(output, sizeof(output), "%s:%d", CompilerPhaseTypeHelper::to_string(cpt), idx);
+      } else {
+        jio_snprintf(output, sizeof(output), "%s", CompilerPhaseTypeHelper::to_string(cpt));
+      }
+      _printer->print_method(output, level);
     }
 #endif
     C->_latest_stage_start_counter.stamp();
   }
 
+#ifndef PRODUCT
+  void igv_print_method_to_file(const char* phase_name = "Debug", bool append = false);
+  void igv_print_method_to_network(const char* phase_name = "Debug");
+  static IdealGraphPrinter* debug_file_printer() { return _debug_file_printer; }
+  static IdealGraphPrinter* debug_network_printer() { return _debug_network_printer; }
+#endif
+
   void end_method(int level = 1) {
     EventCompilerPhase event;
     if (event.should_commit()) {
-      event.set_starttime(C->_latest_stage_start_counter);
-      event.set_phase((u1) PHASE_END);
-      event.set_compileId(C->_compile_id);
-      event.set_phaseLevel(level);
-      event.commit();
+      CompilerEvent::PhaseEvent::post(event, C->_latest_stage_start_counter, PHASE_END, C->_compile_id, level);
     }
+
 #ifndef PRODUCT
     if (_printer && _printer->should_print(level)) {
       _printer->end_method();
@@ -835,6 +727,8 @@ class Compile : public Phase {
   Node* opaque4_node(int idx) const { return _opaque4_nodes->at(idx);  }
   int   opaque4_count()       const { return _opaque4_nodes->length(); }
   void  remove_opaque4_nodes(PhaseIterGVN &igvn);
+
+  void sort_macro_nodes();
 
   // remove the opaque nodes that protect the predicates so that the unused checks and
   // uncommon traps will be eliminated from the graph.
@@ -900,9 +794,7 @@ class Compile : public Phase {
   void         record_dead_node(uint idx)  { if (_dead_node_list.test_set(idx)) return;
                                              _dead_node_count++;
                                            }
-  bool         is_dead_node(uint idx)      { return _dead_node_list.test(idx) != 0; }
-  uint         dead_node_count()           { return _dead_node_count; }
-  void         reset_dead_node_list()      { _dead_node_list.Reset();
+  void         reset_dead_node_list()      { _dead_node_list.reset();
                                              _dead_node_count = 0;
                                            }
   uint          live_nodes() const         {
@@ -919,9 +811,6 @@ class Compile : public Phase {
   void         record_modified_node(Node* n) NOT_DEBUG_RETURN;
   void         remove_modified_node(Node* n) NOT_DEBUG_RETURN;
   DEBUG_ONLY( Unique_Node_List*   modified_nodes() const { return _modified_nodes; } )
-
-  // Constant table
-  ConstantTable&   constant_table() { return _constant_table; }
 
   MachConstantBaseNode*     mach_constant_base_node();
   bool                  has_mach_constant_base_node() const { return _mach_constant_base_node != NULL; }
@@ -959,14 +848,12 @@ class Compile : public Phase {
   // Type management
   Arena*            type_arena()                { return _type_arena; }
   Dict*             type_dict()                 { return _type_dict; }
-  void*             type_hwm()                  { return _type_hwm; }
   size_t            type_last_size()            { return _type_last_size; }
   int               num_alias_types()           { return _num_alias_types; }
 
   void          init_type_arena()                       { _type_arena = &_Compile_types; }
   void          set_type_arena(Arena* a)                { _type_arena = a; }
   void          set_type_dict(Dict* d)                  { _type_dict = d; }
-  void          set_type_hwm(void* p)                   { _type_hwm = p; }
   void          set_type_last_size(size_t sz)           { _type_last_size = sz; }
 
   const TypeFunc* last_tf(ciMethod* m) {
@@ -1105,87 +992,37 @@ class Compile : public Phase {
 
   // Matching, CFG layout, allocation, code generation
   PhaseCFG*         cfg()                       { return _cfg; }
-  bool              select_24_bit_instr() const { return _select_24_bit_instr; }
-  bool              in_24_bit_fp_mode() const   { return _in_24_bit_fp_mode; }
   bool              has_java_calls() const      { return _java_calls > 0; }
   int               java_calls() const          { return _java_calls; }
   int               inner_loops() const         { return _inner_loops; }
   Matcher*          matcher()                   { return _matcher; }
   PhaseRegAlloc*    regalloc()                  { return _regalloc; }
-  int               frame_slots() const         { return _frame_slots; }
-  int               frame_size_in_words() const; // frame_slots in units of the polymorphic 'words'
-  int               frame_size_in_bytes() const { return _frame_slots << LogBytesPerInt; }
   RegMask&          FIRST_STACK_mask()          { return _FIRST_STACK_mask; }
   Arena*            indexSet_arena()            { return _indexSet_arena; }
   void*             indexSet_free_block_list()  { return _indexSet_free_block_list; }
-  uint              node_bundling_limit()       { return _node_bundling_limit; }
-  Bundle*           node_bundling_base()        { return _node_bundling_base; }
-  void          set_node_bundling_limit(uint n) { _node_bundling_limit = n; }
-  void          set_node_bundling_base(Bundle* b) { _node_bundling_base = b; }
-  bool          starts_bundle(const Node *n) const;
-  bool          need_stack_bang(int frame_size_in_bytes) const;
-  bool          need_register_stack_bang() const;
+  DebugInformationRecorder* debug_info()        { return env()->debug_info(); }
 
   void  update_interpreter_frame_size(int size) {
     if (_interpreter_frame_size < size) {
       _interpreter_frame_size = size;
     }
   }
-  int           bang_size_in_bytes() const;
 
   void          set_matcher(Matcher* m)                 { _matcher = m; }
 //void          set_regalloc(PhaseRegAlloc* ra)           { _regalloc = ra; }
   void          set_indexSet_arena(Arena* a)            { _indexSet_arena = a; }
   void          set_indexSet_free_block_list(void* p)   { _indexSet_free_block_list = p; }
 
-  // Remember if this compilation changes hardware mode to 24-bit precision
-  void set_24_bit_selection_and_mode(bool selection, bool mode) {
-    _select_24_bit_instr = selection;
-    _in_24_bit_fp_mode   = mode;
-  }
-
   void  set_java_calls(int z) { _java_calls  = z; }
   void set_inner_loops(int z) { _inner_loops = z; }
 
-  // Instruction bits passed off to the VM
-  int               code_size()                 { return _method_size; }
-  CodeBuffer*       code_buffer()               { return &_code_buffer; }
-  int               first_block_size()          { return _first_block_size; }
-  void              set_frame_complete(int off) { if (!in_scratch_emit_size()) { _code_offsets.set_value(CodeOffsets::Frame_Complete, off); } }
-  ExceptionHandlerTable*  handler_table()       { return &_handler_table; }
-  ImplicitExceptionTable* inc_table()           { return &_inc_table; }
-  OopMapSet*        oop_map_set()               { return _oop_map_set; }
-  DebugInformationRecorder* debug_info()        { return env()->debug_info(); }
-  Dependencies*     dependencies()              { return env()->dependencies(); }
-  static int        CompiledZap_count()         { return _CompiledZap_count; }
-  BufferBlob*       scratch_buffer_blob()       { return _scratch_buffer_blob; }
-  void         init_scratch_buffer_blob(int const_size);
-  void        clear_scratch_buffer_blob();
-  void          set_scratch_buffer_blob(BufferBlob* b) { _scratch_buffer_blob = b; }
-  relocInfo*        scratch_locs_memory()       { return _scratch_locs_memory; }
-  void          set_scratch_locs_memory(relocInfo* b)  { _scratch_locs_memory = b; }
-
-  // emit to scratch blob, report resulting size
-  uint              scratch_emit_size(const Node* n);
-  void       set_in_scratch_emit_size(bool x)   {        _in_scratch_emit_size = x; }
-  bool           in_scratch_emit_size() const   { return _in_scratch_emit_size;     }
-
-  enum ScratchBufferBlob {
-#if defined(PPC64)
-    MAX_inst_size       = 2048,
-#else
-    MAX_inst_size       = 1024,
-#endif
-    MAX_locs_size       = 128, // number of relocInfo elements
-    MAX_const_size      = 128,
-    MAX_stubs_size      = 128
-  };
+  Dependencies* dependencies() { return env()->dependencies(); }
 
   // Major entry point.  Given a Scope, compile the associated method.
   // For normal compilations, entry_bci is InvocationEntryBci.  For on stack
   // replacement, entry_bci indicates the bytecode for which to compile a
   // continuation.
-  Compile(ciEnv* ci_env, C2Compiler* compiler, ciMethod* target,
+  Compile(ciEnv* ci_env, ciMethod* target,
           int entry_bci, bool subsume_loads, bool do_escape_analysis,
           bool eliminate_boxing, DirectiveSet* directive);
 
@@ -1220,51 +1057,8 @@ class Compile : public Phase {
   // returns true if adr overlaps with the given alias category
   bool can_alias(const TypePtr* adr, int alias_idx);
 
-  // Driver for converting compiler's IR into machine code bits
-  void Output();
-
-  // Accessors for node bundling info.
-  Bundle* node_bundling(const Node *n);
-  bool valid_bundle_info(const Node *n);
-
-  // Schedule and Bundle the instructions
-  void ScheduleAndBundle();
-
-  // Build OopMaps for each GC point
-  void BuildOopMaps();
-
-  // Append debug info for the node "local" at safepoint node "sfpt" to the
-  // "array",   May also consult and add to "objs", which describes the
-  // scalar-replaced objects.
-  void FillLocArray( int idx, MachSafePointNode* sfpt,
-                     Node *local, GrowableArray<ScopeValue*> *array,
-                     GrowableArray<ScopeValue*> *objs );
-
   // If "objs" contains an ObjectValue whose id is "id", returns it, else NULL.
   static ObjectValue* sv_for_node_id(GrowableArray<ScopeValue*> *objs, int id);
-  // Requres that "objs" does not contains an ObjectValue whose id matches
-  // that of "sv.  Appends "sv".
-  static void set_sv_for_object_node(GrowableArray<ScopeValue*> *objs,
-                                     ObjectValue* sv );
-
-  // Process an OopMap Element while emitting nodes
-  void Process_OopMap_Node(MachNode *mach, int code_offset);
-
-  // Initialize code buffer
-  CodeBuffer* init_buffer(uint* blk_starts);
-
-  // Write out basic block data to code buffer
-  void fill_buffer(CodeBuffer* cb, uint* blk_starts);
-
-  // Determine which variable sized branches can be shortened
-  void shorten_branches(uint* blk_starts, int& code_size, int& reloc_size, int& stub_size);
-
-  // Compute the size of first NumberOfLoopInstrToAlign instructions
-  // at the head of a loop.
-  void compute_loop_first_inst_sizes();
-
-  // Compute the information for the exception tables
-  void FillExceptionTables(uint cnt, uint *call_returns, uint *inct_starts, Label *blk_labels);
 
   // Stack slots that may be unused by the calling convention but must
   // otherwise be preserved.  On Intel this includes the return address.
@@ -1322,6 +1116,15 @@ class Compile : public Phase {
   void final_graph_reshaping_walk( Node_Stack &nstack, Node *root, Final_Reshape_Counts &frc );
   void eliminate_redundant_card_marks(Node* n);
 
+  // Logic cone optimization.
+  void optimize_logic_cones(PhaseIterGVN &igvn);
+  void collect_logic_cone_roots(Unique_Node_List& list);
+  void process_logic_cone_root(PhaseIterGVN &igvn, Node* n, VectorSet& visited);
+  bool compute_logic_cone(Node* n, Unique_Node_List& partition, Unique_Node_List& inputs);
+  uint compute_truth_table(Unique_Node_List& partition, Unique_Node_List& inputs);
+  uint eval_macro_logic_op(uint func, uint op1, uint op2, uint op3);
+  Node* xform_to_MacroLogicV(PhaseIterGVN &igvn, const TypeVect* vt, Unique_Node_List& partitions, Unique_Node_List& inputs);
+
  public:
 
   // Note:  Histogram array size is about 1 Kb.
@@ -1347,10 +1150,6 @@ class Compile : public Phase {
   // End-of-run dumps.
   static void print_statistics() PRODUCT_RETURN;
 
-  // Dump formatted assembly
-  void dump_asm(int *pcs = NULL, uint pc_limit = 0) PRODUCT_RETURN;
-  void dump_pc(int *pcs, int pc_limit, Node *n);
-
   // Verify ADLC assumptions during startup
   static void adlc_verification() PRODUCT_RETURN;
 
@@ -1375,7 +1174,28 @@ class Compile : public Phase {
   CloneMap&     clone_map();
   void          set_clone_map(Dict* d);
 
-  bool is_compiling_clinit_for(ciKlass* k);
+  bool needs_clinit_barrier(ciField* ik,         ciMethod* accessing_method);
+  bool needs_clinit_barrier(ciMethod* ik,        ciMethod* accessing_method);
+  bool needs_clinit_barrier(ciInstanceKlass* ik, ciMethod* accessing_method);
+
+#ifdef IA32
+ private:
+  bool _select_24_bit_instr;   // We selected an instruction with a 24-bit result
+  bool _in_24_bit_fp_mode;     // We are emitting instructions with 24-bit results
+
+  // Remember if this compilation changes hardware mode to 24-bit precision.
+  void set_24_bit_selection_and_mode(bool selection, bool mode) {
+    _select_24_bit_instr = selection;
+    _in_24_bit_fp_mode   = mode;
+  }
+
+ public:
+  bool select_24_bit_instr() const { return _select_24_bit_instr; }
+  bool in_24_bit_fp_mode() const   { return _in_24_bit_fp_mode; }
+#endif // IA32
+#ifdef ASSERT
+  bool _type_verify_symmetry;
+#endif
 };
 
 #endif // SHARE_OPTO_COMPILE_HPP

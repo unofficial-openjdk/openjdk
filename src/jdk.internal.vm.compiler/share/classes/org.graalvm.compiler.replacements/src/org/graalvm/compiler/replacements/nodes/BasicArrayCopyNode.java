@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,8 +44,8 @@ import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.java.LoadIndexedNode;
 import org.graalvm.compiler.nodes.memory.AbstractMemoryCheckpoint;
 import org.graalvm.compiler.nodes.memory.MemoryAccess;
-import org.graalvm.compiler.nodes.memory.MemoryCheckpoint;
-import org.graalvm.compiler.nodes.memory.MemoryNode;
+import org.graalvm.compiler.nodes.memory.MemoryKill;
+import org.graalvm.compiler.nodes.memory.SingleMemoryKill;
 import org.graalvm.compiler.nodes.spi.Lowerable;
 import org.graalvm.compiler.nodes.spi.LoweringTool;
 import org.graalvm.compiler.nodes.spi.Virtualizable;
@@ -60,7 +60,7 @@ import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.ResolvedJavaType;
 
 @NodeInfo(cycles = NodeCycles.CYCLES_UNKNOWN, size = SIZE_64)
-public class BasicArrayCopyNode extends AbstractMemoryCheckpoint implements Virtualizable, MemoryCheckpoint.Single, MemoryAccess, Lowerable, DeoptimizingNode.DeoptDuring {
+public class BasicArrayCopyNode extends AbstractMemoryCheckpoint implements Virtualizable, SingleMemoryKill, MemoryAccess, Lowerable, DeoptimizingNode.DeoptDuring {
 
     public static final NodeClass<BasicArrayCopyNode> TYPE = NodeClass.create(BasicArrayCopyNode.class);
 
@@ -74,7 +74,7 @@ public class BasicArrayCopyNode extends AbstractMemoryCheckpoint implements Virt
 
     @OptionalInput(State) FrameState stateDuring;
 
-    @OptionalInput(Memory) protected MemoryNode lastLocationAccess;
+    @OptionalInput(Memory) protected MemoryKill lastLocationAccess;
 
     protected JavaKind elementKind;
 
@@ -83,15 +83,12 @@ public class BasicArrayCopyNode extends AbstractMemoryCheckpoint implements Virt
     public BasicArrayCopyNode(NodeClass<? extends AbstractMemoryCheckpoint> type, ValueNode src, ValueNode srcPos, ValueNode dest, ValueNode destPos, ValueNode length, JavaKind elementKind, int bci) {
         super(type, StampFactory.forKind(JavaKind.Void));
         this.bci = bci;
-        args = new NodeInputList<>(this, new ValueNode[]{src, srcPos, dest, destPos, length});
+        this.args = new NodeInputList<>(this, new ValueNode[]{src, srcPos, dest, destPos, length});
         this.elementKind = elementKind != JavaKind.Illegal ? elementKind : null;
     }
 
     public BasicArrayCopyNode(NodeClass<? extends AbstractMemoryCheckpoint> type, ValueNode src, ValueNode srcPos, ValueNode dest, ValueNode destPos, ValueNode length, JavaKind elementKind) {
-        super(type, StampFactory.forKind(JavaKind.Void));
-        this.bci = BytecodeFrame.INVALID_FRAMESTATE_BCI;
-        args = new NodeInputList<>(this, new ValueNode[]{src, srcPos, dest, destPos, length});
-        this.elementKind = elementKind != JavaKind.Illegal ? elementKind : null;
+        this(type, src, srcPos, dest, destPos, length, elementKind, BytecodeFrame.INVALID_FRAMESTATE_BCI);
     }
 
     public ValueNode getSource() {
@@ -131,12 +128,17 @@ public class BasicArrayCopyNode extends AbstractMemoryCheckpoint implements Virt
     }
 
     @Override
-    public MemoryNode getLastLocationAccess() {
+    public LocationIdentity getKilledLocationIdentity() {
+        return getLocationIdentity();
+    }
+
+    @Override
+    public MemoryKill getLastLocationAccess() {
         return lastLocationAccess;
     }
 
     @Override
-    public void setLastLocationAccess(MemoryNode lla) {
+    public void setLastLocationAccess(MemoryKill lla) {
         updateUsagesInterface(lastLocationAccess, lla);
         lastLocationAccess = lla;
     }
@@ -147,7 +149,8 @@ public class BasicArrayCopyNode extends AbstractMemoryCheckpoint implements Virt
     }
 
     private static boolean checkBounds(int position, int length, VirtualObjectNode virtualObject) {
-        return position >= 0 && position + length <= virtualObject.entryCount();
+        assert length >= 0;
+        return position >= 0 && position <= virtualObject.entryCount() - length;
     }
 
     private static boolean checkEntryTypes(int srcPos, int length, VirtualObjectNode src, ResolvedJavaType destComponentType, VirtualizerTool tool) {
@@ -268,4 +271,5 @@ public class BasicArrayCopyNode extends AbstractMemoryCheckpoint implements Virt
         FrameState newStateDuring = currentStateAfter.duplicateModifiedDuringCall(getBci(), asNode().getStackKind());
         setStateDuring(newStateDuring);
     }
+
 }

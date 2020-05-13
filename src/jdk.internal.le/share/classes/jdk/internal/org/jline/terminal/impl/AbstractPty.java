@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2002-2019, the original author or authors.
+ *
+ * This software is distributable under the BSD license. See the terms of the
+ * BSD license in the documentation provided with this software.
+ *
+ * https://opensource.org/licenses/BSD-3-Clause
+ */
 package jdk.internal.org.jline.terminal.impl;
 
 import jdk.internal.org.jline.terminal.Attributes;
@@ -76,6 +84,11 @@ public abstract class AbstractPty implements Pty {
                     }
                 }
             }
+        }
+
+        @Override
+        public int readBuffered(byte[] b) throws IOException {
+            return in.read(b);
         }
 
         private void setNonBlocking() {

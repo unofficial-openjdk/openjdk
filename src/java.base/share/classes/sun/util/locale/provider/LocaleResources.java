@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -56,7 +57,6 @@ import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import sun.security.action.GetPropertyAction;
-import sun.util.calendar.ZoneInfo;
 import sun.util.resources.LocaleData;
 import sun.util.resources.OpenListResourceBundle;
 import sun.util.resources.ParallelListResourceBundle;
@@ -178,36 +178,44 @@ public class LocaleResources {
             // elements are provided by the caller, yet they are cached here.
             ResourceBundle rb = localeData.getNumberFormatData(locale);
             dfsdata = new Object[3];
-
-            // NumberElements look up. First, try the Unicode extension
-            String numElemKey;
-            String numberType = locale.getUnicodeLocaleType("nu");
-            if (numberType != null) {
-                numElemKey = numberType + ".NumberElements";
-                if (rb.containsKey(numElemKey)) {
-                    dfsdata[0] = rb.getStringArray(numElemKey);
-                }
-            }
-
-            // Next, try DefaultNumberingSystem value
-            if (dfsdata[0] == null && rb.containsKey("DefaultNumberingSystem")) {
-                numElemKey = rb.getString("DefaultNumberingSystem") + ".NumberElements";
-                if (rb.containsKey(numElemKey)) {
-                    dfsdata[0] = rb.getStringArray(numElemKey);
-                }
-            }
-
-            // Last resort. No need to check the availability.
-            // Just let it throw MissingResourceException when needed.
-            if (dfsdata[0] == null) {
-                dfsdata[0] = rb.getStringArray("NumberElements");
-            }
+            dfsdata[0] = getNumberStrings(rb, "NumberElements");
 
             cache.put(DECIMAL_FORMAT_SYMBOLS_DATA_CACHEKEY,
                       new ResourceReference(DECIMAL_FORMAT_SYMBOLS_DATA_CACHEKEY, (Object) dfsdata, referenceQueue));
         }
 
         return dfsdata;
+    }
+
+    private String[] getNumberStrings(ResourceBundle rb, String type) {
+        String[] ret = null;
+        String key;
+        String numSys;
+
+        // Number strings look up. First, try the Unicode extension
+        numSys = locale.getUnicodeLocaleType("nu");
+        if (numSys != null) {
+            key = numSys + "." + type;
+            if (rb.containsKey(key)) {
+                ret = rb.getStringArray(key);
+            }
+        }
+
+        // Next, try DefaultNumberingSystem value
+        if (ret == null && rb.containsKey("DefaultNumberingSystem")) {
+            key = rb.getString("DefaultNumberingSystem") + "." + type;
+            if (rb.containsKey(key)) {
+                ret = rb.getStringArray(key);
+            }
+        }
+
+        // Last resort. No need to check the availability.
+        // Just let it throw MissingResourceException when needed.
+        if (ret == null) {
+            ret = rb.getStringArray(type);
+        }
+
+        return ret;
     }
 
     public String getCurrencyName(String key) {
@@ -271,17 +279,31 @@ public class LocaleResources {
 
         if (Objects.isNull(data) || Objects.isNull(val = data.get())) {
             TimeZoneNamesBundle tznb = localeData.getTimeZoneNames(locale);
-            if (tznb.containsKey(key)) {
-                if (key.startsWith(TZNB_EXCITY_PREFIX)) {
+            if (key.startsWith(TZNB_EXCITY_PREFIX)) {
+                if (tznb.containsKey(key)) {
                     val = tznb.getString(key);
                     assert val instanceof String;
                     trace("tznb: %s key: %s, val: %s\n", tznb, key, val);
+                }
+            } else {
+                String[] names = null;
+                if (tznb.containsKey(key)) {
+                    names = tznb.getStringArray(key);
                 } else {
-                    String[] names = tznb.getStringArray(key);
+                    var tz = TimeZoneNameUtility.canonicalTZID(key).orElse(key);
+                    if (tznb.containsKey(tz)) {
+                        names = tznb.getStringArray(tz);
+                    }
+                }
+
+                if (names != null) {
+                    names[0] = key;
                     trace("tznb: %s key: %s, names: %s, %s, %s, %s, %s, %s, %s\n", tznb, key,
                         names[0], names[1], names[2], names[3], names[4], names[5], names[6]);
                     val = names;
                 }
+            }
+            if (val != null) {
                 cache.put(cacheKey,
                           new ResourceReference(cacheKey, val, referenceQueue));
             }
@@ -312,7 +334,7 @@ public class LocaleResources {
         Set<String> keyset = getZoneIDs();
         // Use a LinkedHashSet to preseve the order
         Set<String[]> value = new LinkedHashSet<>();
-        Set<String> tzIds = new HashSet<>(Set.of(TimeZone.getAvailableIDs()));
+        Set<String> tzIds = new HashSet<>(Arrays.asList(TimeZone.getAvailableIDs()));
         for (String key : keyset) {
             if (!key.startsWith(TZNB_EXCITY_PREFIX)) {
                 value.add(rb.getStringArray(key));
@@ -321,8 +343,6 @@ public class LocaleResources {
         }
 
         if (type == LocaleProviderAdapter.Type.CLDR) {
-            // Add aliases data for CLDR
-            Map<String, String> aliases = ZoneInfo.getAliasTable();
             // Note: TimeZoneNamesBundle creates a String[] on each getStringArray call.
 
             // Add timezones which are not present in this keyset,
@@ -335,9 +355,10 @@ public class LocaleResources {
                         if (keyset.contains(tzid)) {
                             val = rb.getStringArray(tzid);
                         } else {
-                            String tz = aliases.get(tzid);
-                            if (keyset.contains(tz)) {
-                                val = rb.getStringArray(tz);
+                            var canonID = TimeZoneNameUtility.canonicalTZID(tzid)
+                                            .orElse(tzid);
+                            if (keyset.contains(canonID)) {
+                                val = rb.getStringArray(canonID);
                             }
                         }
                         val[0] = tzid;
@@ -472,7 +493,7 @@ public class LocaleResources {
 
         if (data == null || ((numberPatterns = (String[]) data.get()) == null)) {
             ResourceBundle resource = localeData.getNumberFormatData(locale);
-            numberPatterns = resource.getStringArray("NumberPatterns");
+            numberPatterns = getNumberStrings(resource, "NumberPatterns");
             cache.put(NUMBER_PATTERNS_CACHEKEY,
                       new ResourceReference(NUMBER_PATTERNS_CACHEKEY, (Object) numberPatterns, referenceQueue));
         }

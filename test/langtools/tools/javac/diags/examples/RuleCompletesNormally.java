@@ -22,14 +22,12 @@
  */
 
 // key: compiler.err.rule.completes.normally
-// key: compiler.note.preview.filename
-// key: compiler.note.preview.recompile
-// options: --enable-preview -source ${jdk.version}
 
 class RuleCompletesNormally {
     public String convert(int i) {
         return switch (i) {
-            default -> {}
+            case 0 -> {}
+            default -> "";
         };
     }
 }

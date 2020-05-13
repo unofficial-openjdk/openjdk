@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import static jdk.test.lib.Asserts.*;
  * @build sun.hotspot.WhiteBox
  * @compile/module=java.base java/lang/ModuleHelper.java
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI AccessCheckAllUnnamed
  */
 
@@ -82,13 +81,6 @@ public class AccessCheckAllUnnamed {
         try {
             ModuleHelper.AddModuleExportsToAllUnnamed(this_cldr, "p2");
             throw new RuntimeException("Failed to get the expected IAE for bad module");
-        } catch(IllegalArgumentException e) {
-            // Expected
-        }
-
-        try {
-            ModuleHelper.AddModuleExportsToAllUnnamed(m2x, "p3");
-            throw new RuntimeException("Failed to get the expected IAE for package in other module");
         } catch(IllegalArgumentException e) {
             // Expected
         }

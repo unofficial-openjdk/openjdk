@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import javax.tools.Diagnostic;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
@@ -77,12 +79,9 @@ public abstract class JavacTemplateTestBase {
 
     protected final Map<String, Template> templates = new HashMap<>();
     protected final Diagnostics diags = new Diagnostics();
-    protected final List<Pair<String, Template>> sourceFiles = new ArrayList<>();
+    protected final List<Pair<String, String>> sourceFiles = new ArrayList<>();
     protected final List<String> compileOptions = new ArrayList<>();
     protected final List<File> classpaths = new ArrayList<>();
-    protected final Template.Resolver defaultResolver = new MapResolver(templates);
-
-    private Template.Resolver currentResolver = defaultResolver;
 
     /** Add a template with a specified name */
     protected void addTemplate(String name, Template t) {
@@ -95,8 +94,8 @@ public abstract class JavacTemplateTestBase {
     }
 
     /** Add a source file */
-    protected void addSourceFile(String name, Template t) {
-        sourceFiles.add(new Pair<>(name, t));
+    protected void addSourceFile(String name, String template) {
+        sourceFiles.add(new Pair<>(name, template));
     }
 
     /** Add a File to the class path to be used when loading classes; File values
@@ -149,7 +148,7 @@ public abstract class JavacTemplateTestBase {
             List<Object> list = new ArrayList<>();
             Collections.addAll(list, result.getParameters());
             list.add("Test case: " + getTestCaseDescription());
-            for (Pair<String, Template> e : sourceFiles)
+            for (Pair<String, String> e : sourceFiles)
                 list.add("Source file " + e.fst + ": " + e.snd);
             if (diags.errorsFound())
                 list.add("Compile diagnostics: " + diags.toString());
@@ -207,8 +206,20 @@ public abstract class JavacTemplateTestBase {
     protected void assertCompileFailed(String key) {
         if (!diags.errorsFound())
             fail("Expected failed compilation: " + key);
-        if (!diags.containsErrorKey(key))
-            fail("Expected compilation error " + key);
+        if (!diags.containsErrorKey(key)) {
+            fail(String.format("Expected compilation error with %s, found %s", key, diags.keys()));
+        }
+    }
+
+    protected void assertCompileFailed(String key, Consumer<Diagnostic<?>> diagConsumer) {
+        if (!diags.errorsFound())
+            fail("Expected failed compilation: " + key);
+        if (!diags.containsErrorKey(key)) {
+            fail(String.format("Expected compilation error with %s, found %s", key, diags.keys()));
+        } else {
+            // for additional checks
+            diagConsumer.accept(diags.getDiagWithKey(key));
+        }
     }
 
     /** Assert that a previous call to compile() failed with a specific error key */
@@ -231,16 +242,6 @@ public abstract class JavacTemplateTestBase {
                 fail("Expected compilation error " + k);
     }
 
-    /** Convert an object, which may be a Template or a String, into a Template */
-    protected Template asTemplate(Object o) {
-        if (o instanceof Template)
-            return (Template) o;
-        else if (o instanceof String)
-            return new StringTemplate((String) o);
-        else
-            return new StringTemplate(o.toString());
-    }
-
     /** Compile all registered source files */
     protected void compile() throws IOException {
         compile(false);
@@ -250,8 +251,8 @@ public abstract class JavacTemplateTestBase {
      * and returning a File describing the directory to which they were written */
     protected File compile(boolean generate) throws IOException {
         List<JavaFileObject> files = new ArrayList<>();
-        for (Pair<String, Template> e : sourceFiles)
-            files.add(new FileAdapter(e.fst, asTemplate(e.snd)));
+        for (Pair<String, String> e : sourceFiles)
+            files.add(new FileAdapter(e.fst, e.snd));
         return compile(classpaths, files, generate);
     }
 
@@ -260,8 +261,8 @@ public abstract class JavacTemplateTestBase {
      * and returning a File describing the directory to which they were written */
     protected File compile(List<File> classpaths, boolean generate) throws IOException {
         List<JavaFileObject> files = new ArrayList<>();
-        for (Pair<String, Template> e : sourceFiles)
-            files.add(new FileAdapter(e.fst, asTemplate(e.snd)));
+        for (Pair<String, String> e : sourceFiles)
+            files.add(new FileAdapter(e.fst, e.snd));
         return compile(classpaths, files, generate);
     }
 
@@ -306,72 +307,21 @@ public abstract class JavacTemplateTestBase {
             this.template = template;
         }
 
-        public String expand(String selector) {
-            return Behavior.expandTemplate(template, currentResolver);
+        public String expand(String selectorIgnored) {
+            return Template.expandTemplate(template, templates);
         }
 
         public String toString() {
             return expand("");
         }
-
-        public StringTemplate with(final String key, final String value) {
-            return new StringTemplateWithResolver(template, new KeyResolver(key, value));
-        }
-
-    }
-
-    /** An implementation of Template which is backed by a String and which
-     * encapsulates a Resolver for resolving embedded tags. */
-    protected class StringTemplateWithResolver extends StringTemplate {
-        private final Resolver localResolver;
-
-        public StringTemplateWithResolver(String template, Resolver localResolver) {
-            super(template);
-            this.localResolver = localResolver;
-        }
-
-        @Override
-        public String expand(String selector) {
-            Resolver saved = currentResolver;
-            currentResolver = new ChainedResolver(currentResolver, localResolver);
-            try {
-                return super.expand(selector);
-            }
-            finally {
-                currentResolver = saved;
-            }
-        }
-
-        @Override
-        public StringTemplate with(String key, String value) {
-            return new StringTemplateWithResolver(template, new ChainedResolver(localResolver, new KeyResolver(key, value)));
-        }
-    }
-
-    /** A Resolver which uses a Map to resolve tags */
-    private class KeyResolver implements Template.Resolver {
-        private final String key;
-        private final String value;
-
-        public KeyResolver(String key, String value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        @Override
-        public Template lookup(String k) {
-            return key.equals(k) ? new StringTemplate(value) : null;
-        }
     }
 
     private class FileAdapter extends SimpleJavaFileObject {
-        private final String filename;
-        private final Template template;
+        private final String templateString;
 
-        public FileAdapter(String filename, Template template) {
+        FileAdapter(String filename, String templateString) {
             super(URI.create("myfo:/" + filename), Kind.SOURCE);
-            this.template = template;
-            this.filename = filename;
+            this.templateString = templateString;
         }
 
         public CharSequence getCharContent(boolean ignoreEncodingErrors) {
@@ -379,7 +329,7 @@ public abstract class JavacTemplateTestBase {
         }
 
         public String toString() {
-            return Template.Behavior.expandTemplate(template.expand(filename), defaultResolver);
+            return Template.expandTemplate(templateString, templates);
         }
     }
 }

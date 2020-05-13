@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -33,7 +34,7 @@ public:
     _alloc_shared_gc,   // Allocate common, outside of GCLAB
     _alloc_tlab,        // Allocate TLAB
     _alloc_gclab,       // Allocate GCLAB
-    _ALLOC_LIMIT,
+    _ALLOC_LIMIT
   };
 
   static const char* alloc_type_to_string(Type type) {
@@ -92,6 +93,10 @@ public:
 
   inline Type type() {
     return _alloc_type;
+  }
+
+  inline const char* type_string() {
+    return alloc_type_to_string(_alloc_type);
   }
 
   inline size_t min_size() {

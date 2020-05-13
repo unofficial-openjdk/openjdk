@@ -123,6 +123,7 @@ class ConversionStub: public CodeStub {
  public:
   ConversionStub(Bytecodes::Code bytecode, LIR_Opr input, LIR_Opr result)
     : _bytecode(bytecode), _input(input), _result(result) {
+    NOT_IA32( ShouldNotReachHere(); ) // used only on x86-32
   }
 
   Bytecodes::Code bytecode() { return _bytecode; }
@@ -409,7 +410,7 @@ class PatchingStub: public CodeStub {
     if (_id == PatchingStub::access_field_id) {
       // embed a fixed offset to handle long patches which need to be offset by a word.
       // the patching code will just add the field offset field to this offset so
-      // that we can refernce either the high or low word of a double word field.
+      // that we can reference either the high or low word of a double word field.
       int field_offset = 0;
       switch (patch_code) {
       case lir_patch_low:         field_offset = lo_word_offset_in_bytes; break;
@@ -419,6 +420,8 @@ class PatchingStub: public CodeStub {
       }
       NativeMovRegMem* n_move = nativeMovRegMem_at(pc_start());
       n_move->set_offset(field_offset);
+      // Copy will never get executed, so only copy the part which is required for patching.
+      _bytes_to_copy = MAX2(n_move->num_bytes_to_end_of_patch(), (int)NativeGeneralJump::instruction_size);
     } else if (_id == load_klass_id || _id == load_mirror_id || _id == load_appendix_id) {
       assert(_obj != noreg, "must have register object for load_klass/load_mirror");
 #ifdef ASSERT

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2018 SAP SE. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@
 #include "compiler/compileBroker.hpp"
 #include "interpreter/interpreter.hpp"
 #include "logging/log.hpp"
+#include "logging/logStream.hpp"
 #include "libo4.hpp"
 #include "libperfstat_aix.hpp"
 #include "libodm_aix.hpp"
@@ -59,7 +60,6 @@
 #include "runtime/javaCalls.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/objectMonitor.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/os.hpp"
 #include "runtime/osThread.hpp"
 #include "runtime/perfMemory.hpp"
@@ -131,18 +131,6 @@ extern "C" int getargs(procsinfo*, int, char*, int);
 #define ERROR_MP_VMGETINFO_CLAIMS_NO_SUPPORT_FOR_64K 103
 
 // excerpts from systemcfg.h that might be missing on older os levels
-#ifndef PV_5_Compat
-  #define PV_5_Compat 0x0F8000   /* Power PC 5 */
-#endif
-#ifndef PV_6
-  #define PV_6 0x100000          /* Power PC 6 */
-#endif
-#ifndef PV_6_1
-  #define PV_6_1 0x100001        /* Power PC 6 DD1.x */
-#endif
-#ifndef PV_6_Compat
-  #define PV_6_Compat 0x108000   /* Power PC 6 */
-#endif
 #ifndef PV_7
   #define PV_7 0x200000          /* Power PC 7 */
 #endif
@@ -155,6 +143,13 @@ extern "C" int getargs(procsinfo*, int, char*, int);
 #ifndef PV_8_Compat
   #define PV_8_Compat 0x308000   /* Power PC 8 */
 #endif
+#ifndef PV_9
+  #define PV_9 0x400000          /* Power PC 9 */
+#endif
+#ifndef PV_9_Compat
+  #define PV_9_Compat  0x408000  /* Power PC 9 */
+#endif
+
 
 static address resolve_function_descriptor_to_code_pointer(address p);
 
@@ -486,8 +481,7 @@ static void query_multipage_support() {
       if (::shmctl(shmid, SHM_PAGESIZE, &shm_buf) != 0) {
         const int en = errno;
         ::shmctl(shmid, IPC_RMID, NULL); // As early as possible!
-        trcVerbose("shmctl(SHM_PAGESIZE) failed with errno=%n",
-          errno);
+        trcVerbose("shmctl(SHM_PAGESIZE) failed with errno=%d", errno);
       } else {
         // Attach and double check pageisze.
         void* p = ::shmat(shmid, NULL, 0);
@@ -495,7 +489,7 @@ static void query_multipage_support() {
         guarantee0(p != (void*) -1); // Should always work.
         const size_t real_pagesize = os::Aix::query_pagesize(p);
         if (real_pagesize != pagesize) {
-          trcVerbose("real page size (0x%llX) differs.", real_pagesize);
+          trcVerbose("real page size (" SIZE_FORMAT_HEX ") differs.", real_pagesize);
         } else {
           can_use = true;
         }
@@ -523,7 +517,7 @@ query_multipage_support_end:
       describe_pagesize(g_multipage_support.pthr_stack_pagesize));
   trcVerbose("Default shared memory page size: %s",
       describe_pagesize(g_multipage_support.shmpsize));
-  trcVerbose("Can use 64K pages dynamically with shared meory: %s",
+  trcVerbose("Can use 64K pages dynamically with shared memory: %s",
       (g_multipage_support.can_use_64K_pages ? "yes" :"no"));
   trcVerbose("Can use 16M pages dynamically with shared memory: %s",
       (g_multipage_support.can_use_16M_pages ? "yes" :"no"));
@@ -554,7 +548,7 @@ void os::init_system_properties_values() {
   const size_t bufsize =
     MAX2((size_t)MAXPATHLEN,  // For dll_dir & friends.
          (size_t)MAXPATHLEN + sizeof(EXTENSIONS_DIR)); // extensions dir
-  char *buf = (char *)NEW_C_HEAP_ARRAY(char, bufsize, mtInternal);
+  char *buf = NEW_C_HEAP_ARRAY(char, bufsize, mtInternal);
 
   // sysclasspath, java_home, dll_dir
   {
@@ -596,7 +590,7 @@ void os::init_system_properties_values() {
 
   // Concatenate user and invariant part of ld_library_path.
   // That's +1 for the colon and +1 for the trailing '\0'.
-  char *ld_library_path = (char *)NEW_C_HEAP_ARRAY(char, strlen(v) + 1 + sizeof(DEFAULT_LIBPATH) + 1, mtInternal);
+  char *ld_library_path = NEW_C_HEAP_ARRAY(char, strlen(v) + 1 + sizeof(DEFAULT_LIBPATH) + 1, mtInternal);
   sprintf(ld_library_path, "%s%s" DEFAULT_LIBPATH, v, v_colon);
   Arguments::set_library_path(ld_library_path);
   FREE_C_HEAP_ARRAY(char, ld_library_path);
@@ -923,6 +917,11 @@ bool os::create_thread(Thread* thread, ThreadType thr_type,
     char buf[64];
     log_warning(os, thread)("Failed to start thread - pthread_create failed (%d=%s) for attributes: %s.",
       ret, os::errno_name(ret), os::Posix::describe_pthread_attr(buf, sizeof(buf), &attr));
+    // Log some OS information which might explain why creating the thread failed.
+    log_info(os, thread)("Number of threads approx. running in the VM: %d", Threads::number_of_threads());
+    LogStream st(Log(os, thread)::info());
+    os::Posix::print_rlimit_info(&st);
+    os::print_memory_info(&st);
   }
 
   pthread_attr_destroy(&attr);
@@ -1022,22 +1021,18 @@ void os::free_thread(OSThread* osthread) {
 // Time since start-up in seconds to a fine granularity.
 // Used by VMSelfDestructTimer and the MemProfiler.
 double os::elapsedTime() {
-  return (double)(os::elapsed_counter()) * 0.000001;
+  return ((double)os::elapsed_counter()) / os::elapsed_frequency(); // nanosecond resolution
 }
 
 jlong os::elapsed_counter() {
-  timeval time;
-  int status = gettimeofday(&time, NULL);
-  return jlong(time.tv_sec) * 1000 * 1000 + jlong(time.tv_usec) - initial_time_count;
+  return javaTimeNanos() - initial_time_count;
 }
 
 jlong os::elapsed_frequency() {
-  return (1000 * 1000);
+  return NANOSECS_PER_SEC; // nanosecond resolution
 }
 
 bool os::supports_vtime() { return true; }
-bool os::enable_vtime()   { return false; }
-bool os::vtime_enabled()  { return false; }
 
 double os::elapsedVTime() {
   struct rusage usage;
@@ -1088,7 +1083,7 @@ jlong os::javaTimeNanos() {
     if (now <= prev) {
       return prev;   // same or retrograde time;
     }
-    jlong obsv = Atomic::cmpxchg(now, &max_real_time, prev);
+    jlong obsv = Atomic::cmpxchg(&max_real_time, prev, now);
     assert(obsv >= prev, "invariant");   // Monotonicity
     // If the CAS succeeded then we're done and return "now".
     // If the CAS failed and the observed value "obsv" is >= now then
@@ -1185,14 +1180,6 @@ void os::shutdown() {
 void os::abort(bool dump_core, void* siginfo, const void* context) {
   os::shutdown();
   if (dump_core) {
-#ifndef PRODUCT
-    fdStream out(defaultStream::output_fd());
-    out.print_raw("Current thread is ");
-    char buf[16];
-    jio_snprintf(buf, sizeof(buf), UINTX_FORMAT, os::current_thread_id());
-    out.print_raw_cr(buf);
-    out.print_raw_cr("Dumping core ...");
-#endif
     ::abort(); // dump core
   }
 
@@ -1200,8 +1187,15 @@ void os::abort(bool dump_core, void* siginfo, const void* context) {
 }
 
 // Die immediately, no exit hook, no abort hook, no cleanup.
+// Dump a core file, if possible, for debugging.
 void os::die() {
-  ::abort();
+  if (TestUnresponsiveErrorHandler && !CreateCoredumpOnCrash) {
+    // For TimeoutInErrorHandlingTest.java, we just kill the VM
+    // and don't take the time to generate a core file.
+    os::signal_raise(SIGKILL);
+  } else {
+    ::abort();
+  }
 }
 
 intx os::current_thread_id() {
@@ -1301,6 +1295,8 @@ bool os::dll_address_to_library_name(address addr, char* buf,
 // for the same architecture as Hotspot is running on.
 void *os::dll_load(const char *filename, char *ebuf, int ebuflen) {
 
+  log_info(os)("attempting shared library load of %s", filename);
+
   if (ebuf && ebuflen > 0) {
     ebuf[0] = '\0';
     ebuf[ebuflen - 1] = '\0';
@@ -1314,16 +1310,23 @@ void *os::dll_load(const char *filename, char *ebuf, int ebuflen) {
   // RTLD_LAZY is currently not implemented. The dl is loaded immediately with all its dependants.
   void * result= ::dlopen(filename, RTLD_LAZY);
   if (result != NULL) {
+    Events::log(NULL, "Loaded shared library %s", filename);
     // Reload dll cache. Don't do this in signal handling.
     LoadedLibraries::reload();
+    log_info(os)("shared library load of %s was successful", filename);
     return result;
   } else {
     // error analysis when dlopen fails
-    const char* const error_report = ::dlerror();
-    if (error_report && ebuf && ebuflen > 0) {
+    const char* error_report = ::dlerror();
+    if (error_report == NULL) {
+      error_report = "dlerror returned no error description";
+    }
+    if (ebuf != NULL && ebuflen > 0) {
       snprintf(ebuf, ebuflen - 1, "%s, LIBPATH=%s, LD_LIBRARY_PATH=%s : %s",
                filename, ::getenv("LIBPATH"), ::getenv("LD_LIBRARY_PATH"), error_report);
     }
+    Events::log(NULL, "Loading shared library %s failed, %s", filename, error_report);
+    log_info(os)("shared library load of %s failed, %s", filename, error_report);
   }
   return NULL;
 }
@@ -1367,28 +1370,21 @@ void os::print_os_info_brief(outputStream* st) {
 void os::print_os_info(outputStream* st) {
   st->print("OS:");
 
-  st->print("uname:");
-  struct utsname name;
-  uname(&name);
-  st->print(name.sysname); st->print(" ");
-  st->print(name.nodename); st->print(" ");
-  st->print(name.release); st->print(" ");
-  st->print(name.version); st->print(" ");
-  st->print(name.machine);
-  st->cr();
+  os::Posix::print_uname_info(st);
 
   uint32_t ver = os::Aix::os_version();
   st->print_cr("AIX kernel version %u.%u.%u.%u",
                (ver >> 24) & 0xFF, (ver >> 16) & 0xFF, (ver >> 8) & 0xFF, ver & 0xFF);
 
+  os::Posix::print_uptime_info(st);
+
   os::Posix::print_rlimit_info(st);
 
-  // load average
-  st->print("load average:");
-  double loadavg[3] = {-1.L, -1.L, -1.L};
-  os::loadavg(loadavg, 3);
-  st->print("%0.02f %0.02f %0.02f", loadavg[0], loadavg[1], loadavg[2]);
-  st->cr();
+  os::Posix::print_load_average(st);
+
+  // _SC_THREAD_THREADS_MAX is the maximum number of threads within a process.
+  long tmax = sysconf(_SC_THREAD_THREADS_MAX);
+  st->print_cr("maximum #threads within a process:%ld", tmax);
 
   // print wpar info
   libperfstat::wparinfo_t wi;
@@ -1399,13 +1395,7 @@ void os::print_os_info(outputStream* st) {
     st->print_cr("type: %s", (wi.app_wpar ? "application" : "system"));
   }
 
-  // print partition info
-  libperfstat::partitioninfo_t pi;
-  if (libperfstat::get_partitioninfo(&pi)) {
-    st->print_cr("partition info");
-    st->print_cr(" name: %s", pi.name);
-  }
-
+  VM_Version::print_platform_virtualization_info(st);
 }
 
 void os::print_memory_info(outputStream* st) {
@@ -1422,7 +1412,7 @@ void os::print_memory_info(outputStream* st) {
     describe_pagesize(g_multipage_support.pthr_stack_pagesize));
   st->print_cr("  Default shared memory page size:        %s",
     describe_pagesize(g_multipage_support.shmpsize));
-  st->print_cr("  Can use 64K pages dynamically with shared meory:  %s",
+  st->print_cr("  Can use 64K pages dynamically with shared memory:  %s",
     (g_multipage_support.can_use_64K_pages ? "yes" :"no"));
   st->print_cr("  Can use 16M pages dynamically with shared memory: %s",
     (g_multipage_support.can_use_16M_pages ? "yes" :"no"));
@@ -1488,6 +1478,9 @@ void os::print_memory_info(outputStream* st) {
 void os::get_summary_cpu_info(char* buf, size_t buflen) {
   // read _system_configuration.version
   switch (_system_configuration.version) {
+  case PV_9:
+    strncpy(buf, "Power PC 9", buflen);
+    break;
   case PV_8:
     strncpy(buf, "Power PC 8", buflen);
     break;
@@ -1520,6 +1513,9 @@ void os::get_summary_cpu_info(char* buf, size_t buflen) {
     break;
   case PV_8_Compat:
     strncpy(buf, "PV_8_Compat", buflen);
+    break;
+  case PV_9_Compat:
+    strncpy(buf, "PV_9_Compat", buflen);
     break;
   default:
     strncpy(buf, "unknown", buflen);
@@ -1647,16 +1643,8 @@ void os::print_jni_name_suffix_on(outputStream* st, int args_size) {
 ////////////////////////////////////////////////////////////////////////////////
 // sun.misc.Signal support
 
-static volatile jint sigint_count = 0;
-
 static void
 UserHandler(int sig, void *siginfo, void *context) {
-  // 4511530 - sem_post is serialized and handled by the manager thread. When
-  // the program is interrupted by Ctrl-C, SIGINT is sent to every thread. We
-  // don't want to flood the manager thread with sem_post requests.
-  if (sig == SIGINT && Atomic::add(1, &sigint_count) > 1)
-    return;
-
   // Ctrl-C is pressed during error reporting, likely because the error
   // handler fails to abort. Let VM die immediately.
   if (sig == SIGINT && VMError::is_error_reported()) {
@@ -1796,11 +1784,10 @@ void os::signal_notify(int sig) {
 }
 
 static int check_pending_signals() {
-  Atomic::store(0, &sigint_count);
   for (;;) {
     for (int i = 0; i < NSIG + 1; i++) {
       jint n = pending_signals[i];
-      if (n > 0 && n == Atomic::cmpxchg(n - 1, &pending_signals[i], n)) {
+      if (n > 0 && n == Atomic::cmpxchg(&pending_signals[i], n, n - 1)) {
         return i;
       }
     }
@@ -1873,12 +1860,12 @@ struct vmembk_t {
     if (!contains_range(p, s)) {
       trcVerbose("[" PTR_FORMAT " - " PTR_FORMAT "] is not a sub "
               "range of [" PTR_FORMAT " - " PTR_FORMAT "].",
-              p, p + s, addr, addr + size);
+              p2i(p), p2i(p + s), p2i(addr), p2i(addr + size));
       guarantee0(false);
     }
     if (!is_aligned_to(p, pagesize) || !is_aligned_to(p + s, pagesize)) {
       trcVerbose("range [" PTR_FORMAT " - " PTR_FORMAT "] is not"
-              " aligned to pagesize (%lu)", p, p + s, (unsigned long) pagesize);
+              " aligned to pagesize (%lu)", p2i(p), p2i(p + s), (unsigned long) pagesize);
       guarantee0(false);
     }
   }
@@ -1949,7 +1936,7 @@ static char* reserve_shmated_memory (
 
   trcVerbose("reserve_shmated_memory " UINTX_FORMAT " bytes, wishaddress "
     PTR_FORMAT ", alignment_hint " UINTX_FORMAT "...",
-    bytes, requested_addr, alignment_hint);
+    bytes, p2i(requested_addr), alignment_hint);
 
   // Either give me wish address or wish alignment but not both.
   assert0(!(requested_addr != NULL && alignment_hint != 0));
@@ -1958,7 +1945,7 @@ static char* reserve_shmated_memory (
   // BRK because that may cause malloc OOM.
   if (requested_addr != NULL && is_close_to_brk((address)requested_addr)) {
     trcVerbose("Wish address " PTR_FORMAT " is too close to the BRK segment. "
-      "Will attach anywhere.", requested_addr);
+      "Will attach anywhere.", p2i(requested_addr));
     // Act like the OS refused to attach there.
     requested_addr = NULL;
   }
@@ -2010,7 +1997,7 @@ static char* reserve_shmated_memory (
 
   // Handle shmat error. If we failed to attach, just return.
   if (addr == (char*)-1) {
-    trcVerbose("Failed to attach segment at " PTR_FORMAT " (%d).", requested_addr, errno_shmat);
+    trcVerbose("Failed to attach segment at " PTR_FORMAT " (%d).", p2i(requested_addr), errno_shmat);
     return NULL;
   }
 
@@ -2018,15 +2005,15 @@ static char* reserve_shmated_memory (
   // work (see above), the system may have given us something other then 4K (LDR_CNTRL).
   const size_t real_pagesize = os::Aix::query_pagesize(addr);
   if (real_pagesize != shmbuf.shm_pagesize) {
-    trcVerbose("pagesize is, surprisingly, %h.", real_pagesize);
+    trcVerbose("pagesize is, surprisingly, " SIZE_FORMAT, real_pagesize);
   }
 
   if (addr) {
     trcVerbose("shm-allocated " PTR_FORMAT " .. " PTR_FORMAT " (" UINTX_FORMAT " bytes, " UINTX_FORMAT " %s pages)",
-      addr, addr + size - 1, size, size/real_pagesize, describe_pagesize(real_pagesize));
+      p2i(addr), p2i(addr + size - 1), size, size/real_pagesize, describe_pagesize(real_pagesize));
   } else {
     if (requested_addr != NULL) {
-      trcVerbose("failed to shm-allocate " UINTX_FORMAT " bytes at with address " PTR_FORMAT ".", size, requested_addr);
+      trcVerbose("failed to shm-allocate " UINTX_FORMAT " bytes at with address " PTR_FORMAT ".", size, p2i(requested_addr));
     } else {
       trcVerbose("failed to shm-allocate " UINTX_FORMAT " bytes at any address.", size);
     }
@@ -2042,7 +2029,7 @@ static char* reserve_shmated_memory (
 static bool release_shmated_memory(char* addr, size_t size) {
 
   trcVerbose("release_shmated_memory [" PTR_FORMAT " - " PTR_FORMAT "].",
-    addr, addr + size - 1);
+    p2i(addr), p2i(addr + size - 1));
 
   bool rc = false;
 
@@ -2058,12 +2045,12 @@ static bool release_shmated_memory(char* addr, size_t size) {
 
 static bool uncommit_shmated_memory(char* addr, size_t size) {
   trcVerbose("uncommit_shmated_memory [" PTR_FORMAT " - " PTR_FORMAT "].",
-    addr, addr + size - 1);
+    p2i(addr), p2i(addr + size - 1));
 
   const bool rc = my_disclaim64(addr, size);
 
   if (!rc) {
-    trcVerbose("my_disclaim64(" PTR_FORMAT ", " UINTX_FORMAT ") failed.\n", addr, size);
+    trcVerbose("my_disclaim64(" PTR_FORMAT ", " UINTX_FORMAT ") failed.\n", p2i(addr), size);
     return false;
   }
   return true;
@@ -2080,11 +2067,11 @@ static bool uncommit_shmated_memory(char* addr, size_t size) {
 static char* reserve_mmaped_memory(size_t bytes, char* requested_addr, size_t alignment_hint) {
   trcVerbose("reserve_mmaped_memory " UINTX_FORMAT " bytes, wishaddress " PTR_FORMAT ", "
     "alignment_hint " UINTX_FORMAT "...",
-    bytes, requested_addr, alignment_hint);
+    bytes, p2i(requested_addr), alignment_hint);
 
   // If a wish address is given, but not aligned to 4K page boundary, mmap will fail.
   if (requested_addr && !is_aligned_to(requested_addr, os::vm_page_size()) != 0) {
-    trcVerbose("Wish address " PTR_FORMAT " not aligned to page boundary.", requested_addr);
+    trcVerbose("Wish address " PTR_FORMAT " not aligned to page boundary.", p2i(requested_addr));
     return NULL;
   }
 
@@ -2092,7 +2079,7 @@ static char* reserve_mmaped_memory(size_t bytes, char* requested_addr, size_t al
   // BRK because that may cause malloc OOM.
   if (requested_addr != NULL && is_close_to_brk((address)requested_addr)) {
     trcVerbose("Wish address " PTR_FORMAT " is too close to the BRK segment. "
-      "Will attach anywhere.", requested_addr);
+      "Will attach anywhere.", p2i(requested_addr));
     // Act like the OS refused to attach there.
     requested_addr = NULL;
   }
@@ -2139,7 +2126,7 @@ static char* reserve_mmaped_memory(size_t bytes, char* requested_addr, size_t al
       PROT_READ|PROT_WRITE|PROT_EXEC, flags, -1, 0);
 
   if (addr == MAP_FAILED) {
-    trcVerbose("mmap(" PTR_FORMAT ", " UINTX_FORMAT ", ..) failed (%d)", requested_addr, size, errno);
+    trcVerbose("mmap(" PTR_FORMAT ", " UINTX_FORMAT ", ..) failed (%d)", p2i(requested_addr), size, errno);
     return NULL;
   }
 
@@ -2158,10 +2145,10 @@ static char* reserve_mmaped_memory(size_t bytes, char* requested_addr, size_t al
 
   if (addr) {
     trcVerbose("mmap-allocated " PTR_FORMAT " .. " PTR_FORMAT " (" UINTX_FORMAT " bytes)",
-      addr, addr + bytes, bytes);
+      p2i(addr), p2i(addr + bytes), bytes);
   } else {
     if (requested_addr != NULL) {
-      trcVerbose("failed to mmap-allocate " UINTX_FORMAT " bytes at wish address " PTR_FORMAT ".", bytes, requested_addr);
+      trcVerbose("failed to mmap-allocate " UINTX_FORMAT " bytes at wish address " PTR_FORMAT ".", bytes, p2i(requested_addr));
     } else {
       trcVerbose("failed to mmap-allocate " UINTX_FORMAT " bytes at any address.", bytes);
     }
@@ -2181,7 +2168,7 @@ static bool release_mmaped_memory(char* addr, size_t size) {
   assert0(is_aligned_to(size, os::vm_page_size()));
 
   trcVerbose("release_mmaped_memory [" PTR_FORMAT " - " PTR_FORMAT "].",
-    addr, addr + size - 1);
+    p2i(addr), p2i(addr + size - 1));
   bool rc = false;
 
   if (::munmap(addr, size) != 0) {
@@ -2201,7 +2188,7 @@ static bool uncommit_mmaped_memory(char* addr, size_t size) {
   assert0(is_aligned_to(size, os::vm_page_size()));
 
   trcVerbose("uncommit_mmaped_memory [" PTR_FORMAT " - " PTR_FORMAT "].",
-    addr, addr + size - 1);
+    p2i(addr), p2i(addr + size - 1));
   bool rc = false;
 
   // Uncommit mmap memory with msync MS_INVALIDATE.
@@ -2232,7 +2219,7 @@ int os::vm_allocation_granularity() {
 static void warn_fail_commit_memory(char* addr, size_t size, bool exec,
                                     int err) {
   warning("INFO: os::commit_memory(" PTR_FORMAT ", " SIZE_FORMAT
-          ", %d) failed; error='%s' (errno=%d)", addr, size, exec,
+          ", %d) failed; error='%s' (errno=%d)", p2i(addr), size, exec,
           os::errno_name(err), err);
 }
 #endif
@@ -2260,7 +2247,7 @@ bool os::pd_commit_memory(char* addr, size_t size, bool exec) {
   guarantee0(vmi);
   vmi->assert_is_valid_subrange(addr, size);
 
-  trcVerbose("commit_memory [" PTR_FORMAT " - " PTR_FORMAT "].", addr, addr + size - 1);
+  trcVerbose("commit_memory [" PTR_FORMAT " - " PTR_FORMAT "].", p2i(addr), p2i(addr + size - 1));
 
   if (UseExplicitCommit) {
     // AIX commits memory on touch. So, touch all pages to be committed.
@@ -2344,6 +2331,10 @@ size_t os::numa_get_leaf_groups(int *ids, size_t size) {
     ids[0] = 0;
     return 1;
   }
+  return 0;
+}
+
+int os::numa_get_group_id_for_address(const void* address) {
   return 0;
 }
 
@@ -2439,6 +2430,7 @@ static bool checked_mprotect(char* addr, size_t size, int prot) {
   //
   // See http://publib.boulder.ibm.com/infocenter/pseries/v5r3/index.jsp?topic=/com.ibm.aix.basetechref/doc/basetrf1/mprotect.htm
 
+  Events::log(NULL, "Protecting memory [" INTPTR_FORMAT "," INTPTR_FORMAT "] with protection modes %x", p2i(addr), p2i(addr+size), prot);
   bool rc = ::mprotect(addr, size, prot) == 0 ? true : false;
 
   if (!rc) {
@@ -2479,6 +2471,7 @@ static bool checked_mprotect(char* addr, size_t size, int prot) {
           // A valid strategy is just to try again. This usually works. :-/
 
           ::usleep(1000);
+          Events::log(NULL, "Protecting memory [" INTPTR_FORMAT "," INTPTR_FORMAT "] with protection modes %x", p2i(addr), p2i(addr+size), prot);
           if (::mprotect(addr, size, prot) == 0) {
             const bool read_protected_2 =
               (SafeFetch32((int*)addr, 0x12345678) == 0x12345678 &&
@@ -2527,17 +2520,13 @@ void os::large_page_init() {
   return; // Nothing to do. See query_multipage_support and friends.
 }
 
-char* os::reserve_memory_special(size_t bytes, size_t alignment, char* req_addr, bool exec) {
-  // reserve_memory_special() is used to allocate large paged memory. On AIX, we implement
-  // 64k paged memory reservation using the normal memory allocation paths (os::reserve_memory()),
-  // so this is not needed.
-  assert(false, "should not be called on AIX");
+char* os::pd_reserve_memory_special(size_t bytes, size_t alignment, char* req_addr, bool exec) {
+  fatal("os::reserve_memory_special should not be called on AIX.");
   return NULL;
 }
 
-bool os::release_memory_special(char* base, size_t bytes) {
-  // Detaching the SHM segment will also delete it, see reserve_memory_special().
-  Unimplemented();
+bool os::pd_release_memory_special(char* base, size_t bytes) {
+  fatal("os::release_memory_special should not be called on AIX.");
   return false;
 }
 
@@ -2645,8 +2634,24 @@ int os::java_to_os_priority[CriticalPriority + 1] = {
   60              // 11 CriticalPriority
 };
 
+static int prio_init() {
+  if (ThreadPriorityPolicy == 1) {
+    if (geteuid() != 0) {
+      if (!FLAG_IS_DEFAULT(ThreadPriorityPolicy) && !FLAG_IS_JIMAGE_RESOURCE(ThreadPriorityPolicy)) {
+        warning("-XX:ThreadPriorityPolicy=1 may require system level permission, " \
+                "e.g., being the root user. If the necessary permission is not " \
+                "possessed, changes to priority will be silently ignored.");
+      }
+    }
+  }
+  if (UseCriticalJavaThreadPriority) {
+    os::java_to_os_priority[MaxPriority] = os::java_to_os_priority[CriticalPriority];
+  }
+  return 0;
+}
+
 OSReturn os::set_native_priority(Thread* thread, int newpri) {
-  if (!UseThreadPriorities) return OS_OK;
+  if (!UseThreadPriorities || ThreadPriorityPolicy == 0) return OS_OK;
   pthread_t thr = thread->osthread()->pthread_id();
   int policy = SCHED_OTHER;
   struct sched_param param;
@@ -2661,7 +2666,7 @@ OSReturn os::set_native_priority(Thread* thread, int newpri) {
 }
 
 OSReturn os::get_native_priority(const Thread* const thread, int *priority_ptr) {
-  if (!UseThreadPriorities) {
+  if (!UseThreadPriorities || ThreadPriorityPolicy == 0) {
     *priority_ptr = java_to_os_priority[NormPriority];
     return OS_OK;
   }
@@ -2758,7 +2763,7 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
     os::SuspendResume::State state = osthread->sr.suspended();
     if (state == os::SuspendResume::SR_SUSPENDED) {
       sigset_t suspend_set;  // signals for sigsuspend()
-
+      sigemptyset(&suspend_set);
       // get current set of blocked signals and unblock resume signal
       pthread_sigmask(SIG_BLOCK, NULL, &suspend_set);
       sigdelset(&suspend_set, SR_signum);
@@ -2996,8 +3001,6 @@ static void javaSignalHandler(int sig, siginfo_t* info, void* uc) {
 bool os::Aix::signal_handlers_are_installed = false;
 
 // For signal-chaining
-struct sigaction sigact[NSIG];
-sigset_t sigs;
 bool os::Aix::libjsig_is_loaded = false;
 typedef struct sigaction *(*get_signal_t)(int);
 get_signal_t os::Aix::get_signal_action = NULL;
@@ -3011,7 +3014,7 @@ struct sigaction* os::Aix::get_chained_signal_action(int sig) {
   }
   if (actp == NULL) {
     // Retrieve the preinstalled signal handler from jvm
-    actp = get_preinstalled_handler(sig);
+    actp = os::Posix::get_preinstalled_handler(sig);
   }
 
   return actp;
@@ -3046,6 +3049,7 @@ static bool call_chained_handler(struct sigaction *actp, int sig,
 
     // try to honor the signal mask
     sigset_t oset;
+    sigemptyset(&oset);
     pthread_sigmask(SIG_SETMASK, &(actp->sa_mask), &oset);
 
     // call into the chained handler
@@ -3056,7 +3060,7 @@ static bool call_chained_handler(struct sigaction *actp, int sig,
     }
 
     // restore the signal mask
-    pthread_sigmask(SIG_SETMASK, &oset, 0);
+    pthread_sigmask(SIG_SETMASK, &oset, NULL);
   }
   // Tell jvm's signal handler the signal is taken care of.
   return true;
@@ -3072,19 +3076,6 @@ bool os::Aix::chained_handler(int sig, siginfo_t* siginfo, void* context) {
     }
   }
   return chained;
-}
-
-struct sigaction* os::Aix::get_preinstalled_handler(int sig) {
-  if (sigismember(&sigs, sig)) {
-    return &sigact[sig];
-  }
-  return NULL;
-}
-
-void os::Aix::save_preinstalled_handler(int sig, struct sigaction& oldAct) {
-  assert(sig > 0 && sig < NSIG, "vm signal out of expected range");
-  sigact[sig] = oldAct;
-  sigaddset(&sigs, sig);
 }
 
 // for diagnostic
@@ -3118,7 +3109,7 @@ void os::Aix::set_signal_handler(int sig, bool set_installed) {
       return;
     } else if (UseSignalChaining) {
       // save the old handler in jvm
-      save_preinstalled_handler(sig, oldAct);
+      os::Posix::save_preinstalled_handler(sig, oldAct);
       // libjsig also interposes the sigaction() call below and saves the
       // old sigaction on it own.
     } else {
@@ -3174,7 +3165,6 @@ void os::Aix::install_signal_handlers() {
       (*begin_signal_setting)();
     }
 
-    ::sigemptyset(&sigs);
     set_signal_handler(SIGSEGV, true);
     set_signal_handler(SIGPIPE, true);
     set_signal_handler(SIGBUS, true);
@@ -3460,7 +3450,7 @@ void os::init(void) {
       // fall back to 4K paged mode and use mmap for everything.
       trcVerbose("4K page mode");
       Aix::_page_size = 4*K;
-      FLAG_SET_ERGO(bool, Use64KPages, false);
+      FLAG_SET_ERGO(Use64KPages, false);
     }
   } else {
     // datapsize = 64k. Data segment, thread stacks are 64k paged.
@@ -3470,11 +3460,11 @@ void os::init(void) {
     assert0(g_multipage_support.can_use_64K_pages);
     Aix::_page_size = 64*K;
     trcVerbose("64K page mode");
-    FLAG_SET_ERGO(bool, Use64KPages, true);
+    FLAG_SET_ERGO(Use64KPages, true);
   }
 
   // For now UseLargePages is just ignored.
-  FLAG_SET_ERGO(bool, UseLargePages, false);
+  FLAG_SET_ERGO(UseLargePages, false);
   _page_sizes[0] = 0;
 
   // debug trace
@@ -3503,7 +3493,7 @@ void os::init(void) {
   // _main_thread points to the thread that created/loaded the JVM.
   Aix::_main_thread = pthread_self();
 
-  initial_time_count = os::elapsed_counter();
+  initial_time_count = javaTimeNanos();
 
   os::Posix::init();
 }
@@ -3551,10 +3541,9 @@ jint os::init_2(void) {
     return JNI_ERR;
   }
 
-  if (UseNUMA) {
-    UseNUMA = false;
-    warning("NUMA optimizations are not available on this OS.");
-  }
+  // Not supported.
+  FLAG_SET_ERGO(UseNUMA, false);
+  FLAG_SET_ERGO(UseNUMAInterleaving, false);
 
   if (MaxFDLimit) {
     // Set the number of file descriptors to max. print out error
@@ -3586,23 +3575,11 @@ jint os::init_2(void) {
     }
   }
 
+  // initialize thread priority policy
+  prio_init();
+
   return JNI_OK;
 }
-
-// Mark the polling page as unreadable
-void os::make_polling_page_unreadable(void) {
-  if (!guard_memory((char*)_polling_page, Aix::page_size())) {
-    fatal("Could not disable polling page");
-  }
-};
-
-// Mark the polling page as readable
-void os::make_polling_page_readable(void) {
-  // Changed according to os_linux.cpp.
-  if (!checked_mprotect((char *)_polling_page, Aix::page_size(), PROT_READ)) {
-    fatal("Could not enable polling page at " PTR_FORMAT, _polling_page);
-  }
-};
 
 int os::active_processor_count() {
   // User has overridden the number of active processors
@@ -3621,11 +3598,6 @@ int os::active_processor_count() {
 void os::set_native_thread_name(const char *name) {
   // Not yet implemented.
   return;
-}
-
-bool os::distribute_processes(uint length, uint* distribution) {
-  // Not yet implemented.
-  return false;
 }
 
 bool os::bind_to_processor(uint processor_id) {
@@ -3720,10 +3692,18 @@ int os::open(const char *path, int oflag, int mode) {
     errno = ENAMETOOLONG;
     return -1;
   }
-  int fd;
+  // AIX 7.X now supports O_CLOEXEC too, like modern Linux; but we have to be careful, see
+  // IV90804: OPENING A FILE IN AFS WITH O_CLOEXEC FAILS WITH AN EINVAL ERROR APPLIES TO AIX 7100-04 17/04/14 PTF PECHANGE
+  int oflag_with_o_cloexec = oflag | O_CLOEXEC;
 
-  fd = ::open64(path, oflag, mode);
-  if (fd == -1) return -1;
+  int fd = ::open64(path, oflag_with_o_cloexec, mode);
+  if (fd == -1) {
+    // we might fail in the open call when O_CLOEXEC is set, so try again without (see IV90804)
+    fd = ::open64(path, oflag, mode);
+    if (fd == -1) {
+      return -1;
+    }
+  }
 
   // If the open succeeded, the file might still be a directory.
   {
@@ -3755,21 +3735,25 @@ int os::open(const char *path, int oflag, int mode) {
   //
   // - might cause an fopen in the subprocess to fail on a system
   //   suffering from bug 1085341.
-  //
-  // (Yes, the default setting of the close-on-exec flag is a Unix
-  // design flaw.)
-  //
-  // See:
-  // 1085341: 32-bit stdio routines should support file descriptors >255
-  // 4843136: (process) pipe file descriptor from Runtime.exec not being closed
-  // 6339493: (process) Runtime.exec does not close all file descriptors on Solaris 9
-#ifdef FD_CLOEXEC
-  {
+
+  // Validate that the use of the O_CLOEXEC flag on open above worked.
+  static sig_atomic_t O_CLOEXEC_is_known_to_work = 0;
+  if (O_CLOEXEC_is_known_to_work == 0) {
     int flags = ::fcntl(fd, F_GETFD);
-    if (flags != -1)
+    if (flags != -1) {
+      if ((flags & FD_CLOEXEC) != 0) {
+        O_CLOEXEC_is_known_to_work = 1;
+      } else { // it does not work
+        ::fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+        O_CLOEXEC_is_known_to_work = -1;
+      }
+    }
+  } else if (O_CLOEXEC_is_known_to_work == -1) {
+    int flags = ::fcntl(fd, F_GETFD);
+    if (flags != -1) {
       ::fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+    }
   }
-#endif
 
   return fd;
 }
@@ -4027,7 +4011,7 @@ int os::loadavg(double values[], int nelem) {
 void os::pause() {
   char filename[MAX_PATH];
   if (PauseAtStartupFile && PauseAtStartupFile[0]) {
-    jio_snprintf(filename, MAX_PATH, PauseAtStartupFile);
+    jio_snprintf(filename, MAX_PATH, "%s", PauseAtStartupFile);
   } else {
     jio_snprintf(filename, MAX_PATH, "./vm.paused.%d", current_process_id());
   }
@@ -4074,7 +4058,7 @@ void os::Aix::initialize_os_info() {
     assert(minor > 0, "invalid OS release");
     _os_version = (major << 24) | (minor << 16);
     char ver_str[20] = {0};
-    char *name_str = "unknown OS";
+    const char* name_str = "unknown OS";
     if (strcmp(uts.sysname, "OS400") == 0) {
       // We run on AS/400 PASE. We do not support versions older than V5R4M0.
       _on_pase = 1;
@@ -4085,19 +4069,19 @@ void os::Aix::initialize_os_info() {
       name_str = "OS/400 (pase)";
       jio_snprintf(ver_str, sizeof(ver_str), "%u.%u", major, minor);
     } else if (strcmp(uts.sysname, "AIX") == 0) {
-      // We run on AIX. We do not support versions older than AIX 5.3.
+      // We run on AIX. We do not support versions older than AIX 7.1.
       _on_pase = 0;
       // Determine detailed AIX version: Version, Release, Modification, Fix Level.
       odmWrapper::determine_os_kernel_version(&_os_version);
-      if (os_version_short() < 0x0503) {
-        trcVerbose("AIX release older than AIX 5.3 not supported.");
+      if (os_version_short() < 0x0701) {
+        trcVerbose("AIX releases older than AIX 7.1 are not supported.");
         assert(false, "AIX release too old.");
       }
       name_str = "AIX";
       jio_snprintf(ver_str, sizeof(ver_str), "%u.%u.%u.%u",
                    major, minor, (_os_version >> 8) & 0xFF, _os_version & 0xFF);
     } else {
-      assert(false, name_str);
+      assert(false, "%s", name_str);
     }
     trcVerbose("We run on %s %s", name_str, ver_str);
   }
@@ -4233,7 +4217,7 @@ extern char** environ;
 // Unlike system(), this function can be called from signal handler. It
 // doesn't block SIGINT et al.
 int os::fork_and_exec(char* cmd, bool use_vfork_if_available) {
-  char * argv[4] = {"sh", "-c", cmd, NULL};
+  char* argv[4] = { (char*)"sh", (char*)"-c", cmd, NULL};
 
   pid_t pid = fork();
 
@@ -4342,4 +4326,8 @@ int os::compare_file_modified_times(const char* file1, const char* file2) {
   time_t t1 = get_mtime(file1);
   time_t t2 = get_mtime(file2);
   return t1 - t2;
+}
+
+bool os::supports_map_sync() {
+  return false;
 }

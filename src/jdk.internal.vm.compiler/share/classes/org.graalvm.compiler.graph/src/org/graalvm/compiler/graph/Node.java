@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@ package org.graalvm.compiler.graph;
 import static org.graalvm.compiler.graph.Edges.Type.Inputs;
 import static org.graalvm.compiler.graph.Edges.Type.Successors;
 import static org.graalvm.compiler.graph.Graph.isModificationCountsEnabled;
-import static org.graalvm.compiler.graph.UnsafeAccess.UNSAFE;
+import static org.graalvm.compiler.serviceprovider.GraalUnsafeAccess.getUnsafe;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
@@ -61,6 +61,7 @@ import org.graalvm.compiler.nodeinfo.NodeSize;
 import org.graalvm.compiler.nodeinfo.Verbosity;
 import org.graalvm.compiler.options.OptionValues;
 
+import jdk.vm.ci.services.Services;
 import sun.misc.Unsafe;
 
 /**
@@ -86,9 +87,11 @@ import sun.misc.Unsafe;
 @NodeInfo
 public abstract class Node implements Cloneable, Formattable, NodeInterface {
 
+    private static final Unsafe UNSAFE = getUnsafe();
+
     public static final NodeClass<?> TYPE = null;
 
-    public static final boolean TRACK_CREATION_POSITION = Boolean.getBoolean("debug.graal.TrackNodeCreationPosition");
+    public static final boolean TRACK_CREATION_POSITION = Boolean.parseBoolean(Services.getSavedProperties().get("debug.graal.TrackNodeCreationPosition"));
 
     static final int DELETED_ID_START = -1000000000;
     static final int INITIAL_ID = -1;
@@ -189,6 +192,11 @@ public abstract class Node implements Cloneable, Formattable, NodeInterface {
          * {@code true}.
          */
         boolean injectedStampIsNonNull() default false;
+
+        /**
+         * If {@code true} then this is lowered into a node that has side effects.
+         */
+        boolean hasSideEffect() default false;
     }
 
     /**
@@ -605,6 +613,7 @@ public abstract class Node implements Cloneable, Formattable, NodeInterface {
                 assert assertTrue(newSuccessor.predecessor == null, "unexpected non-null predecessor in new successor (%s): %s, this=%s", newSuccessor, newSuccessor.predecessor, this);
                 newSuccessor.predecessor = this;
             }
+            maybeNotifyInputChanged(this);
         }
     }
 
@@ -809,22 +818,24 @@ public abstract class Node implements Cloneable, Formattable, NodeInterface {
 
     private void replaceAtMatchingUsages(Node other, Predicate<Node> filter, Node toBeDeleted) {
         if (filter == null) {
-            fail("filter cannot be null");
+            throw fail("filter cannot be null");
         }
         checkReplaceWith(other);
         int i = 0;
-        while (i < this.getUsageCount()) {
+        int usageCount = this.getUsageCount();
+        while (i < usageCount) {
             Node usage = this.getUsageAt(i);
             if (filter.test(usage)) {
                 replaceAtUsage(other, toBeDeleted, usage);
                 this.movUsageFromEndTo(i);
+                usageCount--;
             } else {
                 ++i;
             }
         }
     }
 
-    public Node getUsageAt(int index) {
+    private Node getUsageAt(int index) {
         if (index == 0) {
             return this.usage0;
         } else if (index == 1) {
@@ -839,14 +850,35 @@ public abstract class Node implements Cloneable, Formattable, NodeInterface {
         replaceAtMatchingUsages(other, usagePredicate, null);
     }
 
+    private void replaceAtUsagePos(Node other, Node usage, Position pos) {
+        pos.initialize(usage, other);
+        maybeNotifyInputChanged(usage);
+        if (other != null) {
+            other.addUsage(usage);
+        }
+    }
+
     public void replaceAtUsages(InputType type, Node other) {
         checkReplaceWith(other);
-        for (Node usage : usages().snapshot()) {
+        int i = 0;
+        int usageCount = this.getUsageCount();
+        if (usageCount == 0) {
+            return;
+        }
+        usages: while (i < usageCount) {
+            Node usage = this.getUsageAt(i);
             for (Position pos : usage.inputPositions()) {
                 if (pos.getInputType() == type && pos.get(usage) == this) {
-                    pos.set(usage, other);
+                    replaceAtUsagePos(other, usage, pos);
+                    this.movUsageFromEndTo(i);
+                    usageCount--;
+                    continue usages;
                 }
             }
+            i++;
+        }
+        if (hasNoUsages()) {
+            maybeNotifyZeroUsages(this);
         }
     }
 
@@ -901,6 +933,20 @@ public abstract class Node implements Cloneable, Formattable, NodeInterface {
     public void replaceFirstInput(Node oldInput, Node newInput) {
         if (nodeClass.replaceFirstInput(this, oldInput, newInput)) {
             updateUsages(oldInput, newInput);
+        }
+    }
+
+    public void replaceAllInputs(Node oldInput, Node newInput) {
+        while (nodeClass.replaceFirstInput(this, oldInput, newInput)) {
+            updateUsages(oldInput, newInput);
+        }
+    }
+
+    public void replaceFirstInput(Node oldInput, Node newInput, InputType type) {
+        for (Position pos : inputPositions()) {
+            if (pos.getInputType() == type && pos.get(this) == oldInput) {
+                pos.set(this, newInput);
+            }
         }
     }
 
@@ -1049,7 +1095,10 @@ public abstract class Node implements Cloneable, Formattable, NodeInterface {
             } else {
                 assertFalse(input.isDeleted(), "input was deleted %s", input);
                 assertTrue(input.isAlive(), "input is not alive yet, i.e., it was not yet added to the graph");
-                assertTrue(pos.getInputType() == InputType.Unchecked || input.isAllowedUsageType(pos.getInputType()), "invalid usage type %s %s", input, pos.getInputType());
+                assertTrue(pos.getInputType() == InputType.Unchecked || input.isAllowedUsageType(pos.getInputType()), "invalid usage type input:%s inputType:%s inputField:%s", input,
+                                pos.getInputType(), pos.getName());
+                Class<?> expectedType = pos.getType();
+                assertTrue(expectedType.isAssignableFrom(input.getClass()), "Invalid input type for %s: expected a %s but was a %s", pos, expectedType, input.getClass());
             }
         }
         return true;

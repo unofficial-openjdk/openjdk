@@ -38,8 +38,6 @@ class InterpreterMacroAssembler: public MacroAssembler {
  protected:
 
  protected:
-  using MacroAssembler::call_VM_leaf_base;
-
   // Interpreter specific version of call_VM_base
   using MacroAssembler::call_VM_leaf_base;
 
@@ -125,6 +123,8 @@ class InterpreterMacroAssembler: public MacroAssembler {
 
   // load cpool->resolved_klass_at(index);
   void load_resolved_klass_at_offset(Register cpool, Register index, Register klass, Register temp);
+
+  void load_resolved_method_at_index(int byte_no, Register method, Register cache);
 
   void pop_ptr(Register r = r0);
   void pop_i(Register r = r0);
@@ -262,7 +262,6 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void profile_virtual_call(Register receiver, Register mdp,
                             Register scratch2,
                             bool receiver_can_be_null = false);
-  void profile_called_method(Register method, Register mdp, Register reg2) NOT_JVMCI_RETURN;
   void profile_ret(Register return_bci, Register mdp);
   void profile_null_seen(Register mdp);
   void profile_typecheck(Register mdp, Register klass, Register scratch);

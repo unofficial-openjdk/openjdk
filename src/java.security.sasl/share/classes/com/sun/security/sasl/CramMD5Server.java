@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,32 +25,32 @@
 
 package com.sun.security.sasl;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
+import java.util.Map;
+import java.util.Random;
 import javax.security.sasl.*;
 import javax.security.auth.callback.*;
-import java.util.Random;
-import java.util.Map;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
 
-import java.util.logging.Level;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
-  * Implements the CRAM-MD5 SASL server-side mechanism.
-  * (<A HREF="http://www.ietf.org/rfc/rfc2195.txt">RFC 2195</A>).
-  * CRAM-MD5 has no initial response.
-  *
-  * client <---- M={random, timestamp, server-fqdn} ------- server
-  * client ----- {username HMAC_MD5(pw, M)} --------------> server
-  *
-  * CallbackHandler must be able to handle the following callbacks:
-  * - NameCallback: default name is name of user for whom to get password
-  * - PasswordCallback: must fill in password; if empty, no pw
-  * - AuthorizeCallback: must setAuthorized() and canonicalized authorization id
-  *      - auth id == authzid, but needed to get canonicalized authzid
-  *
-  * @author Rosanna Lee
-  */
+ * Implements the CRAM-MD5 SASL server-side mechanism.
+ * (<A HREF="http://www.ietf.org/rfc/rfc2195.txt">RFC 2195</A>).
+ * CRAM-MD5 has no initial response.
+ *
+ * client <---- M={random, timestamp, server-fqdn} ------- server
+ * client ----- {username HMAC_MD5(pw, M)} --------------> server
+ *
+ * CallbackHandler must be able to handle the following callbacks:
+ * - NameCallback: default name is name of user for whom to get password
+ * - PasswordCallback: must fill in password; if empty, no pw
+ * - AuthorizeCallback: must setAuthorized() and canonicalized authorization id
+ *      - auth id == authzid, but needed to get canonicalized authzid
+ *
+ * @author Rosanna Lee
+ */
 final class CramMD5Server extends CramMD5Base implements SaslServer {
     private String fqdn;
     private byte[] challengeData = null;
@@ -130,7 +130,7 @@ final class CramMD5Server extends CramMD5Base implements SaslServer {
                 logger.log(Level.FINE,
                     "CRAMSRV01:Generated challenge: {0}", challengeStr);
 
-                challengeData = challengeStr.getBytes("UTF8");
+                challengeData = challengeStr.getBytes(UTF_8);
                 return challengeData.clone();
 
             } else {
@@ -138,7 +138,7 @@ final class CramMD5Server extends CramMD5Base implements SaslServer {
                 if(logger.isLoggable(Level.FINE)) {
                     logger.log(Level.FINE,
                         "CRAMSRV02:Received response: {0}",
-                        new String(responseData, "UTF8"));
+                        new String(responseData, UTF_8));
                 }
 
                 // Extract username from response
@@ -154,7 +154,7 @@ final class CramMD5Server extends CramMD5Base implements SaslServer {
                     throw new SaslException(
                         "CRAM-MD5: Invalid response; space missing");
                 }
-                String username = new String(responseData, 0, ulen, "UTF8");
+                String username = new String(responseData, 0, ulen, UTF_8);
 
                 logger.log(Level.FINE,
                     "CRAMSRV03:Extracted username: {0}", username);
@@ -177,7 +177,7 @@ final class CramMD5Server extends CramMD5Base implements SaslServer {
                 for (int i = 0; i < pwChars.length; i++) {
                     pwChars[i] = 0;
                 }
-                pw = pwStr.getBytes("UTF8");
+                pw = pwStr.getBytes(UTF_8);
 
                 // Generate a keyed-MD5 digest from the user's password and
                 // original challenge.
@@ -190,7 +190,7 @@ final class CramMD5Server extends CramMD5Base implements SaslServer {
                 clearPassword();
 
                 // Check whether digest is as expected
-                byte[] expectedDigest = digest.getBytes("UTF8");
+                byte[] expectedDigest = digest.getBytes(UTF_8);
                 int digestLen = responseData.length - ulen - 1;
                 if (expectedDigest.length != digestLen) {
                     aborted = true;
@@ -222,9 +222,6 @@ final class CramMD5Server extends CramMD5Base implements SaslServer {
                 completed = true;
                 return null;
             }
-        } catch (UnsupportedEncodingException e) {
-            aborted = true;
-            throw new SaslException("UTF8 not available on platform", e);
         } catch (NoSuchAlgorithmException e) {
             aborted = true;
             throw new SaslException("MD5 algorithm not available on platform", e);

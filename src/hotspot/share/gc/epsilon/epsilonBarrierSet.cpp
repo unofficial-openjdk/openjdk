@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,7 +26,6 @@
 #include "runtime/thread.hpp"
 #include "gc/epsilon/epsilonBarrierSet.hpp"
 #include "gc/epsilon/epsilonThreadLocalData.hpp"
-#include "gc/shared/collectorPolicy.hpp"
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/barrierSetAssembler.hpp"
 #include "utilities/macros.hpp"

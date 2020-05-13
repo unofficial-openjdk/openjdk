@@ -26,13 +26,12 @@ package com.sun.org.apache.bcel.internal.generic;
  *
  * <PRE>Stack: ..., reference -&gt; ...</PRE>
  *
- * @version $Id: IFNULL.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public class IFNULL extends IfInstruction {
 
     /**
-     * Empty constructor needed for the Class.newInstance() statement in
-     * Instruction.readInstruction(). Not to be used otherwise.
+     * Empty constructor needed for Instruction.readInstruction.
+     * Not to be used otherwise.
      */
     IFNULL() {
     }

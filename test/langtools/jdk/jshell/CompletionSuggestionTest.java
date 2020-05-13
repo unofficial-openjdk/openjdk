@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8131025 8141092 8153761 8145263 8131019 8175886 8176184 8176241 8176110 8177466 8197439
+ * @bug 8131025 8141092 8153761 8145263 8131019 8175886 8176184 8176241 8176110 8177466 8197439 8221759 8234896
  * @summary Test Completion and Documentation
  * @library /tools/lib
  * @modules jdk.compiler/com.sun.tools.javac.api
@@ -107,6 +107,8 @@ public class CompletionSuggestionTest extends KullaTesting {
         assertCompletionIncludesExcludes("new C() {}.|",
                 new HashSet<>(Arrays.asList("method()", "number")),
                 new HashSet<>(Arrays.asList("D", "E", "F", "H", "class")));
+        assertCompletion("\"\".leng|", "length()");
+        assertCompletion("\"\"\"\n\"\"\".leng|", "length()");
     }
 
     public void testStartOfExpression() {
@@ -325,6 +327,14 @@ public class CompletionSuggestionTest extends KullaTesting {
         assertSignature("\"\".getBytes(\"\" |", "void String.getBytes(int, int, byte[], int)",
                                                      "byte[] String.getBytes(String) throws java.io.UnsupportedEncodingException",
                                                      "byte[] String.getBytes(java.nio.charset.Charset)");
+        //JDK-8221759:
+        Compiler compiler = new Compiler();
+        Path testOutDir = Paths.get("WithPrivateField");
+        String input = "package field; public class FieldTest { private static String field; private static String field2; }";
+        compiler.compile(testOutDir, input);
+        addToClasspath(compiler.getPath(testOutDir));
+        assertSignature("field.FieldTest.field|");
+        assertSignature("field.FieldTest.field2|");
     }
 
     public void testMethodsWithNoArguments() throws Exception {
@@ -663,6 +673,29 @@ public class CompletionSuggestionTest extends KullaTesting {
 
     public void testCompletionInAnonymous() {
         assertCompletionIncludesExcludes("new Undefined() { int i = \"\".l|", Set.of("length()"), Set.of());
+    }
+
+    public void testMemberReferences() {
+        assertEval("class C {" +
+                   "    public static String stat() { return null; }" +
+                   "    public static void statVoid(String s) {}" +
+                   "    public static Integer statConvert1(String s) { return null; }" +
+                   "    public static String statConvert2(Integer s) { return null; }" +
+                   "    public static String statConvert3(CharSequence s) { return null; }" +
+                   "    public String inst() { return null; }" +
+                   "    public void instVoid(String s) { }" +
+                   "}");
+        assertEval("interface FI { public void t(String s); }");
+        assertCompletion("FI fi = C::|", (Boolean) null, "stat", "statConvert1", "statConvert2", "statConvert3", "statVoid");
+        assertCompletion("FI fi = C::|", true, "statConvert1", "statConvert3","statVoid");
+        assertCompletion("FI fi = new C()::i|", (Boolean) null, "inst", "instVoid");
+        assertCompletion("FI fi = new C()::i|", true, "instVoid");
+        assertEval("interface FI2<R, P> { public R t(P p); }");
+        assertCompletion("FI2<String, Integer> fi = C::|", (Boolean) null, "stat", "statConvert1", "statConvert2", "statConvert3", "statVoid");
+        assertCompletion("FI2<String, Integer> fi = C::|", true, "statConvert2");
+        assertCompletion("FI2<String, CharSequence> fi = C::|", true, "statConvert3");
+        assertCompletion("FI2<String, String> fi = C::|", true, "statConvert3");
+        assertCompletion("FI2<Object, String> fi = C::|", true, "statConvert1", "statConvert3");
     }
 
     @BeforeMethod

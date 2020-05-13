@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,7 @@
 #include "runtime/javaCalls.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/osThread.hpp"
+#include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.inline.hpp"
@@ -326,7 +327,7 @@ inline static bool checkOverflow(sigcontext* uc,
                                  JavaThread* thread,
                                  address* stub) {
   // check if fault address is within thread stack
-  if (thread->on_local_stack(addr)) {
+  if (thread->is_in_full_stack(addr)) {
     // stack overflow
     if (thread->in_stack_yellow_reserved_zone(addr)) {
       thread->disable_stack_yellow_reserved_zone();
@@ -372,7 +373,7 @@ inline static bool checkOverflow(sigcontext* uc,
 }
 
 inline static bool checkPollingPage(address pc, address fault, address* stub) {
-  if (os::is_poll_address(fault)) {
+  if (SafepointMechanism::is_poll_address(fault)) {
     *stub = SharedRuntime::get_poll_stub(pc);
     return true;
   }
@@ -385,7 +386,11 @@ inline static bool checkByteBuffer(address pc, address npc, JavaThread * thread,
   // Do not crash the VM in such a case.
   CodeBlob* cb = CodeCache::find_blob_unsafe(pc);
   CompiledMethod* nm = cb->as_compiled_method_or_null();
-  if (nm != NULL && nm->has_unsafe_access()) {
+  bool is_unsafe_arraycopy = (thread->doing_unsafe_access() && UnsafeCopyMemory::contains_pc(pc));
+  if ((nm != NULL && nm->has_unsafe_access()) || is_unsafe_arraycopy) {
+    if (is_unsafe_arraycopy) {
+      npc = UnsafeCopyMemory::page_error_continue_pc(pc);
+    }
     *stub = SharedRuntime::handle_unsafe_access(thread, npc);
     return true;
   }
@@ -510,8 +515,9 @@ JVM_handle_linux_signal(int sig,
 
 #ifdef CAN_SHOW_REGISTERS_ON_ASSERT
   if ((sig == SIGSEGV || sig == SIGBUS) && info != NULL && info->si_addr == g_assert_poison) {
-    handle_assert_poison_fault(ucVoid, info->si_addr);
-    return 1;
+    if (handle_assert_poison_fault(ucVoid, info->si_addr)) {
+      return 1;
+    }
   }
 #endif
 
@@ -550,8 +556,12 @@ JVM_handle_linux_signal(int sig,
     }
 
     if (sig == SIGBUS &&
-        thread->thread_state() == _thread_in_vm &&
+        (thread->thread_state() == _thread_in_vm ||
+         thread->thread_state() == _thread_in_native) &&
         thread->doing_unsafe_access()) {
+      if (UnsafeCopyMemory::contains_pc(pc)) {
+        npc = UnsafeCopyMemory::page_error_continue_pc(pc);
+      }
       stub = SharedRuntime::handle_unsafe_access(thread, npc);
     }
 

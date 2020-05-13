@@ -54,7 +54,7 @@ extern int explicit_null_checks_inserted,
 void Parse::array_load(BasicType bt) {
   const Type* elemtype = Type::TOP;
   bool big_val = bt == T_DOUBLE || bt == T_LONG;
-  Node* adr = array_addressing(bt, 0, &elemtype);
+  Node* adr = array_addressing(bt, 0, elemtype);
   if (stopped())  return;     // guaranteed null or range check
 
   pop();                      // index (already used)
@@ -62,10 +62,7 @@ void Parse::array_load(BasicType bt) {
 
   if (elemtype == TypeInt::BOOL) {
     bt = T_BOOLEAN;
-  } else if (bt == T_OBJECT) {
-    elemtype = _gvn.type(array)->is_aryptr()->elem()->make_oopptr();
   }
-
   const TypeAryPtr* adr_type = TypeAryPtr::get_array_body_type(bt);
 
   Node* ld = access_load_at(array, adr, adr_type, elemtype, bt,
@@ -82,7 +79,7 @@ void Parse::array_load(BasicType bt) {
 void Parse::array_store(BasicType bt) {
   const Type* elemtype = Type::TOP;
   bool big_val = bt == T_DOUBLE || bt == T_LONG;
-  Node* adr = array_addressing(bt, big_val ? 2 : 1, &elemtype);
+  Node* adr = array_addressing(bt, big_val ? 2 : 1, elemtype);
   if (stopped())  return;     // guaranteed null or range check
   if (bt == T_OBJECT) {
     array_store_check();
@@ -98,10 +95,7 @@ void Parse::array_store(BasicType bt) {
 
   if (elemtype == TypeInt::BOOL) {
     bt = T_BOOLEAN;
-  } else if (bt == T_OBJECT) {
-    elemtype = _gvn.type(array)->is_aryptr()->elem()->make_oopptr();
   }
-
   const TypeAryPtr* adr_type = TypeAryPtr::get_array_body_type(bt);
 
   access_store_at(array, adr, adr_type, val, elemtype, bt, MO_UNORDERED | IN_HEAP | IS_ARRAY);
@@ -110,7 +104,7 @@ void Parse::array_store(BasicType bt) {
 
 //------------------------------array_addressing-------------------------------
 // Pull array and index from the stack.  Compute pointer-to-element.
-Node* Parse::array_addressing(BasicType type, int vals, const Type* *result2) {
+Node* Parse::array_addressing(BasicType type, int vals, const Type*& elemtype) {
   Node *idx   = peek(0+vals);   // Get from stack without popping
   Node *ary   = peek(1+vals);   // in case of exception
 
@@ -121,9 +115,9 @@ Node* Parse::array_addressing(BasicType type, int vals, const Type* *result2) {
 
   const TypeAryPtr* arytype  = _gvn.type(ary)->is_aryptr();
   const TypeInt*    sizetype = arytype->size();
-  const Type*       elemtype = arytype->elem();
+  elemtype = arytype->elem();
 
-  if (UseUniqueSubclasses && result2 != NULL) {
+  if (UseUniqueSubclasses) {
     const Type* el = elemtype->make_ptr();
     if (el && el->isa_instptr()) {
       const TypeInstPtr* toop = el->is_instptr();
@@ -207,9 +201,6 @@ Node* Parse::array_addressing(BasicType type, int vals, const Type* *result2) {
   // Make array address computation control dependent to prevent it
   // from floating above the range check during loop optimizations.
   Node* ptr = array_element_address(ary, idx, type, sizetype, control());
-
-  if (result2 != NULL)  *result2 = elemtype;
-
   assert(ptr != top(), "top should go hand-in-hand with stopped");
 
   return ptr;
@@ -605,7 +596,7 @@ static float if_prob(float taken_cnt, float total_cnt) {
     return PROB_FAIR;
   }
   float p = taken_cnt / total_cnt;
-  return MIN2(MAX2(p, PROB_MIN), PROB_MAX);
+  return clamp(p, PROB_MIN, PROB_MAX);
 }
 
 static float if_cnt(float cnt) {
@@ -1048,11 +1039,11 @@ void Parse::jump_switch_ranges(Node* key_val, SwitchRange *lo, SwitchRange *hi, 
       // if there is a higher range, test for it and process it:
       if (mid < hi && !eq_test_only) {
         // two comparisons of same values--should enable 1 test for 2 branches
-        // Use BoolTest::le instead of BoolTest::gt
+        // Use BoolTest::lt instead of BoolTest::gt
         float cnt = sum_of_cnts(lo, mid-1);
-        IfNode *iff_le  = jump_if_fork_int(key_val, test_val, BoolTest::le, if_prob(cnt, total_cnt), if_cnt(cnt));
-        Node   *iftrue  = _gvn.transform( new IfTrueNode(iff_le) );
-        Node   *iffalse = _gvn.transform( new IfFalseNode(iff_le) );
+        IfNode *iff_lt  = jump_if_fork_int(key_val, test_val, BoolTest::lt, if_prob(cnt, total_cnt), if_cnt(cnt));
+        Node   *iftrue  = _gvn.transform( new IfTrueNode(iff_lt) );
+        Node   *iffalse = _gvn.transform( new IfFalseNode(iff_lt) );
         { PreserveJVMState pjvms(this);
           set_control(iffalse);
           jump_switch_ranges(key_val, mid+1, hi, switch_depth+1);
@@ -1654,7 +1645,7 @@ void Parse::maybe_add_predicate_after_if(Block* path) {
     // Add predicates at bci of if dominating the loop so traps can be
     // recorded on the if's profile data
     int bc_depth = repush_if_args();
-    add_predicate();
+    add_empty_predicates();
     dec_sp(bc_depth);
     path->set_has_predicates();
   }
@@ -2747,8 +2738,8 @@ void Parse::do_one_bytecode() {
   handle_if_acmp:
     // If this is a backwards branch in the bytecodes, add Safepoint
     maybe_add_safepoint(iter().get_dest());
-    a = access_resolve(pop(), 0);
-    b = access_resolve(pop(), 0);
+    a = pop();
+    b = pop();
     c = _gvn.transform( new CmpPNode(b, a) );
     c = optimize_cmp_with_klass(c);
     do_if(btest, c);

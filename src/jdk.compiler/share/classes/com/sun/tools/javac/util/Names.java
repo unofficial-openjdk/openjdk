@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,10 @@
 
 package com.sun.tools.javac.util;
 
+import java.util.Set;
+
 /**
- * Access to the compiler's name table.  STandard names are defined,
+ * Access to the compiler's name table.  Standard names are defined,
  * as well as methods to create new names.
  *
  *  <p><b>This is NOT part of any supported API.
@@ -53,14 +55,10 @@ public class Names {
     public final Name empty;
     public final Name hyphen;
     public final Name one;
-    public final Name period;
-    public final Name semicolon;
     public final Name slash;
-    public final Name slashequals;
 
     // keywords
     public final Name _class;
-    public final Name _default;
     public final Name _super;
     public final Name _this;
     public final Name var;
@@ -74,6 +72,7 @@ public class Names {
     public final Name uses;
     public final Name open;
     public final Name with;
+    public final Name yield;
 
     // field and method names
     public final Name _name;
@@ -83,24 +82,17 @@ public class Names {
     public final Name clinit;
     public final Name clone;
     public final Name close;
-    public final Name compareTo;
     public final Name deserializeLambda;
     public final Name desiredAssertionStatus;
     public final Name equals;
     public final Name error;
-    public final Name family;
     public final Name finalize;
-    public final Name forName;
     public final Name forRemoval;
+    public final Name essentialAPI;
     public final Name getClass;
-    public final Name getClassLoader;
-    public final Name getComponentType;
-    public final Name getDeclaringClass;
-    public final Name getMessage;
     public final Name hasNext;
     public final Name hashCode;
     public final Name init;
-    public final Name initCause;
     public final Name iterator;
     public final Name length;
     public final Name next;
@@ -111,15 +103,15 @@ public class Names {
     public final Name value;
     public final Name valueOf;
     public final Name values;
+    public final Name readResolve;
+    public final Name readObject;
 
     // class names
     public final Name java_io_Serializable;
-    public final Name java_lang_AutoCloseable;
     public final Name java_lang_Class;
     public final Name java_lang_Cloneable;
     public final Name java_lang_Enum;
     public final Name java_lang_Object;
-    public final Name java_lang_invoke_MethodHandle;
 
     // names of builtin classes
     public final Name Array;
@@ -154,6 +146,7 @@ public class Names {
     public final Name ModuleResolution;
     public final Name NestHost;
     public final Name NestMembers;
+    public final Name Record;
     public final Name RuntimeInvisibleAnnotations;
     public final Name RuntimeInvisibleParameterAnnotations;
     public final Name RuntimeInvisibleTypeAnnotations;
@@ -181,6 +174,7 @@ public class Names {
     public final Name TYPE;
     public final Name TYPE_PARAMETER;
     public final Name TYPE_USE;
+    public final Name RECORD_COMPONENT;
 
     // members of java.lang.annotation.RetentionPolicy
     public final Name CLASS;
@@ -189,7 +183,6 @@ public class Names {
 
     // other identifiers
     public final Name T;
-    public final Name deprecated;
     public final Name ex;
     public final Name module_info;
     public final Name package_info;
@@ -205,6 +198,18 @@ public class Names {
     public final Name makeConcat;
     public final Name makeConcatWithConstants;
 
+    // record related
+    // members of java.lang.runtime.ObjectMethods
+    public final Name bootstrap;
+
+    public final Name record;
+
+    // serialization members, used by records too
+    public final Name serialPersistentFields;
+    public final Name writeObject;
+    public final Name writeReplace;
+    public final Name readObjectNoData;
+
     public final Name.Table table;
 
     public Names(Context context) {
@@ -217,14 +222,10 @@ public class Names {
         empty = fromString("");
         hyphen = fromString("-");
         one = fromString("1");
-        period = fromString(".");
-        semicolon = fromString(";");
         slash = fromString("/");
-        slashequals = fromString("/=");
 
         // keywords
         _class = fromString("class");
-        _default = fromString("default");
         _super = fromString("super");
         _this = fromString("this");
         var = fromString("var");
@@ -238,6 +239,7 @@ public class Names {
         uses = fromString("uses");
         open = fromString("open");
         with = fromString("with");
+        yield = fromString("yield");
 
         // field and method names
         _name = fromString("name");
@@ -247,24 +249,17 @@ public class Names {
         clinit = fromString("<clinit>");
         clone = fromString("clone");
         close = fromString("close");
-        compareTo = fromString("compareTo");
         deserializeLambda = fromString("$deserializeLambda$");
         desiredAssertionStatus = fromString("desiredAssertionStatus");
         equals = fromString("equals");
         error = fromString("<error>");
-        family = fromString("family");
         finalize = fromString("finalize");
-        forName = fromString("forName");
         forRemoval = fromString("forRemoval");
+        essentialAPI = fromString("essentialAPI");
         getClass = fromString("getClass");
-        getClassLoader = fromString("getClassLoader");
-        getComponentType = fromString("getComponentType");
-        getDeclaringClass = fromString("getDeclaringClass");
-        getMessage = fromString("getMessage");
         hasNext = fromString("hasNext");
         hashCode = fromString("hashCode");
         init = fromString("<init>");
-        initCause = fromString("initCause");
         iterator = fromString("iterator");
         length = fromString("length");
         next = fromString("next");
@@ -275,16 +270,16 @@ public class Names {
         value = fromString("value");
         valueOf = fromString("valueOf");
         values = fromString("values");
+        readResolve = fromString("readResolve");
+        readObject = fromString("readObject");
         dollarThis = fromString("$this");
 
         // class names
         java_io_Serializable = fromString("java.io.Serializable");
-        java_lang_AutoCloseable = fromString("java.lang.AutoCloseable");
         java_lang_Class = fromString("java.lang.Class");
         java_lang_Cloneable = fromString("java.lang.Cloneable");
         java_lang_Enum = fromString("java.lang.Enum");
         java_lang_Object = fromString("java.lang.Object");
-        java_lang_invoke_MethodHandle = fromString("java.lang.invoke.MethodHandle");
 
         // names of builtin classes
         Array = fromString("Array");
@@ -319,6 +314,7 @@ public class Names {
         ModuleResolution = fromString("ModuleResolution");
         NestHost = fromString("NestHost");
         NestMembers = fromString("NestMembers");
+        Record = fromString("Record");
         RuntimeInvisibleAnnotations = fromString("RuntimeInvisibleAnnotations");
         RuntimeInvisibleParameterAnnotations = fromString("RuntimeInvisibleParameterAnnotations");
         RuntimeInvisibleTypeAnnotations = fromString("RuntimeInvisibleTypeAnnotations");
@@ -346,6 +342,7 @@ public class Names {
         TYPE = fromString("TYPE");
         TYPE_PARAMETER = fromString("TYPE_PARAMETER");
         TYPE_USE = fromString("TYPE_USE");
+        RECORD_COMPONENT = fromString("RECORD_COMPONENT");
 
         // members of java.lang.annotation.RetentionPolicy
         CLASS = fromString("CLASS");
@@ -354,7 +351,6 @@ public class Names {
 
         // other identifiers
         T = fromString("T");
-        deprecated = fromString("deprecated");
         ex = fromString("ex");
         module_info = fromString("module-info");
         package_info = fromString("package-info");
@@ -368,6 +364,14 @@ public class Names {
         // string concat
         makeConcat = fromString("makeConcat");
         makeConcatWithConstants = fromString("makeConcatWithConstants");
+
+        bootstrap = fromString("bootstrap");
+        record = fromString("record");
+
+        serialPersistentFields = fromString("serialPersistentFields");
+        writeObject = fromString("writeObject");
+        writeReplace = fromString("writeReplace");
+        readObjectNoData = fromString("readObjectNoData");
     }
 
     protected Name.Table createTable(Options options) {

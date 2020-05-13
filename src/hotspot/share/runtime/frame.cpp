@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/moduleEntry.hpp"
 #include "code/codeCache.hpp"
 #include "code/vmreg.inline.hpp"
 #include "compiler/abstractCompiler.hpp"
@@ -32,7 +33,7 @@
 #include "interpreter/oopMapCache.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
 #include "oops/method.hpp"
 #include "oops/methodData.hpp"
 #include "oops/oop.inline.hpp"
@@ -230,8 +231,7 @@ JavaCallWrapper* frame::entry_frame_call_wrapper_if_safe(JavaThread* thread) con
 bool frame::is_entry_frame_valid(JavaThread* thread) const {
   // Validate the JavaCallWrapper an entry frame must have
   address jcw = (address)entry_frame_call_wrapper();
-  bool jcw_safe = (jcw < thread->stack_base()) && (jcw > (address)fp()); // less than stack base
-  if (!jcw_safe) {
+  if (!thread->is_in_stack_range_excl(jcw, (address)fp())) {
     return false;
   }
 
@@ -270,63 +270,10 @@ bool frame::can_be_deoptimized() const {
 }
 
 void frame::deoptimize(JavaThread* thread) {
+  assert(thread->frame_anchor()->has_last_Java_frame() &&
+         thread->frame_anchor()->walkable(), "must be");
   // Schedule deoptimization of an nmethod activation with this frame.
   assert(_cb != NULL && _cb->is_compiled(), "must be");
-
-  // This is a fix for register window patching race
-  if (NeedsDeoptSuspend && Thread::current() != thread) {
-    assert(SafepointSynchronize::is_at_safepoint(),
-           "patching other threads for deopt may only occur at a safepoint");
-
-    // It is possible especially with DeoptimizeALot/DeoptimizeRandom that
-    // we could see the frame again and ask for it to be deoptimized since
-    // it might move for a long time. That is harmless and we just ignore it.
-    if (id() == thread->must_deopt_id()) {
-      assert(thread->is_deopt_suspend(), "lost suspension");
-      return;
-    }
-
-    // We are at a safepoint so the target thread can only be
-    // in 4 states:
-    //     blocked - no problem
-    //     blocked_trans - no problem (i.e. could have woken up from blocked
-    //                                 during a safepoint).
-    //     native - register window pc patching race
-    //     native_trans - momentary state
-    //
-    // We could just wait out a thread in native_trans to block.
-    // Then we'd have all the issues that the safepoint code has as to
-    // whether to spin or block. It isn't worth it. Just treat it like
-    // native and be done with it.
-    //
-    // Examine the state of the thread at the start of safepoint since
-    // threads that were in native at the start of the safepoint could
-    // come to a halt during the safepoint, changing the current value
-    // of the safepoint_state.
-    JavaThreadState state = thread->safepoint_state()->orig_thread_state();
-    if (state == _thread_in_native || state == _thread_in_native_trans) {
-      // Since we are at a safepoint the target thread will stop itself
-      // before it can return to java as long as we remain at the safepoint.
-      // Therefore we can put an additional request for the thread to stop
-      // no matter what no (like a suspend). This will cause the thread
-      // to notice it needs to do the deopt on its own once it leaves native.
-      //
-      // The only reason we must do this is because on machine with register
-      // windows we have a race with patching the return address and the
-      // window coming live as the thread returns to the Java code (but still
-      // in native mode) and then blocks. It is only this top most frame
-      // that is at risk. So in truth we could add an additional check to
-      // see if this frame is one that is at risk.
-      RegisterMap map(thread, false);
-      frame at_risk =  thread->last_frame().sender(&map);
-      if (id() == at_risk.id()) {
-        thread->set_must_deopt_id(id());
-        thread->set_deopt_suspend();
-        return;
-      }
-    }
-  } // NeedsDeoptSuspend
-
 
   // If the call site is a MethodHandle call site use the MH deopt
   // handler.
@@ -681,7 +628,7 @@ void frame::print_on_error(outputStream* st, char* buf, int buflen, bool verbose
 #if INCLUDE_JVMCI
         if (cm->is_nmethod()) {
           nmethod* nm = cm->as_nmethod();
-          char* jvmciName = nm->jvmci_installed_code_name(buf, buflen);
+          const char* jvmciName = nm->jvmci_name();
           if (jvmciName != NULL) {
             st->print(" (%s)", jvmciName);
           }
@@ -766,17 +713,18 @@ class InterpreterFrameClosure : public OffsetClosure {
 };
 
 
-class InterpretedArgumentOopFinder: public SignatureInfo {
+class InterpretedArgumentOopFinder: public SignatureIterator {
  private:
   OopClosure* _f;        // Closure to invoke
   int    _offset;        // TOS-relative offset, decremented with each argument
   bool   _has_receiver;  // true if the callee has a receiver
   frame* _fr;
 
-  void set(int size, BasicType type) {
-    _offset -= size;
-    if (type == T_OBJECT || type == T_ARRAY) oop_offset_do();
-  }
+  friend class SignatureIterator;  // so do_parameters_on can call do_type
+  void do_type(BasicType type) {
+    _offset -= parameter_type_word_count(type);
+    if (is_reference_type(type)) oop_offset_do();
+   }
 
   void oop_offset_do() {
     oop* addr;
@@ -785,7 +733,7 @@ class InterpretedArgumentOopFinder: public SignatureInfo {
   }
 
  public:
-  InterpretedArgumentOopFinder(Symbol* signature, bool has_receiver, frame* fr, OopClosure* f) : SignatureInfo(signature), _has_receiver(has_receiver) {
+  InterpretedArgumentOopFinder(Symbol* signature, bool has_receiver, frame* fr, OopClosure* f) : SignatureIterator(signature), _has_receiver(has_receiver) {
     // compute size of arguments
     int args_size = ArgumentSizeComputer(signature).size() + (has_receiver ? 1 : 0);
     assert(!fr->is_interpreted_frame() ||
@@ -802,7 +750,7 @@ class InterpretedArgumentOopFinder: public SignatureInfo {
       --_offset;
       oop_offset_do();
     }
-    iterate_parameters();
+    do_parameters_on(this);
   }
 };
 
@@ -819,18 +767,20 @@ class InterpretedArgumentOopFinder: public SignatureInfo {
 
 
 // visits and GC's all the arguments in entry frame
-class EntryFrameOopFinder: public SignatureInfo {
+class EntryFrameOopFinder: public SignatureIterator {
  private:
   bool   _is_static;
   int    _offset;
   frame* _fr;
   OopClosure* _f;
 
-  void set(int size, BasicType type) {
+  friend class SignatureIterator;  // so do_parameters_on can call do_type
+  void do_type(BasicType type) {
+    // decrement offset before processing the type
+    _offset -= parameter_type_word_count(type);
     assert (_offset >= 0, "illegal offset");
-    if (type == T_OBJECT || type == T_ARRAY) oop_at_offset_do(_offset);
-    _offset -= size;
-  }
+    if (is_reference_type(type))  oop_at_offset_do(_offset);
+ }
 
   void oop_at_offset_do(int offset) {
     assert (offset >= 0, "illegal offset");
@@ -839,17 +789,17 @@ class EntryFrameOopFinder: public SignatureInfo {
   }
 
  public:
-   EntryFrameOopFinder(frame* frame, Symbol* signature, bool is_static) : SignatureInfo(signature) {
-     _f = NULL; // will be set later
-     _fr = frame;
-     _is_static = is_static;
-     _offset = ArgumentSizeComputer(signature).size() - 1; // last parameter is at index 0
-   }
+  EntryFrameOopFinder(frame* frame, Symbol* signature, bool is_static) : SignatureIterator(signature) {
+    _f = NULL; // will be set later
+    _fr = frame;
+    _is_static = is_static;
+    _offset = ArgumentSizeComputer(signature).size();  // pre-decremented down to zero
+  }
 
   void arguments_do(OopClosure* f) {
     _f = f;
-    if (!_is_static) oop_at_offset_do(_offset+1); // do the receiver
-    iterate_parameters();
+    if (!_is_static)  oop_at_offset_do(_offset); // do the receiver
+    do_parameters_on(this);
   }
 
 };
@@ -967,7 +917,7 @@ void frame::oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, const Register
     cf->do_code_blob(_cb);
 }
 
-class CompiledArgumentOopFinder: public SignatureInfo {
+class CompiledArgumentOopFinder: public SignatureIterator {
  protected:
   OopClosure*     _f;
   int             _offset;        // the current offset, incremented with each argument
@@ -978,9 +928,10 @@ class CompiledArgumentOopFinder: public SignatureInfo {
   int             _arg_size;
   VMRegPair*      _regs;        // VMReg list of arguments
 
-  void set(int size, BasicType type) {
-    if (type == T_OBJECT || type == T_ARRAY) handle_oop_offset();
-    _offset += size;
+  friend class SignatureIterator;  // so do_parameters_on can call do_type
+  void do_type(BasicType type) {
+    if (is_reference_type(type))  handle_oop_offset();
+    _offset += parameter_type_word_count(type);
   }
 
   virtual void handle_oop_offset() {
@@ -992,8 +943,8 @@ class CompiledArgumentOopFinder: public SignatureInfo {
   }
 
  public:
-  CompiledArgumentOopFinder(Symbol* signature, bool has_receiver, bool has_appendix, OopClosure* f, frame fr,  const RegisterMap* reg_map)
-    : SignatureInfo(signature) {
+  CompiledArgumentOopFinder(Symbol* signature, bool has_receiver, bool has_appendix, OopClosure* f, frame fr, const RegisterMap* reg_map)
+    : SignatureIterator(signature) {
 
     // initialize CompiledArgumentOopFinder
     _f         = f;
@@ -1014,7 +965,7 @@ class CompiledArgumentOopFinder: public SignatureInfo {
       handle_oop_offset();
       _offset++;
     }
-    iterate_parameters();
+    do_parameters_on(this);
     if (_has_appendix) {
       handle_oop_offset();
       _offset++;
@@ -1115,13 +1066,13 @@ void frame::nmethods_do(CodeBlobClosure* cf) {
 }
 
 
-// call f() on the interpreted Method*s in the stack.
-// Have to walk the entire code cache for the compiled frames Yuck.
-void frame::metadata_do(void f(Metadata*)) {
+// Call f closure on the interpreted Method*s in the stack.
+void frame::metadata_do(MetadataClosure* f) {
+  ResourceMark rm;
   if (is_interpreted_frame()) {
     Method* m = this->interpreter_frame_method();
     assert(m != NULL, "expecting a method in this frame");
-    f(m);
+    f->do_metadata(m);
   }
 }
 
@@ -1216,7 +1167,7 @@ void frame::describe(FrameValues& values, int frame_no) {
 
     // Compute the actual expression stack size
     InterpreterOopMap mask;
-    OopMapCache::compute_one_oop_map(m, bci, &mask);
+    OopMapCache::compute_one_oop_map(methodHandle(Thread::current(), m), bci, &mask);
     intptr_t* tos = NULL;
     // Report each stack element and mark as owned by this frame
     for (int e = 0; e < mask.expression_stack_size(); e++) {
@@ -1332,17 +1283,17 @@ void FrameValues::print(JavaThread* thread) {
   intptr_t* v1 = _values.at(max_index).location;
 
   if (thread == Thread::current()) {
-    while (!thread->is_in_stack((address)v0)) {
+    while (!thread->is_in_live_stack((address)v0)) {
       v0 = _values.at(++min_index).location;
     }
-    while (!thread->is_in_stack((address)v1)) {
+    while (!thread->is_in_live_stack((address)v1)) {
       v1 = _values.at(--max_index).location;
     }
   } else {
-    while (!thread->on_local_stack((address)v0)) {
+    while (!thread->is_in_full_stack((address)v0)) {
       v0 = _values.at(++min_index).location;
     }
-    while (!thread->on_local_stack((address)v1)) {
+    while (!thread->is_in_full_stack((address)v1)) {
       v1 = _values.at(--max_index).location;
     }
   }

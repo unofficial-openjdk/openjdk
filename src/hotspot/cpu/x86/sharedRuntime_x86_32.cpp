@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,13 +30,17 @@
 #include "code/nativeInst.hpp"
 #include "code/vtableStubs.hpp"
 #include "gc/shared/gcLocker.hpp"
+#include "gc/shared/barrierSet.hpp"
+#include "gc/shared/barrierSetAssembler.hpp"
 #include "interpreter/interpreter.hpp"
 #include "logging/log.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/compiledICHolder.hpp"
+#include "oops/klass.inline.hpp"
 #include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/vframeArray.hpp"
+#include "runtime/vm_version.hpp"
 #include "utilities/align.hpp"
 #include "vmreg_x86.inline.hpp"
 #ifdef COMPILER1
@@ -45,7 +49,6 @@
 #ifdef COMPILER2
 #include "opto/runtime.hpp"
 #endif
-#include "vm_version_x86.hpp"
 
 #define __ masm->
 
@@ -974,6 +977,9 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
 
   address c2i_entry = __ pc();
 
+  BarrierSetAssembler* bs = BarrierSet::barrier_set()->barrier_set_assembler();
+  bs->c2i_entry_barrier(masm);
+
   gen_c2i_adapter(masm, total_args_passed, comp_args_on_stack, sig_bt, regs, skip_fixup);
 
   __ flush();
@@ -1303,6 +1309,97 @@ static void save_or_restore_arguments(MacroAssembler* masm,
   }
 }
 
+// Registers need to be saved for runtime call
+static Register caller_saved_registers[] = {
+  rcx, rdx, rsi, rdi
+};
+
+// Save caller saved registers except r1 and r2
+static void save_registers_except(MacroAssembler* masm, Register r1, Register r2) {
+  int reg_len = (int)(sizeof(caller_saved_registers) / sizeof(Register));
+  for (int index = 0; index < reg_len; index ++) {
+    Register this_reg = caller_saved_registers[index];
+    if (this_reg != r1 && this_reg != r2) {
+      __ push(this_reg);
+    }
+  }
+}
+
+// Restore caller saved registers except r1 and r2
+static void restore_registers_except(MacroAssembler* masm, Register r1, Register r2) {
+  int reg_len = (int)(sizeof(caller_saved_registers) / sizeof(Register));
+  for (int index = reg_len - 1; index >= 0; index --) {
+    Register this_reg = caller_saved_registers[index];
+    if (this_reg != r1 && this_reg != r2) {
+      __ pop(this_reg);
+    }
+  }
+}
+
+// Pin object, return pinned object or null in rax
+static void gen_pin_object(MacroAssembler* masm,
+                           Register thread, VMRegPair reg) {
+  __ block_comment("gen_pin_object {");
+
+  Label is_null;
+  Register tmp_reg = rax;
+  VMRegPair tmp(tmp_reg->as_VMReg());
+  if (reg.first()->is_stack()) {
+    // Load the arg up from the stack
+    simple_move32(masm, reg, tmp);
+    reg = tmp;
+  } else {
+    __ movl(tmp_reg, reg.first()->as_Register());
+  }
+  __ testptr(reg.first()->as_Register(), reg.first()->as_Register());
+  __ jccb(Assembler::equal, is_null);
+
+  // Save registers that may be used by runtime call
+  Register arg = reg.first()->is_Register() ? reg.first()->as_Register() : noreg;
+  save_registers_except(masm, arg, thread);
+
+  __ call_VM_leaf(
+    CAST_FROM_FN_PTR(address, SharedRuntime::pin_object),
+    thread, reg.first()->as_Register());
+
+  // Restore saved registers
+  restore_registers_except(masm, arg, thread);
+
+  __ bind(is_null);
+  __ block_comment("} gen_pin_object");
+}
+
+// Unpin object
+static void gen_unpin_object(MacroAssembler* masm,
+                             Register thread, VMRegPair reg) {
+  __ block_comment("gen_unpin_object {");
+  Label is_null;
+
+  // temp register
+  __ push(rax);
+  Register tmp_reg = rax;
+  VMRegPair tmp(tmp_reg->as_VMReg());
+
+  simple_move32(masm, reg, tmp);
+
+  __ testptr(rax, rax);
+  __ jccb(Assembler::equal, is_null);
+
+  // Save registers that may be used by runtime call
+  Register arg = reg.first()->is_Register() ? reg.first()->as_Register() : noreg;
+  save_registers_except(masm, arg, thread);
+
+  __ call_VM_leaf(
+    CAST_FROM_FN_PTR(address, SharedRuntime::unpin_object),
+    thread, rax);
+
+  // Restore saved registers
+  restore_registers_except(masm, arg, thread);
+  __ bind(is_null);
+  __ pop(rax);
+  __ block_comment("} gen_unpin_object");
+}
+
 // Check GCLocker::needs_gc and enter the runtime if it's true.  This
 // keeps a new JNI critical region from starting until a GC has been
 // forced.  Save down any oops in registers and describe them in an
@@ -1416,8 +1513,7 @@ static void verify_oop_args(MacroAssembler* masm,
   Register temp_reg = rbx;  // not part of any compiled calling seq
   if (VerifyOops) {
     for (int i = 0; i < method->size_of_parameters(); i++) {
-      if (sig_bt[i] == T_OBJECT ||
-          sig_bt[i] == T_ARRAY) {
+      if (is_reference_type(sig_bt[i])) {
         VMReg r = regs[i].first();
         assert(r->is_valid(), "bad oop arg");
         if (r->is_stack()) {
@@ -1524,7 +1620,8 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                                 int compile_id,
                                                 BasicType* in_sig_bt,
                                                 VMRegPair* in_regs,
-                                                BasicType ret_type) {
+                                                BasicType ret_type,
+                                                address critical_entry) {
   if (method->is_method_handle_intrinsic()) {
     vmIntrinsics::ID iid = method->intrinsic_id();
     intptr_t start = (intptr_t)__ pc();
@@ -1547,7 +1644,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                        (OopMapSet*)NULL);
   }
   bool is_critical_native = true;
-  address native_func = method->critical_native_function();
+  address native_func = critical_entry;
   if (native_func == NULL) {
     native_func = method->native_function();
     is_critical_native = false;
@@ -1593,7 +1690,6 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
       out_sig_bt[argc++] = in_sig_bt[i];
     }
   } else {
-    Thread* THREAD = Thread::current();
     in_elem_bt = NEW_RESOURCE_ARRAY(BasicType, total_in_args);
     SignatureStream ss(method->signature());
     for (int i = 0; i < total_in_args ; i++ ) {
@@ -1601,28 +1697,16 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
         // Arrays are passed as int, elem* pair
         out_sig_bt[argc++] = T_INT;
         out_sig_bt[argc++] = T_ADDRESS;
-        Symbol* atype = ss.as_symbol(CHECK_NULL);
-        const char* at = atype->as_C_string();
-        if (strlen(at) == 2) {
-          assert(at[0] == '[', "must be");
-          switch (at[1]) {
-            case 'B': in_elem_bt[i]  = T_BYTE; break;
-            case 'C': in_elem_bt[i]  = T_CHAR; break;
-            case 'D': in_elem_bt[i]  = T_DOUBLE; break;
-            case 'F': in_elem_bt[i]  = T_FLOAT; break;
-            case 'I': in_elem_bt[i]  = T_INT; break;
-            case 'J': in_elem_bt[i]  = T_LONG; break;
-            case 'S': in_elem_bt[i]  = T_SHORT; break;
-            case 'Z': in_elem_bt[i]  = T_BOOLEAN; break;
-            default: ShouldNotReachHere();
-          }
-        }
+        ss.skip_array_prefix(1);  // skip one '['
+        assert(ss.is_primitive(), "primitive type expected");
+        in_elem_bt[i] = ss.type();
       } else {
         out_sig_bt[argc++] = in_sig_bt[i];
         in_elem_bt[i] = T_VOID;
       }
       if (in_sig_bt[i] != T_VOID) {
-        assert(in_sig_bt[i] == ss.type(), "must match");
+        assert(in_sig_bt[i] == ss.type() ||
+               in_sig_bt[i] == T_ARRAY, "must match");
         ss.next();
       }
     }
@@ -1795,6 +1879,10 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   // -2 because return address is already present and so is saved rbp
   __ subptr(rsp, stack_size - 2*wordSize);
 
+
+  BarrierSetAssembler* bs = BarrierSet::barrier_set()->barrier_set_assembler();
+  bs->nmethod_entry_barrier(masm);
+
   // Frame is now completed as far as size and linkage.
   int frame_complete = ((intptr_t)__ pc()) - start;
 
@@ -1830,14 +1918,14 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   // if we load it once it is usable thru the entire wrapper
   const Register thread = rdi;
 
-  // We use rsi as the oop handle for the receiver/klass
-  // It is callee save so it survives the call to native
+   // We use rsi as the oop handle for the receiver/klass
+   // It is callee save so it survives the call to native
 
-  const Register oop_handle_reg = rsi;
+   const Register oop_handle_reg = rsi;
 
-  __ get_thread(thread);
+   __ get_thread(thread);
 
-  if (is_critical_native) {
+  if (is_critical_native && !Universe::heap()->supports_object_pinning()) {
     check_needs_gc_for_critical_native(masm, thread, stack_slots, total_c_args, total_in_args,
                                        oop_handle_offset, oop_maps, in_regs, in_sig_bt);
   }
@@ -1875,6 +1963,11 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   //
   OopMap* map = new OopMap(stack_slots * 2, 0 /* arg_slots*/);
 
+  // Inbound arguments that need to be pinned for critical natives
+  GrowableArray<int> pinned_args(total_in_args);
+  // Current stack slot for storing register based array argument
+  int pinned_slot = oop_handle_offset;
+
   // Mark location of rbp,
   // map->set_callee_saved(VMRegImpl::stack2reg( stack_slots - 2), stack_slots * 2, 0, rbp->as_VMReg());
 
@@ -1886,7 +1979,28 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
     switch (in_sig_bt[i]) {
       case T_ARRAY:
         if (is_critical_native) {
-          unpack_array_argument(masm, in_regs[i], in_elem_bt[i], out_regs[c_arg + 1], out_regs[c_arg]);
+          VMRegPair in_arg = in_regs[i];
+          if (Universe::heap()->supports_object_pinning()) {
+            // gen_pin_object handles save and restore
+            // of any clobbered registers
+            gen_pin_object(masm, thread, in_arg);
+            pinned_args.append(i);
+
+            // rax has pinned array
+            VMRegPair result_reg(rax->as_VMReg());
+            if (!in_arg.first()->is_stack()) {
+              assert(pinned_slot <= stack_slots, "overflow");
+              simple_move32(masm, result_reg, VMRegImpl::stack2reg(pinned_slot));
+              pinned_slot += VMRegImpl::slots_per_word;
+            } else {
+              // Write back pinned value, it will be used to unpin this argument
+              __ movptr(Address(rbp, reg2offset_in(in_arg.first())), result_reg.first()->as_Register());
+            }
+            // We have the array in register, use it
+            in_arg = result_reg;
+          }
+
+          unpack_array_argument(masm, in_arg, in_elem_bt[i], out_regs[c_arg + 1], out_regs[c_arg]);
           c_arg++;
           break;
         }
@@ -2079,6 +2193,26 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   default       : ShouldNotReachHere();
   }
 
+  // unpin pinned arguments
+  pinned_slot = oop_handle_offset;
+  if (pinned_args.length() > 0) {
+    // save return value that may be overwritten otherwise.
+    save_native_result(masm, ret_type, stack_slots);
+    for (int index = 0; index < pinned_args.length(); index ++) {
+      int i = pinned_args.at(index);
+      assert(pinned_slot <= stack_slots, "overflow");
+      if (!in_regs[i].first()->is_stack()) {
+        int offset = pinned_slot * VMRegImpl::stack_slot_size;
+        __ movl(in_regs[i].first()->as_Register(), Address(rsp, offset));
+        pinned_slot += VMRegImpl::slots_per_word;
+      }
+      // gen_pin_object handles save and restore
+      // of any other clobbered registers
+      gen_unpin_object(masm, thread, in_regs[i]);
+    }
+    restore_native_result(masm, ret_type, stack_slots);
+  }
+
   // Switch thread to "native transition" state before reading the synchronization state.
   // This additional state is necessary because reading and testing the synchronization
   // state is not atomic w.r.t. GC, as this scenario demonstrates:
@@ -2218,7 +2352,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   __ reset_last_Java_frame(thread, false);
 
   // Unbox oop result, e.g. JNIHandles::resolve value.
-  if (ret_type == T_OBJECT || ret_type == T_ARRAY) {
+  if (is_reference_type(ret_type)) {
     __ resolve_jobject(rax /* value */,
                        thread /* thread */,
                        rcx /* tmp */);
@@ -3017,7 +3151,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
   __ bind(noException);
 
   Label no_adjust, bail, not_special;
-  if (SafepointMechanism::uses_thread_local_poll() && !cause_return) {
+  if (!cause_return) {
     // If our stashed return pc was modified by the runtime we avoid touching it
     __ cmpptr(rbx, Address(rbp, wordSize));
     __ jccb(Assembler::notEqual, no_adjust);

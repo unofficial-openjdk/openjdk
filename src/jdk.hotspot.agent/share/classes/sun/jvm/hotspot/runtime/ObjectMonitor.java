@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,8 @@ import java.util.*;
 import sun.jvm.hotspot.debugger.*;
 import sun.jvm.hotspot.oops.*;
 import sun.jvm.hotspot.types.*;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
 public class ObjectMonitor extends VMObject {
   static {
@@ -48,9 +50,9 @@ public class ObjectMonitor extends VMObject {
     objectFieldOffset = f.getOffset();
     f = type.getField("_owner");
     ownerFieldOffset = f.getOffset();
-    f = type.getField("FreeNext");
-    FreeNextFieldOffset = f.getOffset();
-    countField  = type.getJIntField("_count");
+    f = type.getField("_next_om");
+    nextOMFieldOffset = f.getOffset();
+    contentionsField  = type.getJIntField("_contentions");
     waitersField = type.getJIntField("_waiters");
     recursionsField = type.getCIntegerField("_recursions");
   }
@@ -64,7 +66,7 @@ public class ObjectMonitor extends VMObject {
   }
 
   // FIXME
-  //  void      set_header(markOop hdr);
+  //  void      set_header(markWord hdr);
 
   // FIXME: must implement and delegate to platform-dependent implementation
   //  public boolean isBusy();
@@ -83,13 +85,9 @@ public class ObjectMonitor extends VMObject {
 
   public int    waiters() { return waitersField.getValue(addr); }
 
-  public Address freeNext() { return addr.getAddressAt(FreeNextFieldOffset); }
+  public Address nextOM() { return addr.getAddressAt(nextOMFieldOffset); }
   // FIXME
   //  void      set_queue(void* owner);
-
-  public int count() { return countField.getValue(addr); }
-  // FIXME
-  //  void      set_count(int count);
 
   public long recursions() { return recursionsField.getValue(addr); }
 
@@ -97,9 +95,8 @@ public class ObjectMonitor extends VMObject {
     return addr.getOopHandleAt(objectFieldOffset);
   }
 
-  // contentions is always equal to count
   public int contentions() {
-      return count();
+      return contentionsField.getValue(addr);
   }
 
   // FIXME
@@ -113,8 +110,8 @@ public class ObjectMonitor extends VMObject {
   private static long          headerFieldOffset;
   private static long          objectFieldOffset;
   private static long          ownerFieldOffset;
-  private static long          FreeNextFieldOffset;
-  private static JIntField     countField;
+  private static long          nextOMFieldOffset;
+  private static JIntField     contentionsField;
   private static JIntField     waitersField;
   private static CIntegerField recursionsField;
   // FIXME: expose platform-dependent stuff

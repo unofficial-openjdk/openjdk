@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,12 +31,15 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 import static java.net.NetworkInterface.getNetworkInterfaces;
 import static java.util.Collections.list;
@@ -85,10 +88,24 @@ public class NetworkConfiguration {
         });
     }
 
-    private static boolean isNotExcludedInterface(NetworkInterface nif) {
-        if (Platform.isOSX() && nif.getName().contains("awdl")) {
-            return false;
+    private static boolean isIPv6LinkLocal(InetAddress a) {
+        return Inet6Address.class.isInstance(a) && a.isLinkLocalAddress();
+    }
+
+    public static boolean isTestable(NetworkInterface nif) {
+        if (Platform.isOSX()) {
+            if (nif.getName().contains("awdl")) {
+                return false; // exclude awdl
+            }
+            // filter out interfaces that only have link-local IPv6 addresses
+            // on macOS interfaces like 'en6' fall in this category and
+            // need to be skipped
+            return nif.inetAddresses()
+                    .filter(Predicate.not(NetworkConfiguration::isIPv6LinkLocal))
+                    .findAny()
+                    .isPresent();
         }
+
         if (Platform.isWindows()) {
             String dName = nif.getDisplayName();
             if (dName != null && dName.contains("Teredo")) {
@@ -114,6 +131,12 @@ public class NetworkConfiguration {
         return ip6Interfaces.get(nif).stream().anyMatch(a -> !a.isAnyLocalAddress());
     }
 
+    public static boolean hasNonLinkLocalAddress(NetworkInterface nif) {
+        return nif.inetAddresses()
+                .filter(Predicate.not(InetAddress::isLinkLocalAddress))
+                .findAny().isPresent();
+    }
+
     private boolean supportsIp4Multicast(NetworkInterface nif) {
         try {
             if (!nif.supportsMulticast()) {
@@ -131,6 +154,14 @@ public class NetworkConfiguration {
                 return false;
             }
 
+            if (Platform.isOSX()) {
+                // multicasting may not work on interfaces that only
+                // have link local addresses
+                if (!hasNonLinkLocalAddress(nif)) {
+                    return false;
+                }
+            }
+
             return hasIp4Addresses(nif);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -141,6 +172,14 @@ public class NetworkConfiguration {
         try {
             if (!nif.supportsMulticast()) {
                 return false;
+            }
+
+            if (Platform.isOSX()) {
+                // multicasting may not work on interfaces that only
+                // have link local addresses
+                if (!hasNonLinkLocalAddress(nif)) {
+                    return false;
+                }
             }
 
             return hasIp6Addresses(nif);
@@ -199,7 +238,7 @@ public class NetworkConfiguration {
     public Stream<NetworkInterface> ip4Interfaces() {
         return ip4Interfaces.keySet()
                             .stream()
-                            .filter(NetworkConfiguration::isNotExcludedInterface)
+                            .filter(NetworkConfiguration::isTestable)
                             .filter(this::hasIp4Addresses);
     }
 
@@ -209,7 +248,7 @@ public class NetworkConfiguration {
     public Stream<NetworkInterface> ip6Interfaces() {
         return ip6Interfaces.keySet()
                             .stream()
-                            .filter(NetworkConfiguration::isNotExcludedInterface)
+                            .filter(NetworkConfiguration::isTestable)
                             .filter(this::hasIp6Addresses);
     }
 
@@ -307,8 +346,8 @@ public class NetworkConfiguration {
      * Return a NetworkConfiguration instance.
      */
     public static NetworkConfiguration probe() throws IOException {
-        Map<NetworkInterface, List<Inet4Address>> ip4Interfaces = new HashMap<>();
-        Map<NetworkInterface, List<Inet6Address>> ip6Interfaces = new HashMap<>();
+        Map<NetworkInterface, List<Inet4Address>> ip4Interfaces = new LinkedHashMap<>();
+        Map<NetworkInterface, List<Inet6Address>> ip6Interfaces = new LinkedHashMap<>();
 
         List<NetworkInterface> nifs = list(getNetworkInterfaces());
         for (NetworkInterface nif : nifs) {
@@ -380,14 +419,17 @@ public class NetworkConfiguration {
 
     /** Prints all the system interface information to the give stream. */
     public static void printSystemConfiguration(PrintStream out) {
+        PrivilegedAction<Void> pa = () -> {
         try {
             out.println("*** all system network interface configuration ***");
             for (NetworkInterface nif : list(getNetworkInterfaces())) {
                 out.print(interfaceInformation(nif));
             }
             out.println("*** end ***");
+            return null;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
-        }
+        }};
+        AccessController.doPrivileged(pa);
     }
 }

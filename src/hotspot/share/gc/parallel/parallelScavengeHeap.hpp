@@ -25,25 +25,26 @@
 #ifndef SHARE_GC_PARALLEL_PARALLELSCAVENGEHEAP_HPP
 #define SHARE_GC_PARALLEL_PARALLELSCAVENGEHEAP_HPP
 
-#include "gc/parallel/generationSizer.hpp"
 #include "gc/parallel/objectStartArray.hpp"
 #include "gc/parallel/psGCAdaptivePolicyCounters.hpp"
 #include "gc/parallel/psOldGen.hpp"
 #include "gc/parallel/psYoungGen.hpp"
 #include "gc/shared/cardTableBarrierSet.hpp"
 #include "gc/shared/collectedHeap.hpp"
-#include "gc/shared/collectorPolicy.hpp"
 #include "gc/shared/gcPolicyCounters.hpp"
 #include "gc/shared/gcWhen.hpp"
+#include "gc/shared/preGCValues.hpp"
+#include "gc/shared/referenceProcessor.hpp"
 #include "gc/shared/softRefPolicy.hpp"
 #include "gc/shared/strongRootsScope.hpp"
+#include "gc/shared/workgroup.hpp"
+#include "logging/log.hpp"
 #include "memory/metaspace.hpp"
 #include "utilities/growableArray.hpp"
 #include "utilities/ostream.hpp"
 
 class AdjoiningGenerations;
 class GCHeapSummary;
-class GCTaskManager;
 class MemoryManager;
 class MemoryPool;
 class PSAdaptiveSizePolicy;
@@ -60,17 +61,9 @@ class ParallelScavengeHeap : public CollectedHeap {
   static PSAdaptiveSizePolicy*       _size_policy;
   static PSGCAdaptivePolicyCounters* _gc_policy_counters;
 
-  GenerationSizer* _collector_policy;
-
   SoftRefPolicy _soft_ref_policy;
 
-  // Collection of generations that are adjacent in the
-  // space reserved for the heap.
-  AdjoiningGenerations* _gens;
   unsigned int _death_march_count;
-
-  // The task manager
-  static GCTaskManager* _gc_task_manager;
 
   GCMemoryManager* _young_manager;
   GCMemoryManager* _old_manager;
@@ -78,6 +71,8 @@ class ParallelScavengeHeap : public CollectedHeap {
   MemoryPool* _eden_pool;
   MemoryPool* _survivor_pool;
   MemoryPool* _old_pool;
+
+  WorkGang _workers;
 
   virtual void initialize_serviceability();
 
@@ -92,8 +87,18 @@ class ParallelScavengeHeap : public CollectedHeap {
   HeapWord* mem_allocate_old_gen(size_t size);
 
  public:
-  ParallelScavengeHeap(GenerationSizer* policy) :
-    CollectedHeap(), _collector_policy(policy), _death_march_count(0) { }
+  ParallelScavengeHeap() :
+    CollectedHeap(),
+    _death_march_count(0),
+    _young_manager(NULL),
+    _old_manager(NULL),
+    _eden_pool(NULL),
+    _survivor_pool(NULL),
+    _old_pool(NULL),
+    _workers("GC Thread",
+             ParallelGCThreads,
+             true /* are_GC_task_threads */,
+             false /* are_ConcurrentGC_threads */) { }
 
   // For use by VM operations
   enum CollectionType {
@@ -109,10 +114,6 @@ class ParallelScavengeHeap : public CollectedHeap {
     return "Parallel";
   }
 
-  virtual CollectorPolicy* collector_policy() const { return _collector_policy; }
-
-  virtual GenerationSizer* ps_collector_policy() const { return _collector_policy; }
-
   virtual SoftRefPolicy* soft_ref_policy() { return &_soft_ref_policy; }
 
   virtual GrowableArray<GCMemoryManager*> memory_managers();
@@ -127,27 +128,14 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   static ParallelScavengeHeap* heap();
 
-  static GCTaskManager* const gc_task_manager() { return _gc_task_manager; }
-
   CardTableBarrierSet* barrier_set();
   PSCardTable* card_table();
-
-  AdjoiningGenerations* gens() { return _gens; }
 
   // Returns JNI_OK on success
   virtual jint initialize();
 
   void post_initialize();
   void update_counters();
-
-  // The alignment used for the various areas
-  size_t space_alignment()      { return _collector_policy->space_alignment(); }
-  size_t generation_alignment() { return _collector_policy->gen_alignment(); }
-
-  // Return the (conservative) maximum heap alignment
-  static size_t conservative_max_heap_alignment() {
-    return CollectorPolicy::compute_heap_alignment();
-  }
 
   size_t capacity() const;
   size_t used() const;
@@ -157,13 +145,12 @@ class ParallelScavengeHeap : public CollectedHeap {
   // collection.
   virtual bool is_maximal_no_gc() const;
 
-  // Return true if the reference points to an object that
-  // can be moved in a partial collection.  For currently implemented
-  // generational collectors that means during a collection of
-  // the young gen.
-  virtual bool is_scavengable(oop obj);
   virtual void register_nmethod(nmethod* nm);
-  virtual void verify_nmethod(nmethod* nmethod);
+  virtual void unregister_nmethod(nmethod* nm);
+  virtual void verify_nmethod(nmethod* nm);
+  virtual void flush_nmethod(nmethod* nm);
+
+  void prune_scavengable_nmethods();
 
   size_t max_capacity() const;
 
@@ -174,6 +161,9 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   bool is_in_young(oop p);  // reserved part
   bool is_in_old(oop p);    // reserved part
+
+  MemRegion reserved_region() const { return _reserved; }
+  HeapWord* base() const { return _reserved.start(); }
 
   // Memory allocation.   "gc_time_limit_was_exceeded" will
   // be set to true if the adaptive size policy determine that
@@ -217,10 +207,8 @@ class ParallelScavengeHeap : public CollectedHeap {
   size_t unsafe_max_tlab_alloc(Thread* thr) const;
 
   void object_iterate(ObjectClosure* cl);
-  void safe_object_iterate(ObjectClosure* cl) { object_iterate(cl); }
 
   HeapWord* block_start(const void* addr) const;
-  size_t block_size(const HeapWord* addr) const;
   bool block_is_obj(const HeapWord* addr) const;
 
   jlong millis_since_last_gc();
@@ -232,6 +220,14 @@ class ParallelScavengeHeap : public CollectedHeap {
   virtual void print_gc_threads_on(outputStream* st) const;
   virtual void gc_threads_do(ThreadClosure* tc) const;
   virtual void print_tracing_info() const;
+
+  virtual WorkGang* get_safepoint_workers() { return &_workers; }
+
+  PreGenGCValues get_pre_gc_values() const;
+  void print_heap_change(const PreGenGCValues& pre_gc_values) const;
+
+  // Used to print information about locations in the hs_err file.
+  virtual bool print_location(outputStream* st, void* addr) const;
 
   void verify(VerifyOption option /* ignored */);
 
@@ -258,28 +254,10 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   GCMemoryManager* old_gc_manager() const { return _old_manager; }
   GCMemoryManager* young_gc_manager() const { return _young_manager; }
-};
 
-// Simple class for storing info about the heap at the start of GC, to be used
-// after GC for comparison/printing.
-class PreGCValues {
-public:
-  PreGCValues(ParallelScavengeHeap* heap) :
-      _heap_used(heap->used()),
-      _young_gen_used(heap->young_gen()->used_in_bytes()),
-      _old_gen_used(heap->old_gen()->used_in_bytes()),
-      _metadata_used(MetaspaceUtils::used_bytes()) { };
-
-  size_t heap_used() const      { return _heap_used; }
-  size_t young_gen_used() const { return _young_gen_used; }
-  size_t old_gen_used() const   { return _old_gen_used; }
-  size_t metadata_used() const  { return _metadata_used; }
-
-private:
-  size_t _heap_used;
-  size_t _young_gen_used;
-  size_t _old_gen_used;
-  size_t _metadata_used;
+  WorkGang& workers() {
+    return _workers;
+  }
 };
 
 // Class that can be used to print information about the

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,6 @@
 #include "memory/allocation.inline.hpp"
 #include "memory/metaspaceShared.hpp"
 #include "memory/resourceArea.hpp"
-#include "memory/universe.hpp"
-#include "runtime/atomic.hpp"
 #include "runtime/os.hpp"
 #include "runtime/task.hpp"
 #include "runtime/threadCritical.hpp"
@@ -326,7 +324,7 @@ void Arena::destruct_contents() {
 // change the size
 void Arena::set_size_in_bytes(size_t size) {
   if (_size_in_bytes != size) {
-    long delta = (long)(size - size_in_bytes());
+    ssize_t delta = size - size_in_bytes();
     _size_in_bytes = size;
     MemTracker::record_arena_size_change(delta, _flags);
   }
@@ -475,10 +473,6 @@ void* Arena::internal_malloc_4(size_t x) {
 // Non-product code
 
 #ifndef PRODUCT
-
-julong Arena::_bytes_allocated = 0;
-
-void Arena::inc_bytes_allocated(size_t x) { inc_stat_counter(&_bytes_allocated, x); }
 
 // debugging code
 inline void Arena::free_all(char** start, char** end) {

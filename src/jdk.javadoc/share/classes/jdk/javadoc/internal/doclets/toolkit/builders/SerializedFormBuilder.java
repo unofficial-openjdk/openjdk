@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,9 +51,6 @@ import jdk.javadoc.internal.doclets.toolkit.util.Utils;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
- * @author Bhavesh Patel (Modified)
  */
 public class SerializedFormBuilder extends AbstractBuilder {
 
@@ -96,12 +93,6 @@ public class SerializedFormBuilder extends AbstractBuilder {
     protected Element currentMember;
 
     /**
-     * The content that will be added to the serialized form documentation tree.
-     */
-    private Content contentTree;
-
-
-    /**
      * Construct a new SerializedFormBuilder.
      * @param context  the build context.
      */
@@ -126,7 +117,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
      */
     @Override
     public void build() throws DocletException {
-        SortedSet<TypeElement> rootclasses = new TreeSet<>(utils.makeGeneralPurposeComparator());
+        SortedSet<TypeElement> rootclasses = new TreeSet<>(utils.comparators.makeGeneralPurposeComparator());
         rootclasses.addAll(configuration.getIncludedTypeElements());
         if (!serialClassFoundToDocument(rootclasses)) {
             //Nothing to document.
@@ -137,32 +128,30 @@ public class SerializedFormBuilder extends AbstractBuilder {
             //Doclet does not support this output.
             return;
         }
-        buildSerializedForm(contentTree);
+        buildSerializedForm();
     }
 
     /**
      * Build the serialized form.
      *
-     * @param serializedTree content tree to which the documentation will be added
      * @throws DocletException if there is a problem while building the documentation
      */
-    protected void buildSerializedForm(Content serializedTree) throws DocletException {
-        serializedTree = writer.getHeader(resources.getText(
+    protected void buildSerializedForm() throws DocletException {
+        Content contentTree = writer.getHeader(resources.getText(
                 "doclet.Serialized_Form"));
 
-        buildSerializedFormSummaries(serializedTree);
+        buildSerializedFormSummaries();
 
-        writer.addFooter(serializedTree);
-        writer.printDocument(serializedTree);
+        writer.addFooter();
+        writer.printDocument(contentTree);
     }
 
     /**
      * Build the serialized form summaries.
      *
-     * @param serializedTree content tree to which the documentation will be added
      * @throws DocletException if there is a problem while building the documentation
      */
-    protected void buildSerializedFormSummaries(Content serializedTree)
+    protected void buildSerializedFormSummaries()
             throws DocletException {
         Content serializedSummariesTree = writer.getSerializedSummariesHeader();
         for (PackageElement pkg : configuration.packages) {
@@ -170,8 +159,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
 
             buildPackageSerializedForm(serializedSummariesTree);
         }
-        serializedTree.addContent(writer.getSerializedContent(
-                serializedSummariesTree));
+        writer.addSerializedContent(serializedSummariesTree);
     }
 
     /**
@@ -205,7 +193,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
      * @param packageSerializedTree content tree to which the documentation will be added
      */
     protected void buildPackageHeader(Content packageSerializedTree) {
-        packageSerializedTree.addContent(writer.getPackageHeader(
+        packageSerializedTree.add(writer.getPackageHeader(
                 utils.getPackageName(currentPackage)));
     }
 
@@ -232,10 +220,10 @@ public class SerializedFormBuilder extends AbstractBuilder {
                 buildSerialUIDInfo(classTree);
                 buildClassContent(classTree);
 
-                classSerializedTree.addContent(classTree);
+                classSerializedTree.add(writer.getMemberTree(classTree));
             }
         }
-        packageSerializedTree.addContent(classSerializedTree);
+        packageSerializedTree.add(classSerializedTree);
     }
 
     /**
@@ -254,7 +242,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
                 break;
             }
         }
-        classTree.addContent(serialUidTree);
+        classTree.add(serialUidTree);
     }
 
     /**
@@ -270,7 +258,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
         buildFieldHeader(classContentTree);
         buildSerializableFields(classContentTree);
 
-        classTree.addContent(classContentTree);
+        classTree.add(classContentTree);
     }
 
     /**
@@ -292,20 +280,20 @@ public class SerializedFormBuilder extends AbstractBuilder {
                 buildDeprecatedMethodInfo(methodsContentTree);
                 buildMethodInfo(methodsContentTree);
 
-                serializableMethodTree.addContent(methodsContentTree);
+                serializableMethodTree.add(methodsContentTree);
             }
         }
         if (!utils.serializationMethods(currentTypeElement).isEmpty()) {
-            classContentTree.addContent(methodWriter.getSerializableMethods(
+            classContentTree.add(methodWriter.getSerializableMethods(
                     resources.getText("doclet.Serialized_Form_methods"),
                     serializableMethodTree));
             if (utils.isSerializable(currentTypeElement) && !utils.isExternalizable(currentTypeElement)) {
                 if (utils.serializationMethods(currentTypeElement).isEmpty()) {
                     Content noCustomizationMsg = methodWriter.getNoCustomizationMsg(
                             resources.getText("doclet.Serializable_no_customization"));
-                    classContentTree.addContent(methodWriter.getSerializableMethods(
-                    resources.getText("doclet.Serialized_Form_methods"),
-                    noCustomizationMsg));
+                    classContentTree.add(methodWriter.getSerializableMethods(
+                            resources.getText("doclet.Serialized_Form_methods"),
+                            noCustomizationMsg));
                 }
             }
         }
@@ -336,7 +324,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
      * @throws DocletException if there is a problem while building the documentation
      */
     protected void buildMethodInfo(Content methodsContentTree) throws DocletException  {
-        if (configuration.nocomment) {
+        if (options.noComment()) {
             return;
         }
 
@@ -363,7 +351,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
         ExecutableElement method = (ExecutableElement)currentMember;
         if (method.getSimpleName().toString().compareTo("writeExternal") == 0
                 && utils.getSerialDataTrees(method).isEmpty()) {
-            if (configuration.serialwarn) {
+            if (options.serialWarn()) {
                 TypeElement encl  = (TypeElement) method.getEnclosingElement();
                 messages.warning(currentMember,
                         "doclet.MissingSerialDataTag", encl.getQualifiedName().toString(),
@@ -398,12 +386,12 @@ public class SerializedFormBuilder extends AbstractBuilder {
                 Content serializableFieldsTree = fieldWriter.getSerializableFieldsHeader();
                 Content fieldsOverviewContentTree = fieldWriter.getFieldsContentHeader(true);
                 fieldWriter.addMemberDeprecatedInfo(ve, fieldsOverviewContentTree);
-                if (!configuration.nocomment) {
+                if (!options.noComment()) {
                     fieldWriter.addMemberDescription(ve, fieldsOverviewContentTree);
                     fieldWriter.addMemberTags(ve, fieldsOverviewContentTree);
                 }
-                serializableFieldsTree.addContent(fieldsOverviewContentTree);
-                classContentTree.addContent(fieldWriter.getSerializableFields(
+                serializableFieldsTree.add(fieldsOverviewContentTree);
+                classContentTree.add(fieldWriter.getSerializableFields(
                         resources.getText("doclet.Serialized_Form_class"),
                         serializableFieldsTree));
             }
@@ -431,12 +419,12 @@ public class SerializedFormBuilder extends AbstractBuilder {
                     buildFieldDeprecationInfo(fieldsContentTree);
                     buildFieldInfo(fieldsContentTree);
 
-                    serializableFieldsTree.addContent(fieldsContentTree);
+                    serializableFieldsTree.add(fieldsContentTree);
                 } else {
                     buildSerialFieldTagsInfo(serializableFieldsTree);
                 }
             }
-            classContentTree.addContent(fieldWriter.getSerializableFields(
+            classContentTree.add(fieldWriter.getSerializableFields(
                     resources.getText("doclet.Serialized_Form_fields"),
                     serializableFieldsTree));
         }
@@ -474,7 +462,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
      * @param serializableFieldsTree content tree to which the documentation will be added
      */
     protected void buildSerialFieldTagsInfo(Content serializableFieldsTree) {
-        if (configuration.nocomment) {
+        if (options.noComment()) {
             return;
         }
         VariableElement field = (VariableElement)currentMember;
@@ -482,7 +470,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
         // ObjectStreamFields. Print a member for each serialField tag.
         // (There should be one serialField tag per ObjectStreamField
         // element.)
-        SortedSet<SerialFieldTree> tags = new TreeSet<>(utils.makeSerialFieldTreeComparator());
+        SortedSet<SerialFieldTree> tags = new TreeSet<>(utils.comparators.makeSerialFieldTreeComparator());
         // sort the elements
         for (DocTree dt : utils.getSerialFieldTrees(field)) {
             SerialFieldTree st = (SerialFieldTree) dt;
@@ -494,7 +482,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
             if (tag.getName() == null || tag.getType() == null)  // ignore malformed @serialField tags
                 continue;
             Content fieldsContentTree = fieldWriter.getFieldsContentHeader(tag.equals(tags.last()));
-            TypeElement te = ch.getReferencedClass(configuration, tag);
+            TypeElement te = ch.getReferencedClass(tag);
             String fieldType = ch.getReferencedMemberName(tag);
             if (te != null && utils.isPrimitive(te.asType())) {
                 fieldType = utils.getTypeName(te.asType(), false);
@@ -511,7 +499,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
             fieldWriter.addMemberHeader(te, fieldType, "",
                     tag.getName().getName().toString(), fieldsContentTree);
             fieldWriter.addMemberDescription(field, tag, fieldsContentTree);
-            serializableFieldsTree.addContent(fieldsContentTree);
+            serializableFieldsTree.add(fieldsContentTree);
         }
     }
 
@@ -521,14 +509,14 @@ public class SerializedFormBuilder extends AbstractBuilder {
      * @param fieldsContentTree content tree to which the documentation will be added
      */
     protected void buildFieldInfo(Content fieldsContentTree) {
-        if (configuration.nocomment) {
+        if (options.noComment()) {
             return;
         }
         VariableElement field = (VariableElement)currentMember;
         TypeElement te = utils.getEnclosingTypeElement(currentMember);
         // Process default Serializable field.
         if ((utils.getSerialTrees(field).isEmpty()) /*&& !field.isSynthetic()*/
-                && configuration.serialwarn) {
+                && options.serialWarn()) {
             messages.warning(field,
                     "doclet.MissingSerialTag", utils.getFullyQualifiedName(te),
                     utils.getSimpleName(field));
@@ -600,10 +588,10 @@ public class SerializedFormBuilder extends AbstractBuilder {
     }
 
     /**
-     * Return true if any of the given typeElements have a @serialinclude tag.
+     * Return true if any of the given typeElements have a {@code @serial include} tag.
      *
      * @param classes the typeElements to check.
-     * @return true if any of the given typeElements have a @serialinclude tag.
+     * @return true if any of the given typeElements have a {@code @serial include} tag.
      */
     private boolean serialClassFoundToDocument(SortedSet<TypeElement> classes) {
         for (TypeElement aClass : classes) {

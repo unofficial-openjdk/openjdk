@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ package gc.g1.humongousObjects;
 import jdk.test.lib.Utils;
 import sun.hotspot.WhiteBox;
 
-import static java.lang.ref.Reference.reachabilityFence;
+import static gc.testlibrary.Allocation.blackHole;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -35,13 +35,13 @@ import java.util.stream.Collectors;
 
 /**
  * @test TestNoAllocationsInHRegions
+ * @key randomness
  * @summary Checks that no additional allocations are made in humongous regions
  * @requires vm.gc.G1
  * @library /test/lib /
  * @modules java.management java.base/jdk.internal.misc
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *      sun.hotspot.WhiteBox$WhiteBoxPermission
  *
  * @run main/othervm -XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
  *                   -XX:G1HeapRegionSize=1M -Xms200m -Xmx200m -XX:MaxTenuringThreshold=0
@@ -73,7 +73,7 @@ public class TestNoAllocationsInHRegions {
     private static volatile Error error = null;
 
     static class Allocator implements Runnable {
-
+        private final Random random;
         private final List<byte[]> liveObjects = new LinkedList<>();
         private int usedMemory = 0;
         public final Runnable[] actions;
@@ -89,12 +89,12 @@ public class TestNoAllocationsInHRegions {
         private static final int DEAD_OBJECT_MAX_SIZE = G1_REGION_SIZE / 10;
 
         public Allocator(int maxAllocationMemory) {
-
+            random = new Random(RND.nextLong());
             actions = new Runnable[]{
                     // Allocation
                     () -> {
                         if (maxAllocationMemory - usedMemory != 0) {
-                            int arraySize = RND.nextInt(Math.min(maxAllocationMemory - usedMemory,
+                            int arraySize = random.nextInt(Math.min(maxAllocationMemory - usedMemory,
                                     MAX_ALLOCATION_SIZE));
 
                             if (arraySize != 0) {
@@ -131,7 +131,7 @@ public class TestNoAllocationsInHRegions {
                     // Deallocation
                     () -> {
                         if (liveObjects.size() != 0) {
-                            int elementNum = RND.nextInt(liveObjects.size());
+                            int elementNum = random.nextInt(liveObjects.size());
                             int shouldFree = liveObjects.get(elementNum).length;
                             liveObjects.remove(elementNum);
                             usedMemory -= shouldFree;
@@ -140,8 +140,8 @@ public class TestNoAllocationsInHRegions {
 
                     // Dead object allocation
                     () -> {
-                        int size = RND.nextInt(DEAD_OBJECT_MAX_SIZE);
-                        reachabilityFence(new byte[size]);
+                        int size = random.nextInt(DEAD_OBJECT_MAX_SIZE);
+                        blackHole(new byte[size]);
                     },
 
                     // Check
@@ -165,7 +165,7 @@ public class TestNoAllocationsInHRegions {
         @Override
         public void run() {
             while (!shouldStop) {
-                actions[RND.nextInt(actions.length)].run();
+                actions[random.nextInt(actions.length)].run();
                 Thread.yield();
             }
         }

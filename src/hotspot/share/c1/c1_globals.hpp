@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 #ifndef SHARE_C1_C1_GLOBALS_HPP
 #define SHARE_C1_C1_GLOBALS_HPP
 
-#include "runtime/globals.hpp"
+#include "runtime/globals_shared.hpp"
 #include "utilities/macros.hpp"
 
 #include CPU_HEADER(c1_globals)
@@ -42,8 +42,7 @@
                  diagnostic_pd, \
                  notproduct, \
                  range, \
-                 constraint, \
-                 writeable) \
+                 constraint) \
                                                                             \
   /* Printing */                                                            \
   notproduct(bool, PrintC1Statistics, false,                                \
@@ -170,9 +169,6 @@
                                                                             \
   develop(bool, UseTableRanges, true,                                       \
           "Faster versions of lookup table using ranges")                   \
-                                                                            \
-  develop_pd(bool, RoundFPResults,                                          \
-          "Indicates whether rounding is needed for floating point results")\
                                                                             \
   develop(intx, NestedInliningSizeRatio, 90,                                \
           "Percentage of prev. allowed inline size in recursive inlining")  \
@@ -324,17 +320,5 @@
   develop(bool, PrintCFGToFile, false,                                      \
           "print control flow graph to a separate file during compilation") \
                                                                             \
-// Read default values for c1 globals
-
-C1_FLAGS(DECLARE_DEVELOPER_FLAG, \
-         DECLARE_PD_DEVELOPER_FLAG, \
-         DECLARE_PRODUCT_FLAG, \
-         DECLARE_PD_PRODUCT_FLAG, \
-         DECLARE_DIAGNOSTIC_FLAG, \
-         DECLARE_PD_DIAGNOSTIC_FLAG, \
-         DECLARE_NOTPRODUCT_FLAG, \
-         IGNORE_RANGE, \
-         IGNORE_CONSTRAINT, \
-         IGNORE_WRITEABLE)
 
 #endif // SHARE_C1_C1_GLOBALS_HPP

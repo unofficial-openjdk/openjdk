@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,7 +75,6 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   // Statistical data gathered for GC
   GCStats _gc_stats;
 
-  size_t _survivor_size_limit;   // Limit in bytes of survivor size
   const double _collection_cost_margin_fraction;
 
   // Variable for estimating the major and minor pause times.
@@ -111,23 +110,12 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   // Flag indicating that the adaptive policy is ready to use
   bool _old_gen_policy_is_ready;
 
-  // Changing the generation sizing depends on the data that is
-  // gathered about the effects of changes on the pause times and
-  // throughput.  These variable count the number of data points
-  // gathered.  The policy may use these counters as a threshold
-  // for reliable data.
-  julong _young_gen_change_for_major_pause_count;
-
   // To facilitate faster growth at start up, supplement the normal
   // growth percentage for the young gen eden and the
   // old gen space for promotion with these value which decay
   // with increasing collections.
   uint _young_gen_size_increment_supplement;
   uint _old_gen_size_increment_supplement;
-
-  // The number of bytes absorbed from eden into the old gen by moving the
-  // boundary over live data.
-  size_t _bytes_absorbed_from_eden;
 
  private:
 
@@ -201,12 +189,6 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   virtual GCPolicyKind kind() const { return _gc_ps_adaptive_size_policy; }
 
  public:
-  // Use by ASPSYoungGen and ASPSOldGen to limit boundary moving.
-  size_t eden_increment_aligned_up(size_t cur_eden);
-  size_t eden_increment_aligned_down(size_t cur_eden);
-  size_t promo_increment_aligned_up(size_t cur_promo);
-  size_t promo_increment_aligned_down(size_t cur_promo);
-
   virtual size_t eden_increment(size_t cur_eden);
   virtual size_t promo_increment(size_t cur_promo);
 
@@ -380,13 +362,6 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
 
   size_t live_at_last_full_gc() {
     return _live_at_last_full_gc;
-  }
-
-  size_t bytes_absorbed_from_eden() const { return _bytes_absorbed_from_eden; }
-  void   reset_bytes_absorbed_from_eden() { _bytes_absorbed_from_eden = 0; }
-
-  void set_bytes_absorbed_from_eden(size_t val) {
-    _bytes_absorbed_from_eden = val;
   }
 
   // Update averages that are always used (even

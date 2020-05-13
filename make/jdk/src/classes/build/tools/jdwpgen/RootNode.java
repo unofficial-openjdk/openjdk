@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,22 +46,33 @@ class RootNode extends AbstractNamedNode {
         writer.println("<meta charset=\"utf-8\"/>");
         writer.println("<title>" + comment() + "</title>");
         writer.println("<style>");
-        writer.println("body {background-color:white;}");
-        writer.println("table {border: 1px solid grey; border-spacing:0px; border-collapse: separate; width: 90%;}");
-        writer.println("td, th {padding: 3px; border: 1px solid black;}");
+        writer.println("body { background-color:white; }");
+        writer.println("table { border: 1px solid grey; border-spacing:0px; border-collapse: separate; width: 90%; }");
+        writer.println("td, th { padding: 3px; border: 1px solid black; font-weight: normal; text-align: left; }");
+        writer.println(".bold { font-weight: bold; }");
+        writer.println(".centered { text-align: center; }");
+        for (int i = 0; i < maxStructIndent; i++) {
+            // each level is 40px
+            writer.println(".indent" + i + " { padding-left: " + (i * 40) + "px; }");
+        }
         writer.println("</style>");
         writer.println("</head>");
         writer.println("<body>");
-        writer.println("<ul role=\"navigation\">");
+        writer.println("<header>");
+        writer.println("<h1 id=\"Protocol_Details\">Java Debug Wire Protocol Details</h1>");
+        writer.println("</header>");
+        writer.println("<nav>");
+        writer.println("<ul>");
         for (Node node : components) {
             node.documentIndex(writer);
         }
         writer.println("</ul>");
-        writer.println("<div role=\"main\">");
+        writer.println("</nav>");
+        writer.println("<main>");
         for (Node node : components) {
             node.document(writer);
         }
-        writer.println("</div>");
+        writer.println("</main>");
         writer.println("</body></html>");
     }
 

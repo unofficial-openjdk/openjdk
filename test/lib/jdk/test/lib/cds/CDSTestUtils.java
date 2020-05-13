@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,8 +40,8 @@ public class CDSTestUtils {
         "UseSharedSpaces: Unable to allocate region, range is not within java heap.";
     public static final String MSG_RANGE_ALREADT_IN_USE =
         "Unable to allocate region, java heap range is already in use.";
-    public static final String MSG_COMPRESSION_MUST_BE_USED =
-        "Unable to use shared archive: UseCompressedOops and UseCompressedClassPointers must be on for UseSharedSpaces.";
+
+    public static final boolean DYNAMIC_DUMP = Boolean.getBoolean("test.dynamic.cds.archive");
 
     public interface Checker {
         public void check(OutputAnalyzer output) throws Exception;
@@ -246,7 +246,7 @@ public class CDSTestUtils {
         cmd.add("-Xlog:cds,cds+hashtables");
         if (opts.archiveName == null)
             opts.archiveName = getDefaultArchiveName();
-        cmd.add("-XX:SharedArchiveFile=./" + opts.archiveName);
+        cmd.add("-XX:SharedArchiveFile=" + opts.archiveName);
 
         if (opts.classList != null) {
             File classListFile = makeClassList(opts.classList);
@@ -256,16 +256,24 @@ public class CDSTestUtils {
         for (String s : opts.suffix) cmd.add(s);
 
         String[] cmdLine = cmd.toArray(new String[cmd.size()]);
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(true, cmdLine);
+        ProcessBuilder pb = ProcessTools.createTestJvm(cmdLine);
         return executeAndLog(pb, "dump");
     }
 
+    public static boolean isDynamicArchive() {
+        return DYNAMIC_DUMP;
+    }
 
     // check result of 'dump-the-archive' operation, that is "-Xshare:dump"
     public static OutputAnalyzer checkDump(OutputAnalyzer output, String... extraMatches)
         throws Exception {
 
-        output.shouldContain("Loading classes to share");
+        if (!DYNAMIC_DUMP) {
+            output.shouldContain("Loading classes to share");
+        } else {
+            output.shouldContain("Buffer-space to target-space delta")
+                  .shouldContain("Written dynamic archive 0x");
+        }
         output.shouldHaveExitValue(0);
 
         for (String match : extraMatches) {
@@ -299,7 +307,7 @@ public class CDSTestUtils {
     // exceptions match. Pass null if you wish not to re-throw any exception.
     public static void checkCommonExecExceptions(OutputAnalyzer output, Exception e)
         throws Exception {
-        if (output.getStdout().contains("http://bugreport.java.com/bugreport/crash.jsp")) {
+        if (output.getStdout().contains("https://bugreport.java.com/bugreport/crash.jsp")) {
             throw new RuntimeException("Hotspot crashed");
         }
         if (output.getStdout().contains("TEST FAILED")) {
@@ -347,7 +355,8 @@ public class CDSTestUtils {
             outStr.contains("Unable to map MiscCode shared space at required address") ||
             outStr.contains("Unable to map OptionalData shared space at required address") ||
             outStr.contains("Could not allocate metaspace at a compatible address") ||
-            outStr.contains("UseSharedSpaces: Unable to allocate region, range is not within java heap") ))
+            outStr.contains("UseSharedSpaces: Unable to allocate region, range is not within java heap") ||
+            outStr.contains("DynamicDumpSharedSpaces is unsupported when base CDS archive is not loaded") ))
         {
             return true;
         }
@@ -405,7 +414,7 @@ public class CDSTestUtils {
         for (String s : opts.suffix) cmd.add(s);
 
         String[] cmdLine = cmd.toArray(new String[cmd.size()]);
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(true, cmdLine);
+        ProcessBuilder pb = ProcessTools.createTestJvm(cmdLine);
         return executeAndLog(pb, "exec");
     }
 
@@ -589,5 +598,65 @@ public class CDSTestUtils {
         ps.print(content);
         ps.close();
         fos.close();
+    }
+
+    // Format a line that defines an extra symbol in the file specify by -XX:SharedArchiveConfigFile=<file>
+    public static String formatArchiveConfigSymbol(String symbol) {
+        int refCount = -1; // This is always -1 in the current HotSpot implementation.
+        if (isAsciiPrintable(symbol)) {
+            return symbol.length() + " " + refCount + ": " + symbol;
+        } else {
+            StringBuilder sb = new StringBuilder();
+            int utf8_length = escapeArchiveConfigString(sb, symbol);
+            return utf8_length + " " + refCount + ": " + sb.toString();
+        }
+    }
+
+    // This method generates the same format as HashtableTextDump::put_utf8() in HotSpot,
+    // to be used by -XX:SharedArchiveConfigFile=<file>.
+    private static int escapeArchiveConfigString(StringBuilder sb, String s) {
+        byte arr[];
+        try {
+            arr = s.getBytes("UTF8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            throw new RuntimeException("Unexpected", e);
+        }
+        for (int i = 0; i < arr.length; i++) {
+            char ch = (char)(arr[i] & 0xff);
+            if (isAsciiPrintable(ch)) {
+                sb.append(ch);
+            } else if (ch == '\t') {
+                sb.append("\\t");
+            } else if (ch == '\r') {
+                sb.append("\\r");
+            } else if (ch == '\n') {
+                sb.append("\\n");
+            } else if (ch == '\\') {
+                sb.append("\\\\");
+            } else {
+                String hex = Integer.toHexString(ch);
+                if (ch < 16) {
+                    sb.append("\\x0");
+                } else {
+                    sb.append("\\x");
+                }
+                sb.append(hex);
+            }
+        }
+
+        return arr.length;
+    }
+
+    private static boolean isAsciiPrintable(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            if (!isAsciiPrintable(s.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isAsciiPrintable(char ch) {
+        return ch >= 32 && ch < 127;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ public:
           assert(current->is_empty(), "Should have been cleared in phase 2.");
         }
       }
-      current->reset_during_compaction();
+      current->reset_humongous_during_compaction();
     }
     return false;
   }
@@ -61,14 +61,14 @@ public:
 
 size_t G1FullGCCompactTask::G1CompactRegionClosure::apply(oop obj) {
   size_t size = obj->size();
-  HeapWord* destination = (HeapWord*)obj->forwardee();
+  HeapWord* destination = cast_from_oop<HeapWord*>(obj->forwardee());
   if (destination == NULL) {
     // Object not moving
     return size;
   }
 
   // copy object and reinit its mark
-  HeapWord* obj_addr = (HeapWord*) obj;
+  HeapWord* obj_addr = cast_from_oop<HeapWord*>(obj);
   assert(obj_addr != destination, "everything in this pass should be moving");
   Copy::aligned_conjoint_words(obj_addr, destination, size);
   oop(destination)->init_mark_raw();

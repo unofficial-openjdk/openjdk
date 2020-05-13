@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import jdk.test.lib.net.SimpleSSLContext;
+import static java.net.Proxy.NO_PROXY;
 
 /*
  * @test
@@ -89,8 +90,10 @@ public class HTTPTest {
         // count will be incremented every time getPasswordAuthentication()
         // is called from the client side.
         final AtomicInteger count = new AtomicInteger();
+        private final String name;
 
-        public HttpTestAuthenticator(String realm, String username) {
+        public HttpTestAuthenticator(String name, String realm, String username) {
+            this.name = name;
             this.realm = realm;
             this.username = username;
         }
@@ -98,7 +101,7 @@ public class HTTPTest {
         @Override
         protected PasswordAuthentication getPasswordAuthentication() {
             if (skipCount.get() == null || skipCount.get().booleanValue() == false) {
-                System.out.println("Authenticator called: " + count.incrementAndGet());
+                System.out.println("Authenticator " + name + " called: " + count.incrementAndGet());
             }
             return new PasswordAuthentication(getUserName(),
                     new char[] {'b','a','r'});
@@ -118,6 +121,11 @@ public class HTTPTest {
             throw new SecurityException("User unknown: " + user);
         }
 
+        @Override
+        public String toString() {
+            return super.toString() + "[name=\"" + name + "\"]";
+        }
+
         public final String getUserName() {
             return username;
         }
@@ -128,7 +136,7 @@ public class HTTPTest {
     }
     public static final HttpTestAuthenticator AUTHENTICATOR;
     static {
-        AUTHENTICATOR = new HttpTestAuthenticator("dublin", "foox");
+        AUTHENTICATOR = new HttpTestAuthenticator("AUTHENTICATOR","dublin", "foox");
         Authenticator.setDefault(AUTHENTICATOR);
     }
 
@@ -258,14 +266,27 @@ public class HTTPTest {
     public static URL url(HttpProtocolType protocol, InetSocketAddress address,
                           String path) throws MalformedURLException {
         return new URL(protocol(protocol),
-                       address.getHostString(),
+                       address.getAddress().getHostAddress(),
                        address.getPort(), path);
     }
 
     public static Proxy proxy(HTTPTestServer server, HttpAuthType authType) {
-        return (authType == HttpAuthType.PROXY)
-               ? new Proxy(Proxy.Type.HTTP, server.getAddress())
-               : null;
+        if (authType != HttpAuthType.PROXY) return null;
+
+        InetSocketAddress proxyAddress = server.getProxyAddress();
+        if (!proxyAddress.isUnresolved()) {
+            // Forces the proxy to use an unresolved address created
+            // from the actual IP address to avoid using the proxy
+            // address hostname which would result in resolving to
+            // a posibly different address. For instance we want to
+            // avoid cases such as:
+            //    ::1 => "localhost" => 127.0.0.1
+            proxyAddress = InetSocketAddress.
+                createUnresolved(proxyAddress.getAddress().getHostAddress(),
+                                 proxyAddress.getPort());
+        }
+
+        return new Proxy(Proxy.Type.HTTP, proxyAddress);
     }
 
     public static HttpURLConnection openConnection(URL url,
@@ -276,7 +297,7 @@ public class HTTPTest {
         HttpURLConnection conn = (HttpURLConnection)
                 (authType == HttpAuthType.PROXY
                     ? url.openConnection(proxy)
-                    : url.openConnection());
+                    : url.openConnection(NO_PROXY));
         return conn;
     }
 }

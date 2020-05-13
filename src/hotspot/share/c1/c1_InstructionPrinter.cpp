@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,19 +33,11 @@
 #ifndef PRODUCT
 
 const char* InstructionPrinter::basic_type_name(BasicType type) {
-  switch (type) {
-    case T_BOOLEAN: return "boolean";
-    case T_BYTE   : return "byte";
-    case T_CHAR   : return "char";
-    case T_SHORT  : return "short";
-    case T_INT    : return "int";
-    case T_LONG   : return "long";
-    case T_FLOAT  : return "float";
-    case T_DOUBLE : return "double";
-    case T_ARRAY  : return "array";
-    case T_OBJECT : return "object";
-    default       : return "???";
+  const char* n = type2name(type);
+  if (n == NULL || type > T_VOID) {
+    return "???";
   }
+  return n;
 }
 
 
@@ -337,7 +329,9 @@ void InstructionPrinter::print_head() {
 void InstructionPrinter::print_line(Instruction* instr) {
   // print instruction data on one line
   if (instr->is_pinned()) output()->put('.');
-  fill_to(bci_pos  ); output()->print("%d", instr->printable_bci());
+  if (instr->has_printable_bci()) {
+    fill_to(bci_pos  ); output()->print("%d", instr->printable_bci());
+  }
   fill_to(use_pos  ); output()->print("%d", instr->use_count());
   fill_to(temp_pos ); print_temp(instr);
   fill_to(instr_pos); print_instr(instr);

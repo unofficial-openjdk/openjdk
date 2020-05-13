@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2019, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2017, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -28,9 +29,9 @@
 #include "gc/shenandoah/shenandoahCollectionSet.inline.hpp"
 #include "gc/shenandoah/shenandoahHeap.inline.hpp"
 #include "gc/shenandoah/shenandoahMarkingContext.inline.hpp"
+#include "gc/shenandoah/shenandoahPhaseTimings.hpp"
 #include "gc/shenandoah/shenandoahStringDedup.hpp"
 #include "gc/shenandoah/shenandoahStrDedupQueue.hpp"
-#include "gc/shenandoah/shenandoahTimingTracker.hpp"
 #include "gc/shenandoah/shenandoahUtils.hpp"
 #include "runtime/thread.hpp"
 
@@ -47,17 +48,17 @@ void ShenandoahStringDedup::enqueue_candidate(oop java_string) {
         "Only from a GC worker thread");
 
   if (java_string->age() <= StringDeduplicationAgeThreshold) {
-    const markOop mark = java_string->mark();
+    const markWord mark = java_string->mark();
 
     // Having/had displaced header, too risk to deal with them, skip
-    if (mark == markOopDesc::INFLATING() || mark->has_displaced_mark_helper()) {
+    if (mark == markWord::INFLATING() || mark.has_displaced_mark_helper()) {
       return;
     }
 
     // Increase string age and enqueue it when it rearches age threshold
-    markOop new_mark = mark->incr_age();
+    markWord new_mark = mark.incr_age();
     if (mark == java_string->cas_set_mark(new_mark, mark)) {
-      if (mark->age() == StringDeduplicationAgeThreshold) {
+      if (mark.age() == StringDeduplicationAgeThreshold) {
         StringDedupQueue::push(ShenandoahWorkerSession::worker_id(), java_string);
       }
     }
@@ -71,20 +72,19 @@ void ShenandoahStringDedup::deduplicate(oop java_string) {
   StringDedupTable::deduplicate(java_string, &dummy);
 }
 
-void ShenandoahStringDedup::parallel_oops_do(OopClosure* cl, uint worker_id) {
+void ShenandoahStringDedup::parallel_oops_do(ShenandoahPhaseTimings::Phase phase,
+        BoolObjectClosure* is_alive, OopClosure* cl, uint worker_id) {
   assert(SafepointSynchronize::is_at_safepoint(), "Must be at a safepoint");
   assert(is_enabled(), "String deduplication not enabled");
 
-  ShenandoahWorkerTimings* worker_times = ShenandoahHeap::heap()->phase_timings()->worker_times();
-
-  StringDedupUnlinkOrOopsDoClosure sd_cl(NULL, cl);
-
+  StringDedupUnlinkOrOopsDoClosure sd_cl(is_alive, cl);
   {
-    ShenandoahWorkerTimingsTracker x(worker_times, ShenandoahPhaseTimings::StringDedupQueueRoots, worker_id);
+    ShenandoahWorkerTimingsTracker x(phase, ShenandoahPhaseTimings::StringDedupQueueRoots, worker_id);
     StringDedupQueue::unlink_or_oops_do(&sd_cl);
   }
+
   {
-    ShenandoahWorkerTimingsTracker x(worker_times, ShenandoahPhaseTimings::StringDedupTableRoots, worker_id);
+    ShenandoahWorkerTimingsTracker x(phase, ShenandoahPhaseTimings::StringDedupTableRoots, worker_id);
     StringDedupTable::unlink_or_oops_do(&sd_cl, worker_id);
   }
 }
@@ -92,7 +92,7 @@ void ShenandoahStringDedup::parallel_oops_do(OopClosure* cl, uint worker_id) {
 void ShenandoahStringDedup::oops_do_slow(OopClosure* cl) {
   assert(SafepointSynchronize::is_at_safepoint(), "Must be at a safepoint");
   assert(is_enabled(), "String deduplication not enabled");
-  ShenandoahAlwaysTrueClosure always_true;
+  AlwaysTrueClosure always_true;
   StringDedupUnlinkOrOopsDoClosure sd_cl(&always_true, cl);
   StringDedupQueue::unlink_or_oops_do(&sd_cl);
   StringDedupTable::unlink_or_oops_do(&sd_cl, 0);

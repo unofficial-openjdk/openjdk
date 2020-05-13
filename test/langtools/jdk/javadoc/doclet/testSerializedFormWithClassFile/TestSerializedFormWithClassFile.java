@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,10 +73,13 @@ public class TestSerializedFormWithClassFile extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOutput("serialized-form.html", true,
-                "<pre class=\"methodSignature\">public&nbsp;void&nbsp;readObject&#8203;"
-                + "(java.io.ObjectInputStream&nbsp;arg0)\n"
-                + "                throws java.lang.ClassNotFoundException,\n"
-                + "                       java.io.IOException</pre>\n");
+                """
+                    <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span c\
+                    lass="return-type">void</span>&nbsp;<span class="member-name">readObject</span>&\
+                    #8203;(<span class="parameters">java.io.ObjectInputStream&nbsp;arg0)</span>
+                                    throws <span class="exceptions">java.lang.ClassNotFoundException,
+                    java.io.IOException</span></div>
+                    """);
     }
 
     void createTestClass(Path base, Path srcDir) throws Exception {

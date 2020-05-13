@@ -1,4 +1,4 @@
-/* Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,9 @@ import java.net.SocketException;
 /*
  * @test
  * @bug 8153674
+ * @key intermittent
+ * @summary This test might fail intermittently as it needs a UDP socket that
+ *          binds to the wildcard address.
  * @summary Expected SocketException not thrown when calling bind() with
  *   setReuseAddress(false)
  * @run main/othervm ReuseAddressTest
@@ -116,7 +119,7 @@ public class ReuseAddressTest {
         MulticastSocket ms1 = null;
         MulticastSocket ms2 = null;
         try {
-            InetSocketAddress addr = createSocketAddress(5050);
+            InetSocketAddress addr = createSocketAddress(0);
 
             ms1 = new MulticastSocket(null);
             ms1.setReuseAddress(true);
@@ -132,6 +135,7 @@ public class ReuseAddressTest {
                         + " unexpected " + e);
             }
 
+            addr = createSocketAddress(ms1.getLocalPort());
             ms2 = new MulticastSocket(null);
             ms2.setReuseAddress(true);
             if (!ms2.getReuseAddress()) {
@@ -186,7 +190,7 @@ public class ReuseAddressTest {
         MulticastSocket ms1 = null;
         MulticastSocket ms2 = null;
         try {
-            InetSocketAddress addr = createSocketAddress(6060);
+            InetSocketAddress addr = createSocketAddress(0);
 
             ms1 = new MulticastSocket(null);
             try {
@@ -196,6 +200,7 @@ public class ReuseAddressTest {
                         + " unexpected " + e);
             }
 
+            addr = createSocketAddress(ms1.getLocalPort());
             ms2 = new MulticastSocket(null);
             ms2.setReuseAddress(false);  // method under test
 
@@ -243,15 +248,13 @@ public class ReuseAddressTest {
         DatagramSocket ds2 = null;
         try {
 
-            InetSocketAddress isa = createSocketAddress(7070);
-            InetAddress addr = isa.getAddress();
+            InetSocketAddress isa1 = createSocketAddress(0);
+            InetAddress addr = isa1.getAddress();
             InetAddress wildcard = InetAddress.getByName("0.0.0.0");
             if (addr.equals(wildcard) || addr.isLoopbackAddress()) {
                 System.out.println("Cannot check: addresses are equal");
             }
 
-            InetSocketAddress isa1 = new InetSocketAddress(addr, isa.getPort());
-            InetSocketAddress isa2 = new InetSocketAddress(wildcard, isa.getPort());
 
             ds1 = new DatagramSocket(null);
             ds1.setReuseAddress(true);    // method under test
@@ -260,6 +263,8 @@ public class ReuseAddressTest {
                         + " safety for SO_REUSEADDR option is not guaranteed");
             }
             ds1.bind(isa1);
+
+            InetSocketAddress isa2 = new InetSocketAddress(wildcard, ds1.getLocalPort());
 
             ds2 = new DatagramSocket(null);
             ds2.setReuseAddress(true);    // method under test
@@ -275,8 +280,8 @@ public class ReuseAddressTest {
                         + " unexpected " + e);
             }
 
-            if (ds1.getLocalPort() != isa.getPort() || !ds1.isBound()
-                    || ds2.getLocalPort() != isa.getPort() || !ds2.isBound()) {
+            if (ds1.getLocalPort() != ds2.getLocalPort() || !ds1.isBound()
+                    || !ds2.isBound()) {
                 System.out.println("bind() fails with: " + addr);
                 System.out.println("  ds1 [" + getInfo(ds1) + "]");
                 System.out.println("  ds2 [" + getInfo(ds2) + "]");

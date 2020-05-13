@@ -186,6 +186,7 @@ AWT_NS_WINDOW_IMPLEMENTATION
 @synthesize preFullScreenLevel;
 @synthesize standardFrame;
 @synthesize isMinimizing;
+@synthesize keyNotificationRecd;
 
 - (void) updateMinMaxSize:(BOOL)resizable {
     if (resizable) {
@@ -204,13 +205,13 @@ AWT_NS_WINDOW_IMPLEMENTATION
     if (IS(styleBits, DECORATED)) {
         type |= NSTitledWindowMask;
         if (IS(styleBits, CLOSEABLE))            type |= NSClosableWindowMask;
-        if (IS(styleBits, MINIMIZABLE))          type |= NSMiniaturizableWindowMask;
         if (IS(styleBits, RESIZABLE))            type |= NSResizableWindowMask;
         if (IS(styleBits, FULL_WINDOW_CONTENT))  type |= NSFullSizeContentViewWindowMask;
     } else {
         type |= NSBorderlessWindowMask;
     }
 
+    if (IS(styleBits, MINIMIZABLE))   type |= NSMiniaturizableWindowMask;
     if (IS(styleBits, TEXTURED))      type |= NSTexturedBackgroundWindowMask;
     if (IS(styleBits, UNIFIED))       type |= NSUnifiedTitleAndToolbarWindowMask;
     if (IS(styleBits, UTILITY))       type |= NSUtilityWindowMask;
@@ -319,6 +320,7 @@ AWT_ASSERT_APPKIT_THREAD;
     if (self.nsWindow == nil) return nil; // no hope either
     [self.nsWindow release]; // the property retains the object already
 
+    self.keyNotificationRecd = NO;
     self.isEnabled = YES;
     self.isMinimizing = NO;
     self.javaPlatformWindow = platformWindow;
@@ -747,8 +749,15 @@ AWT_ASSERT_APPKIT_THREAD;
 AWT_ASSERT_APPKIT_THREAD;
     [AWTToolkit eventCountPlusPlus];
 #ifdef DEBUG
-    NSLog(@"became main: %d %@ %@", [self.nsWindow isKeyWindow], [self.nsWindow title], [self menuBarForWindow]);
+    NSLog(@"became main: %d %@ %@ %d", [self.nsWindow isKeyWindow], [self.nsWindow title], [self menuBarForWindow], self.keyNotificationRecd);
 #endif
+
+    // if for some reason, no KEY notification is received but this main window is also a key window
+    // then we need to execute the KEY notification functionality.
+    if(self.keyNotificationRecd != YES && [self.nsWindow isKeyWindow]) {
+        [self doWindowDidBecomeKey];
+    }
+    self.keyNotificationRecd = NO;
 
     if (![self.nsWindow isKeyWindow]) {
         [self activateWindowMenuBar];
@@ -769,6 +778,12 @@ AWT_ASSERT_APPKIT_THREAD;
 #ifdef DEBUG
     NSLog(@"became key: %d %@ %@", [self.nsWindow isMainWindow], [self.nsWindow title], [self menuBarForWindow]);
 #endif
+    [self doWindowDidBecomeKey];
+    self.keyNotificationRecd = YES;
+}
+
+- (void) doWindowDidBecomeKey {
+AWT_ASSERT_APPKIT_THREAD;
     AWTWindow *opposite = [AWTWindow lastKeyWindow];
 
     if (![self.nsWindow isMainWindow]) {
@@ -1222,6 +1237,15 @@ JNF_COCOA_ENTER(env);
         // ensure we repaint the whole window after the resize operation
         // (this will also re-enable screen updates, which were disabled above)
         // TODO: send PaintEvent
+
+        // the macOS may ignore our "setFrame" request, in this, case the
+        // windowDidMove() will not come and we need to manually resync the
+        // "java.awt.Window" and NSWindow locations, because "java.awt.Window"
+        // already uses location ignored by the macOS.
+        // see sun.lwawt.LWWindowPeer#notifyReshape()
+        if (!NSEqualRects(rect, [nsWindow frame])) {
+            [window _deliverMoveResizeEvent];
+        }
     }];
 
 JNF_COCOA_EXIT(env);

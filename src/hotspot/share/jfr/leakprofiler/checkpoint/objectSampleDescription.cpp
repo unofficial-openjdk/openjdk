@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
  */
 
 #include "precompiled.hpp"
-#include "classfile/javaClasses.hpp"
+#include "classfile/javaClasses.inline.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "jfr/leakprofiler/checkpoint/objectSampleDescription.hpp"
@@ -91,7 +91,7 @@ ObjectSampleDescription::ObjectSampleDescription(oop object) :
 
 void ObjectSampleDescription::ensure_initialized() {
   if (symbol_size == NULL) {
-    symbol_size = SymbolTable::new_permanent_symbol("size", Thread::current());
+    symbol_size = SymbolTable::new_permanent_symbol("size");
   }
 }
 
@@ -162,10 +162,9 @@ void ObjectSampleDescription::write_class_name() {
 
   if (k->is_instance_klass()) {
     const InstanceKlass* ik = InstanceKlass::cast(k);
-    if (ik->is_unsafe_anonymous()) {
+    if (ik->is_unsafe_anonymous() || ik->is_hidden()) {
       return;
     }
-    assert(!ik->is_unsafe_anonymous(), "invariant");
     const Symbol* name = ik->name();
     if (name != NULL) {
       write_text("Class Name: ");

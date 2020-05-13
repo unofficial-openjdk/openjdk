@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
 #include "c1/c1_LIRAssembler.hpp"
 #include "c1/c1_MacroAssembler.hpp"
 #include "c1/c1_Runtime1.hpp"
+#include "classfile/javaClasses.inline.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/codeBlob.hpp"
@@ -37,6 +38,7 @@
 #include "code/pcDesc.hpp"
 #include "code/scopeDesc.hpp"
 #include "code/vtableStubs.hpp"
+#include "compiler/compilationPolicy.hpp"
 #include "compiler/disassembler.hpp"
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/c1/barrierSetC1.hpp"
@@ -48,13 +50,13 @@
 #include "memory/allocation.inline.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/biasedLocking.hpp"
-#include "runtime/compilationPolicy.hpp"
 #include "runtime/fieldDescriptor.inline.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -291,6 +293,12 @@ const char* Runtime1::name_for(StubID id) {
 const char* Runtime1::name_for_address(address entry) {
   for (int id = 0; id < number_of_ids; id++) {
     if (entry == entry_for((StubID)id)) return name_for((StubID)id);
+  }
+
+  BarrierSetC1* bsc1 = BarrierSet::barrier_set()->barrier_set_c1();
+  const char* name = bsc1->rtcall_name_for_address(entry);
+  if (name != NULL) {
+    return name;
   }
 
 #define FUNCTION_CASE(a, f) \
@@ -574,7 +582,7 @@ JRT_ENTRY_NO_ASYNC(static address, exception_handler_for_pc_helper(JavaThread* t
       tempst.print("compiled method <%s>\n"
                    " at PC" INTPTR_FORMAT " for thread " INTPTR_FORMAT,
                    nm->method()->print_value_string(), p2i(pc), p2i(thread));
-      Exceptions::log_exception(exception, tempst);
+      Exceptions::log_exception(exception, tempst.as_string());
     }
     // for AbortVMOnException flag
     Exceptions::debug_check_abort(exception);
@@ -692,43 +700,22 @@ JRT_ENTRY(void, Runtime1::throw_incompatible_class_change_error(JavaThread* thre
 JRT_END
 
 
-JRT_ENTRY_NO_ASYNC(void, Runtime1::monitorenter(JavaThread* thread, oopDesc* obj, BasicObjectLock* lock))
+JRT_BLOCK_ENTRY(void, Runtime1::monitorenter(JavaThread* thread, oopDesc* obj, BasicObjectLock* lock))
   NOT_PRODUCT(_monitorenter_slowcase_cnt++;)
-  if (PrintBiasedLockingStatistics) {
-    Atomic::inc(BiasedLocking::slow_path_entry_count_addr());
+  if (!UseFastLocking) {
+    lock->set_obj(obj);
   }
-  Handle h_obj(thread, obj);
-  if (UseBiasedLocking) {
-    // Retry fast entry if bias is revoked to avoid unnecessary inflation
-    ObjectSynchronizer::fast_enter(h_obj, lock->lock(), true, CHECK);
-  } else {
-    if (UseFastLocking) {
-      // When using fast locking, the compiled code has already tried the fast case
-      assert(obj == lock->obj(), "must match");
-      ObjectSynchronizer::slow_enter(h_obj, lock->lock(), THREAD);
-    } else {
-      lock->set_obj(obj);
-      ObjectSynchronizer::fast_enter(h_obj, lock->lock(), false, THREAD);
-    }
-  }
+  assert(obj == lock->obj(), "must match");
+  SharedRuntime::monitor_enter_helper(obj, lock->lock(), thread);
 JRT_END
 
 
 JRT_LEAF(void, Runtime1::monitorexit(JavaThread* thread, BasicObjectLock* lock))
   NOT_PRODUCT(_monitorexit_slowcase_cnt++;)
-  assert(thread == JavaThread::current(), "threads must correspond");
   assert(thread->last_Java_sp(), "last_Java_sp must be set");
-  // monitorexit is non-blocking (leaf routine) => no exceptions can be thrown
-  EXCEPTION_MARK;
-
   oop obj = lock->obj();
   assert(oopDesc::is_oop(obj), "must be NULL or an object");
-  if (UseFastLocking) {
-    // When using fast locking, the compiled code has already tried the fast case
-    ObjectSynchronizer::slow_exit(obj, lock->lock(), THREAD);
-  } else {
-    ObjectSynchronizer::fast_exit(obj, lock->lock(), THREAD);
-  }
+  SharedRuntime::monitor_exit_helper(obj, lock->lock(), thread);
 JRT_END
 
 // Cf. OptoRuntime::deoptimize_caller_frame
@@ -1046,7 +1033,7 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* thread, Runtime1::StubID stub_i
   // Now copy code back
 
   {
-    MutexLockerEx ml_patch (Patching_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker ml_patch (THREAD, Patching_lock, Mutex::_no_safepoint_check_flag);
     //
     // Deoptimization may have happened while we waited for the lock.
     // In that case we don't bother to do any patching we just return
@@ -1264,8 +1251,8 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* thread, Runtime1::StubID stub_i
 
   // If we are patching in a non-perm oop, make sure the nmethod
   // is on the right list.
-  if (ScavengeRootsInCode) {
-    MutexLockerEx ml_code (CodeCache_lock, Mutex::_no_safepoint_check_flag);
+  {
+    MutexLocker ml_code (THREAD, CodeCache_lock, Mutex::_no_safepoint_check_flag);
     nmethod* nm = CodeCache::find_nmethod(caller_frame.pc());
     guarantee(nm != NULL, "only nmethods can contain non-perm oops");
 
@@ -1428,7 +1415,7 @@ JRT_ENTRY(void, Runtime1::predicate_failed_trap(JavaThread* thread))
   assert (nm != NULL, "no more nmethod?");
   nm->make_not_entrant();
 
-  methodHandle m(nm->method());
+  methodHandle m(thread, nm->method());
   MethodData* mdo = m->method_data();
 
   if (mdo == NULL && !HAS_PENDING_EXCEPTION) {
@@ -1449,7 +1436,7 @@ JRT_ENTRY(void, Runtime1::predicate_failed_trap(JavaThread* thread))
   if (TracePredicateFailedTraps) {
     stringStream ss1, ss2;
     vframeStream vfst(thread);
-    methodHandle inlinee = methodHandle(vfst.method());
+    Method* inlinee = vfst.method();
     inlinee->print_short_name(&ss1);
     m->print_short_name(&ss2);
     tty->print_cr("Predicate failed trap in method %s at bci %d inlined in %s at pc " INTPTR_FORMAT, ss1.as_string(), vfst.bci(), ss2.as_string(), p2i(caller_frame.pc()));

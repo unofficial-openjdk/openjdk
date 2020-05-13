@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@
 #if defined(__linux__) || defined(__solaris__)
 #include <sys/sendfile.h>
 #elif defined(_AIX)
+#include <string.h>
 #include <sys/socket.h>
 #elif defined(_ALLBSD_SOURCE)
 #include <sys/socket.h>
@@ -47,6 +48,7 @@
 #include "nio_util.h"
 #include "sun_nio_ch_FileChannelImpl.h"
 #include "java_lang_Integer.h"
+#include <assert.h>
 
 static jfieldID chan_fd;        /* jobject 'fd' in sun.nio.ch.FileChannelImpl */
 
@@ -72,13 +74,16 @@ handle(JNIEnv *env, jlong rv, char *msg)
 
 JNIEXPORT jlong JNICALL
 Java_sun_nio_ch_FileChannelImpl_map0(JNIEnv *env, jobject this,
-                                     jint prot, jlong off, jlong len)
+                                     jint prot, jlong off, jlong len, jboolean map_sync)
 {
     void *mapAddress = 0;
     jobject fdo = (*env)->GetObjectField(env, this, chan_fd);
     jint fd = fdval(env, fdo);
     int protections = 0;
     int flags = 0;
+
+    // should never be called with map_sync and prot == PRIVATE
+    assert((prot != sun_nio_ch_FileChannelImpl_MAP_PV) || !map_sync);
 
     if (prot == sun_nio_ch_FileChannelImpl_MAP_RO) {
         protections = PROT_READ;
@@ -91,6 +96,33 @@ Java_sun_nio_ch_FileChannelImpl_map0(JNIEnv *env, jobject this,
         flags = MAP_PRIVATE;
     }
 
+    // if MAP_SYNC and MAP_SHARED_VALIDATE are not defined then it is
+    // best to define them here. This ensures the code compiles on old
+    // OS releases which do not provide the relevant headers. If run
+    // on the same machine then it will work if the kernel contains
+    // the necessary support otherwise mmap should fail with an
+    // invalid argument error
+
+#ifndef MAP_SYNC
+#define MAP_SYNC 0x80000
+#endif
+#ifndef MAP_SHARED_VALIDATE
+#define MAP_SHARED_VALIDATE 0x03
+#endif
+
+    if (map_sync) {
+        // ensure
+        //  1) this is Linux on AArch64, x86_64, or PPC64 LE
+        //  2) the mmap APIs are available at compile time
+#if !defined(LINUX) || ! (defined(aarch64) || (defined(amd64) && defined(_LP64)) || defined(ppc64le))
+        // TODO - implement for solaris/AIX/BSD/WINDOWS and for 32 bit
+        JNU_ThrowInternalError(env, "should never call map on platform where MAP_SYNC is unimplemented");
+        return IOS_THROWN;
+#else
+        flags |= MAP_SYNC | MAP_SHARED_VALIDATE;
+#endif
+    }
+
     mapAddress = mmap64(
         0,                    /* Let OS decide location */
         len,                  /* Number of bytes to map */
@@ -100,6 +132,11 @@ Java_sun_nio_ch_FileChannelImpl_map0(JNIEnv *env, jobject this,
         off);                 /* Offset into file */
 
     if (mapAddress == MAP_FAILED) {
+        if (map_sync && errno == ENOTSUP) {
+            JNU_ThrowIOExceptionWithLastError(env, "map with mode MAP_SYNC unsupported");
+            return IOS_THROWN;
+        }
+
         if (errno == ENOMEM) {
             JNU_ThrowOutOfMemoryError(env, "Map failed");
             return IOS_THROWN;

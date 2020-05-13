@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,8 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
+import javax.lang.model.element.Element;
+
 /**
  * Index item for search.
  *
@@ -40,7 +42,14 @@ public class SearchIndexItem {
         PACKAGES,
         TYPES,
         MEMBERS,
-        SEARCH_TAGS
+        /**
+         * The category of items corresponding to {@code {@index}} tags.
+         */
+        INDEX,
+        /**
+         * The category of items corresponding to {@code {@systemProperty}} tags.
+         */
+        SYSTEM_PROPERTY
     }
 
     private Category category;
@@ -51,6 +60,7 @@ public class SearchIndexItem {
     private String containingClass = "";
     private String holder = "";
     private String description = "";
+    private Element element;
 
     public void setLabel(String l) {
         label = l;
@@ -100,58 +110,73 @@ public class SearchIndexItem {
         return description;
     }
 
+    protected Category getCategory() {
+        return category;
+    }
+
+    public void setElement(Element element) {
+        this.element = element;
+    }
+
+    public Element getElement() {
+        return element;
+    }
+
+    @Override
     public String toString() {
-        StringBuilder item = new StringBuilder("");
+        // TODO: Additional processing is required, see JDK-8238495
+        StringBuilder item = new StringBuilder();
         switch (category) {
-        case MODULES:
-            item.append("{")
-                    .append("\"l\":\"").append(label).append("\"")
-                    .append("}");
-            break;
-        case PACKAGES:
-            item.append("{");
-            if (!containingModule.isEmpty()) {
-                item.append("\"m\":\"").append(containingModule).append("\",");
-            }
-            item.append("\"l\":\"").append(label).append("\"");
-            if (!url.isEmpty()) {
-                item.append(",\"url\":\"").append(url).append("\"");
-            }
-            item.append("}");
-            break;
-        case TYPES:
-            item.append("{");
-            if (!containingPackage.isEmpty()) {
-                item.append("\"p\":\"").append(containingPackage).append("\",");
-            }
-            item.append("\"l\":\"").append(label).append("\"");
-            if (!url.isEmpty()) {
-                item.append(",\"url\":\"").append(url).append("\"");
-            }
-            item.append("}");
-            break;
-        case MEMBERS:
-            item.append("{")
-                    .append("\"p\":\"").append(containingPackage).append("\",")
-                    .append("\"c\":\"").append(containingClass).append("\",")
-                    .append("\"l\":\"").append(label).append("\"");
-            if (!url.isEmpty()) {
-                item.append(",\"url\":\"").append(url).append("\"");
-            }
-            item.append("}");
-            break;
-        case SEARCH_TAGS:
-            item.append("{")
-                    .append("\"l\":\"").append(label).append("\",")
-                    .append("\"h\":\"").append(holder).append("\",");
-            if (!description.isEmpty()) {
-                item.append("\"d\":\"").append(description).append("\",");
-            }
-            item.append("\"u\":\"").append(url).append("\"")
-                    .append("}");
-            break;
-        default:
-            throw new IllegalStateException("category not set");
+            case MODULES:
+                item.append("{")
+                        .append("\"l\":\"").append(label).append("\"")
+                        .append("}");
+                break;
+            case PACKAGES:
+                item.append("{");
+                if (!containingModule.isEmpty()) {
+                    item.append("\"m\":\"").append(containingModule).append("\",");
+                }
+                item.append("\"l\":\"").append(label).append("\"");
+                if (!url.isEmpty()) {
+                    item.append(",\"u\":\"").append(url).append("\"");
+                }
+                item.append("}");
+                break;
+            case TYPES:
+                item.append("{");
+                if (!containingPackage.isEmpty()) {
+                    item.append("\"p\":\"").append(containingPackage).append("\",");
+                }
+                item.append("\"l\":\"").append(label).append("\"");
+                if (!url.isEmpty()) {
+                    item.append(",\"u\":\"").append(url).append("\"");
+                }
+                item.append("}");
+                break;
+            case MEMBERS:
+                item.append("{")
+                        .append("\"p\":\"").append(containingPackage).append("\",")
+                        .append("\"c\":\"").append(containingClass).append("\",")
+                        .append("\"l\":\"").append(label).append("\"");
+                if (!url.isEmpty()) {
+                    item.append(",\"u\":\"").append(url).append("\"");
+                }
+                item.append("}");
+                break;
+            case INDEX:
+            case SYSTEM_PROPERTY:
+                item.append("{")
+                        .append("\"l\":\"").append(label).append("\",")
+                        .append("\"h\":\"").append(holder).append("\",");
+                if (!description.isEmpty()) {
+                    item.append("\"d\":\"").append(description).append("\",");
+                }
+                item.append("\"u\":\"").append(url).append("\"")
+                        .append("}");
+                break;
+            default:
+                throw new AssertionError("Unexpected category: " + category);
         }
         return item.toString();
     }

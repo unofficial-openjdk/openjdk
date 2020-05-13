@@ -34,22 +34,29 @@ template <class T>
 class WorkerDataArray  : public CHeapObj<mtGC> {
   friend class WDAPrinter;
 public:
-  static const uint MaxThreadWorkItems = 4;
+  static const uint MaxThreadWorkItems = 6;
 private:
   T*          _data;
   uint        _length;
   const char* _title;
 
+  bool _is_serial;
+
   WorkerDataArray<size_t>* _thread_work_items[MaxThreadWorkItems];
 
  public:
-  WorkerDataArray(uint length, const char* title);
+  WorkerDataArray(const char* title, uint length, bool is_serial = false);
   ~WorkerDataArray();
 
-  void link_thread_work_items(WorkerDataArray<size_t>* thread_work_items, uint index = 0);
+  // Create an integer sub-item at the given index to this WorkerDataArray. If length_override
+  // is zero, use the same number of elements as this array, otherwise use the given
+  // number.
+  void create_thread_work_items(const char* title, uint index = 0, uint length_override = 0);
+
   void set_thread_work_item(uint worker_i, size_t value, uint index = 0);
   void add_thread_work_item(uint worker_i, size_t value, uint index = 0);
   void set_or_add_thread_work_item(uint worker_i, size_t value, uint index = 0);
+  size_t get_thread_work_item(uint worker_i, uint index = 0);
 
   WorkerDataArray<size_t>* thread_work_items(uint index = 0) const {
     assert(index < MaxThreadWorkItems, "Tried to access thread work item %u max %u", index, MaxThreadWorkItems);
@@ -78,7 +85,9 @@ private:
  private:
   class WDAPrinter {
   public:
+    static void summary(outputStream* out, double time);
     static void summary(outputStream* out, double min, double avg, double max, double diff, double sum, bool print_sum);
+    static void summary(outputStream* out, size_t value);
     static void summary(outputStream* out, size_t min, double avg, size_t max, size_t diff, size_t sum, bool print_sum);
 
     static void details(const WorkerDataArray<double>* phase, outputStream* out);

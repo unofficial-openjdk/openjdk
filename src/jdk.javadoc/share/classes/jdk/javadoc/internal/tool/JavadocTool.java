@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.lang.model.element.Element;
@@ -67,8 +66,6 @@ import static jdk.javadoc.internal.tool.Main.Result.*;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- *  @author Neal Gafter
  */
 public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
     ToolEnvironment toolEnv;
@@ -123,18 +120,20 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
 
             return new JavadocTool(context);
         } catch (CompletionFailure ex) {
+            assert messager != null;
             messager.error(Position.NOPOS, ex.getMessage());
             return null;
         }
     }
 
-    public DocletEnvironment getEnvironment(Map<ToolOption,
-            Object> jdtoolOpts,
-            List<String> javaNames,
-            Iterable<? extends JavaFileObject> fileObjects) throws ToolException {
+    public DocletEnvironment getEnvironment(ToolOptions toolOptions,
+                                            List<String> javaNames,
+                                            Iterable<? extends JavaFileObject> fileObjects)
+            throws ToolException
+    {
         toolEnv = ToolEnvironment.instance(context);
-        toolEnv.initialize(jdtoolOpts);
-        ElementsTable etable = new ElementsTable(context, jdtoolOpts);
+        toolEnv.initialize(toolOptions);
+        ElementsTable etable = new ElementsTable(context, toolOptions);
         javadocFinder.sourceCompleter = etable.xclasses
                 ? Completer.NULL_COMPLETER
                 : sourceCompleter;
@@ -197,9 +196,11 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
             }
 
             // Parse the files in the packages and subpackages to be documented
-            ListBuffer<JCCompilationUnit> packageTrees = new ListBuffer<>();
-            parse(etable.getFilesToParse(), packageTrees, false);
-            modules.enter(packageTrees.toList(), null);
+            ListBuffer<JCCompilationUnit> allTrees = new ListBuffer<>();
+            allTrees.addAll(classTrees);
+            parse(etable.getFilesToParse(), allTrees, false);
+            modules.newRound();
+            modules.initModules(allTrees.toList());
 
             if (messager.hasErrors()) {
                 return null;
@@ -207,7 +208,7 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
 
             // Enter symbols for all files
             toolEnv.notice("main.Building_tree");
-            javadocEnter.main(classTrees.toList().appendList(packageTrees));
+            javadocEnter.main(allTrees.toList());
 
             if (messager.hasErrors()) {
                 return null;
@@ -221,9 +222,9 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
             // Ensure that package-info is read for all included packages
             for (Element e : etable.getIncludedElements()) {
                 if (e.getKind() == ElementKind.PACKAGE) {
-                    PackageSymbol packge = (PackageSymbol) e;
-                    if (packge.package_info != null) {
-                        packge.package_info.complete();
+                    PackageSymbol p = (PackageSymbol) e;
+                    if (p.package_info != null) {
+                        p.package_info.complete();
                     }
                 }
             }
@@ -290,7 +291,7 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
     }
 
     /** Are surrogates supported? */
-    final static boolean surrogatesSupported = surrogatesSupported();
+    static final boolean surrogatesSupported = surrogatesSupported();
     private static boolean surrogatesSupported() {
         try {
             boolean b = Character.isHighSurrogate('a');

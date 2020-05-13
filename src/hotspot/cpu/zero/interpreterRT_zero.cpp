@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2007, 2008, 2010 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,7 +27,6 @@
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterRuntime.hpp"
 #include "memory/allocation.inline.hpp"
-#include "memory/universe.hpp"
 #include "oops/method.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -141,7 +140,7 @@ void InterpreterRuntime::SignatureHandler::finalize() {
   assert(status == FFI_OK, "should be");
 }
 
-IRT_ENTRY(address,
+JRT_ENTRY(address,
           InterpreterRuntime::slow_signature_handler(JavaThread* thread,
                                                      Method*     method,
                                                      intptr_t*   unused1,
@@ -162,7 +161,7 @@ IRT_ENTRY(address,
   handler->finalize();
 
   return (address) handler;
-IRT_END
+JRT_END
 
 void SignatureHandlerLibrary::pd_set_handler(address handlerAddr) {
   InterpreterRuntime::SignatureHandler *handler =

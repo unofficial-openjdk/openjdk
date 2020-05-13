@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,8 +38,7 @@ public:
   VM_StopSafepoint(Semaphore* running, Semaphore* wait_for) :
     _running(running), _test_complete(wait_for) {}
   VMOp_Type type() const          { return VMOp_None; }
-  Mode evaluation_mode() const    { return _no_safepoint; }
-  bool is_cheap_allocated() const { return false; }
+  bool evaluate_at_safepoint() const { return false; }
   void doit()                     { _running->signal(); _test_complete->wait(); }
 };
 
@@ -66,7 +65,7 @@ public:
   // Override as JavaThread::post_run() calls JavaThread::exit which
   // expects a valid thread object oop.
   virtual void post_run() {
-    Threads::remove(this);
+    Threads::remove(this, false);
     this->smr_delete();
   }
 
@@ -105,7 +104,7 @@ public:
       Threads::add(this);
     }
     {
-      MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
+      MutexLocker ml(SR_lock(), Mutex::_no_safepoint_check_flag);
     }
   }
 
@@ -118,7 +117,7 @@ public:
   // Override as JavaThread::post_run() calls JavaThread::exit which
   // expects a valid thread object oop. And we need to call signal.
   void post_run() {
-    Threads::remove(this);
+    Threads::remove(this, false);
     _post->signal();
     this->smr_delete();
   }

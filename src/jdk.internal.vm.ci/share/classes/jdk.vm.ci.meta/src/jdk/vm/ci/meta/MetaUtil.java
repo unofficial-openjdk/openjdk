@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,13 +38,13 @@ public class MetaUtil {
      * @return the simple name
      */
     public static String getSimpleName(Class<?> clazz, boolean withEnclosingClass) {
-        final String simpleName = clazz.getSimpleName();
+        final String simpleName = safeSimpleName(clazz);
         if (simpleName.length() != 0) {
             if (withEnclosingClass) {
                 String prefix = "";
                 Class<?> enclosingClass = clazz;
                 while ((enclosingClass = enclosingClass.getEnclosingClass()) != null) {
-                    prefix = enclosingClass.getSimpleName() + "." + prefix;
+                    prefix = safeSimpleName(enclosingClass) + "." + prefix;
                 }
                 return prefix + simpleName;
             }
@@ -63,6 +63,52 @@ public class MetaUtil {
         return name.substring(index + 1);
     }
 
+    private static String safeSimpleName(Class<?> clazz) {
+        try {
+            return clazz.getSimpleName();
+        } catch (InternalError e) {
+            // Scala inner class names do not always start with '$',
+            // causing Class.getSimpleName to throw an InternalError
+            Class<?> enclosingClass = clazz.getEnclosingClass();
+            String fqn = clazz.getName();
+            if (enclosingClass == null) {
+                // Should never happen given logic in
+                // Class.getSimpleName but best be safe
+                return fqn;
+            }
+            String enclosingFQN = enclosingClass.getName();
+            int length = fqn.length();
+            if (enclosingFQN.length() >= length) {
+                // Should also never happen
+                return fqn;
+            }
+            return fqn.substring(enclosingFQN.length());
+        }
+    }
+
+    /**
+     * Classes for lambdas can have {@code /} characters that are not package separators. These are
+     * distinguished by being followed by a character that is not a
+     * {@link Character#isJavaIdentifierStart(char)} (e.g.,
+     * "jdk.vm.ci.runtime.test.TypeUniverse$$Lambda$1/869601985").
+     */
+    private static String replacePackageSeparatorsWithDot(String name) {
+        int length = name.length();
+        int i = 0;
+        StringBuilder buf = new StringBuilder(length);
+        while (i < length - 1) {
+            char ch = name.charAt(i);
+            if (ch == '/' && Character.isJavaIdentifierStart(name.charAt(i + 1))) {
+                buf.append('.');
+            } else {
+                buf.append(ch);
+            }
+            i++;
+        }
+        buf.append(name.charAt(length - 1));
+        return buf.toString();
+    }
+
     /**
      * Converts a type name in internal form to an external form.
      *
@@ -76,7 +122,7 @@ public class MetaUtil {
     public static String internalNameToJava(String name, boolean qualified, boolean classForNameCompatible) {
         switch (name.charAt(0)) {
             case 'L': {
-                String result = name.substring(1, name.length() - 1).replace('/', '.');
+                String result = replacePackageSeparatorsWithDot(name.substring(1, name.length() - 1));
                 if (!qualified) {
                     final int lastDot = result.lastIndexOf('.');
                     if (lastDot != -1) {
@@ -86,7 +132,7 @@ public class MetaUtil {
                 return result;
             }
             case '[':
-                return classForNameCompatible ? name.replace('/', '.') : internalNameToJava(name.substring(1), qualified, classForNameCompatible) + "[]";
+                return classForNameCompatible ? replacePackageSeparatorsWithDot(name) : internalNameToJava(name.substring(1), qualified, classForNameCompatible) + "[]";
             default:
                 if (name.length() != 1) {
                     throw new IllegalArgumentException("Illegal internal name: " + name);

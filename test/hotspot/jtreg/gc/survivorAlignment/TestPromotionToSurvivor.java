@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,17 @@
 package gc.survivorAlignment;
 
 /**
- * @test
+ * @test gc.survivorAlignment.TestPromotionToSurvivor
  * @bug 8031323
  * @summary Verify that objects promoted from eden space to survivor space after
  *          minor GC are aligned to SurvivorAlignmentInBytes.
  * @requires vm.gc != "Z" & vm.gc != "Shenandoah"
  * @library /test/lib
+ * @library /
  * @modules java.base/jdk.internal.misc
  *          java.management
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=128m -XX:MaxNewSize=128m
  *                   -XX:SurvivorRatio=1 -XX:+UnlockExperimentalVMOptions

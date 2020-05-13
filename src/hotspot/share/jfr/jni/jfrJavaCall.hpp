@@ -28,6 +28,7 @@
 #include "jni.h"
 #include "jfr/utilities/jfrAllocation.hpp"
 #include "utilities/exceptions.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 class JavaCallArguments;
 class JavaThread;
@@ -47,11 +48,11 @@ class JfrJavaArguments : public StackObj {
   void set_klass(const Klass* klass);
 
   Symbol* name() const;
-  void set_name(const char* name, TRAPS);
+  void set_name(const char* name);
   void set_name(const Symbol* name);
 
   Symbol* signature() const;
-  void set_signature(const char* signature, TRAPS);
+  void set_signature(const char* signature);
   void set_signature(const Symbol* signature);
 
   int array_length() const;
@@ -86,8 +87,7 @@ class JfrJavaArguments : public StackObj {
     int _java_stack_slots;
 
     Parameters();
-    Parameters(const Parameters&); // no impl
-    Parameters& operator=(const Parameters&); // no impl
+    NONCOPYABLE(Parameters);
 
     void push(const JavaValue& value);
     void push_large(const JavaValue& value);

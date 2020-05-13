@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,19 +25,21 @@
  * @test
  * @bug 4678055
  * @modules java.base/sun.net.www
- * @library ../../../sun/net/www/httptest/
+ * @library ../../../sun/net/www/httptest/ /test/lib
  * @build HttpCallback TestHttpServer ClosedChannelList HttpTransaction
- * @run main B4678055
+ * @run main/othervm B4678055
+ * @run main/othervm -Djava.net.preferIPv6Addresses=true B4678055
  * @summary Basic Authentication fails with multiple realms
  */
 
 import java.io.*;
 import java.net.*;
+import jdk.test.lib.net.URIBuilder;
 
 public class B4678055 implements HttpCallback {
 
-    static int count = 0;
-    static String authstring;
+    static volatile int count = 0;
+    static volatile String authstring;
 
     void errorReply (HttpTransaction req, String reply) throws IOException {
         req.addResponseHeader ("Connection", "close");
@@ -54,6 +56,7 @@ public class B4678055 implements HttpCallback {
 
     public void request (HttpTransaction req) {
         try {
+            System.out.println("Server handling case: "+ count);
             authstring = req.getRequestHeader ("Authorization");
             System.out.println (authstring);
             switch (count) {
@@ -93,6 +96,7 @@ public class B4678055 implements HttpCallback {
             }
             count ++;
         } catch (IOException e) {
+            System.err.println("Unexpected exception for case " + count + ": " + e);
             e.printStackTrace();
         }
     }
@@ -125,13 +129,24 @@ public class B4678055 implements HttpCallback {
     public static void main (String[] args) throws Exception {
         MyAuthenticator auth = new MyAuthenticator ();
         Authenticator.setDefault (auth);
+        ProxySelector.setDefault(ProxySelector.of(null)); // no proxy
         try {
-            server = new TestHttpServer (new B4678055(), 1, 10, 0);
-            System.out.println ("Server: listening on port: " + server.getLocalPort());
-            client ("http://localhost:"+server.getLocalPort()+"/d1/foo.html");
-            client ("http://localhost:"+server.getLocalPort()+"/d2/foo.html");
-            client ("http://localhost:"+server.getLocalPort()+"/d2/foo.html");
+            InetAddress loopback = InetAddress.getLoopbackAddress();
+            server = new TestHttpServer(new B4678055(), 1, 10, loopback, 0);
+            String serverURL = URIBuilder.newBuilder()
+                .scheme("http")
+                .loopback()
+                .port(server.getLocalPort())
+                .path("/")
+                .build()
+                .toString();
+            System.out.println("Server: listening at: " + serverURL);
+            client(serverURL + "d1/foo.html");
+            client(serverURL + "d2/foo.html");
+            client(serverURL + "d2/foo.html");
         } catch (Exception e) {
+            System.out.println("Client got exception: " + e);
+            System.out.println("Terminating server");
             if (server != null) {
                 server.terminate();
             }
@@ -145,10 +160,13 @@ public class B4678055 implements HttpCallback {
         if (!checkFinalAuth()) {
             except ("Wrong authorization string received from client");
         }
+        System.out.println("Terminating server");
         server.terminate();
     }
 
     public static void except (String s) {
+        System.out.println("Check failed: " + s);
+        System.out.println("Terminating server");
         server.terminate();
         throw new RuntimeException (s);
     }
@@ -158,7 +176,7 @@ public class B4678055 implements HttpCallback {
             super ();
         }
 
-        int count = 0;
+        volatile int count = 0;
 
         public PasswordAuthentication getPasswordAuthentication () {
             PasswordAuthentication pw;

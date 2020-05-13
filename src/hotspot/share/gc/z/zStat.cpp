@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,13 @@
 
 #include "precompiled.hpp"
 #include "gc/z/zCollectedHeap.hpp"
-#include "gc/z/zCPU.hpp"
+#include "gc/z/zCPU.inline.hpp"
 #include "gc/z/zGlobals.hpp"
 #include "gc/z/zHeap.inline.hpp"
 #include "gc/z/zLargePages.inline.hpp"
 #include "gc/z/zNMethodTable.hpp"
 #include "gc/z/zNUMA.hpp"
+#include "gc/z/zRelocationSetSelector.inline.hpp"
 #include "gc/z/zStat.hpp"
 #include "gc/z/zTracer.inline.hpp"
 #include "gc/z/zUtils.hpp"
@@ -40,6 +41,14 @@
 #include "utilities/compilerWarnings.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/ticks.hpp"
+
+#define ZSIZE_FMT                       SIZE_FORMAT "M(%.0f%%)"
+#define ZSIZE_ARGS_WITH_MAX(size, max)  ((size) / M), (percent_of(size, max))
+#define ZSIZE_ARGS(size)                ZSIZE_ARGS_WITH_MAX(size, ZStatHeap::max_capacity())
+
+#define ZTABLE_ARGS_NA                  "%9s", "-"
+#define ZTABLE_ARGS(size)               SIZE_FORMAT_W(8) "M (%.0f%%)", \
+                                        ((size) / M), (percent_of(size, ZStatHeap::max_capacity()))
 
 //
 // Stat sampler/counter data
@@ -56,7 +65,7 @@ struct ZStatSamplerData {
 
   void add(const ZStatSamplerData& new_sample) {
     _nsamples += new_sample._nsamples;
-    _sum += new_sample._nsamples;
+    _sum += new_sample._sum;
     _max = MAX2(_max, new_sample._max);
   }
 };
@@ -230,7 +239,7 @@ public:
 // Stat unit printers
 //
 void ZStatUnitTime(LogTargetHandle log, const ZStatSampler& sampler, const ZStatSamplerHistory& history) {
-  log.print(" %10s: %-40s  "
+  log.print(" %10s: %-41s "
             "%9.3f / %-9.3f "
             "%9.3f / %-9.3f "
             "%9.3f / %-9.3f "
@@ -248,7 +257,7 @@ void ZStatUnitTime(LogTargetHandle log, const ZStatSampler& sampler, const ZStat
 }
 
 void ZStatUnitBytes(LogTargetHandle log, const ZStatSampler& sampler, const ZStatSamplerHistory& history) {
-  log.print(" %10s: %-40s  "
+  log.print(" %10s: %-41s "
             UINT64_FORMAT_W(9) " / " UINT64_FORMAT_W(-9) " "
             UINT64_FORMAT_W(9) " / " UINT64_FORMAT_W(-9) " "
             UINT64_FORMAT_W(9) " / " UINT64_FORMAT_W(-9) " "
@@ -266,7 +275,7 @@ void ZStatUnitBytes(LogTargetHandle log, const ZStatSampler& sampler, const ZSta
 }
 
 void ZStatUnitThreads(LogTargetHandle log, const ZStatSampler& sampler, const ZStatSamplerHistory& history) {
-  log.print(" %10s: %-40s  "
+  log.print(" %10s: %-41s "
             UINT64_FORMAT_W(9) " / " UINT64_FORMAT_W(-9) " "
             UINT64_FORMAT_W(9) " / " UINT64_FORMAT_W(-9) " "
             UINT64_FORMAT_W(9) " / " UINT64_FORMAT_W(-9) " "
@@ -284,7 +293,7 @@ void ZStatUnitThreads(LogTargetHandle log, const ZStatSampler& sampler, const ZS
 }
 
 void ZStatUnitBytesPerSecond(LogTargetHandle log, const ZStatSampler& sampler, const ZStatSamplerHistory& history) {
-  log.print(" %10s: %-40s  "
+  log.print(" %10s: %-41s "
             UINT64_FORMAT_W(9) " / " UINT64_FORMAT_W(-9) " "
             UINT64_FORMAT_W(9) " / " UINT64_FORMAT_W(-9) " "
             UINT64_FORMAT_W(9) " / " UINT64_FORMAT_W(-9) " "
@@ -302,7 +311,7 @@ void ZStatUnitBytesPerSecond(LogTargetHandle log, const ZStatSampler& sampler, c
 }
 
 void ZStatUnitOpsPerSecond(LogTargetHandle log, const ZStatSampler& sampler, const ZStatSamplerHistory& history) {
-  log.print(" %10s: %-40s  "
+  log.print(" %10s: %-41s "
             UINT64_FORMAT_W(9) " / " UINT64_FORMAT_W(-9) " "
             UINT64_FORMAT_W(9) " / " UINT64_FORMAT_W(-9) " "
             UINT64_FORMAT_W(9) " / " UINT64_FORMAT_W(-9) " "
@@ -347,12 +356,11 @@ T* ZStatValue::get_cpu_local(uint32_t cpu) const {
 
 void ZStatValue::initialize() {
   // Finalize and align CPU offset
-  _cpu_offset = align_up(_cpu_offset, ZCacheLineSize);
+  _cpu_offset = align_up(_cpu_offset, (uint32_t)ZCacheLineSize);
 
   // Allocation aligned memory
   const size_t size = _cpu_offset * ZCPU::count();
   _base = ZUtils::alloc_aligned(ZCacheLineSize, size);
-  memset((void*)_base, 0, size);
 }
 
 const char* ZStatValue::group() const {
@@ -404,7 +412,7 @@ T* ZStatIterableValue<T>::insert() const {
 // Stat sampler
 //
 ZStatSampler::ZStatSampler(const char* group, const char* name, ZStatUnitPrinter printer) :
-    ZStatIterableValue(group, name, sizeof(ZStatSamplerData)),
+    ZStatIterableValue<ZStatSampler>(group, name, sizeof(ZStatSamplerData)),
     _printer(printer) {}
 
 ZStatSamplerData* ZStatSampler::get() const {
@@ -418,9 +426,9 @@ ZStatSamplerData ZStatSampler::collect_and_reset() const {
   for (uint32_t i = 0; i < ncpus; i++) {
     ZStatSamplerData* const cpu_data = get_cpu_local<ZStatSamplerData>(i);
     if (cpu_data->_nsamples > 0) {
-      const uint64_t nsamples = Atomic::xchg((uint64_t)0, &cpu_data->_nsamples);
-      const uint64_t sum = Atomic::xchg((uint64_t)0, &cpu_data->_sum);
-      const uint64_t max = Atomic::xchg((uint64_t)0, &cpu_data->_max);
+      const uint64_t nsamples = Atomic::xchg(&cpu_data->_nsamples, (uint64_t)0);
+      const uint64_t sum = Atomic::xchg(&cpu_data->_sum, (uint64_t)0);
+      const uint64_t max = Atomic::xchg(&cpu_data->_max, (uint64_t)0);
       all._nsamples += nsamples;
       all._sum += sum;
       if (all._max < max) {
@@ -440,7 +448,7 @@ ZStatUnitPrinter ZStatSampler::printer() const {
 // Stat counter
 //
 ZStatCounter::ZStatCounter(const char* group, const char* name, ZStatUnitPrinter printer) :
-    ZStatIterableValue(group, name, sizeof(ZStatCounterData)),
+    ZStatIterableValue<ZStatCounter>(group, name, sizeof(ZStatCounterData)),
     _sampler(group, name, printer) {}
 
 ZStatCounterData* ZStatCounter::get() const {
@@ -453,7 +461,7 @@ void ZStatCounter::sample_and_reset() const {
   const uint32_t ncpus = ZCPU::count();
   for (uint32_t i = 0; i < ncpus; i++) {
     ZStatCounterData* const cpu_data = get_cpu_local<ZStatCounterData>(i);
-    counter += Atomic::xchg((uint64_t)0, &cpu_data->_counter);
+    counter += Atomic::xchg(&cpu_data->_counter, (uint64_t)0);
   }
 
   ZStatSample(_sampler, counter);
@@ -463,7 +471,7 @@ void ZStatCounter::sample_and_reset() const {
 // Stat unsampled counter
 //
 ZStatUnsampledCounter::ZStatUnsampledCounter(const char* name) :
-    ZStatIterableValue("Unsampled", name, sizeof(ZStatCounterData)) {}
+    ZStatIterableValue<ZStatUnsampledCounter>("Unsampled", name, sizeof(ZStatCounterData)) {}
 
 ZStatCounterData* ZStatUnsampledCounter::get() const {
   return get_cpu_local<ZStatCounterData>(ZCPU::id());
@@ -475,7 +483,7 @@ ZStatCounterData ZStatUnsampledCounter::collect_and_reset() const {
   const uint32_t ncpus = ZCPU::count();
   for (uint32_t i = 0; i < ncpus; i++) {
     ZStatCounterData* const cpu_data = get_cpu_local<ZStatCounterData>(i);
-    all._counter += Atomic::xchg((uint64_t)0, &cpu_data->_counter);
+    all._counter += Atomic::xchg(&cpu_data->_counter, (uint64_t)0);
   }
 
   return all;
@@ -621,9 +629,6 @@ void ZStatPhaseCycle::register_start(const Ticks& start) const {
                        GCCause::to_string(ZCollectedHeap::heap()->gc_cause()));
 }
 
-#define ZUSED_FMT                       SIZE_FORMAT "M(%.0lf%%)"
-#define ZUSED_ARGS(size, max_capacity)  ((size) / M), (percent_of(size, max_capacity))
-
 void ZStatPhaseCycle::register_end(const Ticks& start, const Ticks& end) const {
   timer()->register_gc_end(end);
 
@@ -638,16 +643,16 @@ void ZStatPhaseCycle::register_end(const Ticks& start, const Ticks& end) const {
   ZStatLoad::print();
   ZStatMMU::print();
   ZStatMark::print();
-  ZStatRelocation::print();
   ZStatNMethods::print();
   ZStatMetaspace::print();
   ZStatReferences::print();
+  ZStatRelocation::print();
   ZStatHeap::print();
 
-  log_info(gc)("Garbage Collection (%s) " ZUSED_FMT "->" ZUSED_FMT,
+  log_info(gc)("Garbage Collection (%s) " ZSIZE_FMT "->" ZSIZE_FMT,
                GCCause::to_string(ZCollectedHeap::heap()->gc_cause()),
-               ZUSED_ARGS(ZStatHeap::used_at_mark_start(), ZStatHeap::max_capacity()),
-               ZUSED_ARGS(ZStatHeap::used_at_relocate_end(), ZStatHeap::max_capacity()));
+               ZSIZE_ARGS(ZStatHeap::used_at_mark_start()),
+               ZSIZE_ARGS(ZStatHeap::used_at_relocate_end()));
 }
 
 Tickspan ZStatPhasePause::_max;
@@ -713,7 +718,7 @@ void ZStatSubPhase::register_start(const Ticks& start) const {
 }
 
 void ZStatSubPhase::register_end(const Ticks& start, const Ticks& end) const {
-  ZTracer::tracer()->report_thread_phase(*this, start, end);
+  ZTracer::tracer()->report_thread_phase(name(), start, end);
 
   const Tickspan duration = end - start;
   ZStatSample(_sampler, duration.value());
@@ -733,7 +738,7 @@ void ZStatCriticalPhase::register_start(const Ticks& start) const {
 }
 
 void ZStatCriticalPhase::register_end(const Ticks& start, const Ticks& end) const {
-  ZTracer::tracer()->report_thread_phase(*this, start, end);
+  ZTracer::tracer()->report_thread_phase(name(), start, end);
 
   const Tickspan duration = end - start;
   ZStatSample(_sampler, duration.value());
@@ -749,12 +754,17 @@ void ZStatCriticalPhase::register_end(const Ticks& start, const Ticks& end) cons
 }
 
 //
+// Stat timer
+//
+THREAD_LOCAL uint32_t ZStatTimerDisable::_active = 0;
+
+//
 // Stat sample/inc
 //
-void ZStatSample(const ZStatSampler& sampler, uint64_t value, bool trace) {
+void ZStatSample(const ZStatSampler& sampler, uint64_t value) {
   ZStatSamplerData* const cpu_data = sampler.get();
-  Atomic::add(1u, &cpu_data->_nsamples);
-  Atomic::add(value, &cpu_data->_sum);
+  Atomic::add(&cpu_data->_nsamples, 1u);
+  Atomic::add(&cpu_data->_sum, value);
 
   uint64_t max = cpu_data->_max;
   for (;;) {
@@ -764,7 +774,7 @@ void ZStatSample(const ZStatSampler& sampler, uint64_t value, bool trace) {
     }
 
     const uint64_t new_max = value;
-    const uint64_t prev_max = Atomic::cmpxchg(new_max, &cpu_data->_max, max);
+    const uint64_t prev_max = Atomic::cmpxchg(&cpu_data->_max, max, new_max);
     if (prev_max == max) {
       // Success
       break;
@@ -774,23 +784,19 @@ void ZStatSample(const ZStatSampler& sampler, uint64_t value, bool trace) {
     max = prev_max;
   }
 
-  if (trace) {
-    ZTracer::tracer()->report_stat_sampler(sampler, value);
-  }
+  ZTracer::tracer()->report_stat_sampler(sampler, value);
 }
 
-void ZStatInc(const ZStatCounter& counter, uint64_t increment, bool trace) {
+void ZStatInc(const ZStatCounter& counter, uint64_t increment) {
   ZStatCounterData* const cpu_data = counter.get();
-  const uint64_t value = Atomic::add(increment, &cpu_data->_counter);
+  const uint64_t value = Atomic::add(&cpu_data->_counter, increment);
 
-  if (trace) {
-    ZTracer::tracer()->report_stat_counter(counter, increment, value);
-  }
+  ZTracer::tracer()->report_stat_counter(counter, increment, value);
 }
 
 void ZStatInc(const ZStatUnsampledCounter& counter, uint64_t increment) {
   ZStatCounterData* const cpu_data = counter.get();
-  Atomic::add(increment, &cpu_data->_counter);
+  Atomic::add(&cpu_data->_counter, increment);
 }
 
 //
@@ -845,7 +851,16 @@ void ZStat::sample_and_collect(ZStatSamplerHistory* history) const {
 }
 
 bool ZStat::should_print(LogTargetHandle log) const {
-  return log.is_enabled() && (_metronome.nticks() % ZStatisticsInterval == 0);
+  static uint64_t print_at = ZStatisticsInterval;
+  const uint64_t now = os::elapsedTime();
+
+  if (now < print_at) {
+    return false;
+  }
+
+  print_at = ((now / ZStatisticsInterval) * ZStatisticsInterval) + ZStatisticsInterval;
+
+  return log.is_enabled();
 }
 
 void ZStat::print(LogTargetHandle log, const ZStatSamplerHistory* history) const {
@@ -1011,7 +1026,7 @@ public:
 //
 // Stat cycle
 //
-uint64_t  ZStatCycle::_ncycles = 0;
+uint64_t  ZStatCycle::_nwarmup_cycles = 0;
 Ticks     ZStatCycle::_start_of_last;
 Ticks     ZStatCycle::_end_of_last;
 NumberSeq ZStatCycle::_normalized_duration(0.3 /* alpha */);
@@ -1020,9 +1035,12 @@ void ZStatCycle::at_start() {
   _start_of_last = Ticks::now();
 }
 
-void ZStatCycle::at_end(double boost_factor) {
+void ZStatCycle::at_end(GCCause::Cause cause, double boost_factor) {
   _end_of_last = Ticks::now();
-  _ncycles++;
+
+  if (cause == GCCause::_z_warmup) {
+    _nwarmup_cycles++;
+  }
 
   // Calculate normalized cycle duration. The measured duration is
   // normalized using the boost factor to avoid artificial deflation
@@ -1032,8 +1050,18 @@ void ZStatCycle::at_end(double boost_factor) {
   _normalized_duration.add(normalized_duration);
 }
 
-uint64_t ZStatCycle::ncycles() {
-  return _ncycles;
+bool ZStatCycle::is_warm() {
+  return _nwarmup_cycles >= 3;
+}
+
+uint64_t ZStatCycle::nwarmup_cycles() {
+  return _nwarmup_cycles;
+}
+
+bool ZStatCycle::is_normalized_duration_trustable() {
+  // The normalized duration is considered trustable if we have
+  // completed at least one warmup cycle
+  return _nwarmup_cycles > 0;
 }
 
 const AbsSeq& ZStatCycle::normalized_duration() {
@@ -1041,8 +1069,8 @@ const AbsSeq& ZStatCycle::normalized_duration() {
 }
 
 double ZStatCycle::time_since_last() {
-  if (_ncycles == 0) {
-    // Return time since VM start-up
+  if (_end_of_last.value() == 0) {
+    // No end recorded yet, return time since VM start
     return os::elapsedTime();
   }
 
@@ -1100,23 +1128,37 @@ void ZStatMark::print() {
 //
 // Stat relocation
 //
-size_t ZStatRelocation::_relocating;
-bool ZStatRelocation::_success;
+ZRelocationSetSelectorStats ZStatRelocation::_stats;
+bool                        ZStatRelocation::_success;
 
-void ZStatRelocation::set_at_select_relocation_set(size_t relocating) {
-  _relocating = relocating;
+void ZStatRelocation::set_at_select_relocation_set(const ZRelocationSetSelectorStats& stats) {
+  _stats = stats;
 }
 
 void ZStatRelocation::set_at_relocate_end(bool success) {
   _success = success;
 }
 
+void ZStatRelocation::print(const char* name, const ZRelocationSetSelectorGroupStats& group) {
+  const size_t total = _stats.small().total() + _stats.medium().total() + _stats.large().total();
+
+  log_info(gc, reloc)("%s Pages: " SIZE_FORMAT " / " ZSIZE_FMT ", Empty: " ZSIZE_FMT ", Compacting: " ZSIZE_FMT "->" ZSIZE_FMT,
+                      name,
+                      group.npages(),
+                      ZSIZE_ARGS_WITH_MAX(group.total(), total),
+                      ZSIZE_ARGS_WITH_MAX(group.empty(), total),
+                      ZSIZE_ARGS_WITH_MAX(group.compacting_from(), total),
+                      ZSIZE_ARGS_WITH_MAX(group.compacting_to(), total));
+}
+
 void ZStatRelocation::print() {
-  if (_success) {
-    log_info(gc, reloc)("Relocation: Successful, " SIZE_FORMAT "M relocated", _relocating / M);
-  } else {
-    log_info(gc, reloc)("Relocation: Incomplete");
+  print("Small", _stats.small());
+  if (ZPageSizeMedium != 0) {
+    print("Medium", _stats.medium());
   }
+  print("Large", _stats.large());
+
+  log_info(gc, reloc)("Relocation: %s", _success ? "Successful" : "Incomplete");
 }
 
 //
@@ -1198,9 +1240,19 @@ ZStatHeap::ZAtMarkEnd ZStatHeap::_at_mark_end;
 ZStatHeap::ZAtRelocateStart ZStatHeap::_at_relocate_start;
 ZStatHeap::ZAtRelocateEnd ZStatHeap::_at_relocate_end;
 
-#define ZSIZE_NA               "%9s", "-"
-#define ZSIZE_ARGS(size)       SIZE_FORMAT_W(8) "M (%.0lf%%)", \
-                               ((size) / M), (percent_of(size, _at_initialize.max_capacity))
+size_t ZStatHeap::capacity_high() {
+  return MAX4(_at_mark_start.capacity,
+              _at_mark_end.capacity,
+              _at_relocate_start.capacity,
+              _at_relocate_end.capacity);
+}
+
+size_t ZStatHeap::capacity_low() {
+  return MIN4(_at_mark_start.capacity,
+              _at_mark_end.capacity,
+              _at_relocate_start.capacity,
+              _at_relocate_end.capacity);
+}
 
 size_t ZStatHeap::available(size_t used) {
   return _at_initialize.max_capacity - used;
@@ -1214,14 +1266,18 @@ size_t ZStatHeap::free(size_t used) {
   return available(used) - reserve(used);
 }
 
-void ZStatHeap::set_at_initialize(size_t max_capacity,
+void ZStatHeap::set_at_initialize(size_t min_capacity,
+                                  size_t max_capacity,
                                   size_t max_reserve) {
+  _at_initialize.min_capacity = min_capacity;
   _at_initialize.max_capacity = max_capacity;
   _at_initialize.max_reserve = max_reserve;
 }
 
-void ZStatHeap::set_at_mark_start(size_t capacity,
+void ZStatHeap::set_at_mark_start(size_t soft_max_capacity,
+                                  size_t capacity,
                                   size_t used) {
+  _at_mark_start.soft_max_capacity = soft_max_capacity;
   _at_mark_start.capacity = capacity;
   _at_mark_start.reserve = reserve(used);
   _at_mark_start.used = used;
@@ -1238,9 +1294,10 @@ void ZStatHeap::set_at_mark_end(size_t capacity,
   _at_mark_end.free = free(used);
 }
 
-void ZStatHeap::set_at_select_relocation_set(size_t live,
-                                             size_t garbage,
-                                             size_t reclaimed) {
+void ZStatHeap::set_at_select_relocation_set(const ZRelocationSetSelectorStats& stats, size_t reclaimed) {
+  const size_t live = stats.small().live() + stats.medium().live() + stats.large().live();
+  const size_t garbage = stats.small().garbage() + stats.medium().garbage() + stats.large().garbage();
+
   _at_mark_end.live = live;
   _at_mark_end.garbage = garbage;
 
@@ -1265,8 +1322,8 @@ void ZStatHeap::set_at_relocate_end(size_t capacity,
                                     size_t used_high,
                                     size_t used_low) {
   _at_relocate_end.capacity = capacity;
-  _at_relocate_end.capacity_high = capacity;
-  _at_relocate_end.capacity_low = _at_mark_start.capacity;
+  _at_relocate_end.capacity_high = capacity_high();
+  _at_relocate_end.capacity_low = capacity_low();
   _at_relocate_end.reserve = reserve(used);
   _at_relocate_end.reserve_high = reserve(used_low);
   _at_relocate_end.reserve_low = reserve(used_high);
@@ -1294,6 +1351,13 @@ size_t ZStatHeap::used_at_relocate_end() {
 }
 
 void ZStatHeap::print() {
+  log_info(gc, heap)("Min Capacity: "
+                     ZSIZE_FMT, ZSIZE_ARGS(_at_initialize.min_capacity));
+  log_info(gc, heap)("Max Capacity: "
+                     ZSIZE_FMT, ZSIZE_ARGS(_at_initialize.max_capacity));
+  log_info(gc, heap)("Soft Max Capacity: "
+                     ZSIZE_FMT, ZSIZE_ARGS(_at_mark_start.soft_max_capacity));
+
   ZStatTablePrinter table(10, 18);
   log_info(gc, heap)("%s", table()
                      .fill()
@@ -1306,74 +1370,74 @@ void ZStatHeap::print() {
                      .end());
   log_info(gc, heap)("%s", table()
                      .right("Capacity:")
-                     .left(ZSIZE_ARGS(_at_mark_start.capacity))
-                     .left(ZSIZE_ARGS(_at_mark_end.capacity))
-                     .left(ZSIZE_ARGS(_at_relocate_start.capacity))
-                     .left(ZSIZE_ARGS(_at_relocate_end.capacity))
-                     .left(ZSIZE_ARGS(_at_relocate_end.capacity_high))
-                     .left(ZSIZE_ARGS(_at_relocate_end.capacity_low))
+                     .left(ZTABLE_ARGS(_at_mark_start.capacity))
+                     .left(ZTABLE_ARGS(_at_mark_end.capacity))
+                     .left(ZTABLE_ARGS(_at_relocate_start.capacity))
+                     .left(ZTABLE_ARGS(_at_relocate_end.capacity))
+                     .left(ZTABLE_ARGS(_at_relocate_end.capacity_high))
+                     .left(ZTABLE_ARGS(_at_relocate_end.capacity_low))
                      .end());
   log_info(gc, heap)("%s", table()
                      .right("Reserve:")
-                     .left(ZSIZE_ARGS(_at_mark_start.reserve))
-                     .left(ZSIZE_ARGS(_at_mark_end.reserve))
-                     .left(ZSIZE_ARGS(_at_relocate_start.reserve))
-                     .left(ZSIZE_ARGS(_at_relocate_end.reserve))
-                     .left(ZSIZE_ARGS(_at_relocate_end.reserve_high))
-                     .left(ZSIZE_ARGS(_at_relocate_end.reserve_low))
+                     .left(ZTABLE_ARGS(_at_mark_start.reserve))
+                     .left(ZTABLE_ARGS(_at_mark_end.reserve))
+                     .left(ZTABLE_ARGS(_at_relocate_start.reserve))
+                     .left(ZTABLE_ARGS(_at_relocate_end.reserve))
+                     .left(ZTABLE_ARGS(_at_relocate_end.reserve_high))
+                     .left(ZTABLE_ARGS(_at_relocate_end.reserve_low))
                      .end());
   log_info(gc, heap)("%s", table()
                      .right("Free:")
-                     .left(ZSIZE_ARGS(_at_mark_start.free))
-                     .left(ZSIZE_ARGS(_at_mark_end.free))
-                     .left(ZSIZE_ARGS(_at_relocate_start.free))
-                     .left(ZSIZE_ARGS(_at_relocate_end.free))
-                     .left(ZSIZE_ARGS(_at_relocate_end.free_high))
-                     .left(ZSIZE_ARGS(_at_relocate_end.free_low))
+                     .left(ZTABLE_ARGS(_at_mark_start.free))
+                     .left(ZTABLE_ARGS(_at_mark_end.free))
+                     .left(ZTABLE_ARGS(_at_relocate_start.free))
+                     .left(ZTABLE_ARGS(_at_relocate_end.free))
+                     .left(ZTABLE_ARGS(_at_relocate_end.free_high))
+                     .left(ZTABLE_ARGS(_at_relocate_end.free_low))
                      .end());
   log_info(gc, heap)("%s", table()
                      .right("Used:")
-                     .left(ZSIZE_ARGS(_at_mark_start.used))
-                     .left(ZSIZE_ARGS(_at_mark_end.used))
-                     .left(ZSIZE_ARGS(_at_relocate_start.used))
-                     .left(ZSIZE_ARGS(_at_relocate_end.used))
-                     .left(ZSIZE_ARGS(_at_relocate_end.used_high))
-                     .left(ZSIZE_ARGS(_at_relocate_end.used_low))
+                     .left(ZTABLE_ARGS(_at_mark_start.used))
+                     .left(ZTABLE_ARGS(_at_mark_end.used))
+                     .left(ZTABLE_ARGS(_at_relocate_start.used))
+                     .left(ZTABLE_ARGS(_at_relocate_end.used))
+                     .left(ZTABLE_ARGS(_at_relocate_end.used_high))
+                     .left(ZTABLE_ARGS(_at_relocate_end.used_low))
                      .end());
   log_info(gc, heap)("%s", table()
                      .right("Live:")
-                     .left(ZSIZE_NA)
-                     .left(ZSIZE_ARGS(_at_mark_end.live))
-                     .left(ZSIZE_ARGS(_at_mark_end.live /* Same as at mark end */))
-                     .left(ZSIZE_ARGS(_at_mark_end.live /* Same as at mark end */))
-                     .left(ZSIZE_NA)
-                     .left(ZSIZE_NA)
+                     .left(ZTABLE_ARGS_NA)
+                     .left(ZTABLE_ARGS(_at_mark_end.live))
+                     .left(ZTABLE_ARGS(_at_mark_end.live /* Same as at mark end */))
+                     .left(ZTABLE_ARGS(_at_mark_end.live /* Same as at mark end */))
+                     .left(ZTABLE_ARGS_NA)
+                     .left(ZTABLE_ARGS_NA)
                      .end());
   log_info(gc, heap)("%s", table()
                      .right("Allocated:")
-                     .left(ZSIZE_NA)
-                     .left(ZSIZE_ARGS(_at_mark_end.allocated))
-                     .left(ZSIZE_ARGS(_at_relocate_start.allocated))
-                     .left(ZSIZE_ARGS(_at_relocate_end.allocated))
-                     .left(ZSIZE_NA)
-                     .left(ZSIZE_NA)
+                     .left(ZTABLE_ARGS_NA)
+                     .left(ZTABLE_ARGS(_at_mark_end.allocated))
+                     .left(ZTABLE_ARGS(_at_relocate_start.allocated))
+                     .left(ZTABLE_ARGS(_at_relocate_end.allocated))
+                     .left(ZTABLE_ARGS_NA)
+                     .left(ZTABLE_ARGS_NA)
                      .end());
   log_info(gc, heap)("%s", table()
                      .right("Garbage:")
-                     .left(ZSIZE_NA)
-                     .left(ZSIZE_ARGS(_at_mark_end.garbage))
-                     .left(ZSIZE_ARGS(_at_relocate_start.garbage))
-                     .left(ZSIZE_ARGS(_at_relocate_end.garbage))
-                     .left(ZSIZE_NA)
-                     .left(ZSIZE_NA)
+                     .left(ZTABLE_ARGS_NA)
+                     .left(ZTABLE_ARGS(_at_mark_end.garbage))
+                     .left(ZTABLE_ARGS(_at_relocate_start.garbage))
+                     .left(ZTABLE_ARGS(_at_relocate_end.garbage))
+                     .left(ZTABLE_ARGS_NA)
+                     .left(ZTABLE_ARGS_NA)
                      .end());
   log_info(gc, heap)("%s", table()
                      .right("Reclaimed:")
-                     .left(ZSIZE_NA)
-                     .left(ZSIZE_NA)
-                     .left(ZSIZE_ARGS(_at_relocate_start.reclaimed))
-                     .left(ZSIZE_ARGS(_at_relocate_end.reclaimed))
-                     .left(ZSIZE_NA)
-                     .left(ZSIZE_NA)
+                     .left(ZTABLE_ARGS_NA)
+                     .left(ZTABLE_ARGS_NA)
+                     .left(ZTABLE_ARGS(_at_relocate_start.reclaimed))
+                     .left(ZTABLE_ARGS(_at_relocate_end.reclaimed))
+                     .left(ZTABLE_ARGS_NA)
+                     .left(ZTABLE_ARGS_NA)
                      .end());
 }

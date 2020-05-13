@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 #define SHARE_GC_Z_ZARRAY_HPP
 
 #include "memory/allocation.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 template <typename T>
 class ZArray {
@@ -35,9 +36,7 @@ private:
   size_t _size;
   size_t _capacity;
 
-  // Copy and assignment are not allowed
-  ZArray(const ZArray<T>& array);
-  ZArray<T>& operator=(const ZArray<T>& array);
+  NONCOPYABLE(ZArray);
 
   void expand(size_t new_capacity);
 
@@ -51,6 +50,7 @@ public:
   T at(size_t index) const;
 
   void add(T value);
+  void transfer(ZArray<T>* from);
   void clear();
 };
 
@@ -73,15 +73,13 @@ public:
 template <typename T>
 class ZArrayIterator : public ZArrayIteratorImpl<T, ZARRAY_SERIAL> {
 public:
-  ZArrayIterator(ZArray<T>* array) :
-      ZArrayIteratorImpl<T, ZARRAY_SERIAL>(array) {}
+  ZArrayIterator(ZArray<T>* array);
 };
 
 template <typename T>
 class ZArrayParallelIterator : public ZArrayIteratorImpl<T, ZARRAY_PARALLEL> {
 public:
-  ZArrayParallelIterator(ZArray<T>* array) :
-      ZArrayIteratorImpl<T, ZARRAY_PARALLEL>(array) {}
+  ZArrayParallelIterator(ZArray<T>* array);
 };
 
 #endif // SHARE_GC_Z_ZARRAY_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  */
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -30,9 +30,8 @@ import com.sun.org.apache.bcel.internal.Const;
  * This class is derived from the abstract  {@link Constant}
  * and represents a reference to a Double object.
  *
- * @version $Id: ConstantDouble.java 1747278 2016-06-07 17:28:43Z britter $
  * @see     Constant
- * @LastModified: Nov 2017
+ * @LastModified: Jun 2019
  */
 public final class ConstantDouble extends Constant implements ConstantObject {
 
@@ -87,7 +86,7 @@ public final class ConstantDouble extends Constant implements ConstantObject {
      * @throws IOException
      */
     @Override
-    public final void dump( final DataOutputStream file ) throws IOException {
+    public void dump( final DataOutputStream file ) throws IOException {
         file.writeByte(super.getTag());
         file.writeDouble(bytes);
     }
@@ -96,7 +95,7 @@ public final class ConstantDouble extends Constant implements ConstantObject {
     /**
      * @return data, i.e., 8 bytes.
      */
-    public final double getBytes() {
+    public double getBytes() {
         return bytes;
     }
 
@@ -104,7 +103,7 @@ public final class ConstantDouble extends Constant implements ConstantObject {
     /**
      * @param bytes the raw bytes that represent the double value
      */
-    public final void setBytes( final double bytes ) {
+    public void setBytes( final double bytes ) {
         this.bytes = bytes;
     }
 
@@ -113,7 +112,7 @@ public final class ConstantDouble extends Constant implements ConstantObject {
      * @return String representation.
      */
     @Override
-    public final String toString() {
+    public String toString() {
         return super.toString() + "(bytes = " + bytes + ")";
     }
 

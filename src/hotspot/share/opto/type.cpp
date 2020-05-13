@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@
 #include "opto/node.hpp"
 #include "opto/opcodes.hpp"
 #include "opto/type.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 // Portions of code courtesy of Clifford Click
 
@@ -244,10 +245,6 @@ const Type* Type::make_from_constant(ciConstant constant, bool require_constant,
     case T_DOUBLE:   return TypeD::make(constant.as_double());
     case T_ARRAY:
     case T_OBJECT: {
-        // cases:
-        //   can_be_constant    = (oop not scavengable || ScavengeRootsInCode != 0)
-        //   should_be_constant = (oop not scavengable || ScavengeRootsInCode >= 2)
-        // An oop is not scavengable if it is in the perm gen.
         const Type* con_type = NULL;
         ciObject* oop_constant = constant.as_object();
         if (oop_constant->is_null_object()) {
@@ -379,7 +376,7 @@ const Type* Type::make_constant_from_field(ciField* field, ciInstance* holder,
                                             field->is_autobox_cache());
   if (con_type != NULL && field->is_call_site_target()) {
     ciCallSite* call_site = holder->as_call_site();
-    if (!call_site->is_constant_call_site()) {
+    if (!call_site->is_fully_initialized_constant_call_site()) {
       ciMethodHandle* target = con.as_object()->as_method_handle();
       Compile::current()->dependencies()->assert_call_site_target_value(call_site, target);
     }
@@ -415,18 +412,8 @@ int Type::uhash( const Type *const t ) {
 }
 
 #define SMALLINT ((juint)3)  // a value too insignificant to consider widening
-
-static double pos_dinf() {
-  union { int64_t i; double d; } v;
-  v.i = CONST64(0x7ff0000000000000);
-  return v.d;
-}
-
-static float pos_finf() {
-  union { int32_t i; float f; } v;
-  v.i = 0x7f800000;
-  return v.f;
-}
+#define POSITIVE_INFINITE_F 0x7f800000 // hex representation for IEEE 754 single precision positive infinite
+#define POSITIVE_INFINITE_D 0x7ff0000000000000 // hex representation for IEEE 754 double precision positive infinite
 
 //--------------------------Initialize_shared----------------------------------
 void Type::Initialize_shared(Compile* current) {
@@ -457,13 +444,13 @@ void Type::Initialize_shared(Compile* current) {
 
   TypeF::ZERO = TypeF::make(0.0); // Float 0 (positive zero)
   TypeF::ONE  = TypeF::make(1.0); // Float 1
-  TypeF::POS_INF = TypeF::make(pos_finf());
-  TypeF::NEG_INF = TypeF::make(-pos_finf());
+  TypeF::POS_INF = TypeF::make(jfloat_cast(POSITIVE_INFINITE_F));
+  TypeF::NEG_INF = TypeF::make(-jfloat_cast(POSITIVE_INFINITE_F));
 
   TypeD::ZERO = TypeD::make(0.0); // Double 0 (positive zero)
   TypeD::ONE  = TypeD::make(1.0); // Double 1
-  TypeD::POS_INF = TypeD::make(pos_dinf());
-  TypeD::NEG_INF = TypeD::make(-pos_dinf());
+  TypeD::POS_INF = TypeD::make(jdouble_cast(POSITIVE_INFINITE_D));
+  TypeD::NEG_INF = TypeD::make(-jdouble_cast(POSITIVE_INFINITE_D));
 
   TypeInt::MINUS_1 = TypeInt::make(-1);  // -1
   TypeInt::ZERO    = TypeInt::make( 0);  //  0
@@ -734,8 +721,11 @@ const Type *Type::hashcons(void) {
   // Since we just discovered a new Type, compute its dual right now.
   assert( !_dual, "" );         // No dual yet
   _dual = xdual();              // Compute the dual
-  if( cmp(this,_dual)==0 ) {    // Handle self-symmetric
-    _dual = this;
+  if (cmp(this, _dual) == 0) {  // Handle self-symmetric
+    if (_dual != this) {
+      delete _dual;
+      _dual = this;
+    }
     return this;
   }
   assert( !_dual->_dual, "" );  // No reverse dual yet
@@ -820,6 +810,35 @@ bool Type::interface_vs_oop(const Type *t) const {
 
 #endif
 
+void Type::check_symmetrical(const Type *t, const Type *mt) const {
+#ifdef ASSERT
+  assert(mt == t->xmeet(this), "meet not commutative");
+  const Type* dual_join = mt->_dual;
+  const Type *t2t    = dual_join->xmeet(t->_dual);
+  const Type *t2this = dual_join->xmeet(this->_dual);
+
+  // Interface meet Oop is Not Symmetric:
+  // Interface:AnyNull meet Oop:AnyNull == Interface:AnyNull
+  // Interface:NotNull meet Oop:NotNull == java/lang/Object:NotNull
+
+  if( !interface_vs_oop(t) && (t2t != t->_dual || t2this != this->_dual) ) {
+    tty->print_cr("=== Meet Not Symmetric ===");
+    tty->print("t   =                   ");              t->dump(); tty->cr();
+    tty->print("this=                   ");                 dump(); tty->cr();
+    tty->print("mt=(t meet this)=       ");             mt->dump(); tty->cr();
+
+    tty->print("t_dual=                 ");       t->_dual->dump(); tty->cr();
+    tty->print("this_dual=              ");          _dual->dump(); tty->cr();
+    tty->print("mt_dual=                ");      mt->_dual->dump(); tty->cr();
+
+    tty->print("mt_dual meet t_dual=    "); t2t           ->dump(); tty->cr();
+    tty->print("mt_dual meet this_dual= "); t2this        ->dump(); tty->cr();
+
+    fatal("meet not symmetric" );
+  }
+#endif
+}
+
 //------------------------------meet-------------------------------------------
 // Compute the MEET of two types.  NOT virtual.  It enforces that meet is
 // commutative and the lattice is symmetric.
@@ -837,33 +856,28 @@ const Type *Type::meet_helper(const Type *t, bool include_speculative) const {
   t = t->maybe_remove_speculative(include_speculative);
 
   const Type *mt = this_t->xmeet(t);
+#ifdef ASSERT
   if (isa_narrowoop() || t->isa_narrowoop()) return mt;
   if (isa_narrowklass() || t->isa_narrowklass()) return mt;
-#ifdef ASSERT
-  assert(mt == t->xmeet(this_t), "meet not commutative");
-  const Type* dual_join = mt->_dual;
-  const Type *t2t    = dual_join->xmeet(t->_dual);
-  const Type *t2this = dual_join->xmeet(this_t->_dual);
-
-  // Interface meet Oop is Not Symmetric:
-  // Interface:AnyNull meet Oop:AnyNull == Interface:AnyNull
-  // Interface:NotNull meet Oop:NotNull == java/lang/Object:NotNull
-
-  if( !interface_vs_oop(t) && (t2t != t->_dual || t2this != this_t->_dual) ) {
-    tty->print_cr("=== Meet Not Symmetric ===");
-    tty->print("t   =                   ");              t->dump(); tty->cr();
-    tty->print("this=                   ");         this_t->dump(); tty->cr();
-    tty->print("mt=(t meet this)=       ");             mt->dump(); tty->cr();
-
-    tty->print("t_dual=                 ");       t->_dual->dump(); tty->cr();
-    tty->print("this_dual=              ");  this_t->_dual->dump(); tty->cr();
-    tty->print("mt_dual=                ");      mt->_dual->dump(); tty->cr();
-
-    tty->print("mt_dual meet t_dual=    "); t2t           ->dump(); tty->cr();
-    tty->print("mt_dual meet this_dual= "); t2this        ->dump(); tty->cr();
-
-    fatal("meet not symmetric" );
+  Compile* C = Compile::current();
+  if (!C->_type_verify_symmetry) {
+    return mt;
   }
+  this_t->check_symmetrical(t, mt);
+  // In the case of an array, computing the meet above, caused the
+  // computation of the meet of the elements which at verification
+  // time caused the computation of the meet of the dual of the
+  // elements. Computing the meet of the dual of the arrays here
+  // causes the meet of the dual of the elements to be computed which
+  // would cause the meet of the dual of the dual of the elements,
+  // that is the meet of the elements already computed above to be
+  // computed. Avoid redundant computations by requesting no
+  // verification.
+  C->_type_verify_symmetry = false;
+  const Type *mt_dual = this_t->_dual->xmeet(t->_dual);
+  this_t->_dual->check_symmetrical(t->_dual, mt_dual);
+  assert(!C->_type_verify_symmetry, "shouldn't have changed");
+  C->_type_verify_symmetry = true;
 #endif
   return mt;
 }
@@ -2113,7 +2127,7 @@ const Type *TypeAry::xmeet( const Type *t ) const {
     const TypeAry *a = t->is_ary();
     return TypeAry::make(_elem->meet_speculative(a->_elem),
                          _size->xmeet(a->_size)->is_int(),
-                         _stable & a->_stable);
+                         _stable && a->_stable);
   }
   case Top:
     break;
@@ -3015,15 +3029,13 @@ TypeOopPtr::TypeOopPtr(TYPES t, PTR ptr, ciKlass* k, bool xk, ciObject* o, int o
           ciField* field = k->get_field_by_offset(_offset, true);
           assert(field != NULL, "missing field");
           BasicType basic_elem_type = field->layout_type();
-          _is_ptr_to_narrowoop = UseCompressedOops && (basic_elem_type == T_OBJECT ||
-                                                       basic_elem_type == T_ARRAY);
+          _is_ptr_to_narrowoop = UseCompressedOops && is_reference_type(basic_elem_type);
         } else {
           // Instance fields which contains a compressed oop references.
           field = ik->get_field_by_offset(_offset, false);
           if (field != NULL) {
             BasicType basic_elem_type = field->layout_type();
-            _is_ptr_to_narrowoop = UseCompressedOops && (basic_elem_type == T_OBJECT ||
-                                                         basic_elem_type == T_ARRAY);
+            _is_ptr_to_narrowoop = UseCompressedOops && is_reference_type(basic_elem_type);
           } else if (klass()->equals(ciEnv::current()->Object_klass())) {
             // Compile::find_alias_type() cast exactness on all types to verify
             // that it does not affect alias type.
@@ -3061,10 +3073,6 @@ const Type *TypeOopPtr::cast_to_ptr_type(PTR ptr) const {
 const TypeOopPtr *TypeOopPtr::cast_to_instance_id(int instance_id) const {
   // There are no instances of a general oop.
   // Return self unchanged.
-  return this;
-}
-
-const TypeOopPtr *TypeOopPtr::cast_to_nonconst() const {
   return this;
 }
 
@@ -3228,15 +3236,17 @@ const TypeOopPtr* TypeOopPtr::make_from_klass_common(ciKlass *klass, bool klass_
 // Make a java pointer from an oop constant
 const TypeOopPtr* TypeOopPtr::make_from_constant(ciObject* o, bool require_constant) {
   assert(!o->is_null_object(), "null object not yet handled here.");
+
+  const bool make_constant = require_constant || o->should_be_constant();
+
   ciKlass* klass = o->klass();
   if (klass->is_instance_klass()) {
     // Element is an instance
-    if (require_constant) {
-      if (!o->can_be_constant())  return NULL;
-    } else if (!o->should_be_constant()) {
+    if (make_constant) {
+      return TypeInstPtr::make(o);
+    } else {
       return TypeInstPtr::make(TypePtr::NotNull, klass, true, NULL, 0);
     }
-    return TypeInstPtr::make(o);
   } else if (klass->is_obj_array_klass()) {
     // Element is an object array. Recursively call ourself.
     const TypeOopPtr *etype =
@@ -3245,13 +3255,11 @@ const TypeOopPtr* TypeOopPtr::make_from_constant(ciObject* o, bool require_const
     // We used to pass NotNull in here, asserting that the sub-arrays
     // are all not-null.  This is not true in generally, as code can
     // slam NULLs down in the subarrays.
-    if (require_constant) {
-      if (!o->can_be_constant())  return NULL;
-    } else if (!o->should_be_constant()) {
+    if (make_constant) {
+      return TypeAryPtr::make(TypePtr::Constant, o, arr0, klass, true, 0);
+    } else {
       return TypeAryPtr::make(TypePtr::NotNull, arr0, klass, true, 0);
     }
-    const TypeAryPtr* arr = TypeAryPtr::make(TypePtr::Constant, o, arr0, klass, true, 0);
-    return arr;
   } else if (klass->is_type_array_klass()) {
     // Element is an typeArray
     const Type* etype =
@@ -3259,13 +3267,11 @@ const TypeOopPtr* TypeOopPtr::make_from_constant(ciObject* o, bool require_const
     const TypeAry* arr0 = TypeAry::make(etype, TypeInt::make(o->as_array()->length()));
     // We used to pass NotNull in here, asserting that the array pointer
     // is not-null. That was not true in general.
-    if (require_constant) {
-      if (!o->can_be_constant())  return NULL;
-    } else if (!o->should_be_constant()) {
+    if (make_constant) {
+      return TypeAryPtr::make(TypePtr::Constant, o, arr0, klass, true, 0);
+    } else {
       return TypeAryPtr::make(TypePtr::NotNull, arr0, klass, true, 0);
     }
-    const TypeAryPtr* arr = TypeAryPtr::make(TypePtr::Constant, o, arr0, klass, true, 0);
-    return arr;
   }
 
   fatal("unhandled object type");
@@ -3576,11 +3582,6 @@ const TypeOopPtr *TypeInstPtr::cast_to_instance_id(int instance_id) const {
   return make(_ptr, klass(), _klass_is_exact, const_oop(), _offset, instance_id, _speculative, _inline_depth);
 }
 
-const TypeOopPtr *TypeInstPtr::cast_to_nonconst() const {
-  if (const_oop() == NULL) return this;
-  return make(NotNull, klass(), _klass_is_exact, NULL, _offset, _instance_id, _speculative, _inline_depth);
-}
-
 //------------------------------xmeet_unloaded---------------------------------
 // Compute the MEET of two InstPtrs when at least one is unloaded.
 // Assume classes are different since called after check for same name/class-loader
@@ -3885,7 +3886,7 @@ const Type *TypeInstPtr::xmeet_helper(const Type *t) const {
     bool subtype_exact = false;
     if( tinst_klass->equals(this_klass) ) {
       subtype = this_klass;
-      subtype_exact = below_centerline(ptr) ? (this_xk & tinst_xk) : (this_xk | tinst_xk);
+      subtype_exact = below_centerline(ptr) ? (this_xk && tinst_xk) : (this_xk || tinst_xk);
     } else if( !tinst_xk && this_klass->is_subtype_of( tinst_klass ) ) {
       subtype = this_klass;     // Pick subtyping class
       subtype_exact = this_xk;
@@ -4113,38 +4114,23 @@ const TypeOopPtr *TypeAryPtr::cast_to_instance_id(int instance_id) const {
   return make(_ptr, const_oop(), _ary, klass(), _klass_is_exact, _offset, instance_id, _speculative, _inline_depth);
 }
 
-const TypeOopPtr *TypeAryPtr::cast_to_nonconst() const {
-  if (const_oop() == NULL) return this;
-  return make(NotNull, NULL, _ary, klass(), _klass_is_exact, _offset, _instance_id, _speculative, _inline_depth);
-}
 
+//-----------------------------max_array_length-------------------------------
+// A wrapper around arrayOopDesc::max_array_length(etype) with some input normalization.
+jint TypeAryPtr::max_array_length(BasicType etype) {
+  if (!is_java_primitive(etype) && !is_reference_type(etype)) {
+    if (etype == T_NARROWOOP) {
+      etype = T_OBJECT;
+    } else if (etype == T_ILLEGAL) { // bottom[]
+      etype = T_BYTE; // will produce conservatively high value
+    } else {
+      fatal("not an element type: %s", type2name(etype));
+    }
+  }
+  return arrayOopDesc::max_array_length(etype);
+}
 
 //-----------------------------narrow_size_type-------------------------------
-// Local cache for arrayOopDesc::max_array_length(etype),
-// which is kind of slow (and cached elsewhere by other users).
-static jint max_array_length_cache[T_CONFLICT+1];
-static jint max_array_length(BasicType etype) {
-  jint& cache = max_array_length_cache[etype];
-  jint res = cache;
-  if (res == 0) {
-    switch (etype) {
-    case T_NARROWOOP:
-      etype = T_OBJECT;
-      break;
-    case T_NARROWKLASS:
-    case T_CONFLICT:
-    case T_ILLEGAL:
-    case T_VOID:
-      etype = T_BYTE;           // will produce conservatively high value
-      break;
-    default:
-      break;
-    }
-    cache = res = arrayOopDesc::max_array_length(etype);
-  }
-  return res;
-}
-
 // Narrow the given size type to the index range for the given array base type.
 // Return NULL if the resulting int type becomes empty.
 const TypeInt* TypeAryPtr::narrow_size_type(const TypeInt* size) const {
@@ -4353,7 +4339,7 @@ const Type *TypeAryPtr::xmeet_helper(const Type *t) const {
            (tap->_klass_is_exact && !tap->klass()->is_subtype_of(klass())) ||
            // 'this' is exact and super or unrelated:
            (this->_klass_is_exact && !klass()->is_subtype_of(tap->klass())))) {
-      if (above_centerline(ptr)) {
+      if (above_centerline(ptr) || (tary->_elem->make_ptr() && above_centerline(tary->_elem->make_ptr()->_ptr))) {
         tary = TypeAry::make(Type::BOTTOM, tary->_size, tary->_stable);
       }
       return make(NotNull, NULL, tary, lazy_klass, false, off, InstanceBot, speculative, depth);
@@ -4367,7 +4353,7 @@ const Type *TypeAryPtr::xmeet_helper(const Type *t) const {
       if (below_centerline(this->_ptr)) {
         xk = this->_klass_is_exact;
       } else {
-        xk = (tap->_klass_is_exact | this->_klass_is_exact);
+        xk = (tap->_klass_is_exact || this->_klass_is_exact);
       }
       return make(ptr, const_oop(), tary, lazy_klass, xk, off, instance_id, speculative, depth);
     case Constant: {

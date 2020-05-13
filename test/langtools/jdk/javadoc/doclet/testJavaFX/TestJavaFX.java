@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@
  *      8167967 8172528 8175200 8178830 8182257 8186332 8182765 8025091
  *      8203791 8184205
  * @summary Test of the JavaFX doclet features.
- * @author jvalenta
  * @library ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build javadoc.tester.*
@@ -54,124 +53,171 @@ public class TestJavaFX extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOutput("pkg1/C.html", true,
-                "<dt><span class=\"seeLabel\">See Also:</span></dt>\n"
-                + "<dd><a href=\"#getRate()\"><code>getRate()</code></a>, \n"
-                + "<a href=\"#setRate(double)\"><code>setRate(double)</code></a></dd>",
-                "<pre class=\"methodSignature\">public final&nbsp;void&nbsp;setRate&#8203;(double&nbsp;value)</pre>\n"
-                + "<div class=\"block\">Sets the value of the property rate.</div>\n"
-                + "<dl>\n"
-                + "<dt><span class=\"simpleTagLabel\">Property description:</span></dt>",
-                "<pre class=\"methodSignature\">public final&nbsp;double&nbsp;getRate()</pre>\n"
-                + "<div class=\"block\">Gets the value of the property rate.</div>\n"
-                + "<dl>\n"
-                + "<dt><span class=\"simpleTagLabel\">Property description:</span></dt>",
-                "<td class=\"colFirst\"><code><a href=\"C.DoubleProperty.html\" "
-                + "title=\"class in pkg1\">C.DoubleProperty</a></code></td>\n"
-                + "<th class=\"colSecond\" scope=\"row\"><code><span class=\"memberNameLink\">"
-                + "<a href=\"#rateProperty\">rate</a></span></code></th>\n"
-                + "<td class=\"colLast\">\n"
-                + "<div class=\"block\">Defines the direction/speed at which the "
-                + "<code>Timeline</code> is expected to\n"
-                + " be played.</div>\n</td>",
-                "<span class=\"simpleTagLabel\">Default value:</span>",
-                "<span class=\"simpleTagLabel\">Since:</span></dt>\n"
-                + "<dd>JavaFX 8.0</dd>",
-                "<p>Sets the value of the property <code>Property</code>",
-                "<p>Gets the value of the property <code>Property</code>",
-                "<span class=\"simpleTagLabel\">Property description:</span>",
-                "<th class=\"colSecond\" scope=\"row\"><code><span class=\"memberNameLink\">"
-                + "<a href=\"#setTestMethodProperty()\">"
-                + "setTestMethodProperty</a></span>()</code></th>",
-                "<th class=\"colSecond\" scope=\"row\"><code><span class=\"memberNameLink\">"
-                + "<a href=\"#pausedProperty\">paused</a></span></code></th>\n"
-                + "<td class=\"colLast\">\n"
-                + "<div class=\"block\">Defines if paused.</div>",
-                "<h4>paused</h4>\n"
-                + "<pre>public final&nbsp;<a href=\"C.BooleanProperty.html\" "
-                + "title=\"class in pkg1\">C.BooleanProperty</a> pausedProperty</pre>\n"
-                + "<div class=\"block\">Defines if paused. The second line.</div>",
-                "<h4>isPaused</h4>\n"
-                + "<pre class=\"methodSignature\">public final&nbsp;double&nbsp;isPaused()</pre>\n"
-                + "<div class=\"block\">Gets the value of the property paused.</div>",
-                "<h4>setPaused</h4>\n"
-                + "<pre class=\"methodSignature\">public final&nbsp;void&nbsp;setPaused&#8203;(boolean&nbsp;value)</pre>\n"
-                + "<div class=\"block\">Sets the value of the property paused.</div>\n"
-                + "<dl>\n"
-                + "<dt><span class=\"simpleTagLabel\">Property description:</span></dt>\n"
-                + "<dd>Defines if paused. The second line.</dd>\n"
-                + "<dt><span class=\"simpleTagLabel\">Default value:</span></dt>\n"
-                + "<dd>false</dd>",
-                "<h4>isPaused</h4>\n"
-                + "<pre class=\"methodSignature\">public final&nbsp;double&nbsp;isPaused()</pre>\n"
-                + "<div class=\"block\">Gets the value of the property paused.</div>\n"
-                + "<dl>\n"
-                + "<dt><span class=\"simpleTagLabel\">Property description:</span></dt>\n"
-                + "<dd>Defines if paused. The second line.</dd>\n"
-                + "<dt><span class=\"simpleTagLabel\">Default value:</span></dt>\n"
-                + "<dd>false</dd>",
-                "<h4>rate</h4>\n"
-                + "<pre>public final&nbsp;<a href=\"C.DoubleProperty.html\" "
-                + "title=\"class in pkg1\">C.DoubleProperty</a> rateProperty</pre>\n"
-                + "<div class=\"block\">Defines the direction/speed at which the "
-                + "<code>Timeline</code> is expected to\n"
-                + " be played. This is the second line.</div>",
-                "<h4>setRate</h4>\n"
-                + "<pre class=\"methodSignature\">public final&nbsp;void&nbsp;setRate&#8203;(double&nbsp;value)</pre>\n"
-                + "<div class=\"block\">Sets the value of the property rate.</div>\n"
-                + "<dl>\n"
-                + "<dt><span class=\"simpleTagLabel\">Property description:</span></dt>\n"
-                + "<dd>Defines the direction/speed at which the <code>Timeline</code> is expected to\n"
-                + " be played. This is the second line.</dd>\n"
-                + "<dt><span class=\"simpleTagLabel\">Default value:</span></dt>\n"
-                + "<dd>11</dd>\n"
-                + "<dt><span class=\"simpleTagLabel\">Since:</span></dt>\n"
-                + "<dd>JavaFX 8.0</dd>",
-                "<h4>getRate</h4>\n"
-                + "<pre class=\"methodSignature\">public final&nbsp;double&nbsp;getRate()</pre>\n"
-                + "<div class=\"block\">Gets the value of the property rate.</div>\n"
-                + "<dl>\n"
-                + "<dt><span class=\"simpleTagLabel\">Property description:</span></dt>\n"
-                + "<dd>Defines the direction/speed at which the <code>Timeline</code> is expected to\n"
-                + " be played. This is the second line.</dd>\n"
-                + "<dt><span class=\"simpleTagLabel\">Default value:</span></dt>\n"
-                + "<dd>11</dd>\n"
-                + "<dt><span class=\"simpleTagLabel\">Since:</span></dt>\n"
-                + "<dd>JavaFX 8.0</dd>",
-                "<h3>Property Summary</h3>\n"
-                + "<div class=\"memberSummary\">\n<table>\n"
-                + "<caption><span>Properties</span><span class=\"tabEnd\">&nbsp;</span></caption>",
-                "<tr class=\"altColor\">\n"
-                + "<td class=\"colFirst\"><code><a href=\"C.BooleanProperty.html\" title=\"class in pkg1\">C.BooleanProperty</a></code></td>\n",
-                "<tr class=\"rowColor\">\n"
-                + "<td class=\"colFirst\"><code><a href=\"C.DoubleProperty.html\" title=\"class in pkg1\">C.DoubleProperty</a></code></td>\n");
+                """
+                    <dt>See Also:</dt>
+                    <dd><a href="#getRate()"><code>getRate()</code></a>,\s
+                    <a href="#setRate(double)"><code>setRate(double)</code></a></dd>""",
+                """
+                    <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<\
+                    span class="return-type">void</span>&nbsp;<span class="member-name">setRate</spa\
+                    n>&#8203;(<span class="parameters">double&nbsp;value)</span></div>
+                    <div class="block">Sets the value of the property rate.</div>
+                    <dl class="notes">
+                    <dt>Property description:</dt>""",
+                """
+                    <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<\
+                    span class="return-type">double</span>&nbsp;<span class="member-name">getRate</s\
+                    pan>()</div>
+                    <div class="block">Gets the value of the property rate.</div>
+                    <dl class="notes">
+                    <dt>Property description:</dt>""",
+                """
+                    <td class="col-first"><code><a href="C.DoubleProperty.html" title="class in pkg1">C.DoubleProperty</a></code></td>
+                    <th class="col-second" scope="row"><code><span class="member-name-link"><a href=\
+                    "#rateProperty">rate</a></span></code></th>
+                    <td class="col-last">
+                    <div class="block">Defines the direction/speed at which the <code>Timeline</code> is expected to
+                     be played.</div>
+                    </td>""",
+                "<dt>Default value:</dt>",
+                """
+                    <dt>Since:</dt>
+                    <dd>JavaFX 8.0</dd>""",
+                "<dt>Property description:</dt>",
+                """
+                    <th class="col-second" scope="row"><code><span class="member-name-link"><a href=\
+                    "#setTestMethodProperty()">setTestMethodProperty</a></span>()</code></th>""",
+                """
+                    <th class="col-second" scope="row"><code><span class="member-name-link"><a href=\
+                    "#pausedProperty">paused</a></span></code></th>
+                    <td class="col-last">
+                    <div class="block">Defines if paused.</div>""",
+                """
+                    <section class="detail" id="pausedProperty">
+                    <h3>paused</h3>
+                    <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<\
+                    span class="return-type"><a href="C.BooleanProperty.html" title="class in pkg1">\
+                    C.BooleanProperty</a></span>&nbsp;<span class="member-name">pausedProperty</span\
+                    ></div>
+                    <div class="block">Defines if paused. The second line.</div>""",
+                """
+                    <section class="detail" id="isPaused()">
+                    <h3>isPaused</h3>
+                    <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<\
+                    span class="return-type">double</span>&nbsp;<span class="member-name">isPaused</\
+                    span>()</div>
+                    <div class="block">Gets the value of the property paused.</div>""",
+                """
+                    <section class="detail" id="setPaused(boolean)">
+                    <h3>setPaused</h3>
+                    <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<\
+                    span class="return-type">void</span>&nbsp;<span class="member-name">setPaused</s\
+                    pan>&#8203;(<span class="parameters">boolean&nbsp;value)</span></div>
+                    <div class="block">Sets the value of the property paused.</div>
+                    <dl class="notes">
+                    <dt>Property description:</dt>
+                    <dd>Defines if paused. The second line.</dd>
+                    <dt>Default value:</dt>
+                    <dd>false</dd>""",
+                """
+                    <section class="detail" id="isPaused()">
+                    <h3>isPaused</h3>
+                    <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<\
+                    span class="return-type">double</span>&nbsp;<span class="member-name">isPaused</\
+                    span>()</div>
+                    <div class="block">Gets the value of the property paused.</div>
+                    <dl class="notes">
+                    <dt>Property description:</dt>
+                    <dd>Defines if paused. The second line.</dd>
+                    <dt>Default value:</dt>
+                    <dd>false</dd>""",
+                """
+                    <section class="detail" id="rateProperty">
+                    <h3>rate</h3>
+                    <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<\
+                    span class="return-type"><a href="C.DoubleProperty.html" title="class in pkg1">C\
+                    .DoubleProperty</a></span>&nbsp;<span class="member-name">rateProperty</span></d\
+                    iv>
+                    <div class="block">Defines the direction/speed at which the <code>Timeline</code> is expected to
+                     be played. This is the second line.</div>""",
+                """
+                    <section class="detail" id="setRate(double)">
+                    <h3>setRate</h3>
+                    <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<\
+                    span class="return-type">void</span>&nbsp;<span class="member-name">setRate</spa\
+                    n>&#8203;(<span class="parameters">double&nbsp;value)</span></div>
+                    <div class="block">Sets the value of the property rate.</div>
+                    <dl class="notes">
+                    <dt>Property description:</dt>
+                    <dd>Defines the direction/speed at which the <code>Timeline</code> is expected to
+                     be played. This is the second line.</dd>
+                    <dt>Default value:</dt>
+                    <dd>11</dd>
+                    <dt>Since:</dt>
+                    <dd>JavaFX 8.0</dd>""",
+                """
+                    <section class="detail" id="getRate()">
+                    <h3>getRate</h3>
+                    <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<\
+                    span class="return-type">double</span>&nbsp;<span class="member-name">getRate</s\
+                    pan>()</div>
+                    <div class="block">Gets the value of the property rate.</div>
+                    <dl class="notes">
+                    <dt>Property description:</dt>
+                    <dd>Defines the direction/speed at which the <code>Timeline</code> is expected to
+                     be played. This is the second line.</dd>
+                    <dt>Default value:</dt>
+                    <dd>11</dd>
+                    <dt>Since:</dt>
+                    <dd>JavaFX 8.0</dd>""",
+                """
+                    <section class="property-summary" id="property.summary">
+                    <h2>Property Summary</h2>
+                    <div class="member-summary">
+                    <table class="summary-table">
+                    <caption><span>Properties</span></caption>""",
+                """
+                    <tr class="alt-color">
+                    <td class="col-first"><code><a href="C.BooleanProperty.html" title="class in pkg1">C.BooleanProperty</a></code></td>
+                    """,
+                """
+                    <tr class="row-color">
+                    <td class="col-first"><code><a href="C.DoubleProperty.html" title="class in pkg1">C.DoubleProperty</a></code></td>
+                    """);
 
         checkOutput("pkg1/C.html", false,
                 "A()",
-                "<h3>Property Summary</h3>\n"
-                + "<div class=\"memberSummary\">\n"
-                + "<div role=\"tablist\" aria-orientation=\"horizontal\"><button role=\"tab\""
-                + " aria-selected=\"true\" aria-controls=\"memberSummary_tabpanel\" tabindex=\"0\""
-                + " onkeydown=\"switchTab(event)\" id=\"t0\" class=\"activeTableTab\">All Methods"
-                + "</button><button role=\"tab\" aria-selected=\"false\""
-                + " aria-controls=\"memberSummary_tabpanel\" tabindex=\"-1\" onkeydown=\"switchTab(event)\""
-                + " id=\"t2\" class=\"tableTab\" onclick=\"show(2);\">Instance Methods</button>"
-                + "<button role=\"tab\" aria-selected=\"false\" aria-controls=\"memberSummary_tabpanel\""
-                + " tabindex=\"-1\" onkeydown=\"switchTab(event)\" id=\"t4\" class=\"tableTab\""
-                + " onclick=\"show(8);\">Concrete Methods</button></div>",
-                "<tr id=\"i0\" class=\"altColor\">\n"
-                + "<td class=\"colFirst\"><code><a href=\"C.BooleanProperty.html\" title=\"class in pkg1\">C.BooleanProperty</a></code></td>\n",
-                "<tr id=\"i1\" class=\"rowColor\">\n"
-                + "<td class=\"colFirst\"><code><a href=\"C.DoubleProperty.html\" title=\"class in pkg1\">C.DoubleProperty</a></code></td>\n");
+                """
+                    <h2 id="property.summary">Property Summary</h2>
+                    <div class="member-summary">
+                    <div role="tablist" aria-orientation="horizontal"><button role="tab" aria-select\
+                    ed="true" aria-controls="member-summary_tabpanel" tabindex="0" onkeydown="switch\
+                    Tab(event)" id="t0" class="active-table-tab">All Methods</button><button role="t\
+                    ab" aria-selected="false" aria-controls="member-summary_tabpanel" tabindex="-1" \
+                    onkeydown="switchTab(event)" id="t2" class="table-tab" onclick="show(2);">Instan\
+                    ce Methods</button><button role="tab" aria-selected="false" aria-controls="membe\
+                    r-summary_tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t4" class="ta\
+                    ble-tab" onclick="show(8);">Concrete Methods</button></div>""",
+                """
+                    <tr id="i0" class="alt-color">
+                    <td class="col-first"><code><a href="C.BooleanProperty.html" title="class in pkg1">C.BooleanProperty</a></code></td>
+                    """,
+                """
+                    <tr id="i1" class="row-color">
+                    <td class="col-first"><code><a href="C.DoubleProperty.html" title="class in pkg1">C.DoubleProperty</a></code></td>
+                    """);
 
         checkOutput("index-all.html", true,
-                "<div class=\"block\">Gets the value of the property paused.</div>",
-                "<div class=\"block\">Defines if paused.</div>");
+                """
+                    <div class="block">Gets the value of the property paused.</div>""",
+                """
+                    <div class="block">Defines if paused.</div>""");
 
         checkOutput("pkg1/D.html", true,
-                "<h3>Properties inherited from class&nbsp;pkg1."
-                    + "<a href=\"C.html\" title=\"class in pkg1\">C</a></h3>\n"
-                    + "<code><a href=\"C.html#pausedProperty\">"
-                    + "paused</a>, <a href=\"C.html#rateProperty\">rate</a></code></li>");
+                """
+                    <h3 id="properties.inherited.from.class.pkg1.C">Properties inherited from class&\
+                    nbsp;pkg1.<a href="C.html" title="class in pkg1">C</a></h3>
+                    <code><a href="C.html#pausedProperty">paused</a>, <a href="C.html#rateProperty">rate</a></code></div>""");
 
         checkOutput("pkg1/D.html", false, "shouldNotAppear");
     }
@@ -190,53 +236,55 @@ public class TestJavaFX extends JavadocTester {
                 "pkg2");
         checkExit(Exit.OK);
         checkOutput("pkg2/Test.html", true,
-                "<h3>Property Detail</h3>\n"
-                + "<a id=\"betaProperty\">\n"
-                + "<!--   -->\n"
-                + "</a>\n"
-                + "<ul class=\"blockList\">\n"
-                + "<li class=\"blockList\">\n"
-                + "<h4>beta</h4>\n"
-                + "<pre>public&nbsp;java.lang.Object betaProperty</pre>\n"
-                + "</li>\n"
-                + "</ul>\n"
-                + "<a id=\"gammaProperty\">\n"
-                + "<!--   -->\n"
-                + "</a>\n"
-                + "<ul class=\"blockList\">\n"
-                + "<li class=\"blockList\">\n"
-                + "<h4>gamma</h4>\n"
-                + "<pre>public final&nbsp;java.util.List&lt;java.lang.String&gt; gammaProperty</pre>\n"
-                + "</li>\n"
-                + "</ul>\n"
-                + "<a id=\"deltaProperty\">\n"
-                + "<!--   -->\n"
-                + "</a>\n"
-                + "<ul class=\"blockListLast\">\n"
-                + "<li class=\"blockList\">\n"
-                + "<h4>delta</h4>\n"
-                + "<pre>public final&nbsp;java.util.List&lt;"
-                + "java.util.Set&lt;? super java.lang.Object&gt;&gt; deltaProperty</pre>\n"
-                + "</li>\n"
-                + "</ul>\n"
-                + "</li>\n"
-                + "</ul>",
-                "<h3>Property Summary</h3>\n"
-                + "<div class=\"memberSummary\">\n<table>\n"
-                + "<caption><span>Properties</span><span class=\"tabEnd\">&nbsp;</span></caption>");
+                """
+                    <section class="property-details" id="property.detail">
+                    <h2>Property Details</h2>
+                    <ul class="member-list">
+                    <li>
+                    <section class="detail" id="betaProperty">
+                    <h3>beta</h3>
+                    <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span c\
+                    lass="return-type">java.lang.Object</span>&nbsp;<span class="member-name">betaPr\
+                    operty</span></div>
+                    </section>
+                    </li>
+                    <li>
+                    <section class="detail" id="gammaProperty">
+                    <h3>gamma</h3>
+                    <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<\
+                    span class="return-type">java.util.List&lt;java.lang.String&gt;</span>&nbsp;<spa\
+                    n class="member-name">gammaProperty</span></div>
+                    </section>
+                    </li>
+                    <li>
+                    <section class="detail" id="deltaProperty">
+                    <h3>delta</h3>
+                    <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<\
+                    span class="return-type">java.util.List&lt;java.util.Set&lt;? super java.lang.Ob\
+                    ject&gt;&gt;</span>&nbsp;<span class="member-name">deltaProperty</span></div>
+                    </section>
+                    </li>
+                    </ul>
+                    </section>""",
+                """
+                    <section class="property-summary" id="property.summary">
+                    <h2>Property Summary</h2>
+                    <div class="member-summary">
+                    <table class="summary-table">
+                    <caption><span>Properties</span></caption>""");
 
         checkOutput("pkg2/Test.html", false,
-                "<h3>Property Summary</h3>\n"
-                + "<div class=\"memberSummary\">\n"
-                + "<div role=\"tablist\" aria-orientation=\"horizontal\"><button role=\"tab\""
-                + " aria-selected=\"true\" aria-controls=\"memberSummary_tabpanel\" tabindex=\"0\""
-                + " onkeydown=\"switchTab(event)\" id=\"t0\" class=\"activeTableTab\">All Methods"
-                + "</button><button role=\"tab\" aria-selected=\"false\""
-                + " aria-controls=\"memberSummary_tabpanel\" tabindex=\"-1\" onkeydown=\"switchTab(event)\""
-                + " id=\"t2\" class=\"tableTab\" onclick=\"show(2);\">Instance Methods</button>"
-                + "<button role=\"tab\" aria-selected=\"false\" aria-controls=\"memberSummary_tabpanel\""
-                + " tabindex=\"-1\" onkeydown=\"switchTab(event)\" id=\"t4\" class=\"tableTab\""
-                + " onclick=\"show(8);\">Concrete Methods</button></div>");
+                """
+                    <h2>Property Summary</h2>
+                    <div class="member-summary">
+                    <div role="tablist" aria-orientation="horizontal"><button role="tab" aria-select\
+                    ed="true" aria-controls="member-summary_tabpanel" tabindex="0" onkeydown="switch\
+                    Tab(event)" id="t0" class="active-table-tab">All Methods</button><button role="t\
+                    ab" aria-selected="false" aria-controls="member-summary_tabpanel" tabindex="-1" \
+                    onkeydown="switchTab(event)" id="t2" class="table-tab" onclick="show(2);">Instan\
+                    ce Methods</button><button role="tab" aria-selected="false" aria-controls="membe\
+                    r-summary_tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t4" class="ta\
+                    ble-tab" onclick="show(8);">Concrete Methods</button></div>""");
     }
 
     /*
@@ -250,38 +298,41 @@ public class TestJavaFX extends JavadocTester {
                 "-package",
                 "pkg2");
         checkExit(Exit.OK);
-        checkOutput("pkg2/Test.html", false, "<h3>Property Summary</h3>");
+        checkOutput("pkg2/Test.html", false, "<h2>Property Summary</h2>");
         checkOutput("pkg2/Test.html", true,
-                "<th class=\"colFirst\" scope=\"col\">Modifier and Type</th>\n"
-                + "<th class=\"colSecond\" scope=\"col\">Method</th>\n"
-                + "<th class=\"colLast\" scope=\"col\">Description</th>\n"
-                + "</tr>\n"
-                + "<tbody>\n"
-                + "<tr class=\"altColor\" id=\"i0\">\n"
-                + "<td class=\"colFirst\"><code>&lt;T&gt;&nbsp;java.lang.Object</code></td>\n"
-                + "<th class=\"colSecond\" scope=\"row\"><code><span class=\"memberNameLink\">"
-                + "<a href=\"#alphaProperty(java.util.List)\">alphaProperty</a>"
-                + "</span>&#8203;(java.util.List&lt;T&gt;&nbsp;foo)</code></th>\n"
-                + "<td class=\"colLast\">&nbsp;</td>\n"
-                + "</tr>\n"
-                + "<tr class=\"rowColor\" id=\"i1\">\n"
-                + "<td class=\"colFirst\"><code>java.lang.Object</code></td>\n"
-                + "<th class=\"colSecond\" scope=\"row\"><code><span class=\"memberNameLink\">"
-                + "<a href=\"#betaProperty()\">betaProperty</a></span>()</code></th>\n"
-                + "<td class=\"colLast\">&nbsp;</td>\n"
-                + "</tr>\n"
-                + "<tr class=\"altColor\" id=\"i2\">\n"
-                + "<td class=\"colFirst\"><code>java.util.List&lt;java.util.Set&lt;? super java.lang.Object&gt;&gt;"
-                + "</code></td>\n"
-                + "<th class=\"colSecond\" scope=\"row\"><code><span class=\"memberNameLink\">"
-                + "<a href=\"#deltaProperty()\">deltaProperty</a></span>()</code></th>\n"
-                + "<td class=\"colLast\">&nbsp;</td>\n"
-                + "</tr>\n"
-                + "<tr class=\"rowColor\" id=\"i3\">\n"
-                + "<td class=\"colFirst\"><code>java.util.List&lt;java.lang.String&gt;</code></td>\n"
-                + "<th class=\"colSecond\" scope=\"row\"><code><span class=\"memberNameLink\">"
-                + "<a href=\"#gammaProperty()\">gammaProperty</a></span>()</code></th>\n"
-                + "<td class=\"colLast\">&nbsp;</td>"
+                """
+                    <thead>
+                    <tr>
+                    <th class="col-first" scope="col">Modifier and Type</th>
+                    <th class="col-second" scope="col">Method</th>
+                    <th class="col-last" scope="col">Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr class="alt-color" id="i0">
+                    <td class="col-first"><code>&lt;T&gt;&nbsp;java.lang.Object</code></td>
+                    <th class="col-second" scope="row"><code><span class="member-name-link"><a href=\
+                    "#alphaProperty(java.util.List)">alphaProperty</a></span>&#8203;(java.util.List&\
+                    lt;T&gt;&nbsp;foo)</code></th>
+                    <td class="col-last">&nbsp;</td>
+                    </tr>
+                    <tr class="row-color" id="i1">
+                    <td class="col-first"><code>java.lang.Object</code></td>
+                    <th class="col-second" scope="row"><code><span class="member-name-link"><a href=\
+                    "#betaProperty()">betaProperty</a></span>()</code></th>
+                    <td class="col-last">&nbsp;</td>
+                    </tr>
+                    <tr class="alt-color" id="i2">
+                    <td class="col-first"><code>java.util.List&lt;java.util.Set&lt;? super java.lang.Object&gt;&gt;</code></td>
+                    <th class="col-second" scope="row"><code><span class="member-name-link"><a href=\
+                    "#deltaProperty()">deltaProperty</a></span>()</code></th>
+                    <td class="col-last">&nbsp;</td>
+                    </tr>
+                    <tr class="row-color" id="i3">
+                    <td class="col-first"><code>java.util.List&lt;java.lang.String&gt;</code></td>
+                    <th class="col-second" scope="row"><code><span class="member-name-link"><a href=\
+                    "#gammaProperty()">gammaProperty</a></span>()</code></th>
+                    <td class="col-last">&nbsp;</td>"""
         );
     }
 

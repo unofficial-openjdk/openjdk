@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -306,15 +306,8 @@ public final class FrameState extends VirtualState implements IterableNodeType {
     /**
      * Gets a copy of this frame state.
      */
-    public FrameState duplicate(int newBci) {
-        return graph().add(new FrameState(outerFrameState(), code, newBci, values, localsSize, stackSize, rethrowException, duringCall, monitorIds, virtualObjectMappings));
-    }
-
-    /**
-     * Gets a copy of this frame state.
-     */
     public FrameState duplicate() {
-        return duplicate(bci);
+        return graph().add(new FrameState(outerFrameState(), code, bci, values, localsSize, stackSize, rethrowException, duringCall, monitorIds, virtualObjectMappings));
     }
 
     /**
@@ -350,26 +343,16 @@ public final class FrameState extends VirtualState implements IterableNodeType {
     }
 
     /**
-     * Creates a copy of this frame state with one stack element of type {@code popKind} popped from
-     * the stack and the values in {@code pushedValues} pushed on the stack. The
-     * {@code pushedValues} will be formatted correctly in slot encoding: a long or double will be
-     * followed by a null slot.
-     */
-    public FrameState duplicateModified(int newBci, boolean newRethrowException, JavaKind popKind, JavaKind[] pushedSlotKinds, ValueNode[] pushedValues) {
-        return duplicateModified(graph(), newBci, newRethrowException, duringCall, popKind, pushedSlotKinds, pushedValues);
-    }
-
-    public FrameState duplicateModified(int newBci, boolean newRethrowException, boolean newDuringCall, JavaKind popKind, JavaKind[] pushedSlotKinds, ValueNode[] pushedValues) {
-        return duplicateModified(graph(), newBci, newRethrowException, newDuringCall, popKind, pushedSlotKinds, pushedValues);
-    }
-
-    /**
      * Creates a copy of this frame state with the top of stack replaced with with
      * {@code pushedValue} which must be of type {@code popKind}.
      */
     public FrameState duplicateModified(JavaKind popKind, JavaKind pushedSlotKind, ValueNode pushedValue) {
         assert pushedValue != null && pushedValue.getStackKind() == popKind;
         return duplicateModified(graph(), bci, rethrowException, duringCall, popKind, new JavaKind[]{pushedSlotKind}, new ValueNode[]{pushedValue});
+    }
+
+    public FrameState duplicateRethrow(ValueNode exceptionObject) {
+        return duplicateModified(graph(), bci, true, duringCall, JavaKind.Void, new JavaKind[]{JavaKind.Object}, new ValueNode[]{exceptionObject});
     }
 
     /**
@@ -680,5 +663,9 @@ public final class FrameState extends VirtualState implements IterableNodeType {
             }
         }
         return false;
+    }
+
+    public boolean isExceptionHandlingBCI() {
+        return bci == BytecodeFrame.AFTER_EXCEPTION_BCI || bci == BytecodeFrame.UNWIND_BCI;
     }
 }

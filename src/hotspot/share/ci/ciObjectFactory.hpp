@@ -74,7 +74,7 @@ private:
   ciMetadata* create_new_metadata(Metadata* o);
 
   static bool is_equal(NonPermObject* p, oop key) {
-    return oopDesc::equals(p->object()->get_oop(), key);
+    return p->object()->get_oop() == key;
   }
 
   NonPermObject* &find_non_perm(oop key);
@@ -140,7 +140,7 @@ public:
 
   GrowableArray<ciMetadata*>* get_ci_metadata() const { return _ci_metadata; }
   // RedefineClasses support
-  void metadata_do(void f(Metadata*));
+  void metadata_do(MetadataClosure* f);
 
   void print_contents();
   void print();

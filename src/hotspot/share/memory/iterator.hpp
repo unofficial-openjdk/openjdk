@@ -36,10 +36,18 @@ class DataLayout;
 class KlassClosure;
 class ClassLoaderData;
 class Symbol;
+class Metadata;
+class Thread;
 
 // The following classes are C++ `closures` for iterating over objects, roots and spaces
 
 class Closure : public StackObj { };
+
+// Thread iterator
+class ThreadClosure: public Closure {
+ public:
+  virtual void do_thread(Thread* thread) = 0;
+};
 
 // OopClosure is used for iterating through references to Java objects.
 class OopClosure : public Closure {
@@ -124,6 +132,11 @@ class CLDClosure : public Closure {
   virtual void do_cld(ClassLoaderData* cld) = 0;
 };
 
+class MetadataClosure : public Closure {
+ public:
+  virtual void do_metadata(Metadata* md) = 0;
+};
+
 
 class CLDToOopClosure : public CLDClosure {
   OopClosure*       _oop_closure;
@@ -138,16 +151,26 @@ class CLDToOopClosure : public CLDClosure {
   void do_cld(ClassLoaderData* cld);
 };
 
-// The base class for all concurrent marking closures,
-// that participates in class unloading.
-// It's used to proxy through the metadata to the oops defined in them.
-class MetadataVisitingOopIterateClosure: public OopIterateClosure {
+class ClaimMetadataVisitingOopIterateClosure : public OopIterateClosure {
+ protected:
+  const int _claim;
+
  public:
-  MetadataVisitingOopIterateClosure(ReferenceDiscoverer* rd = NULL) : OopIterateClosure(rd) { }
+  ClaimMetadataVisitingOopIterateClosure(int claim, ReferenceDiscoverer* rd = NULL) :
+      OopIterateClosure(rd),
+      _claim(claim) { }
 
   virtual bool do_metadata() { return true; }
   virtual void do_klass(Klass* k);
   virtual void do_cld(ClassLoaderData* cld);
+};
+
+// The base class for all concurrent marking closures,
+// that participates in class unloading.
+// It's used to proxy through the metadata to the oops defined in them.
+class MetadataVisitingOopIterateClosure: public ClaimMetadataVisitingOopIterateClosure {
+ public:
+  MetadataVisitingOopIterateClosure(ReferenceDiscoverer* rd = NULL);
 };
 
 // ObjectClosure is used for iterating through an object space
@@ -181,34 +204,6 @@ class ObjectToOopClosure: public ObjectClosure {
 public:
   void do_object(oop obj);
   ObjectToOopClosure(OopIterateClosure* cl) : _cl(cl) {}
-};
-
-// A version of ObjectClosure that is expected to be robust
-// in the face of possibly uninitialized objects.
-class ObjectClosureCareful : public ObjectClosure {
- public:
-  virtual size_t do_object_careful_m(oop p, MemRegion mr) = 0;
-  virtual size_t do_object_careful(oop p) = 0;
-};
-
-// The following are used in CompactibleFreeListSpace and
-// ConcurrentMarkSweepGeneration.
-
-// Blk closure (abstract class)
-class BlkClosure : public StackObj {
- public:
-  virtual size_t do_blk(HeapWord* addr) = 0;
-};
-
-// A version of BlkClosure that is expected to be robust
-// in the face of possibly uninitialized objects.
-class BlkClosureCareful : public BlkClosure {
- public:
-  size_t do_blk(HeapWord* addr) {
-    guarantee(false, "call do_blk_careful instead");
-    return 0;
-  }
-  virtual size_t do_blk_careful(HeapWord* addr) = 0;
 };
 
 // SpaceClosure is used for iterating over spaces
@@ -315,6 +310,9 @@ public:
 
   // Read/write the 32-bit unsigned integer pointed to by p.
   virtual void do_u4(u4* p) = 0;
+
+  // Read/write the bool pointed to by p.
+  virtual void do_bool(bool* p) = 0;
 
   // Read/write the region specified.
   virtual void do_region(u_char* start, size_t size) = 0;

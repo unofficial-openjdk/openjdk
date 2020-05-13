@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,9 @@
 #include "oops/oop.inline.hpp"
 #include "prims/jvmtiCodeBlobEvents.hpp"
 #include "prims/jvmtiExport.hpp"
+#include "prims/jvmtiThreadState.inline.hpp"
 #include "runtime/handles.inline.hpp"
+#include "runtime/safepointVerifiers.hpp"
 #include "runtime/vmThread.hpp"
 
 // Support class to collect a list of the non-nmethod CodeBlobs in
@@ -203,7 +205,7 @@ jvmtiError JvmtiCodeBlobEvents::generate_dynamic_code_events(JvmtiEnv* env) {
   // there isn't any safe way to iterate over regular CodeBlobs since
   // they can be freed at any point.
   {
-    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     collector.collect();
   }
 
@@ -219,25 +221,34 @@ jvmtiError JvmtiCodeBlobEvents::generate_dynamic_code_events(JvmtiEnv* env) {
 
 // Generate a COMPILED_METHOD_LOAD event for each nnmethod
 jvmtiError JvmtiCodeBlobEvents::generate_compiled_method_load_events(JvmtiEnv* env) {
-  HandleMark hm;
+  JavaThread* java_thread = JavaThread::current();
+  JvmtiThreadState* state = JvmtiThreadState::state_for(java_thread);
+  {
+    NoSafepointVerifier nsv;  // safepoints are not safe while collecting methods to post.
+    {
+      // Walk the CodeCache notifying for live nmethods, don't release the CodeCache_lock
+      // because the sweeper may be running concurrently.
+      // Save events to the queue for posting outside the CodeCache_lock.
+      MutexLocker mu(java_thread, CodeCache_lock, Mutex::_no_safepoint_check_flag);
+      // Iterate over non-profiled and profiled nmethods
+      NMethodIterator iter(NMethodIterator::only_alive_and_not_unloading);
+      while(iter.next()) {
+        nmethod* current = iter.method();
+        current->post_compiled_method_load_event(state);
+      }
+    }
 
-  // Walk the CodeCache notifying for live nmethods.  The code cache
-  // may be changing while this is happening which is ok since newly
-  // created nmethod will notify normally and nmethods which are freed
-  // can be safely skipped.
-  MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
-  // Iterate over non-profiled and profiled nmethods
-  NMethodIterator iter(NMethodIterator::only_alive_and_not_unloading);
-  while(iter.next()) {
-    nmethod* current = iter.method();
-    // Lock the nmethod so it can't be freed
-    nmethodLocker nml(current);
-
-    // Don't hold the lock over the notify or jmethodID creation
-    MutexUnlockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
-    current->get_and_cache_jmethod_id();
-    JvmtiExport::post_compiled_method_load(current);
+    // Enter nmethod barrier code if present outside CodeCache_lock
+    state->run_nmethod_entry_barriers();
   }
+
+  // Now post all the events outside the CodeCache_lock.
+  // If there's a safepoint, the queued events will be kept alive.
+  // Adding these events to the service thread to post is something that
+  // should work, but the service thread doesn't keep up in stress scenarios and
+  // the os eventually kills the process with OOM.
+  // We want this thread to wait until the events are all posted.
+  state->post_events(env);
   return JVMTI_ERROR_NONE;
 }
 
@@ -253,7 +264,7 @@ void JvmtiCodeBlobEvents::build_jvmti_addr_location_map(nmethod *nm,
 
 
   // Generate line numbers using PcDesc and ScopeDesc info
-  methodHandle mh(nm->method());
+  methodHandle mh(Thread::current(), nm->method());
 
   if (!mh->is_native()) {
     PcDesc *pcd;

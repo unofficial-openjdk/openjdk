@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License version 2 only, as
@@ -44,18 +45,6 @@ encode %{
                                                    /*acquire*/ true, /*release*/ true, /*weak*/ false, /*is_cae*/ false, $res$$Register);
   %}
 %}
-
-instruct shenandoahRB(iRegPNoSp dst, iRegP src, rFlagsReg cr) %{
-  match(Set dst (ShenandoahReadBarrier src));
-  format %{ "shenandoah_rb $dst,$src" %}
-  ins_encode %{
-    Register s = $src$$Register;
-    Register d = $dst$$Register;
-    __ ldr(d, Address(s, ShenandoahBrooksPointer::byte_offset()));
-  %}
-  ins_pipe(pipe_class_memory);
-%}
-
 
 instruct compareAndSwapP_shenandoah(iRegINoSp res, indirect mem, iRegP oldval, iRegP newval, iRegPNoSp tmp, rFlagsReg cr) %{
 

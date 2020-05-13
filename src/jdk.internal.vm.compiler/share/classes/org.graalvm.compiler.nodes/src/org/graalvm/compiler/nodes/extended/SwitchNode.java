@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -198,6 +198,13 @@ public abstract class SwitchNode extends ControlSplitNode {
     }
 
     /**
+     * Returns the probability of taking the default branch.
+     */
+    public double defaultProbability() {
+        return keyProbabilities[keyProbabilities.length - 1];
+    }
+
+    /**
      * Returns the index of the default (fall through) successor of this switch.
      */
     public int defaultSuccessorIndex() {
@@ -283,4 +290,7 @@ public abstract class SwitchNode extends ControlSplitNode {
         }
     }
 
+    public int[] getKeySuccessors() {
+        return keySuccessors.clone();
+    }
 }

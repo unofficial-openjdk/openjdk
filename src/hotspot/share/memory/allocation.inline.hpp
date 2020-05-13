@@ -26,6 +26,7 @@
 #define SHARE_MEMORY_ALLOCATION_INLINE_HPP
 
 #include "runtime/atomic.hpp"
+#include "runtime/globals.hpp"
 #include "runtime/os.hpp"
 #include "services/memTracker.hpp"
 #include "utilities/align.hpp"
@@ -34,16 +35,13 @@
 // Explicit C-heap memory management
 
 #ifndef PRODUCT
-// Increments unsigned long value for statistics (not atomic on MP).
+// Increments unsigned long value for statistics (not atomic on MP, but avoids word-tearing on 32 bit).
 inline void inc_stat_counter(volatile julong* dest, julong add_value) {
-#if defined(SPARC) || defined(X86)
-  // Sparc and X86 have atomic jlong (8 bytes) instructions
-  julong value = Atomic::load(dest);
-  value += add_value;
-  Atomic::store(value, dest);
-#else
-  // possible word-tearing during load/store
+#ifdef _LP64
   *dest += add_value;
+#else
+  julong value = Atomic::load(dest);
+  Atomic::store(dest, value + add_value);
 #endif
 }
 #endif

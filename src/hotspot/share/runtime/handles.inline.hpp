@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,19 +55,11 @@ DEF_HANDLE_CONSTR(typeArray, is_typeArray_noinline)
 
 // Constructor for metadata handles
 #define DEF_METADATA_HANDLE_FN(name, type) \
-inline name##Handle::name##Handle(type* obj) : _value(obj), _thread(NULL) {       \
-  if (obj != NULL) {                                                   \
-    assert(((Metadata*)obj)->is_valid(), "obj is valid");              \
-    _thread = Thread::current();                                       \
-    assert (_thread->is_in_stack((address)this), "not on stack?");     \
-    _thread->metadata_handles()->push((Metadata*)obj);                 \
-  }                                                                    \
-}                                                                      \
 inline name##Handle::name##Handle(Thread* thread, type* obj) : _value(obj), _thread(thread) { \
   if (obj != NULL) {                                                   \
     assert(((Metadata*)obj)->is_valid(), "obj is valid");              \
     assert(_thread == Thread::current(), "thread must be current");    \
-    assert (_thread->is_in_stack((address)this), "not on stack?");     \
+    assert(_thread->is_in_live_stack((address)this), "not on stack?"); \
     _thread->metadata_handles()->push((Metadata*)obj);                 \
   }                                                                    \
 }                                                                      \

@@ -85,7 +85,7 @@ public class AuthHeaderTest implements HttpCallback {
     static void client (String u) throws Exception {
         URL url = new URL (u);
         System.out.println ("client opening connection to: " + u);
-        URLConnection urlc = url.openConnection ();
+        URLConnection urlc = url.openConnection (Proxy.NO_PROXY);
         InputStream is = urlc.getInputStream ();
         read (is);
         is.close();
@@ -96,10 +96,11 @@ public class AuthHeaderTest implements HttpCallback {
     public static void main (String[] args) throws Exception {
         MyAuthenticator auth = new MyAuthenticator ();
         Authenticator.setDefault (auth);
+        InetAddress loopback = InetAddress.getLoopbackAddress();
         try {
-            server = new TestHttpServer (new AuthHeaderTest(), 1, 10, 0);
-            System.out.println ("Server: listening on port: " + server.getLocalPort());
-            client ("http://localhost:"+server.getLocalPort()+"/d1/foo.html");
+            server = new TestHttpServer (new AuthHeaderTest(), 1, 10, loopback, 0);
+            System.out.println ("Server: listening on port: " + server.getAuthority());
+            client ("http://" + server.getAuthority() + "/d1/foo.html");
         } catch (Exception e) {
             if (server != null) {
                 server.terminate();

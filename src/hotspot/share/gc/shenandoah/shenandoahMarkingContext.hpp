@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -54,16 +55,17 @@ public:
 
   inline bool is_marked(oop obj) const;
 
+  inline bool allocated_after_mark_start(oop obj) const;
   inline bool allocated_after_mark_start(HeapWord* addr) const;
 
   inline MarkBitMap* mark_bit_map();
 
-  HeapWord* top_at_mark_start(ShenandoahHeapRegion* r) const;
-  void capture_top_at_mark_start(ShenandoahHeapRegion* r);
-  void reset_top_at_mark_start(ShenandoahHeapRegion* r);
+  inline HeapWord* top_at_mark_start(ShenandoahHeapRegion* r) const;
+  inline void capture_top_at_mark_start(ShenandoahHeapRegion* r);
+  inline void reset_top_at_mark_start(ShenandoahHeapRegion* r);
   void initialize_top_at_mark_start(ShenandoahHeapRegion* r);
 
-  void reset_top_bitmap(ShenandoahHeapRegion *r);
+  inline void reset_top_bitmap(ShenandoahHeapRegion *r);
   void clear_bitmap(ShenandoahHeapRegion *r);
 
   bool is_bitmap_clear() const;

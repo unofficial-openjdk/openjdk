@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
  * @test
  * @bug 4524350 4662945 4633447 8196202
  * @summary stddoclet: {@docRoot} inserts an extra trailing "/"
- * @author dkramer
  * @library ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build javadoc.tester.*
@@ -57,21 +56,15 @@ public class DocRootSlash extends JavadocTester {
         javadoc("-d", "out",
                 "-Xdoclint:none",
                 "-overview", (srcdir + "/overview.html"),
-                "--frames",
-                "-header", "<A HREF=\"{@docroot}/element-list\">{&#064;docroot}</A> <A HREF=\"{@docRoot}/help-doc.html\">{&#064;docRoot}</A>",
+                "-header", """
+                    <A HREF="{@docroot}/element-list">{&#064;docroot}</A> <A HREF="{@docRoot}/help-doc.html">{&#064;docRoot}</A>""",
                 "-sourcepath", srcdir,
                 "p1", "p2");
 
         checkFiles(
                 "p1/C1.html",
                 "p1/package-summary.html",
-                "overview-summary.html");
-
-        // Bug 4633447: Special test for overview-frame.html
-        // Find two strings in file "overview-frame.html"
-        checkOutput("overview-frame.html", true,
-                "<A HREF=\"./element-list\">",
-                "<A HREF=\"./help-doc.html\">");
+                "index.html");
     }
 
     void checkFiles(String... filenameArray) {

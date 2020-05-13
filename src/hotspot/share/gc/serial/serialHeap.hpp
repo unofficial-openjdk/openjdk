@@ -30,7 +30,6 @@
 #include "gc/shared/genCollectedHeap.hpp"
 #include "utilities/growableArray.hpp"
 
-class GenCollectorPolicy;
 class GCMemoryManager;
 class MemoryPool;
 class TenuredGeneration;
@@ -46,7 +45,7 @@ private:
 public:
   static SerialHeap* heap();
 
-  SerialHeap(GenCollectorPolicy* policy);
+  SerialHeap();
 
   virtual Name kind() const {
     return CollectedHeap::Serial;
@@ -58,11 +57,6 @@ public:
 
   virtual GrowableArray<GCMemoryManager*> memory_managers();
   virtual GrowableArray<MemoryPool*> memory_pools();
-
-  // override
-  virtual bool is_in_closed_subset(const void* p) const {
-    return is_in(p);
-  }
 
   DefNewGeneration* young_gen() const {
     assert(_young_gen->kind() == Generation::DefNew, "Wrong generation type");

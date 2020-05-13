@@ -154,8 +154,7 @@ public class TestVerifyGCType {
 
         basicOpts.add(TriggerGCs.class.getName());
 
-        ProcessBuilder procBuilder =  ProcessTools.createJavaProcessBuilder(basicOpts.toArray(
-                                                                            new String[basicOpts.size()]));
+        ProcessBuilder procBuilder =  ProcessTools.createJavaProcessBuilder(basicOpts);
         OutputAnalyzer analyzer = new OutputAnalyzer(procBuilder.start());
         return analyzer;
     }
@@ -174,9 +173,9 @@ public class TestVerifyGCType {
 
     private static void verifyType(CollectionInfo ci, boolean shouldExist, String pattern) {
         if (shouldExist) {
-            Asserts.assertTrue(ci.containsVerification(pattern), "Missing expected verification for: " + ci.getName());
+            Asserts.assertTrue(ci.containsVerification(pattern), "Missing expected verification pattern " + pattern + " for: " + ci.getName());
         } else {
-            Asserts.assertFalse(ci.containsVerification(pattern), "Found unexpected verification for: " + ci.getName());
+            Asserts.assertFalse(ci.containsVerification(pattern), "Found unexpected verification pattern " + pattern + " for: " + ci.getName());
         }
     }
 

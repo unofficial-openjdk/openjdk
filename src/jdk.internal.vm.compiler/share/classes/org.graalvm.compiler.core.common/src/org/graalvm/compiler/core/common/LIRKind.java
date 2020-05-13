@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,7 +88,7 @@ public final class LIRKind extends ValueKind<LIRKind> {
         this.referenceCompressionMask = referenceCompressionMask;
         this.derivedReferenceBase = derivedReferenceBase;
 
-        assert this.referenceCompressionMask == 0 || this.referenceMask == this.referenceCompressionMask : "mixing compressed and uncompressed references is untested";
+        assert this.referenceCompressionMask == 0 || this.referenceMask == this.referenceCompressionMask : "mixing compressed and uncompressed references is unsupported";
         assert derivedReferenceBase == null || !derivedReferenceBase.getValueKind(LIRKind.class).isDerivedReference() : "derived reference can't have another derived reference as base";
     }
 
@@ -419,6 +419,22 @@ public final class LIRKind extends ValueKind<LIRKind> {
     public boolean isCompressedReference(int idx) {
         assert 0 <= idx && idx < getPlatformKind().getVectorLength() : "invalid index " + idx + " in " + this;
         return !isUnknownReference() && (referenceCompressionMask & (1 << idx)) != 0;
+    }
+
+    /**
+     * Check whether the given kind is a scalar (i.e., vector length 1) <b>compressed</b> reference.
+     *
+     * @param kind The kind to be checked.
+     * @return true if the given kind is a scalar compressed reference
+     */
+    public static boolean isScalarCompressedReference(ValueKind<?> kind) {
+        if (kind instanceof LIRKind) {
+            LIRKind lirKind = (LIRKind) kind;
+            if (lirKind.getPlatformKind().getVectorLength() == 1 && lirKind.isCompressedReference(0)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

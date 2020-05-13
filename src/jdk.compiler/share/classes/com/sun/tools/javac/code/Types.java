@@ -48,6 +48,8 @@ import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Check;
 import com.sun.tools.javac.comp.Enter;
 import com.sun.tools.javac.comp.Env;
+import com.sun.tools.javac.comp.LambdaToMethod;
+import com.sun.tools.javac.jvm.ClassFile;
 import com.sun.tools.javac.util.*;
 
 import static com.sun.tools.javac.code.BoundKind.*;
@@ -221,7 +223,7 @@ public class Types {
      * A downwards projection maps a type T into a type S such that (i) T has no variables in V,
      * and (ii) S is a lower bound of T.
      *
-     * Note that projections are only allowed to touch variables in V. Theferore it is possible for
+     * Note that projections are only allowed to touch variables in V. Therefore, it is possible for
      * a projection to leave its input type unchanged if it does not contain any variables in V.
      *
      * Moreover, note that while an upwards projection is always defined (every type as an upper bound),
@@ -637,7 +639,7 @@ public class Types {
     public static class FunctionDescriptorLookupError extends RuntimeException {
         private static final long serialVersionUID = 0;
 
-        JCDiagnostic diagnostic;
+        transient JCDiagnostic diagnostic;
 
         FunctionDescriptorLookupError() {
             this.diagnostic = null;
@@ -2731,7 +2733,7 @@ public class Types {
      * signature</em> of the other.  This is <b>not</b> an equivalence
      * relation.
      *
-     * @jls section 8.4.2.
+     * @jls 8.4.2 Method Signature
      * @see #overrideEquivalent(Type t, Type s)
      * @param t first signature (possibly raw).
      * @param s second signature (could be subjected to erasure).
@@ -2750,7 +2752,7 @@ public class Types {
      * equivalence</em>.  This is the natural extension of
      * isSubSignature to an equivalence relation.
      *
-     * @jls section 8.4.2.
+     * @jls 8.4.2 Method Signature
      * @see #isSubSignature(Type t, Type s)
      * @param t a signature (possible raw, could be subjected to
      * erasure).
@@ -3743,12 +3745,9 @@ public class Types {
             return cl1;
         } else if (shouldSkip.test(cl1.head, cl2.head)) {
             return union(cl1.tail, cl2.tail, shouldSkip).prepend(cl1.head);
-        } else if (cl1.head.tsym.precedes(cl2.head.tsym, this)) {
-            return union(cl1.tail, cl2, shouldSkip).prepend(cl1.head);
         } else if (cl2.head.tsym.precedes(cl1.head.tsym, this)) {
             return union(cl1, cl2.tail, shouldSkip).prepend(cl2.head);
         } else {
-            // unrelated types
             return union(cl1.tail, cl2, shouldSkip).prepend(cl1.head);
         }
     }
@@ -4212,7 +4211,7 @@ public class Types {
 
     /**
      * Return-Type-Substitutable.
-     * @jls section 8.4.5
+     * @jls 8.4.5 Method Result
      */
     public boolean returnTypeSubstitutable(Type r1, Type r2) {
         if (hasSameArgs(r1, r2))
@@ -5000,7 +4999,7 @@ public class Types {
         public static class InvalidSignatureException extends RuntimeException {
             private static final long serialVersionUID = 0;
 
-            private final Type type;
+            private final transient Type type;
 
             InvalidSignatureException(Type type) {
                 this.type = type;
@@ -5175,10 +5174,35 @@ public class Types {
             append('>');
         }
 
-        private void assembleSig(List<Type> types) {
+        public void assembleSig(List<Type> types) {
             for (List<Type> ts = types; ts.nonEmpty(); ts = ts.tail) {
                 assembleSig(ts.head);
             }
+        }
+    }
+
+    public Type constantType(LoadableConstant c) {
+        switch (c.poolTag()) {
+            case ClassFile.CONSTANT_Class:
+                return syms.classType;
+            case ClassFile.CONSTANT_String:
+                return syms.stringType;
+            case ClassFile.CONSTANT_Integer:
+                return syms.intType;
+            case ClassFile.CONSTANT_Float:
+                return syms.floatType;
+            case ClassFile.CONSTANT_Long:
+                return syms.longType;
+            case ClassFile.CONSTANT_Double:
+                return syms.doubleType;
+            case ClassFile.CONSTANT_MethodHandle:
+                return syms.methodHandleType;
+            case ClassFile.CONSTANT_MethodType:
+                return syms.methodTypeType;
+            case ClassFile.CONSTANT_Dynamic:
+                return ((DynamicVarSymbol)c).type;
+            default:
+                throw new AssertionError("Not a loadable constant: " + c.poolTag());
         }
     }
     // </editor-fold>

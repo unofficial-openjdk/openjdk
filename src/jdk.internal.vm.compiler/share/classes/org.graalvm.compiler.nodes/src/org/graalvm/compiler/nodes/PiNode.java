@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import org.graalvm.compiler.core.common.type.ObjectStamp;
 import org.graalvm.compiler.core.common.type.Stamp;
 import org.graalvm.compiler.core.common.type.StampFactory;
 import org.graalvm.compiler.core.common.type.TypeReference;
-import org.graalvm.compiler.graph.IterableNodeType;
+import org.graalvm.compiler.debug.DebugContext;
 import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.graph.NodeClass;
 import org.graalvm.compiler.graph.spi.Canonicalizable;
@@ -64,7 +64,7 @@ import jdk.vm.ci.meta.ResolvedJavaType;
  * also the scheduling restriction enforced by the guard, will go away.
  */
 @NodeInfo(cycles = CYCLES_0, size = SIZE_0)
-public class PiNode extends FloatingGuardedNode implements LIRLowerable, Virtualizable, IterableNodeType, Canonicalizable, ValueProxy {
+public class PiNode extends FloatingGuardedNode implements LIRLowerable, Virtualizable, Canonicalizable, ValueProxy {
 
     public static final NodeClass<PiNode> TYPE = NodeClass.create(PiNode.class);
     @Input ValueNode object;
@@ -100,7 +100,7 @@ public class PiNode extends FloatingGuardedNode implements LIRLowerable, Virtual
     }
 
     public static ValueNode create(ValueNode object, Stamp stamp) {
-        ValueNode value = canonical(object, stamp, null);
+        ValueNode value = canonical(object, stamp, null, null);
         if (value != null) {
             return value;
         }
@@ -108,7 +108,7 @@ public class PiNode extends FloatingGuardedNode implements LIRLowerable, Virtual
     }
 
     public static ValueNode create(ValueNode object, Stamp stamp, ValueNode guard) {
-        ValueNode value = canonical(object, stamp, (GuardingNode) guard);
+        ValueNode value = canonical(object, stamp, (GuardingNode) guard, null);
         if (value != null) {
             return value;
         }
@@ -117,7 +117,7 @@ public class PiNode extends FloatingGuardedNode implements LIRLowerable, Virtual
 
     public static ValueNode create(ValueNode object, ValueNode guard) {
         Stamp stamp = AbstractPointerStamp.pointerNonNull(object.stamp(NodeView.DEFAULT));
-        ValueNode value = canonical(object, stamp, (GuardingNode) guard);
+        ValueNode value = canonical(object, stamp, (GuardingNode) guard, null);
         if (value != null) {
             return value;
         }
@@ -127,7 +127,7 @@ public class PiNode extends FloatingGuardedNode implements LIRLowerable, Virtual
     @SuppressWarnings("unused")
     public static boolean intrinsify(GraphBuilderContext b, ResolvedJavaMethod method, ValueNode object, ValueNode guard) {
         Stamp stamp = AbstractPointerStamp.pointerNonNull(object.stamp(NodeView.DEFAULT));
-        ValueNode value = canonical(object, stamp, (GuardingNode) guard);
+        ValueNode value = canonical(object, stamp, (GuardingNode) guard, null);
         if (value == null) {
             value = new PiNode(object, stamp, guard);
         }
@@ -139,7 +139,7 @@ public class PiNode extends FloatingGuardedNode implements LIRLowerable, Virtual
     public static boolean intrinsify(GraphBuilderContext b, ResolvedJavaMethod method, ValueNode object, ResolvedJavaType toType, boolean exactType, boolean nonNull) {
         Stamp stamp = StampFactory.object(exactType ? TypeReference.createExactTrusted(toType) : TypeReference.createWithoutAssumptions(toType),
                         nonNull || StampTool.isPointerNonNull(object.stamp(NodeView.DEFAULT)));
-        ValueNode value = canonical(object, stamp, null);
+        ValueNode value = canonical(object, stamp, null, null);
         if (value == null) {
             value = new PiNode(object, stamp);
         }
@@ -177,13 +177,16 @@ public class PiNode extends FloatingGuardedNode implements LIRLowerable, Virtual
         ValueNode alias = tool.getAlias(object());
         if (alias instanceof VirtualObjectNode) {
             VirtualObjectNode virtual = (VirtualObjectNode) alias;
-            if (StampTool.typeOrNull(this) != null && StampTool.typeOrNull(this).isAssignableFrom(virtual.type())) {
+            ResolvedJavaType type = StampTool.typeOrNull(this, tool.getMetaAccess());
+            if (type != null && type.isAssignableFrom(virtual.type())) {
                 tool.replaceWithVirtual(virtual);
+            } else {
+                tool.getDebug().log(DebugContext.INFO_LEVEL, "could not virtualize Pi because of type mismatch: %s %s vs %s", this, type, virtual.type());
             }
         }
     }
 
-    public static ValueNode canonical(ValueNode object, Stamp stamp, GuardingNode guard) {
+    public static ValueNode canonical(ValueNode object, Stamp stamp, GuardingNode guard, PiNode self) {
         // Use most up to date stamp.
         Stamp computedStamp = stamp.improveWith(object.stamp(NodeView.DEFAULT));
 
@@ -201,8 +204,9 @@ public class PiNode extends FloatingGuardedNode implements LIRLowerable, Virtual
             }
         } else {
             for (Node n : guard.asNode().usages()) {
-                if (n instanceof PiNode) {
+                if (n instanceof PiNode && n != self) {
                     PiNode otherPi = (PiNode) n;
+                    assert otherPi.guard == guard;
                     if (object == otherPi.object() && computedStamp.equals(otherPi.stamp(NodeView.DEFAULT))) {
                         /*
                          * Two PiNodes with the same guard and same result, so return the one with
@@ -221,7 +225,7 @@ public class PiNode extends FloatingGuardedNode implements LIRLowerable, Virtual
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
-        Node value = canonical(object(), stamp(NodeView.DEFAULT), getGuard());
+        Node value = canonical(object(), piStamp(), getGuard(), this);
         if (value != null) {
             return value;
         }

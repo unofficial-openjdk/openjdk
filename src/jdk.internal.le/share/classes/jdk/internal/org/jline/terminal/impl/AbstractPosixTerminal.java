@@ -4,7 +4,7 @@
  * This software is distributable under the BSD license. See the terms of the
  * BSD license in the documentation provided with this software.
  *
- * http://www.opensource.org/licenses/bsd-license.php
+ * https://opensource.org/licenses/BSD-3-Clause
  */
 package jdk.internal.org.jline.terminal.impl;
 
@@ -71,8 +71,8 @@ public abstract class AbstractPosixTerminal extends AbstractTerminal {
         }
     }
 
-    public void close() throws IOException {
-        super.close();
+    protected void doClose() throws IOException {
+        super.doClose();
         pty.setAttr(originalAttributes);
         pty.close();
     }

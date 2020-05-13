@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import jdk.internal.vm.compiler.collections.EconomicMap;
 import jdk.internal.vm.compiler.collections.EconomicSet;
 import jdk.internal.vm.compiler.collections.Equivalence;
 import org.graalvm.compiler.asm.Assembler;
@@ -60,9 +59,9 @@ import org.graalvm.compiler.asm.sparc.SPARCMacroAssembler.ScratchRegister;
 import org.graalvm.compiler.code.CompilationResult;
 import org.graalvm.compiler.code.DataSection;
 import org.graalvm.compiler.code.DataSection.Data;
-import org.graalvm.compiler.core.common.CompilationIdentifier;
 import org.graalvm.compiler.core.common.alloc.RegisterAllocationConfig;
 import org.graalvm.compiler.core.common.cfg.AbstractBlockBase;
+import org.graalvm.compiler.core.gen.LIRGenerationProvider;
 import org.graalvm.compiler.core.sparc.SPARCNodeMatchRules;
 import org.graalvm.compiler.debug.CounterKey;
 import org.graalvm.compiler.debug.DebugContext;
@@ -76,9 +75,7 @@ import org.graalvm.compiler.hotspot.meta.HotSpotProviders;
 import org.graalvm.compiler.hotspot.stubs.Stub;
 import org.graalvm.compiler.lir.InstructionValueConsumer;
 import org.graalvm.compiler.lir.LIR;
-import org.graalvm.compiler.lir.LIRFrameState;
 import org.graalvm.compiler.lir.LIRInstruction;
-import org.graalvm.compiler.lir.StandardOp.SaveRegistersOp;
 import org.graalvm.compiler.lir.asm.CompilationResultBuilder;
 import org.graalvm.compiler.lir.asm.CompilationResultBuilderFactory;
 import org.graalvm.compiler.lir.asm.DataBuilder;
@@ -109,7 +106,7 @@ import jdk.vm.ci.meta.ResolvedJavaMethod;
 /**
  * HotSpot SPARC specific backend.
  */
-public class SPARCHotSpotBackend extends HotSpotHostBackend {
+public class SPARCHotSpotBackend extends HotSpotHostBackend implements LIRGenerationProvider {
 
     private static final SizeEstimateStatistics CONSTANT_ESTIMATED_STATS = new SizeEstimateStatistics("ESTIMATE");
     private static final SizeEstimateStatistics CONSTANT_ACTUAL_STATS = new SizeEstimateStatistics("ACTUAL");
@@ -135,24 +132,15 @@ public class SPARCHotSpotBackend extends HotSpotHostBackend {
     }
 
     @Override
-    public FrameMapBuilder newFrameMapBuilder(RegisterConfig registerConfig) {
+    protected FrameMapBuilder newFrameMapBuilder(RegisterConfig registerConfig) {
         RegisterConfig registerConfigNonNull = registerConfig == null ? getCodeCache().getRegisterConfig() : registerConfig;
-        return new SPARCFrameMapBuilder(newFrameMap(registerConfigNonNull), getCodeCache(), registerConfigNonNull);
-    }
-
-    @Override
-    public FrameMap newFrameMap(RegisterConfig registerConfig) {
-        return new SPARCFrameMap(getCodeCache(), registerConfig, this);
+        FrameMap frameMap = new SPARCFrameMap(getCodeCache(), registerConfigNonNull, this);
+        return new SPARCFrameMapBuilder(frameMap, getCodeCache(), registerConfigNonNull);
     }
 
     @Override
     public LIRGeneratorTool newLIRGenerator(LIRGenerationResult lirGenRes) {
         return new SPARCHotSpotLIRGenerator(getProviders(), getRuntime().getVMConfig(), lirGenRes);
-    }
-
-    @Override
-    public LIRGenerationResult newLIRGenerationResult(CompilationIdentifier compilationId, LIR lir, FrameMapBuilder frameMapBuilder, StructuredGraph graph, Object stub) {
-        return new HotSpotLIRGenerationResult(compilationId, lir, frameMapBuilder, makeCallingConvention(graph, (Stub) stub), stub, config.requiresReservedStackCheck(graph.getMethods()));
     }
 
     @Override
@@ -227,18 +215,13 @@ public class SPARCHotSpotBackend extends HotSpotHostBackend {
     }
 
     @Override
-    protected Assembler createAssembler(FrameMap frameMap) {
-        return new SPARCMacroAssembler(getTarget());
-    }
-
-    @Override
     public CompilationResultBuilder newCompilationResultBuilder(LIRGenerationResult lirGenRes, FrameMap frameMap, CompilationResult compilationResult, CompilationResultBuilderFactory factory) {
         HotSpotLIRGenerationResult gen = (HotSpotLIRGenerationResult) lirGenRes;
         LIR lir = gen.getLIR();
         assert gen.getDeoptimizationRescueSlot() == null || frameMap.frameNeedsAllocating() : "method that can deoptimize must have a frame";
 
         Stub stub = gen.getStub();
-        Assembler masm = createAssembler(frameMap);
+        Assembler masm = new SPARCMacroAssembler(getTarget());
         // On SPARC we always use stack frames.
         HotSpotFrameContext frameContext = new HotSpotFrameContext(stub != null);
         DataBuilder dataBuilder = new HotSpotDataBuilder(getCodeCache().getTarget());
@@ -254,10 +237,7 @@ public class SPARCHotSpotBackend extends HotSpotHostBackend {
         }
 
         if (stub != null) {
-            // Even on sparc we need to save floating point registers
-            EconomicSet<Register> destroyedCallerRegisters = gatherDestroyedCallerRegisters(lir);
-            EconomicMap<LIRFrameState, SaveRegistersOp> calleeSaveInfo = gen.getCalleeSaveInfo();
-            updateStub(stub, destroyedCallerRegisters, calleeSaveInfo, frameMap);
+            updateStub(stub, gen, frameMap);
         }
         assert registerSizePredictionValidator(crb, debug);
         return crb;
@@ -369,7 +349,7 @@ public class SPARCHotSpotBackend extends HotSpotHostBackend {
             crb.recordMark(config.MARKID_EXCEPTION_HANDLER_ENTRY);
             SPARCCall.directCall(crb, masm, foreignCalls.lookupForeignCall(EXCEPTION_HANDLER), null, null);
             crb.recordMark(config.MARKID_DEOPT_HANDLER_ENTRY);
-            SPARCCall.directCall(crb, masm, foreignCalls.lookupForeignCall(DEOPTIMIZATION_HANDLER), null, null);
+            SPARCCall.directCall(crb, masm, foreignCalls.lookupForeignCall(DEOPT_BLOB_UNPACK), null, null);
         } else {
             // No need to emit the stubs for entries back into the method since
             // it has no calls that can cause such "return" entries

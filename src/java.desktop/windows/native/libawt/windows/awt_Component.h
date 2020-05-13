@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -449,7 +449,7 @@ public:
     static void JavaKeyToWindowsKey(UINT javaKey, UINT *windowsKey, UINT *modifiers, UINT originalWindowsKey);
     static void UpdateDynPrimaryKeymap(UINT wkey, UINT jkeyLegacy, jint keyLocation, UINT modifiers);
 
-    INLINE static void AwtComponent::JavaKeyToWindowsKey(UINT javaKey,
+    INLINE static void JavaKeyToWindowsKey(UINT javaKey,
                                        UINT *windowsKey, UINT *modifiers)
     {
         JavaKeyToWindowsKey(javaKey, windowsKey, modifiers, IGNORE_KEY);
@@ -923,10 +923,12 @@ public:
     void            AddDCItem(DCItem *newItem);
     DCItem          *RemoveDC(HDC hDC, HWND hWnd);
     DCItem          *RemoveAllDCs(HWND hWnd);
+    DCItem          *RemoveAllDCs();
     void            RealizePalettes(int screen);
 };
 
 void ReleaseDCList(HWND hwnd, DCList &list);
+void ReleaseDCList(DCList &list);
 void MoveDCToPassiveList(HDC hDC, HWND hWnd);
 
 #include "ObjectList.h"

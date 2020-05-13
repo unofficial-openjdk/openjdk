@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,13 +73,12 @@ public class LoadJavaMirrorWithKlassTest extends GraalCompilerTest {
     }
 
     @Override
-    protected boolean checkLowTierGraph(StructuredGraph graph) {
+    protected void checkLowTierGraph(StructuredGraph graph) {
         for (ConstantNode constantNode : graph.getNodes().filter(ConstantNode.class)) {
             assert constantNode.asJavaConstant() == null || constantNode.asJavaConstant().getJavaKind() != JavaKind.Object ||
                             constantNode.asJavaConstant().isDefaultForKind() : "Found unexpected object constant " +
                                             constantNode + ", this should have been removed by the LoadJavaMirrorWithKlassPhase.";
         }
-        return true;
     }
 
     public static Class<?> classConstant() {

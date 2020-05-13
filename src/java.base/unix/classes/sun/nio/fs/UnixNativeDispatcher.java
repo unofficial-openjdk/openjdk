@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,6 @@
 
 package sun.nio.fs;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
 /**
  * Unix system and library calls.
  */
@@ -36,7 +33,7 @@ class UnixNativeDispatcher {
     protected UnixNativeDispatcher() { }
 
     // returns a NativeBuffer containing the given path
-    private static NativeBuffer copyToNativeBuffer(UnixPath path) {
+    static NativeBuffer copyToNativeBuffer(UnixPath path) {
         byte[] cstr = path.getByteArrayForSysCalls();
         int size = cstr.length + 1;
         NativeBuffer buffer = NativeBuffers.getNativeBufferFromCache(size);
@@ -120,6 +117,16 @@ class UnixNativeDispatcher {
      * fclose(FILE* stream)
      */
     static native void fclose(long stream) throws UnixException;
+
+    /**
+     * void rewind(FILE* stream);
+     */
+    static native void rewind(long stream) throws UnixException;
+
+    /**
+     * ssize_t getline(char **lineptr, size_t *n, FILE *stream);
+     */
+    static native int getlinelen(long stream) throws UnixException;
 
     /**
      * link(const char* existing, const char* new)
@@ -401,7 +408,7 @@ class UnixNativeDispatcher {
     static native void fchmod(int fd, int mode) throws UnixException;
 
     /**
-     * utimes(conar char* path, const struct timeval times[2])
+     * utimes(const char* path, const struct timeval times[2])
      */
     static void utimes(UnixPath path, long times0, long times1)
         throws UnixException
@@ -417,9 +424,30 @@ class UnixNativeDispatcher {
         throws UnixException;
 
     /**
-     * futimes(int fildes,, const struct timeval times[2])
+     * futimes(int fildes, const struct timeval times[2])
      */
     static native void futimes(int fd, long times0, long times1) throws UnixException;
+
+    /**
+     * futimens(int fildes, const struct timespec times[2])
+     */
+    static native void futimens(int fd, long times0, long times1) throws UnixException;
+
+    /**
+     * lutimes(const char* path, const struct timeval times[2])
+     */
+    static void lutimes(UnixPath path, long times0, long times1)
+        throws UnixException
+    {
+        NativeBuffer buffer = copyToNativeBuffer(path);
+        try {
+            lutimes0(buffer.address(), times0, times1);
+        } finally {
+            buffer.release();
+        }
+    }
+    private static native void lutimes0(long pathAddress, long times0, long times1)
+        throws UnixException;
 
     /**
      * DIR *opendir(const char* dirname)
@@ -578,9 +606,11 @@ class UnixNativeDispatcher {
     /**
      * Capabilities
      */
-    private static final int SUPPORTS_OPENAT        = 1 << 1;    // syscalls
+    private static final int SUPPORTS_OPENAT        = 1 << 1;  // syscalls
     private static final int SUPPORTS_FUTIMES       = 1 << 2;
-    private static final int SUPPORTS_BIRTHTIME     = 1 << 16;   // other features
+    private static final int SUPPORTS_FUTIMENS      = 1 << 4;
+    private static final int SUPPORTS_LUTIMES       = 1 << 8;
+    private static final int SUPPORTS_BIRTHTIME     = 1 << 16; // other features
     private static final int capabilities;
 
     /**
@@ -598,6 +628,20 @@ class UnixNativeDispatcher {
     }
 
     /**
+     * Supports futimens
+     */
+    static boolean futimensSupported() {
+        return (capabilities & SUPPORTS_FUTIMENS) != 0;
+    }
+
+    /**
+     * Supports lutimes
+     */
+    static boolean lutimesSupported() {
+        return (capabilities & SUPPORTS_LUTIMES) != 0;
+    }
+
+    /**
      * Supports file birth (creation) time attribute
      */
     static boolean birthtimeSupported() {
@@ -606,11 +650,7 @@ class UnixNativeDispatcher {
 
     private static native int init();
     static {
-        AccessController.doPrivileged(new PrivilegedAction<>() {
-            public Void run() {
-                System.loadLibrary("nio");
-                return null;
-        }});
+        jdk.internal.loader.BootLoader.loadLibrary("nio");
         capabilities = init();
     }
 }

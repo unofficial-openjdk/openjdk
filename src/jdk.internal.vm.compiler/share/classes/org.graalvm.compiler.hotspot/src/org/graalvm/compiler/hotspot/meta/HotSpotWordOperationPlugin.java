@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ import org.graalvm.compiler.nodes.calc.PointerEqualsNode;
 import org.graalvm.compiler.nodes.extended.GuardingNode;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderContext;
 import org.graalvm.compiler.nodes.java.LoadIndexedNode;
-import org.graalvm.compiler.nodes.memory.HeapAccess.BarrierType;
+import org.graalvm.compiler.nodes.memory.OnHeapMemoryAccess.BarrierType;
 import org.graalvm.compiler.nodes.memory.ReadNode;
 import org.graalvm.compiler.nodes.memory.address.AddressNode;
 import org.graalvm.compiler.nodes.type.StampTool;
@@ -121,23 +121,23 @@ public class HotSpotWordOperationPlugin extends WordOperationPlugin {
                 ValueNode pointer = args[0];
                 assert pointer.stamp(NodeView.DEFAULT) instanceof MetaspacePointerStamp;
 
-                LogicNode isNull = b.addWithInputs(IsNullNode.create(pointer));
+                LogicNode isNull = b.add(IsNullNode.create(pointer));
                 b.addPush(returnKind, ConditionalNode.create(isNull, b.add(forBoolean(true)), b.add(forBoolean(false)), NodeView.DEFAULT));
                 break;
 
             case FROM_POINTER:
                 assert args.length == 1;
-                b.addPush(returnKind, new PointerCastNode(StampFactory.forKind(wordKind), args[0]));
+                b.addPush(returnKind, PointerCastNode.create(StampFactory.forKind(wordKind), args[0]));
                 break;
 
             case TO_KLASS_POINTER:
                 assert args.length == 1;
-                b.addPush(returnKind, new PointerCastNode(KlassPointerStamp.klass(), args[0]));
+                b.addPush(returnKind, PointerCastNode.create(KlassPointerStamp.klass(), args[0]));
                 break;
 
             case TO_METHOD_POINTER:
                 assert args.length == 1;
-                b.addPush(returnKind, new PointerCastNode(MethodPointerStamp.method(), args[0]));
+                b.addPush(returnKind, PointerCastNode.create(MethodPointerStamp.method(), args[0]));
                 break;
 
             case READ_KLASS_POINTER:

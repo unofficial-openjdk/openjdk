@@ -55,54 +55,15 @@ inline void OrderAccess::fence() {
   compiler_barrier();
 }
 
-template<>
-struct OrderAccess::PlatformOrderedStore<1, RELEASE_X_FENCE>
-{
-  template <typename T>
-  void operator()(T v, volatile T* p) const {
-    __asm__ volatile (  "xchgb (%2),%0"
-                      : "=q" (v)
-                      : "0" (v), "r" (p)
-                      : "memory");
-  }
-};
-
-template<>
-struct OrderAccess::PlatformOrderedStore<2, RELEASE_X_FENCE>
-{
-  template <typename T>
-  void operator()(T v, volatile T* p) const {
-    __asm__ volatile (  "xchgw (%2),%0"
-                      : "=r" (v)
-                      : "0" (v), "r" (p)
-                      : "memory");
-  }
-};
-
-template<>
-struct OrderAccess::PlatformOrderedStore<4, RELEASE_X_FENCE>
-{
-  template <typename T>
-  void operator()(T v, volatile T* p) const {
-    __asm__ volatile (  "xchgl (%2),%0"
-                      : "=r" (v)
-                      : "0" (v), "r" (p)
-                      : "memory");
-  }
-};
-
+inline void OrderAccess::cross_modify_fence() {
+  int idx = 0;
 #ifdef AMD64
-template<>
-struct OrderAccess::PlatformOrderedStore<8, RELEASE_X_FENCE>
-{
-  template <typename T>
-  void operator()(T v, volatile T* p) const {
-    __asm__ volatile (  "xchgq (%2), %0"
-                      : "=r" (v)
-                      : "0" (v), "r" (p)
-                      : "memory");
-  }
-};
-#endif // AMD64
+  __asm__ volatile ("cpuid " : "+a" (idx) : : "ebx", "ecx", "edx", "memory");
+#else
+  // On some x86 systems EBX is a reserved register that cannot be
+  // clobbered, so we must protect it around the CPUID.
+  __asm__ volatile ("xchg %%esi, %%ebx; cpuid; xchg %%esi, %%ebx " : "+a" (idx) : : "esi", "ecx", "edx", "memory");
+#endif
+}
 
 #endif // OS_CPU_LINUX_X86_ORDERACCESS_LINUX_X86_HPP

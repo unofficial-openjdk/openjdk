@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,13 +46,13 @@ struct X11InputMethodIDs {
   jfieldID pData;
 } x11InputMethodIDs;
 
-static void PreeditStartCallback(XIC, XPointer, XPointer);
+static int PreeditStartCallback(XIC, XPointer, XPointer);
 static void PreeditDoneCallback(XIC, XPointer, XPointer);
 static void PreeditDrawCallback(XIC, XPointer,
                                 XIMPreeditDrawCallbackStruct *);
 static void PreeditCaretCallback(XIC, XPointer,
                                  XIMPreeditCaretCallbackStruct *);
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
 static void StatusStartCallback(XIC, XPointer, XPointer);
 static void StatusDoneCallback(XIC, XPointer, XPointer);
 static void StatusDrawCallback(XIC, XPointer,
@@ -66,7 +66,7 @@ static void StatusDrawCallback(XIC, XPointer,
 #define PreeditDoneIndex        1
 #define PreeditDrawIndex        2
 #define PreeditCaretIndex       3
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
 #define StatusStartIndex        4
 #define StatusDoneIndex         5
 #define StatusDrawIndex         6
@@ -80,18 +80,18 @@ static void StatusDrawCallback(XIC, XPointer,
  * values above.
  */
 static XIMProc callback_funcs[NCALLBACKS] = {
-    (XIMProc)PreeditStartCallback,
+    (XIMProc)(void *)&PreeditStartCallback,
     (XIMProc)PreeditDoneCallback,
     (XIMProc)PreeditDrawCallback,
     (XIMProc)PreeditCaretCallback,
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
     (XIMProc)StatusStartCallback,
     (XIMProc)StatusDoneCallback,
     (XIMProc)StatusDrawCallback,
 #endif
 };
 
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
 #define MAX_STATUS_LEN  100
 typedef struct {
     Window   w;                /*status window id        */
@@ -124,7 +124,7 @@ typedef struct _X11InputMethodData {
     XIMCallback *callbacks;     /* callback parameters */
     jobject     x11inputmethod; /* global ref to X11InputMethod instance */
                                 /* associated with the XIC */
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
     StatusWindow *statusWindow; /* our own status window  */
 #endif
     char        *lookup_buf;    /* buffer used for XmbLookupString */
@@ -175,6 +175,9 @@ static X11InputMethodData * getX11InputMethodData(JNIEnv *, jobject);
 static void setX11InputMethodData(JNIEnv *, jobject, X11InputMethodData *);
 static void destroyX11InputMethodData(JNIEnv *, X11InputMethodData *);
 static void freeX11InputMethodData(JNIEnv *, X11InputMethodData *);
+#if defined(__linux__)
+static Window getParentWindow(Window);
+#endif
 
 #ifdef __solaris__
 /* Prototype for this function is missing in Solaris X11R6 Xlib.h */
@@ -372,7 +375,7 @@ destroyX11InputMethodData(JNIEnv *env, X11InputMethodData *pX11IMData)
 static void
 freeX11InputMethodData(JNIEnv *env, X11InputMethodData *pX11IMData)
 {
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
     if (pX11IMData->statusWindow != NULL){
         StatusWindow *sw = pX11IMData->statusWindow;
         XFreeGC(awt_display, sw->lightGC);
@@ -475,7 +478,7 @@ awt_x11inputmethod_lookupString(XKeyPressedEvent *event, KeySym *keysymp)
     pX11IMData = getX11InputMethodData(env, currentX11InputMethodInstance);
 
     if (pX11IMData == NULL) {
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
         return False;
 #else
         return result;
@@ -483,7 +486,7 @@ awt_x11inputmethod_lookupString(XKeyPressedEvent *event, KeySym *keysymp)
     }
 
     if ((ic = pX11IMData->current_ic) == (XIC)0){
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
         return False;
 #else
         return result;
@@ -575,7 +578,7 @@ awt_x11inputmethod_lookupString(XKeyPressedEvent *event, KeySym *keysymp)
     return result;
 }
 
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
 static StatusWindow *createStatusWindow(Window parent) {
     StatusWindow *statusWindow;
     XSetWindowAttributes attrib;
@@ -849,7 +852,7 @@ static void adjustStatusWindow(Window shell) {
         }
     }
 }
-#endif  /* __linux__ || MACOSX */
+#endif  /* __linux__ */
 
 /*
  * Creates two XICs, one for active clients and the other for passive
@@ -895,7 +898,7 @@ createXIC(JNIEnv * env, X11InputMethodData *pX11IMData, Window w)
 
     on_the_spot_styles |= XIMStatusNothing;
 
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
     /*kinput does not support XIMPreeditCallbacks and XIMStatusArea
       at the same time, so use StatusCallback to draw the status
       ourself
@@ -906,7 +909,7 @@ createXIC(JNIEnv * env, X11InputMethodData *pX11IMData, Window w)
             break;
         }
     }
-#endif /* __linux__ || MACOSX */
+#endif /* __linux__ */
 
     for (i = 0; i < im_styles->count_styles; i++) {
         active_styles |= im_styles->supported_styles[i] & on_the_spot_styles;
@@ -960,7 +963,7 @@ createXIC(JNIEnv * env, X11InputMethodData *pX11IMData, Window w)
                         NULL);
         if (preedit == (XVaNestedList)NULL)
             goto err;
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
         /*always try XIMStatusCallbacks for active client...*/
         {
             status = (XVaNestedList)XVaCreateNestedList(0,
@@ -982,7 +985,7 @@ createXIC(JNIEnv * env, X11InputMethodData *pX11IMData, Window w)
             XFree((void *)status);
             XFree((void *)preedit);
         }
-#else /* !__linux__ && !MACOSX */
+#else /* !__linux__ */
         pX11IMData->ic_active = XCreateIC(X11im,
                                           XNClientWindow, w,
                                           XNFocusWindow, w,
@@ -990,7 +993,7 @@ createXIC(JNIEnv * env, X11InputMethodData *pX11IMData, Window w)
                                           XNPreeditAttributes, preedit,
                                           NULL);
         XFree((void *)preedit);
-#endif /* __linux__ || MACOSX */
+#endif /* __linux__ */
     } else {
         pX11IMData->ic_active = XCreateIC(X11im,
                                           XNClientWindow, w,
@@ -1019,8 +1022,27 @@ createXIC(JNIEnv * env, X11InputMethodData *pX11IMData, Window w)
         }
     }
 
+    // The code set the IC mode that the preedit state is not initialied
+    // at XmbResetIC.  This attribute can be set at XCreateIC.  I separately
+    // set the attribute to avoid the failure of XCreateIC at some platform
+    // which does not support the attribute.
+    if (pX11IMData->ic_active != 0)
+        XSetICValues(pX11IMData->ic_active,
+                     XNResetState, XIMInitialState,
+                     NULL);
+    if (pX11IMData->ic_passive != 0
+            && pX11IMData->ic_active != pX11IMData->ic_passive)
+        XSetICValues(pX11IMData->ic_passive,
+                     XNResetState, XIMInitialState,
+                     NULL);
+
     /* Add the global reference object to X11InputMethod to the list. */
     addToX11InputMethodGRefList(pX11IMData->x11inputmethod);
+
+    /* Unset focus to avoid unexpected IM on */
+    setXICFocus(pX11IMData->ic_active, False);
+    if (pX11IMData->ic_active != pX11IMData->ic_passive)
+        setXICFocus(pX11IMData->ic_passive, False);
 
     return True;
 
@@ -1031,11 +1053,12 @@ createXIC(JNIEnv * env, X11InputMethodData *pX11IMData, Window w)
     return False;
 }
 
-static void
+static int
 PreeditStartCallback(XIC ic, XPointer client_data, XPointer call_data)
 {
     /*ARGSUSED*/
     /* printf("Native: PreeditStartCallback\n"); */
+    return -1;
 }
 
 static void
@@ -1150,7 +1173,7 @@ PreeditCaretCallback(XIC ic, XPointer client_data,
     /* printf("Native: PreeditCaretCallback\n"); */
 }
 
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
 static void
 StatusStartCallback(XIC ic, XPointer client_data, XPointer call_data)
 {
@@ -1163,6 +1186,29 @@ StatusDoneCallback(XIC ic, XPointer client_data, XPointer call_data)
 {
     /*ARGSUSED*/
     /*printf("StatusDoneCallback:\n"); */
+    JNIEnv *env = GetJNIEnv();
+    X11InputMethodData *pX11IMData = NULL;
+    StatusWindow *statusWindow;
+
+    AWT_LOCK();
+
+    if (!isX11InputMethodGRefInList((jobject)client_data)) {
+        if ((jobject)client_data == currentX11InputMethodInstance) {
+            currentX11InputMethodInstance = NULL;
+        }
+        goto finally;
+    }
+
+    if (NULL == (pX11IMData = getX11InputMethodData(env, (jobject)client_data))
+        || NULL == (statusWindow = pX11IMData->statusWindow)){
+        goto finally;
+    }
+    currentX11InputMethodInstance = (jobject)client_data;
+
+    onoffStatusWindow(pX11IMData, 0, False);
+
+ finally:
+    AWT_UNLOCK();
 }
 
 static void
@@ -1216,7 +1262,7 @@ StatusDrawCallback(XIC ic, XPointer client_data,
  finally:
     AWT_UNLOCK();
 }
-#endif /* __linux__ || MACOSX */
+#endif /* __linux__ */
 
 static void CommitStringCallback(XIC ic, XPointer client_data, XPointer call_data) {
     JNIEnv *env = GetJNIEnv();
@@ -1283,7 +1329,15 @@ static void DestroyXIMCallback(XIM im, XPointer client_data, XPointer call_data)
     /* free the old pX11IMData and set it to null. this also avoids crashing
      * the jvm if the XIM server reappears */
     while (x11InputMethodGRefListHead != NULL) {
-        getX11InputMethodData(env, x11InputMethodGRefListHead->inputMethodGRef);
+        if (getX11InputMethodData(env,
+                x11InputMethodGRefListHead->inputMethodGRef) == NULL) {
+            /* Clear possible exceptions
+             */
+            if ((*env)->ExceptionOccurred(env)) {
+                (*env)->ExceptionDescribe(env);
+                (*env)->ExceptionClear(env);
+            }
+        }
     }
     AWT_UNLOCK();
 }
@@ -1302,14 +1356,14 @@ Java_sun_awt_X11_XInputMethod_openXIMNative(JNIEnv *env,
 /* Use IMInstantiate call back only on Linux, as there is a bug in Solaris
    (4768335)
 */
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
     registered = XRegisterIMInstantiateCallback(dpy, NULL, NULL,
                      NULL, (XIDProc)OpenXIMCallback, NULL);
     if (!registered) {
         /* directly call openXIM callback */
 #endif
         OpenXIMCallback(dpy, NULL, NULL);
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
     }
 #endif
 
@@ -1344,9 +1398,9 @@ Java_sun_awt_X11_XInputMethod_createXICNative(JNIEnv *env,
 
     globalRef = (*env)->NewGlobalRef(env, this);
     pX11IMData->x11inputmethod = globalRef;
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
     pX11IMData->statusWindow = NULL;
-#endif /* __linux__ || MACOSX */
+#endif /* __linux__ */
 
     pX11IMData->lookup_buf = 0;
     pX11IMData->lookup_buf_len = 0;
@@ -1396,14 +1450,14 @@ Java_sun_awt_X11_XInputMethod_setXICFocusNative(JNIEnv *env,
         setXICFocus(pX11IMData->current_ic, req);
         currentX11InputMethodInstance = pX11IMData->x11inputmethod;
         currentFocusWindow =  w;
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
         if (active && pX11IMData->statusWindow && pX11IMData->statusWindow->on)
             onoffStatusWindow(pX11IMData, w, True);
 #endif
     } else {
         currentX11InputMethodInstance = NULL;
         currentFocusWindow = 0;
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
         onoffStatusWindow(pX11IMData, 0, False);
         if (pX11IMData->current_ic != NULL)
 #endif
@@ -1438,7 +1492,7 @@ JNIEXPORT void JNICALL Java_sun_awt_X11InputMethodBase_initIDs
 JNIEXPORT void JNICALL Java_sun_awt_X11InputMethodBase_turnoffStatusWindow
   (JNIEnv *env, jobject this)
 {
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
     X11InputMethodData *pX11IMData;
     StatusWindow *statusWindow;
 
@@ -1552,6 +1606,10 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_X11InputMethodBase_setCompositionEnabled
 {
     X11InputMethodData *pX11IMData;
     char * ret = NULL;
+    XVaNestedList   pr_atrb;
+#if defined(__linux__)
+    Boolean calledXSetICFocus = False;
+#endif
 
     AWT_LOCK();
     pX11IMData = getX11InputMethodData(env, this);
@@ -1561,11 +1619,44 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_X11InputMethodBase_setCompositionEnabled
         return JNI_FALSE;
     }
 
-    ret = XSetICValues(pX11IMData->current_ic, XNPreeditState,
-                       (enable ? XIMPreeditEnable : XIMPreeditDisable), NULL);
+#if defined(__linux__)
+    if (NULL != pX11IMData->statusWindow) {
+        Window focus = 0;
+        int revert_to;
+#if defined(_LP64) && !defined(_LITTLE_ENDIAN)
+        // The Window value which is used for XGetICValues must be 32bit on BigEndian XOrg's xlib
+        unsigned int w = 0;
+#else
+        Window w = 0;
+#endif
+        XGetInputFocus(awt_display, &focus, &revert_to);
+        XGetICValues(pX11IMData->current_ic, XNFocusWindow, &w, NULL);
+        if (RevertToPointerRoot == revert_to
+                && pX11IMData->ic_active != pX11IMData->ic_passive) {
+            if (pX11IMData->current_ic == pX11IMData->ic_active) {
+                if (getParentWindow(focus) == getParentWindow(w)) {
+                    XUnsetICFocus(pX11IMData->ic_active);
+                    calledXSetICFocus = True;
+                }
+            }
+        }
+    }
+#endif
+    pr_atrb = XVaCreateNestedList(0,
+                  XNPreeditState, (enable ? XIMPreeditEnable : XIMPreeditDisable),
+                  NULL);
+    ret = XSetICValues(pX11IMData->current_ic, XNPreeditAttributes, pr_atrb, NULL);
+    XFree((void *)pr_atrb);
+#if defined(__linux__)
+    if (calledXSetICFocus) {
+        XSetICFocus(pX11IMData->ic_active);
+    }
+#endif
     AWT_UNLOCK();
 
-    if ((ret != 0) && (strcmp(ret, XNPreeditState) == 0)) {
+    if ((ret != 0)
+            && ((strcmp(ret, XNPreeditAttributes) == 0)
+            || (strcmp(ret, XNPreeditState) == 0))) {
         JNU_ThrowByName(env, "java/lang/UnsupportedOperationException", "");
     }
 
@@ -1588,7 +1679,14 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_X11InputMethodBase_isCompositionEnabledN
 {
     X11InputMethodData *pX11IMData = NULL;
     char * ret = NULL;
-    XIMPreeditState state;
+#if defined(__linux__) && defined(_LP64) && !defined(_LITTLE_ENDIAN)
+    // XIMPreeditState value which is used for XGetICValues must be 32bit on BigEndian XOrg's xlib
+    unsigned int state = XIMPreeditUnKnown;
+#else
+    XIMPreeditState state = XIMPreeditUnKnown;
+#endif
+
+    XVaNestedList   pr_atrb;
 
     AWT_LOCK();
     pX11IMData = getX11InputMethodData(env, this);
@@ -1598,10 +1696,14 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_X11InputMethodBase_isCompositionEnabledN
         return JNI_FALSE;
     }
 
-    ret = XGetICValues(pX11IMData->current_ic, XNPreeditState, &state, NULL);
+    pr_atrb = XVaCreateNestedList(0, XNPreeditState, &state, NULL);
+    ret = XGetICValues(pX11IMData->current_ic, XNPreeditAttributes, pr_atrb, NULL);
+    XFree((void *)pr_atrb);
     AWT_UNLOCK();
 
-    if ((ret != 0) && (strcmp(ret, XNPreeditState) == 0)) {
+    if ((ret != 0)
+            && ((strcmp(ret, XNPreeditAttributes) == 0)
+            || (strcmp(ret, XNPreeditState) == 0))) {
         JNU_ThrowByName(env, "java/lang/UnsupportedOperationException", "");
         return JNI_FALSE;
     }
@@ -1612,9 +1714,26 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_X11InputMethodBase_isCompositionEnabledN
 JNIEXPORT void JNICALL Java_sun_awt_X11_XInputMethod_adjustStatusWindow
   (JNIEnv *env, jobject this, jlong window)
 {
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
     AWT_LOCK();
     adjustStatusWindow(window);
     AWT_UNLOCK();
 #endif
 }
+
+#if defined(__linux__)
+static Window getParentWindow(Window w)
+{
+    Window root=None, parent=None, *ignore_children=NULL;
+    unsigned int ignore_uint=0;
+    Status status = 0;
+
+    if (w == None)
+        return None;
+    status = XQueryTree(dpy, w, &root, &parent, &ignore_children, &ignore_uint);
+    XFree(ignore_children);
+    if (status == 0)
+        return None;
+    return parent;
+}
+#endif

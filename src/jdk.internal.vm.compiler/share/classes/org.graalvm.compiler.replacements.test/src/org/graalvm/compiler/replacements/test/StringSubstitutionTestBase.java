@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,8 @@ import org.graalvm.compiler.nodes.StructuredGraph;
 import org.junit.Assert;
 import org.junit.Assume;
 
-import jdk.vm.ci.amd64.AMD64;
 import jdk.vm.ci.aarch64.AArch64;
+import jdk.vm.ci.amd64.AMD64;
 import jdk.vm.ci.code.InstalledCode;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 
@@ -71,7 +71,7 @@ public class StringSubstitutionTestBase extends MethodSubstitutionTest {
         StructuredGraph graph = testGraph(testMethod.getName());
 
         // Check to see if the resulting graph contains the expected node
-        StructuredGraph replacement = getReplacements().getSubstitution(realMethod, -1, false, null);
+        StructuredGraph replacement = getReplacements().getSubstitution(realMethod, -1, false, null, graph.getOptions());
         if (replacement == null) {
             assertInGraph(graph, expectedNode);
         }

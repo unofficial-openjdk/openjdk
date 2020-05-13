@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,16 +39,15 @@ import static java.util.stream.Collectors.toList;
 public class Diagnostics implements javax.tools.DiagnosticListener<JavaFileObject> {
 
     protected List<Diagnostic<? extends JavaFileObject>> diags = new ArrayList<>();
-    protected boolean foundErrors = false;
 
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
         diags.add(diagnostic);
-        foundErrors = foundErrors || diagnostic.getKind() == Diagnostic.Kind.ERROR;
     }
 
     /** Were there any errors found? */
     public boolean errorsFound() {
-        return foundErrors;
+        return diags.stream()
+                    .anyMatch(d -> d.getKind() == Diagnostic.Kind.ERROR);
     }
 
     /** Get all diagnostic keys */
@@ -56,6 +55,15 @@ public class Diagnostics implements javax.tools.DiagnosticListener<JavaFileObjec
         return diags.stream()
                     .map(Diagnostic::getCode)
                     .collect(toList());
+    }
+
+    public Diagnostic<?> getDiagWithKey(String key) {
+        for (Diagnostic<?> d : diags) {
+            if (d.getCode().equals(key)) {
+                return d;
+            }
+        }
+        return null;
     }
 
     /** Do the diagnostics contain the specified error key? */
@@ -85,6 +93,5 @@ public class Diagnostics implements javax.tools.DiagnosticListener<JavaFileObjec
     /** Clear all diagnostic state */
     public void reset() {
         diags.clear();
-        foundErrors = false;
     }
 }

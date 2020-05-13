@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,7 +21,6 @@
  * questions.
  */
 
-import static java.io.File.createTempFile;
 import static java.lang.Long.parseLong;
 import static java.lang.System.getProperty;
 import static java.nio.file.Files.readAllBytes;
@@ -30,6 +29,8 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static jdk.test.lib.process.ProcessTools.createJavaProcessBuilder;
 import static jdk.test.lib.Platform.isWindows;
+import jdk.test.lib.Utils;
+import jtreg.SkippedException;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -43,13 +44,14 @@ import java.util.stream.Stream;
 
 /*
  * @test TestInheritFD
- * @bug 8176717 8176809
+ * @bug 8176717 8176809 8222500
  * @summary a new process should not inherit open file descriptors
  * @comment On Aix lsof requires root privileges.
  * @requires os.family != "aix"
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
+ * @run driver TestInheritFD
  */
 
 /**
@@ -79,13 +81,11 @@ public class TestInheritFD {
 
     // first VM
     public static void main(String[] args) throws Exception {
-        String logPath = createTempFile("logging", LOG_SUFFIX).getName();
-        File commFile = createTempFile("communication", ".txt");
+        String logPath = Utils.createTempFile("logging", LOG_SUFFIX).toFile().getName();
+        File commFile = Utils.createTempFile("communication", ".txt").toFile();
 
         if (!isWindows() && !lsofCommand().isPresent()) {
-            System.out.println("Could not find lsof like command");
-            System.out.println("Exit test case as successful though it could not verify anything");
-            return;
+            throw new SkippedException("Could not find lsof like command");
         }
 
         ProcessBuilder pb = createJavaProcessBuilder(

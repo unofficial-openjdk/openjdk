@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,8 +42,8 @@ package java.lang;
  * @see     java.lang.Class#newInstance()
  * @since   1.0
  */
-public
-class InstantiationException extends ReflectiveOperationException {
+public class InstantiationException extends ReflectiveOperationException {
+    @java.io.Serial
     private static final long serialVersionUID = -8441929162975509110L;
 
     /**

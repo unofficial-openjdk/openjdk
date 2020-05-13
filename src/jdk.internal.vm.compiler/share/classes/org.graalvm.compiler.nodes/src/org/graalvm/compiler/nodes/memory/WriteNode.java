@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,13 +44,16 @@ import jdk.internal.vm.compiler.word.LocationIdentity;
 public class WriteNode extends AbstractWriteNode implements LIRLowerableAccess, Canonicalizable {
 
     public static final NodeClass<WriteNode> TYPE = NodeClass.create(WriteNode.class);
+    private final boolean volatileAccess;
 
-    public WriteNode(AddressNode address, LocationIdentity location, ValueNode value, BarrierType barrierType) {
+    public WriteNode(AddressNode address, LocationIdentity location, ValueNode value, BarrierType barrierType, boolean volatileAccess) {
         super(TYPE, address, location, value, barrierType);
+        this.volatileAccess = volatileAccess;
     }
 
     protected WriteNode(NodeClass<? extends WriteNode> c, AddressNode address, LocationIdentity location, ValueNode value, BarrierType barrierType) {
         super(c, address, location, value, barrierType);
+        this.volatileAccess = false;
     }
 
     @Override
@@ -61,23 +64,36 @@ public class WriteNode extends AbstractWriteNode implements LIRLowerableAccess, 
 
     @Override
     public boolean canNullCheck() {
-        return true;
+        return !isVolatile();
     }
 
     @Override
-    public Stamp getAccessStamp() {
-        return value().stamp(NodeView.DEFAULT);
+    public Stamp getAccessStamp(NodeView view) {
+        return value().stamp(view);
     }
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
         if (tool.canonicalizeReads() && hasExactlyOneUsage() && next() instanceof WriteNode) {
             WriteNode write = (WriteNode) next();
-            if (write.lastLocationAccess == this && write.getAddress() == getAddress() && getAccessStamp().isCompatible(write.getAccessStamp())) {
+            if (write.lastLocationAccess == this && write.getAddress() == getAddress() && getAccessStamp(NodeView.DEFAULT).isCompatible(write.getAccessStamp(NodeView.DEFAULT)) && !isVolatile()) {
                 write.setLastLocationAccess(getLastLocationAccess());
                 return write;
             }
         }
         return this;
     }
+
+    @Override
+    public LocationIdentity getKilledLocationIdentity() {
+        if (isVolatile()) {
+            return LocationIdentity.any();
+        }
+        return getLocationIdentity();
+    }
+
+    public boolean isVolatile() {
+        return volatileAccess;
+    }
+
 }

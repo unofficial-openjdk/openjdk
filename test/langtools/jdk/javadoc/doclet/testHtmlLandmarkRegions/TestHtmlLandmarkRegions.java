@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8210047 8199892
+ * @bug 8210047 8199892 8215599 8223378 8239817
  * @summary some pages contains content outside of landmark region
  * @library /tools/lib ../../lib
  * @modules
@@ -57,7 +57,6 @@ public class TestHtmlLandmarkRegions extends JavadocTester {
 
     TestHtmlLandmarkRegions() {
         tb = new ToolBox();
-        setAutomaticCheckLinks(false); // @ignore 8217013
     }
 
     @Test
@@ -69,39 +68,22 @@ public class TestHtmlLandmarkRegions extends JavadocTester {
         javadoc("-d", outDir.toString(),
                 "-doctitle", "Document Title",
                 "-header", "Test Header",
-                "--frames",
                 "--module-source-path", srcDir.toString(),
                 "--module", "m1,m2");
 
         checkExit(Exit.OK);
 
-        checkOrder("module-overview-frame.html",
-                "<header role=\"banner\">\n"
-                + "<h1 title=\"Test Header\" class=\"bar\">Test Header</h1>\n"
-                + "<nav role=\"navigation\" class=\"indexNav\">",
-                "<main role=\"main\">\n"
-                + "<div class=\"indexContainer\">\n"
-                + "<h2 title=\"Modules\">Modules</h2>\n"
-                + "<ul title=\"Modules\">",
-                "<footer role=\"contentinfo\">");
-
-        checkOrder("m1/module-frame.html",
-                "<header role=\"banner\">\n"
-                + "<h1 title=\"Test Header\" class=\"bar\">Test Header</h1>\n"
-                + "<nav role=\"navigation\" class=\"indexNav\">",
-                "<main role=\"main\">\n"
-                + "<div class=\"indexContainer\">\n"
-                + "<h2 title=\"m1\"><a href=\"module-summary.html\" target=\"classFrame\">m1</a>&nbsp;Packages</h2>",
-                "<footer role=\"contentinfo\">");
-
-        checkOrder("overview-summary.html",
-                "<header role=\"banner\">\n"
-                + "<nav role=\"navigation\">",
-                "<main role=\"main\">\n"
-                + "<div class=\"header\">\n"
-                + "<h1 class=\"title\">Document Title</h1>",
-                "<footer role=\"contentinfo\">\n"
-                + "<nav role=\"navigation\">");
+        checkOrder("index.html",
+                """
+                    <header role="banner" class="flex-header">
+                    <nav role="navigation">""",
+                """
+                    <main role="main">
+                    <div class="header">
+                    <h1 class="title">Document Title</h1>""",
+                """
+                    <footer role="contentinfo">
+                    <nav role="navigation">""");
     }
 
     @Test
@@ -109,33 +91,26 @@ public class TestHtmlLandmarkRegions extends JavadocTester {
         Path srcDir = base.resolve("src");
         createPackages(srcDir);
 
-        Path outDir = base.resolve("out3");
+        Path outDir = base.resolve("out");
         javadoc("-d", outDir.toString(),
                 "-doctitle", "Document Title",
                 "-header", "Test Header",
-                "--frames",
                 "-sourcepath", srcDir.toString(),
                 "pkg1", "pkg2");
 
         checkExit(Exit.OK);
 
-        checkOrder("overview-summary.html",
-                "<header role=\"banner\">\n"
-                + "<nav role=\"navigation\">",
-                "<main role=\"main\">\n"
-                + "<div class=\"header\">\n"
-                + "<h1 class=\"title\">Document Title</h1>",
-                "<footer role=\"contentinfo\">\n" +
-                        "<nav role=\"navigation\">");
-
-        checkOrder("overview-frame.html",
-                "<header role=\"banner\">\n"
-                + "<h1 title=\"Test Header\" class=\"bar\">Test Header</h1>\n"
-                + "<nav role=\"navigation\" class=\"indexNav\">",
-                "<main role=\"main\">\n"
-                + "<div class=\"indexContainer\">\n"
-                + "<h2 title=\"Packages\">Packages</h2>",
-                "<footer role=\"contentinfo\">");
+        checkOrder("index.html",
+                """
+                    <header role="banner" class="flex-header">
+                    <nav role="navigation">""",
+                """
+                    <main role="main">
+                    <div class="header">
+                    <h1 class="title">Document Title</h1>""",
+                """
+                    <footer role="contentinfo">
+                    <nav role="navigation">""");
     }
 
     @Test
@@ -144,16 +119,17 @@ public class TestHtmlLandmarkRegions extends JavadocTester {
         createPackages(srcDir);
         Path docFiles = Files.createDirectory(srcDir.resolve("pkg1").resolve("doc-files"));
         Files.write(docFiles.resolve("s.html"), List.of(
-                "<html>\n"
-                + "  <head>\n"
-                + "    <title>\"Hello World\"</title>\n"
-                + "  </head>\n"
-                + "  <body>\n"
-                + "     A sample doc file.\n"
-                + "  </body>\n"
-                + "</html>"));
+                """
+                    <html>
+                      <head>
+                        <title>"Hello World"</title>
+                      </head>
+                      <body>
+                         A sample doc file.
+                      </body>
+                    </html>"""));
 
-        Path outDir = base.resolve("out5");
+        Path outDir = base.resolve("out");
         javadoc("-d", outDir.toString(),
                 "-sourcepath", srcDir.toString(),
                 "pkg1", "pkg2");
@@ -161,22 +137,26 @@ public class TestHtmlLandmarkRegions extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOrder("pkg1/doc-files/s.html",
-                "<header role=\"banner\">\n"
-                + "<nav role=\"navigation\">\n",
-                "<main role=\"main\">A sample doc file",
-                "<footer role=\"contentinfo\">\n"
-                + "<nav role=\"navigation\">"
+                """
+                    <header role="banner" class="flex-header">
+                    <nav role="navigation">
+                    """,
+                """
+                    <main role="main">A sample doc file""",
+                """
+                    <footer role="contentinfo">
+                    <nav role="navigation">"""
                 );
     }
 
     void createModules(Path srcDir) throws Exception {
         new ModuleBuilder(tb, "m1")
-                .classes("package p1; public class a{}")
-                .classes("package p2; public class b{}")
+                .classes("package p1; public class a { }")
+                .classes("package p2; public class b { }")
                 .write(srcDir);
         new ModuleBuilder(tb, "m2")
-                .classes("package p3; public class c{}")
-                .classes("package p4; public class d{}")
+                .classes("package p3; public class c { }")
+                .classes("package p4; public class d { }")
                 .write(srcDir);
     }
 

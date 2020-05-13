@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2013, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,6 +26,7 @@
 #define SHARE_GC_SHENANDOAH_SHENANDOAHCONCURRENTMARK_HPP
 
 #include "gc/shared/taskqueue.hpp"
+#include "gc/shared/taskTerminator.hpp"
 #include "gc/shenandoah/shenandoahOopClosures.hpp"
 #include "gc/shenandoah/shenandoahPhaseTimings.hpp"
 #include "gc/shenandoah/shenandoahTaskqueue.hpp"
@@ -32,7 +34,6 @@
 class ShenandoahStrDedupQueue;
 
 class ShenandoahConcurrentMark: public CHeapObj<mtGC> {
-  friend class ShenandoahTraversalGC;
 private:
   ShenandoahHeap* _heap;
   ShenandoahObjToScanQueueSet* _task_queues;
@@ -45,7 +46,7 @@ public:
 //
 private:
   template <class T>
-  inline void do_task(ShenandoahObjToScanQueue* q, T* cl, jushort* live_data, ShenandoahMarkTask* task);
+  inline void do_task(ShenandoahObjToScanQueue* q, T* cl, ShenandoahLiveData* live_data, ShenandoahMarkTask* task);
 
   template <class T>
   inline void do_chunked_array_start(ShenandoahObjToScanQueue* q, T* cl, oop array);
@@ -53,16 +54,16 @@ private:
   template <class T>
   inline void do_chunked_array(ShenandoahObjToScanQueue* q, T* cl, oop array, int chunk, int pow);
 
-  inline void count_liveness(jushort* live_data, oop obj);
+  inline void count_liveness(ShenandoahLiveData* live_data, oop obj);
 
   template <class T, bool CANCELLABLE>
-  void mark_loop_work(T* cl, jushort* live_data, uint worker_id, ShenandoahTaskTerminator *t);
+  void mark_loop_work(T* cl, ShenandoahLiveData* live_data, uint worker_id, TaskTerminator *t);
 
   template <bool CANCELLABLE>
-  void mark_loop_prework(uint worker_id, ShenandoahTaskTerminator *terminator, ReferenceProcessor *rp, bool strdedup);
+  void mark_loop_prework(uint worker_id, TaskTerminator *terminator, ReferenceProcessor *rp, bool strdedup);
 
 public:
-  void mark_loop(uint worker_id, ShenandoahTaskTerminator* terminator, ReferenceProcessor *rp,
+  void mark_loop(uint worker_id, TaskTerminator* terminator, ReferenceProcessor *rp,
                  bool cancellable, bool strdedup) {
     if (cancellable) {
       mark_loop_prework<true>(worker_id, terminator, rp, strdedup);
@@ -79,6 +80,7 @@ public:
 
   void mark_roots(ShenandoahPhaseTimings::Phase root_phase);
   void update_roots(ShenandoahPhaseTimings::Phase root_phase);
+  void update_thread_roots(ShenandoahPhaseTimings::Phase root_phase);
 
 // ---------- Weak references
 //

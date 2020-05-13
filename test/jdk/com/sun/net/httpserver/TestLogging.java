@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,10 @@
 /**
  * @test
  * @bug 6422914
+ * @library /test/lib
  * @summary change httpserver exception printouts
+ * @run main TestLogging
+ * @run main/othervm -Djava.net.preferIPv6Addresses=true TestLogging
  */
 
 import com.sun.net.httpserver.*;
@@ -37,6 +40,7 @@ import java.net.*;
 import java.security.*;
 import java.security.cert.*;
 import javax.net.ssl.*;
+import jdk.test.lib.net.URIBuilder;
 
 public class TestLogging extends Test {
 
@@ -47,7 +51,8 @@ public class TestLogging extends Test {
         try {
             System.out.print ("Test9: ");
             String root = System.getProperty ("test.src")+ "/docs";
-            InetSocketAddress addr = new InetSocketAddress (0);
+            InetAddress loopback = InetAddress.getLoopbackAddress();
+            InetSocketAddress addr = new InetSocketAddress(loopback, 0);
             Logger logger = Logger.getLogger ("com.sun.net.httpserver");
             logger.setLevel (Level.ALL);
             Handler h1 = new ConsoleHandler ();
@@ -63,13 +68,25 @@ public class TestLogging extends Test {
 
             int p1 = s1.getAddress().getPort();
 
-            URL url = new URL ("http://127.0.0.1:"+p1+"/test1/smallfile.txt");
-            HttpURLConnection urlc = (HttpURLConnection)url.openConnection();
+            URL url = URIBuilder.newBuilder()
+                .scheme("http")
+                .loopback()
+                .port(p1)
+                .path("/test1/smallfile.txt")
+                .toURL();
+            System.out.println("URL: " + url);
+            HttpURLConnection urlc = (HttpURLConnection)url.openConnection(Proxy.NO_PROXY);
             InputStream is = urlc.getInputStream();
             while (is.read() != -1) ;
             is.close();
 
-            url = new URL ("http://127.0.0.1:"+p1+"/test1/doesntexist.txt");
+            url = URIBuilder.newBuilder()
+                .scheme("http")
+                .loopback()
+                .port(p1)
+                .path("/test1/doesntexist.txt")
+                .toURLUnchecked();
+            System.out.println("URL: " + url);
             urlc = (HttpURLConnection)url.openConnection();
             try {
                 is = urlc.getInputStream();
@@ -79,7 +96,7 @@ public class TestLogging extends Test {
                 System.out.println ("caught expected exception");
             }
 
-            Socket s = new Socket ("127.0.0.1", p1);
+            Socket s = new Socket (InetAddress.getLoopbackAddress(), p1);
             OutputStream os = s.getOutputStream();
             //os.write ("GET xxx HTTP/1.1\r\n".getBytes());
             os.write ("HELLO WORLD\r\n".getBytes());

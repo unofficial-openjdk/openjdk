@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
   @test
-  @bug 6252005
+  @bug 6252005 8242174
   @key headful
   @summary Tests that realSync feature works
   @author denis.mikhalkin: area=awt.toolkit
@@ -31,16 +31,17 @@
   @run main/timeout=6000 Test
 */
 
+import java.awt.Frame;
+import java.awt.Point;
+import java.awt.Robot;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.LinkedList;
-import java.util.Collections;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
+import java.util.LinkedList;
+
 import javax.swing.*;
-import java.awt.image.*;
-import javax.imageio.*;
-import java.io.*;
 
 /**
  * Tests various problematic areas and how they are fixed using real-sync API:
@@ -219,7 +220,8 @@ public class Test {
         robot.keyPress(KeyEvent.VK_A);
         robot.keyRelease(KeyEvent.VK_A);
         realSync(f);
-        asser("a".equals(b.getText()), "Wrong text: " + b.getText());
+        asser("a".equals(b.getText()), "Expected 'a' got " + "'" +
+            b.getText() + "'.");
         f.dispose();
     }
 
@@ -242,7 +244,8 @@ public class Test {
         robot.keyPress(KeyEvent.VK_A);
         robot.keyRelease(KeyEvent.VK_A);
         realSync(f);
-        asser("a".equals(b.getText()), "Wrong text: " + b.getText());
+        asser("a".equals(b.getText()), "Expected 'a' got " + "'" +
+            b.getText() + "'.");
         f.dispose();
     }
 

@@ -3322,11 +3322,11 @@ public class BasicTabbedPaneUI extends TabbedPaneUI implements SwingConstants {
     private class TabbedPaneScrollLayout extends TabbedPaneLayout {
 
         protected int preferredTabAreaHeight(int tabPlacement, int width) {
-            return calculateMaxTabHeight(tabPlacement);
+            return calculateTabAreaHeight(tabPlacement, 1, calculateMaxTabHeight(tabPlacement));
         }
 
         protected int preferredTabAreaWidth(int tabPlacement, int height) {
-            return calculateMaxTabWidth(tabPlacement);
+            return calculateTabAreaWidth(tabPlacement, 1, calculateMaxTabWidth(tabPlacement));
         }
 
         @SuppressWarnings("deprecation")
@@ -3907,11 +3907,13 @@ public class BasicTabbedPaneUI extends TabbedPaneUI implements SwingConstants {
         public ScrollableTabPanel() {
             super(null);
             setOpaque(tabPane.isOpaque());
-            Color bgColor = UIManager.getColor("TabbedPane.tabAreaBackground");
-            if (bgColor == null) {
-                bgColor = tabPane.getBackground();
+            Color background = tabPane.getBackground();
+            Color tabAreaBackground = UIManager.getColor("TabbedPane.tabAreaBackground");
+            if (background instanceof UIResource && tabAreaBackground != null) {
+                setBackground(tabAreaBackground);
+            } else {
+                setBackground(background);
             }
-            setBackground(bgColor);
         }
         public void paintComponent(Graphics g) {
             super.paintComponent(g);

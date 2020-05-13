@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,9 +32,7 @@
 #include "utilities/debug.hpp"
 
 int BarrierSetNMethod::disarmed_value() const {
-  char* disarmed_addr = reinterpret_cast<char*>(Thread::current());
-  disarmed_addr += in_bytes(thread_disarmed_offset());
-  return *reinterpret_cast<int*>(disarmed_addr);
+  return *disarmed_value_address();
 }
 
 bool BarrierSetNMethod::supports_entry_barrier(nmethod* nm) {
@@ -64,6 +62,16 @@ int BarrierSetNMethod::nmethod_stub_entry_barrier(address* return_address_ptr) {
   assert(!nm->is_osr_method(), "Should not reach here");
   // Called upon first entry after being armed
   bool may_enter = bs_nm->nmethod_entry_barrier(nm);
+
+  // Diagnostic option to force deoptimization 1 in 3 times. It is otherwise
+  // a very rare event.
+  if (DeoptimizeNMethodBarriersALot) {
+    static volatile uint32_t counter=0;
+    if (Atomic::add(&counter, 1u) % 3 == 0) {
+      may_enter = false;
+    }
+  }
+
   if (!may_enter) {
     log_trace(nmethod, barrier)("Deoptimizing nmethod: " PTR_FORMAT, p2i(nm));
     bs_nm->deoptimize(nm, return_address_ptr);

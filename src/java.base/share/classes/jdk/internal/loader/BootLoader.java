@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,6 +71,10 @@ public class BootLoader {
     private static final ConcurrentHashMap<?, ?> CLASS_LOADER_VALUE_MAP
         = new ConcurrentHashMap<>();
 
+    // native libraries loaded by the boot class loader
+    private static final NativeLibraries NATIVE_LIBS
+        = NativeLibraries.jniNativeLibraries(null);
+
     /**
      * Returns the unnamed module for the boot loader.
      */
@@ -90,6 +94,13 @@ public class BootLoader {
      */
     public static ConcurrentHashMap<?, ?> getClassLoaderValueMap() {
         return CLASS_LOADER_VALUE_MAP;
+    }
+
+    /**
+     * Returns NativeLibraries for the boot class loader.
+     */
+    public static NativeLibraries getNativeLibraries() {
+        return NATIVE_LIBS;
     }
 
     /**
@@ -125,6 +136,22 @@ public class BootLoader {
             return c;
         } else {
             return null;
+        }
+    }
+
+    /**
+     * Loads a native library from the system library path.
+     */
+    public static void loadLibrary(String name) {
+        if (System.getSecurityManager() == null) {
+            BootLoader.getNativeLibraries().loadLibrary(name);
+        } else {
+            AccessController.doPrivileged(new java.security.PrivilegedAction<>() {
+                public Void run() {
+                    BootLoader.getNativeLibraries().loadLibrary(name);
+                    return null;
+                }
+            });
         }
     }
 

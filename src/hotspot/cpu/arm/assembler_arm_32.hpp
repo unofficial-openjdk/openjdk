@@ -199,6 +199,14 @@ class Assembler : public AbstractAssembler  {
   static const int LogInstructionSize = 2;
   static const int InstructionSize    = 1 << LogInstructionSize;
 
+  //---<  calculate length of instruction  >---
+  // We just use the values set above.
+  // instruction must start at passed address
+  static unsigned int instr_len(unsigned char *instr) { return InstructionSize; }
+
+  //---<  longest instructions  >---
+  static unsigned int instr_maxlen() { return InstructionSize; }
+
   static inline AsmCondition inverse(AsmCondition cond) {
     assert ((cond != al) && (cond != nv), "AL and NV conditions cannot be inversed");
     return (AsmCondition)((int)cond ^ 1);
@@ -434,7 +442,9 @@ class Assembler : public AbstractAssembler  {
   }
 
   void pldw(Address addr) {
-    assert(VM_Version::arm_arch() >= 7 && os::is_MP(), "no pldw on this processor");
+    assert(!VM_Version::is_initialized() ||
+           (VM_Version::arm_arch() >= 7 && VM_Version::has_multiprocessing_extensions()),
+           "PLDW is available on ARMv7 with Multiprocessing Extensions only");
     emit_int32(0xf510f000 | addr.encoding2());
   }
 
@@ -953,8 +963,8 @@ class Assembler : public AbstractAssembler  {
 
   F(fldmia, 1, 1)    F(fldmfd, 1, 1)
   F(fldmdb, 1, 2)    F(fldmea, 1, 2)
-  F(fstmia, 0, 1)    F(fstmfd, 0, 1)
-  F(fstmdb, 0, 2)    F(fstmea, 0, 2)
+  F(fstmia, 0, 1)    F(fstmea, 0, 1)
+  F(fstmdb, 0, 2)    F(fstmfd, 0, 2)
 #undef F
 
   // fconst{s,d} encoding:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,19 +35,18 @@ import java.security.cert.Certificate;
  *
  * @since 1.2
  */
-public
-class JarEntry extends ZipEntry {
+public class JarEntry extends ZipEntry {
     Attributes attr;
     Certificate[] certs;
     CodeSigner[] signers;
 
     /**
-     * Creates a new <code>JarEntry</code> for the specified JAR file
+     * Creates a new {@code JarEntry} for the specified JAR file
      * entry name.
      *
      * @param name the JAR file entry name
-     * @exception NullPointerException if the entry name is <code>null</code>
-     * @exception IllegalArgumentException if the entry name is longer than
+     * @throws    NullPointerException if the entry name is {@code null}
+     * @throws    IllegalArgumentException if the entry name is longer than
      *            0xFFFF bytes.
      */
     public JarEntry(String name) {
@@ -55,20 +54,20 @@ class JarEntry extends ZipEntry {
     }
 
     /**
-     * Creates a new <code>JarEntry</code> with fields taken from the
-     * specified <code>ZipEntry</code> object.
-     * @param ze the <code>ZipEntry</code> object to create the
-     *           <code>JarEntry</code> from
+     * Creates a new {@code JarEntry} with fields taken from the
+     * specified {@code ZipEntry} object.
+     * @param ze the {@code ZipEntry} object to create the
+     *           {@code JarEntry} from
      */
     public JarEntry(ZipEntry ze) {
         super(ze);
     }
 
     /**
-     * Creates a new <code>JarEntry</code> with fields taken from the
-     * specified <code>JarEntry</code> object.
+     * Creates a new {@code JarEntry} with fields taken from the
+     * specified {@code JarEntry} object.
      *
-     * @param je the <code>JarEntry</code> to copy
+     * @param je the {@code JarEntry} to copy
      */
     public JarEntry(JarEntry je) {
         this((ZipEntry)je);
@@ -78,11 +77,11 @@ class JarEntry extends ZipEntry {
     }
 
     /**
-     * Returns the <code>Manifest</code> <code>Attributes</code> for this
-     * entry, or <code>null</code> if none.
+     * Returns the {@code Manifest} {@code Attributes} for this
+     * entry, or {@code null} if none.
      *
-     * @return the <code>Manifest</code> <code>Attributes</code> for this
-     * entry, or <code>null</code> if none
+     * @return the {@code Manifest} {@code Attributes} for this
+     * entry, or {@code null} if none
      * @throws IOException  if an I/O error has occurred
      */
     public Attributes getAttributes() throws IOException {
@@ -90,11 +89,11 @@ class JarEntry extends ZipEntry {
     }
 
     /**
-     * Returns the <code>Certificate</code> objects for this entry, or
-     * <code>null</code> if none. This method can only be called once
-     * the <code>JarEntry</code> has been completely verified by reading
+     * Returns the {@code Certificate} objects for this entry, or
+     * {@code null} if none. This method can only be called once
+     * the {@code JarEntry} has been completely verified by reading
      * from the entry input stream until the end of the stream has been
-     * reached. Otherwise, this method will return <code>null</code>.
+     * reached. Otherwise, this method will return {@code null}.
      *
      * <p>The returned certificate array comprises all the signer certificates
      * that were used to verify this entry. Each signer certificate is
@@ -103,25 +102,25 @@ class JarEntry extends ZipEntry {
      * bottom-to-top (i.e., with the signer certificate first and the (root)
      * certificate authority last).
      *
-     * @return the <code>Certificate</code> objects for this entry, or
-     * <code>null</code> if none.
+     * @return the {@code Certificate} objects for this entry, or
+     * {@code null} if none.
      */
     public Certificate[] getCertificates() {
         return certs == null ? null : certs.clone();
     }
 
     /**
-     * Returns the <code>CodeSigner</code> objects for this entry, or
-     * <code>null</code> if none. This method can only be called once
-     * the <code>JarEntry</code> has been completely verified by reading
+     * Returns the {@code CodeSigner} objects for this entry, or
+     * {@code null} if none. This method can only be called once
+     * the {@code JarEntry} has been completely verified by reading
      * from the entry input stream until the end of the stream has been
-     * reached. Otherwise, this method will return <code>null</code>.
+     * reached. Otherwise, this method will return {@code null}.
      *
      * <p>The returned array comprises all the code signers that have signed
      * this entry.
      *
-     * @return the <code>CodeSigner</code> objects for this entry, or
-     * <code>null</code> if none.
+     * @return the {@code CodeSigner} objects for this entry, or
+     * {@code null} if none.
      *
      * @since 1.5
      */

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016, 2018, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -29,7 +30,7 @@
  * @test TestReferenceCAS
  * @summary Shenandoah reference CAS test
  * @key gc
- * @requires vm.gc.Shenandoah
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
  * @modules java.base/jdk.internal.misc:+open
  *
  * @run main/othervm -Diters=20000 -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:ShenandoahGCHeuristics=aggressive -XX:+UseShenandoahGC                                                 TestReferenceCAS
@@ -37,6 +38,14 @@
  * @run main/othervm -Diters=20000 -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:ShenandoahGCHeuristics=aggressive -XX:+UseShenandoahGC -XX:-TieredCompilation                          TestReferenceCAS
  * @run main/othervm -Diters=20000 -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:ShenandoahGCHeuristics=aggressive -XX:+UseShenandoahGC -XX:TieredStopAtLevel=1                         TestReferenceCAS
  * @run main/othervm -Diters=20000 -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:ShenandoahGCHeuristics=aggressive -XX:+UseShenandoahGC -XX:TieredStopAtLevel=4                         TestReferenceCAS
+ */
+
+/*
+ * @test TestReferenceCAS
+ * @summary Shenandoah reference CAS test
+ * @key gc
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled & (vm.bits == "64")
+ * @modules java.base/jdk.internal.misc:+open
  *
  * @run main/othervm -Diters=20000 -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:ShenandoahGCHeuristics=aggressive -XX:+UseShenandoahGC -XX:-UseCompressedOops                          TestReferenceCAS
  * @run main/othervm -Diters=100   -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:ShenandoahGCHeuristics=aggressive -XX:+UseShenandoahGC -XX:-UseCompressedOops -Xint                    TestReferenceCAS

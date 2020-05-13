@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -52,26 +52,24 @@ ifeq ($(call isTargetOs, macosx), true)
   $(eval $(call SetupCopyFiles, COPY_JDK_IMAGE, \
       SRC := $(JDK_IMAGE_DIR), \
       DEST := $(JDK_MACOSX_CONTENTS_DIR)/Home, \
-      FILES := $(call CacheFind, $(JDK_IMAGE_DIR)), \
+      FILES := $(call FindFiles, $(JDK_IMAGE_DIR)), \
   ))
 
   $(eval $(call SetupCopyFiles, COPY_JRE_IMAGE, \
       SRC := $(JRE_IMAGE_DIR), \
       DEST := $(JRE_MACOSX_CONTENTS_DIR)/Home, \
-      FILES := $(call CacheFind, $(JRE_IMAGE_DIR)), \
+      FILES := $(call FindFiles, $(JRE_IMAGE_DIR)), \
   ))
 
-  $(JDK_MACOSX_CONTENTS_DIR)/MacOS/libjli.dylib:
-	$(call LogInfo, Creating link $(patsubst $(OUTPUTDIR)/%,%,$@))
-	$(call MakeTargetDir)
-	$(RM) $@
-	$(LN) -s ../Home/lib/libjli.dylib $@
+  $(eval $(call SetupCopyFiles, COPY_LIBJLI_JDK, \
+      FILES := $(JDK_IMAGE_DIR)/lib/libjli.dylib, \
+      DEST := $(JDK_MACOSX_CONTENTS_DIR)/MacOS, \
+  ))
 
-  $(JRE_MACOSX_CONTENTS_DIR)/MacOS/libjli.dylib:
-	$(call LogInfo, Creating link $(patsubst $(OUTPUTDIR)/%,%,$@))
-	$(call MakeTargetDir)
-	$(RM) $@
-	$(LN) -s ../Home/lib/libjli.dylib $@
+  $(eval $(call SetupCopyFiles, COPY_LIBJLI_JRE, \
+      FILES := $(JRE_IMAGE_DIR)/lib/libjli.dylib, \
+      DEST := $(JRE_MACOSX_CONTENTS_DIR)/MacOS, \
+  ))
 
   $(eval $(call SetupTextFileProcessing, BUILD_JDK_PLIST, \
       SOURCE_FILES := $(MACOSX_PLIST_SRC)/JDK-Info.plist, \
@@ -97,13 +95,19 @@ ifeq ($(call isTargetOs, macosx), true)
           @@VENDOR@@ => $(BUNDLE_VENDOR) , \
   ))
 
-  jdk-bundle: $(COPY_JDK_IMAGE) $(JDK_MACOSX_CONTENTS_DIR)/MacOS/libjli.dylib \
-      $(BUILD_JDK_PLIST)
+  $(SUPPORT_OUTPUTDIR)/images/_jdk_bundle_attribute_set: $(COPY_JDK_IMAGE)
 	$(SETFILE) -a B $(dir $(JDK_MACOSX_CONTENTS_DIR))
+	$(TOUCH) $@
 
-  jre-bundle: $(COPY_JRE_IMAGE) $(JRE_MACOSX_CONTENTS_DIR)/MacOS/libjli.dylib \
-      $(BUILD_JRE_PLIST)
+  $(SUPPORT_OUTPUTDIR)/images/_jre_bundle_attribute_set: $(COPY_JRE_IMAGE)
 	$(SETFILE) -a B $(dir $(JRE_MACOSX_CONTENTS_DIR))
+	$(TOUCH) $@
+
+  jdk-bundle: $(COPY_JDK_IMAGE) $(COPY_LIBJLI_JDK) \
+      $(BUILD_JDK_PLIST) $(SUPPORT_OUTPUTDIR)/images/_jdk_bundle_attribute_set
+
+  jre-bundle: $(COPY_JRE_IMAGE) $(COPY_LIBJLI_JRE) \
+      $(BUILD_JRE_PLIST) $(SUPPORT_OUTPUTDIR)/images/_jre_bundle_attribute_set
 
 else # Not macosx
 

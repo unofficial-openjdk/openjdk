@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -115,7 +115,7 @@ public class JMap {
             } else if (option.equals("-finalizerinfo")) {
                 executeCommandForPid(pid, "jcmd", "GC.finalizer_info");
             } else if (option.equals("-clstats")) {
-                executeCommandForPid(pid, "jcmd", "GC.class_stats");
+                executeCommandForPid(pid, "jcmd", "VM.classloader_stats");
             } else {
               usage(1);
             }
@@ -190,7 +190,7 @@ public class JMap {
         System.out.flush();
 
         // inspectHeap is not the same as jcmd GC.class_histogram
-        executeCommandForPid(pid, "inspectheap", filename, liveopt);
+        executeCommandForPid(pid, "inspectheap", liveopt, filename);
     }
 
     private static void dump(String pid, String options)

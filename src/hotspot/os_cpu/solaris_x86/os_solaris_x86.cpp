@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@
 #include "prims/jniFastGetField.hpp"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
@@ -46,6 +45,7 @@
 #include "runtime/javaCalls.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/osThread.hpp"
+#include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.inline.hpp"
@@ -141,11 +141,11 @@ bool os::Solaris::valid_ucontext(Thread* thread, const ucontext_t* valid, const 
   }
 
   if (thread->is_Java_thread()) {
-    if (!valid_stack_address(thread, (address)suspect)) {
+    if (!thread->is_in_full_stack_checked((address)suspect)) {
       DEBUG_ONLY(tty->print_cr("valid_ucontext: uc_link not in thread stack");)
       return false;
     }
-    if (!valid_stack_address(thread,  (address) suspect->uc_mcontext.gregs[REG_SP])) {
+    if (!thread->is_in_full_stack_checked((address) suspect->uc_mcontext.gregs[REG_SP])) {
       DEBUG_ONLY(tty->print_cr("valid_ucontext: stackpointer not in thread stack");)
       return false;
     }
@@ -517,16 +517,20 @@ JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid,
       stub = VM_Version::cpuinfo_cont_addr();
     }
 
-    if (thread->thread_state() == _thread_in_vm) {
+    if (thread->thread_state() == _thread_in_vm ||
+         thread->thread_state() == _thread_in_native) {
       if (sig == SIGBUS && info->si_code == BUS_OBJERR && thread->doing_unsafe_access()) {
         address next_pc = Assembler::locate_next_instruction(pc);
+        if (UnsafeCopyMemory::contains_pc(pc)) {
+          next_pc = UnsafeCopyMemory::page_error_continue_pc(pc);
+        }
         stub = SharedRuntime::handle_unsafe_access(thread, next_pc);
       }
     }
 
     if (thread->thread_state() == _thread_in_Java) {
       // Support Safepoint Polling
-      if ( sig == SIGSEGV && os::is_poll_address((address)info->si_addr)) {
+      if ( sig == SIGSEGV && SafepointMechanism::is_poll_address((address)info->si_addr)) {
         stub = SharedRuntime::get_poll_stub(pc);
       }
       else if (sig == SIGBUS && info->si_code == BUS_OBJERR) {
@@ -536,8 +540,12 @@ JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid,
         CodeBlob* cb = CodeCache::find_blob_unsafe(pc);
         if (cb != NULL) {
           CompiledMethod* nm = cb->as_compiled_method_or_null();
-          if (nm != NULL && nm->has_unsafe_access()) {
+          bool is_unsafe_arraycopy = thread->doing_unsafe_access() && UnsafeCopyMemory::contains_pc(pc);
+          if ((nm != NULL && nm->has_unsafe_access()) || is_unsafe_arraycopy) {
             address next_pc = Assembler::locate_next_instruction(pc);
+            if (is_unsafe_arraycopy) {
+              next_pc = UnsafeCopyMemory::page_error_continue_pc(pc);
+            }
             stub = SharedRuntime::handle_unsafe_access(thread, next_pc);
           }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.Set;
 
 import javax.lang.model.element.Modifier;
@@ -72,11 +73,11 @@ import com.sun.tools.javac.util.JCDiagnostic;
  *
  *  For each method, exceptions are handled as follows:
  *  <ul>
- *  <li>Checked exceptions are left alone and propogate upwards in the
+ *  <li>Checked exceptions are left alone to propagate upwards in the
  *      obvious way, since they are an expected aspect of the method's
  *      specification.
  *  <li>Unchecked exceptions which have already been caught and wrapped in
- *      ClientCodeException are left alone to continue propogating upwards.
+ *      ClientCodeException are left alone to continue propagating upwards.
  *  <li>All other unchecked exceptions (i.e. subtypes of RuntimeException
  *      and Error) and caught, and rethrown as a ClientCodeException with
  *      its cause set to the original exception.
@@ -156,7 +157,7 @@ public class ClientCodeWrapper {
             return fo;
     }
 
-    public <T /*super JavaFileOject*/> DiagnosticListener<T> wrap(DiagnosticListener<T> dl) {
+    public <T /*super JavaFileObject*/> DiagnosticListener<T> wrap(DiagnosticListener<T> dl) {
         if (isTrusted(dl))
             return dl;
         return new WrappedDiagnosticListener<>(dl);
@@ -417,6 +418,17 @@ public class ClientCodeWrapper {
         public String toString() {
             return wrappedToString(getClass(), clientJavaFileManager);
         }
+
+        @Override @DefinedBy(Api.COMPILER)
+        public <S> ServiceLoader<S> getServiceLoader(Location location, Class<S> service) throws IOException {
+            try {
+                return clientJavaFileManager.getServiceLoader(location, service);
+            } catch (ClientCodeException e) {
+                throw e;
+            } catch (RuntimeException | Error e) {
+                throw new ClientCodeException(e);
+            }
+        }
     }
 
     protected class WrappedStandardJavaFileManager extends WrappedJavaFileManager
@@ -436,6 +448,18 @@ public class ClientCodeWrapper {
             }
         }
 
+        @Override @DefinedBy(Api.COMPILER)
+        public Iterable<? extends JavaFileObject> getJavaFileObjectsFromPaths(Collection<? extends Path> paths) {
+            try {
+                return ((StandardJavaFileManager)clientJavaFileManager).getJavaFileObjectsFromPaths(paths);
+            } catch (ClientCodeException e) {
+                throw e;
+            } catch (RuntimeException | Error e) {
+                throw new ClientCodeException(e);
+            }
+        }
+
+        @Deprecated(since = "13")
         @Override @DefinedBy(Api.COMPILER)
         public Iterable<? extends JavaFileObject> getJavaFileObjectsFromPaths(Iterable<? extends Path> paths) {
             try {
@@ -550,6 +574,18 @@ public class ClientCodeWrapper {
         public void setPathFactory(PathFactory f) {
             try {
                 ((StandardJavaFileManager)clientJavaFileManager).setPathFactory(f);
+            } catch (ClientCodeException e) {
+                throw e;
+            } catch (RuntimeException | Error e) {
+                throw new ClientCodeException(e);
+            }
+        }
+
+        @Override @DefinedBy(Api.COMPILER)
+        public void setLocationForModule(Location location, String moduleName, Collection<? extends Path> paths) throws IOException {
+            try {
+                System.out.println("invoking wrapped setLocationForModule");
+                ((StandardJavaFileManager)clientJavaFileManager).setLocationForModule(location, moduleName, paths);
             } catch (ClientCodeException e) {
                 throw e;
             } catch (RuntimeException | Error e) {

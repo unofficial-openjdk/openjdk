@@ -81,6 +81,9 @@ class LIR_Assembler: public CompilationResourceObj {
   // returns offset of icache check
   int check_icache();
 
+  bool needs_clinit_barrier_on_entry(ciMethod* method) const;
+  void clinit_barrier(ciMethod* method);
+
   void jobject2reg(jobject o, Register reg);
   void jobject2reg_with_patching(Register reg, CodeEmitInfo* info);
 
@@ -101,13 +104,6 @@ class LIR_Assembler: public CompilationResourceObj {
   void add_debug_info_for_div0_here(CodeEmitInfo* info);
   ImplicitNullCheckStub* add_debug_info_for_null_check(int pc_offset, CodeEmitInfo* cinfo);
   ImplicitNullCheckStub* add_debug_info_for_null_check_here(CodeEmitInfo* info);
-
-  void set_24bit_FPU();
-  void reset_FPU();
-  void fpop();
-  void fxch(int i);
-  void fld(int i);
-  void ffree(int i);
 
   void breakpoint();
   void push(LIR_Opr opr);

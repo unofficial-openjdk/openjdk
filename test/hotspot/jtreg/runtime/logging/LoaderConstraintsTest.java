@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,7 @@ public class LoaderConstraintsTest {
         Collections.addAll(argsList, "-Xmn8m");
         Collections.addAll(argsList, "-Dtest.classes=" + System.getProperty("test.classes","."));
         Collections.addAll(argsList, ClassUnloadTestMain.class.getName());
-        return ProcessTools.createJavaProcessBuilder(argsList.toArray(new String[argsList.size()]));
+        return ProcessTools.createJavaProcessBuilder(argsList);
     }
 
     public static void main(String... args) throws Exception {

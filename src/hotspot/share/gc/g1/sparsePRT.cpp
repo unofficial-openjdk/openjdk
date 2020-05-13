@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,8 +30,6 @@
 #include "gc/shared/cardTableBarrierSet.hpp"
 #include "gc/shared/space.inline.hpp"
 #include "memory/allocation.inline.hpp"
-#include "runtime/atomic.hpp"
-#include "runtime/mutexLocker.hpp"
 
 // Check that the size of the SparsePRTEntry is evenly divisible by the maximum
 // member type to avoid SIGBUS when accessing them.
@@ -57,19 +55,19 @@ bool SparsePRTEntry::contains_card(CardIdx_t card_index) const {
   return false;
 }
 
-SparsePRTEntry::AddCardResult SparsePRTEntry::add_card(CardIdx_t card_index) {
+SparsePRT::AddCardResult SparsePRTEntry::add_card(CardIdx_t card_index) {
   for (int i = 0; i < num_valid_cards(); i++) {
     if (card(i) == card_index) {
-      return found;
+      return SparsePRT::found;
     }
   }
   if (num_valid_cards() < cards_num() - 1) {
     _cards[_next_null] = (card_elem_t)card_index;
     _next_null++;
-    return added;
+    return SparsePRT::added;
    }
   // Otherwise, we're full.
-  return overflow;
+  return SparsePRT::overflow;
 }
 
 void SparsePRTEntry::copy_cards(card_elem_t* cards) const {
@@ -87,38 +85,48 @@ void SparsePRTEntry::copy_cards(SparsePRTEntry* e) const {
 
 float RSHashTable::TableOccupancyFactor = 0.5f;
 
-RSHashTable::RSHashTable(size_t capacity) :
+// The empty table can't hold any entries and is effectively immutable
+// This means it can be used as an initial sentinel value
+static int empty_buckets[] = { RSHashTable::NullEntry };
+RSHashTable RSHashTable::empty_table;
+
+RSHashTable::RSHashTable() :
   _num_entries(0),
-  _capacity(capacity),
-  _capacity_mask(capacity-1),
+  _capacity(0),
+  _capacity_mask(0),
   _occupied_entries(0),
-  _occupied_cards(0),
   _entries(NULL),
+  _buckets(empty_buckets),
+  _free_region(0),
+  _free_list(NullEntry) { }
+
+RSHashTable::RSHashTable(size_t capacity) :
+  _num_entries((capacity * TableOccupancyFactor) + 1),
+  _capacity(capacity),
+  _capacity_mask(capacity - 1),
+  _occupied_entries(0),
+  _entries((SparsePRTEntry*)NEW_C_HEAP_ARRAY(char, _num_entries * SparsePRTEntry::size(), mtGC)),
   _buckets(NEW_C_HEAP_ARRAY(int, capacity, mtGC)),
   _free_region(0),
   _free_list(NullEntry)
 {
-  _num_entries = (capacity * TableOccupancyFactor) + 1;
-  _entries = (SparsePRTEntry*)NEW_C_HEAP_ARRAY(char, _num_entries * SparsePRTEntry::size(), mtGC);
   clear();
 }
 
 RSHashTable::~RSHashTable() {
-  if (_entries != NULL) {
+  // Nothing to free for empty RSHashTable
+  if (_buckets != empty_buckets) {
+    assert(_entries != NULL, "invariant");
     FREE_C_HEAP_ARRAY(SparsePRTEntry, _entries);
-    _entries = NULL;
-  }
-  if (_buckets != NULL) {
     FREE_C_HEAP_ARRAY(int, _buckets);
-    _buckets = NULL;
   }
 }
 
 void RSHashTable::clear() {
+  assert(_buckets != empty_buckets, "Shouldn't call this for the empty_table");
   _occupied_entries = 0;
-  _occupied_cards = 0;
-  guarantee(_entries != NULL, "INV");
-  guarantee(_buckets != NULL, "INV");
+  guarantee(_entries != NULL, "invariant");
+  guarantee(_buckets != NULL, "invariant");
 
   guarantee(_capacity <= ((size_t)1 << (sizeof(int)*BitsPerByte-1)) - 1,
                 "_capacity too large");
@@ -130,14 +138,14 @@ void RSHashTable::clear() {
   _free_region = 0;
 }
 
-bool RSHashTable::add_card(RegionIdx_t region_ind, CardIdx_t card_index) {
+SparsePRT::AddCardResult RSHashTable::add_card(RegionIdx_t region_ind, CardIdx_t card_index) {
+  assert(this != &empty_table, "can't add a card to the empty table");
   SparsePRTEntry* e = entry_for_region_ind_create(region_ind);
   assert(e != NULL && e->r_ind() == region_ind,
          "Postcondition of call above.");
-  SparsePRTEntry::AddCardResult res = e->add_card(card_index);
-  if (res == SparsePRTEntry::added) _occupied_cards++;
+  SparsePRT::AddCardResult res = e->add_card(card_index);
   assert(e->num_valid_cards() > 0, "Postcondition");
-  return res != SparsePRTEntry::overflow;
+  return res;
 }
 
 SparsePRTEntry* RSHashTable::get_entry(RegionIdx_t region_ind) const {
@@ -170,7 +178,6 @@ bool RSHashTable::delete_entry(RegionIdx_t region_ind) {
   if (cur_ind == NullEntry) return false;
   // Otherwise, splice out "cur".
   *prev_loc = cur->next_index();
-  _occupied_cards -= cur->num_valid_cards();
   free_entry(cur_ind);
   _occupied_entries--;
   return true;
@@ -216,63 +223,20 @@ void RSHashTable::add_entry(SparsePRTEntry* e) {
   assert(e->num_valid_cards() > 0, "Precondition.");
   SparsePRTEntry* e2 = entry_for_region_ind_create(e->r_ind());
   e->copy_cards(e2);
-  _occupied_cards += e2->num_valid_cards();
   assert(e2->num_valid_cards() > 0, "Postcondition.");
 }
 
-CardIdx_t RSHashTableIter::find_first_card_in_list() {
-  while (_bl_ind != RSHashTable::NullEntry) {
-    SparsePRTEntry* sparse_entry = _rsht->entry(_bl_ind);
-    if (sparse_entry->num_valid_cards() > 0) {
-      return sparse_entry->card(0);
-    } else {
-      _bl_ind = sparse_entry->next_index();
+bool RSHashTableBucketIter::has_next(SparsePRTEntry*& entry) {
+  while (_bl_ind == RSHashTable::NullEntry)  {
+    if (_tbl_ind + 1 >= _rsht->capacity()) {
+      return false;
     }
-  }
-  // Otherwise, none found:
-  return NoCardFound;
-}
-
-size_t RSHashTableIter::compute_card_ind(CardIdx_t ci) {
-  return (_rsht->entry(_bl_ind)->r_ind() * HeapRegion::CardsPerRegion) + ci;
-}
-
-bool RSHashTableIter::has_next(size_t& card_index) {
-  _card_ind++;
-  if (_bl_ind >= 0) {
-    SparsePRTEntry* e = _rsht->entry(_bl_ind);
-    if (_card_ind < e->num_valid_cards()) {
-      CardIdx_t ci = e->card(_card_ind);
-      card_index = compute_card_ind(ci);
-      return true;
-    }
-  }
-
-  // Otherwise, must find the next valid entry.
-  _card_ind = 0;
-
-  if (_bl_ind != RSHashTable::NullEntry) {
-      _bl_ind = _rsht->entry(_bl_ind)->next_index();
-      CardIdx_t ci = find_first_card_in_list();
-      if (ci != NoCardFound) {
-        card_index = compute_card_ind(ci);
-        return true;
-      }
-  }
-  // If we didn't return above, must go to the next non-null table index.
-  _tbl_ind++;
-  while ((size_t)_tbl_ind < _rsht->capacity()) {
-    _bl_ind = _rsht->_buckets[_tbl_ind];
-    CardIdx_t ci = find_first_card_in_list();
-    if (ci != NoCardFound) {
-      card_index = compute_card_ind(ci);
-      return true;
-    }
-    // Otherwise, try next entry.
     _tbl_ind++;
+    _bl_ind = _rsht->_buckets[_tbl_ind];
   }
-  // Otherwise, there were no entry.
-  return false;
+  entry = _rsht->entry(_bl_ind);
+  _bl_ind = entry->next_index();
+  return true;
 }
 
 bool RSHashTable::contains_card(RegionIdx_t region_index, CardIdx_t card_index) const {
@@ -288,12 +252,14 @@ size_t RSHashTable::mem_size() const {
 // ----------------------------------------------------------------------
 
 SparsePRT::SparsePRT() :
-  _table(new RSHashTable(InitialCapacity)) {
+  _table(&RSHashTable::empty_table) {
 }
 
 
 SparsePRT::~SparsePRT() {
-  delete _table;
+  if (_table != &RSHashTable::empty_table) {
+    delete _table;
+  }
 }
 
 
@@ -303,7 +269,7 @@ size_t SparsePRT::mem_size() const {
   return sizeof(SparsePRT) + _table->mem_size();
 }
 
-bool SparsePRT::add_card(RegionIdx_t region_id, CardIdx_t card_index) {
+SparsePRT::AddCardResult SparsePRT::add_card(RegionIdx_t region_id, CardIdx_t card_index) {
   if (_table->should_expand()) {
     expand();
   }
@@ -319,23 +285,27 @@ bool SparsePRT::delete_entry(RegionIdx_t region_id) {
 }
 
 void SparsePRT::clear() {
-  // If the entry table is not at initial capacity, just create a new one.
-  if (_table->capacity() != InitialCapacity) {
-    delete _table;
-    _table = new RSHashTable(InitialCapacity);
-  } else {
+  // If the entry table not at initial capacity, just reset to the empty table.
+  if (_table->capacity() == InitialCapacity) {
     _table->clear();
+  } else if (_table != &RSHashTable::empty_table) {
+    delete _table;
+    _table = &RSHashTable::empty_table;
   }
 }
 
 void SparsePRT::expand() {
   RSHashTable* last = _table;
-  _table = new RSHashTable(last->capacity() * 2);
-  for (size_t i = 0; i < last->num_entries(); i++) {
-    SparsePRTEntry* e = last->entry((int)i);
-    if (e->valid_entry()) {
-      _table->add_entry(e);
+  if (last != &RSHashTable::empty_table) {
+    _table = new RSHashTable(last->capacity() * 2);
+    for (size_t i = 0; i < last->num_entries(); i++) {
+      SparsePRTEntry* e = last->entry((int)i);
+      if (e->valid_entry()) {
+        _table->add_entry(e);
+      }
     }
+    delete last;
+  } else {
+    _table = new RSHashTable(InitialCapacity);
   }
-  delete last;
 }

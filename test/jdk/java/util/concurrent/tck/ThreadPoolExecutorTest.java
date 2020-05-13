@@ -699,7 +699,7 @@ public class ThreadPoolExecutorTest extends JSR166TestCase {
         Runnable waiter = new CheckedRunnable() { public void realRun() {
             threadsStarted.countDown();
             try {
-                MILLISECONDS.sleep(2 * LONG_DELAY_MS);
+                MILLISECONDS.sleep(LONGER_DELAY_MS);
             } catch (InterruptedException success) {}
             ran.getAndIncrement();
         }};
@@ -2009,6 +2009,51 @@ public class ThreadPoolExecutorTest extends JSR166TestCase {
         assertTrue(p.getRejectedExecutionHandler() instanceof AbortPolicy);
         assertEquals(0, p.getTaskCount());
         assertTrue(p.getQueue().isEmpty());
+    }
+
+    public void testThreadFactoryReturnsTerminatedThread_shouldThrow() {
+        if (!testImplementationDetails)
+            return;
+
+        ThreadFactory returnsTerminatedThread = runnableIgnored -> {
+            Thread thread = new Thread(() -> {});
+            thread.start();
+            try { thread.join(); }
+            catch (InterruptedException ex) { throw new Error(ex); }
+            return thread;
+        };
+        ThreadPoolExecutor p =
+            new ThreadPoolExecutor(1, 1, 1, SECONDS,
+                                   new ArrayBlockingQueue<Runnable>(1),
+                                   returnsTerminatedThread);
+        try (PoolCleaner cleaner = cleaner(p)) {
+            assertThrows(IllegalThreadStateException.class,
+                         () -> p.execute(() -> {}));
+        }
+    }
+
+    public void testThreadFactoryReturnsStartedThread_shouldThrow() {
+        if (!testImplementationDetails)
+            return;
+
+        CountDownLatch latch = new CountDownLatch(1);
+        Runnable awaitLatch = () -> {
+            try { latch.await(); }
+            catch (InterruptedException ex) { throw new Error(ex); }};
+        ThreadFactory returnsStartedThread = runnable -> {
+            Thread thread = new Thread(awaitLatch);
+            thread.start();
+            return thread;
+        };
+        ThreadPoolExecutor p =
+            new ThreadPoolExecutor(1, 1, 1, SECONDS,
+                                   new ArrayBlockingQueue<Runnable>(1),
+                                   returnsStartedThread);
+        try (PoolCleaner cleaner = cleaner(p)) {
+            assertThrows(IllegalThreadStateException.class,
+                         () -> p.execute(() -> {}));
+            latch.countDown();
+        }
     }
 
 }

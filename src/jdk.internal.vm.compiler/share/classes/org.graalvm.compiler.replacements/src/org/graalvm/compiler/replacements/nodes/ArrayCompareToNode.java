@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,10 +24,12 @@
 
 package org.graalvm.compiler.replacements.nodes;
 
+import static org.graalvm.compiler.core.common.GraalOptions.UseGraalStubs;
 import static org.graalvm.compiler.nodeinfo.InputType.Memory;
 import static org.graalvm.compiler.nodeinfo.NodeCycles.CYCLES_1024;
 import static org.graalvm.compiler.nodeinfo.NodeSize.SIZE_1024;
 
+import org.graalvm.compiler.core.common.spi.ForeignCallLinkage;
 import org.graalvm.compiler.core.common.type.StampFactory;
 import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.graph.NodeClass;
@@ -40,7 +42,7 @@ import org.graalvm.compiler.nodes.NamedLocationIdentity;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.ValueNodeUtil;
 import org.graalvm.compiler.nodes.memory.MemoryAccess;
-import org.graalvm.compiler.nodes.memory.MemoryNode;
+import org.graalvm.compiler.nodes.memory.MemoryKill;
 import org.graalvm.compiler.nodes.spi.LIRLowerable;
 import org.graalvm.compiler.nodes.spi.NodeLIRBuilderTool;
 import org.graalvm.compiler.nodes.spi.Virtualizable;
@@ -79,7 +81,7 @@ public final class ArrayCompareToNode extends FixedWithNextNode implements LIRLo
     /** Length of the other array. */
     @Input ValueNode length2;
 
-    @OptionalInput(Memory) MemoryNode lastLocationAccess;
+    @OptionalInput(Memory) MemoryKill lastLocationAccess;
 
     public ArrayCompareToNode(ValueNode array1, ValueNode array2, ValueNode length1, ValueNode length2, @ConstantNodeParameter JavaKind kind1, @ConstantNodeParameter JavaKind kind2) {
         super(TYPE, StampFactory.forKind(JavaKind.Int));
@@ -117,24 +119,41 @@ public final class ArrayCompareToNode extends FixedWithNextNode implements LIRLo
     @NodeIntrinsic
     public static native int compareTo(Object array1, Object array2, int length1, int length2, @ConstantNodeParameter JavaKind kind1, @ConstantNodeParameter JavaKind kind2);
 
+    public JavaKind getKind1() {
+        return kind1;
+    }
+
+    public JavaKind getKind2() {
+        return kind2;
+    }
+
     @Override
     public void generate(NodeLIRBuilderTool gen) {
+        if (UseGraalStubs.getValue(graph().getOptions())) {
+            ForeignCallLinkage linkage = gen.lookupGraalStub(this);
+            if (linkage != null) {
+                Value result = gen.getLIRGeneratorTool().emitForeignCall(linkage, null, gen.operand(array1), gen.operand(array2), gen.operand(length1), gen.operand(length2));
+                gen.setResult(this, result);
+                return;
+            }
+        }
+
         Value result = gen.getLIRGeneratorTool().emitArrayCompareTo(kind1, kind2, gen.operand(array1), gen.operand(array2), gen.operand(length1), gen.operand(length2));
         gen.setResult(this, result);
     }
 
     @Override
     public LocationIdentity getLocationIdentity() {
-        return NamedLocationIdentity.getArrayLocation(kind1);
+        return kind1 != kind2 ? LocationIdentity.ANY_LOCATION : NamedLocationIdentity.getArrayLocation(kind1);
     }
 
     @Override
-    public MemoryNode getLastLocationAccess() {
+    public MemoryKill getLastLocationAccess() {
         return lastLocationAccess;
     }
 
     @Override
-    public void setLastLocationAccess(MemoryNode lla) {
+    public void setLastLocationAccess(MemoryKill lla) {
         updateUsages(ValueNodeUtil.asNode(lastLocationAccess), ValueNodeUtil.asNode(lla));
         lastLocationAccess = lla;
     }

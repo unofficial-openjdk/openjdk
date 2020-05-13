@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,13 +34,20 @@
 #include "interpreter/abstractInterpreter.hpp"
 #include "jvmci/compilerRuntime.hpp"
 #include "jvmci/jvmciRuntime.hpp"
+#include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
+#include "memory/universe.hpp"
+#include "oops/compressedOops.hpp"
+#include "oops/klass.inline.hpp"
 #include "oops/method.inline.hpp"
+#include "runtime/atomic.hpp"
+#include "runtime/deoptimization.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/os.hpp"
 #include "runtime/safepointVerifiers.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/vmOperations.hpp"
+#include "utilities/powerOfTwo.hpp"
 #include "utilities/sizes.hpp"
 
 bool AOTLib::_narrow_oop_shift_initialized = false;
@@ -89,7 +96,7 @@ Klass* AOTCodeHeap::lookup_klass(const char* name, int len, const Method* method
   Handle protection_domain(thread, caller->method_holder()->protection_domain());
 
   // Ignore wrapping L and ;
-  if (name[0] == 'L') {
+  if (name[0] == JVM_SIGNATURE_CLASS) {
     assert(len > 2, "small name %s", name);
     name++;
     len -= 2;
@@ -175,11 +182,8 @@ void AOTLib::verify_config() {
   verify_flag(_config->_useBiasedLocking, UseBiasedLocking, "UseBiasedLocking");
   verify_flag(_config->_objectAlignment, ObjectAlignmentInBytes, "ObjectAlignmentInBytes");
   verify_flag(_config->_contendedPaddingWidth, ContendedPaddingWidth, "ContendedPaddingWidth");
-  verify_flag(_config->_fieldsAllocationStyle, FieldsAllocationStyle, "FieldsAllocationStyle");
-  verify_flag(_config->_compactFields, CompactFields, "CompactFields");
   verify_flag(_config->_enableContended, EnableContended, "EnableContended");
   verify_flag(_config->_restrictContended, RestrictContended, "RestrictContended");
-  verify_flag(_config->_threadLocalHandshakes, ThreadLocalHandshakes, "ThreadLocalHandshakes");
 
   if (!TieredCompilation && _config->_tieredAOT) {
     handle_config_error("Shared file %s error: Expected to run with tiered compilation on", _name);
@@ -210,12 +214,8 @@ AOTLib::~AOTLib() {
 }
 
 AOTCodeHeap::~AOTCodeHeap() {
-  if (_classes != NULL) {
-    FREE_C_HEAP_ARRAY(AOTClass, _classes);
-  }
-  if (_code_to_aot != NULL) {
-    FREE_C_HEAP_ARRAY(CodeToAMethod, _code_to_aot);
-  }
+  FREE_C_HEAP_ARRAY(AOTClass, _classes);
+  FREE_C_HEAP_ARRAY(CodeToAMethod, _code_to_aot);
 }
 
 AOTLib::AOTLib(void* handle, const char* name, int dso_id) : _valid(true), _dl_handle(handle), _dso_id(dso_id) {
@@ -346,14 +346,17 @@ void AOTCodeHeap::publish_aot(const methodHandle& mh, AOTMethodData* method_data
   AOTCompiledMethod *aot = new AOTCompiledMethod(code, mh(), meta, metadata_table, metadata_size, state_adr, this, name, code_id, _aot_id);
   assert(_code_to_aot[code_id]._aot == NULL, "should be not initialized");
   _code_to_aot[code_id]._aot = aot; // Should set this first
-  if (Atomic::cmpxchg(in_use, &_code_to_aot[code_id]._state, not_set) != not_set) {
+  if (Atomic::cmpxchg(&_code_to_aot[code_id]._state, not_set, in_use) != not_set) {
     _code_to_aot[code_id]._aot = NULL; // Clean
   } else { // success
     // Publish method
 #ifdef TIERED
     mh->set_aot_code(aot);
 #endif
-    Method::set_code(mh, aot);
+    {
+      MutexLocker pl(CompiledMethod_lock, Mutex::_no_safepoint_check_flag);
+      Method::set_code(mh, aot);
+    }
     if (PrintAOT || (PrintCompilation && PrintAOT)) {
       PauseNoSafepointVerifier pnsv(&nsv); // aot code is registered already
       aot->print_on(tty, NULL);
@@ -399,9 +402,6 @@ void AOTCodeHeap::register_stubs() {
     int len = Bytes::get_Java_u2((address)stub_name);
     stub_name += 2;
     char* full_name = NEW_C_HEAP_ARRAY(char, len+5, mtCode);
-    if (full_name == NULL) { // No memory?
-      break;
-    }
     memcpy(full_name, "AOT ", 4);
     memcpy(full_name+4, stub_name, len);
     full_name[len+4] = 0;
@@ -409,7 +409,7 @@ void AOTCodeHeap::register_stubs() {
     AOTCompiledMethod* aot = new AOTCompiledMethod(entry, NULL, meta, metadata_table, metadata_size, state_adr, this, full_name, code_id, i);
     assert(_code_to_aot[code_id]._aot  == NULL, "should be not initialized");
     _code_to_aot[code_id]._aot  = aot;
-    if (Atomic::cmpxchg(in_use, &_code_to_aot[code_id]._state, not_set) != not_set) {
+    if (Atomic::cmpxchg(&_code_to_aot[code_id]._state, not_set, in_use) != not_set) {
       fatal("stab '%s' code state is %d", full_name, _code_to_aot[code_id]._state);
     }
     // Adjust code buffer boundaries only for stubs because they are last in the buffer.
@@ -450,7 +450,6 @@ void AOTCodeHeap::link_graal_runtime_symbols()  {
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_jvmci_runtime_write_barrier_post", address, JVMCIRuntime::write_barrier_post);
 #endif
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_jvmci_runtime_identity_hash_code", address, JVMCIRuntime::identity_hash_code);
-    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_jvmci_runtime_thread_is_interrupted", address, JVMCIRuntime::thread_is_interrupted);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_jvmci_runtime_exception_handler_for_pc", address, JVMCIRuntime::exception_handler_for_pc);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_jvmci_runtime_test_deoptimize_call_int", address, JVMCIRuntime::test_deoptimize_call_int);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_jvmci_runtime_throw_and_post_jvmti_exception", address, JVMCIRuntime::throw_and_post_jvmti_exception);
@@ -465,6 +464,7 @@ void AOTCodeHeap::link_shared_runtime_symbols() {
     SET_AOT_GLOBAL_SYMBOL_VALUE("_resolve_virtual_entry", address, SharedRuntime::get_resolve_virtual_call_stub());
     SET_AOT_GLOBAL_SYMBOL_VALUE("_resolve_opt_virtual_entry", address, SharedRuntime::get_resolve_opt_virtual_call_stub());
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_deopt_blob_unpack", address, SharedRuntime::deopt_blob()->unpack());
+    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_deopt_blob_unpack_with_exception_in_tls", address, SharedRuntime::deopt_blob()->unpack_with_exception_in_tls());
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_deopt_blob_uncommon_trap", address, SharedRuntime::deopt_blob()->uncommon_trap());
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_ic_miss_stub", address, SharedRuntime::get_ic_miss_stub());
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_handle_wrong_method_stub", address, SharedRuntime::get_handle_wrong_method_stub());
@@ -530,6 +530,8 @@ void AOTCodeHeap::link_stub_routines_symbols() {
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_aescrypt_decryptBlock", address, StubRoutines::_aescrypt_decryptBlock);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_cipherBlockChaining_encryptAESCrypt", address, StubRoutines::_cipherBlockChaining_encryptAESCrypt);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_cipherBlockChaining_decryptAESCrypt", address, StubRoutines::_cipherBlockChaining_decryptAESCrypt);
+    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_electronicCodeBook_encryptAESCrypt", address, StubRoutines::_electronicCodeBook_encryptAESCrypt);
+    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_electronicCodeBook_decryptAESCrypt", address, StubRoutines::_electronicCodeBook_decryptAESCrypt);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_update_bytes_crc32", address, StubRoutines::_updateBytesCRC32);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_crc_table_adr", address, StubRoutines::_crc_table_adr);
 
@@ -553,6 +555,8 @@ void AOTCodeHeap::link_stub_routines_symbols() {
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_montgomeryMultiply",  address, StubRoutines::_montgomeryMultiply);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_montgomerySquare", address, StubRoutines::_montgomerySquare);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_vectorizedMismatch", address, StubRoutines::_vectorizedMismatch);
+    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_bigIntegerRightShiftWorker", address, StubRoutines::_bigIntegerRightShiftWorker);
+    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_bigIntegerLeftShiftWorker", address, StubRoutines::_bigIntegerLeftShiftWorker);
 
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_throw_delayed_StackOverflowError_entry", address, StubRoutines::_throw_delayed_StackOverflowError_entry);
 
@@ -576,9 +580,8 @@ void AOTCodeHeap::link_global_lib_symbols() {
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_card_table_address", address, (BarrierSet::barrier_set()->is_a(BarrierSet::CardTableBarrierSet) ? ci_card_table_address() : NULL));
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_heap_top_address", address, (heap->supports_inline_contig_alloc() ? heap->top_addr() : NULL));
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_heap_end_address", address, (heap->supports_inline_contig_alloc() ? heap->end_addr() : NULL));
-    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_polling_page", address, os::get_polling_page());
-    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_narrow_klass_base_address", address, Universe::narrow_klass_base());
-    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_narrow_oop_base_address", address, Universe::narrow_oop_base());
+    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_narrow_klass_base_address", address, CompressedKlassPointers::base());
+    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_narrow_oop_base_address", address, CompressedOops::base());
 #if INCLUDE_G1GC
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_log_of_heap_region_grain_bytes", int, HeapRegion::LogOfHRGrainBytes);
 #endif
@@ -719,7 +722,7 @@ void AOTCodeHeap::sweep_dependent_methods(int* indexes, int methods_cnt) {
   for (int i = 0; i < methods_cnt; ++i) {
     int code_id = indexes[i];
     // Invalidate aot code.
-    if (Atomic::cmpxchg(invalid, &_code_to_aot[code_id]._state, not_set) != not_set) {
+    if (Atomic::cmpxchg(&_code_to_aot[code_id]._state, not_set, invalid) != not_set) {
       if (_code_to_aot[code_id]._state == in_use) {
         AOTCompiledMethod* aot = _code_to_aot[code_id]._aot;
         assert(aot != NULL, "aot should be set");
@@ -731,8 +734,7 @@ void AOTCodeHeap::sweep_dependent_methods(int* indexes, int methods_cnt) {
     }
   }
   if (marked > 0) {
-    VM_Deoptimize op;
-    VMThread::execute(&op);
+    Deoptimization::deoptimize_all_marked();
   }
 }
 
@@ -931,13 +933,13 @@ void AOTCodeHeap::oops_do(OopClosure* f) {
 // Scan only klasses_got cells which should have only Klass*,
 // metadata_got cells are scanned only for alive AOT methods
 // by AOTCompiledMethod::metadata_do().
-void AOTCodeHeap::got_metadata_do(void f(Metadata*)) {
+void AOTCodeHeap::got_metadata_do(MetadataClosure* f) {
   for (int i = 1; i < _klasses_got_size; i++) {
     Metadata** p = &_klasses_got[i];
     Metadata* md = *p;
     if (md == NULL)  continue;  // skip non-oops
     if (Metaspace::contains(md)) {
-      f(md);
+      f->do_metadata(md);
     } else {
       intptr_t meta = (intptr_t)md;
       fatal("Invalid value in _klasses_got[%d] = " INTPTR_FORMAT, i, meta);
@@ -969,7 +971,7 @@ int AOTCodeHeap::verify_icholder_relocations() {
 }
 #endif
 
-void AOTCodeHeap::metadata_do(void f(Metadata*)) {
+void AOTCodeHeap::metadata_do(MetadataClosure* f) {
   for (int index = 0; index < _method_count; index++) {
     if (_code_to_aot[index]._state != in_use) {
       continue; // Skip uninitialized entries.
@@ -1047,7 +1049,7 @@ bool AOTCodeHeap::reconcile_dynamic_klass(AOTCompiledMethod *caller, InstanceKla
 
   InstanceKlass* dyno = InstanceKlass::cast(dyno_klass);
 
-  if (!dyno->is_unsafe_anonymous()) {
+  if (!dyno->is_hidden() && !dyno->is_unsafe_anonymous()) {
     if (_klasses_got[dyno_data->_got_index] != dyno) {
       // compile-time class different from runtime class, fail and deoptimize
       sweep_dependent_methods(holder_data);

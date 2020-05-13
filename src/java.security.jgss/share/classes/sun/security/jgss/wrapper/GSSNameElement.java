@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import org.ietf.jgss.*;
 import java.security.Provider;
 import java.security.Security;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import sun.security.krb5.Realm;
 import sun.security.jgss.GSSUtil;
 import sun.security.util.ObjectIdentifier;
@@ -97,6 +96,7 @@ public class GSSNameElement implements GSSNameSpi {
         printableName = "<DEFAULT ACCEPTOR>";
     }
 
+    // Warning: called by NativeUtil.c
     GSSNameElement(long pNativeName, GSSLibStub stub) throws GSSException {
         assert(stub != null);
         if (pNativeName == 0) {

@@ -29,18 +29,21 @@
 #include "utilities/exceptions.hpp"
 
 class Klass;
-class JavaThread;
 class outputStream;
 
 class JfrJavaSupport : public AllStatic {
  public:
   static jobject local_jni_handle(const oop obj, Thread* t);
   static jobject local_jni_handle(const jobject handle, Thread* t);
-  static void destroy_local_jni_handle(const jobject handle);
+  static void destroy_local_jni_handle(jobject handle);
 
   static jobject global_jni_handle(const oop obj, Thread* t);
   static jobject global_jni_handle(const jobject handle, Thread* t);
-  static void destroy_global_jni_handle(const jobject handle);
+  static void destroy_global_jni_handle(jobject handle);
+
+  static jweak global_weak_jni_handle(const oop obj, Thread* t);
+  static jweak global_weak_jni_handle(const jobject handle, Thread* t);
+  static void destroy_global_weak_jni_handle(jweak handle);
 
   static oop resolve_non_null(jobject obj);
   static void notify_all(jobject obj, TRAPS);
@@ -81,11 +84,19 @@ class JfrJavaSupport : public AllStatic {
   static void throw_internal_error(const char* message, TRAPS);
   static void throw_out_of_memory_error(const char* message, TRAPS);
   static void throw_class_format_error(const char* message, TRAPS);
+  static void throw_runtime_exception(const char* message, TRAPS);
 
   static bool is_jdk_jfr_module_available();
   static bool is_jdk_jfr_module_available(outputStream* stream, TRAPS);
 
-  static jlong jfr_thread_id(jobject target_thread);
+  static jlong jfr_thread_id(jobject thread);
+  static void exclude(jobject thread);
+  static void include(jobject thread);
+  static bool is_excluded(jobject thread);
+  static void on_thread_start(Thread* t);
+
+  static jobject get_handler(jobject clazz, TRAPS);
+  static bool set_handler(jobject clazz, jobject handler, TRAPS);
 
   // critical
   static void abort(jstring errorMsg, TRAPS);

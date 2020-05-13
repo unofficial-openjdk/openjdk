@@ -1,5 +1,5 @@
- /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+/*
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import java.security.*;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Map;
 import sun.security.ssl.SSLHandshake.HandshakeMessage;
 import sun.security.ssl.X509Authentication.X509Credentials;
 import sun.security.ssl.X509Authentication.X509Possession;
@@ -286,6 +287,17 @@ final class CertificateVerify {
                 ByteBuffer message) throws IOException {
             // The consuming happens in server side only.
             ServerHandshakeContext shc = (ServerHandshakeContext)context;
+
+            // Clean up this consumer
+            shc.handshakeConsumers.remove(SSLHandshake.CERTIFICATE_VERIFY.id);
+
+            // Ensure that the CV message follows the CKE
+            if (shc.handshakeConsumers.containsKey(
+                    SSLHandshake.CLIENT_KEY_EXCHANGE.id)) {
+                throw shc.conContext.fatal(Alert.UNEXPECTED_MESSAGE,
+                        "Unexpected CertificateVerify handshake message");
+            }
+
             S30CertificateVerifyMessage cvm =
                     new S30CertificateVerifyMessage(shc, message);
             if (SSLLogger.isOn && SSLLogger.isOn("ssl,handshake")) {
@@ -528,6 +540,17 @@ final class CertificateVerify {
                 ByteBuffer message) throws IOException {
             // The consuming happens in server side only.
             ServerHandshakeContext shc = (ServerHandshakeContext)context;
+
+            // Clean up this consumer
+            shc.handshakeConsumers.remove(SSLHandshake.CERTIFICATE_VERIFY.id);
+
+            // Ensure that the CV message follows the CKE
+            if (shc.handshakeConsumers.containsKey(
+                    SSLHandshake.CLIENT_KEY_EXCHANGE.id)) {
+                throw shc.conContext.fatal(Alert.UNEXPECTED_MESSAGE,
+                        "Unexpected CertificateVerify handshake message");
+            }
+
             T10CertificateVerifyMessage cvm =
                     new T10CertificateVerifyMessage(shc, message);
             if (SSLLogger.isOn && SSLLogger.isOn("ssl,handshake")) {
@@ -563,30 +586,28 @@ final class CertificateVerify {
 
             // This happens in client side only.
             ClientHandshakeContext chc = (ClientHandshakeContext)context;
-            this.signatureScheme = SignatureScheme.getPreferableAlgorithm(
+            Map.Entry<SignatureScheme, Signature> schemeAndSigner =
+                    SignatureScheme.getSignerOfPreferableAlgorithm(
+                    chc.algorithmConstraints,
                     chc.peerRequestedSignatureSchemes,
-                    x509Possession.popPrivateKey,
+                    x509Possession,
                     chc.negotiatedProtocol);
-            if (signatureScheme == null) {
+            if (schemeAndSigner == null) {
                 // Unlikely, the credentials generator should have
                 // selected the preferable signature algorithm properly.
                 throw chc.conContext.fatal(Alert.INTERNAL_ERROR,
-                    "No preferred signature algorithm for CertificateVerify");
+                    "No supported CertificateVerify signature algorithm for " +
+                    x509Possession.popPrivateKey.getAlgorithm() +
+                    "  key");
             }
 
+            this.signatureScheme = schemeAndSigner.getKey();
             byte[] temproary = null;
             try {
-                Signature signer =
-                    signatureScheme.getSignature(x509Possession.popPrivateKey);
+                Signature signer = schemeAndSigner.getValue();
                 signer.update(chc.handshakeHash.archived());
                 temproary = signer.sign();
-            } catch (NoSuchAlgorithmException |
-                    InvalidAlgorithmParameterException nsae) {
-                throw chc.conContext.fatal(Alert.INTERNAL_ERROR,
-                        "Unsupported signature algorithm (" +
-                        signatureScheme.name +
-                        ") used in CertificateVerify handshake message", nsae);
-            } catch (InvalidKeyException | SignatureException ikse) {
+            } catch (SignatureException ikse) {
                 throw chc.conContext.fatal(Alert.HANDSHAKE_FAILURE,
                         "Cannot produce CertificateVerify signature", ikse);
             }
@@ -646,7 +667,7 @@ final class CertificateVerify {
             this.signature = Record.getBytes16(m);
             try {
                 Signature signer =
-                    signatureScheme.getSignature(x509Credentials.popPublicKey);
+                    signatureScheme.getVerifier(x509Credentials.popPublicKey);
                 signer.update(shc.handshakeHash.archived());
                 if (!signer.verify(signature)) {
                     throw shc.conContext.fatal(Alert.HANDSHAKE_FAILURE,
@@ -768,6 +789,17 @@ final class CertificateVerify {
                 ByteBuffer message) throws IOException {
             // The consuming happens in server side only.
             ServerHandshakeContext shc = (ServerHandshakeContext)context;
+
+            // Clean up this consumer
+            shc.handshakeConsumers.remove(SSLHandshake.CERTIFICATE_VERIFY.id);
+
+            // Ensure that the CV message follows the CKE
+            if (shc.handshakeConsumers.containsKey(
+                    SSLHandshake.CLIENT_KEY_EXCHANGE.id)) {
+                throw shc.conContext.fatal(Alert.UNEXPECTED_MESSAGE,
+                        "Unexpected CertificateVerify handshake message");
+            }
+
             T12CertificateVerifyMessage cvm =
                     new T12CertificateVerifyMessage(shc, message);
             if (SSLLogger.isOn && SSLLogger.isOn("ssl,handshake")) {
@@ -864,16 +896,22 @@ final class CertificateVerify {
                 X509Possession x509Possession) throws IOException {
             super(context);
 
-            this.signatureScheme = SignatureScheme.getPreferableAlgorithm(
+            Map.Entry<SignatureScheme, Signature> schemeAndSigner =
+                    SignatureScheme.getSignerOfPreferableAlgorithm(
+                    context.algorithmConstraints,
                     context.peerRequestedSignatureSchemes,
-                    x509Possession.popPrivateKey,
+                    x509Possession,
                     context.negotiatedProtocol);
-            if (signatureScheme == null) {
+            if (schemeAndSigner == null) {
                 // Unlikely, the credentials generator should have
                 // selected the preferable signature algorithm properly.
                 throw context.conContext.fatal(Alert.INTERNAL_ERROR,
-                    "No preferred signature algorithm for CertificateVerify");
+                    "No supported CertificateVerify signature algorithm for " +
+                    x509Possession.popPrivateKey.getAlgorithm() +
+                    "  key");
             }
+
+            this.signatureScheme = schemeAndSigner.getKey();
 
             byte[] hashValue = context.handshakeHash.digest();
             byte[] contentCovered;
@@ -891,17 +929,10 @@ final class CertificateVerify {
 
             byte[] temproary = null;
             try {
-                Signature signer =
-                    signatureScheme.getSignature(x509Possession.popPrivateKey);
+                Signature signer = schemeAndSigner.getValue();
                 signer.update(contentCovered);
                 temproary = signer.sign();
-            } catch (NoSuchAlgorithmException |
-                    InvalidAlgorithmParameterException nsae) {
-                throw context.conContext.fatal(Alert.INTERNAL_ERROR,
-                        "Unsupported signature algorithm (" +
-                        signatureScheme.name +
-                        ") used in CertificateVerify handshake message", nsae);
-            } catch (InvalidKeyException | SignatureException ikse) {
+            } catch (SignatureException ikse) {
                 throw context.conContext.fatal(Alert.HANDSHAKE_FAILURE,
                         "Cannot produce CertificateVerify signature", ikse);
             }
@@ -972,7 +1003,7 @@ final class CertificateVerify {
 
             try {
                 Signature signer =
-                    signatureScheme.getSignature(x509Credentials.popPublicKey);
+                    signatureScheme.getVerifier(x509Credentials.popPublicKey);
                 signer.update(contentCovered);
                 if (!signer.verify(signature)) {
                     throw context.conContext.fatal(Alert.HANDSHAKE_FAILURE,
@@ -1122,6 +1153,10 @@ final class CertificateVerify {
                 ByteBuffer message) throws IOException {
             // The producing happens in handshake context only.
             HandshakeContext hc = (HandshakeContext)context;
+
+            // Clean up this consumer
+            hc.handshakeConsumers.remove(SSLHandshake.CERTIFICATE_VERIFY.id);
+
             T13CertificateVerifyMessage cvm =
                     new T13CertificateVerifyMessage(hc, message);
             if (SSLLogger.isOn && SSLLogger.isOn("ssl,handshake")) {

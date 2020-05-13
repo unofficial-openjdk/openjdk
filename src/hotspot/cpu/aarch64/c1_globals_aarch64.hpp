@@ -41,13 +41,7 @@ define_pd_global(bool, PreferInterpreterNativeStubs, false);
 define_pd_global(bool, ProfileTraps,                 false);
 define_pd_global(bool, UseOnStackReplacement,        true );
 define_pd_global(bool, TieredCompilation,            false);
-#ifdef BUILTIN_SIM
-// We compile very aggressively with the builtin simulator because
-// doing so greatly reduces run times and tests more code.
-define_pd_global(intx, CompileThreshold,             150 );
-#else
 define_pd_global(intx, CompileThreshold,             1500 );
-#endif
 
 define_pd_global(intx, OnStackReplacePercentage,     933  );
 define_pd_global(intx, FreqInlineSize,               325  );
@@ -67,7 +61,6 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
 define_pd_global(bool, CICompileOSR,                 true );
 #endif // !TIERED
 define_pd_global(bool, UseTypeProfile,               false);
-define_pd_global(bool, RoundFPResults,               true );
 
 define_pd_global(bool, LIRFillDelaySlots,            false);
 define_pd_global(bool, OptimizeSinglePrecision,      true );

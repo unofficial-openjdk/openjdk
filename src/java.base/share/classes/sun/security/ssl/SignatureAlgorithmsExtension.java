@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,21 +82,25 @@ final class SignatureAlgorithmsExtension {
             }
         }
 
-        SignatureSchemesSpec(ByteBuffer buffer) throws IOException {
+        SignatureSchemesSpec(HandshakeContext hc,
+                ByteBuffer buffer) throws IOException {
             if (buffer.remaining() < 2) {      // 2: the length of the list
-                throw new SSLProtocolException(
-                    "Invalid signature_algorithms: insufficient data");
+                throw hc.conContext.fatal(Alert.DECODE_ERROR,
+                        new SSLProtocolException(
+                    "Invalid signature_algorithms: insufficient data"));
             }
 
             byte[] algs = Record.getBytes16(buffer);
             if (buffer.hasRemaining()) {
-                throw new SSLProtocolException(
-                    "Invalid signature_algorithms: unknown extra data");
+                throw hc.conContext.fatal(Alert.DECODE_ERROR,
+                        new SSLProtocolException(
+                    "Invalid signature_algorithms: unknown extra data"));
             }
 
             if (algs == null || algs.length == 0 || (algs.length & 0x01) != 0) {
-                throw new SSLProtocolException(
-                    "Invalid signature_algorithms: incomplete data");
+                throw hc.conContext.fatal(Alert.DECODE_ERROR,
+                        new SSLProtocolException(
+                    "Invalid signature_algorithms: incomplete data"));
             }
 
             int[] schemes = new int[algs.length / 2];
@@ -144,9 +148,9 @@ final class SignatureAlgorithmsExtension {
     private static final
             class SignatureSchemesStringizer implements SSLStringizer {
         @Override
-        public String toString(ByteBuffer buffer) {
+        public String toString(HandshakeContext hc, ByteBuffer buffer) {
             try {
-                return (new SignatureSchemesSpec(buffer)).toString();
+                return (new SignatureSchemesSpec(hc, buffer)).toString();
             } catch (IOException ioe) {
                 // For debug logging only, so please swallow exceptions.
                 return ioe.getMessage();
@@ -185,6 +189,7 @@ final class SignatureAlgorithmsExtension {
             if (chc.localSupportedSignAlgs == null) {
                 chc.localSupportedSignAlgs =
                     SignatureScheme.getSupportedAlgorithms(
+                            chc.sslConfig,
                             chc.algorithmConstraints, chc.activeProtocols);
             }
 
@@ -234,12 +239,7 @@ final class SignatureAlgorithmsExtension {
             }
 
             // Parse the extension.
-            SignatureSchemesSpec spec;
-            try {
-                spec = new SignatureSchemesSpec(buffer);
-            } catch (IOException ioe) {
-                throw shc.conContext.fatal(Alert.UNEXPECTED_MESSAGE, ioe);
-            }
+            SignatureSchemesSpec spec = new SignatureSchemesSpec(shc, buffer);
 
             // Update the context.
             shc.handshakeExtensions.put(
@@ -277,6 +277,7 @@ final class SignatureAlgorithmsExtension {
             // update the context
             List<SignatureScheme> sss =
                     SignatureScheme.getSupportedAlgorithms(
+                            shc.sslConfig,
                             shc.algorithmConstraints, shc.negotiatedProtocol,
                             spec.signatureSchemes);
             shc.peerRequestedSignatureSchemes = sss;
@@ -410,6 +411,7 @@ final class SignatureAlgorithmsExtension {
             // Produce the extension.
             List<SignatureScheme> sigAlgs =
                     SignatureScheme.getSupportedAlgorithms(
+                            shc.sslConfig,
                             shc.algorithmConstraints,
                             List.of(shc.negotiatedProtocol));
 
@@ -458,12 +460,7 @@ final class SignatureAlgorithmsExtension {
             }
 
             // Parse the extension.
-            SignatureSchemesSpec spec;
-            try {
-                spec = new SignatureSchemesSpec(buffer);
-            } catch (IOException ioe) {
-                throw chc.conContext.fatal(Alert.UNEXPECTED_MESSAGE, ioe);
-            }
+            SignatureSchemesSpec spec = new SignatureSchemesSpec(chc, buffer);
 
             List<SignatureScheme> knownSignatureSchemes = new LinkedList<>();
             for (int id : spec.signatureSchemes) {
@@ -510,6 +507,7 @@ final class SignatureAlgorithmsExtension {
             // update the context
             List<SignatureScheme> sss =
                     SignatureScheme.getSupportedAlgorithms(
+                            chc.sslConfig,
                             chc.algorithmConstraints, chc.negotiatedProtocol,
                             spec.signatureSchemes);
             chc.peerRequestedSignatureSchemes = sss;

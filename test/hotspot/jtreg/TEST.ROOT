@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,8 @@
 # It also contains test-suite configuration information.
 
 # The list of keywords supported in this test suite
-keys=cte_test jcmd nmt regression gc stress metaspace headful intermittent
+# randomness:           test uses randomness, test cases differ from run to run
+keys=cte_test jcmd nmt regression gc stress metaspace headful intermittent randomness
 
 groups=TEST.groups TEST.quick-groups
 
@@ -35,7 +36,9 @@ groups=TEST.groups TEST.quick-groups
 # to determine additional characteristics of the system for use with the @requires tag.
 # Note: compiled bootlibs code will be located in the folder 'bootClasses'
 requires.extraPropDefns = ../../jtreg-ext/requires/VMProps.java
-requires.extraPropDefns.bootlibs = ../../lib/sun ../../lib/jdk/test/lib/Platform.java
+requires.extraPropDefns.bootlibs = ../../lib/sun \
+    ../../lib/jdk/test/lib/Platform.java \
+    ../../lib/jdk/test/lib/Container.java
 requires.extraPropDefns.vmOpts = -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:bootClasses
 requires.properties= \
     sun.arch.data.model \
@@ -45,7 +48,6 @@ requires.properties= \
     vm.gc.G1 \
     vm.gc.Serial \
     vm.gc.Parallel \
-    vm.gc.ConcMarkSweep \
     vm.gc.Shenandoah \
     vm.gc.Epsilon \
     vm.gc.Z \
@@ -54,7 +56,6 @@ requires.properties= \
     vm.cpu.features \
     vm.debug \
     vm.hasSA \
-    vm.hasSAandCanAttach \
     vm.hasJFR \
     vm.rtm.cpu \
     vm.rtm.compiler \
@@ -70,7 +71,7 @@ requires.properties= \
     test.vm.gc.nvdimm
 
 # Minimum jtreg version
-requiredVersion=4.2 b14
+requiredVersion=5.0 b1
 
 # Path to libraries in the topmost test directory. This is needed so @library
 # does not need ../../../ notation to reach them
@@ -81,6 +82,3 @@ useNewOptions=true
 
 # Use --patch-module instead of -Xmodule:
 useNewPatchModule=true
-
-# disabled till JDK-8219140 is fixed
-allowSmartActionArgs=false

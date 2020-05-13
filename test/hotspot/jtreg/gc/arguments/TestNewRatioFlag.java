@@ -84,7 +84,7 @@ public class TestNewRatioFlag {
                 Integer.toString(ratio)
         );
 
-        ProcessBuilder procBuilder = ProcessTools.createJavaProcessBuilder(vmOptions.toArray(new String[vmOptions.size()]));
+        ProcessBuilder procBuilder = GCArguments.createJavaProcessBuilder(vmOptions);
         OutputAnalyzer analyzer = new OutputAnalyzer(procBuilder.start());
         analyzer.shouldHaveExitValue(0);
         System.out.println(analyzer.getOutput());
@@ -101,7 +101,6 @@ public class TestNewRatioFlag {
             int expectedRatio = Integer.valueOf(args[0]);
             switch (GCTypes.YoungGCType.getYoungGCType()) {
                 case DefNew:
-                case ParNew:
                     verifyDefNewNewRatio(expectedRatio);
                     break;
                 case PSNew:

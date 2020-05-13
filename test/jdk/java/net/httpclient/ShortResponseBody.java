@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,13 +50,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 import jdk.test.lib.net.SimpleSSLContext;
+import org.testng.ITestContext;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -106,6 +107,13 @@ public class ShortResponseBody {
     };
     final ExecutorService service = Executors.newCachedThreadPool(factory);
 
+    @BeforeMethod
+    void beforeMethod(ITestContext context) {
+        if (context.getFailedTests().size() > 0) {
+            throw new RuntimeException("some tests failed");
+        }
+    }
+
     @DataProvider(name = "sanity")
     public Object[][] sanity() {
         return new Object[][]{
@@ -129,7 +137,7 @@ public class ShortResponseBody {
     }
 
     @DataProvider(name = "uris")
-    public Object[][] variants() {
+    public Object[][] variants(ITestContext context) {
         String[][] cases = new String[][] {
             // The length query string is the total number of bytes in the reply,
             // including headers, before the server closes the connection. The
@@ -187,6 +195,13 @@ public class ShortResponseBody {
             { httpURIClsImed,  "no bytes"},
             { httpsURIClsImed, "no bytes"},
         };
+
+        if (context.getFailedTests().size() > 0) {
+            // Shorten the log output by preventing useless
+            // skip traces to be printed for subsequent methods
+            // if one of the previous @Test method has failed.
+            return new Object[0][];
+        }
 
         List<Object[]> list = new ArrayList<>();
         Arrays.asList(cases).stream()
@@ -370,7 +385,6 @@ public class ShortResponseBody {
                 if (ee.getCause() instanceof IOException) {
                     IOException ioe = (IOException) ee.getCause();
                     out.println("Caught expected exception:" + ioe);
-                    String msg = ioe.getMessage();
 
                     List<String> expectedMessages = new ArrayList<>();
                     expectedMessages.add(expectedMsg);
@@ -469,7 +483,9 @@ public class ShortResponseBody {
             try {
                 ss.close();
             } catch (IOException e) {
-                throw new UncheckedIOException("Unexpected", e);
+                out.println("Unexpected exception while closing server: " + e);
+                e.printStackTrace(out);
+                throw new UncheckedIOException("Unexpected: ", e);
             }
         }
     }
@@ -494,9 +510,12 @@ public class ShortResponseBody {
                         ((SSLSocket)s).startHandshake();
                     }
                     out.println("Server: got connection, closing immediately ");
-                } catch (IOException e) {
-                    if (!closed)
-                        throw new UncheckedIOException("Unexpected", e);
+                } catch (Throwable e) {
+                    if (!closed) {
+                        out.println("Unexpected exception in server: " + e);
+                        e.printStackTrace(out);
+                        throw new RuntimeException("Unexpected: ", e);
+                    }
                 }
             }
         }
@@ -565,9 +584,12 @@ public class ShortResponseBody {
                         os.write(responseBytes[i]);
                         os.flush();
                     }
-                } catch (IOException e) {
-                    if (!closed)
-                        throw new UncheckedIOException("Unexpected", e);
+                } catch (Throwable e) {
+                    if (!closed) {
+                        out.println("Unexpected exception in server: " + e);
+                        e.printStackTrace(out);
+                        throw new RuntimeException("Unexpected: " + e, e);
+                    }
                 }
             }
         }
@@ -690,7 +712,6 @@ public class ShortResponseBody {
         SSLContext.setDefault(sslContext);
 
         sslParameters = new SSLParameters();
-        sslParameters.setProtocols(new String[] {"TLSv1.2"});
 
         closeImmediatelyServer = new PlainCloseImmediatelyServer();
         httpURIClsImed = "http://" + serverAuthority(closeImmediatelyServer)

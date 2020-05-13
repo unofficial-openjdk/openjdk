@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@
 #include "prims/jvmtiExport.hpp"
 #include "prims/jvmtiImpl.hpp"
 #include "prims/jvmtiThreadState.inline.hpp"
+#include "runtime/deoptimization.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/thread.inline.hpp"
 #include "runtime/threadSMR.hpp"
@@ -239,8 +240,7 @@ void VM_EnterInterpOnlyMode::doit() {
       }
     }
     if (num_marked > 0) {
-      VM_Deoptimize op;
-      VMThread::execute(&op);
+      Deoptimization::deoptimize_all_marked();
     }
   }
 }
@@ -264,7 +264,7 @@ public:
 
 
 VM_ChangeSingleStep::VM_ChangeSingleStep(bool on)
-  : _on(on != 0)
+  : _on(on)
 {
 }
 
@@ -331,18 +331,20 @@ void JvmtiEventControllerPrivate::set_should_post_single_step(bool on) {
 }
 
 
-// This change must always be occur when at a safepoint.
-// Being at a safepoint causes the interpreter to use the
-// safepoint dispatch table which we overload to find single
-// step points.  Just to be sure that it has been set, we
-// call notice_safepoints when turning on single stepping.
-// When we leave our current safepoint, should_post_single_step
-// will be checked by the interpreter, and the table kept
-// or changed accordingly.
+// When _on == true, we use the safepoint interpreter dispatch table
+// to allow us to find the single step points. Otherwise, we switch
+// back to the regular interpreter dispatch table.
+// Note: We call Interpreter::notice_safepoints() and ignore_safepoints()
+// in a VM_Operation to safely make the dispatch table switch. We
+// no longer rely on the safepoint mechanism to do any of this work
+// for us.
 void VM_ChangeSingleStep::doit() {
+  log_debug(interpreter, safepoint)("changing single step to '%s'", _on ? "on" : "off");
   JvmtiEventControllerPrivate::set_should_post_single_step(_on);
   if (_on) {
     Interpreter::notice_safepoints();
+  } else {
+    Interpreter::ignore_safepoints();
   }
 }
 
@@ -997,21 +999,21 @@ JvmtiEventController::set_extension_event_callback(JvmtiEnvBase *env,
 
 void
 JvmtiEventController::set_frame_pop(JvmtiEnvThreadState *ets, JvmtiFramePop fpop) {
-  MutexLockerEx mu(SafepointSynchronize::is_at_safepoint() ? NULL : JvmtiThreadState_lock);
+  MutexLocker mu(SafepointSynchronize::is_at_safepoint() ? NULL : JvmtiThreadState_lock);
   JvmtiEventControllerPrivate::set_frame_pop(ets, fpop);
 }
 
 
 void
 JvmtiEventController::clear_frame_pop(JvmtiEnvThreadState *ets, JvmtiFramePop fpop) {
-  MutexLockerEx mu(SafepointSynchronize::is_at_safepoint() ? NULL : JvmtiThreadState_lock);
+  MutexLocker mu(SafepointSynchronize::is_at_safepoint() ? NULL : JvmtiThreadState_lock);
   JvmtiEventControllerPrivate::clear_frame_pop(ets, fpop);
 }
 
 
 void
 JvmtiEventController::clear_to_frame_pop(JvmtiEnvThreadState *ets, JvmtiFramePop fpop) {
-  MutexLockerEx mu(SafepointSynchronize::is_at_safepoint() ? NULL : JvmtiThreadState_lock);
+  MutexLocker mu(SafepointSynchronize::is_at_safepoint() ? NULL : JvmtiThreadState_lock);
   JvmtiEventControllerPrivate::clear_to_frame_pop(ets, fpop);
 }
 

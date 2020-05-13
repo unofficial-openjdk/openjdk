@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import java.lang.reflect.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.security.*;
@@ -37,16 +38,17 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import javax.security.auth.Subject;
 import javax.security.auth.x500.X500Principal;
-import java.io.FilePermission;
 import java.net.SocketPermission;
 import java.net.NetPermission;
 import java.util.concurrent.ConcurrentHashMap;
 import jdk.internal.access.JavaSecurityAccess;
-import static jdk.internal.access.JavaSecurityAccess.ProtectionDomainCache;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.util.StaticProperty;
 import sun.security.util.*;
 import sun.net.www.ParseUtil;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static jdk.internal.access.JavaSecurityAccess.ProtectionDomainCache;
 
 /**
  * This class represents a default Policy implementation for the
@@ -273,23 +275,6 @@ public class PolicyFile extends java.security.Policy {
     private static Set<URL> badPolicyURLs =
         Collections.newSetFromMap(new ConcurrentHashMap<URL,Boolean>());
 
-    // The default.policy file
-    private static final URL DEFAULT_POLICY_URL =
-        AccessController.doPrivileged(new PrivilegedAction<>() {
-            @Override
-            public URL run() {
-                String sep = File.separator;
-                try {
-                    return Path.of(StaticProperty.javaHome(),
-                                     "lib", "security",
-                                     "default.policy").toUri().toURL();
-                } catch (MalformedURLException mue) {
-                    // should not happen
-                    throw new Error("Malformed default.policy URL: " + mue);
-                }
-            }
-        });
-
     /**
      * Initializes the Policy object and reads the default policy
      * configuration file(s) into the Policy object.
@@ -315,7 +300,7 @@ public class PolicyFile extends java.security.Policy {
      * initialize the Policy object.
      */
     private void init(URL url) {
-        // Properties are set once for each init(); ignore changes between
+        // Properties are set once for each init(); ignore changes
         // between diff invocations of initPolicyFile(policy, url, info).
         String numCacheStr =
           AccessController.doPrivileged(new PrivilegedAction<>() {
@@ -340,7 +325,6 @@ public class PolicyFile extends java.security.Policy {
         } else {
             numCaches = DEFAULT_CACHE_SIZE;
         }
-        // System.out.println("number caches=" + numCaches);
         PolicyInfo newInfo = new PolicyInfo(numCaches);
         initPolicyFile(newInfo, url);
         policyInfo = newInfo;
@@ -349,13 +333,10 @@ public class PolicyFile extends java.security.Policy {
     private void initPolicyFile(final PolicyInfo newInfo, final URL url) {
 
         // always load default.policy
-        if (debug != null) {
-            debug.println("reading " + DEFAULT_POLICY_URL);
-        }
         AccessController.doPrivileged(new PrivilegedAction<>() {
             @Override
             public Void run() {
-                init(DEFAULT_POLICY_URL, newInfo, true);
+                initDefaultPolicy(newInfo);
                 return null;
             }
         });
@@ -373,7 +354,7 @@ public class PolicyFile extends java.security.Policy {
             AccessController.doPrivileged(new PrivilegedAction<>() {
                 @Override
                 public Void run() {
-                    if (init(url, newInfo, false) == false) {
+                    if (init(url, newInfo) == false) {
                         // use static policy if all else fails
                         initStaticPolicy(newInfo);
                     }
@@ -429,7 +410,7 @@ public class PolicyFile extends java.security.Policy {
                             if (debug != null) {
                                 debug.println("reading "+policyURL);
                             }
-                            if (init(policyURL, newInfo, false)) {
+                            if (init(policyURL, newInfo)) {
                                 loaded_policy = true;
                             }
                         } catch (Exception e) {
@@ -472,7 +453,7 @@ public class PolicyFile extends java.security.Policy {
                         if (debug != null) {
                             debug.println("reading " + policy_url);
                         }
-                        if (init(policy_url, newInfo, false)) {
+                        if (init(policy_url, newInfo)) {
                             loaded_policy = true;
                         }
                     } catch (Exception e) {
@@ -492,11 +473,34 @@ public class PolicyFile extends java.security.Policy {
         return loadedPolicy;
     }
 
+    private void initDefaultPolicy(PolicyInfo newInfo) {
+        Path defaultPolicy = Path.of(StaticProperty.javaHome(),
+                                     "lib",
+                                     "security",
+                                     "default.policy");
+        if (debug != null) {
+            debug.println("reading " + defaultPolicy);
+        }
+        try (BufferedReader br = Files.newBufferedReader(defaultPolicy)) {
+
+            PolicyParser pp = new PolicyParser(expandProperties);
+            pp.read(br);
+
+            Enumeration<PolicyParser.GrantEntry> enum_ = pp.grantElements();
+            while (enum_.hasMoreElements()) {
+                PolicyParser.GrantEntry ge = enum_.nextElement();
+                addGrantEntry(ge, null, newInfo);
+            }
+        } catch (Exception e) {
+            throw new InternalError("Failed to load default.policy", e);
+        }
+    }
+
     /**
      * Reads a policy configuration into the Policy object using a
      * Reader object.
      */
-    private boolean init(URL policy, PolicyInfo newInfo, boolean defPolicy) {
+    private boolean init(URL policy, PolicyInfo newInfo) {
 
         // skip parsing policy file if it has been previously parsed and
         // has syntax errors
@@ -537,9 +541,6 @@ public class PolicyFile extends java.security.Policy {
             }
             return true;
         } catch (PolicyParser.ParsingException pe) {
-            if (defPolicy) {
-                throw new InternalError("Failed to load default.policy", pe);
-            }
             // record bad policy file to avoid later reparsing it
             badPolicyURLs.add(policy);
             Object[] source = {policy, pe.getNonlocalizedMessage()};
@@ -549,9 +550,6 @@ public class PolicyFile extends java.security.Policy {
                 pe.printStackTrace();
             }
         } catch (Exception e) {
-            if (defPolicy) {
-                throw new InternalError("Failed to load default.policy", e);
-            }
             if (debug != null) {
                 debug.println("error parsing "+policy);
                 debug.println(e.toString());
@@ -562,8 +560,7 @@ public class PolicyFile extends java.security.Policy {
         return false;
     }
 
-    private InputStreamReader getInputStreamReader(InputStream is)
-                              throws IOException {
+    private InputStreamReader getInputStreamReader(InputStream is) {
         /*
          * Read in policy using UTF-8 by default.
          *
@@ -572,7 +569,7 @@ public class PolicyFile extends java.security.Policy {
          */
         return (notUtf8)
             ? new InputStreamReader(is)
-            : new InputStreamReader(is, "UTF-8");
+            : new InputStreamReader(is, UTF_8);
     }
 
     private void initStaticPolicy(final PolicyInfo newInfo) {
@@ -1945,6 +1942,7 @@ public class PolicyFile extends java.security.Policy {
 
     private static class SelfPermission extends Permission {
 
+        @java.io.Serial
         private static final long serialVersionUID = -8315562579967246806L;
 
         /**

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -48,7 +49,7 @@ ShenandoahStrDedupQueue::ShenandoahStrDedupQueue() :
 }
 
 ShenandoahStrDedupQueue::~ShenandoahStrDedupQueue() {
-  MonitorLockerEx ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
+  MonitorLocker ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
   for (size_t index = 0; index < num_queues(); index ++) {
     release_buffers(queue_at(index));
   }
@@ -58,9 +59,9 @@ ShenandoahStrDedupQueue::~ShenandoahStrDedupQueue() {
 }
 
 void ShenandoahStrDedupQueue::wait_impl() {
-  MonitorLockerEx ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
+  MonitorLocker ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
   while (_consumer_queue == NULL && !_cancel) {
-    ml.wait(Mutex::_no_safepoint_check_flag);
+    ml.wait();
     assert(_consumer_queue == NULL, "Why wait?");
     _consumer_queue = _published_queues;
     _published_queues = NULL;
@@ -68,7 +69,7 @@ void ShenandoahStrDedupQueue::wait_impl() {
 }
 
 void ShenandoahStrDedupQueue::cancel_wait_impl() {
-  MonitorLockerEx ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
+  MonitorLocker ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
   _cancel = true;
   ml.notify();
 }
@@ -105,11 +106,11 @@ void ShenandoahStrDedupQueue::push_impl(uint worker_id, oop string_oop) {
   ShenandoahQueueBuffer* buf = queue_at((size_t)worker_id);
 
   if (buf == NULL) {
-    MonitorLockerEx ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
+    MonitorLocker ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
     buf = new_buffer();
     set_producer_buffer(buf, worker_id);
   } else if (buf->is_full()) {
-    MonitorLockerEx ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
+    MonitorLocker ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
     buf->set_next(_published_queues);
     _published_queues = buf;
     buf = new_buffer();
@@ -125,7 +126,7 @@ oop ShenandoahStrDedupQueue::pop_impl() {
   assert(Thread::current() == StringDedupThread::thread(), "Must be dedup thread");
   while (true) {
     if (_consumer_queue == NULL) {
-      MonitorLockerEx ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
+      MonitorLocker ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
       _consumer_queue = _published_queues;
       _published_queues = NULL;
     }
@@ -163,7 +164,7 @@ bool ShenandoahStrDedupQueue::pop_candidate(oop& obj) {
   } while (obj == NULL);
 
   if (to_release != NULL) {
-    MonitorLockerEx ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
+    MonitorLocker ml(StringDedupQueue_lock, Mutex::_no_safepoint_check_flag);
     release_buffers(to_release);
   }
 
@@ -205,8 +206,11 @@ void ShenandoahStrDedupQueue::release_buffers(ShenandoahQueueBuffer* list) {
 void ShenandoahStrDedupQueue::print_statistics_impl() {
   Log(gc, stringdedup) log;
   log.debug("  Queue:");
-  log.debug("    Total buffers: " SIZE_FORMAT " (" SIZE_FORMAT " K). " SIZE_FORMAT " buffers are on free list",
-    _total_buffers, (_total_buffers * sizeof(ShenandoahQueueBuffer) / K), _num_free_buffer);
+  log.debug("    Total buffers: " SIZE_FORMAT " (" SIZE_FORMAT " %s). " SIZE_FORMAT " buffers are on free list",
+    _total_buffers,
+    byte_size_in_proper_unit(_total_buffers * sizeof(ShenandoahQueueBuffer)),
+    proper_unit_for_byte_size(_total_buffers * sizeof(ShenandoahQueueBuffer)),
+    _num_free_buffer);
 }
 
 class VerifyQueueClosure : public OopClosure {

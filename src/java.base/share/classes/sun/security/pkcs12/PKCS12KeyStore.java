@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,8 @@ import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.*;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
@@ -155,34 +157,34 @@ public final class PKCS12KeyStore extends KeyStoreSpi {
 
     private static final Debug debug = Debug.getInstance("pkcs12");
 
-    private static final int[] keyBag  = {1, 2, 840, 113549, 1, 12, 10, 1, 2};
-    private static final int[] certBag = {1, 2, 840, 113549, 1, 12, 10, 1, 3};
-    private static final int[] secretBag = {1, 2, 840, 113549, 1, 12, 10, 1, 5};
+    private static final ObjectIdentifier PKCS8ShroudedKeyBag_OID =
+            ObjectIdentifier.of("1.2.840.113549.1.12.10.1.2");
+    private static final ObjectIdentifier CertBag_OID =
+            ObjectIdentifier.of("1.2.840.113549.1.12.10.1.3");
+    private static final ObjectIdentifier SecretBag_OID =
+            ObjectIdentifier.of("1.2.840.113549.1.12.10.1.5");
+    private static final ObjectIdentifier PKCS9FriendlyName_OID =
+            ObjectIdentifier.of("1.2.840.113549.1.9.20");
+    private static final ObjectIdentifier PKCS9LocalKeyId_OID =
+            ObjectIdentifier.of("1.2.840.113549.1.9.21");
+    private static final ObjectIdentifier PKCS9CertType_OID =
+            ObjectIdentifier.of("1.2.840.113549.1.9.22.1");
+    private static final ObjectIdentifier pbes2_OID =
+            ObjectIdentifier.of("1.2.840.113549.1.5.13");
 
-    private static final int[] pkcs9Name  = {1, 2, 840, 113549, 1, 9, 20};
-    private static final int[] pkcs9KeyId = {1, 2, 840, 113549, 1, 9, 21};
-
-    private static final int[] pkcs9certType = {1, 2, 840, 113549, 1, 9, 22, 1};
-
-    private static final int[] pbes2 = {1, 2, 840, 113549, 1, 5, 13};
-    // TODO: temporary Oracle OID
     /*
-     * { joint-iso-itu-t(2) country(16) us(840) organization(1) oracle(113894)
-     *   jdk(746875) crypto(1) id-at-trustedKeyUsage(1) }
+     * Temporary Oracle OID
+     *
+     * {joint-iso-itu-t(2) country(16) us(840) organization(1)
+     *  oracle(113894) jdk(746875) crypto(1) id-at-trustedKeyUsage(1)}
      */
-    private static final int[] TrustedKeyUsage =
-                                        {2, 16, 840, 1, 113894, 746875, 1, 1};
-    private static final int[] AnyExtendedKeyUsage = {2, 5, 29, 37, 0};
+    private static final ObjectIdentifier TrustedKeyUsage_OID =
+            ObjectIdentifier.of("2.16.840.1.113894.746875.1.1");
 
-    private static final ObjectIdentifier PKCS8ShroudedKeyBag_OID;
-    private static final ObjectIdentifier CertBag_OID;
-    private static final ObjectIdentifier SecretBag_OID;
-    private static final ObjectIdentifier PKCS9FriendlyName_OID;
-    private static final ObjectIdentifier PKCS9LocalKeyId_OID;
-    private static final ObjectIdentifier PKCS9CertType_OID;
-    private static final ObjectIdentifier pbes2_OID;
-    private static final ObjectIdentifier TrustedKeyUsage_OID;
-    private static final ObjectIdentifier[] AnyUsage;
+    private static final ObjectIdentifier[] AnyUsage = new ObjectIdentifier[] {
+                // AnyExtendedKeyUsage
+                ObjectIdentifier.of("2.5.29.37.0")
+            };
 
     private int counter = 0;
 
@@ -210,23 +212,6 @@ public final class PKCS12KeyStore extends KeyStoreSpi {
 
     // the source of randomness
     private SecureRandom random;
-
-    static {
-        try {
-            PKCS8ShroudedKeyBag_OID = new ObjectIdentifier(keyBag);
-            CertBag_OID = new ObjectIdentifier(certBag);
-            SecretBag_OID = new ObjectIdentifier(secretBag);
-            PKCS9FriendlyName_OID = new ObjectIdentifier(pkcs9Name);
-            PKCS9LocalKeyId_OID = new ObjectIdentifier(pkcs9KeyId);
-            PKCS9CertType_OID = new ObjectIdentifier(pkcs9certType);
-            pbes2_OID = new ObjectIdentifier(pbes2);
-            TrustedKeyUsage_OID = new ObjectIdentifier(TrustedKeyUsage);
-            AnyUsage = new ObjectIdentifier[]{
-                new ObjectIdentifier(AnyExtendedKeyUsage)};
-        } catch (IOException ioe) {
-            throw new AssertionError("OID not initialized", ioe);
-        }
-    }
 
     // A keystore entry and associated attributes
     private static class Entry {
@@ -687,12 +672,14 @@ public final class PKCS12KeyStore extends KeyStoreSpi {
                 entry.attributes.addAll(attributes);
             }
             // set the keyId to current date
-            entry.keyId = ("Time " + (entry.date).getTime()).getBytes("UTF8");
+            entry.keyId = ("Time " + (entry.date).getTime()).getBytes(UTF_8);
             // set the alias
             entry.alias = alias.toLowerCase(Locale.ENGLISH);
             // add the entry
             entries.put(alias.toLowerCase(Locale.ENGLISH), entry);
 
+        } catch (KeyStoreException kse) {
+            throw kse;
         } catch (Exception nsae) {
             throw new KeyStoreException("Key protection" +
                        " algorithm not found: " + nsae, nsae);
@@ -746,12 +733,8 @@ public final class PKCS12KeyStore extends KeyStoreSpi {
                 alias + "'");
         }
 
-        try {
-            // set the keyId to current date
-            entry.keyId = ("Time " + (entry.date).getTime()).getBytes("UTF8");
-        } catch (UnsupportedEncodingException ex) {
-            // Won't happen
-        }
+        // set the keyId to current date
+        entry.keyId = ("Time " + (entry.date).getTime()).getBytes(UTF_8);
         // set the alias
         entry.alias = alias.toLowerCase(Locale.ENGLISH);
 
@@ -2499,18 +2482,18 @@ public final class PKCS12KeyStore extends KeyStoreSpi {
                        // attribute in pkcs12 with one private key entry and
                        // associated cert-chain
                        if (privateKeyCount == 1) {
-                            keyId = "01".getBytes("UTF8");
+                            keyId = "01".getBytes(UTF_8);
                        } else {
                             continue;
                        }
                     } else {
                         // keyId in a SecretKeyEntry is not significant
-                        keyId = "00".getBytes("UTF8");
+                        keyId = "00".getBytes(UTF_8);
                     }
                 }
                 entry.keyId = keyId;
                 // restore date if it exists
-                String keyIdStr = new String(keyId, "UTF8");
+                String keyIdStr = new String(keyId, UTF_8);
                 Date date = null;
                 if (keyIdStr.startsWith("Time ")) {
                     try {
@@ -2547,7 +2530,7 @@ public final class PKCS12KeyStore extends KeyStoreSpi {
                 if ((keyId == null) && (privateKeyCount == 1)) {
                     // insert localKeyID only for EE cert or self-signed cert
                     if (i == 0) {
-                        keyId = "01".getBytes("UTF8");
+                        keyId = "01".getBytes(UTF_8);
                     }
                 }
                 // Trusted certificate

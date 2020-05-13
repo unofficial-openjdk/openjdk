@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,6 @@ class SocketInputStream extends FileInputStream {
     private boolean eof;
     private AbstractPlainSocketImpl impl = null;
     private byte temp[];
-    private Socket socket = null;
 
     /**
      * Creates a new SocketInputStream. Can only be called
@@ -59,7 +58,6 @@ class SocketInputStream extends FileInputStream {
     SocketInputStream(AbstractPlainSocketImpl impl) throws IOException {
         super(impl.getFileDescriptor());
         this.impl = impl;
-        socket = impl.getSocket();
     }
 
     /**
@@ -88,7 +86,7 @@ class SocketInputStream extends FileInputStream {
      * @param timeout the read timeout in ms
      * @return the actual number of bytes read, -1 is
      *          returned when the end of the stream is reached.
-     * @exception IOException If an I/O error has occurred.
+     * @throws    IOException If an I/O error has occurred.
      */
     private native int socketRead0(FileDescriptor fd,
                                    byte b[], int off, int len,
@@ -106,7 +104,7 @@ class SocketInputStream extends FileInputStream {
      * @param timeout the read timeout in ms
      * @return the actual number of bytes read, -1 is
      *          returned when the end of the stream is reached.
-     * @exception IOException If an I/O error has occurred.
+     * @throws    IOException If an I/O error has occurred.
      */
     private int socketRead(FileDescriptor fd,
                            byte b[], int off, int len,
@@ -120,7 +118,7 @@ class SocketInputStream extends FileInputStream {
      * @param b the buffer into which the data is read
      * @return the actual number of bytes read, -1 is
      *          returned when the end of the stream is reached.
-     * @exception IOException If an I/O error has occurred.
+     * @throws    IOException If an I/O error has occurred.
      */
     public int read(byte b[]) throws IOException {
         return read(b, 0, b.length);
@@ -134,7 +132,7 @@ class SocketInputStream extends FileInputStream {
      * @param length the maximum number of bytes read
      * @return the actual number of bytes read, -1 is
      *          returned when the end of the stream is reached.
-     * @exception IOException If an I/O error has occurred.
+     * @throws    IOException If an I/O error has occurred.
      */
     public int read(byte b[], int off, int length) throws IOException {
         return read(b, off, length, impl.getTimeout());
@@ -208,7 +206,7 @@ class SocketInputStream extends FileInputStream {
      * Skips n bytes of input.
      * @param numbytes the number of bytes to skip
      * @return  the actual number of bytes skipped.
-     * @exception IOException If an I/O error has occurred.
+     * @throws    IOException If an I/O error has occurred.
      */
     public long skip(long numbytes) throws IOException {
         if (numbytes <= 0) {
@@ -236,25 +234,14 @@ class SocketInputStream extends FileInputStream {
         return eof ? 0 : available;
     }
 
-    /**
-     * Closes the stream.
-     */
-    private boolean closing = false;
-    public void close() throws IOException {
-        // Prevent recursion. See BugId 4484411
-        if (closing)
-            return;
-        closing = true;
-        if (socket != null) {
-            if (!socket.isClosed())
-                socket.close();
-        } else
-            impl.close();
-        closing = false;
-    }
-
     void setEOF(boolean eof) {
         this.eof = eof;
+    }
+
+    public void close() throws IOException {
+        // No longer used. Socket.getInputStream returns an
+        // InputStream which calls Socket.close directly
+        assert false;
     }
 
     /**

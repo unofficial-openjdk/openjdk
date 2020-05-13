@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,10 +51,12 @@ import org.graalvm.compiler.hotspot.GraalHotSpotVMConfig;
 import org.graalvm.compiler.hotspot.HotSpotGraalCompilerFactory;
 import org.graalvm.compiler.hotspot.HotSpotGraalOptionValues;
 import org.graalvm.compiler.hotspot.HotSpotGraalRuntime;
+import org.graalvm.compiler.hotspot.HotSpotGraalRuntime.HotSpotGC;
 import org.graalvm.compiler.hotspot.HotSpotHostBackend;
 import org.graalvm.compiler.hotspot.meta.HotSpotInvokeDynamicPlugin;
 import org.graalvm.compiler.java.GraphBuilderPhase;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderConfiguration;
+import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderContext;
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.BasePhase;
 import org.graalvm.compiler.phases.PhaseSuite;
@@ -166,7 +168,7 @@ public final class Main {
                 printer.printInfo(classesToCompile.size() + " classes found");
             }
 
-            OptionValues graalOptions = HotSpotGraalOptionValues.HOTSPOT_OPTIONS;
+            OptionValues graalOptions = HotSpotGraalOptionValues.defaultOptions();
             // Setting -Dgraal.TieredAOT overrides --compile-for-tiered
             if (!TieredAOT.hasBeenSet(graalOptions)) {
                 graalOptions = new OptionValues(graalOptions, TieredAOT, options.tiered);
@@ -194,7 +196,17 @@ public final class Main {
             AOTDynamicTypeStore dynoStore = new AOTDynamicTypeStore();
             AOTCompiledClass.setDynamicTypeStore(dynoStore);
 
-            AOTBackend aotBackend = new AOTBackend(this, graalOptions, backend, new HotSpotInvokeDynamicPlugin(dynoStore));
+            // AOTBackend aotBackend = new AOTBackend(this, graalOptions, backend, new
+            // HotSpotInvokeDynamicPlugin(dynoStore));
+            // Temporary workaround until JDK-8223533 is fixed.
+            // Disable invokedynamic support.
+            var indyPlugin = new HotSpotInvokeDynamicPlugin(dynoStore) {
+                @Override
+                public boolean supportsDynamicInvoke(GraphBuilderContext builder, int index, int opcode) {
+                    return false;
+                }
+            };
+            AOTBackend aotBackend = new AOTBackend(this, graalOptions, backend, indyPlugin);
             SnippetReflectionProvider snippetReflection = aotBackend.getProviders().getSnippetReflection();
             AOTCompiler compiler = new AOTCompiler(this, graalOptions, aotBackend, options.threads);
             classes = compiler.compileClasses(classes);
@@ -212,7 +224,16 @@ public final class Main {
                 System.gc();
             }
 
-            int gc = runtime.getGarbageCollector().ordinal() + 1;
+            HotSpotGC graalGC = runtime.getGarbageCollector();
+            // Prior to JDK 14, the Graal HotSpotGC enum order matched the JDK CollectedHeap enum
+            // order, so using the ordinal value worked fine. In JDK 14, CMS was removed on the
+            // JDK side, so we need a symbolic lookup of the JDK value.
+            int def = graalGC.ordinal() + 1;
+            // The GC names are spelled the same in both enums, so no clever remapping is needed
+            // here.
+            String name = "CollectedHeap::" + graalGC.name();
+            int gc = graalHotSpotVMConfig.getConstant(name, Integer.class, def);
+
             BinaryContainer binaryContainer = new BinaryContainer(graalOptions, graalHotSpotVMConfig, graphBuilderConfig, gc, JVM_VERSION);
             DataBuilder dataBuilder = new DataBuilder(this, backend, classes, binaryContainer);
 

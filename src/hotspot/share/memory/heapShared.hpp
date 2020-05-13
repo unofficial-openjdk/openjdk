@@ -29,7 +29,7 @@
 #include "classfile/systemDictionary.hpp"
 #include "memory/allocation.hpp"
 #include "memory/metaspaceShared.hpp"
-#include "memory/universe.hpp"
+#include "oops/compressedOops.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "oops/oop.hpp"
 #include "oops/typeArrayKlass.hpp"
@@ -125,7 +125,7 @@ class HeapShared: AllStatic {
   static bool _archive_heap_region_fixed;
 
   static bool oop_equals(oop const& p1, oop const& p2) {
-    return oopDesc::equals(p1, p2);
+    return p1 == p2;
   }
   static unsigned oop_hash(oop const& p);
 
@@ -286,16 +286,6 @@ private:
                                idx <= MetaspaceShared::last_open_archive_heap_region));
     NOT_CDS_JAVA_HEAP_RETURN_(false);
   }
-  static bool is_closed_archive_heap_region(int idx) {
-    CDS_JAVA_HEAP_ONLY(return (idx >= MetaspaceShared::first_closed_archive_heap_region &&
-                               idx <= MetaspaceShared::last_closed_archive_heap_region));
-    NOT_CDS_JAVA_HEAP_RETURN_(false);
-  }
-  static bool is_open_archive_heap_region(int idx) {
-    CDS_JAVA_HEAP_ONLY(return (idx >= MetaspaceShared::first_open_archive_heap_region &&
-                               idx <= MetaspaceShared::last_open_archive_heap_region));
-    NOT_CDS_JAVA_HEAP_RETURN_(false);
-  }
 
   static void set_closed_archive_heap_region_mapped() {
     CDS_JAVA_HEAP_ONLY(_closed_archive_heap_region_mapped = true);
@@ -321,7 +311,7 @@ private:
   static void initialize_from_archived_subgraph(Klass* k) NOT_CDS_JAVA_HEAP_RETURN;
 
   // NarrowOops stored in the CDS archive may use a different encoding scheme
-  // than Universe::narrow_oop_{base,shift} -- see FileMapInfo::map_heap_regions_impl.
+  // than CompressedOops::{base,shift} -- see FileMapInfo::map_heap_regions_impl.
   // To decode them, do not use CompressedOops::decode_not_null. Use this
   // function instead.
   inline static oop decode_from_archive(narrowOop v) NOT_CDS_JAVA_HEAP_RETURN_(NULL);

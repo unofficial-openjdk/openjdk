@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +30,6 @@
 /*
    Exported function:
 
-   jboolean
-   VerifyClass(JNIEnv *env, jclass cb, char *message_buffer,
-               jint buffer_length)
    jboolean
    VerifyClassForMajorVersion(JNIEnv *env, jclass cb, char *message_buffer,
                               jint buffer_length, jint major_version)
@@ -707,6 +704,7 @@ done:
     return *pID;
 }
 
+#ifdef DEBUG
 static const char *
 ID_to_class_name(context_type *context, unsigned short ID)
 {
@@ -714,6 +712,7 @@ ID_to_class_name(context_type *context, unsigned short ID)
     hash_bucket_type *bucket = GET_BUCKET(class_hash, ID);
     return bucket->name;
 }
+#endif
 
 static jclass
 ID_to_class(context_type *context, unsigned short ID)
@@ -906,20 +905,6 @@ VerifyClassForMajorVersion(JNIEnv *env, jclass cb, char *buffer, jint len,
 
     CCdestroy(context);         /* destroy heap */
     return result;
-}
-
-#define OLD_FORMAT_MAX_MAJOR_VERSION 48
-
-JNIEXPORT jboolean
-VerifyClass(JNIEnv *env, jclass cb, char *buffer, jint len)
-{
-    static int warned = 0;
-    if (!warned) {
-      jio_fprintf(stdout, "Warning! An old version of jvm is used. This is not supported.\n");
-      warned = 1;
-    }
-    return VerifyClassForMajorVersion(env, cb, buffer, len,
-                                      OLD_FORMAT_MAX_MAJOR_VERSION);
 }
 
 static void
@@ -1390,7 +1375,7 @@ verify_opcode_operands(context_type *context, unsigned int inumber, int offset)
     case JVM_OPC_invokedynamic:
         CCerror(context,
                 "invokedynamic bytecode is not supported in this class file version");
-
+        break;
     case JVM_OPC_instanceof:
     case JVM_OPC_checkcast:
     case JVM_OPC_new:
@@ -1699,7 +1684,9 @@ static int instruction_length(unsigned char *iptr, unsigned char *end)
             if ((index < 0) || (index > 65535)) {
                 return -1;      /* illegal */
             } else {
-                return (unsigned char *)(&lpc[index + 4]) - iptr;
+                unsigned char *finish = (unsigned char *)(&lpc[index + 4]);
+                assert(finish >= iptr);
+                return (int)(finish - iptr);
             }
         }
 
@@ -1714,8 +1701,11 @@ static int instruction_length(unsigned char *iptr, unsigned char *end)
              */
             if (npairs < 0 || npairs >= 65536)
                 return  -1;
-            else
-                return (unsigned char *)(&lpc[2 * (npairs + 1)]) - iptr;
+            else {
+                unsigned char *finish = (unsigned char *)(&lpc[2 * (npairs + 1)]);
+                assert(finish >= iptr);
+                return (int)(finish - iptr);
+            }
         }
 
         case JVM_OPC_wide:
@@ -3828,7 +3818,8 @@ signature_to_fieldtype(context_type *context,
                     result = 0;
                     break;
                 }
-                length = finish - p;
+                assert(finish >= p);
+                length = (int)(finish - p);
                 if (length + 1 > (int)sizeof(buffer_space)) {
                     buffer = malloc(length + 1);
                     check_and_push(context, buffer, VM_MALLOC_BLK);

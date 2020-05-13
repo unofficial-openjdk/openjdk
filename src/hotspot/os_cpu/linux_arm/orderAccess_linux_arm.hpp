@@ -28,7 +28,7 @@
 // Included in orderAccess.hpp header file.
 
 #include "runtime/os.hpp"
-#include "vm_version_arm.hpp"
+#include "runtime/vm_version.hpp"
 
 // Implementation of class OrderAccess.
 // - we define the high level barriers below and use the general
@@ -101,5 +101,6 @@ inline void OrderAccess::storestore() { dmb_st(); }
 inline void OrderAccess::storeload()  { dmb_sy(); }
 inline void OrderAccess::release()    { dmb_sy(); }
 inline void OrderAccess::fence()      { dmb_sy(); }
+inline void OrderAccess::cross_modify_fence()   { }
 
 #endif // OS_CPU_LINUX_ARM_ORDERACCESS_LINUX_ARM_HPP

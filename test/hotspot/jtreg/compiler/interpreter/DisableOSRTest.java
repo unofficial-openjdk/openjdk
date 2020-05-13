@@ -30,7 +30,6 @@
  *
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:+PrintCompilation
  *                   -XX:-BackgroundCompilation -XX:-TieredCompilation -XX:-UseOnStackReplacement
  *                   compiler.interpreter.DisableOSRTest
@@ -48,7 +47,7 @@ import java.util.Random;
 
 public class DisableOSRTest {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
-    private static final Random RANDOM = new Random();
+    private static final Random RANDOM = new Random(42);
 
     public static int foo() {
         return RANDOM.nextInt();

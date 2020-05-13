@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,7 +88,7 @@ public class HotSpotCompiledCodeBuilder {
 
         ResolvedJavaMethod[] methods = compResult.getMethods();
 
-        List<CodeAnnotation> annotations = compResult.getAnnotations();
+        List<CodeAnnotation> annotations = compResult.getCodeAnnotations();
         Comment[] comments = new Comment[annotations.size()];
         if (!annotations.isEmpty()) {
             for (int i = 0; i < comments.length; i++) {
@@ -103,7 +103,7 @@ public class HotSpotCompiledCodeBuilder {
                 } else {
                     text = annotation.toString();
                 }
-                comments[i] = new Comment(annotation.position, text);
+                comments[i] = new Comment(annotation.getPosition(), text);
             }
         }
 
@@ -129,16 +129,16 @@ public class HotSpotCompiledCodeBuilder {
             boolean hasUnsafeAccess = compResult.hasUnsafeAccess();
 
             int id;
-            long jvmciEnv;
+            long jvmciCompileState;
             if (compRequest != null) {
                 id = compRequest.getId();
-                jvmciEnv = compRequest.getJvmciEnv();
+                jvmciCompileState = compRequest.getJvmciEnv();
             } else {
                 id = hsMethod.allocateCompileId(entryBCI);
-                jvmciEnv = 0L;
+                jvmciCompileState = 0L;
             }
             return new HotSpotCompiledNmethod(name, targetCode, targetCodeSize, sites, assumptions, methods, comments, dataSection, dataSectionAlignment, dataSectionPatches, isImmutablePIC,
-                            totalFrameSize, customStackArea, hsMethod, entryBCI, id, jvmciEnv, hasUnsafeAccess);
+                            totalFrameSize, customStackArea, hsMethod, entryBCI, id, jvmciCompileState, hasUnsafeAccess);
         } else {
             return new HotSpotCompiledCode(name, targetCode, targetCodeSize, sites, assumptions, methods, comments, dataSection, dataSectionAlignment, dataSectionPatches, isImmutablePIC,
                             totalFrameSize, customStackArea);
@@ -280,14 +280,14 @@ public class HotSpotCompiledCodeBuilder {
                         }
                     }
                 }
-                assert !siteListIterator.hasNext() || site.pcOffset >= source.getStartOffset();
+                assert !siteListIterator.hasNext() || (site != null && site.pcOffset >= source.getStartOffset());
                 if (site != null && source.getStartOffset() <= site.pcOffset && site.pcOffset <= source.getEndOffset()) {
                     // Conflicting source mapping, skip it.
                     continue;
                 } else {
                     // Since the sites are sorted there can not be any more sites in this interval.
                 }
-                assert !siteListIterator.hasNext() || site.pcOffset > source.getEndOffset();
+                assert !siteListIterator.hasNext() || (site != null && site.pcOffset > source.getEndOffset());
                 // Good source mapping. Create an infopoint and add it to the list.
                 NodeSourcePosition sourcePosition = source.getSourcePosition();
                 assert sourcePosition.verify();

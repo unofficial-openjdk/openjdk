@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -119,7 +119,6 @@ class Solaris {
 
   static address handler_start, handler_end; // start and end pc of thr_sighndlrinfo
 
-  static bool valid_stack_address(Thread* thread, address sp);
   static bool valid_ucontext(Thread* thread, const ucontext_t* valid, const ucontext_t* suspect);
   static const ucontext_t* get_valid_uc_in_signal_handler(Thread* thread,
                                                     const ucontext_t* uc);
@@ -271,10 +270,6 @@ class Solaris {
 
   static void correct_stack_boundaries_for_primordial_thread(Thread* thr);
 
-  // Stack overflow handling
-
-  static int max_register_window_saves_before_flushing();
-
   // Stack repair handling
 
   // none present
@@ -335,18 +330,31 @@ class PlatformParker : public CHeapObj<mtSynchronizer> {
   }
 };
 
-// Platform specific implementation that underpins VM Monitor/Mutex class
-class PlatformMonitor : public CHeapObj<mtSynchronizer> {
- private:
+// Platform specific implementations that underpin VM Mutex/Monitor classes
+
+class PlatformMutex : public CHeapObj<mtSynchronizer> {
+  NONCOPYABLE(PlatformMutex);
+
+ protected:
   mutex_t _mutex; // Native mutex for locking
+
+ public:
+  PlatformMutex();
+  ~PlatformMutex();
+  void lock();
+  void unlock();
+  bool try_lock();
+};
+
+class PlatformMonitor : public PlatformMutex {
+ private:
   cond_t  _cond;  // Native condition variable for blocking
+
+  NONCOPYABLE(PlatformMonitor);
 
  public:
   PlatformMonitor();
   ~PlatformMonitor();
-  void lock();
-  void unlock();
-  bool try_lock();
   int wait(jlong millis);
   void notify();
   void notify_all();

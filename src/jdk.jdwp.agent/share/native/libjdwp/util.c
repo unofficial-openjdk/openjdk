@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -992,6 +992,10 @@ convertSignatureToClassname(char *convert)
         char c = *p;
         if (c == '/') {
             *(p-1) = '.';
+        } else if (c == '.') {
+            // class signature of a hidden class is "Ljava/lang/Foo.1234;"
+            // map to "java.lang.Foo/1234"
+            *(p-1) = '/';
         } else {
             *(p-1) = c;
         }
@@ -1673,7 +1677,7 @@ setAgentPropertyValue(JNIEnv *env, char *propertyName, char* propertyValue)
     /* Create jstrings for property name and value */
     nameString = JNI_FUNC_PTR(env,NewStringUTF)(env, propertyName);
     if (nameString != NULL) {
-        valueString = JNI_FUNC_PTR(env,NewStringUTF)(env, propertyValue);
+        valueString = JNU_NewStringPlatform(env, propertyValue);
         if (valueString != NULL) {
             /* invoke Properties.setProperty */
             JNI_FUNC_PTR(env,CallObjectMethod)
@@ -1742,7 +1746,7 @@ isMethodObsolete(jmethodID method)
 }
 
 /* Get the jvmti environment to be used with tags */
-static jvmtiEnv *
+jvmtiEnv *
 getSpecialJvmti(void)
 {
     jvmtiEnv  *jvmti;

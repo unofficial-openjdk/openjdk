@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,13 +51,18 @@ final class SSLEngineOutputRecord extends OutputRecord implements SSLRecord {
     }
 
     @Override
-    public synchronized void close() throws IOException {
-        if (!isClosed) {
-            if (fragmenter != null && fragmenter.hasAlert()) {
-                isCloseWaiting = true;
-            } else {
-                super.close();
+    public void close() throws IOException {
+        recordLock.lock();
+        try {
+            if (!isClosed) {
+                if (fragmenter != null && fragmenter.hasAlert()) {
+                    isCloseWaiting = true;
+                } else {
+                    super.close();
+                }
             }
+        } finally {
+            recordLock.unlock();
         }
     }
 
@@ -232,9 +237,8 @@ final class SSLEngineOutputRecord extends OutputRecord implements SSLRecord {
                     fragLen = Record.maxDataSize;
                 }
 
-                if (fragmentSize > 0) {
-                    fragLen = Math.min(fragLen, fragmentSize);
-                }
+                // Calculate more impact, for example TLS 1.3 padding.
+                fragLen = calculateFragmentSize(fragLen);
             }
 
             int dstPos = destination.position();
@@ -439,9 +443,8 @@ final class SSLEngineOutputRecord extends OutputRecord implements SSLRecord {
                 fragLen = Record.maxDataSize;
             }
 
-            if (fragmentSize > 0) {
-                fragLen = Math.min(fragLen, fragmentSize);
-            }
+            // Calculate more impact, for example TLS 1.3 padding.
+            fragLen = calculateFragmentSize(fragLen);
 
             int dstPos = dstBuf.position();
             int dstLim = dstBuf.limit();

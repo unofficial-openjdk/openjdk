@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,16 @@
 
 import java.io.*;
 import java.net.*;
+import jdk.test.lib.net.IPSupport;
 
 /*
  * @test
  * @bug 4398880
  * @summary FTP URL processing modified to conform to RFC 1738
+ * @library /test/lib
+ * @run main/othervm FtpURL
+ * @run main/othervm -Djava.net.preferIPv4Stack=true FtpURL
+ * @run main/othervm -Djava.net.preferIPv6Addresses=true FtpURL
  */
 
 public class FtpURL {
@@ -36,11 +41,12 @@ public class FtpURL {
      */
 
     private class FtpServer extends Thread {
-        private ServerSocket    server;
-        private int port;
+        private final ServerSocket server;
+        private final int port;
         private boolean done = false;
         private boolean portEnabled = true;
         private boolean pasvEnabled = true;
+        private boolean extendedEnabled = true;
         private String username;
         private String password;
         private String cwd;
@@ -75,9 +81,10 @@ public class FtpURL {
             private final int NLST = 15;
             private final int RNFR = 16;
             private final int RNTO = 17;
+            private final int EPSV = 18;
             String[] cmds = { "USER", "PASS", "CWD", "CDUP", "PWD", "TYPE",
                               "NOOP", "RETR", "PASV", "PORT", "LIST", "REIN",
-                              "QUIT", "STOR", "NLST", "RNFR", "RNTO" };
+                              "QUIT", "STOR", "NLST", "RNFR", "RNTO", "EPSV" };
             private String arg = null;
             private ServerSocket pasv = null;
             private int data_port = 0;
@@ -89,6 +96,7 @@ public class FtpURL {
              */
 
             private int parseCmd(String cmd) {
+                System.out.println("Received command: " + cmd);
                 if (cmd == null || cmd.length() < 3)
                     return ERROR;
                 int blank = cmd.indexOf(' ');
@@ -127,7 +135,7 @@ public class FtpURL {
 
             /**
              * Open the data socket with the client. This can be the
-             * result of a "PASV" or "PORT" command.
+             * result of a "EPSV", "PASV" or "PORT" command.
              */
 
             protected OutputStream getOutDataStream() {
@@ -247,14 +255,45 @@ public class FtpURL {
                         case PWD:
                             out.println("257 \"" + cwd + "\" is current directory");
                             break;
+                        case EPSV:
+                            if (!extendedEnabled || !pasvEnabled) {
+                                out.println("500 EPSV is disabled, " +
+                                                "use PORT instead.");
+                                continue;
+                            }
+                            if (!(server.getInetAddress() instanceof Inet6Address)) {
+                                // pretend EPSV is not implemented
+                                out.println("500 '" + str + "': command not understood.");
+                                break;
+                            }
+                            if ("all".equalsIgnoreCase(arg)) {
+                                out.println("200 EPSV ALL command successful.");
+                                continue;
+                            }
+                            try {
+                                if (pasv == null)
+                                    pasv = new ServerSocket(0, 0, server.getInetAddress());
+                                int port = pasv.getLocalPort();
+                                out.println("229 Entering Extended" +
+                                        " Passive Mode (|||" + port + "|)");
+                            } catch (IOException ssex) {
+                                out.println("425 Can't build data connection:" +
+                                                " Connection refused.");
+                            }
+                            break;
+
                         case PASV:
                             if (!pasvEnabled) {
                                 out.println("500 PASV is disabled, use PORT instead.");
                                 continue;
                             }
                             try {
-                                if (pasv == null)
-                                    pasv = new ServerSocket(0);
+                                if (pasv == null) {
+                                    // Not sure how to support PASV mode over
+                                    // IPv6
+                                    pasv = new ServerSocket();
+                                    pasv.bind(new InetSocketAddress("127.0.0.1", 0));
+                                }
                                 int port = pasv.getLocalPort();
                                 out.println("227 Entering Passive Mode (127,0,0,1," +
                                             (port >> 8) + "," + (port & 0xff) +")");
@@ -369,21 +408,39 @@ public class FtpURL {
         }
 
         public FtpServer(int port) {
+            this(InetAddress.getLoopbackAddress(), port);
+        }
+
+        public FtpServer(InetAddress address, int port) {
             this.port = port;
             try {
-              server = new ServerSocket(port);
+                if (address == null) {
+                    server = new ServerSocket(port);
+                } else {
+                    server = new ServerSocket();
+                    server.bind(new InetSocketAddress(address, port));
+                }
             } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
         }
 
         public FtpServer() {
-            this(21);
+            this(null, 21);
         }
 
         public int getPort() {
-            if (server != null)
-                return server.getLocalPort();
-            return 0;
+             return server.getLocalPort();
+        }
+
+        public String getAuthority() {
+            InetAddress address = server.getInetAddress();
+            String hostaddr = address.isAnyLocalAddress()
+                ? "localhost" : address.getHostAddress();
+            if (hostaddr.indexOf(':') > -1) {
+                hostaddr = "[" + hostaddr +"]";
+            }
+            return hostaddr + ":" + getPort();
         }
 
         /**
@@ -445,20 +502,23 @@ public class FtpURL {
         }
     }
     public static void main(String[] args) throws Exception {
+        IPSupport.throwSkippedExceptionIfNonOperational();
         FtpURL test = new FtpURL();
     }
 
     public FtpURL() throws Exception {
-        FtpServer server = new FtpServer(0);
+        FtpServer server = new FtpServer(InetAddress.getLoopbackAddress(), 0);
         BufferedReader in = null;
         try {
             server.start();
-            int port = server.getPort();
+            String authority = server.getAuthority();
+            System.out.println("FTP server waiting for connections at: " + authority);
+            assert authority != null;
 
             // Now let's check the URL handler
 
-            URL url = new URL("ftp://user:password@localhost:" + port + "/%2Fetc/motd;type=a");
-            URLConnection con = url.openConnection();
+            URL url = new URL("ftp://user:password@" + authority + "/%2Fetc/motd;type=a");
+            URLConnection con = url.openConnection(Proxy.NO_PROXY);
             in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String s;
             do {
@@ -479,12 +539,11 @@ public class FtpURL {
             // We're done!
 
             // Second URL test
-            port = server.getPort();
 
             // Now let's check the URL handler
 
-            url = new URL("ftp://user2@localhost:" + port + "/%2Fusr/bin;type=d");
-            con = url.openConnection();
+            url = new URL("ftp://user2@" + authority + "/%2Fusr/bin;type=d");
+            con = url.openConnection(Proxy.NO_PROXY);
             in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             do {
                 s = in.readLine();
@@ -500,9 +559,9 @@ public class FtpURL {
             // We're done!
 
         } catch (Exception e) {
-            throw new RuntimeException("FTP support error: " + e.getMessage());
+            throw new RuntimeException("FTP support error: " + e.getMessage(), e);
         } finally {
-            try { in.close(); } catch (IOException unused) {}
+            try { in.close(); } catch (Exception unused) {}
             server.terminate();
             server.server.close();
         }

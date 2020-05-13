@@ -38,6 +38,7 @@ class CompiledStaticCall;
 class NativeCallWrapper;
 class ScopeDesc;
 class CompiledIC;
+class MetadataClosure;
 
 // This class is used internally by nmethods, to cache
 // exception/pc/handler information.
@@ -207,9 +208,9 @@ public:
          not_used      = 1,  // not entrant, but revivable
          not_entrant   = 2,  // marked for deoptimization but activations may still exist,
                              // will be transformed to zombie when all activations are gone
-         zombie        = 3,  // no activations exist, nmethod is ready for purge
-         unloaded      = 4   // there should be no activations, should not be called,
-                             // will be transformed to zombie immediately
+         unloaded      = 3,  // there should be no activations, should not be called, will be
+                             // transformed to zombie by the sweeper, when not "locked in vm".
+         zombie        = 4   // no activations exist, nmethod is ready for purge
   };
 
   virtual bool  is_in_use() const = 0;
@@ -243,10 +244,9 @@ public:
   bool is_at_poll_return(address pc);
   bool is_at_poll_or_poll_return(address pc);
 
-  bool  is_marked_for_deoptimization() const      { return _mark_for_deoptimization_status != not_marked; }
-  void  mark_for_deoptimization(bool inc_recompile_counts = true) {
-    _mark_for_deoptimization_status = (inc_recompile_counts ? deoptimize : deoptimize_noupdate);
-  }
+  bool  is_marked_for_deoptimization() const { return _mark_for_deoptimization_status != not_marked; }
+  void  mark_for_deoptimization(bool inc_recompile_counts = true);
+
   bool update_recompile_counts() const {
     // Update recompile counts when either the update is explicitly requested (deoptimize)
     // or the nmethod is not marked for deoptimization at all (not_marked).
@@ -348,13 +348,16 @@ public:
   void preserve_callee_argument_oops(frame fr, const RegisterMap *reg_map, OopClosure* f);
 
   // implicit exceptions support
-  virtual address continuation_for_implicit_exception(address pc) { return NULL; }
+  address continuation_for_implicit_div0_exception(address pc) { return continuation_for_implicit_exception(pc, true); }
+  address continuation_for_implicit_null_exception(address pc) { return continuation_for_implicit_exception(pc, false); }
 
   static address get_deopt_original_pc(const frame* fr);
 
   // Inline cache support for class unloading and nmethod unloading
  private:
   bool cleanup_inline_caches_impl(bool unloading_occurred, bool clean_all);
+
+  address continuation_for_implicit_exception(address pc, bool for_div0_check);
 
  public:
   // Serial version used by sweeper and whitebox test
@@ -363,11 +366,15 @@ public:
   virtual void clear_inline_caches();
   void clear_ic_callsites();
 
+  // Execute nmethod barrier code, as if entering through nmethod call.
+  void run_nmethod_entry_barrier();
+
   // Verify and count cached icholder relocations.
   int  verify_icholder_relocations();
   void verify_oop_relocations();
 
-  virtual bool is_evol_dependent() = 0;
+  bool has_evol_metadata();
+
   // Fast breakpoint support. Tells if this compiled method is
   // dependent on the given method. Returns true if this nmethod
   // corresponds to the given method as well.
@@ -384,7 +391,7 @@ public:
   Method* attached_method(address call_pc);
   Method* attached_method_before_pc(address pc);
 
-  virtual void metadata_do(void f(Metadata*)) = 0;
+  virtual void metadata_do(MetadataClosure* f) = 0;
 
   // GC support
  protected:
@@ -392,8 +399,6 @@ public:
 
  private:
   bool static clean_ic_if_metadata_is_dead(CompiledIC *ic);
-
-  void clean_ic_stubs();
 
  public:
   // GC unloading support
@@ -408,10 +413,6 @@ private:
   PcDesc* find_pc_desc(address pc, bool approximate) {
     return _pc_desc_container.find_pc_desc(pc, approximate, PcDescSearch(code_begin(), scopes_pcs_begin(), scopes_pcs_end()));
   }
-
-protected:
-  // Used by some GCs to chain nmethods.
-  nmethod* _scavenge_root_link; // from CodeCache::scavenge_root_nmethods
 };
 
 #endif // SHARE_CODE_COMPILEDMETHOD_HPP

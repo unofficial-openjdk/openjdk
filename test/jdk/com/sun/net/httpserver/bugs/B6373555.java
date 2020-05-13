@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,10 @@
 /**
  * @test
  * @bug 6373555
+ * @library /test/lib
  * @summary HTTP Server failing to answer client requests
+ * @run main B6373555
+ * @run main/othervm -Djava.net.preferIPv6Addresses=true B6373555
  */
 
 import java.net.*;
@@ -32,6 +35,7 @@ import java.io.*;
 import java.util.*;
 import com.sun.net.httpserver.*;
 import java.util.concurrent.*;
+import jdk.test.lib.net.URIBuilder;
 
 public class B6373555 {
 
@@ -96,8 +100,14 @@ public class B6373555 {
             try {
                 Thread.sleep(10);
                 byte[] buf = getBuf();
-                URL url = new URL("http://127.0.0.1:"+port+"/test");
-                HttpURLConnection con = (HttpURLConnection)url.openConnection();
+                URL url = URIBuilder.newBuilder()
+                    .scheme("http")
+                    .loopback()
+                    .port(port)
+                    .path("/test")
+                    .toURLUnchecked();
+                System.out.println("URL: " + url);
+                HttpURLConnection con = (HttpURLConnection)url.openConnection(Proxy.NO_PROXY);
                 con.setDoOutput(true);
                 con.setDoInput(true);
                 con.setRequestMethod("POST");
@@ -140,7 +150,8 @@ public class B6373555 {
 
     private static HttpServer createHttpServer(ExecutorService execs)
         throws Exception {
-        InetSocketAddress inetAddress = new InetSocketAddress(0);
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        InetSocketAddress inetAddress = new InetSocketAddress(loopback, 0);
         HttpServer testServer = HttpServer.create(inetAddress, 15);
         testServer.setExecutor(execs);
         HttpContext context = testServer.createContext("/test");

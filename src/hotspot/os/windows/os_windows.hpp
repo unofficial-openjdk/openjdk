@@ -55,6 +55,7 @@ class win32 {
   static bool   _has_exit_bug;
 
   static void print_windows_version(outputStream* st);
+  static void print_uptime_info(outputStream* st);
 
  public:
   // Windows-specific interface:
@@ -187,18 +188,30 @@ class PlatformParker : public CHeapObj<mtSynchronizer> {
 
 } ;
 
-// Platform specific implementation that underpins VM Monitor/Mutex class
-class PlatformMonitor : public CHeapObj<mtSynchronizer> {
- private:
+// Platform specific implementations that underpin VM Mutex/Monitor classes
+
+class PlatformMutex : public CHeapObj<mtSynchronizer> {
+  NONCOPYABLE(PlatformMutex);
+
+ protected:
   CRITICAL_SECTION   _mutex; // Native mutex for locking
+
+ public:
+  PlatformMutex();
+  ~PlatformMutex();
+  void lock();
+  void unlock();
+  bool try_lock();
+};
+
+class PlatformMonitor : public PlatformMutex {
+ private:
   CONDITION_VARIABLE _cond;  // Native condition variable for blocking
+  NONCOPYABLE(PlatformMonitor);
 
  public:
   PlatformMonitor();
   ~PlatformMonitor();
-  void lock();
-  void unlock();
-  bool try_lock();
   int wait(jlong millis);
   void notify();
   void notify_all();

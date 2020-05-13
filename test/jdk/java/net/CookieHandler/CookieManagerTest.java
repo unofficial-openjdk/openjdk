@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,8 @@
  * @summary Unit test for java.net.CookieManager
  * @bug 6244040 7150552 7051862
  * @modules jdk.httpserver
- * @run main/othervm -ea CookieManagerTest
+ *          java.logging
+ * @run main/othervm -ea -esa CookieManagerTest
  * @author Edward Wang
  */
 
@@ -36,6 +37,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.io.IOException;
 import java.net.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import static java.net.Proxy.NO_PROXY;
 
 public class CookieManagerTest {
@@ -57,11 +60,17 @@ public class CookieManagerTest {
         } catch (IOException x) {
             System.out.println("Debug: caught:" + x);
         }
-        System.out.println("Using: \"127.0.0.1\"");
-        return "127.0.0.1";
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        System.out.println("Using: \"" + loopback.getHostAddress() + "\"");
+        return loopback.getHostAddress();
     }
 
     public static void main(String[] args) throws Exception {
+        // logs everything...
+        Logger root = Logger.getLogger("");
+        root.setLevel(Level.ALL);
+        root.getHandlers()[0].setLevel(Level.ALL);
+
         startHttpServer();
         makeHttpCall();
 
@@ -73,7 +82,7 @@ public class CookieManagerTest {
 
    public static void startHttpServer() throws IOException {
         httpTrans = new CookieTransactionHandler();
-        server = HttpServer.create(new InetSocketAddress(0), 0);
+        server = HttpServer.create(new InetSocketAddress(hostAddress, 0), 0);
         server.createContext("/", httpTrans);
         server.start();
     }

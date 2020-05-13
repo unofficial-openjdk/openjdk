@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@
 #include "gc/shared/c1/barrierSetC1.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
+#include "utilities/powerOfTwo.hpp"
 #include "vmreg_x86.inline.hpp"
 
 #ifdef ASSERT
@@ -92,9 +93,13 @@ LIR_Opr LIRGenerator::result_register_for(ValueType* type, bool callee) {
     case intTag:     opr = FrameMap::rax_opr;          break;
     case objectTag:  opr = FrameMap::rax_oop_opr;      break;
     case longTag:    opr = FrameMap::long0_opr;        break;
+#ifdef _LP64
+    case floatTag:   opr = FrameMap::xmm0_float_opr;   break;
+    case doubleTag:  opr = FrameMap::xmm0_double_opr;  break;
+#else
     case floatTag:   opr = UseSSE >= 1 ? FrameMap::xmm0_float_opr  : FrameMap::fpu0_float_opr;  break;
     case doubleTag:  opr = UseSSE >= 2 ? FrameMap::xmm0_double_opr : FrameMap::fpu0_double_opr;  break;
-
+#endif // _LP64
     case addressTag:
     default: ShouldNotReachHere(); return LIR_OprFact::illegalOpr;
   }
@@ -144,7 +149,7 @@ bool LIRGenerator::can_inline_as_constant(LIR_Const* c) const {
 
 
 LIR_Opr LIRGenerator::safepoint_poll_register() {
-  NOT_LP64( if (SafepointMechanism::uses_thread_local_poll()) { return new_register(T_ADDRESS); } )
+  NOT_LP64( return new_register(T_ADDRESS); )
   return LIR_OprFact::illegalOpr;
 }
 
@@ -355,6 +360,7 @@ void LIRGenerator::do_ArithmeticOp_FPU(ArithmeticOp* x) {
     left.dont_load_item();
   }
 
+#ifndef _LP64
   // do not load right operand if it is a constant.  only 0 and 1 are
   // loaded because there are special instructions for loading them
   // without memory access (not needed for SSE2 instructions)
@@ -370,13 +376,18 @@ void LIRGenerator::do_ArithmeticOp_FPU(ArithmeticOp* x) {
       must_load_right = UseSSE < 2 && (c->is_one_double() || c->is_zero_double());
     }
   }
+#endif // !LP64
 
   if (must_load_both) {
     // frem and drem destroy also right operand, so move it to a new register
     right.set_destroys_register();
     right.load_item();
-  } else if (right.is_register() || must_load_right) {
+  } else if (right.is_register()) {
     right.load_item();
+#ifndef _LP64
+  } else if (must_load_right) {
+    right.load_item();
+#endif // !LP64
   } else {
     right.dont_load_item();
   }
@@ -386,6 +397,42 @@ void LIRGenerator::do_ArithmeticOp_FPU(ArithmeticOp* x) {
     tmp = new_register(T_DOUBLE);
   }
 
+#ifdef _LP64
+  if (x->op() == Bytecodes::_frem || x->op() == Bytecodes::_drem) {
+    // frem and drem are implemented as a direct call into the runtime.
+    LIRItem left(x->x(), this);
+    LIRItem right(x->y(), this);
+
+    BasicType bt = as_BasicType(x->type());
+    BasicTypeList signature(2);
+    signature.append(bt);
+    signature.append(bt);
+    CallingConvention* cc = frame_map()->c_calling_convention(&signature);
+
+    const LIR_Opr result_reg = result_register_for(x->type());
+    left.load_item_force(cc->at(0));
+    right.load_item_force(cc->at(1));
+
+    address entry = NULL;
+    switch (x->op()) {
+      case Bytecodes::_frem:
+        entry = CAST_FROM_FN_PTR(address, SharedRuntime::frem);
+        break;
+      case Bytecodes::_drem:
+        entry = CAST_FROM_FN_PTR(address, SharedRuntime::drem);
+        break;
+      default:
+        ShouldNotReachHere();
+    }
+
+    LIR_Opr result = rlock_result(x);
+    __ call_runtime_leaf(entry, getThreadTemp(), result_reg, cc->args());
+    __ move(result_reg, result);
+  } else {
+    arithmetic_op_fpu(x->op(), reg, left.result(), right.result(), x->is_strictfp(), tmp);
+    set_result(x, round_item(reg));
+  }
+#else
   if ((UseSSE >= 1 && x->op() == Bytecodes::_frem) || (UseSSE >= 2 && x->op() == Bytecodes::_drem)) {
     // special handling for frem and drem: no SSE instruction, so must use FPU with temporary fpu stack slots
     LIR_Opr fpu0, fpu1;
@@ -404,8 +451,8 @@ void LIRGenerator::do_ArithmeticOp_FPU(ArithmeticOp* x) {
   } else {
     arithmetic_op_fpu(x->op(), reg, left.result(), right.result(), x->is_strictfp(), tmp);
   }
-
   set_result(x, round_item(reg));
+#endif // _LP64
 }
 
 
@@ -444,9 +491,6 @@ void LIRGenerator::do_ArithmeticOp_Long(ArithmeticOp* x) {
     case Bytecodes::_ldiv:
       entry = CAST_FROM_FN_PTR(address, SharedRuntime::ldiv);
       break; // check if dividend is 0 is done elsewhere
-    case Bytecodes::_lmul:
-      entry = CAST_FROM_FN_PTR(address, SharedRuntime::lmul);
-      break;
     default:
       ShouldNotReachHere();
     }
@@ -671,7 +715,7 @@ void LIRGenerator::do_CompareOp(CompareOp* x) {
 
 LIR_Opr LIRGenerator::atomic_cmpxchg(BasicType type, LIR_Opr addr, LIRItem& cmp_value, LIRItem& new_value) {
   LIR_Opr ill = LIR_OprFact::illegalOpr;  // for convenience
-  if (type == T_OBJECT || type == T_ARRAY) {
+  if (is_reference_type(type)) {
     cmp_value.load_item_force(FrameMap::rax_oop_opr);
     new_value.load_item();
     __ cas_obj(addr->as_address_ptr()->base(), cmp_value.result(), new_value.result(), ill, ill);
@@ -693,7 +737,7 @@ LIR_Opr LIRGenerator::atomic_cmpxchg(BasicType type, LIR_Opr addr, LIRItem& cmp_
 }
 
 LIR_Opr LIRGenerator::atomic_xchg(BasicType type, LIR_Opr addr, LIRItem& value) {
-  bool is_oop = type == T_OBJECT || type == T_ARRAY;
+  bool is_oop = is_reference_type(type);
   LIR_Opr result = new_register(type);
   value.load_item();
   // Because we want a 2-arg form of xchg and xadd
@@ -754,9 +798,11 @@ void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
   LIRItem value(x->argument_at(0), this);
 
   bool use_fpu = false;
+#ifndef _LP64
   if (UseSSE < 2) {
     value.set_destroys_register();
   }
+#endif // !LP64
   value.load_item();
 
   LIR_Opr calc_input = value.result();
@@ -1145,6 +1191,15 @@ LIR_Opr fixed_register_for(BasicType type) {
 }
 
 void LIRGenerator::do_Convert(Convert* x) {
+#ifdef _LP64
+  LIRItem value(x->value(), this);
+  value.load_item();
+  LIR_Opr input = value.result();
+  LIR_Opr result = rlock(x);
+  __ convert(x->op(), input, result);
+  assert(result->is_virtual(), "result must be virtual register");
+  set_result(x, result);
+#else
   // flags that vary for the different operations and different SSE-settings
   bool fixed_input = false, fixed_result = false, round_result = false, needs_stub = false;
 
@@ -1203,6 +1258,7 @@ void LIRGenerator::do_Convert(Convert* x) {
 
   assert(result->is_virtual(), "result must be virtual register");
   set_result(x, result);
+#endif // _LP64
 }
 
 
@@ -1508,10 +1564,12 @@ void LIRGenerator::volatile_field_load(LIR_Address* address, LIR_Opr result,
     LIR_Opr temp_double = new_register(T_DOUBLE);
     __ volatile_move(LIR_OprFact::address(address), temp_double, T_LONG, info);
     __ volatile_move(temp_double, result, T_LONG);
+#ifndef _LP64
     if (UseSSE < 2) {
       // no spill slot needed in SSE2 mode because xmm->cpu register move is possible
       set_vreg_flag(result, must_start_in_memory);
     }
+#endif // !LP64
   } else {
     __ load(address, result, info);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,8 +97,8 @@ static void save_memory_to_file(char* addr, size_t size) {
 
   int result;
 
-  RESTARTABLE(::open(destfile, O_CREAT|O_WRONLY|O_TRUNC, S_IREAD|S_IWRITE),
-              result);;
+  RESTARTABLE(os::open(destfile, O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR),
+              result);
   if (result == OS_ERR) {
     if (PrintMiscellaneous && Verbose) {
       warning("Could not create Perfdata save file: %s: %s\n",
@@ -629,7 +629,7 @@ static char* get_user_name_slow(int vmid, int nspid, TRAPS) {
           if (statbuf.st_ctime > oldest_ctime) {
             char* user = strchr(dentry->d_name, '_') + 1;
 
-            if (oldest_user != NULL) FREE_C_HEAP_ARRAY(char, oldest_user);
+            FREE_C_HEAP_ARRAY(char, oldest_user);
             oldest_user = NEW_C_HEAP_ARRAY(char, strlen(user)+1, mtInternal);
 
             strcpy(oldest_user, user);
@@ -661,7 +661,7 @@ static int get_namespace_pid(int vmid) {
   if (fp) {
     int pid, nspid;
     int ret;
-    while (!feof(fp)) {
+    while (!feof(fp) && !ferror(fp)) {
       ret = fscanf(fp, "NSpid: %d %d", &pid, &nspid);
       if (ret == 1) {
         break;
@@ -871,7 +871,7 @@ static int create_sharedmem_resources(const char* dirname, const char* filename,
   // Cannot use O_TRUNC here; truncation of an existing file has to happen
   // after the is_file_secure() check below.
   int result;
-  RESTARTABLE(::open(filename, O_RDWR|O_CREAT|O_NOFOLLOW, S_IREAD|S_IWRITE), result);
+  RESTARTABLE(os::open(filename, O_RDWR|O_CREAT|O_NOFOLLOW, S_IRUSR|S_IWUSR), result);
   if (result == OS_ERR) {
     if (PrintMiscellaneous && Verbose) {
       if (errno == ELOOP) {
@@ -949,7 +949,7 @@ static int open_sharedmem_file(const char* filename, int oflags, TRAPS) {
 
   // open the file
   int result;
-  RESTARTABLE(::open(filename, oflags), result);
+  RESTARTABLE(os::open(filename, oflags, 0), result);
   if (result == OS_ERR) {
     if (errno == ENOENT) {
       THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
@@ -1107,7 +1107,7 @@ static size_t sharedmem_filesize(int fd, TRAPS) {
 
   if ((statbuf.st_size == 0) ||
      ((size_t)statbuf.st_size % os::vm_page_size() != 0)) {
-    THROW_MSG_0(vmSymbols::java_lang_Exception(),
+    THROW_MSG_0(vmSymbols::java_io_IOException(),
                 "Invalid PerfMemory size");
   }
 

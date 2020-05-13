@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,8 @@
 #ifndef SHARE_GC_G1_G1_GLOBALS_HPP
 #define SHARE_GC_G1_G1_GLOBALS_HPP
 
-#include <float.h> // for DBL_MAX
+#include "runtime/globals_shared.hpp"
+
 //
 // Defines all globals flags used by the garbage-first compiler.
 //
@@ -42,8 +43,7 @@
                     product_rw,                                             \
                     lp64_product,                                           \
                     range,                                                  \
-                    constraint,                                             \
-                    writeable)                                              \
+                    constraint)                                             \
                                                                             \
   product(bool, G1UseAdaptiveIHOP, true,                                    \
           "Adaptively adjust the initiating heap occupancy from the "       \
@@ -203,11 +203,6 @@
   develop(bool, G1VerifyCTCleanup, false,                                   \
           "Verify card table cleanup.")                                     \
                                                                             \
-  product(size_t, G1RSetScanBlockSize, 64,                                  \
-          "Size of a work unit of cards claimed by a worker thread"         \
-          "during RSet scanning.")                                          \
-          range(1, max_uintx)                                               \
-                                                                            \
   develop(uintx, G1DummyRegionsPerGC, 0,                                    \
           "The number of dummy regions G1 will allocate at the end of "     \
           "each evacuation pause in order to artificially fill up the "     \
@@ -243,9 +238,6 @@
   product(uintx, G1MixedGCCountTarget, 8,                                   \
           "The target number of mixed GCs after a marking cycle.")          \
           range(0, max_uintx)                                               \
-                                                                            \
-  experimental(bool, G1PretouchAuxiliaryMemory, false,                      \
-          "Pre-touch large auxiliary data structures used by the GC.")      \
                                                                             \
   experimental(bool, G1EagerReclaimHumongousObjects, true,                  \
           "Try to reclaim dead large objects at every young GC.")           \

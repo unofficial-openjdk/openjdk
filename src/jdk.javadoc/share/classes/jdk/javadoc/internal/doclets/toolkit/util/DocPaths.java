@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,36 +39,21 @@ import javax.lang.model.element.TypeElement;
  *
  */
 public class DocPaths {
-    private final boolean useModuleDirectories;
     private final String moduleSeparator;
     private final Utils utils;
 
-    public DocPaths(Utils utils, boolean useModuleDirectories) {
+    public DocPaths(Utils utils) {
         this.utils = utils;
-        this.useModuleDirectories = useModuleDirectories;
-        moduleSeparator = useModuleDirectories ? "/module-" : "-";
+        moduleSeparator = "/module-";
     }
 
     public static final DocPath DOT_DOT = DocPath.create("..");
-
-    /** The name of the file for all classes, without using frames, when --no-frames is specified. */
-    public static final DocPath ALLCLASSES = DocPath.create("allclasses.html");
-
-    /** The name of the file for all classes, using frames. */
-    public static final DocPath ALLCLASSES_FRAME = DocPath.create("allclasses-frame.html");
 
     /** The name of the file for all classes index. */
     public static final DocPath ALLCLASSES_INDEX = DocPath.create("allclasses-index.html");
 
     /** The name of the file for all packages index. */
     public static final DocPath ALLPACKAGES_INDEX = DocPath.create("allpackages-index.html");
-
-    /** The name of the file for all classes, without using frames. */
-    public static final DocPath ALLCLASSES_NOFRAME = DocPath.create("allclasses-noframe.html");
-
-    public static DocPath AllClasses(boolean frames) {
-        return frames ? ALLCLASSES_NOFRAME : ALLCLASSES;
-    }
 
     /** The name of the sub-directory for storing class usage info. */
     public static final DocPath CLASS_USE = DocPath.create("class-use");
@@ -113,80 +98,31 @@ public class DocPaths {
     public static final DocPath JAVASCRIPT = DocPath.create("script.js");
 
     /** The name of the directory for the jQuery. */
-    public static final DocPath JQUERY_FILES = DocPath.create("jquery");
+    public static final DocPath JQUERY_FILES = DocPath.create("script-dir");
 
     /** The name of the default jQuery stylesheet file. */
     public static final DocPath JQUERY_STYLESHEET_FILE = DocPath.create("jquery-ui.css");
 
     /** The name of the default jQuery javascript file. */
-    public static final DocPath JQUERY_JS_3_3 = DocPath.create("jquery-3.3.1.js");
-
-    /** The name of jquery-migrate javascript file. */
-    public static final DocPath JQUERY_MIGRATE = DocPath.create("jquery-migrate-3.0.1.js");
+    public static final DocPath JQUERY_JS_3_4 = DocPath.create("jquery-3.4.1.js");
 
     /** The name of the default jQuery javascript file. */
     public static final DocPath JQUERY_JS = DocPath.create("jquery-ui.js");
 
-    /** The name of the default jszip javascript file. */
-    public static final DocPath JSZIP = DocPath.create("jszip/dist/jszip.js");
-
-    /** The name of the default jszip javascript file. */
-    public static final DocPath JSZIP_MIN = DocPath.create("jszip/dist/jszip.min.js");
-
-    /** The name of the default jszip-utils javascript file. */
-    public static final DocPath JSZIPUTILS = DocPath.create("jszip-utils/dist/jszip-utils.js");
-
-    /** The name of the default jszip-utils javascript file. */
-    public static final DocPath JSZIPUTILS_MIN = DocPath.create("jszip-utils/dist/jszip-utils.min.js");
-
-    /** The name of the default jszip-utils javascript file. */
-    public static final DocPath JSZIPUTILS_IE = DocPath.create("jszip-utils/dist/jszip-utils-ie.js");
-
-    /** The name of the default jszip-utils javascript file. */
-    public static final DocPath JSZIPUTILS_IE_MIN = DocPath.create("jszip-utils/dist/jszip-utils-ie.min.js");
-
-    /** The name of the member search index file. */
-    public static final DocPath MEMBER_SEARCH_INDEX_JSON = DocPath.create("member-search-index.json");
-
-    /** The name of the member search index zip file. */
-    public static final DocPath MEMBER_SEARCH_INDEX_ZIP = DocPath.create("member-search-index.zip");
-
     /** The name of the member search index js file. */
     public static final DocPath MEMBER_SEARCH_INDEX_JS = DocPath.create("member-search-index.js");
-
-    /** The name of the module search index file. */
-    public static final DocPath MODULE_SEARCH_INDEX_JSON = DocPath.create("module-search-index.json");
-
-    /** The name of the module search index zip file. */
-    public static final DocPath MODULE_SEARCH_INDEX_ZIP = DocPath.create("module-search-index.zip");
 
     /** The name of the module search index js file. */
     public static final DocPath MODULE_SEARCH_INDEX_JS = DocPath.create("module-search-index.js");
 
-    /** The name of the file for the overview frame. */
-    public static final DocPath OVERVIEW_FRAME = DocPath.create("overview-frame.html");
-
     /** The name of the file for the overview summary. */
     public static final DocPath OVERVIEW_SUMMARY = DocPath.create("overview-summary.html");
-
-    public static DocPath overviewSummary(boolean frames) {
-        return frames ? OVERVIEW_SUMMARY : INDEX;
-    }
 
     /** The name of the file for the overview tree. */
     public static final DocPath OVERVIEW_TREE = DocPath.create("overview-tree.html");
 
-    /** The name of the file for the package frame. */
-    public static final DocPath PACKAGE_FRAME = DocPath.create("package-frame.html");
-
     /** The name of the file for the package list. This is to support the legacy mode. */
     public static final DocPath PACKAGE_LIST = DocPath.create("package-list");
-
-    /** The name of the package search index file. */
-    public static final DocPath PACKAGE_SEARCH_INDEX_JSON = DocPath.create("package-search-index.json");
-
-    /** The name of the package search index zip file. */
-    public static final DocPath PACKAGE_SEARCH_INDEX_ZIP = DocPath.create("package-search-index.zip");
 
     /** The name of the package search index js file. */
     public static final DocPath PACKAGE_SEARCH_INDEX_JS = DocPath.create("package-search-index.js");
@@ -199,6 +135,9 @@ public class DocPaths {
 
     /** The name of the file for the package usage info. */
     public static final DocPath PACKAGE_USE = DocPath.create("package-use.html");
+
+    /** The name of the file for all system properties. */
+    public static final DocPath SYSTEM_PROPERTIES = DocPath.create("system-properties.html");
 
     /**
      * Returns the path for a type element.
@@ -262,12 +201,8 @@ public class DocPaths {
         }
 
         DocPath pkgPath = DocPath.create(pkgElement.getQualifiedName().toString().replace('.', '/'));
-        if (useModuleDirectories) {
-            ModuleElement mdle = (ModuleElement) pkgElement.getEnclosingElement();
-            return forModule(mdle).resolve(pkgPath);
-        } else {
-            return pkgPath;
-        }
+        ModuleElement mdle = (ModuleElement) pkgElement.getEnclosingElement();
+        return forModule(mdle).resolve(pkgPath);
     }
 
     /**
@@ -306,15 +241,6 @@ public class DocPaths {
     }
 
     /**
-     * The path for the file for a module's frame page.
-     * @param mdle the module
-     * @return the path
-     */
-    public DocPath moduleFrame(ModuleElement mdle) {
-        return createModulePath(mdle, "frame.html");
-    }
-
-    /**
      * The path for the file for a module's summary page.
      * @param mdle the module
      * @return the path
@@ -332,15 +258,6 @@ public class DocPaths {
         return createModulePath(mdleName, "summary.html");
     }
 
-    /**
-     * The path for the file for a module's type frame page.
-     * @param mdle the module
-     * @return the path
-     */
-    public DocPath moduleTypeFrame(ModuleElement mdle) {
-        return createModulePath(mdle, "type-frame.html");
-    }
-
     private DocPath createModulePath(ModuleElement mdle, String path) {
         return DocPath.create(mdle.getQualifiedName() + moduleSeparator + path);
     }
@@ -348,9 +265,6 @@ public class DocPaths {
     private DocPath createModulePath(String moduleName, String path) {
         return DocPath.create(moduleName + moduleSeparator + path);
     }
-
-    /** The name of the file for the module overview frame. */
-    public static final DocPath MODULE_OVERVIEW_FRAME = DocPath.create("module-overview-frame.html");
 
     /** The name of the sub-package from which resources are read. */
     public static final DocPath RESOURCES = DocPath.create("resources");
@@ -369,20 +283,8 @@ public class DocPaths {
     /** The name of the default stylesheet. */
     public static final DocPath STYLESHEET = DocPath.create("stylesheet.css");
 
-    /** The name of the tag search index file. */
-    public static final DocPath TAG_SEARCH_INDEX_JSON = DocPath.create("tag-search-index.json");
-
-    /** The name of the tag search index zip file. */
-    public static final DocPath TAG_SEARCH_INDEX_ZIP = DocPath.create("tag-search-index.zip");
-
     /** The name of the tag search index js file. */
     public static final DocPath TAG_SEARCH_INDEX_JS = DocPath.create("tag-search-index.js");
-
-    /** The name of the type search index file. */
-    public static final DocPath TYPE_SEARCH_INDEX_JSON = DocPath.create("type-search-index.json");
-
-    /** The name of the type search index zip file. */
-    public static final DocPath TYPE_SEARCH_INDEX_ZIP = DocPath.create("type-search-index.zip");
 
     /** The name of the type search index js file. */
     public static final DocPath TYPE_SEARCH_INDEX_JS = DocPath.create("type-search-index.js");

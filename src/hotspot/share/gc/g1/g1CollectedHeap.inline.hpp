@@ -28,16 +28,23 @@
 #include "gc/g1/g1BarrierSet.hpp"
 #include "gc/g1/g1CollectedHeap.hpp"
 #include "gc/g1/g1CollectorState.hpp"
+#include "gc/g1/g1Policy.hpp"
+#include "gc/g1/g1RemSet.hpp"
 #include "gc/g1/heapRegionManager.inline.hpp"
+#include "gc/g1/heapRegionRemSet.hpp"
 #include "gc/g1/heapRegionSet.inline.hpp"
+#include "gc/shared/markBitMap.inline.hpp"
 #include "gc/shared/taskqueue.inline.hpp"
-#include "runtime/orderAccess.hpp"
 
-G1EvacStats* G1CollectedHeap::alloc_buffer_stats(InCSetState dest) {
-  switch (dest.value()) {
-    case InCSetState::Young:
+G1GCPhaseTimes* G1CollectedHeap::phase_times() const {
+  return _policy->phase_times();
+}
+
+G1EvacStats* G1CollectedHeap::alloc_buffer_stats(G1HeapRegionAttr dest) {
+  switch (dest.type()) {
+    case G1HeapRegionAttr::Young:
       return &_survivor_evac_stats;
-    case InCSetState::Old:
+    case G1HeapRegionAttr::Old:
       return &_old_evac_stats;
     default:
       ShouldNotReachHere();
@@ -45,7 +52,7 @@ G1EvacStats* G1CollectedHeap::alloc_buffer_stats(InCSetState dest) {
   }
 }
 
-size_t G1CollectedHeap::desired_plab_sz(InCSetState dest) {
+size_t G1CollectedHeap::desired_plab_sz(G1HeapRegionAttr dest) {
   size_t gclab_word_size = alloc_buffer_stats(dest)->desired_plab_sz(workers()->active_workers());
   // Prevent humongous PLAB sizes for two reasons:
   // * PLABs are allocated using a similar paths as oops, but should
@@ -83,7 +90,7 @@ inline HeapRegion* G1CollectedHeap::heap_region_containing(const T addr) const {
   assert(is_in_g1_reserved((const void*) addr),
          "Address " PTR_FORMAT " is outside of the heap ranging from [" PTR_FORMAT " to " PTR_FORMAT ")",
          p2i((void*)addr), p2i(g1_reserved().start()), p2i(g1_reserved().end()));
-  return _hrm->addr_to_region((HeapWord*) addr);
+  return _hrm->addr_to_region((HeapWord*)(void*) addr);
 }
 
 template <class T>
@@ -137,31 +144,48 @@ inline RefToScanQueue* G1CollectedHeap::task_queue(uint i) const {
 }
 
 inline bool G1CollectedHeap::is_marked_next(oop obj) const {
-  return _cm->next_mark_bitmap()->is_marked((HeapWord*)obj);
+  return _cm->next_mark_bitmap()->is_marked(obj);
 }
 
 inline bool G1CollectedHeap::is_in_cset(oop obj) {
-  return is_in_cset((HeapWord*)obj);
+  return is_in_cset(cast_from_oop<HeapWord*>(obj));
 }
 
 inline bool G1CollectedHeap::is_in_cset(HeapWord* addr) {
-  return _in_cset_fast_test.is_in_cset(addr);
+  return _region_attr.is_in_cset(addr);
 }
 
 bool G1CollectedHeap::is_in_cset(const HeapRegion* hr) {
-  return _in_cset_fast_test.is_in_cset(hr);
+  return _region_attr.is_in_cset(hr);
 }
 
 bool G1CollectedHeap::is_in_cset_or_humongous(const oop obj) {
-  return _in_cset_fast_test.is_in_cset_or_humongous((HeapWord*)obj);
+  return _region_attr.is_in_cset_or_humongous(cast_from_oop<HeapWord*>(obj));
 }
 
-InCSetState G1CollectedHeap::in_cset_state(const oop obj) {
-  return _in_cset_fast_test.at((HeapWord*)obj);
+G1HeapRegionAttr G1CollectedHeap::region_attr(const void* addr) const {
+  return _region_attr.at((HeapWord*)addr);
 }
 
-void G1CollectedHeap::register_humongous_region_with_cset(uint index) {
-  _in_cset_fast_test.set_humongous(index);
+G1HeapRegionAttr G1CollectedHeap::region_attr(uint idx) const {
+  return _region_attr.get_by_index(idx);
+}
+
+void G1CollectedHeap::register_humongous_region_with_region_attr(uint index) {
+  _region_attr.set_humongous(index, region_at(index)->rem_set()->is_tracked());
+}
+
+void G1CollectedHeap::register_region_with_region_attr(HeapRegion* r) {
+  _region_attr.set_has_remset(r->hrm_index(), r->rem_set()->is_tracked());
+}
+
+void G1CollectedHeap::register_old_region_with_region_attr(HeapRegion* r) {
+  _region_attr.set_in_old(r->hrm_index(), r->rem_set()->is_tracked());
+  _rem_set->exclude_region_from_scan(r->hrm_index());
+}
+
+void G1CollectedHeap::register_optional_region_with_region_attr(HeapRegion* r) {
+  _region_attr.set_optional(r->hrm_index(), r->rem_set()->is_tracked());
 }
 
 #ifndef PRODUCT
@@ -275,10 +299,14 @@ inline bool G1CollectedHeap::is_humongous_reclaim_candidate(uint region) {
   return _humongous_reclaim_candidates.is_candidate(region);
 }
 
+inline void G1CollectedHeap::set_has_humongous_reclaim_candidate(bool value) {
+  _has_humongous_reclaim_candidates = value;
+}
+
 inline void G1CollectedHeap::set_humongous_is_live(oop obj) {
-  uint region = addr_to_region((HeapWord*)obj);
+  uint region = addr_to_region(cast_from_oop<HeapWord*>(obj));
   // Clear the flag in the humongous_reclaim_candidates table.  Also
-  // reset the entry in the _in_cset_fast_test table so that subsequent references
+  // reset the entry in the region attribute table so that subsequent references
   // to the same humongous object do not go into the slow path again.
   // This is racy, as multiple threads may at the same time enter here, but this
   // is benign.
@@ -289,7 +317,7 @@ inline void G1CollectedHeap::set_humongous_is_live(oop obj) {
   // thread (i.e. within the VM thread).
   if (is_humongous_reclaim_candidate(region)) {
     set_humongous_reclaim_candidate(region, false);
-    _in_cset_fast_test.clear_humongous(region);
+    _region_attr.clear_humongous(region);
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,6 +61,7 @@ import java.util.stream.Collectors;
 import jdk.internal.module.Checks;
 import jdk.internal.module.DefaultRoots;
 import jdk.internal.module.IllegalAccessMaps;
+import jdk.internal.module.Modules;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfo.Attributes;
 import jdk.internal.module.ModuleInfoExtender;
@@ -291,10 +292,10 @@ public final class SystemModulesPlugin implements Plugin {
 
     /**
      * Resolves a collection of root modules, with service binding, to create
-     * configuration.
+     * a Configuration for the boot layer.
      */
     private Configuration resolve(ModuleFinder finder, Set<String> roots) {
-        return Configuration.empty().resolveAndBind(finder, ModuleFinder.of(), roots);
+        return Modules.newBootLayerConfiguration(finder, roots, null);
     }
 
     /**
@@ -441,6 +442,7 @@ public final class SystemModulesPlugin implements Plugin {
                                                  int flags,
                                                  String version) {
                     return new ModuleVisitor(Opcodes.ASM7) {
+                        @Override
                         public void visitPackage(String pn) {
                             packages.add(pn);
                         }
@@ -1707,6 +1709,7 @@ public final class SystemModulesPlugin implements Plugin {
             /**
              * Loads an Enum field.
              */
+            @Override
             void visitElement(T t, MethodVisitor mv) {
                 mv.visitFieldInsn(GETSTATIC, className, t.toString(),
                                   "L" + className + ";");

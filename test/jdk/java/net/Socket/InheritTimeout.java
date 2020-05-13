@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 /*
  * @test
  * @bug 4508149
+ * @library /test/lib
  * @summary Setting ServerSocket.setSoTimeout shouldn't cause
  *          the timeout to be inherited by accepted connections
  * @run main InheritTimeout
@@ -32,6 +33,7 @@
 
 import java.net.*;
 import java.io.InputStream;
+import jdk.test.lib.net.IPSupport;
 
 public class InheritTimeout {
 
@@ -54,10 +56,11 @@ public class InheritTimeout {
     }
 
    InheritTimeout() throws Exception {
-        ServerSocket ss = new ServerSocket(0);
+        InetAddress ia = InetAddress.getLocalHost();
+        ServerSocket ss = new ServerSocket();
+        ss.bind(new InetSocketAddress(ia, 0));
         ss.setSoTimeout(1000);
 
-        InetAddress ia = InetAddress.getLocalHost();
         InetSocketAddress isa =
             new InetSocketAddress(ia, ss.getLocalPort());
 
@@ -92,6 +95,7 @@ public class InheritTimeout {
    }
 
    public static void main(String args[]) throws Exception {
+        IPSupport.throwSkippedExceptionIfNonOperational();
         new InheritTimeout();
    }
 }

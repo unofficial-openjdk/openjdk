@@ -32,54 +32,52 @@
 
 #ifdef VM_LITTLE_ENDIAN
 static const int low_offset = 0;
-static const int leakp_offset = low_offset + 1;
+static const int meta_offset = low_offset + 1;
 #else
 static const int low_offset = 7;
-static const int leakp_offset = low_offset - 1;
+static const int meta_offset = low_offset - 1;
 #endif
 
-inline void set_bits(jbyte bits, jbyte* const dest) {
+inline void set_bits(jbyte bits, jbyte volatile* const dest) {
   assert(dest != NULL, "invariant");
-  const jbyte current = OrderAccess::load_acquire(dest);
-  if (bits != (current & bits)) {
-    *dest |= bits;
-  }
+  *dest |= bits;
+  OrderAccess::storestore();
 }
 
-inline void set_mask(jbyte mask, jbyte* const dest) {
+inline jbyte traceid_and(jbyte current, jbyte bits) {
+  return current & bits;
+}
+
+inline jbyte traceid_or(jbyte current, jbyte bits) {
+  return current | bits;
+}
+
+inline jbyte traceid_xor(jbyte current, jbyte bits) {
+  return current ^ bits;
+}
+
+template <jbyte op(jbyte, jbyte)>
+inline void set_bits_cas_form(jbyte bits, jbyte* const dest) {
   assert(dest != NULL, "invariant");
-  const jbyte current = OrderAccess::load_acquire(dest);
-  if (mask != (current & mask)) {
-    *dest &= mask;
-  }
+  do {
+    const jbyte current = *dest;
+    const jbyte new_value = op(current, bits);
+    if (Atomic::cmpxchg(dest, current, new_value) == current) {
+      return;
+    }
+  } while (true);
 }
 
 inline void set_bits_cas(jbyte bits, jbyte* const dest) {
-  assert(dest != NULL, "invariant");
-  do {
-    const jbyte current = OrderAccess::load_acquire(dest);
-    if (bits == (current & bits)) {
-      return;
-    }
-    const jbyte new_value = current | bits;
-    if (Atomic::cmpxchg(new_value, dest, current) == current) {
-      return;
-    }
-  } while (true);
+  set_bits_cas_form<traceid_or>(bits, dest);
 }
 
 inline void clear_bits_cas(jbyte bits, jbyte* const dest) {
-  assert(dest != NULL, "invariant");
-  do {
-    const jbyte current = OrderAccess::load_acquire(dest);
-    if (bits != (current & bits)) {
-      return;
-    }
-    const jbyte new_value = current ^ bits;
-    if (Atomic::cmpxchg(new_value, dest, current) == current) {
-      return;
-    }
-  } while (true);
+  set_bits_cas_form<traceid_xor>(bits, dest);
+}
+
+inline void set_mask(jbyte mask, jbyte* const dest) {
+  set_bits_cas_form<traceid_and>(mask, dest);
 }
 
 inline void set_traceid_bits(jbyte bits, traceid* dest) {
@@ -94,16 +92,28 @@ inline void set_traceid_mask(jbyte mask, traceid* dest) {
   set_mask(mask, ((jbyte*)dest) + low_offset);
 }
 
-inline void set_leakp_traceid_bits(jbyte bits, traceid* dest) {
-  set_bits(bits, ((jbyte*)dest) + leakp_offset);
+inline void set_meta_bits(jbyte bits, jbyte* const dest) {
+  assert(dest != NULL, "invariant");
+  *dest |= bits;
 }
 
-inline void set_leakp_traceid_bits_cas(jbyte bits, traceid* dest) {
-  set_bits_cas(bits, ((jbyte*)dest) + leakp_offset);
+inline void set_traceid_meta_bits(jbyte bits, traceid* dest) {
+  set_meta_bits(bits, ((jbyte*)dest) + meta_offset);
 }
 
-inline void set_leakp_traceid_mask(jbyte mask, traceid* dest) {
-  set_mask(mask, ((jbyte*)dest) + leakp_offset);
+inline void set_meta_mask(jbyte mask, jbyte* const dest) {
+  assert(dest != NULL, "invariant");
+  *dest &= mask;
+}
+
+inline void set_traceid_meta_mask(jbyte mask, traceid* dest) {
+  set_meta_mask(mask, ((jbyte*)dest) + meta_offset);
+}
+
+// only used by a single thread with no visibility requirements
+inline void clear_meta_bits(jbyte bits, jbyte* const dest) {
+  assert(dest != NULL, "invariant");
+  *dest ^= bits;
 }
 
 #endif // SHARE_JFR_RECORDER_CHECKPOINT_TYPES_TRACEID_JFRTRACEIDBITS_INLINE_HPP

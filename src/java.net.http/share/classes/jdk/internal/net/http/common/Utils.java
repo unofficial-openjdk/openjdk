@@ -39,7 +39,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.System.Logger.Level;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
@@ -74,6 +73,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.util.stream.Collectors.joining;
 import jdk.internal.net.http.HttpRequestImpl;
 
@@ -178,7 +178,12 @@ public final class Utils {
                 ! (k.equalsIgnoreCase("Authorization")
                         && k.equalsIgnoreCase("Proxy-Authorization"));
     }
+    private static final BiPredicate<String, String> HOST_RESTRICTED = (k,v) -> !"host".equalsIgnoreCase(k);
+    public static final BiPredicate<String, String> PROXY_TUNNEL_RESTRICTED(HttpClient client)  {
+        return CONTEXT_RESTRICTED(client).and(HOST_RESTRICTED);
+    }
 
+    private static final Predicate<String> IS_HOST = "host"::equalsIgnoreCase;
     private static final Predicate<String> IS_PROXY_HEADER = (k) ->
             k != null && k.length() > 6 && "proxy-".equalsIgnoreCase(k.substring(0,6));
     private static final Predicate<String> NO_PROXY_HEADER =
@@ -250,7 +255,8 @@ public final class Utils {
 
     public static final BiPredicate<String, String> PROXY_TUNNEL_FILTER =
             (s,v) -> isAllowedForProxy(s, v, PROXY_AUTH_TUNNEL_DISABLED_SCHEMES,
-                    IS_PROXY_HEADER);
+                    // Allows Proxy-* and Host headers when establishing the tunnel.
+                    IS_PROXY_HEADER.or(IS_HOST));
     public static final BiPredicate<String, String> PROXY_FILTER =
             (s,v) -> isAllowedForProxy(s, v, PROXY_AUTH_DISABLED_SCHEMES,
                     ALL_HEADERS);
@@ -532,15 +538,9 @@ public final class Utils {
 
     public static String stackTrace(Throwable t) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        String s = null;
-        try {
-            PrintStream p = new PrintStream(bos, true, "US-ASCII");
-            t.printStackTrace(p);
-            s = bos.toString("US-ASCII");
-        } catch (UnsupportedEncodingException ex) {
-            throw new InternalError(ex); // Can't happen
-        }
-        return s;
+        PrintStream p = new PrintStream(bos, true, US_ASCII);
+        t.printStackTrace(p);
+        return bos.toString(US_ASCII);
     }
 
     /**

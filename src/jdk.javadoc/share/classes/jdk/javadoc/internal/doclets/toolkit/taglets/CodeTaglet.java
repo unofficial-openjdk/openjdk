@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +30,8 @@ import java.util.EnumSet;
 import javax.lang.model.element.Element;
 
 import com.sun.source.doctree.DocTree;
+import jdk.javadoc.doclet.Taglet.Location;
 import jdk.javadoc.internal.doclets.toolkit.Content;
-
-import static com.sun.source.doctree.DocTree.Kind.CODE;
 
 /**
  * An inline Taglet used to denote literal code fragments.
@@ -50,14 +49,12 @@ import static com.sun.source.doctree.DocTree.Kind.CODE;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Scott Seligman
  */
 
 public class CodeTaglet extends BaseTaglet {
 
     CodeTaglet() {
-        super(CODE.tagName, true, EnumSet.allOf(Site.class));
+        super(DocTree.Kind.CODE, true, EnumSet.allOf(Location.class));
     }
 
     @Override

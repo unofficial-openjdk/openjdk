@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -150,7 +150,7 @@ import sun.util.locale.provider.TimeZoneNameUtility;
  * class for formatting. The {@link #toFormat()} method returns an
  * implementation of {@code java.text.Format}.
  *
- * <h3 id="predefined">Predefined Formatters</h3>
+ * <h2 id="predefined">Predefined Formatters</h2>
  * <table class="striped" style="text-align:left">
  * <caption>Predefined Formatters</caption>
  * <thead>
@@ -258,7 +258,7 @@ import sun.util.locale.provider.TimeZoneNameUtility;
  * </tbody>
  * </table>
  *
- * <h3 id="patterns">Patterns for Formatting and Parsing</h3>
+ * <h2 id="patterns">Patterns for Formatting and Parsing</h2>
  * Patterns are based on a simple sequence of letters and symbols.
  * A pattern is used to create a Formatter using the
  * {@link #ofPattern(String)} and {@link #ofPattern(String, Locale)} methods.
@@ -396,15 +396,16 @@ import sun.util.locale.provider.TimeZoneNameUtility;
  * 'Z' when the offset to be output would be zero, whereas pattern letter 'x'
  * (lower case) will output '+00', '+0000', or '+00:00'.
  * <p>
- * <b>Offset O</b>: This formats the localized offset based on the number of
- * pattern letters. One letter outputs the {@linkplain TextStyle#SHORT short}
- * form of the localized offset, which is localized offset text, such as 'GMT',
- * with hour without leading zero, optional 2-digit minute and second if
- * non-zero, and colon, for example 'GMT+8'. Four letters outputs the
- * {@linkplain TextStyle#FULL full} form, which is localized offset text,
- * such as 'GMT, with 2-digit hour and minute field, optional second field
- * if non-zero, and colon, for example 'GMT+08:00'. Any other count of letters
- * throws {@code IllegalArgumentException}.
+ * <b>Offset O</b>: With a non-zero offset, this formats the localized offset
+ * based on the number of pattern letters. One letter outputs the
+ * {@linkplain TextStyle#SHORT short} form of the localized offset, which is
+ * localized offset text, such as 'GMT', with hour without leading zero, optional
+ * 2-digit minute and second if non-zero, and colon, for example 'GMT+8'. Four
+ * letters outputs the {@linkplain TextStyle#FULL full} form, which is localized
+ * offset text, such as 'GMT, with 2-digit hour and minute field, optional second
+ * field if non-zero, and colon, for example 'GMT+08:00'. If the offset is zero,
+ * only localized text is output. Any other count of letters throws
+ * {@code IllegalArgumentException}.
  * <p>
  * <b>Offset Z</b>: This formats the offset based on the number of pattern
  * letters. One, two or three letters outputs the hour and minute, without a
@@ -434,7 +435,7 @@ import sun.util.locale.provider.TimeZoneNameUtility;
  * that you want to output directly to ensure that future changes do not break
  * your application.
  *
- * <h3 id="resolving">Resolving</h3>
+ * <h2 id="resolving">Resolving</h2>
  * Parsing is implemented as a two-phase operation.
  * First, the text is parsed using the layout defined by the formatter, producing
  * a {@code Map} of field to value, a {@code ZoneId} and a {@code Chronology}.
@@ -1498,18 +1499,20 @@ public final class DateTimeFormatter {
             return this;
         }
 
-        // Check for decimalStyle/chronology/timezone in locale object
-        Chronology c = locale.getUnicodeLocaleType("ca") != null ?
-                       Chronology.ofLocale(locale) : chrono;
-        DecimalStyle ds = locale.getUnicodeLocaleType("nu") != null ?
-                       DecimalStyle.of(locale) : decimalStyle;
+        // Override decimalStyle/chronology/timezone for the locale object
         String tzType = locale.getUnicodeLocaleType("tz");
-        ZoneId z  = tzType != null ?
+        ZoneId z = tzType != null ?
                     TimeZoneNameUtility.convertLDMLShortID(tzType)
                         .map(ZoneId::of)
                         .orElse(zone) :
                     zone;
-        return new DateTimeFormatter(printerParser, locale, ds, resolverStyle, resolverFields, c, z);
+        return new DateTimeFormatter(printerParser,
+                locale,
+                DecimalStyle.of(locale),
+                resolverStyle,
+                resolverFields,
+                Chronology.ofLocale(locale),
+                z);
     }
 
     //-----------------------------------------------------------------------

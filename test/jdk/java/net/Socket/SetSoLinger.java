@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,20 +24,28 @@
 /*
  * @test
  * @bug 4151834
+ * @library /test/lib
  * @summary Test Socket.setSoLinger
  * @run main SetSoLinger
  * @run main/othervm -Djava.net.preferIPv4Stack=true SetSoLinger
+ * @run main/othervm -Djava.net.preferIPv6Addresses=true SetSoLinger
  */
 
 import java.net.*;
+import jdk.test.lib.net.IPSupport;
 
 public class SetSoLinger {
     static final int LINGER = 65546;
 
     public static void main(String args[]) throws Exception {
+        IPSupport.throwSkippedExceptionIfNonOperational();
+
         int value;
         InetAddress addr = InetAddress.getLocalHost();
-        ServerSocket ss = new ServerSocket(0);
+        ServerSocket ss = new ServerSocket();
+
+        InetSocketAddress socketAddress = new InetSocketAddress(addr, 0);
+        ss.bind(socketAddress);
         int port = ss.getLocalPort();
 
         Socket s = new Socket(addr, port);

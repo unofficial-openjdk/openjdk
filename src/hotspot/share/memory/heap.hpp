@@ -51,6 +51,8 @@ class HeapBlock {
  public:
   // Initialization
   void initialize(size_t length)                 { _header._length = length; set_used(); }
+  // Merging/splitting
+  void set_length(size_t length)                 { _header._length = length; }
 
   // Accessors
   void* allocated_space() const                  { return (void*)(this + 1); }
@@ -71,9 +73,6 @@ class FreeBlock: public HeapBlock {
   // Initialization
   void initialize(size_t length)             { HeapBlock::initialize(length); _link= NULL; }
 
-  // Merging
-  void set_length(size_t l)                  { _header._length = l; }
-
   // Accessors
   FreeBlock* link() const                    { return _link; }
   void set_link(FreeBlock* link)             { _link = link; }
@@ -93,6 +92,7 @@ class CodeHeap : public CHeapObj<mtCode> {
   size_t       _next_segment;
 
   FreeBlock*   _freelist;
+  FreeBlock*   _last_insert_point;               // last insert point in add_to_freelist
   size_t       _freelist_segments;               // No. of segments in freelist
   int          _freelist_length;
   size_t       _max_allocated_capacity;          // Peak capacity that was allocated during lifetime of the heap
@@ -103,9 +103,12 @@ class CodeHeap : public CHeapObj<mtCode> {
   int          _nmethod_count;                   // Number of nmethods
   int          _adapter_count;                   // Number of adapters
   int          _full_count;                      // Number of times the code heap was full
-
+  int          _fragmentation_count;             // #FreeBlock joins without fully initializing segment map elements.
 
   enum { free_sentinel = 0xFF };
+  static const int fragmentation_limit = 10000;  // defragment after that many potential fragmentations.
+  static const int freelist_limit = 100;         // improve insert point search if list is longer than this limit.
+  static char  segmap_template[free_sentinel+1];
 
   // Helper functions
   size_t   size_to_segments(size_t size) const { return (size + _segment_size - 1) >> _log2_segment_size; }
@@ -113,10 +116,17 @@ class CodeHeap : public CHeapObj<mtCode> {
 
   size_t   segment_for(void* p) const            { return ((char*)p - _memory.low()) >> _log2_segment_size; }
   bool     is_segment_unused(int val) const      { return val == free_sentinel; }
-  HeapBlock* block_at(size_t i) const            { return (HeapBlock*)(_memory.low() + (i << _log2_segment_size)); }
+  void*    address_for(size_t i) const           { return (void*)(_memory.low() + segments_to_size(i)); }
+  void*    find_block_for(void* p) const;
+  HeapBlock* block_at(size_t i) const            { return (HeapBlock*)address_for(i); }
 
-  void  mark_segmap_as_free(size_t beg, size_t end);
-  void  mark_segmap_as_used(size_t beg, size_t end);
+  // These methods take segment map indices as range boundaries
+  void mark_segmap_as_free(size_t beg, size_t end);
+  void mark_segmap_as_used(size_t beg, size_t end, bool is_FreeBlock_join);
+  void invalidate(size_t beg, size_t end, size_t header_bytes);
+  void clear(size_t beg, size_t end);
+  void clear();                                 // clears all heap contents
+  static void init_segmap_template();
 
   // Freelist management helpers
   FreeBlock* following_block(FreeBlock* b);
@@ -125,7 +135,7 @@ class CodeHeap : public CHeapObj<mtCode> {
 
   // Toplevel freelist management
   void add_to_freelist(HeapBlock* b);
-  FreeBlock* search_freelist(size_t length);
+  HeapBlock* search_freelist(size_t length);
 
   // Iteration helpers
   void*      next_used(HeapBlock* b) const;
@@ -133,7 +143,6 @@ class CodeHeap : public CHeapObj<mtCode> {
 
   // to perform additional actions on creation of executable code
   void on_code_mapping(char* base, size_t size);
-  void clear();                                 // clears all heap contents
 
  public:
   CodeHeap(const char* name, const int code_blob_type);
@@ -152,12 +161,15 @@ class CodeHeap : public CHeapObj<mtCode> {
   //            beforehand and we also can't easily relocate the interpreter to a new location.
   void  deallocate_tail(void* p, size_t used_size);
 
-  // Attributes
-  char* low_boundary() const                     { return _memory.low_boundary(); }
+  // Boundaries of committed space.
+  char* low()  const                             { return _memory.low(); }
   char* high() const                             { return _memory.high(); }
+  // Boundaries of reserved space.
+  char* low_boundary() const                     { return _memory.low_boundary(); }
   char* high_boundary() const                    { return _memory.high_boundary(); }
 
-  bool contains(const void* p) const             { return low_boundary() <= p && p < high(); }
+  // Containment means "contained in committed space".
+  bool contains(const void* p) const             { return low() <= p && p < high(); }
   bool contains_blob(const CodeBlob* blob) const {
     // AOT CodeBlobs (i.e. AOTCompiledMethod) objects aren't allocated in the AOTCodeHeap but on the C-Heap.
     // Only the code they are pointing to is located in the AOTCodeHeap. All other CodeBlobs are allocated
@@ -180,6 +192,7 @@ class CodeHeap : public CHeapObj<mtCode> {
   size_t segment_size()         const { return _segment_size; }  // for CodeHeapState
   HeapBlock* first_block() const;                                // for CodeHeapState
   HeapBlock* next_block(HeapBlock* b) const;                     // for CodeHeapState
+  HeapBlock* split_block(HeapBlock* b, size_t split_seg);        // split one block into two
 
   FreeBlock* freelist()         const { return _freelist; }      // for CodeHeapState
 
@@ -216,6 +229,8 @@ class CodeHeap : public CHeapObj<mtCode> {
 
 private:
   size_t heap_unallocated_capacity() const;
+  int defrag_segmap(bool do_defrag);
+  int segmap_hops(size_t beg, size_t end);
 
 public:
   // Debugging

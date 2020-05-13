@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,6 @@
 #include "sys.h"
 
 /* How the options get to OnLoad: */
-#define XDEBUG "-Xdebug"
 #define XRUN "-Xrunjdwp"
 #define AGENTLIB "-agentlib:jdwp"
 
@@ -873,7 +872,6 @@ printUsage(void)
  "launch=<command line>            run debugger on event             none\n"
  "onthrow=<exception name>         debug on throw                    none\n"
  "onuncaught=y|n                   debug on any uncaught?            n\n"
- "onjcmd=y|n                       start debug via jcmd?             n\n"
  "timeout=<timeout value>          for listen/attach in milliseconds n\n"
  "mutf8=y|n                        output modified utf-8             n\n"
  "quiet=y|n                        control over terminal messages    n\n"));
@@ -899,7 +897,7 @@ printUsage(void)
  "--------\n"
  "  - The older " XRUN " interface can still be used, but will be removed in\n"
  "    a future release, for example:\n"
- "        java " XDEBUG " " XRUN ":[help]|[<option>=<value>, ...]\n"
+ "        java " XRUN ":[help]|[<option>=<value>, ...]\n"
     ));
 
 #ifdef DEBUG

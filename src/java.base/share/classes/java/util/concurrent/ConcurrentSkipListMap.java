@@ -334,6 +334,7 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
      * nested classes.)
      * @serial
      */
+    @SuppressWarnings("serial") // Conditionally serializable
     final Comparator<? super K> comparator;
 
     /** Lazily initialized topmost index of the skiplist. */
@@ -1129,6 +1130,7 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
             clone.entrySet = null;
             clone.values = null;
             clone.descendingMap = null;
+            clone.adder = null;
             clone.buildFromSorted(this);
             return clone;
         } catch (CloneNotSupportedException e) {
@@ -1711,9 +1713,8 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
         Map<?,?> m = (Map<?,?>) o;
         try {
             Comparator<? super K> cmp = comparator;
-            @SuppressWarnings("unchecked")
-            Iterator<Map.Entry<?,?>> it =
-                (Iterator<Map.Entry<?,?>>)m.entrySet().iterator();
+            // See JDK-8223553 for Iterator type wildcard rationale
+            Iterator<? extends Map.Entry<?,?>> it = m.entrySet().iterator();
             if (m instanceof SortedMap &&
                 ((SortedMap<?,?>)m).comparator() == cmp) {
                 Node<K,V> b, n;
@@ -2375,8 +2376,10 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
         /** Underlying map */
         final ConcurrentSkipListMap<K,V> m;
         /** lower bound key, or null if from start */
+        @SuppressWarnings("serial") // Conditionally serializable
         private final K lo;
         /** upper bound key, or null if to end */
+        @SuppressWarnings("serial") // Conditionally serializable
         private final K hi;
         /** inclusion flag for lo */
         private final boolean loInclusive;

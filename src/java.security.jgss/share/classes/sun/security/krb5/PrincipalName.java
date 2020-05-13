@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,6 +91,11 @@ public class PrincipalName implements Cloneable {
     public static final int KRB_NT_UID = 5;
 
     /**
+     * Enterprise name (alias)
+     */
+    public static final int KRB_NT_ENTERPRISE = 10;
+
+    /**
      * TGS Name
      */
     public static final String TGS_DEFAULT_SRV_NAME = "krbtgt";
@@ -153,7 +158,7 @@ public class PrincipalName implements Cloneable {
         this.realmDeduced = false;
     }
 
-    // This method is called by Windows NativeCred.c
+    // Warning: called by NativeCreds.c
     public PrincipalName(String[] nameParts, String realm) throws RealmException {
         this(KRB_NT_UNKNOWN, nameParts, new Realm(realm));
     }
@@ -465,6 +470,7 @@ public class PrincipalName implements Cloneable {
         case KRB_NT_SRV_INST:
         case KRB_NT_SRV_XHST:
         case KRB_NT_UID:
+        case KRB_NT_ENTERPRISE:
             nameStrings = nameParts;
             nameType = type;
             if (realm != null) {
@@ -478,6 +484,7 @@ public class PrincipalName implements Cloneable {
         }
     }
 
+    // Warning: called by nativeccache.c
     public PrincipalName(String name, int type) throws RealmException {
         this(name, type, (String)null);
     }
@@ -558,7 +565,9 @@ public class PrincipalName implements Cloneable {
         for (int i = 0; i < nameStrings.length; i++) {
             if (i > 0)
                 str.append("/");
-            str.append(nameStrings[i]);
+            String n = nameStrings[i];
+            n = n.replace("@", "\\@");
+            str.append(n);
         }
         str.append("@");
         str.append(nameRealm.toString());

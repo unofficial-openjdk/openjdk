@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -135,7 +135,7 @@ public final class OCSPResponse {
     private static final Debug debug = Debug.getInstance("certpath");
     private static final boolean dump = debug != null && Debug.isOn("ocsp");
     private static final ObjectIdentifier OCSP_BASIC_RESPONSE_OID =
-        ObjectIdentifier.newInternal(new int[] { 1, 3, 6, 1, 5, 5, 7, 48, 1, 1});
+        ObjectIdentifier.of("1.3.6.1.5.5.7.48.1.1");
     private static final int CERT_STATUS_GOOD = 0;
     private static final int CERT_STATUS_REVOKED = 1;
     private static final int CERT_STATUS_UNKNOWN = 2;
@@ -599,8 +599,9 @@ public final class OCSPResponse {
                 }
                 debug.println("OCSP response validity interval is from " +
                         sr.thisUpdate + until);
-                debug.println("Checking validity of OCSP response on: " +
-                        new Date(now));
+                debug.println("Checking validity of OCSP response on " +
+                        new Date(now) + " with allowed interval between " +
+                        nowMinusSkew + " and " + nowPlusSkew);
             }
 
             // Check that the test date is within the validity interval:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,22 +24,21 @@
 
 package org.graalvm.compiler.nodes.test;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import org.graalvm.compiler.api.directives.GraalDirectives;
 import org.graalvm.compiler.core.test.GraalCompilerTest;
 import org.graalvm.compiler.graph.Node;
+import org.graalvm.compiler.loop.phases.ConvertDeoptimizeToGuardPhase;
 import org.graalvm.compiler.nodes.IfNode;
 import org.graalvm.compiler.nodes.LogicNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
 import org.graalvm.compiler.nodes.calc.SubNode;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.phases.common.CanonicalizerPhase;
-import org.graalvm.compiler.phases.common.ConvertDeoptimizeToGuardPhase;
 import org.graalvm.compiler.phases.common.IterativeConditionalEliminationPhase;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * A few tests of expected simplifications by
@@ -68,19 +67,19 @@ public class IfNodeCanonicalizationTest extends GraalCompilerTest {
                     for (byte d : testValues) {
                         values[3] = d;
                         value = 2;
-                        super.test("testSnippet1", values, true);
-                        super.test("testSnippet1", values, false);
+                        super.test("testSnippet1", values);
                     }
                 }
             }
         }
     }
 
-    public int testSnippet1(byte[] values, boolean test) {
+    public int testSnippet1(byte[] values) {
         int v = values[0] - values[1];
-        if (test) {
-            v = values[2] - values[3];
+        if (v < 0) {
+            value = 2;
         }
+        v = values[3] - values[2];
         if (v < 0) {
             value = 1;
         }
@@ -156,14 +155,13 @@ public class IfNodeCanonicalizationTest extends GraalCompilerTest {
     public void test(String name, Class<? extends Node> expectedClass, int expectedCount) {
         StructuredGraph graph = parseEager(name, AllowAssumptions.YES);
 
-        PhaseContext context = new PhaseContext(getProviders());
-        CanonicalizerPhase canonicalizer = new CanonicalizerPhase();
+        CoreProviders context = getProviders();
+        CanonicalizerPhase canonicalizer = createCanonicalizerPhase();
         new ConvertDeoptimizeToGuardPhase().apply(graph, context);
         graph.clearAllStateAfter();
         graph.setGuardsStage(StructuredGraph.GuardsStage.AFTER_FSA);
         canonicalizer.apply(graph, context);
 
-        // new DominatorConditionalEliminationPhase(true).apply(graph, context);
         new IterativeConditionalEliminationPhase(canonicalizer, true).apply(graph, context);
         canonicalizer.apply(graph, context);
         canonicalizer.apply(graph, context);

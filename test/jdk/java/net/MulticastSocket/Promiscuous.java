@@ -22,7 +22,8 @@
  *
 
 /* @test
- * @bug 8014499
+ * @bug 8014499 8219804
+ * @library /test/lib
  * @summary Test for interference when two sockets are bound to the same
  *          port but joined to different multicast groups
  * @run main Promiscuous
@@ -31,7 +32,12 @@
 
 import java.io.IOException;
 import static java.lang.System.out;
+
+import java.io.UncheckedIOException;
 import java.net.*;
+
+import jdk.test.lib.NetworkConfiguration;
+import jdk.test.lib.net.IPSupport;
 
 public class Promiscuous {
 
@@ -42,11 +48,20 @@ public class Promiscuous {
         throws IOException
     {
         byte[] ba = new byte[100];
-        DatagramPacket p = new DatagramPacket(ba, ba.length);
+        DatagramPacket p;
         try {
-            mc.receive(p);
-            int recvId = Integer.parseInt(
-                    new String(p.getData(), 0, p.getLength(), "UTF-8"));
+            String data = null;
+            while (true) {
+                p = new DatagramPacket(ba, ba.length);
+                mc.receive(p);
+                data = new String(p.getData(), 0, p.getLength(), "UTF-8");
+                if (data.length() > UUID.length() && data.startsWith(UUID)) {
+                    data = data.substring(UUID.length());
+                    break;
+                }
+                logUnexpected(p);
+            }
+            int recvId = Integer.parseInt(data);
             if (datagramExpected) {
                 if (recvId != id)
                     throw new RuntimeException("Unexpected id, got " + recvId
@@ -58,11 +73,30 @@ public class Promiscuous {
             }
         } catch (SocketTimeoutException e) {
             if (datagramExpected)
-                throw new RuntimeException("Expected message not received, "
-                                            + e.getMessage());
+                throw new RuntimeException(mc.getLocalSocketAddress()
+                        + ": Expected message not received, "
+                        + e.getMessage());
             else
                 out.printf("Message not received, as expected\n");
         }
+    }
+
+    static void logUnexpected(DatagramPacket p) {
+        byte[] ba = p.getData();
+        System.out.printf("Unexpected packet: length: %d. First three bytes: %d, %d, %d\n",
+                          p.getLength(), ba[0], ba[1], ba[2]);
+    }
+
+    static final String UUID; // process-id : currentTimeMillis
+
+    static {
+        String s1 = Long.toString(ProcessHandle.current().pid());
+        String s2 = Long.toString(System.currentTimeMillis());
+        UUID = "<" + s1 + s2 + ">";
+    }
+
+    static SocketAddress toSocketAddress(InetAddress group) {
+        return new InetSocketAddress(group, 0);
     }
 
     static void test(InetAddress group1, InetAddress group2)
@@ -77,15 +111,26 @@ public class Promiscuous {
             mc1.setSoTimeout(TIMEOUT);
             mc2.setSoTimeout(TIMEOUT);
             int nextId = id;
-            byte[] msg = Integer.toString(nextId).getBytes("UTF-8");
+            byte[] msg = (UUID + Integer.toString(nextId)).getBytes("UTF-8");
             DatagramPacket p = new DatagramPacket(msg, msg.length);
             p.setAddress(group1);
             p.setPort(port);
 
-            mc1.joinGroup(group1);
-            out.printf("mc1 joined the MC group: %s\n", group1);
-            mc2.joinGroup(group2);
-            out.printf("mc2 joined the MC group: %s\n", group2);
+            // join groups on all network interfaces
+            NetworkConfiguration.probe()
+                    .multicastInterfaces(false)
+                    .forEach((nic) -> {
+                try {
+                    mc1.joinGroup(toSocketAddress(group1), nic);
+                    out.printf("mc1 joined the MC group on %s: %s\n",
+                            nic.getDisplayName(), group1);
+                    mc2.joinGroup(toSocketAddress(group2), nic);
+                    out.printf("mc2 joined the MC group on %s: %s\n",
+                            nic.getDisplayName(), group2);
+                } catch (IOException io) {
+                    throw new UncheckedIOException(io);
+                }
+            });
 
             out.printf("Sending datagram to: %s/%d\n", group1, port);
             ds.send(p);
@@ -95,7 +140,7 @@ public class Promiscuous {
             receive(mc2, false, 0);
 
             nextId = ++id;
-            msg = Integer.toString(nextId).getBytes("UTF-8");
+            msg = (UUID + Integer.toString(nextId)).getBytes("UTF-8");
             p = new DatagramPacket(msg, msg.length);
             p.setAddress(group2);
             p.setPort(port);
@@ -107,12 +152,26 @@ public class Promiscuous {
             receive(mc2, true, nextId);
             receive(mc1, false, 0);
 
-            mc1.leaveGroup(group1);
-            mc2.leaveGroup(group2);
+            // leave groups on all network interfaces
+            NetworkConfiguration.probe()
+                    .multicastInterfaces(false)
+                    .forEach((nic) -> {
+                try {
+                    mc1.leaveGroup(toSocketAddress(group1), nic);
+                    out.printf("mc1 left the MC group on %s: %s\n",
+                            nic.getDisplayName(), group1);
+                    mc2.leaveGroup(toSocketAddress(group2), nic);
+                    out.printf("mc2 left the MC group on %s: %s\n",
+                            nic.getDisplayName(), group2);
+                } catch (IOException io) {
+                    throw new UncheckedIOException(io);
+                }
+            });
         }
     }
 
     public static void main(String args[]) throws IOException {
+        IPSupport.throwSkippedExceptionIfNonOperational();
         String os = System.getProperty("os.name");
 
         // Requires IP_MULTICAST_ALL on Linux (new since 2.6.31) so skip
@@ -129,8 +188,8 @@ public class Promiscuous {
         }
 
         // multicast groups used for the test
-        InetAddress ip4Group1 = InetAddress.getByName("224.7.8.9");
-        InetAddress ip4Group2 = InetAddress.getByName("225.4.5.6");
+        InetAddress ip4Group1 = InetAddress.getByName("224.1.1.120");
+        InetAddress ip4Group2 = InetAddress.getByName("224.1.1.121");
 
         test(ip4Group1, ip4Group2);
     }

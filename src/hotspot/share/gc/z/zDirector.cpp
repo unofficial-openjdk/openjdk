@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,14 +48,6 @@ void ZDirector::sample_allocation_rate() const {
                        ZStatAllocRate::avg_sd() / M);
 }
 
-bool ZDirector::is_first() const {
-  return ZStatCycle::ncycles() == 0;
-}
-
-bool ZDirector::is_warm() const {
-  return ZStatCycle::ncycles() >= 3;
-}
-
 bool ZDirector::rule_timer() const {
   if (ZCollectionInterval == 0) {
     // Rule disabled
@@ -66,14 +58,14 @@ bool ZDirector::rule_timer() const {
   const double time_since_last_gc = ZStatCycle::time_since_last();
   const double time_until_gc = ZCollectionInterval - time_since_last_gc;
 
-  log_debug(gc, director)("Rule: Timer, Interval: %us, TimeUntilGC: %.3lfs",
+  log_debug(gc, director)("Rule: Timer, Interval: %us, TimeUntilGC: %.3fs",
                           ZCollectionInterval, time_until_gc);
 
   return time_until_gc <= 0;
 }
 
 bool ZDirector::rule_warmup() const {
-  if (is_warm()) {
+  if (ZStatCycle::is_warm()) {
     // Rule disabled
     return false;
   }
@@ -81,9 +73,9 @@ bool ZDirector::rule_warmup() const {
   // Perform GC if heap usage passes 10/20/30% and no other GC has been
   // performed yet. This allows us to get some early samples of the GC
   // duration, which is needed by the other rules.
-  const size_t max_capacity = ZHeap::heap()->current_max_capacity();
+  const size_t max_capacity = ZHeap::heap()->soft_max_capacity();
   const size_t used = ZHeap::heap()->used();
-  const double used_threshold_percent = (ZStatCycle::ncycles() + 1) * 0.1;
+  const double used_threshold_percent = (ZStatCycle::nwarmup_cycles() + 1) * 0.1;
   const size_t used_threshold = max_capacity * used_threshold_percent;
 
   log_debug(gc, director)("Rule: Warmup %.0f%%, Used: " SIZE_FORMAT "MB, UsedThreshold: " SIZE_FORMAT "MB",
@@ -93,7 +85,7 @@ bool ZDirector::rule_warmup() const {
 }
 
 bool ZDirector::rule_allocation_rate() const {
-  if (is_first()) {
+  if (!ZStatCycle::is_normalized_duration_trustable()) {
     // Rule disabled
     return false;
   }
@@ -107,10 +99,10 @@ bool ZDirector::rule_allocation_rate() const {
   // Calculate amount of free memory available to Java threads. Note that
   // the heap reserve is not available to Java threads and is therefore not
   // considered part of the free memory.
-  const size_t max_capacity = ZHeap::heap()->current_max_capacity();
+  const size_t max_capacity = ZHeap::heap()->soft_max_capacity();
   const size_t max_reserve = ZHeap::heap()->max_reserve();
   const size_t used = ZHeap::heap()->used();
-  const size_t free_with_reserve = max_capacity - used;
+  const size_t free_with_reserve = max_capacity - MIN2(max_capacity, used);
   const size_t free = free_with_reserve - MIN2(free_with_reserve, max_reserve);
 
   // Calculate time until OOM given the max allocation rate and the amount
@@ -133,14 +125,14 @@ bool ZDirector::rule_allocation_rate() const {
   const double sample_interval = 1.0 / ZStatAllocRate::sample_hz;
   const double time_until_gc = time_until_oom - max_duration_of_gc - sample_interval;
 
-  log_debug(gc, director)("Rule: Allocation Rate, MaxAllocRate: %.3lfMB/s, Free: " SIZE_FORMAT "MB, MaxDurationOfGC: %.3lfs, TimeUntilGC: %.3lfs",
+  log_debug(gc, director)("Rule: Allocation Rate, MaxAllocRate: %.3fMB/s, Free: " SIZE_FORMAT "MB, MaxDurationOfGC: %.3fs, TimeUntilGC: %.3fs",
                           max_alloc_rate / M, free / M, max_duration_of_gc, time_until_gc);
 
   return time_until_gc <= 0;
 }
 
 bool ZDirector::rule_proactive() const {
-  if (!ZProactive || !is_warm()) {
+  if (!ZProactive || !ZStatCycle::is_warm()) {
     // Rule disabled
     return false;
   }
@@ -155,14 +147,14 @@ bool ZDirector::rule_proactive() const {
   // passed since the previous GC. This helps avoid superfluous GCs when running
   // applications with very low allocation rate.
   const size_t used_after_last_gc = ZStatHeap::used_at_relocate_end();
-  const size_t used_increase_threshold = ZHeap::heap()->current_max_capacity() * 0.10; // 10%
+  const size_t used_increase_threshold = ZHeap::heap()->soft_max_capacity() * 0.10; // 10%
   const size_t used_threshold = used_after_last_gc + used_increase_threshold;
   const size_t used = ZHeap::heap()->used();
   const double time_since_last_gc = ZStatCycle::time_since_last();
   const double time_since_last_gc_threshold = 5 * 60; // 5 minutes
   if (used < used_threshold && time_since_last_gc < time_since_last_gc_threshold) {
     // Don't even consider doing a proactive GC
-    log_debug(gc, director)("Rule: Proactive, UsedUntilEnabled: " SIZE_FORMAT "MB, TimeUntilEnabled: %.3lfs",
+    log_debug(gc, director)("Rule: Proactive, UsedUntilEnabled: " SIZE_FORMAT "MB, TimeUntilEnabled: %.3fs",
                             (used_threshold - used) / M,
                             time_since_last_gc_threshold - time_since_last_gc);
     return false;
@@ -175,10 +167,33 @@ bool ZDirector::rule_proactive() const {
   const double acceptable_gc_interval = max_duration_of_gc * ((assumed_throughput_drop_during_gc / acceptable_throughput_drop) - 1.0);
   const double time_until_gc = acceptable_gc_interval - time_since_last_gc;
 
-  log_debug(gc, director)("Rule: Proactive, AcceptableGCInterval: %.3lfs, TimeSinceLastGC: %.3lfs, TimeUntilGC: %.3lfs",
+  log_debug(gc, director)("Rule: Proactive, AcceptableGCInterval: %.3fs, TimeSinceLastGC: %.3fs, TimeUntilGC: %.3fs",
                           acceptable_gc_interval, time_since_last_gc, time_until_gc);
 
   return time_until_gc <= 0;
+}
+
+bool ZDirector::rule_high_usage() const {
+  // Perform GC if the amount of free memory is 5% or less. This is a preventive
+  // meassure in the case where the application has a very low allocation rate,
+  // such that the allocation rate rule doesn't trigger, but the amount of free
+  // memory is still slowly but surely heading towards zero. In this situation,
+  // we start a GC cycle to avoid a potential allocation stall later.
+
+  // Calculate amount of free memory available to Java threads. Note that
+  // the heap reserve is not available to Java threads and is therefore not
+  // considered part of the free memory.
+  const size_t max_capacity = ZHeap::heap()->soft_max_capacity();
+  const size_t max_reserve = ZHeap::heap()->max_reserve();
+  const size_t used = ZHeap::heap()->used();
+  const size_t free_with_reserve = max_capacity - used;
+  const size_t free = free_with_reserve - MIN2(free_with_reserve, max_reserve);
+  const double free_percent = percent_of(free, max_capacity);
+
+  log_debug(gc, director)("Rule: High Usage, Free: " SIZE_FORMAT "MB(%.1f%%)",
+                          free / M, free_percent);
+
+  return free_percent <= 5.0;
 }
 
 GCCause::Cause ZDirector::make_gc_decision() const {
@@ -200,6 +215,11 @@ GCCause::Cause ZDirector::make_gc_decision() const {
   // Rule 3: Proactive
   if (rule_proactive()) {
     return GCCause::_z_proactive;
+  }
+
+  // Rule 4: High usage
+  if (rule_high_usage()) {
+    return GCCause::_z_high_usage;
   }
 
   // No GC

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -99,27 +99,6 @@ static BOOL shouldUsePressAndHold() {
         //[self setLayerContentsRedrawPolicy: NSViewLayerContentsRedrawDuringViewResize];
         //[self setLayerContentsPlacement: NSViewLayerContentsPlacementTopLeft];
         //[self setAutoresizingMask: NSViewHeightSizable | NSViewWidthSizable];
-
-#ifdef REMOTELAYER
-        CGLLayer *parentLayer = (CGLLayer*)self.cglLayer;
-        parentLayer.parentLayer = NULL;
-        parentLayer.remoteLayer = NULL;
-        if (JRSRemotePort != 0 && remoteSocketFD > 0) {
-            CGLLayer *remoteLayer = [[CGLLayer alloc] initWithJavaLayer: parentLayer.javaLayer];
-            remoteLayer.target = GL_TEXTURE_2D;
-            NSLog(@"Creating Parent=%p, Remote=%p", parentLayer, remoteLayer);
-            parentLayer.remoteLayer = remoteLayer;
-            remoteLayer.parentLayer = parentLayer;
-            remoteLayer.remoteLayer = NULL;
-            remoteLayer.jrsRemoteLayer = [remoteLayer createRemoteLayerBoundTo:JRSRemotePort];
-            [remoteLayer retain];  // REMIND
-            remoteLayer.frame = CGRectMake(0, 0, 720, 500); // REMIND
-            [remoteLayer.jrsRemoteLayer retain]; // REMIND
-            int layerID = [remoteLayer.jrsRemoteLayer layerID];
-            NSLog(@"layer id to send = %d", layerID);
-            sendLayerID(layerID);
-        }
-#endif /* REMOTELAYER */
     }
 
     return self;
@@ -972,8 +951,16 @@ JNF_CLASS_CACHE(jc_CInputMethod, "sun/lwawt/macosx/CInputMethod");
     NSUInteger utf16Length = [useString lengthOfBytesUsingEncoding:NSUTF16StringEncoding];
     NSUInteger utf8Length = [useString lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
     BOOL aStringIsComplex = NO;
+
+    unichar codePoint = [useString characterAtIndex:0];
+
+#ifdef IM_DEBUG
+    NSLog(@"insertText kbdlayout %@ ",(NSString *)kbdLayout);
+#endif // IM_DEBUG
+
     if ((utf16Length > 2) ||
-        ((utf8Length > 1) && [self isCodePointInUnicodeBlockNeedingIMEvent:[useString characterAtIndex:0]])) {
+        ((utf8Length > 1) && [self isCodePointInUnicodeBlockNeedingIMEvent:codePoint]) ||
+        ((codePoint == 0x5c) && ([(NSString *)kbdLayout containsString:@"Kotoeri"]))) {
         aStringIsComplex = YES;
     }
 
@@ -1009,6 +996,15 @@ JNF_CLASS_CACHE(jc_CInputMethod, "sun/lwawt/macosx/CInputMethod");
     // symbols
 
     [self abandonInput];
+}
+
+- (void)keyboardInputSourceChanged:(NSNotification *)notification
+{
+#ifdef IM_DEBUG
+    NSLog(@"keyboardInputSourceChangeNotification received");
+#endif
+    NSTextInputContext *curContxt = [NSTextInputContext currentInputContext];
+    kbdLayout = curContxt.selectedKeyboardInputSource;
 }
 
 - (void) doCommandBySelector:(SEL)aSelector
@@ -1336,6 +1332,13 @@ JNF_CLASS_CACHE(jc_CInputMethod, "sun/lwawt/macosx/CInputMethod");
         fInputMethodLOCKABLE = JNFNewGlobalRef(env, inputMethod);
     else
         fInputMethodLOCKABLE = NULL;
+
+    NSTextInputContext *curContxt = [NSTextInputContext currentInputContext];
+    kbdLayout = curContxt.selectedKeyboardInputSource;
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(keyboardInputSourceChanged:)
+                                               name:NSTextInputContextKeyboardSelectionDidChangeNotification
+                                             object:nil];
 }
 
 - (void)abandonInput
@@ -1429,10 +1432,8 @@ Java_sun_lwawt_macosx_CPlatformView_nativeGetNSViewDisplayID
     JNF_COCOA_ENTER(env);
 
     NSView *view = (NSView *)jlong_to_ptr(viewPtr);
-    NSWindow *window = [view window];
-
     [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-
+        NSWindow *window = [view window];
         ret = (jint)[[AWTWindow getNSWindowDisplayID_AppKitThread: window] intValue];
     }];
 

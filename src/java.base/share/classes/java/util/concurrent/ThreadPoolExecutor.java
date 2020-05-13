@@ -604,8 +604,10 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         private static final long serialVersionUID = 6138294804551838833L;
 
         /** Thread this worker is running in.  Null if factory fails. */
+        @SuppressWarnings("serial") // Unlikely to be serializable
         final Thread thread;
         /** Initial task to run.  Possibly null. */
+        @SuppressWarnings("serial") // Not statically typed as Serializable
         Runnable firstTask;
         /** Per-thread task counter */
         volatile long completedTasks;
@@ -922,13 +924,13 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
                     if (isRunning(c) ||
                         (runStateLessThan(c, STOP) && firstTask == null)) {
-                        if (t.isAlive()) // precheck that t is startable
+                        if (t.getState() != Thread.State.NEW)
                             throw new IllegalThreadStateException();
                         workers.add(w);
+                        workerAdded = true;
                         int s = workers.size();
                         if (s > largestPoolSize)
                             largestPoolSize = s;
-                        workerAdded = true;
                     }
                 } finally {
                     mainLock.unlock();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,12 +38,12 @@ package java.lang;
  * @see     java.lang.Object#wait(long, int)
  * @since   1.0
  */
-public
-class IllegalMonitorStateException extends RuntimeException {
+public class IllegalMonitorStateException extends RuntimeException {
+    @java.io.Serial
     private static final long serialVersionUID = 3713306369498869069L;
 
     /**
-     * Constructs an <code>IllegalMonitorStateException</code> with no
+     * Constructs an {@code IllegalMonitorStateException} with no
      * detail message.
      */
     public IllegalMonitorStateException() {
@@ -51,7 +51,7 @@ class IllegalMonitorStateException extends RuntimeException {
     }
 
     /**
-     * Constructs an <code>IllegalMonitorStateException</code> with the
+     * Constructs an {@code IllegalMonitorStateException} with the
      * specified detail message.
      *
      * @param   s   the detail message.

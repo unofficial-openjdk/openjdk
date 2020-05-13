@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -258,8 +258,9 @@ public class HostLocaleProviderAdapterImpl {
             @Override
             public NumberFormat getIntegerInstance(Locale locale) {
                 AtomicReferenceArray<String> patterns = getNumberPatterns(locale);
-                return new DecimalFormat(patterns.get(NF_INTEGER),
+                DecimalFormat format = new DecimalFormat(patterns.get(NF_INTEGER),
                     DecimalFormatSymbols.getInstance(locale));
+                return HostLocaleProviderAdapter.makeIntegerFormatter(format);
             }
 
             @Override
@@ -510,8 +511,15 @@ public class HostLocaleProviderAdapterImpl {
             public String getDisplayCountry(String countryCode, Locale locale) {
                 // Retrieves the display country name by calling
                 // GetLocaleInfoEx(LOCALE_SLOCALIZEDCOUNTRYNAME).
-                return getDisplayString(locale.toLanguageTag(),
-                            DN_LOCALE_REGION, nativeDisplayLanguage+"-"+countryCode);
+                String str = getDisplayString(locale.toLanguageTag(),
+                                 DN_LOCALE_REGION,
+                                 nativeDisplayLanguage+"-"+countryCode);
+                // Hack: Windows 10 returns translated "Unknown Region (XX)"
+                // for localized XX region name. Take that as not known.
+                if (str != null && str.endsWith("("+countryCode+")")) {
+                    return null;
+                }
+                return str;
             }
 
             @Override

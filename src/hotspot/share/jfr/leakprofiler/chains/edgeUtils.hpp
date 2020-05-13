@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,24 +28,24 @@
 #include "memory/allocation.hpp"
 
 class Edge;
-class RoutableEdge;
 class Symbol;
 
 class EdgeUtils : public AllStatic {
  public:
-  static bool is_leak_edge(const Edge& edge);
+  static const size_t leak_context = 100;
+  static const size_t root_context = 100;
+  static const size_t max_ref_chain_depth = leak_context + root_context;
 
+  static bool is_leak_edge(const Edge& edge);
   static const Edge* root(const Edge& edge);
-  static bool is_root(const Edge& edge);
+  static const Edge* ancestor(const Edge& edge, size_t distance);
 
   static bool is_array_element(const Edge& edge);
   static int array_index(const Edge& edge);
   static int array_size(const Edge& edge);
 
-  static const Symbol* field_name_symbol(const Edge& edge);
-  static jshort field_modifiers(const Edge& edge);
+  static const Symbol* field_name(const Edge& edge, jshort* modifiers);
 
-  static void collapse_chain(const RoutableEdge& edge);
 };
 
 #endif // SHARE_JFR_LEAKPROFILER_CHAINS_EDGEUTILS_HPP

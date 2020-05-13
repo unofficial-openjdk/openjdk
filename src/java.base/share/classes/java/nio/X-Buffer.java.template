@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import java.util.stream.$Streamtype$Stream;
 #end[streamableType]
 
 import java.util.Objects;
+import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.util.ArraysSupport;
 
 /**
@@ -279,17 +280,25 @@ public abstract class $Type$Buffer
     // backing array, and array offset
     //
     $Type$Buffer(int mark, int pos, int lim, int cap,   // package-private
-                 $type$[] hb, int offset)
+                 $type$[] hb, int offset, MemorySegmentProxy segment)
     {
-        super(mark, pos, lim, cap);
+        super(mark, pos, lim, cap, segment);
         this.hb = hb;
         this.offset = offset;
     }
 
     // Creates a new buffer with the given mark, position, limit, and capacity
     //
-    $Type$Buffer(int mark, int pos, int lim, int cap) { // package-private
-        this(mark, pos, lim, cap, null, 0);
+    $Type$Buffer(int mark, int pos, int lim, int cap, MemorySegmentProxy segment) { // package-private
+        this(mark, pos, lim, cap, null, 0, segment);
+    }
+
+    // Creates a new buffer with given base, address and capacity
+    //
+    $Type$Buffer($type$[] hb, long addr, int cap, MemorySegmentProxy segment) { // package-private
+        super(addr, cap, segment);
+        this.hb = hb;
+        this.offset = 0;
     }
 
     @Override
@@ -348,7 +357,7 @@ public abstract class $Type$Buffer
     public static $Type$Buffer allocate(int capacity) {
         if (capacity < 0)
             throw createCapacityException(capacity);
-        return new Heap$Type$Buffer(capacity, capacity);
+        return new Heap$Type$Buffer(capacity, capacity, null);
     }
 
     /**
@@ -393,7 +402,7 @@ public abstract class $Type$Buffer
                                     int offset, int length)
     {
         try {
-            return new Heap$Type$Buffer(array, offset, length);
+            return new Heap$Type$Buffer(array, offset, length, null);
         } catch (IllegalArgumentException x) {
             throw new IndexOutOfBoundsException();
         }
@@ -545,6 +554,46 @@ public abstract class $Type$Buffer
      */
     @Override
     public abstract $Type$Buffer slice();
+
+    /**
+     * Creates a new $type$ buffer whose content is a shared subsequence of
+     * this buffer's content.
+     *
+     * <p> The content of the new buffer will start at position {@code index}
+     * in this buffer, and will contain {@code length} elements. Changes to
+     * this buffer's content will be visible in the new buffer, and vice versa;
+     * the two buffers' position, limit, and mark values will be independent.
+     *
+     * <p> The new buffer's position will be zero, its capacity and its limit
+     * will be {@code length}, its mark will be undefined, and its byte order
+     * will be
+#if[byte]
+     * {@link ByteOrder#BIG_ENDIAN BIG_ENDIAN}.
+#else[byte]
+     * identical to that of this buffer.
+#end[byte]
+     * The new buffer will be direct if, and only if, this buffer is direct,
+     * and it will be read-only if, and only if, this buffer is read-only. </p>
+     *
+     * @param   index
+     *          The position in this buffer at which the content of the new
+     *          buffer will start; must be non-negative and no larger than
+     *          {@link #limit() limit()}
+     *
+     * @param   length
+     *          The number of elements the new buffer will contain; must be
+     *          non-negative and no larger than {@code limit() - index}
+     *
+     * @return  The new buffer
+     *
+     * @throws  IndexOutOfBoundsException
+     *          If {@code index} is negative or greater than {@code limit()},
+     *          {@code length} is negative, or {@code length > limit() - index}
+     *
+     * @since 13
+     */
+    @Override
+    public abstract $Type$Buffer slice(int index, int length);
 
     /**
      * Creates a new $type$ buffer that shares this buffer's content.
@@ -732,7 +781,7 @@ public abstract class $Type$Buffer
      *          parameters do not hold
      */
     public $Type$Buffer get($type$[] dst, int offset, int length) {
-        checkBounds(offset, length, dst.length);
+        Objects.checkFromIndexSize(offset, length, dst.length);
         if (length > remaining())
             throw new BufferUnderflowException();
         int end = offset + length;
@@ -956,7 +1005,7 @@ public abstract class $Type$Buffer
      *          If this buffer is read-only
      */
     public $Type$Buffer put($type$[] src, int offset, int length) {
-        checkBounds(offset, length, src.length);
+        Objects.checkFromIndexSize(offset, length, src.length);
         if (length > remaining())
             throw new BufferOverflowException();
         int end = offset + length;
@@ -1136,7 +1185,7 @@ public abstract class $Type$Buffer
      *          If this buffer is read-only
      */
     public $Type$Buffer put(String src, int start, int end) {
-        checkBounds(start, end - start, src.length());
+        Objects.checkFromIndexSize(start, end - start, src.length());
         if (isReadOnly())
             throw new ReadOnlyBufferException();
         if (end - start > remaining())
@@ -1820,14 +1869,27 @@ public abstract class $Type$Buffer
 
     /**
      * Returns the memory address, pointing to the byte at the given index,
-     * modulus the given unit size.
+     * modulo the given unit size.
      *
-     * <p> A return value greater than zero indicates the address of the byte at
-     * the index is misaligned for the unit size, and the value's quantity
-     * indicates how much the index should be rounded up or down to locate a
-     * byte at an aligned address.  Otherwise, a value of {@code 0} indicates
-     * that the address of the byte at the index is aligned for the unit size.
-     *
+     * <p> The return value is non-negative in the range of {@code 0}
+     * (inclusive) up to {@code unitSize} (exclusive), with zero indicating
+     * that the address of the byte at the index is aligned for the unit size,
+     * and a positive value that the address is misaligned for the unit size.
+     * If the address of the byte at the index is misaligned, the return value
+     * represents how much the index should be adjusted to locate a byte at an
+     * aligned address.  Specifically, the index should either be decremented by
+     * the return value if the latter is not greater than {@code index}, or be
+     * incremented by the unit size minus the return value.  Therefore given
+     * <blockquote><pre>
+     * int value = alignmentOffset(index, unitSize)</pre></blockquote>
+     * then the identities
+     * <blockquote><pre>
+     * alignmentOffset(index - value, unitSize) == 0, value &le; index</pre></blockquote>
+     * and
+     * <blockquote><pre>
+     * alignmentOffset(index + (unitSize - value), unitSize) == 0</pre></blockquote>
+     * must hold.
+     * 
      * @apiNote
      * This method may be utilized to determine if unit size bytes from an
      * index can be accessed atomically, if supported by the native platform.
@@ -1843,7 +1905,7 @@ public abstract class $Type$Buffer
      * @param  unitSize
      *         The unit size in bytes, must be a power of {@code 2}
      *
-     * @return  The indexed byte's memory address modulus the unit size
+     * @return  The indexed byte's memory address modulo the unit size
      *
      * @throws IllegalArgumentException
      *         If the index is negative or the unit size is not a power of
@@ -1869,7 +1931,7 @@ public abstract class $Type$Buffer
         if (unitSize > 8 && !isDirect())
             throw new UnsupportedOperationException("Unit size unsupported for non-direct buffers: " + unitSize);
 
-        return (int) ((address + index) % unitSize);
+        return (int) ((address + index) & (unitSize - 1));
     }
 
     /**
@@ -1950,10 +2012,8 @@ public abstract class $Type$Buffer
             aligned_pos = aligned_lim = pos;
         }
 
-        return slice(aligned_pos, aligned_lim);
+        return slice(aligned_pos, aligned_lim - aligned_pos);
     }
-
-    abstract ByteBuffer slice(int pos, int lim);
 
     // #BIN
     //

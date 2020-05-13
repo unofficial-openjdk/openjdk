@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8218998
+ * @bug 8218998 8219946 8219060 8241190 8242056
  * @summary Add metadata to generated API documentation files
  * @library /tools/lib ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
@@ -57,26 +57,22 @@ public class TestMetadata extends JavadocTester {
         tester.runTests();
     }
 
-    enum Frames { NO_FRAMES, FRAMES };
     enum Index  { SINGLE, SPLIT };
     enum Source { PACKAGES, MODULES };
 
     final ToolBox tb = new ToolBox();
+    final Set<String> allBodyClassesFound = new HashSet<>();
     final Set<String> allGeneratorsFound = new HashSet<>();
 
     public void runTests() throws Exception {
         for (Source s : Source.values()) {
             Path src = genSource(s);
-            for (Frames f : Frames.values()) {
                  for (Index i : Index.values()) {
                      List<String> args = new ArrayList<>();
                      args.add("-d");
-                     args.add(String.format("out-%s-%s-%s", s, f, i));
+                     args.add(String.format("out-%s-%s", s, i));
                      args.add("-use");
-                     if (s != Source.MODULES) {
-                         args.add("-linksource"); // broken, with modules: JDK-8219060
-                     }
-                     args.add(f == Frames.NO_FRAMES ? "--no-frames" : "--frames");
+                     args.add("-linksource");
                      if (i == Index.SPLIT) {
                          args.add("-splitIndex");
                      }
@@ -93,28 +89,33 @@ public class TestMetadata extends JavadocTester {
                      }
                      javadoc(args.toArray(new String[args.size()]));
                      checkExit(Exit.OK);
+                     checkBodyClasses();
                      checkMetadata();
 
                      // spot check the descriptions for declarations
                      switch (s) {
                          case PACKAGES:
                              checkOutput("pA/package-summary.html", true,
-                                     "<meta name=\"description\" content=\"declaration: package: pA\">");
+                                     """
+                                         <meta name="description" content="declaration: package: pA">""");
                              checkOutput("pA/CA.html", true,
-                                     "<meta name=\"description\" content=\"declaration: package: pA, class: CA\">");
+                                     """
+                                         <meta name="description" content="declaration: package: pA, class: CA">""");
                              break;
 
                          case MODULES:
                              checkOutput("mA/module-summary.html", true,
-                                     "<meta name=\"description\" content=\"declaration: module: mA\">");
+                                     """
+                                         <meta name="description" content="declaration: module: mA">""");
                              checkOutput("mA/pA/package-summary.html", true,
-                                     "<meta name=\"description\" content=\"declaration: module: mA, package: pA\">");
+                                     """
+                                         <meta name="description" content="declaration: module: mA, package: pA">""");
                              checkOutput("mA/pA/CA.html", true,
-                                     "<meta name=\"description\" content=\"declaration: module: mA, package: pA, class: CA\">");
+                                     """
+                                         <meta name="description" content="declaration: module: mA, package: pA, class: CA">""");
                              break;
                      }
                  }
-            }
         }
 
         checking ("all generators");
@@ -126,32 +127,99 @@ public class TestMetadata extends JavadocTester {
             failed("not found: " + notFound);
         }
 
+        checking ("all body classes");
+        if (allBodyClassesFound.equals(allBodyClasses)) {
+            passed("all body classes found");
+        } else {
+            Set<String> notFound = new TreeSet<>(allBodyClasses);
+            notFound.removeAll(allBodyClassesFound);
+            failed("not found: " + notFound);
+        }
+
         printSummary();
     }
 
     final Pattern nl = Pattern.compile("[\\r\\n]+");
+    final Pattern bodyPattern = Pattern.compile("<body [^>]*class=\"([^\"]+)\"");
+    final Set<String> allBodyClasses = Set.of(
+        "all-classes-index-page",
+        "all-packages-index-page",
+        "class-declaration-page",
+        "class-use-page",
+        "constants-summary-page",
+        "deprecated-list-page",
+        "doc-file-page",
+        "help-page",
+        "index-redirect-page",
+        "module-declaration-page",
+        "module-index-page",
+        "package-declaration-page",
+        "package-index-page",
+        "package-tree-page",
+        "package-use-page",
+        "serialized-form-page",
+        "single-index-page",
+        "source-page",
+        "split-index-page",
+        "system-properties-page",
+        "tree-page"
+    );
+
+    void checkBodyClasses() throws IOException {
+        Path outputDirPath = outputDir.toPath();
+        for (Path p : tb.findFiles(".html", outputDirPath)) {
+            checkBodyClass(outputDirPath.relativize(p));
+        }
+    }
+
+    void checkBodyClass(Path p) {
+        checking("Check body: " + p);
+
+        List<String> bodyLines = nl.splitAsStream(readOutputFile(p.toString()))
+                .filter(s -> s.contains("<body class="))
+                .collect(Collectors.toList());
+
+        String bodyLine;
+        switch (bodyLines.size()) {
+            case 0:
+                 failed("Not found: <body class=");
+                 return;
+            case 1:
+                 bodyLine = bodyLines.get(0);
+                 break;
+            default:
+                 failed("Multiple found: <body class=");
+                 return;
+        }
+
+        Matcher m = bodyPattern.matcher(bodyLine);
+        if (m.find()) {
+            String bodyClass = m.group(1);
+            if (allBodyClasses.contains(bodyClass)) {
+                passed("found: " + bodyClass);
+                allBodyClassesFound.add(bodyClass);
+            } else {
+                failed("Unrecognized body class: " + bodyClass);
+            }
+        } else {
+            failed("Unrecognized line:\n" + bodyLine);
+        }
+    }
+
     final Pattern contentPattern = Pattern.compile("content=\"([^\"]+)\">");
     final Pattern generatorPattern = Pattern.compile("content=\"javadoc/([^\"]+)\">");
     final Set<String> allGenerators = Set.of(
-            "AllClassesFrameWriter",
             "AllClassesIndexWriter",
             "AllPackagesIndexWriter",
-            "AnnotationTypeWriterImpl",
             "ClassUseWriter",
             "ClassWriterImpl",
             "ConstantsSummaryWriterImpl",
             "DeprecatedListWriter",
             "DocFileWriter",
-            "FrameOutputWriter",
             "HelpWriter",
             "IndexRedirectWriter",
-            "ModuleFrameWriter",
-            "ModuleIndexFrameWriter",
             "ModuleIndexWriter",
-            "ModulePackageIndexFrameWriter",
             "ModuleWriterImpl",
-            "PackageFrameWriter",
-            "PackageIndexFrameWriter",
             "PackageIndexWriter",
             "PackageTreeWriter",
             "PackageUseWriter",
@@ -160,6 +228,7 @@ public class TestMetadata extends JavadocTester {
             "SingleIndexWriter",
             "SourceToHTMLConverter",
             "SplitIndexWriter",
+            "SystemPropertiesWriter",
             "TreeWriter"
             );
 
@@ -180,13 +249,15 @@ public class TestMetadata extends JavadocTester {
         String generator;
         switch (generators.size()) {
             case 0:
-                 failed("Not found: <meta name=\"generator\"");
+                 failed("""
+                     Not found: <meta name="generator\"""");
                  return;
             case 1:
                  generator = generators.get(0);
                  break;
             default:
-                 failed("Multiple found: <meta name=\"generator\"");
+                 failed("""
+                     Multiple found: <meta name="generator\"""");
                  return;
         }
 
@@ -219,14 +290,16 @@ public class TestMetadata extends JavadocTester {
                 if (generator.equals("DocFileWriter")) {
                     passed("Not found, as expected");
                 } else {
-                    failed("Not found: <meta name=\"description\"");
+                    failed("""
+                        Not found: <meta name="description\"""");
                 }
                 return;
             case 1:
                 description = descriptions.get(0);
                 break;
             default:
-                failed("Multiple found: <meta name=\"description\"");
+                failed("""
+                    Multiple found: <meta name="description\"""");
                 return;
         }
 
@@ -240,16 +313,6 @@ public class TestMetadata extends JavadocTester {
         }
 
         switch (generator) {
-            case "AllClassesFrameWriter":
-            case "FrameOutputWriter":
-            case "ModuleFrameWriter":
-            case "ModuleIndexFrameWriter":
-            case "ModulePackageIndexFrameWriter":
-            case "PackageFrameWriter":
-            case "PackageIndexFrameWriter":
-                check(generator, content, content.contains("frame"));
-                break;
-
             case "AllClassesIndexWriter":
             case "AllPackagesIndexWriter":
             case "ModuleIndexWriter":
@@ -308,6 +371,10 @@ public class TestMetadata extends JavadocTester {
                 check(generator, content, content.startsWith("source:"));
                 break;
 
+            case "SystemPropertiesWriter":
+                check(generator, content, content.contains("system properties"));
+                break;
+
             default:
                 failed("unexpected generator: " + generator);
                 break;
@@ -327,14 +394,16 @@ public class TestMetadata extends JavadocTester {
         switch (s) {
             case PACKAGES:
                 tb.writeJavaFiles(src,
-                    "/** Package pA. */ package pA;",
+                    "/** Package pA. {@systemProperty exampleProperty} */ package pA;",
                     "/** Class pA.CA. */ package pA; public class CA { }",
                     "/** Anno pA.Anno, */ package pA; public @interface Anno { }",
                     "/** Serializable pA.Ser, */ package pA; public class Ser implements java.io.Serializable { }",
                     "/** Package pB. */ package pB;",
                     "/** Class pB.CB. */ package pB; public class CB { }");
                 tb.writeFile(src.resolve("pA").resolve("doc-files").resolve("extra.html"),
-                        "<!doctype html>\n<html><head></head><body>Extra</body></html>");
+                        """
+                            <!doctype html>
+                            <html><head></head><body>Extra</body></html>""");
                 break;
 
             case MODULES:
@@ -354,4 +423,3 @@ public class TestMetadata extends JavadocTester {
         return src;
     }
 }
-

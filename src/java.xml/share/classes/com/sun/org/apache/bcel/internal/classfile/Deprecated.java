@@ -28,15 +28,15 @@ import com.sun.org.apache.bcel.internal.Const;
 
 /**
  * This class is derived from <em>Attribute</em> and denotes that this is a
- * deprecated method. It is instantiated from the
- * <em>Attribute.readAttribute()</em> method.
+ * deprecated method.
+ * It is instantiated from the <em>Attribute.readAttribute()</em> method.
  *
- * @version $Id: Deprecated.java 1749603 2016-06-21 20:50:19Z ggregory $
- * @see Attribute
+ * @see     Attribute
  */
 public final class Deprecated extends Attribute {
 
     private byte[] bytes;
+
 
     /**
      * Initialize from another object. Note that both objects use the same
@@ -45,6 +45,7 @@ public final class Deprecated extends Attribute {
     public Deprecated(final Deprecated c) {
         this(c.getNameIndex(), c.getLength(), c.getBytes(), c.getConstantPool());
     }
+
 
     /**
      * @param name_index Index in constant pool to CONSTANT_Utf8
@@ -56,6 +57,7 @@ public final class Deprecated extends Attribute {
         super(Const.ATTR_DEPRECATED, name_index, length, constant_pool);
         this.bytes = bytes;
     }
+
 
     /**
      * Construct object from input stream.
@@ -72,9 +74,10 @@ public final class Deprecated extends Attribute {
         if (length > 0) {
             bytes = new byte[length];
             input.readFully(bytes);
-            System.err.println("Deprecated attribute with length > 0");
+            println("Deprecated attribute with length > 0");
         }
     }
+
 
     /**
      * Called by objects that are traversing the nodes of the tree implicitely
@@ -84,9 +87,10 @@ public final class Deprecated extends Attribute {
      * @param v Visitor object
      */
     @Override
-    public void accept(final Visitor v) {
+    public void accept( final Visitor v ) {
         v.visitDeprecated(this);
     }
+
 
     /**
      * Dump source file attribute to file stream in binary format.
@@ -95,40 +99,44 @@ public final class Deprecated extends Attribute {
      * @throws IOException
      */
     @Override
-    public final void dump(final DataOutputStream file) throws IOException {
+    public void dump( final DataOutputStream file ) throws IOException {
         super.dump(file);
         if (super.getLength() > 0) {
             file.write(bytes, 0, super.getLength());
         }
     }
 
+
     /**
      * @return data bytes.
      */
-    public final byte[] getBytes() {
+    public byte[] getBytes() {
         return bytes;
     }
+
 
     /**
      * @param bytes the raw bytes that represents this byte array
      */
-    public final void setBytes(final byte[] bytes) {
+    public void setBytes( final byte[] bytes ) {
         this.bytes = bytes;
     }
+
 
     /**
      * @return attribute name
      */
     @Override
-    public final String toString() {
+    public String toString() {
         return Const.getAttributeName(Const.ATTR_DEPRECATED);
     }
+
 
     /**
      * @return deep copy of this attribute
      */
     @Override
-    public Attribute copy(final ConstantPool _constant_pool) {
+    public Attribute copy( final ConstantPool _constant_pool ) {
         final Deprecated c = (Deprecated) clone();
         if (bytes != null) {
             c.bytes = new byte[bytes.length];

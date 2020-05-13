@@ -35,6 +35,7 @@ import com.sun.tools.javac.tree.JCTree.JCAssert;
 import com.sun.tools.javac.tree.JCTree.JCAssign;
 import com.sun.tools.javac.tree.JCTree.JCAssignOp;
 import com.sun.tools.javac.tree.JCTree.JCBinary;
+import com.sun.tools.javac.tree.JCTree.JCBindingPattern;
 import com.sun.tools.javac.tree.JCTree.JCBlock;
 import com.sun.tools.javac.tree.JCTree.JCBreak;
 import com.sun.tools.javac.tree.JCTree.JCCase;
@@ -71,6 +72,7 @@ import com.sun.tools.javac.tree.JCTree.JCProvides;
 import com.sun.tools.javac.tree.JCTree.JCRequires;
 import com.sun.tools.javac.tree.JCTree.JCReturn;
 import com.sun.tools.javac.tree.JCTree.JCSwitch;
+import com.sun.tools.javac.tree.JCTree.JCSwitchExpression;
 import com.sun.tools.javac.tree.JCTree.JCSynchronized;
 import com.sun.tools.javac.tree.JCTree.JCThrow;
 import com.sun.tools.javac.tree.JCTree.JCTry;
@@ -84,6 +86,7 @@ import com.sun.tools.javac.tree.JCTree.JCUses;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.JCWhileLoop;
 import com.sun.tools.javac.tree.JCTree.JCWildcard;
+import com.sun.tools.javac.tree.JCTree.JCYield;
 import com.sun.tools.javac.tree.JCTree.LetExpr;
 import com.sun.tools.javac.tree.JCTree.TypeBoundKind;
 import com.sun.tools.javac.tree.TreeInfo;
@@ -251,6 +254,18 @@ public class TreeDiffer extends TreeScanner {
     }
 
     @Override
+    public void visitBindingPattern(JCBindingPattern tree) {
+        JCBindingPattern that = (JCBindingPattern) parameter;
+        result =
+                scan(tree.vartype, that.vartype)
+                        && tree.name == that.name;
+        if (!result) {
+            return;
+        }
+        equiv.put(tree.symbol, that.symbol);
+    }
+
+    @Override
     public void visitBlock(JCBlock tree) {
         JCBlock that = (JCBlock) parameter;
         result = tree.flags == that.flags && scan(tree.stats, that.stats);
@@ -259,6 +274,12 @@ public class TreeDiffer extends TreeScanner {
     @Override
     public void visitBreak(JCBreak tree) {
         JCBreak that = (JCBreak) parameter;
+        result = tree.label == that.label;
+    }
+
+    @Override
+    public void visitYield(JCYield tree) {
+        JCYield that = (JCYield) parameter;
         result = scan(tree.value, that.value);
     }
 
@@ -499,6 +520,12 @@ public class TreeDiffer extends TreeScanner {
     }
 
     @Override
+    public void visitSwitchExpression(JCSwitchExpression tree) {
+        JCSwitchExpression that = (JCSwitchExpression) parameter;
+        result = scan(tree.selector, that.selector) && scan(tree.cases, that.cases);
+    }
+
+    @Override
     public void visitSynchronized(JCSynchronized tree) {
         JCSynchronized that = (JCSynchronized) parameter;
         result = scan(tree.lock, that.lock) && scan(tree.body, that.body);
@@ -577,7 +604,7 @@ public class TreeDiffer extends TreeScanner {
     @Override
     public void visitTypeTest(JCInstanceOf tree) {
         JCInstanceOf that = (JCInstanceOf) parameter;
-        result = scan(tree.expr, that.expr) && scan(tree.clazz, that.clazz);
+        result = scan(tree.expr, that.expr) && scan(tree.pattern, that.pattern);
     }
 
     @Override

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2013, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -27,6 +28,8 @@
 #include "memory/allocation.hpp"
 #include "gc/shenandoah/shenandoahHeap.hpp"
 #include "gc/shenandoah/shenandoahHeapRegion.hpp"
+#include "gc/shenandoah/shenandoahPadding.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 class ShenandoahHeapRegionSet;
 
@@ -35,13 +38,12 @@ private:
   const ShenandoahHeapRegionSet* _set;
   ShenandoahHeap* const _heap;
 
-  DEFINE_PAD_MINUS_SIZE(0, DEFAULT_CACHE_LINE_SIZE, sizeof(volatile jint));
+  shenandoah_padding(0);
   volatile jint _current_index;
-  DEFINE_PAD_MINUS_SIZE(1, DEFAULT_CACHE_LINE_SIZE, 0);
+  shenandoah_padding(1);
 
   // No implicit copying: iterators should be passed by reference to capture the state
-  ShenandoahHeapRegionSetIterator(const ShenandoahHeapRegionSetIterator& that);
-  ShenandoahHeapRegionSetIterator& operator=(const ShenandoahHeapRegionSetIterator& o);
+  NONCOPYABLE(ShenandoahHeapRegionSetIterator);
 
 public:
   ShenandoahHeapRegionSetIterator(const ShenandoahHeapRegionSet* const set);
@@ -82,8 +84,8 @@ public:
   bool is_empty() const { return _region_count == 0; }
 
   inline bool is_in(ShenandoahHeapRegion* r) const;
-  inline bool is_in(size_t region_number)    const;
-  inline bool is_in(HeapWord* p)             const;
+  inline bool is_in(size_t region_idx)       const;
+  inline bool is_in(oop p)                   const;
 
   void print_on(outputStream* out) const;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ import com.sun.net.httpserver.*;
 import java.util.concurrent.*;
 import javax.net.ssl.*;
 import jdk.test.lib.net.SimpleSSLContext;
+import jdk.test.lib.net.URIBuilder;
 
 public class RedirectOnPost {
 
@@ -55,8 +56,8 @@ public class RedirectOnPost {
             int sslPort = httpsServer.getAddress().getPort();
             httpServer.start();
             httpsServer.start();
-            runTest("http://127.0.0.1:"+port+"/test/", null);
-            runTest("https://127.0.0.1:"+sslPort+"/test/", ctx);
+            runTest("http", port, null);
+            runTest("https", sslPort, ctx);
             System.out.println("Main thread waiting");
         } finally {
             httpServer.stop(0);
@@ -65,10 +66,17 @@ public class RedirectOnPost {
         }
     }
 
-    public static void runTest(String baseURL, SSLContext ctx) throws Exception
+    public static void runTest(String scheme, int port, SSLContext ctx) throws Exception
     {
         byte[] buf = "Hello world".getBytes();
-        URL url = new URL(baseURL + "a");
+
+        URL url = URIBuilder.newBuilder()
+            .scheme(scheme)
+            .loopback()
+            .port(port)
+            .path("/test/a")
+            .toURL();
+        System.out.println("URL: " + url);
         HttpURLConnection con = (HttpURLConnection)url.openConnection();
         if (con instanceof HttpsURLConnection) {
             HttpsURLConnection ssl = (HttpsURLConnection)con;
@@ -107,10 +115,12 @@ public class RedirectOnPost {
 
     static class Handler implements HttpHandler {
 
-        String baseURL;
+        String scheme;
+        int port;
 
-        Handler(String baseURL) {
-            this.baseURL = baseURL;
+        Handler(String scheme, int port) {
+          this.scheme = scheme;
+          this.port = port;
         }
 
         int calls = 0;
@@ -118,6 +128,12 @@ public class RedirectOnPost {
         public void handle(HttpExchange msg) {
             try {
                 String method = msg.getRequestMethod();
+                URL baseURL = URIBuilder.newBuilder()
+                    .scheme(scheme)
+                    .loopback()
+                    .path("/test/b")
+                    .port(port)
+                    .toURLUnchecked();
                 System.out.println ("Server: " + baseURL);
                 if (calls++ == 0) {
                     System.out.println ("Server: redirecting");
@@ -125,7 +141,7 @@ public class RedirectOnPost {
                     byte[] buf = readFully(is);
                     is.close();
                     Headers h = msg.getResponseHeaders();
-                    h.add("Location", baseURL + "b");
+                    h.add("Location", baseURL.toString());
                     msg.sendResponseHeaders(302, -1);
                     msg.close();
                 } else {
@@ -149,13 +165,14 @@ public class RedirectOnPost {
     private static HttpServer getHttpServer(ExecutorService execs)
         throws Exception
     {
-        InetSocketAddress inetAddress = new InetSocketAddress(0);
+        InetSocketAddress inetAddress = new InetSocketAddress(
+                InetAddress.getLoopbackAddress(), 0);
         HttpServer testServer = HttpServer.create(inetAddress, 15);
         int port = testServer.getAddress().getPort();
         testServer.setExecutor(execs);
-        String base = "http://127.0.0.1:"+port+"/test";
+
         HttpContext context = testServer.createContext("/test");
-        context.setHandler(new Handler(base));
+        context.setHandler(new Handler("http", port));
         return testServer;
     }
 
@@ -164,14 +181,15 @@ public class RedirectOnPost {
     )
         throws Exception
     {
-        InetSocketAddress inetAddress = new InetSocketAddress(0);
+        InetSocketAddress inetAddress = new InetSocketAddress(
+                InetAddress.getLoopbackAddress(), 0);
         HttpsServer testServer = HttpsServer.create(inetAddress, 15);
         int port = testServer.getAddress().getPort();
         testServer.setExecutor(execs);
         testServer.setHttpsConfigurator(new HttpsConfigurator (ctx));
-        String base = "https://127.0.0.1:"+port+"/test";
+
         HttpContext context = testServer.createContext("/test");
-        context.setHandler(new Handler(base));
+        context.setHandler(new Handler("https", port));
         return testServer;
     }
 }

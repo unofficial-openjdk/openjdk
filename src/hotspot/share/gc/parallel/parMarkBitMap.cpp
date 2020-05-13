@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ ParMarkBitMap::initialize(MemRegion covered_region)
   const idx_t bits = bits_required(covered_region);
   // The bits will be divided evenly between two bitmaps; each of them should be
   // an integral number of words.
-  assert(bits % (BitsPerWord * 2) == 0, "region size unaligned");
+  assert(is_aligned(bits, (BitsPerWord * 2)), "region size unaligned");
 
   const size_t words = bits / BitsPerWord;
   const size_t raw_bytes = words * sizeof(idx_t);
@@ -90,7 +90,7 @@ ParMarkBitMap::mark_obj(HeapWord* addr, size_t size)
     bool end_bit_ok = _end_bits.par_set_bit(end_bit);
     assert(end_bit_ok, "concurrency problem");
     DEBUG_ONLY(Atomic::inc(&mark_bitmap_count));
-    DEBUG_ONLY(Atomic::add(size, &mark_bitmap_size));
+    DEBUG_ONLY(Atomic::add(&mark_bitmap_size, size));
     return true;
   }
   return false;
@@ -111,14 +111,14 @@ ParMarkBitMap::update_live_words_in_range_cache(ParCompactionManager* cm, HeapWo
 size_t
 ParMarkBitMap::live_words_in_range_helper(HeapWord* beg_addr, oop end_obj) const
 {
-  assert(beg_addr <= (HeapWord*)end_obj, "bad range");
+  assert(beg_addr <= cast_from_oop<HeapWord*>(end_obj), "bad range");
   assert(is_marked(end_obj), "end_obj must be live");
 
   idx_t live_bits = 0;
 
   // The bitmap routines require the right boundary to be word-aligned.
-  const idx_t end_bit = addr_to_bit((HeapWord*)end_obj);
-  const idx_t range_end = BitMap::word_align_up(end_bit);
+  const idx_t end_bit = addr_to_bit(cast_from_oop<HeapWord*>(end_obj));
+  const idx_t range_end = align_range_end(end_bit);
 
   idx_t beg_bit = find_obj_beg(addr_to_bit(beg_addr), range_end);
   while (beg_bit < end_bit) {
@@ -134,8 +134,8 @@ size_t
 ParMarkBitMap::live_words_in_range_use_cache(ParCompactionManager* cm, HeapWord* beg_addr, oop end_oop) const
 {
   HeapWord* last_beg = cm->last_query_begin();
-  HeapWord* last_obj = (HeapWord*)cm->last_query_object();
-  HeapWord* end_obj  = (HeapWord*)end_oop;
+  HeapWord* last_obj = cast_from_oop<HeapWord*>(cm->last_query_object());
+  HeapWord* end_obj  = cast_from_oop<HeapWord*>(end_oop);
 
   size_t last_ret = cm->last_query_return();
   if (end_obj > last_obj) {
@@ -177,7 +177,7 @@ ParMarkBitMap::iterate(ParMarkBitMapClosure* live_closure,
   assert(range_beg <= range_end, "live range invalid");
 
   // The bitmap routines require the right boundary to be word-aligned.
-  const idx_t search_end = BitMap::word_align_up(range_end);
+  const idx_t search_end = align_range_end(range_end);
 
   idx_t cur_beg = find_obj_beg(range_beg, search_end);
   while (cur_beg < range_end) {
@@ -216,8 +216,8 @@ ParMarkBitMap::iterate(ParMarkBitMapClosure* live_closure,
   assert(range_end <= dead_range_end, "dead range invalid");
 
   // The bitmap routines require the right boundary to be word-aligned.
-  const idx_t live_search_end = BitMap::word_align_up(range_end);
-  const idx_t dead_search_end = BitMap::word_align_up(dead_range_end);
+  const idx_t live_search_end = align_range_end(range_end);
+  const idx_t dead_search_end = align_range_end(dead_range_end);
 
   idx_t cur_beg = range_beg;
   if (range_beg < range_end && is_unmarked(range_beg)) {

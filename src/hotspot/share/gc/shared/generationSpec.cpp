@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,10 +29,6 @@
 #include "memory/filemap.hpp"
 #include "runtime/java.hpp"
 #include "utilities/macros.hpp"
-#if INCLUDE_CMSGC
-#include "gc/cms/concurrentMarkSweepGeneration.hpp"
-#include "gc/cms/parNewGeneration.hpp"
-#endif
 #if INCLUDE_SERIALGC
 #include "gc/serial/defNewGeneration.hpp"
 #include "gc/serial/tenuredGeneration.hpp"
@@ -42,33 +38,11 @@ Generation* GenerationSpec::init(ReservedSpace rs, CardTableRS* remset) {
   switch (name()) {
 #if INCLUDE_SERIALGC
     case Generation::DefNew:
-      return new DefNewGeneration(rs, init_size());
+      return new DefNewGeneration(rs, _init_size, _min_size, _max_size);
 
     case Generation::MarkSweepCompact:
-      return new TenuredGeneration(rs, init_size(), remset);
+      return new TenuredGeneration(rs, _init_size, _min_size, _max_size, remset);
 #endif
-
-#if INCLUDE_CMSGC
-    case Generation::ParNew:
-      return new ParNewGeneration(rs, init_size());
-
-    case Generation::ConcurrentMarkSweep: {
-      assert(UseConcMarkSweepGC, "UseConcMarkSweepGC should be set");
-      if (remset == NULL) {
-        vm_exit_during_initialization("Rem set incompatibility.");
-      }
-      // Otherwise
-      // The constructor creates the CMSCollector if needed,
-      // else registers with an existing CMSCollector
-
-      ConcurrentMarkSweepGeneration* g = NULL;
-      g = new ConcurrentMarkSweepGeneration(rs, init_size(), remset);
-
-      g->initialize_performance_counters();
-
-      return g;
-    }
-#endif // INCLUDE_CMSGC
 
     default:
       guarantee(false, "unrecognized GenerationName");

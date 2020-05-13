@@ -58,7 +58,6 @@
 // * arraycopy: Copy data from one heap array to another heap array. The ArrayAccess class has convenience functions for this.
 // * clone: Clone the contents of an object to a newly allocated object.
 // * resolve: Resolve a stable to-space invariant oop that is guaranteed not to relocate its payload until a subsequent thread transition.
-// * equals: Object equality, e.g. when different copies of the same objects are in use (from-space vs. to-space)
 //
 // == IMPLEMENTATION ==
 // Each access goes through the following steps in a template pipeline.
@@ -166,15 +165,15 @@ public:
   }
 
   template <typename T>
-  static inline T atomic_cmpxchg_at(T new_value, oop base, ptrdiff_t offset, T compare_value) {
+  static inline T atomic_cmpxchg_at(oop base, ptrdiff_t offset, T compare_value, T new_value) {
     verify_primitive_decorators<atomic_cmpxchg_mo_decorators>();
-    return AccessInternal::atomic_cmpxchg_at<decorators>(new_value, base, offset, compare_value);
+    return AccessInternal::atomic_cmpxchg_at<decorators>(base, offset, compare_value, new_value);
   }
 
   template <typename T>
-  static inline T atomic_xchg_at(T new_value, oop base, ptrdiff_t offset) {
+  static inline T atomic_xchg_at(oop base, ptrdiff_t offset, T new_value) {
     verify_primitive_decorators<atomic_xchg_mo_decorators>();
-    return AccessInternal::atomic_xchg_at<decorators>(new_value, base, offset);
+    return AccessInternal::atomic_xchg_at<decorators>(base, offset, new_value);
   }
 
   // Oop heap accesses
@@ -192,20 +191,20 @@ public:
   }
 
   template <typename T>
-  static inline T oop_atomic_cmpxchg_at(T new_value, oop base, ptrdiff_t offset, T compare_value) {
+  static inline T oop_atomic_cmpxchg_at(oop base, ptrdiff_t offset, T compare_value, T new_value) {
     verify_heap_oop_decorators<atomic_cmpxchg_mo_decorators>();
     typedef typename AccessInternal::OopOrNarrowOop<T>::type OopType;
     OopType new_oop_value = new_value;
     OopType compare_oop_value = compare_value;
-    return AccessInternal::atomic_cmpxchg_at<decorators | INTERNAL_VALUE_IS_OOP>(new_oop_value, base, offset, compare_oop_value);
+    return AccessInternal::atomic_cmpxchg_at<decorators | INTERNAL_VALUE_IS_OOP>(base, offset, compare_oop_value, new_oop_value);
   }
 
   template <typename T>
-  static inline T oop_atomic_xchg_at(T new_value, oop base, ptrdiff_t offset) {
+  static inline T oop_atomic_xchg_at(oop base, ptrdiff_t offset, T new_value) {
     verify_heap_oop_decorators<atomic_xchg_mo_decorators>();
     typedef typename AccessInternal::OopOrNarrowOop<T>::type OopType;
     OopType new_oop_value = new_value;
-    return AccessInternal::atomic_xchg_at<decorators | INTERNAL_VALUE_IS_OOP>(new_oop_value, base, offset);
+    return AccessInternal::atomic_xchg_at<decorators | INTERNAL_VALUE_IS_OOP>(base, offset, new_oop_value);
   }
 
   // Clone an object from src to dst
@@ -228,15 +227,15 @@ public:
   }
 
   template <typename P, typename T>
-  static inline T atomic_cmpxchg(T new_value, P* addr, T compare_value) {
+  static inline T atomic_cmpxchg(P* addr, T compare_value, T new_value) {
     verify_primitive_decorators<atomic_cmpxchg_mo_decorators>();
-    return AccessInternal::atomic_cmpxchg<decorators>(new_value, addr, compare_value);
+    return AccessInternal::atomic_cmpxchg<decorators>(addr, compare_value, new_value);
   }
 
   template <typename P, typename T>
-  static inline T atomic_xchg(T new_value, P* addr) {
+  static inline T atomic_xchg(P* addr, T new_value) {
     verify_primitive_decorators<atomic_xchg_mo_decorators>();
-    return AccessInternal::atomic_xchg<decorators>(new_value, addr);
+    return AccessInternal::atomic_xchg<decorators>(addr, new_value);
   }
 
   // Oop accesses
@@ -255,30 +254,25 @@ public:
   }
 
   template <typename P, typename T>
-  static inline T oop_atomic_cmpxchg(T new_value, P* addr, T compare_value) {
+  static inline T oop_atomic_cmpxchg(P* addr, T compare_value, T new_value) {
     verify_oop_decorators<atomic_cmpxchg_mo_decorators>();
     typedef typename AccessInternal::OopOrNarrowOop<T>::type OopType;
     OopType new_oop_value = new_value;
     OopType compare_oop_value = compare_value;
-    return AccessInternal::atomic_cmpxchg<decorators | INTERNAL_VALUE_IS_OOP>(new_oop_value, addr, compare_oop_value);
+    return AccessInternal::atomic_cmpxchg<decorators | INTERNAL_VALUE_IS_OOP>(addr, compare_oop_value, new_oop_value);
   }
 
   template <typename P, typename T>
-  static inline T oop_atomic_xchg(T new_value, P* addr) {
+  static inline T oop_atomic_xchg(P* addr, T new_value) {
     verify_oop_decorators<atomic_xchg_mo_decorators>();
     typedef typename AccessInternal::OopOrNarrowOop<T>::type OopType;
     OopType new_oop_value = new_value;
-    return AccessInternal::atomic_xchg<decorators | INTERNAL_VALUE_IS_OOP>(new_oop_value, addr);
+    return AccessInternal::atomic_xchg<decorators | INTERNAL_VALUE_IS_OOP>(addr, new_oop_value);
   }
 
   static oop resolve(oop obj) {
     verify_decorators<DECORATORS_NONE>();
     return AccessInternal::resolve<decorators>(obj);
-  }
-
-  static bool equals(oop o1, oop o2) {
-    verify_decorators<AS_RAW>();
-    return AccessInternal::equals<decorators>(o1, o2);
   }
 };
 

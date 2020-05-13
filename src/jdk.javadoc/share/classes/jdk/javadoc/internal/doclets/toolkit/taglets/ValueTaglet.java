@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,13 +30,12 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
 
 import com.sun.source.doctree.DocTree;
+import jdk.javadoc.doclet.Taglet.Location;
 import jdk.javadoc.internal.doclets.toolkit.BaseConfiguration;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.Messages;
 import jdk.javadoc.internal.doclets.toolkit.util.CommentHelper;
 import jdk.javadoc.internal.doclets.toolkit.util.Utils;
-
-import static com.sun.source.doctree.DocTree.Kind.VALUE;
 
 /**
  * An inline Taglet representing the value tag. This tag should only be used with
@@ -44,15 +43,13 @@ import static com.sun.source.doctree.DocTree.Kind.VALUE;
  * fields.  This inline tag has an optional field name parameter.  If the name is
  * specified, the constant value is retrieved from the specified field.  A link
  * is also created to the specified field.  If a name is not specified, the value
- * is retrieved for the field that the inline tag appears on.  The name is specifed
+ * is retrieved for the field that the inline tag appears on.  The name is specified
  * in the following format:  [fully qualified class name]#[constant field name].
  *
  *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
  */
 
 public class ValueTaglet extends BaseTaglet {
@@ -61,7 +58,7 @@ public class ValueTaglet extends BaseTaglet {
      * Construct a new ValueTaglet.
      */
     public ValueTaglet() {
-        super(VALUE.tagName, true, EnumSet.allOf(Site.class));
+        super(DocTree.Kind.VALUE, true, EnumSet.allOf(Location.class));
     }
 
     /**
@@ -80,7 +77,7 @@ public class ValueTaglet extends BaseTaglet {
 
         Element e = signature == null
                 ? holder
-                : ch.getReferencedMember(config, tag);
+                : ch.getReferencedMember(tag);
 
         return (e != null && config.utils.isVariableElement(e))
                 ? (VariableElement) e

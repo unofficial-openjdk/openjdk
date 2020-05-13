@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,6 +82,15 @@ public class EventNames {
     public final static String BiasedLockRevocation = PREFIX + "BiasedLockRevocation";
     public final static String BiasedLockSelfRevocation = PREFIX + "BiasedLockSelfRevocation";
     public final static String BiasedLockClassRevocation = PREFIX + "BiasedLockClassRevocation";
+    public final static String SymbolTableStatistics = PREFIX + "SymbolTableStatistics";
+    public final static String StringTableStatistics = PREFIX + "StringTableStatistics";
+    public final static String PlaceholderTableStatistics = PREFIX + "PlaceholderTableStatistics";
+    public final static String LoaderConstraintsTableStatistics = PREFIX + "LoaderConstraintsTableStatistics";
+    public final static String ProtectionDomainCacheTableStatistics = PREFIX + "ProtectionDomainCacheTableStatistics";
+    public static final String RedefineClasses = PREFIX + "RedefineClasses";
+    public static final String RetransformClasses = PREFIX + "RetransformClasses";
+    public static final String ClassRedefinition = PREFIX + "ClassRedefinition";
+
     // This event is hard to test
     public final static String ReservedStackActivation = PREFIX + "ReservedStackActivation";
 
@@ -96,6 +105,8 @@ public class EventNames {
     public final static String G1HeapSummary = PREFIX + "G1HeapSummary";
     public final static String G1HeapRegionInformation = PREFIX + "G1HeapRegionInformation";
     public final static String G1HeapRegionTypeChange = PREFIX + "G1HeapRegionTypeChange";
+    public final static String ShenandoahHeapRegionInformation = PREFIX + "ShenandoahHeapRegionInformation";
+    public final static String ShenandoahHeapRegionStateChange = PREFIX + "ShenandoahHeapRegionStateChange";
     public final static String TenuringDistribution = PREFIX + "TenuringDistribution";
     public final static String GarbageCollection = PREFIX + "GarbageCollection";
     public final static String ParallelOldGarbageCollection = PREFIX + "ParallelOldGarbageCollection";
@@ -130,6 +141,13 @@ public class EventNames {
     public final static String AllocationRequiringGC = PREFIX + "AllocationRequiringGC";
     public final static String GCPhaseParallel = PREFIX + "GCPhaseParallel";
     public final static String GCPhaseConcurrent = PREFIX + "GCPhaseConcurrent";
+    public final static String GCPhaseConcurrentLevel1 = PREFIX + "GCPhaseConcurrentLevel1";
+    public final static String ZAllocationStall = PREFIX + "ZAllocationStall";
+    public final static String ZPageAllocation = PREFIX + "ZPageAllocation";
+    public final static String ZPageCacheFlush = PREFIX + "ZPageCacheFlush";
+    public final static String ZRelocationSet = PREFIX + "ZRelocationSet";
+    public final static String ZRelocationSetGroup = PREFIX + "ZRelocationSetGroup";
+    public final static String ZUncommit = PREFIX + "ZUncommit";
 
     // Compiler
     public final static String Compilation = PREFIX + "Compilation";
@@ -146,9 +164,11 @@ public class EventNames {
     public final static String CodeCacheFull = PREFIX + "CodeCacheFull";
     public final static String ObjectAllocationInNewTLAB = PREFIX + "ObjectAllocationInNewTLAB";
     public final static String ObjectAllocationOutsideTLAB = PREFIX + "ObjectAllocationOutsideTLAB";
+    public final static String Deoptimization = PREFIX + "Deoptimization";
 
     // OS
     public final static String OSInformation = PREFIX + "OSInformation";
+    public final static String VirtualizationInformation = PREFIX + "VirtualizationInformation";
     public final static String CPUInformation = PREFIX + "CPUInformation";
     public final static String CPULoad = PREFIX + "CPULoad";
     public final static String ThreadCPULoad = PREFIX + "ThreadCPULoad";
@@ -158,6 +178,7 @@ public class EventNames {
     public final static String NativeLibrary = PREFIX + "NativeLibrary";
     public final static String PhysicalMemory = PREFIX + "PhysicalMemory";
     public final static String NetworkUtilization = PREFIX + "NetworkUtilization";
+    public static final String ProcessStart = PREFIX + "ProcessStart";
 
     // JDK
     public static final String FileForce  = PREFIX + "FileForce";
@@ -174,6 +195,7 @@ public class EventNames {
     public final static String X509Certificate = PREFIX + "X509Certificate";
     public final static String X509Validation = PREFIX + "X509Validation";
     public final static String SecurityProperty = PREFIX + "SecurityPropertyModification";
+    public final static String DirectBufferStatistics = PREFIX + "DirectBufferStatistics";
 
     // Flight Recorder
     public final static String DumpReason = PREFIX + "DumpReason";
@@ -181,6 +203,10 @@ public class EventNames {
     public final static String CPUTimeStampCounter = PREFIX + "CPUTimeStampCounter";
     public final static String ActiveRecording = PREFIX + "ActiveRecording";
     public final static String ActiveSetting = PREFIX + "ActiveSetting";
+    public static final String Flush = PREFIX + "Flush";
+
+    // Diagnostics
+    public static final String HeapDump = PREFIX + "HeapDump";
 
     public static boolean isGcEvent(EventType et) {
         return et.getCategoryNames().contains(GC_CATEGORY);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,9 +29,11 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -41,6 +43,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.RecordComponentElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
@@ -54,11 +57,15 @@ import com.sun.tools.javac.comp.Attr;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.jvm.*;
+import com.sun.tools.javac.jvm.PoolConstant;
+import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.JCTree.JCAnnotation;
 import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.Tag;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.DefinedBy.Api;
+import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Name;
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -66,7 +73,6 @@ import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
 import static com.sun.tools.javac.code.Scope.LookupKind.NON_RECURSIVE;
 import com.sun.tools.javac.code.Scope.WriteableScope;
-import static com.sun.tools.javac.code.Symbol.OperatorSymbol.AccessCode.FIRSTASGOP;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.code.TypeTag.FORALL;
 import static com.sun.tools.javac.code.TypeTag.TYPEVAR;
@@ -86,7 +92,7 @@ import static com.sun.tools.javac.jvm.ByteCodes.string_add;
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
-public abstract class Symbol extends AnnoConstruct implements Element {
+public abstract class Symbol extends AnnoConstruct implements PoolConstant, Element {
 
     /** The kind of this symbol.
      *  @see Kinds
@@ -281,6 +287,11 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         this.name = name;
     }
 
+    @Override
+    public int poolTag() {
+        throw new AssertionError("Invalid pool entry");
+    }
+
     /** Clone this symbol with new owner.
      *  Legal only for fields and methods.
      */
@@ -367,6 +378,10 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         return (flags_field & DEPRECATED_REMOVAL) != 0;
     }
 
+    public boolean isPreviewApi() {
+        return (flags_field & PREVIEW_API) != 0;
+    }
+
     public boolean isDeprecatableViaAnnotation() {
         switch (getKind()) {
             case LOCAL_VARIABLE:
@@ -391,15 +406,27 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         return (flags() & INTERFACE) != 0;
     }
 
+    public boolean isAbstract() {
+        return (flags_field & ABSTRACT) != 0;
+    }
+
     public boolean isPrivate() {
         return (flags_field & Flags.AccessFlags) == PRIVATE;
+    }
+
+    public boolean isPublic() {
+        return (flags_field & Flags.AccessFlags) == PUBLIC;
     }
 
     public boolean isEnum() {
         return (flags() & ENUM) != 0;
     }
 
-    /** Is this symbol declared (directly or indirectly) local
+    public boolean isFinal() {
+        return (flags_field & FINAL) != 0;
+    }
+
+   /** Is this symbol declared (directly or indirectly) local
      *  to a method or variable initializer?
      *  Also includes fields of inner classes which are in
      *  turn local to a method or variable initializer.
@@ -421,6 +448,10 @@ public abstract class Symbol extends AnnoConstruct implements Element {
      */
     public boolean isConstructor() {
         return name == name.table.names.init;
+    }
+
+    public boolean isDynamic() {
+        return false;
     }
 
     /** The fully qualified name of this symbol.
@@ -809,7 +840,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public java.util.List<Symbol> getEnclosedElements() {
+        public List<Symbol> getEnclosedElements() {
             List<Symbol> list = List.nil();
             if (kind == TYP && type.hasTag(TYPEVAR)) {
                 return list;
@@ -964,6 +995,11 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             super(MDL, 0, name, null, owner);
             Assert.checkNonNull(name);
             this.type = new ModuleType(this);
+        }
+
+        @Override
+        public int poolTag() {
+            return ClassFile.CONSTANT_Module;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
@@ -1132,6 +1168,11 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return members_field;
         }
 
+        @Override
+        public int poolTag() {
+            return ClassFile.CONSTANT_Package;
+        }
+
         public long flags() {
             complete();
             return flags_field;
@@ -1188,6 +1229,20 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
     }
 
+    public static class RootPackageSymbol extends PackageSymbol {
+        public final MissingInfoHandler missingInfoHandler;
+        public final boolean allowPrivateInvokeVirtual;
+
+        public RootPackageSymbol(Name name, Symbol owner,
+                                 MissingInfoHandler missingInfoHandler,
+                                 boolean allowPrivateInvokeVirtual) {
+            super(name, owner);
+            this.missingInfoHandler = missingInfoHandler;
+            this.allowPrivateInvokeVirtual = allowPrivateInvokeVirtual;
+        }
+
+    }
+
     /** A class for class symbols
      */
     public static class ClassSymbol extends TypeSymbol implements TypeElement {
@@ -1222,12 +1277,13 @@ public abstract class Symbol extends AnnoConstruct implements Element {
          */
         public List<ClassSymbol> trans_local;
 
-        /** the constant pool of the class
-         */
-        public Pool pool;
-
         /** the annotation metadata attached to this class */
         private AnnotationTypeMetadata annotationTypeMetadata;
+
+        /* the list of any of record components, only non empty if the class is a record
+         * and it has at least one record component
+         */
+        private List<RecordComponent> recordComponents = List.nil();
 
         public ClassSymbol(long flags, Name name, Type type, Symbol owner) {
             super(TYP, flags, name, type, owner);
@@ -1236,7 +1292,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             this.flatname = formFlatName(name, owner);
             this.sourcefile = null;
             this.classfile = null;
-            this.pool = null;
             this.annotationTypeMetadata = AnnotationTypeMetadata.notAnAnnotationType();
         }
 
@@ -1296,6 +1351,18 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         @DefinedBy(Api.LANGUAGE_MODEL)
         public Name getQualifiedName() {
             return fullname;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public List<Symbol> getEnclosedElements() {
+            List<Symbol> result = super.getEnclosedElements();
+            if (!recordComponents.isEmpty()) {
+                List<RecordComponent> reversed = recordComponents.reverse();
+                for (RecordComponent rc : reversed) {
+                    result = result.prepend(rc);
+                }
+            }
+            return result;
         }
 
         public Name flatName() {
@@ -1390,6 +1457,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
 
         @DefinedBy(Api.LANGUAGE_MODEL)
+        @SuppressWarnings("preview")
         public ElementKind getKind() {
             apiComplete();
             long flags = flags();
@@ -1399,6 +1467,8 @@ public abstract class Symbol extends AnnoConstruct implements Element {
                 return ElementKind.INTERFACE;
             else if ((flags & ENUM) != 0)
                 return ElementKind.ENUM;
+            else if ((flags & RECORD) != 0)
+                return ElementKind.RECORD;
             else
                 return ElementKind.CLASS;
         }
@@ -1408,6 +1478,34 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             apiComplete();
             long flags = flags();
             return Flags.asModifierSet(flags & ~DEFAULT);
+        }
+
+        public RecordComponent getRecordComponent(VarSymbol field) {
+            for (RecordComponent rc : recordComponents) {
+                if (rc.name == field.name) {
+                    return rc;
+                }
+            }
+            return null;
+        }
+
+        public RecordComponent getRecordComponent(JCVariableDecl var, boolean addIfMissing, List<JCAnnotation> annotations) {
+            for (RecordComponent rc : recordComponents) {
+                if (rc.name == var.name) {
+                    return rc;
+                }
+            }
+            RecordComponent rc = null;
+            if (addIfMissing) {
+                recordComponents = recordComponents.append(rc = new RecordComponent(var, annotations));
+            }
+            return rc;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        @SuppressWarnings("preview")
+        public List<? extends RecordComponent> getRecordComponents() {
+            return recordComponents;
         }
 
         @DefinedBy(Api.LANGUAGE_MODEL)
@@ -1423,7 +1521,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
                 return NestingKind.MEMBER;
         }
 
-
         @Override
         protected <A extends Annotation> Attribute.Compound getAttribute(final Class<A> annoType) {
 
@@ -1438,9 +1535,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return superType == null ? null
                                      : superType.getAttribute(annoType);
         }
-
-
-
 
         @DefinedBy(Api.LANGUAGE_MODEL)
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
@@ -1500,6 +1594,10 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             Assert.check(!annotationTypeMetadata.isMetadataForAnnotationType());
             this.annotationTypeMetadata = a;
         }
+
+        public boolean isRecord() {
+            return (flags_field & RECORD) != 0;
+        }
     }
 
 
@@ -1528,6 +1626,15 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             super(VAR, flags, name, type, owner);
         }
 
+        @Override
+        public int poolTag() {
+            return ClassFile.CONSTANT_Fieldref;
+        }
+
+        public MethodHandleSymbol asMethodHandle(boolean getter) {
+            return new MethodHandleSymbol(this, getter);
+        }
+
         /** Clone this symbol with new owner.
          */
         public VarSymbol clone(Symbol newOwner) {
@@ -1535,6 +1642,11 @@ public abstract class Symbol extends AnnoConstruct implements Element {
                 @Override
                 public Symbol baseSymbol() {
                     return VarSymbol.this;
+                }
+
+                @Override
+                public Object poolKey(Types types) {
+                    return new Pair<>(newOwner, baseSymbol());
                 }
             };
             v.pos = pos;
@@ -1566,6 +1678,10 @@ public abstract class Symbol extends AnnoConstruct implements Element {
                 return ElementKind.FIELD;
             } else if (isResourceVariable()) {
                 return ElementKind.RESOURCE_VARIABLE;
+            } else if ((flags & MATCH_BINDING) != 0) {
+                @SuppressWarnings("preview")
+                ElementKind kind = ElementKind.BINDING_VARIABLE;
+                return kind;
             } else {
                 return ElementKind.LOCAL_VARIABLE;
             }
@@ -1633,6 +1749,89 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         }
     }
 
+    @SuppressWarnings("preview")
+    public static class RecordComponent extends VarSymbol implements RecordComponentElement {
+        public MethodSymbol accessor;
+        public JCTree.JCMethodDecl accessorMeth;
+        private final List<JCAnnotation> originalAnnos;
+
+        /**
+         * Construct a record component, given its flags, name, type and owner.
+         */
+        public RecordComponent(JCVariableDecl fieldDecl, List<JCAnnotation> annotations) {
+            super(PUBLIC, fieldDecl.sym.name, fieldDecl.sym.type, fieldDecl.sym.owner);
+            this.originalAnnos = annotations;
+        }
+
+        public List<JCAnnotation> getOriginalAnnos() { return originalAnnos; }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        @SuppressWarnings("preview")
+        public ElementKind getKind() {
+            return ElementKind.RECORD_COMPONENT;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public ExecutableElement getAccessor() {
+            return accessor;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        @SuppressWarnings("preview")
+        public <R, P> R accept(ElementVisitor<R, P> v, P p) {
+            return v.visitRecordComponent(this, p);
+        }
+    }
+
+    public static class ParamSymbol extends VarSymbol {
+        public ParamSymbol(long flags, Name name, Type type, Symbol owner) {
+            super(flags, name, type, owner);
+        }
+
+        @Override
+        public Name getSimpleName() {
+            if ((flags_field & NAME_FILLED) == 0) {
+                flags_field |= NAME_FILLED;
+                Symbol rootPack = this;
+                while (rootPack != null && !(rootPack instanceof RootPackageSymbol)) {
+                    rootPack = rootPack.owner;
+                }
+                if (rootPack != null) {
+                    Name inferredName =
+                            ((RootPackageSymbol) rootPack).missingInfoHandler.getParameterName(this);
+                    if (inferredName != null) {
+                        this.name = inferredName;
+                    }
+                }
+            }
+            return super.getSimpleName();
+        }
+
+    }
+
+    public static class BindingSymbol extends VarSymbol {
+
+        public BindingSymbol(Name name, Type type, Symbol owner) {
+            super(Flags.FINAL | Flags.HASINIT | Flags.MATCH_BINDING, name, type, owner);
+        }
+
+        public boolean isAliasFor(BindingSymbol b) {
+            return aliases().containsAll(b.aliases());
+        }
+
+        List<BindingSymbol> aliases() {
+            return List.of(this);
+        }
+
+        public void preserveBinding() {
+            flags_field |= Flags.MATCH_BINDING_TO_OUTER;
+        }
+
+        public boolean isPreserved() {
+            return (flags_field & Flags.MATCH_BINDING_TO_OUTER) != 0;
+        }
+    }
+
     /** A class for method symbols.
      */
     public static class MethodSymbol extends Symbol implements ExecutableElement {
@@ -1670,6 +1869,11 @@ public abstract class Symbol extends AnnoConstruct implements Element {
                 public Symbol baseSymbol() {
                     return MethodSymbol.this;
                 }
+
+                @Override
+                public Object poolKey(Types types) {
+                    return new Pair<>(newOwner, baseSymbol());
+                }
             };
             m.code = code;
             return m;
@@ -1699,8 +1903,19 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             }
         }
 
-        public boolean isDynamic() {
+        @Override
+        public int poolTag() {
+            return owner.isInterface() ?
+                    ClassFile.CONSTANT_InterfaceMethodref : ClassFile.CONSTANT_Methodref;
+        }
+
+        public boolean isHandle() {
             return false;
+        }
+
+
+        public MethodHandleSymbol asHandle() {
+            return new MethodHandleSymbol(this);
         }
 
         /** find a symbol that this (proxy method) symbol implements.
@@ -1877,6 +2092,13 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return (flags() & LAMBDA_METHOD) == LAMBDA_METHOD;
         }
 
+        /** override this method to point to the original enclosing method if this method symbol represents a synthetic
+         *  lambda method
+         */
+        public MethodSymbol originalEnclosingMethod() {
+            return this;
+        }
+
         /** The implementation of this (abstract) symbol in class origin;
          *  null if none exists. Synthetic methods are not considered
          *  as possible implementations.
@@ -1970,7 +2192,8 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         @DefinedBy(Api.LANGUAGE_MODEL)
         public Type getReceiverType() {
-            return asType().getReceiverType();
+            Type result = asType().getReceiverType();
+            return (result == null) ? Type.noType : result;
         }
 
         @DefinedBy(Api.LANGUAGE_MODEL)
@@ -1986,21 +2209,153 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
     /** A class for invokedynamic method calls.
      */
-    public static class DynamicMethodSymbol extends MethodSymbol {
+    public static class DynamicMethodSymbol extends MethodSymbol implements Dynamic {
 
-        public Object[] staticArgs;
-        public Symbol bsm;
-        public int bsmKind;
+        public LoadableConstant[] staticArgs;
+        public MethodHandleSymbol bsm;
 
-        public DynamicMethodSymbol(Name name, Symbol owner, int bsmKind, MethodSymbol bsm, Type type, Object[] staticArgs) {
+        public DynamicMethodSymbol(Name name, Symbol owner, MethodHandleSymbol bsm, Type type, LoadableConstant[] staticArgs) {
             super(0, name, type, owner);
             this.bsm = bsm;
-            this.bsmKind = bsmKind;
             this.staticArgs = staticArgs;
         }
 
         @Override
         public boolean isDynamic() {
+            return true;
+        }
+
+        @Override
+        public LoadableConstant[] staticArgs() {
+            return staticArgs;
+        }
+
+        @Override
+        public MethodHandleSymbol bootstrapMethod() {
+            return bsm;
+        }
+
+        @Override
+        public int poolTag() {
+            return ClassFile.CONSTANT_InvokeDynamic;
+        }
+
+        @Override
+        public Type dynamicType() {
+            return type;
+        }
+    }
+
+    /** A class for condy.
+     */
+    public static class DynamicVarSymbol extends VarSymbol implements Dynamic, LoadableConstant {
+        public LoadableConstant[] staticArgs;
+        public MethodHandleSymbol bsm;
+
+        public DynamicVarSymbol(Name name, Symbol owner, MethodHandleSymbol bsm, Type type, LoadableConstant[] staticArgs) {
+            super(0, name, type, owner);
+            this.bsm = bsm;
+            this.staticArgs = staticArgs;
+        }
+
+        @Override
+        public boolean isDynamic() {
+            return true;
+        }
+
+        @Override
+        public PoolConstant dynamicType() {
+            return type;
+        }
+
+        @Override
+        public LoadableConstant[] staticArgs() {
+            return staticArgs;
+        }
+
+        @Override
+        public LoadableConstant bootstrapMethod() {
+            return bsm;
+        }
+
+        @Override
+        public int poolTag() {
+            return ClassFile.CONSTANT_Dynamic;
+        }
+    }
+
+    /** A class for method handles.
+     */
+    public static class MethodHandleSymbol extends MethodSymbol implements LoadableConstant {
+
+        private Symbol refSym;
+        private boolean getter;
+
+        public MethodHandleSymbol(Symbol msym) {
+            this(msym, false);
+        }
+
+        public MethodHandleSymbol(Symbol msym, boolean getter) {
+            super(msym.flags_field, msym.name, msym.type, msym.owner);
+            this.refSym = msym;
+            this.getter = getter;
+        }
+
+        /**
+         * Returns the kind associated with this method handle.
+         */
+        public int referenceKind() {
+            if (refSym.kind == VAR) {
+                return getter ?
+                        refSym.isStatic() ? ClassFile.REF_getStatic : ClassFile.REF_getField :
+                        refSym.isStatic() ? ClassFile.REF_putStatic : ClassFile.REF_putField;
+            } else {
+                if (refSym.isConstructor()) {
+                    return ClassFile.REF_newInvokeSpecial;
+                } else {
+                    if (refSym.isStatic()) {
+                        return ClassFile.REF_invokeStatic;
+                    } else if ((refSym.flags() & PRIVATE) != 0 && !allowPrivateInvokeVirtual()) {
+                        return ClassFile.REF_invokeSpecial;
+                    } else if (refSym.enclClass().isInterface()) {
+                        return ClassFile.REF_invokeInterface;
+                    } else {
+                        return ClassFile.REF_invokeVirtual;
+                    }
+                }
+            }
+        }
+
+        private boolean allowPrivateInvokeVirtual() {
+            Symbol rootPack = this;
+            while (rootPack != null && !(rootPack instanceof RootPackageSymbol)) {
+                rootPack = rootPack.owner;
+            }
+            return rootPack != null && ((RootPackageSymbol) rootPack).allowPrivateInvokeVirtual;
+        }
+        @Override
+        public int poolTag() {
+            return ClassFile.CONSTANT_MethodHandle;
+        }
+
+        @Override
+        public Object poolKey(Types types) {
+            return new Pair<>(baseSymbol(), referenceKind());
+        }
+
+        @Override
+        public MethodHandleSymbol asHandle() {
+            return this;
+        }
+
+        @Override
+        public Symbol baseSymbol() {
+            return refSym;
+        }
+
+
+        @Override
+        public boolean isHandle() {
             return true;
         }
     }
@@ -2126,37 +2481,47 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
     public static class CompletionFailure extends RuntimeException {
         private static final long serialVersionUID = 0;
-        public final DeferredCompletionFailureHandler dcfh;
-        public Symbol sym;
+        public final transient DeferredCompletionFailureHandler dcfh;
+        public transient Symbol sym;
 
         /** A diagnostic object describing the failure
          */
-        public JCDiagnostic diag;
+        private transient JCDiagnostic diag;
 
-        public CompletionFailure(Symbol sym, JCDiagnostic diag, DeferredCompletionFailureHandler dcfh) {
+        private transient Supplier<JCDiagnostic> diagSupplier;
+
+        public CompletionFailure(Symbol sym, Supplier<JCDiagnostic> diagSupplier, DeferredCompletionFailureHandler dcfh) {
             this.dcfh = dcfh;
             this.sym = sym;
-            this.diag = diag;
+            this.diagSupplier = diagSupplier;
 //          this.printStackTrace();//DEBUG
         }
 
         public JCDiagnostic getDiagnostic() {
+            if (diag == null && diagSupplier != null) {
+                diag = diagSupplier.get();
+            }
             return diag;
         }
 
         @Override
         public String getMessage() {
-            return diag.getMessage(null);
+            return getDiagnostic().getMessage(null);
         }
 
         public JCDiagnostic getDetailValue() {
-            return diag;
+            return getDiagnostic();
         }
 
         @Override
         public CompletionFailure initCause(Throwable cause) {
             super.initCause(cause);
             return this;
+        }
+
+        public void resetDiagnostic(Supplier<JCDiagnostic> diagSupplier) {
+            this.diagSupplier = diagSupplier;
+            this.diag = null;
         }
 
     }

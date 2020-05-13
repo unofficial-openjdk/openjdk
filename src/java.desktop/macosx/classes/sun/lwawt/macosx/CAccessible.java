@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.JProgressBar;
 import javax.swing.JTabbedPane;
 import javax.swing.JSlider;
-import javax.swing.JCheckBox;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -42,8 +41,10 @@ import static javax.accessibility.AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT
 import static javax.accessibility.AccessibleContext.ACCESSIBLE_CARET_PROPERTY;
 import static javax.accessibility.AccessibleContext.ACCESSIBLE_SELECTION_PROPERTY;
 import static javax.accessibility.AccessibleContext.ACCESSIBLE_STATE_PROPERTY;
+import static javax.accessibility.AccessibleContext.ACCESSIBLE_TABLE_MODEL_CHANGED;
 import static javax.accessibility.AccessibleContext.ACCESSIBLE_TEXT_PROPERTY;
 import static javax.accessibility.AccessibleContext.ACCESSIBLE_NAME_PROPERTY;
+import static javax.accessibility.AccessibleContext.ACCESSIBLE_VALUE_PROPERTY;
 
 import javax.accessibility.AccessibleRole;
 import javax.accessibility.AccessibleState;
@@ -106,13 +107,6 @@ class CAccessible extends CFRetainedResource implements Accessible {
             AccessibleContext ac = ((Accessible)c).getAccessibleContext();
             ac.addPropertyChangeListener(new AXChangeNotifier());
         }
-        if (c instanceof JProgressBar) {
-            JProgressBar pb = (JProgressBar) c;
-            pb.addChangeListener(new AXProgressChangeNotifier());
-        } else if (c instanceof JSlider) {
-            JSlider slider = (JSlider) c;
-            slider.addChangeListener(new AXProgressChangeNotifier());
-        }
     }
 
     private class AXChangeNotifier implements PropertyChangeListener {
@@ -129,6 +123,8 @@ class CAccessible extends CFRetainedResource implements Accessible {
                     valueChanged(ptr);
                 } else if (name.compareTo(ACCESSIBLE_SELECTION_PROPERTY) == 0) {
                     selectionChanged(ptr);
+                } else if (name.compareTo(ACCESSIBLE_TABLE_MODEL_CHANGED) == 0) {
+                    valueChanged(ptr);
                 } else if (name.compareTo(ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY) == 0 ) {
                     if (newValue instanceof AccessibleContext) {
                         activeDescendant = (AccessibleContext)newValue;
@@ -171,17 +167,18 @@ class CAccessible extends CFRetainedResource implements Accessible {
                     if (e.getSource() instanceof JTabbedPane) {
                         titleChanged(ptr);
                     }
+                } else if (name.compareTo(ACCESSIBLE_VALUE_PROPERTY) == 0) {
+                    AccessibleRole thisRole = accessible.getAccessibleContext()
+                                                        .getAccessibleRole();
+                    if (thisRole == AccessibleRole.SLIDER ||
+                            thisRole == AccessibleRole.PROGRESS_BAR) {
+                        valueChanged(ptr);
+                    }
                 }
             }
         }
     }
 
-    private class AXProgressChangeNotifier implements ChangeListener {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-            if (ptr != 0) valueChanged(ptr);
-        }
-    }
 
     static Accessible getSwingAccessible(final Accessible a) {
         return (a instanceof CAccessible) ? ((CAccessible)a).accessible : a;

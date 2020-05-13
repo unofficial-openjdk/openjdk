@@ -1,14 +1,16 @@
 /*
- * Copyright (c) 2002-2018, the original author or authors.
+ * Copyright (c) 2002-2019, the original author or authors.
  *
  * This software is distributable under the BSD license. See the terms of the
  * BSD license in the documentation provided with this software.
  *
- * http://www.opensource.org/licenses/bsd-license.php
+ * https://opensource.org/licenses/BSD-3-Clause
  */
 package jdk.internal.org.jline.reader;
 
+import java.io.File;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Map;
 import java.util.function.IntConsumer;
 
@@ -57,7 +59,7 @@ import jdk.internal.org.jline.utils.AttributedString;
  * Defaults to an empty string.
  * </dd>
  * <dt>{@code %}<var>n</var>{@code P}<var>c</var></dt>
- * <dd>Insert padding at this possion, repeating the following
+ * <dd>Insert padding at this position, repeating the following
  *   character <var>c</var> as needed to bring the total prompt
  *   column width as specified by the digits <var>n</var>.
  * </dd>
@@ -95,7 +97,10 @@ public interface LineReader {
     String CALLBACK_FINISH = "callback-finish";
     String CALLBACK_KEYMAP = "callback-keymap";
 
+    String ACCEPT_AND_INFER_NEXT_HISTORY = "accept-and-infer-next-history";
+    String ACCEPT_AND_HOLD = "accept-and-hold";
     String ACCEPT_LINE = "accept-line";
+    String ACCEPT_LINE_AND_DOWN_HISTORY = "accept-line-and-down-history";
     String ARGUMENT_BASE = "argument-base";
     String BACKWARD_CHAR = "backward-char";
     String BACKWARD_DELETE_CHAR = "backward-delete-char";
@@ -127,6 +132,7 @@ public interface LineReader {
     String DOWN_LINE = "down-line";
     String DOWN_LINE_OR_HISTORY = "down-line-or-history";
     String DOWN_LINE_OR_SEARCH = "down-line-or-search";
+    String EDIT_AND_EXECUTE_COMMAND = "edit-and-execute-command";
     String EMACS_BACKWARD_WORD = "emacs-backward-word";
     String EMACS_EDITING_MODE = "emacs-editing-mode";
     String EMACS_FORWARD_WORD = "emacs-forward-word";
@@ -351,6 +357,19 @@ public interface LineReader {
      */
     String HISTORY_FILE_SIZE = "history-file-size";
 
+    /**
+     * New line automatic indentation after opening/closing bracket.
+     */
+    String INDENTATION = "indentation";
+
+    /**
+     * Max buffer size for advanced features.
+     * Once the length of the buffer reaches this threshold, no
+     * advanced features will be enabled. This includes the undo
+     * buffer, syntax highlighting, parsing, etc....
+     */
+    String FEATURES_MAX_BUFFER_SIZE = "features-max-buffer-size";
+
     Map<String, KeyMap<Binding>> defaultKeyMaps();
 
     enum Option {
@@ -395,6 +414,7 @@ public interface LineReader {
         DELAY_LINE_WRAP,
         AUTO_PARAM_SLASH(true),
         AUTO_REMOVE_SLASH(true),
+        USE_FORWARD_SLASH(false),
         /** When hitting the <code>&lt;tab&gt;</code> key at the beginning of the line, insert a tabulation
          *  instead of completing.  This is mainly useful when {@link #BRACKETED_PASTE} is
          *  disabled, so that copy/paste of indented text does not trigger completion.
@@ -412,6 +432,12 @@ public interface LineReader {
 
         /** if history search is fully case insensitive */
         CASE_INSENSITIVE_SEARCH,
+
+        /** Automatic insertion of closing bracket */
+        INSERT_BRACKET,
+
+        /** Show command options tab completion candidates for zero length word */
+        EMPTY_WORD_OPTIONS(true),
         ;
 
         private final boolean def;
@@ -434,6 +460,27 @@ public interface LineReader {
         CHAR,
         LINE,
         PASTE
+    }
+
+    enum SuggestionType {
+        /**
+         * As you type command line suggestions are disabled.
+         */
+        NONE,
+        /**
+         * Prepare command line suggestions using command history.
+         * Requires an additional widgets implementation.
+         */
+        HISTORY,
+        /**
+         * Prepare command line suggestions using command completer data.
+         */
+        COMPLETER,
+        /**
+         * Prepare command line suggestions using command completer data and/or command positional argument descriptions.
+         * Requires an additional widgets implementation.
+         */
+        TAIL_TIP
     }
 
     /**
@@ -652,4 +699,17 @@ public interface LineReader {
 
     int getRegionMark();
 
+    void addCommandsInBuffer(Collection<String> commands);
+
+    void editAndAddInBuffer(File file) throws Exception;
+
+    String getLastBinding();
+
+    String getTailTip();
+
+    void setTailTip(String tailTip);
+
+    void setAutosuggestion(SuggestionType type);
+
+    SuggestionType getAutosuggestion();
 }

@@ -41,23 +41,23 @@ template <class T> void G1ParScanThreadState::do_oop_evac(T* p) {
   // than one thread might claim the same card. So the same card may be
   // processed multiple times, and so we might get references into old gen here.
   // So we need to redo this check.
-  const InCSetState in_cset_state = _g1h->in_cset_state(obj);
+  const G1HeapRegionAttr region_attr = _g1h->region_attr(obj);
   // References pushed onto the work stack should never point to a humongous region
   // as they are not added to the collection set due to above precondition.
-  assert(!in_cset_state.is_humongous(),
+  assert(!region_attr.is_humongous(),
          "Obj " PTR_FORMAT " should not refer to humongous region %u from " PTR_FORMAT,
-         p2i(obj), _g1h->addr_to_region((HeapWord*)obj), p2i(p));
+         p2i(obj), _g1h->addr_to_region(cast_from_oop<HeapWord*>(obj)), p2i(p));
 
-  if (!in_cset_state.is_in_cset()) {
+  if (!region_attr.is_in_cset()) {
     // In this case somebody else already did all the work.
     return;
   }
 
-  markOop m = obj->mark_raw();
-  if (m->is_marked()) {
-    obj = (oop) m->decode_pointer();
+  markWord m = obj->mark_raw();
+  if (m.is_marked()) {
+    obj = (oop) m.decode_pointer();
   } else {
-    obj = copy_to_survivor_space(in_cset_state, obj, m);
+    obj = copy_to_survivor_space(region_attr, obj, m);
   }
   RawAccess<IS_NOT_NULL>::oop_store(p, obj);
 
@@ -67,7 +67,7 @@ template <class T> void G1ParScanThreadState::do_oop_evac(T* p) {
   }
   HeapRegion* from = _g1h->heap_region_containing(p);
   if (!from->is_young()) {
-    enqueue_card_if_tracked(p, obj);
+    enqueue_card_if_tracked(_g1h->region_attr(obj), p, obj);
   }
 }
 
@@ -208,6 +208,8 @@ template <typename T>
 inline void G1ParScanThreadState::remember_root_into_optional_region(T* p) {
   oop o = RawAccess<IS_NOT_NULL>::oop_load(p);
   uint index = _g1h->heap_region_containing(o)->index_in_opt_cset();
+  assert(index < _num_optional_regions,
+         "Trying to access optional region idx %u beyond " SIZE_FORMAT, index, _num_optional_regions);
   _oops_into_optional_regions[index].push_root(p);
 }
 
@@ -215,12 +217,43 @@ template <typename T>
 inline void G1ParScanThreadState::remember_reference_into_optional_region(T* p) {
   oop o = RawAccess<IS_NOT_NULL>::oop_load(p);
   uint index = _g1h->heap_region_containing(o)->index_in_opt_cset();
+  assert(index < _num_optional_regions,
+         "Trying to access optional region idx %u beyond " SIZE_FORMAT, index, _num_optional_regions);
   _oops_into_optional_regions[index].push_oop(p);
   DEBUG_ONLY(verify_ref(p);)
 }
 
 G1OopStarChunkedList* G1ParScanThreadState::oops_into_optional_region(const HeapRegion* hr) {
+  assert(hr->index_in_opt_cset() < _num_optional_regions,
+         "Trying to access optional region idx %u beyond " SIZE_FORMAT " " HR_FORMAT,
+         hr->index_in_opt_cset(), _num_optional_regions, HR_FORMAT_PARAMS(hr));
   return &_oops_into_optional_regions[hr->index_in_opt_cset()];
+}
+
+void G1ParScanThreadState::initialize_numa_stats() {
+  if (_numa->is_enabled()) {
+    LogTarget(Info, gc, heap, numa) lt;
+
+    if (lt.is_enabled()) {
+      uint num_nodes = _numa->num_active_nodes();
+      // Record only if there are multiple active nodes.
+      _obj_alloc_stat = NEW_C_HEAP_ARRAY(size_t, num_nodes, mtGC);
+      memset(_obj_alloc_stat, 0, sizeof(size_t) * num_nodes);
+    }
+  }
+}
+
+void G1ParScanThreadState::flush_numa_stats() {
+  if (_obj_alloc_stat != NULL) {
+    uint node_index = _numa->index_of_current_thread();
+    _numa->copy_statistics(G1NUMAStats::LocalObjProcessAtCopyToSurv, node_index, _obj_alloc_stat);
+  }
+}
+
+void G1ParScanThreadState::update_numa_stats(uint node_index) {
+  if (_obj_alloc_stat != NULL) {
+    _obj_alloc_stat[node_index]++;
+  }
 }
 
 #endif // SHARE_GC_G1_G1PARSCANTHREADSTATE_INLINE_HPP

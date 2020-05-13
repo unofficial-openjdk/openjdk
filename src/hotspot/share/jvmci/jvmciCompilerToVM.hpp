@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,40 +24,12 @@
 #ifndef SHARE_JVMCI_JVMCICOMPILERTOVM_HPP
 #define SHARE_JVMCI_JVMCICOMPILERTOVM_HPP
 
-#include "jni.h"
+#include "gc/shared/cardTable.hpp"
+#include "jvmci/jvmciExceptions.hpp"
 #include "runtime/javaCalls.hpp"
-#include "jvmci/jvmciJavaClasses.hpp"
+#include "runtime/signature.hpp"
 
-// Helper class to ensure that references to Klass* are kept alive for G1
-class JVMCIKlassHandle : public StackObj {
- private:
-  Klass*     _klass;
-  Handle     _holder;
-  Thread*    _thread;
-
-  Klass*        klass() const                     { return _klass; }
-  Klass*        non_null_klass() const            { assert(_klass != NULL, "resolving NULL _klass"); return _klass; }
-
- public:
-  /* Constructors */
-  JVMCIKlassHandle (Thread* thread) : _klass(NULL), _thread(thread) {}
-  JVMCIKlassHandle (Thread* thread, Klass* klass);
-
-  JVMCIKlassHandle (const JVMCIKlassHandle &h): _klass(h._klass), _holder(h._holder), _thread(h._thread) {}
-  JVMCIKlassHandle& operator=(const JVMCIKlassHandle &s);
-  JVMCIKlassHandle& operator=(Klass* klass);
-
-  /* Operators for ease of use */
-  Klass*        operator () () const            { return klass(); }
-  Klass*        operator -> () const            { return non_null_klass(); }
-
-  bool    operator == (Klass* o) const          { return klass() == o; }
-  bool    operator == (const JVMCIKlassHandle& h) const  { return klass() == h.klass(); }
-
-  /* Null checks */
-  bool    is_null() const                      { return _klass == NULL; }
-  bool    not_null() const                     { return _klass != NULL; }
-};
+class JVMCIObjectArray;
 
 class CompilerToVM {
  public:
@@ -73,6 +45,7 @@ class CompilerToVM {
     static address SharedRuntime_ic_miss_stub;
     static address SharedRuntime_handle_wrong_method_stub;
     static address SharedRuntime_deopt_blob_unpack;
+    static address SharedRuntime_deopt_blob_unpack_with_exception_in_tls;
     static address SharedRuntime_deopt_blob_uncommon_trap;
 
     static size_t ThreadLocalAllocBuffer_alignment_reserve;
@@ -93,7 +66,7 @@ class CompilerToVM {
     static int _max_oop_map_stack_offset;
     static int _fields_annotations_base_offset;
 
-    static jbyte* cardtable_start_address;
+    static CardTable::CardValue* cardtable_start_address;
     static int cardtable_shift;
 
     static int vm_page_size;
@@ -118,7 +91,7 @@ class CompilerToVM {
     static address symbol_clinit;
 
    public:
-    static void initialize(TRAPS);
+     static void initialize(JVMCI_TRAPS);
 
     static int max_oop_map_stack_offset() {
       assert(_max_oop_map_stack_offset > 0, "must be initialized");
@@ -141,59 +114,14 @@ class CompilerToVM {
   }
 
   static JNINativeMethod methods[];
+  static JNINativeMethod jni_methods[];
 
-  static objArrayHandle initialize_intrinsics(TRAPS);
+  static JVMCIObjectArray initialize_intrinsics(JVMCI_TRAPS);
  public:
   static int methods_count();
 
-  static inline Method* asMethod(jobject jvmci_method) {
-    return (Method*) (address) HotSpotResolvedJavaMethodImpl::metaspaceMethod(jvmci_method);
-  }
-
-  static inline Method* asMethod(Handle jvmci_method) {
-    return (Method*) (address) HotSpotResolvedJavaMethodImpl::metaspaceMethod(jvmci_method);
-  }
-
-  static inline Method* asMethod(oop jvmci_method) {
-    return (Method*) (address) HotSpotResolvedJavaMethodImpl::metaspaceMethod(jvmci_method);
-  }
-
-  static inline ConstantPool* asConstantPool(jobject jvmci_constant_pool) {
-    return (ConstantPool*) (address) HotSpotConstantPool::metaspaceConstantPool(jvmci_constant_pool);
-  }
-
-  static inline ConstantPool* asConstantPool(Handle jvmci_constant_pool) {
-    return (ConstantPool*) (address) HotSpotConstantPool::metaspaceConstantPool(jvmci_constant_pool);
-  }
-
-  static inline ConstantPool* asConstantPool(oop jvmci_constant_pool) {
-    return (ConstantPool*) (address) HotSpotConstantPool::metaspaceConstantPool(jvmci_constant_pool);
-  }
-
-  static inline Klass* asKlass(jobject jvmci_type) {
-    return java_lang_Class::as_Klass(HotSpotResolvedObjectTypeImpl::javaClass(jvmci_type));
-  }
-
-  static inline Klass* asKlass(Handle jvmci_type) {
-    return java_lang_Class::as_Klass(HotSpotResolvedObjectTypeImpl::javaClass(jvmci_type));
-  }
-
-  static inline Klass* asKlass(oop jvmci_type) {
-    return java_lang_Class::as_Klass(HotSpotResolvedObjectTypeImpl::javaClass(jvmci_type));
-  }
-
-  static inline Klass* asKlass(jlong metaspaceKlass) {
-    return (Klass*) (address) metaspaceKlass;
-  }
-
-  static inline MethodData* asMethodData(jlong metaspaceMethodData) {
-    return (MethodData*) (address) metaspaceMethodData;
-  }
-
-  static oop get_jvmci_method(const methodHandle& method, TRAPS);
-
-  static oop get_jvmci_type(JVMCIKlassHandle& klass, TRAPS);
 };
+
 
 class JavaArgumentUnboxer : public SignatureIterator {
  protected:
@@ -204,7 +132,12 @@ class JavaArgumentUnboxer : public SignatureIterator {
   Handle next_arg(BasicType expectedType);
 
  public:
-  JavaArgumentUnboxer(Symbol* signature, JavaCallArguments*  jca, arrayOop args, bool is_static) : SignatureIterator(signature) {
+  JavaArgumentUnboxer(Symbol* signature,
+                      JavaCallArguments* jca,
+                      arrayOop args,
+                      bool is_static)
+    : SignatureIterator(signature)
+  {
     this->_return_type = T_ILLEGAL;
     _jca = jca;
     _index = 0;
@@ -212,34 +145,42 @@ class JavaArgumentUnboxer : public SignatureIterator {
     if (!is_static) {
       _jca->push_oop(next_arg(T_OBJECT));
     }
-    iterate();
+    do_parameters_on(this);
     assert(_index == args->length(), "arg count mismatch with signature");
   }
 
-  inline void do_bool()   { if (!is_return_type()) _jca->push_int(next_arg(T_BOOLEAN)->bool_field(java_lang_boxing_object::value_offset_in_bytes(T_BOOLEAN))); }
-  inline void do_char()   { if (!is_return_type()) _jca->push_int(next_arg(T_CHAR)->char_field(java_lang_boxing_object::value_offset_in_bytes(T_CHAR))); }
-  inline void do_short()  { if (!is_return_type()) _jca->push_int(next_arg(T_SHORT)->short_field(java_lang_boxing_object::value_offset_in_bytes(T_SHORT))); }
-  inline void do_byte()   { if (!is_return_type()) _jca->push_int(next_arg(T_BYTE)->byte_field(java_lang_boxing_object::value_offset_in_bytes(T_BYTE))); }
-  inline void do_int()    { if (!is_return_type()) _jca->push_int(next_arg(T_INT)->int_field(java_lang_boxing_object::value_offset_in_bytes(T_INT))); }
-
-  inline void do_long()   { if (!is_return_type()) _jca->push_long(next_arg(T_LONG)->long_field(java_lang_boxing_object::value_offset_in_bytes(T_LONG))); }
-  inline void do_float()  { if (!is_return_type()) _jca->push_float(next_arg(T_FLOAT)->float_field(java_lang_boxing_object::value_offset_in_bytes(T_FLOAT))); }
-  inline void do_double() { if (!is_return_type()) _jca->push_double(next_arg(T_DOUBLE)->double_field(java_lang_boxing_object::value_offset_in_bytes(T_DOUBLE))); }
-
-  inline void do_object() { _jca->push_oop(next_arg(T_OBJECT)); }
-  inline void do_object(int begin, int end) { if (!is_return_type()) _jca->push_oop(next_arg(T_OBJECT)); }
-  inline void do_array(int begin, int end)  { if (!is_return_type()) _jca->push_oop(next_arg(T_OBJECT)); }
-  inline void do_void()                     { }
+ private:
+  friend class SignatureIterator;  // so do_parameters_on can call do_type
+  void do_type(BasicType type) {
+    if (is_reference_type(type)) {
+      _jca->push_oop(next_arg(T_OBJECT));
+      return;
+    }
+    Handle arg = next_arg(type);
+    int box_offset = java_lang_boxing_object::value_offset_in_bytes(type);
+    switch (type) {
+    case T_BOOLEAN:     _jca->push_int(arg->bool_field(box_offset));    break;
+    case T_CHAR:        _jca->push_int(arg->char_field(box_offset));    break;
+    case T_SHORT:       _jca->push_int(arg->short_field(box_offset));   break;
+    case T_BYTE:        _jca->push_int(arg->byte_field(box_offset));    break;
+    case T_INT:         _jca->push_int(arg->int_field(box_offset));     break;
+    case T_LONG:        _jca->push_long(arg->long_field(box_offset));   break;
+    case T_FLOAT:       _jca->push_float(arg->float_field(box_offset));    break;
+    case T_DOUBLE:      _jca->push_double(arg->double_field(box_offset));  break;
+    default:            ShouldNotReachHere();
+    }
+  }
 };
 
 class JNIHandleMark : public StackObj {
+  JavaThread* _thread;
   public:
-    JNIHandleMark() { push_jni_handle_block(); }
-    ~JNIHandleMark() { pop_jni_handle_block(); }
+    JNIHandleMark(JavaThread* thread) : _thread(thread) { push_jni_handle_block(thread); }
+    ~JNIHandleMark() { pop_jni_handle_block(_thread); }
 
   private:
-    static void push_jni_handle_block();
-    static void pop_jni_handle_block();
+    static void push_jni_handle_block(JavaThread* thread);
+    static void pop_jni_handle_block(JavaThread* thread);
 };
 
 #endif // SHARE_JVMCI_JVMCICOMPILERTOVM_HPP

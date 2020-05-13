@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -135,6 +135,7 @@ public final class JapaneseChronology extends AbstractChronology implements Seri
     /**
      * Serialization version.
      */
+    @java.io.Serial
     private static final long serialVersionUID = 459996390165777884L;
 
     //-----------------------------------------------------------------------
@@ -363,9 +364,8 @@ public final class JapaneseChronology extends AbstractChronology implements Seri
     /**
      * Returns the calendar system era object from the given numeric value.
      *
-     * See the description of each Era for the numeric values of:
-     * {@link JapaneseEra#HEISEI}, {@link JapaneseEra#SHOWA},{@link JapaneseEra#TAISHO},
-     * {@link JapaneseEra#MEIJI}), only Meiji and later eras are supported.
+     * The numeric values supported by this method are the same as the
+     * numeric values supported by {@link JapaneseEra#of(int)}.
      *
      * @param eraValue  the era value
      * @return the Japanese {@code Era} for the given numeric era value
@@ -517,6 +517,7 @@ public final class JapaneseChronology extends AbstractChronology implements Seri
      * @return the instance of {@code Ser}, not null
      */
     @Override
+    @java.io.Serial
     Object writeReplace() {
         return super.writeReplace();
     }
@@ -527,6 +528,7 @@ public final class JapaneseChronology extends AbstractChronology implements Seri
      * @param s the stream to read
      * @throws InvalidObjectException always
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream s) throws InvalidObjectException {
         throw new InvalidObjectException("Deserialization via serialization delegate");
     }

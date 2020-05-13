@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,11 +25,10 @@
  * @test
  * @bug 8197901 8209758
  * @summary Redefine classes with enabling logging to verify Klass:external_name() during GC.
- * @comment This test is simplified version of runtime/RedefineTests/RedefineRunningMethods.java.
+ * @comment This test is simplified version of serviceability/jvmti/RedefineClasses/RedefineRunningMethods.java.
  * @library /test/lib
  * @modules java.compiler
  *          java.instrument
- *          jdk.jartool/sun.tools.jar
  * @run main RedefineClassHelper
  * @run main/othervm -Xmx256m -XX:MaxMetaspaceSize=64m -javaagent:redefineagent.jar -Xlog:all=trace:file=all.log RedefineClasses
  */

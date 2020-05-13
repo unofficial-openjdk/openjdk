@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@ package java.lang.invoke;
  * @since 1.7
  */
 public class WrongMethodTypeException extends RuntimeException {
+    @java.io.Serial
     private static final long serialVersionUID = 292L;
 
     /**
@@ -68,7 +69,8 @@ public class WrongMethodTypeException extends RuntimeException {
      * @param cause the cause of the exception, or null.
      */
     //FIXME: make this public in MR1
-    /*non-public*/ WrongMethodTypeException(String s, Throwable cause) {
+    /*non-public*/
+    WrongMethodTypeException(String s, Throwable cause) {
         super(s, cause);
     }
 
@@ -79,7 +81,8 @@ public class WrongMethodTypeException extends RuntimeException {
      * @param cause the cause of the exception, or null.
      */
     //FIXME: make this public in MR1
-    /*non-public*/ WrongMethodTypeException(Throwable cause) {
+    /*non-public*/
+    WrongMethodTypeException(Throwable cause) {
         super(cause);
     }
 }

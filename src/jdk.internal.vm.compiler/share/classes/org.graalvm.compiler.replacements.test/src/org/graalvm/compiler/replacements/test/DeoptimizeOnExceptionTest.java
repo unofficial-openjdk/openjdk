@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,8 @@ import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderContext;
 import org.graalvm.compiler.nodes.graphbuilderconf.InlineInvokePlugin;
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.common.AbstractInliningPhase;
-import org.graalvm.compiler.test.ExportingClassLoader;
+import org.graalvm.compiler.serviceprovider.JavaVersionUtil;
+import org.graalvm.compiler.api.test.ExportingClassLoader;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -103,7 +104,7 @@ public class DeoptimizeOnExceptionTest extends GraalCompilerTest {
 
     @Test
     public void test3() {
-        Assume.assumeTrue("Only works on jdk8 right now", Java8OrEarlier);
+        Assume.assumeTrue("Only works on jdk8 right now", JavaVersionUtil.JAVA_SPEC <= 8);
         ResolvedJavaMethod method = getResolvedJavaMethod("test3Snippet");
 
         for (int i = 0; i < 2; i++) {

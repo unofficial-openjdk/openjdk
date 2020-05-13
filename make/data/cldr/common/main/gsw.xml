@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
-<!-- Copyright © 1991-2018 Unicode, Inc.
+<!-- Copyright © 1991-2019 Unicode, Inc.
 For terms of use, see http://www.unicode.org/copyright.html
 Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 CLDR data files are interpreted according to the LDML specification (http://unicode.org/reports/tr35/)
 -->
 <ldml>
 	<identity>
-		<version number="$Revision: 13911 $"/>
+		<version number="$Revision$"/>
 		<language type="gsw"/>
 	</identity>
 	<localeDisplayNames>
@@ -767,8 +767,6 @@ CLDR data files are interpreted according to the LDML specification (http://unic
 			<territory type="MF">St. Martin</territory>
 			<territory type="MG">Madagaschkar</territory>
 			<territory type="MH">Marshallinsle</territory>
-			<territory type="MK">Mazedoonie</territory>
-			<territory type="MK" alt="variant">Mazedoonie (EJRM)</territory>
 			<territory type="ML">Maali</territory>
 			<territory type="MM">Myanmar (Burma)</territory>
 			<territory type="MN">Mongolei</territory>
@@ -3218,6 +3216,11 @@ CLDR data files are interpreted according to the LDML specification (http://unic
 				<displayName count="other">Bolivar (1871–2008)</displayName>
 			</currency>
 			<currency type="VEF">
+				<displayName>Bolivar (2008–2018)</displayName>
+				<displayName count="one">Bolivar (2008–2018)</displayName>
+				<displayName count="other">Bolivar (2008–2018)</displayName>
+			</currency>
+			<currency type="VES">
 				<displayName>Bolivar</displayName>
 				<displayName count="one">Bolivar</displayName>
 				<displayName count="other">Bolivar</displayName>
@@ -3567,11 +3570,6 @@ CLDR data files are interpreted according to the LDML specification (http://unic
 				<unitPattern count="one" draft="unconfirmed">{0} Pferdestärke</unitPattern>
 				<unitPattern count="other" draft="unconfirmed">{0} Pferdestärke</unitPattern>
 			</unit>
-			<unit type="pressure-hectopascal">
-				<displayName draft="provisional">Hektopascal</displayName>
-				<unitPattern count="one" draft="unconfirmed">{0} Hektopascal</unitPattern>
-				<unitPattern count="other" draft="unconfirmed">{0} Hektopascal</unitPattern>
-			</unit>
 			<unit type="pressure-inch-hg">
 				<displayName draft="provisional">Zoll Quecksilbersüüle</displayName>
 				<unitPattern count="one" draft="unconfirmed">{0} Zoll Quecksilbersüüle</unitPattern>
@@ -3581,6 +3579,11 @@ CLDR data files are interpreted according to the LDML specification (http://unic
 				<displayName draft="provisional">Millibar</displayName>
 				<unitPattern count="one" draft="unconfirmed">{0} Millibar</unitPattern>
 				<unitPattern count="other" draft="unconfirmed">{0} Millibar</unitPattern>
+			</unit>
+			<unit type="pressure-hectopascal">
+				<displayName draft="provisional">Hektopascal</displayName>
+				<unitPattern count="one" draft="unconfirmed">{0} Hektopascal</unitPattern>
+				<unitPattern count="other" draft="unconfirmed">{0} Hektopascal</unitPattern>
 			</unit>
 			<unit type="speed-kilometer-per-hour">
 				<displayName draft="provisional">Kilometer pro Stund</displayName>
@@ -3796,11 +3799,6 @@ CLDR data files are interpreted according to the LDML specification (http://unic
 				<unitPattern count="one" draft="unconfirmed">{0} PS</unitPattern>
 				<unitPattern count="other" draft="unconfirmed">{0} PS</unitPattern>
 			</unit>
-			<unit type="pressure-hectopascal">
-				<displayName draft="provisional">Hektopascal</displayName>
-				<unitPattern count="one" draft="unconfirmed">{0} hPa</unitPattern>
-				<unitPattern count="other" draft="unconfirmed">{0} hPa</unitPattern>
-			</unit>
 			<unit type="pressure-inch-hg">
 				<displayName draft="provisional">Zoll Quecksilbersüüle</displayName>
 				<unitPattern count="one">{0} inHg</unitPattern>
@@ -3810,6 +3808,11 @@ CLDR data files are interpreted according to the LDML specification (http://unic
 				<displayName draft="provisional">Millibar</displayName>
 				<unitPattern count="one" draft="unconfirmed">{0} mbar</unitPattern>
 				<unitPattern count="other" draft="unconfirmed">{0} mbar</unitPattern>
+			</unit>
+			<unit type="pressure-hectopascal">
+				<displayName draft="provisional">Hektopascal</displayName>
+				<unitPattern count="one" draft="unconfirmed">{0} hPa</unitPattern>
+				<unitPattern count="other" draft="unconfirmed">{0} hPa</unitPattern>
 			</unit>
 			<unit type="speed-kilometer-per-hour">
 				<displayName draft="provisional">Kilometer pro Stund</displayName>
@@ -3984,10 +3987,6 @@ CLDR data files are interpreted according to the LDML specification (http://unic
 				<unitPattern count="one" draft="unconfirmed">{0} PS</unitPattern>
 				<unitPattern count="other" draft="unconfirmed">{0} PS</unitPattern>
 			</unit>
-			<unit type="pressure-hectopascal">
-				<unitPattern count="one" draft="unconfirmed">{0}hPa</unitPattern>
-				<unitPattern count="other" draft="unconfirmed">{0}hPa</unitPattern>
-			</unit>
 			<unit type="pressure-inch-hg">
 				<unitPattern count="one">{0} inHg</unitPattern>
 				<unitPattern count="other">{0} inHg</unitPattern>
@@ -3995,6 +3994,10 @@ CLDR data files are interpreted according to the LDML specification (http://unic
 			<unit type="pressure-millibar">
 				<unitPattern count="one" draft="unconfirmed">{0}mbar</unitPattern>
 				<unitPattern count="other" draft="unconfirmed">{0}mbar</unitPattern>
+			</unit>
+			<unit type="pressure-hectopascal">
+				<unitPattern count="one" draft="unconfirmed">{0}hPa</unitPattern>
+				<unitPattern count="other" draft="unconfirmed">{0}hPa</unitPattern>
 			</unit>
 			<unit type="speed-kilometer-per-hour">
 				<unitPattern count="one" draft="unconfirmed">{0}km/h</unitPattern>

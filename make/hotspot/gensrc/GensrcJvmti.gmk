@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -28,20 +28,15 @@ $(eval $(call IncludeCustomExtension, hotspot/gensrc/GensrcJvmti.gmk))
 ################################################################################
 # Build tools needed for the JVMTI source code generation
 
+# FIXME: jvmtiGen.java should move to make/src, jvmtiEnvFill.java should be removed.
 JVMTI_TOOLS_SRCDIR := $(TOPDIR)/src/hotspot/share/prims
 JVMTI_TOOLS_OUTPUTDIR := $(JVM_VARIANT_OUTPUTDIR)/tools/jvmti
 
-$(eval $(call SetupJavaCompiler, GENERATE_OLDBYTECODE, \
-    JAVAC := $(JAVAC), \
-    FLAGS := $(DISABLE_WARNINGS), \
-    SERVER_DIR := $(SJAVAC_SERVER_DIR), \
-    SERVER_JVM := $(SJAVAC_SERVER_JAVA), \
-    DISABLE_SJAVAC := true, \
-))
-
 $(eval $(call SetupJavaCompilation, BUILD_JVMTI_TOOLS, \
-    SETUP := GENERATE_OLDBYTECODE, \
+    COMPILER := bootjdk, \
+    SMALL_JAVA := false, \
     SRC := $(JVMTI_TOOLS_SRCDIR), \
+    DISABLED_WARNINGS := rawtypes cast, \
     INCLUDE_FILES := jvmtiGen.java jvmtiEnvFill.java, \
     BIN := $(JVMTI_TOOLS_OUTPUTDIR), \
 ))
@@ -64,16 +59,17 @@ TOOL_JVMTI_ENV_FILL := $(JAVA_SMALL) -cp $(JVMTI_TOOLS_OUTPUTDIR) jvmtiEnvFill
 #   DEPS -- Additional dependencies
 SetupXslTransform = $(NamedParamsMacroTemplate)
 define SetupXslTransformBody
-  $$($1_OUTPUT_DIR)/$1: $$($1_XML_FILE) $$($1_XSL_FILE) $$($1_DEPS) $$(BUILD_JVMTI_TOOLS)
-	$$(call LogInfo, Generating $$(@F))
-	$$(call MakeDir, $$(@D))
-	$$(call ExecuteWithLog, $$@, $$(TOOL_JVMTI_GEN) -IN $$($1_XML_FILE) \
-	    -XSL $$($1_XSL_FILE) -OUT $$@ $$($1_ARGS))
-        # jvmtiGen does not return error code properly on fail.
-        # NOTE: We should really fix jvmtiGen.java instead.
-	test -f $$@
+  $1_OUTPUT_FILE := $$($1_OUTPUT_DIR)/$1
 
-  TARGETS += $$($1_OUTPUT_DIR)/$1
+  $$(eval $$(call SetupExecute, jvmti_gen_$1, \
+      INFO := Generating jvmti file $1, \
+      DEPS := $$($1_XML_FILE) $$($1_XSL_FILE) $$($1_DEPS) $$(BUILD_JVMTI_TOOLS), \
+      OUTPUT_FILE := $$($1_OUTPUT_FILE), \
+      COMMAND := $$(TOOL_JVMTI_GEN) -IN $$($1_XML_FILE) \
+          -XSL $$($1_XSL_FILE) -OUT $$($1_OUTPUT_FILE) $$($1_ARGS), \
+  ))
+
+  TARGETS += $$(jvmti_gen_$1_TARGET)
 endef
 
 ################################################################################
@@ -98,12 +94,17 @@ define SetupJvmtiGeneration
 endef
 
 $(eval $(call SetupJvmtiGeneration, jvmtiEnter.cpp, jvmtiEnter.xsl, \
+    -PARAM majorversion $(VERSION_FEATURE) \
     -PARAM interface jvmti))
 $(eval $(call SetupJvmtiGeneration, jvmtiEnterTrace.cpp, jvmtiEnter.xsl, \
+    -PARAM majorversion $(VERSION_FEATURE) \
     -PARAM interface jvmti -PARAM trace Trace))
-$(eval $(call SetupJvmtiGeneration, jvmtiEnv.hpp, jvmtiHpp.xsl))
-$(eval $(call SetupJvmtiGeneration, jvmti.h, jvmtiH.xsl))
-$(eval $(call SetupJvmtiGeneration, jvmti.html, jvmti.xsl))
+$(eval $(call SetupJvmtiGeneration, jvmtiEnv.hpp, jvmtiHpp.xsl, \
+    -PARAM majorversion $(VERSION_FEATURE)))
+$(eval $(call SetupJvmtiGeneration, jvmti.h, jvmtiH.xsl, \
+    -PARAM majorversion $(VERSION_FEATURE)))
+$(eval $(call SetupJvmtiGeneration, jvmti.html, jvmti.xsl, \
+    -PARAM majorversion $(VERSION_FEATURE)))
 
 JVMTI_BC_SRCDIR := $(TOPDIR)/src/hotspot/share/interpreter
 

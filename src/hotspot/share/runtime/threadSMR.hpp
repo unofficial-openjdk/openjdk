@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,6 +86,7 @@ class ThreadClosure;
 // SMR Support for the Threads class.
 //
 class ThreadsSMRSupport : AllStatic {
+  friend class VMStructs;
   friend class SafeThreadsListPtr;  // for _nested_thread_list_max, delete_notify(), release_stable_list_wake_up() access
 
   // The coordination between ThreadsSMRSupport::release_stable_list() and
@@ -128,7 +129,6 @@ class ThreadsSMRSupport : AllStatic {
   static void inc_deleted_thread_cnt();
   static void inc_java_thread_list_alloc_cnt();
   static void inc_tlh_cnt();
-  static bool is_a_protected_JavaThread(JavaThread *thread);
   static void release_stable_list_wake_up(bool is_nested);
   static void set_delete_notify();
   static void threads_do(ThreadClosure *tc);
@@ -142,7 +142,9 @@ class ThreadsSMRSupport : AllStatic {
  public:
   static void add_thread(JavaThread *thread);
   static ThreadsList* get_java_thread_list();
+  static bool is_a_protected_JavaThread(JavaThread *thread);
   static bool is_a_protected_JavaThread_with_lock(JavaThread *thread);
+  static void wait_until_not_protected(JavaThread *thread);
   static bool is_bootstrap_list(ThreadsList* list);
   static void remove_thread(JavaThread *thread);
   static void smr_delete(JavaThread *thread);
@@ -158,6 +160,7 @@ class ThreadsSMRSupport : AllStatic {
 // A fast list of JavaThreads.
 //
 class ThreadsList : public CHeapObj<mtThread> {
+  friend class VMStructs;
   friend class SafeThreadsListPtr;  // for {dec,inc}_nested_handle_cnt() access
   friend class ThreadsSMRSupport;  // for _nested_handle_cnt, {add,remove}_thread(), {,set_}next_list() access
 
@@ -296,6 +299,10 @@ public:
 
   uint length() const {
     return list()->length();
+  }
+
+  JavaThread *thread_at(uint i) const {
+    return list()->thread_at(i);
   }
 };
 

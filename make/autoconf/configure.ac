@@ -1,5 +1,5 @@
-SRC#
-# Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+#
+# Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -36,10 +36,20 @@ AC_INIT(OpenJDK, openjdk, build-dev@openjdk.java.net,,http://openjdk.java.net)
 AC_CONFIG_AUX_DIR([$TOPDIR/make/autoconf/build-aux])
 m4_include([build-aux/pkg.m4])
 
+AC_DEFUN_ONCE([CUSTOM_EARLY_HOOK])
+AC_DEFUN_ONCE([CUSTOM_LATE_HOOK])
+AC_DEFUN_ONCE([CUSTOM_CONFIG_OUTPUT_GENERATED_HOOK])
+AC_DEFUN_ONCE([CUSTOM_SUMMARY_AND_WARNINGS_HOOK])
+
+# This line needs to be here, verbatim, after the dummy hook definitions but
+# before all includes. It is replaced with custom functionality when building
+# custom sources.
+#CUSTOM_AUTOCONF_INCLUDE
+
 # Include these first...
-m4_include([basics.m4])
-m4_include([basics_windows.m4])
+m4_include([util.m4])
 # ... then the rest
+m4_include([basic.m4])
 m4_include([boot-jdk.m4])
 m4_include([build-performance.m4])
 m4_include([flags.m4])
@@ -47,21 +57,11 @@ m4_include([help.m4])
 m4_include([hotspot.m4])
 m4_include([jdk-options.m4])
 m4_include([jdk-version.m4])
+m4_include([jvm-features.m4])
 m4_include([libraries.m4])
 m4_include([platform.m4])
 m4_include([source-dirs.m4])
 m4_include([toolchain.m4])
-m4_include([toolchain_windows.m4])
-
-AC_DEFUN_ONCE([CUSTOM_EARLY_HOOK])
-AC_DEFUN_ONCE([CUSTOM_LATE_HOOK])
-AC_DEFUN_ONCE([CUSTOM_CONFIG_OUTPUT_GENERATED_HOOK])
-AC_DEFUN_ONCE([CUSTOM_SUMMARY_AND_WARNINGS_HOOK])
-
-# This line needs to be here, verbatim, after all includes and the dummy hook
-# definitions. It is replaced with custom functionality when building
-# custom sources.
-#CUSTOM_AUTOCONF_INCLUDE
 
 ###############################################################################
 #
@@ -97,6 +97,9 @@ HOTSPOT_SETUP_JVM_VARIANTS
 # With basic setup done, call the custom early hook.
 CUSTOM_EARLY_HOOK
 
+# This only needs debug level to be setup
+JDKOPT_ALLOW_ABSOLUTE_PATHS_IN_OUTPUT
+
 # Check if we have devkits, extra paths or sysroot set.
 BASIC_SETUP_DEVKIT
 
@@ -123,12 +126,11 @@ BASIC_SETUP_DEFAULT_LOG
 
 ###############################################################################
 #
-# Determine OpenJDK variants, options and version numbers.
+# Determine OpenJDK variants and version numbers.
 #
 ###############################################################################
 
 # We need build & target for this.
-JDKOPT_SETUP_JDK_OPTIONS
 JDKOPT_SETUP_JLINK_OPTIONS
 JDKVER_SETUP_JDK_VERSION_NUMBERS
 
@@ -140,6 +142,14 @@ JDKVER_SETUP_JDK_VERSION_NUMBERS
 
 BOOTJDK_SETUP_BOOT_JDK
 BOOTJDK_SETUP_BUILD_JDK
+
+###############################################################################
+#
+# Determine JDK specific build time options.
+#
+###############################################################################
+
+JDKOPT_SETUP_JDK_OPTIONS
 
 ###############################################################################
 #
@@ -203,12 +213,6 @@ JDKOPT_SETUP_CODE_COVERAGE
 # AddressSanitizer
 JDKOPT_SETUP_ADDRESS_SANITIZER
 
-# Need toolchain to setup dtrace
-HOTSPOT_SETUP_DTRACE
-HOTSPOT_ENABLE_DISABLE_AOT
-HOTSPOT_ENABLE_DISABLE_CDS
-HOTSPOT_ENABLE_DISABLE_GTEST
-
 ###############################################################################
 #
 # Check dependencies for external and internal libraries.
@@ -221,9 +225,17 @@ BASIC_COMPILE_FIXPATH
 LIB_DETERMINE_DEPENDENCIES
 LIB_SETUP_LIBRARIES
 
-# Hotspot setup depends on lib checks.
+###############################################################################
+#
+# Setup hotspot and JVM features (needs toolchain).
+#
+###############################################################################
 
-HOTSPOT_SETUP_JVM_FEATURES
+JVM_FEATURES_PARSE_OPTIONS
+JVM_FEATURES_SETUP
+
+HOTSPOT_ENABLE_DISABLE_GTEST
+HOTSPOT_SETUP_MISC
 
 ###############################################################################
 #
@@ -237,6 +249,7 @@ JDKOPT_ENABLE_DISABLE_GENERATE_CLASSLIST
 JDKOPT_EXCLUDE_TRANSLATIONS
 JDKOPT_ENABLE_DISABLE_MANPAGES
 JDKOPT_ENABLE_DISABLE_CDS_ARCHIVE
+JDKOPT_SETUP_REPRODUCIBLE_BUILD
 
 ###############################################################################
 #
@@ -249,12 +262,10 @@ BPERF_SETUP_BUILD_CORES
 BPERF_SETUP_BUILD_MEMORY
 BPERF_SETUP_BUILD_JOBS
 BPERF_SETUP_TEST_JOBS
+BPERF_SETUP_JAVAC_SERVER
 
 # Setup arguments for the boot jdk (after cores and memory have been setup)
 BOOTJDK_SETUP_BOOT_JDK_ARGUMENTS
-
-# Setup smart javac (after cores and memory have been setup)
-BPERF_SETUP_SMART_JAVAC
 
 # Setup use of icecc if requested
 BPERF_SETUP_ICECC
@@ -276,9 +287,6 @@ BASIC_TEST_USABILITY_ISSUES
 
 # At the end, call the custom hook. (Dummy macro if no custom sources available)
 CUSTOM_LATE_HOOK
-
-# This needs to be done after CUSTOM_LATE_HOOK since we can setup custom features.
-HOTSPOT_FINALIZE_JVM_FEATURES
 
 # Did user specify any unknown variables?
 BASIC_CHECK_LEFTOVER_OVERRIDDEN

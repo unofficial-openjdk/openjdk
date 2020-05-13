@@ -162,6 +162,9 @@ bool LIR_Assembler::needs_icache(ciMethod* method) const {
   return !method->is_static();
 }
 
+bool LIR_Assembler::needs_clinit_barrier_on_entry(ciMethod* method) const {
+  return VM_Version::supports_fast_class_init_checks() && method->needs_clinit_barrier();
+}
 
 int LIR_Assembler::code_offset() const {
   return _masm->offset();
@@ -478,7 +481,7 @@ void LIR_Assembler::emit_call(LIR_OpJavaCall* op) {
     compilation()->set_has_method_handle_invokes(true);
   }
 
-#if defined(X86) && defined(TIERED)
+#if defined(IA32) && defined(TIERED)
   // C2 leave fpu stack dirty clean it
   if (UseSSE < 2) {
     int i;
@@ -529,6 +532,7 @@ void LIR_Assembler::emit_op1(LIR_Op1* op) {
       safepoint_poll(op->in_opr(), op->info());
       break;
 
+#ifdef IA32
     case lir_fxch:
       fxch(op->in_opr()->as_jint());
       break;
@@ -536,10 +540,7 @@ void LIR_Assembler::emit_op1(LIR_Op1* op) {
     case lir_fld:
       fld(op->in_opr()->as_jint());
       break;
-
-    case lir_ffree:
-      ffree(op->in_opr()->as_jint());
-      break;
+#endif // IA32
 
     case lir_branch:
       break;
@@ -594,11 +595,6 @@ void LIR_Assembler::emit_op1(LIR_Op1* op) {
 
 void LIR_Assembler::emit_op0(LIR_Op0* op) {
   switch (op->code()) {
-    case lir_word_align: {
-      _masm->align(BytesPerWord);
-      break;
-    }
-
     case lir_nop:
       assert(op->info() == NULL, "not supported");
       _masm->nop();
@@ -606,10 +602,6 @@ void LIR_Assembler::emit_op0(LIR_Op0* op) {
 
     case lir_label:
       Unimplemented();
-      break;
-
-    case lir_build_frame:
-      build_frame();
       break;
 
     case lir_std_entry:
@@ -621,6 +613,9 @@ void LIR_Assembler::emit_op0(LIR_Op0* op) {
       }
       offsets()->set_value(CodeOffsets::Verified_Entry, _masm->offset());
       _masm->verified_entry();
+      if (needs_clinit_barrier_on_entry(compilation()->method())) {
+        clinit_barrier(compilation()->method());
+      }
       build_frame();
       offsets()->set_value(CodeOffsets::Frame_Complete, _masm->offset());
       break;
@@ -630,20 +625,14 @@ void LIR_Assembler::emit_op0(LIR_Op0* op) {
       osr_entry();
       break;
 
-    case lir_24bit_FPU:
-      set_24bit_FPU();
+#ifdef IA32
+    case lir_fpop_raw:
+      fpop();
       break;
-
-    case lir_reset_FPU:
-      reset_FPU();
-      break;
+#endif // IA32
 
     case lir_breakpoint:
       breakpoint();
-      break;
-
-    case lir_fpop_raw:
-      fpop();
       break;
 
     case lir_membar:
@@ -780,6 +769,7 @@ void LIR_Assembler::build_frame() {
 
 
 void LIR_Assembler::roundfp_op(LIR_Opr src, LIR_Opr tmp, LIR_Opr dest, bool pop_fpu_stack) {
+  assert(strict_fp_requires_explicit_rounding, "not required");
   assert((src->is_single_fpu() && dest->is_single_stack()) ||
          (src->is_double_fpu() && dest->is_double_stack()),
          "round_fp: rounds register -> stack location");

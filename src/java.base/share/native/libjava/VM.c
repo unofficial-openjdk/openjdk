@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,11 +42,6 @@ Java_jdk_internal_misc_VM_latestUserDefinedLoader0(JNIEnv *env, jclass cls) {
 
 JNIEXPORT void JNICALL
 Java_jdk_internal_misc_VM_initialize(JNIEnv *env, jclass cls) {
-    if (!JDK_InitJvmHandle()) {
-        JNU_ThrowInternalError(env, "Handle for JVM not found for symbol lookup");
-        return;
-    }
-
     // Registers implementations of native methods described in methods[]
     // above.
     // In particular, registers JVM_GetNanoTimeAdjustment as the implementation
@@ -65,4 +60,9 @@ JNIEXPORT void JNICALL
 Java_jdk_internal_misc_VM_initializeFromArchive(JNIEnv *env, jclass ignore,
                                                 jclass c) {
     JVM_InitializeFromArchive(env, c);
+}
+
+JNIEXPORT jlong JNICALL
+Java_jdk_internal_misc_VM_getRandomSeedForCDSDump(JNIEnv *env, jclass ignore) {
+    return JVM_GetRandomSeedForCDSDump();
 }

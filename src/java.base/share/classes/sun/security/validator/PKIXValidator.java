@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import javax.security.auth.x500.X500Principal;
 import sun.security.action.GetBooleanAction;
 import sun.security.provider.certpath.AlgorithmChecker;
 import sun.security.provider.certpath.PKIXExtendedParameters;
+import sun.security.util.SecurityProperties;
 
 /**
  * Validator implementation built on the PKIX CertPath API. This
@@ -59,6 +60,18 @@ public final class PKIXValidator extends Validator {
      */
     private static final boolean checkTLSRevocation = GetBooleanAction
             .privilegedGetProperty("com.sun.net.ssl.checkRevocation");
+
+    /**
+     * System or security property that if set (or set to "true"), allows trust
+     * anchor certificates to be used if they do not have the proper CA
+     * extensions. Set to false if prop is not set, or set to any other value.
+     */
+    private static final boolean ALLOW_NON_CA_ANCHOR = allowNonCaAnchor();
+    private static boolean allowNonCaAnchor() {
+        String prop = SecurityProperties
+                .privilegedGetOverridable("jdk.security.allowNonCaAnchor");
+        return prop != null && (prop.isEmpty() || prop.equalsIgnoreCase("true"));
+    }
 
     private final Set<X509Certificate> trustedCerts;
     private final PKIXBuilderParameters parameterTemplate;
@@ -143,6 +156,7 @@ public final class PKIXValidator extends Validator {
         return subjectMap;
     }
 
+    @Override
     public Collection<X509Certificate> getTrustedCertificates() {
         return trustedCerts;
     }
@@ -194,6 +208,7 @@ public final class PKIXValidator extends Validator {
                 ("null or zero-length certificate chain");
         }
 
+
         // Use PKIXExtendedParameters for timestamp and variant additions
         PKIXBuilderParameters pkixParameters = null;
         try {
@@ -223,28 +238,30 @@ public final class PKIXValidator extends Validator {
         for (int i = 0; i < chain.length; i++) {
             X509Certificate cert = chain[i];
             X500Principal dn = cert.getSubjectX500Principal();
-            if (i != 0 && !dn.equals(prevIssuer)) {
-                // chain is not ordered correctly, call builder instead
-                return doBuild(chain, otherCerts, pkixParameters);
-            }
 
-            // Check if chain[i] is already trusted. It may be inside
-            // trustedCerts, or has the same dn and public key as a cert
-            // inside trustedCerts. The latter happens when a CA has
-            // updated its cert with a stronger signature algorithm in JRE
-            // but the weak one is still in circulation.
-
-            if (trustedCerts.contains(cert) ||          // trusted cert
-                    (trustedSubjects.containsKey(dn) && // replacing ...
-                     trustedSubjects.get(dn).contains(  // ... weak cert
-                        cert.getPublicKey()))) {
-                if (i == 0) {
+            if (i == 0) {
+                if (trustedCerts.contains(cert)) {
                     return new X509Certificate[] {chain[0]};
                 }
-                // Remove and call validator on partial chain [0 .. i-1]
-                X509Certificate[] newChain = new X509Certificate[i];
-                System.arraycopy(chain, 0, newChain, 0, i);
-                return doValidate(newChain, pkixParameters);
+            } else {
+                if (!dn.equals(prevIssuer)) {
+                    // chain is not ordered correctly, call builder instead
+                    return doBuild(chain, otherCerts, pkixParameters);
+                }
+                // Check if chain[i] is already trusted. It may be inside
+                // trustedCerts, or has the same dn and public key as a cert
+                // inside trustedCerts. The latter happens when a CA has
+                // updated its cert with a stronger signature algorithm in JRE
+                // but the weak one is still in circulation.
+                if (trustedCerts.contains(cert) ||          // trusted cert
+                        (trustedSubjects.containsKey(dn) && // replacing ...
+                         trustedSubjects.get(dn).contains(  // ... weak cert
+                            cert.getPublicKey()))) {
+                    // Remove and call validator on partial chain [0 .. i-1]
+                    X509Certificate[] newChain = new X509Certificate[i];
+                    System.arraycopy(chain, 0, newChain, 0, i);
+                    return doValidate(newChain, pkixParameters);
+                }
             }
             prevIssuer = cert.getIssuerX500Principal();
         }
@@ -307,15 +324,18 @@ public final class PKIXValidator extends Validator {
 
     private static X509Certificate[] toArray(CertPath path, TrustAnchor anchor)
             throws CertificateException {
-        List<? extends java.security.cert.Certificate> list =
-                                                path.getCertificates();
-        X509Certificate[] chain = new X509Certificate[list.size() + 1];
-        list.toArray(chain);
         X509Certificate trustedCert = anchor.getTrustedCert();
         if (trustedCert == null) {
             throw new ValidatorException
                 ("TrustAnchor must be specified as certificate");
         }
+
+        verifyTrustAnchor(trustedCert);
+
+        List<? extends java.security.cert.Certificate> list =
+                                                path.getCertificates();
+        X509Certificate[] chain = new X509Certificate[list.size() + 1];
+        list.toArray(chain);
         chain[chain.length - 1] = trustedCert;
         return chain;
     }
@@ -347,6 +367,41 @@ public final class PKIXValidator extends Validator {
         } catch (GeneralSecurityException e) {
             throw new ValidatorException
                 ("PKIX path validation failed: " + e.toString(), e);
+        }
+    }
+
+    /**
+     * Verify that a trust anchor certificate is a CA certificate.
+     */
+    private static void verifyTrustAnchor(X509Certificate trustedCert)
+        throws ValidatorException {
+
+        // skip check if jdk.security.allowNonCAAnchor system property is set
+        if (ALLOW_NON_CA_ANCHOR) {
+            return;
+        }
+
+        // allow v1 trust anchor certificates
+        if (trustedCert.getVersion() < 3) {
+            return;
+        }
+
+        // check that the BasicConstraints cA field is not set to false
+        if (trustedCert.getBasicConstraints() == -1) {
+            throw new ValidatorException
+                ("TrustAnchor with subject \"" +
+                 trustedCert.getSubjectX500Principal() +
+                 "\" is not a CA certificate");
+        }
+
+        // check that the KeyUsage extension, if included, asserts the
+        // keyCertSign bit
+        boolean[] keyUsageBits = trustedCert.getKeyUsage();
+        if (keyUsageBits != null && !keyUsageBits[5]) {
+            throw new ValidatorException
+                ("TrustAnchor with subject \"" +
+                 trustedCert.getSubjectX500Principal() +
+                 "\" does not have keyCertSign bit set in KeyUsage extension");
         }
     }
 
@@ -399,55 +454,67 @@ public final class PKIXValidator extends Validator {
      */
     private static void addResponses(PKIXBuilderParameters pkixParams,
             X509Certificate[] chain, List<byte[]> responseList) {
+        try {
+            boolean createdRevChk = false;
 
-        if (pkixParams.isRevocationEnabled()) {
-            try {
-                // Make a modifiable copy of the CertPathChecker list
-                PKIXRevocationChecker revChecker = null;
-                List<PKIXCertPathChecker> checkerList =
-                        new ArrayList<>(pkixParams.getCertPathCheckers());
+            // Obtain the current CertPathChecker list
+            PKIXRevocationChecker revChecker = null;
+            List<PKIXCertPathChecker> checkerList =
+                    pkixParams.getCertPathCheckers();
 
-                // Find the first PKIXRevocationChecker in the list
-                for (PKIXCertPathChecker checker : checkerList) {
-                    if (checker instanceof PKIXRevocationChecker) {
-                        revChecker = (PKIXRevocationChecker)checker;
-                        break;
-                    }
+            // Find the first PKIXRevocationChecker in the list
+            for (PKIXCertPathChecker checker : checkerList) {
+                if (checker instanceof PKIXRevocationChecker) {
+                    revChecker = (PKIXRevocationChecker)checker;
+                    break;
                 }
+            }
 
-                // If we still haven't found one, make one
-                if (revChecker == null) {
+            // If we still haven't found one, make one, unless revocation
+            // is disabled - then there's no point adding OCSP responses.
+            // If a PKIXRevocationChecker was added externally, then we
+            // must add the responses since revocation checking is performed
+            // independent of the revocation flag (per the
+            // PKIXRevocationChecker spec).
+            if (revChecker == null) {
+                if (pkixParams.isRevocationEnabled()) {
                     revChecker = (PKIXRevocationChecker)CertPathValidator.
                             getInstance("PKIX").getRevocationChecker();
-                    checkerList.add(revChecker);
+                    createdRevChk = true;
+                } else {
+                    return;
                 }
-
-                // Each response in the list should be in parallel with
-                // the certificate list.  If there is a zero-length response
-                // treat it as being absent.  If the user has provided their
-                // own PKIXRevocationChecker with pre-populated responses, do
-                // not overwrite them with the ones from the handshake.
-                Map<X509Certificate, byte[]> responseMap =
-                        revChecker.getOcspResponses();
-                int limit = Integer.min(chain.length, responseList.size());
-                for (int idx = 0; idx < limit; idx++) {
-                    byte[] respBytes = responseList.get(idx);
-                    if (respBytes != null && respBytes.length > 0 &&
-                            !responseMap.containsKey(chain[idx])) {
-                        responseMap.put(chain[idx], respBytes);
-                    }
-                }
-
-                // Add the responses and push it all back into the
-                // PKIXBuilderParameters
-                revChecker.setOcspResponses(responseMap);
-                pkixParams.setCertPathCheckers(checkerList);
-            } catch (NoSuchAlgorithmException exc) {
-                // This should not occur, but if it does happen then
-                // stapled OCSP responses won't be part of revocation checking.
-                // Clients can still fall back to other means of revocation
-                // checking.
             }
+
+            // Each response in the list should be in parallel with
+            // the certificate list.  If there is a zero-length response
+            // treat it as being absent.  If the user has provided their
+            // own PKIXRevocationChecker with pre-populated responses, do
+            // not overwrite them with the ones from the handshake.
+            Map<X509Certificate, byte[]> responseMap =
+                    revChecker.getOcspResponses();
+            int limit = Integer.min(chain.length, responseList.size());
+            for (int idx = 0; idx < limit; idx++) {
+                byte[] respBytes = responseList.get(idx);
+                if (respBytes != null && respBytes.length > 0 &&
+                        !responseMap.containsKey(chain[idx])) {
+                    responseMap.put(chain[idx], respBytes);
+                }
+            }
+            revChecker.setOcspResponses(responseMap);
+
+            // Add the responses and push it all back into the
+            // PKIXBuilderParameters
+            if (createdRevChk) {
+                pkixParams.addCertPathChecker(revChecker);
+            } else {
+                pkixParams.setCertPathCheckers(checkerList);
+            }
+        } catch (NoSuchAlgorithmException exc) {
+            // This should not occur, but if it does happen then
+            // stapled OCSP responses won't be part of revocation checking.
+            // Clients can still fall back to other means of revocation
+            // checking.
         }
     }
 }

@@ -25,8 +25,8 @@
  * @test
  * @bug 8206986
  * @summary Check fall through in switch expressions.
- * @compile --enable-preview -source ${jdk.version} ExpressionSwitchFallThrough1.java
- * @run main/othervm --enable-preview ExpressionSwitchFallThrough1
+ * @compile ExpressionSwitchFallThrough1.java
+ * @run main ExpressionSwitchFallThrough1
  */
 
 import java.util.Objects;
@@ -50,8 +50,8 @@ public class ExpressionSwitchFallThrough1 {
         return switch (p) {
             case 0: result += "0";
             case 1: result += "1";
-                break result;
-            default: break "other";
+                yield result;
+            default: yield "other";
         };
     }
 
@@ -60,7 +60,7 @@ public class ExpressionSwitchFallThrough1 {
         switch (p) {
             case 0: result += "0";
             case 1: result += "1";
-                break ;
+                break;
             default: result = "other";
                 break;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import org.graalvm.compiler.api.replacements.Fold.InjectedParameter;
 import org.graalvm.compiler.api.replacements.MethodSubstitution;
 import org.graalvm.compiler.nodes.DeoptimizeNode;
 import org.graalvm.compiler.replacements.nodes.ArrayCompareToNode;
+import org.graalvm.compiler.replacements.nodes.ArrayRegionEqualsNode;
 import org.graalvm.compiler.word.Word;
 import jdk.internal.vm.compiler.word.Pointer;
 
@@ -89,7 +90,15 @@ public class AMD64StringLatin1Substitutions {
         return ArrayCompareToNode.compareTo(value, other, value.length, other.length, JavaKind.Byte, JavaKind.Char);
     }
 
-    @MethodSubstitution(optional = true)
+    private static Word pointer(byte[] target) {
+        return Word.objectToTrackedPointer(target).add(byteArrayBaseOffset(INJECTED));
+    }
+
+    private static Word byteOffsetPointer(byte[] source, int offset) {
+        return pointer(source).add(offset * byteArrayIndexScale(INJECTED));
+    }
+
+    @MethodSubstitution
     public static int indexOf(byte[] value, int ch, int origFromIndex) {
         int fromIndex = origFromIndex;
         if (ch >>> 8 != 0) {
@@ -103,12 +112,46 @@ public class AMD64StringLatin1Substitutions {
             // Note: fromIndex might be near -1>>>1.
             return -1;
         }
-        Pointer sourcePointer = Word.objectToTrackedPointer(value).add(byteArrayBaseOffset(INJECTED)).add(fromIndex);
-        int result = AMD64ArrayIndexOf.indexOf1Byte(sourcePointer, length - fromIndex, (byte) ch);
-        if (result != -1) {
-            return result + fromIndex;
+        return AMD64ArrayIndexOf.indexOf1Byte(value, length, fromIndex, (byte) ch);
+    }
+
+    @MethodSubstitution
+    public static int indexOf(byte[] source, int sourceCount, byte[] target, int targetCount, int origFromIndex) {
+        int fromIndex = origFromIndex;
+        if (fromIndex >= sourceCount) {
+            return (targetCount == 0 ? sourceCount : -1);
         }
-        return result;
+        if (fromIndex < 0) {
+            fromIndex = 0;
+        }
+        if (targetCount == 0) {
+            // The empty string is in every string.
+            return fromIndex;
+        }
+        if (sourceCount - fromIndex < targetCount) {
+            // The empty string contains nothing except the empty string.
+            return -1;
+        }
+        if (targetCount == 1) {
+            return AMD64ArrayIndexOf.indexOf1Byte(source, sourceCount, fromIndex, target[0]);
+        } else {
+            int haystackLength = sourceCount - (targetCount - 2);
+            int offset = fromIndex;
+            while (offset < haystackLength) {
+                int indexOfResult = AMD64ArrayIndexOf.indexOfTwoConsecutiveBytes(source, haystackLength, offset, target[0], target[1]);
+                if (indexOfResult < 0) {
+                    return -1;
+                }
+                offset = indexOfResult;
+                Pointer cmpSourcePointer = byteOffsetPointer(source, offset);
+                Pointer targetPointer = pointer(target);
+                if (targetCount == 2 || ArrayRegionEqualsNode.regionEquals(cmpSourcePointer, targetPointer, targetCount, JavaKind.Byte)) {
+                    return offset;
+                }
+                offset++;
+            }
+            return -1;
+        }
     }
 
     /**

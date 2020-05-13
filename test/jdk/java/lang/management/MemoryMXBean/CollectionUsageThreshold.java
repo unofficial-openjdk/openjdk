@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@
  * @build CollectionUsageThreshold MemoryUtil RunUtil
  * @requires vm.opt.ExplicitGCInvokesConcurrent == "false" | vm.opt.ExplicitGCInvokesConcurrent == "null"
  * @build sun.hotspot.WhiteBox
- * @run driver ClassFileInstaller sun.hotspot.WhiteBox sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  * @run main/othervm/timeout=300 -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:. CollectionUsageThreshold
  */
 
@@ -76,9 +76,6 @@ public class CollectionUsageThreshold {
         RunUtil.runTestClearGcOpts(main, "-XX:+UseSerialGC");
         RunUtil.runTestClearGcOpts(main, "-XX:+UseParallelGC");
         RunUtil.runTestClearGcOpts(main, "-XX:+UseG1GC");
-        if (!Compiler.isGraalEnabled()) { // Graal does not support CMS
-            RunUtil.runTestClearGcOpts(main, "-XX:+UseConcMarkSweepGC");
-        }
     }
 
     static class PoolRecord {

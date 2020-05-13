@@ -25,50 +25,35 @@
 #ifndef SHARE_OOPS_KLASS_INLINE_HPP
 #define SHARE_OOPS_KLASS_INLINE_HPP
 
-#include "memory/universe.hpp"
+#include "classfile/classLoaderData.inline.hpp"
+#include "oops/compressedOops.hpp"
 #include "oops/klass.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
+#include "oops/oopHandle.inline.hpp"
 
-inline void Klass::set_prototype_header(markOop header) {
-  assert(!header->has_bias_pattern() || is_instance_klass(), "biased locking currently only supported for Java instances");
+inline void Klass::set_prototype_header(markWord header) {
+  assert(!header.has_bias_pattern() || is_instance_klass(), "biased locking currently only supported for Java instances");
   _prototype_header = header;
 }
 
-inline bool Klass::is_null(Klass* obj)  { return obj == NULL; }
-inline bool Klass::is_null(narrowKlass obj) { return obj == 0; }
-
-// Encoding and decoding for klass field.
-
-inline bool check_klass_alignment(Klass* obj) {
-  return (intptr_t)obj % KlassAlignmentInBytes == 0;
+inline oop Klass::java_mirror() const {
+  return _java_mirror.resolve();
 }
 
-inline narrowKlass Klass::encode_klass_not_null(Klass* v) {
-  assert(!is_null(v), "klass value can never be zero");
-  assert(check_klass_alignment(v), "Address not aligned");
-  int    shift = Universe::narrow_klass_shift();
-  uint64_t pd = (uint64_t)(pointer_delta((void*)v, Universe::narrow_klass_base(), 1));
-  assert(KlassEncodingMetaspaceMax > pd, "change encoding max if new encoding");
-  uint64_t result = pd >> shift;
-  assert((result & CONST64(0xffffffff00000000)) == 0, "narrow klass pointer overflow");
-  assert(decode_klass(result) == v, "reversibility");
-  return (narrowKlass)result;
+inline klassVtable Klass::vtable() const {
+  return klassVtable(const_cast<Klass*>(this), start_of_vtable(), vtable_length() / vtableEntry::size());
 }
 
-inline narrowKlass Klass::encode_klass(Klass* v) {
-  return is_null(v) ? (narrowKlass)0 : encode_klass_not_null(v);
+inline oop Klass::class_loader() const {
+  return class_loader_data()->class_loader();
 }
 
-inline Klass* Klass::decode_klass_not_null(narrowKlass v) {
-  assert(!is_null(v), "narrow klass value can never be zero");
-  int    shift = Universe::narrow_klass_shift();
-  Klass* result = (Klass*)(void*)((uintptr_t)Universe::narrow_klass_base() + ((uintptr_t)v << shift));
-  assert(check_klass_alignment(result), "address not aligned: " INTPTR_FORMAT, p2i((void*) result));
-  return result;
+inline vtableEntry* Klass::start_of_vtable() const {
+  return (vtableEntry*) ((address)this + in_bytes(vtable_start_offset()));
 }
 
-inline Klass* Klass::decode_klass(narrowKlass v) {
-  return is_null(v) ? (Klass*)NULL : decode_klass_not_null(v);
+inline ByteSize Klass::vtable_start_offset() {
+  return in_ByteSize(InstanceKlass::header_size() * wordSize);
 }
 
 #endif // SHARE_OOPS_KLASS_INLINE_HPP

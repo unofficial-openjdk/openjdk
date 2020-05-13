@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
+#include "gc/g1/g1NUMA.hpp"
 #include "gc/g1/heapRegionRemSet.hpp"
 #include "gc/g1/heapRegionSet.inline.hpp"
 
@@ -89,6 +90,12 @@ void FreeRegionList::set_unrealistically_long_length(uint len) {
   _unrealistically_long_length = len;
 }
 
+void FreeRegionList::abandon() {
+  check_mt_safety();
+  clear();
+  verify_optional();
+}
+
 void FreeRegionList::remove_all() {
   check_mt_safety();
   verify_optional();
@@ -101,6 +108,9 @@ void FreeRegionList::remove_all() {
     curr->set_next(NULL);
     curr->set_prev(NULL);
     curr->set_containing_set(NULL);
+
+    decrease_length(curr->node_index());
+
     curr = next;
   }
   clear();
@@ -108,15 +118,18 @@ void FreeRegionList::remove_all() {
   verify_optional();
 }
 
-void FreeRegionList::add_ordered(FreeRegionList* from_list) {
+void FreeRegionList::add_list_common_start(FreeRegionList* from_list) {
   check_mt_safety();
   from_list->check_mt_safety();
-
   verify_optional();
   from_list->verify_optional();
 
   if (from_list->is_empty()) {
     return;
+  }
+
+  if (_node_info != NULL && from_list->_node_info != NULL) {
+    _node_info->add(from_list->_node_info);
   }
 
   #ifdef ASSERT
@@ -130,6 +143,47 @@ void FreeRegionList::add_ordered(FreeRegionList* from_list) {
     hr->set_containing_set(this);
   }
   #endif // ASSERT
+}
+
+void FreeRegionList::add_list_common_end(FreeRegionList* from_list) {
+  _length += from_list->length();
+  from_list->clear();
+
+  verify_optional();
+  from_list->verify_optional();
+}
+
+void FreeRegionList::append_ordered(FreeRegionList* from_list) {
+  add_list_common_start(from_list);
+
+  if (from_list->is_empty()) {
+    return;
+  }
+
+  if (is_empty()) {
+    // Make from_list the current list.
+    assert_free_region_list(length() == 0 && _tail == NULL, "invariant");
+    _head = from_list->_head;
+    _tail = from_list->_tail;
+  } else {
+    // Add the from_list to the end of the current list.
+    assert(_tail->hrm_index() < from_list->_head->hrm_index(), "Should be sorted %u < %u",
+           _tail->hrm_index(), from_list->_head->hrm_index());
+
+    _tail->set_next(from_list->_head);
+    from_list->_head->set_prev(_tail);
+    _tail = from_list->_tail;
+  }
+
+  add_list_common_end(from_list);
+}
+
+void FreeRegionList::add_ordered(FreeRegionList* from_list) {
+  add_list_common_start(from_list);
+
+  if (from_list->is_empty()) {
+    return;
+  }
 
   if (is_empty()) {
     assert_free_region_list(length() == 0 && _tail == NULL, "invariant");
@@ -170,11 +224,7 @@ void FreeRegionList::add_ordered(FreeRegionList* from_list) {
     }
   }
 
-  _length += from_list->length();
-  from_list->clear();
-
-  verify_optional();
-  from_list->verify_optional();
+  add_list_common_end(from_list);
 }
 
 void FreeRegionList::remove_starting_at(HeapRegion* first, uint num_regions) {
@@ -220,6 +270,9 @@ void FreeRegionList::remove_starting_at(HeapRegion* first, uint num_regions) {
     remove(curr);
 
     count++;
+
+    decrease_length(curr->node_index());
+
     curr = next;
   }
 
@@ -267,6 +320,10 @@ void FreeRegionList::clear() {
   _head = NULL;
   _tail = NULL;
   _last = NULL;
+
+  if (_node_info!= NULL) {
+    _node_info->clear();
+  }
 }
 
 void FreeRegionList::verify_list() {
@@ -303,3 +360,41 @@ void FreeRegionList::verify_list() {
   guarantee(_tail == NULL || _tail->next() == NULL, "_tail should not have a next");
   guarantee(length() == count, "%s count mismatch. Expected %u, actual %u.", name(), length(), count);
 }
+
+
+FreeRegionList::FreeRegionList(const char* name, HeapRegionSetChecker* checker):
+  HeapRegionSetBase(name, checker),
+  _node_info(G1NUMA::numa()->is_enabled() ? new NodeInfo() : NULL) {
+
+  clear();
+}
+
+FreeRegionList::~FreeRegionList() {
+  if (_node_info != NULL) {
+    delete _node_info;
+  }
+}
+
+FreeRegionList::NodeInfo::NodeInfo() : _numa(G1NUMA::numa()), _length_of_node(NULL),
+                                       _num_nodes(_numa->num_active_nodes()) {
+  assert(UseNUMA, "Invariant");
+
+  _length_of_node = NEW_C_HEAP_ARRAY(uint, _num_nodes, mtGC);
+}
+
+FreeRegionList::NodeInfo::~NodeInfo() {
+  FREE_C_HEAP_ARRAY(uint, _length_of_node);
+}
+
+void FreeRegionList::NodeInfo::clear() {
+  for (uint i = 0; i < _num_nodes; ++i) {
+    _length_of_node[i] = 0;
+  }
+}
+
+void FreeRegionList::NodeInfo::add(NodeInfo* info) {
+  for (uint i = 0; i < _num_nodes; ++i) {
+    _length_of_node[i] += info->_length_of_node[i];
+  }
+}
+

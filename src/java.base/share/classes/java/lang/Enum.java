@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,8 +44,15 @@ import static java.util.Objects.requireNonNull;
  *
  * More information about enums, including descriptions of the
  * implicitly declared methods synthesized by the compiler, can be
- * found in section 8.9 of
- * <cite>The Java&trade; Language Specification</cite>.
+ * found in section {@jls 8.9} of <cite>The Java&trade; Language
+ * Specification</cite>.
+ *
+ * Enumeration types are all serializable and receive special handling
+ * by the serialization mechanism. The serialized representation used
+ * for enum constants cannot be customized. Declarations of methods
+ * and fields that would otherwise interact with serialization are
+ * ignored, including {@code serialVersionUID}; see the <cite>Java
+ * Object Serialization Specification</cite> for details.
  *
  * <p> Note that when using an enumeration type as the type of a set
  * or as the type of the keys in a map, specialized and efficient
@@ -59,6 +66,8 @@ import static java.util.Objects.requireNonNull;
  * @see     Class#getEnumConstants()
  * @see     java.util.EnumSet
  * @see     java.util.EnumMap
+ * @jls 8.9 Enum Types
+ * @jls 8.9.3 Enum Members
  * @since   1.5
  */
 @SuppressWarnings("serial") // No serialVersionUID needed due to
@@ -273,17 +282,19 @@ public abstract class Enum<E extends Enum<E>>
     /**
      * prevent default deserialization
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream in) throws IOException,
         ClassNotFoundException {
         throw new InvalidObjectException("can't deserialize enum");
     }
 
+    @java.io.Serial
     private void readObjectNoData() throws ObjectStreamException {
         throw new InvalidObjectException("can't deserialize enum");
     }
 
     /**
-     * A <a href="package-summary.html#nominal">nominal descriptor</a> for an
+     * A <a href="{@docRoot}/java.base/java/lang/constant/package-summary.html#nominal">nominal descriptor</a> for an
      * {@code enum} constant.
      *
      * @param <E> the type of the enum constant

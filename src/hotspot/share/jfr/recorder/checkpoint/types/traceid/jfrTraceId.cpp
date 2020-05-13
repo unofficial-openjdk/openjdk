@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "classfile/classLoaderData.inline.hpp"
+#include "classfile/javaClasses.inline.hpp"
 #include "classfile/symbolTable.hpp"
 #include "jfr/recorder/checkpoint/types/traceid/jfrTraceId.inline.hpp"
 #include "jfr/utilities/jfrTypes.hpp"
@@ -33,7 +34,6 @@
 #include "oops/method.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/atomic.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/vm_version.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/thread.inline.hpp"
@@ -45,9 +45,9 @@ static traceid atomic_inc(traceid volatile* const dest) {
   traceid compare_value;
   traceid exchange_value;
   do {
-    compare_value = OrderAccess::load_acquire(dest);
+    compare_value = *dest;
     exchange_value = compare_value + 1;
-  } while (Atomic::cmpxchg(exchange_value, dest, compare_value) != compare_value);
+  } while (Atomic::cmpxchg(dest, compare_value, exchange_value) != compare_value);
   return exchange_value;
 }
 
@@ -87,14 +87,14 @@ static void check_klass(const Klass* klass) {
   static const Symbol* jdk_internal_event_sym = NULL;
   if (jdk_internal_event_sym == NULL) {
     // setup when loading the first TypeArrayKlass (Universe::genesis) hence single threaded invariant
-    jdk_internal_event_sym = SymbolTable::new_permanent_symbol("jdk/internal/event/Event", Thread::current());
+    jdk_internal_event_sym = SymbolTable::new_permanent_symbol("jdk/internal/event/Event");
   }
   assert(jdk_internal_event_sym != NULL, "invariant");
 
   static const Symbol* jdk_jfr_event_sym = NULL;
   if (jdk_jfr_event_sym == NULL) {
     // setup when loading the first TypeArrayKlass (Universe::genesis) hence single threaded invariant
-    jdk_jfr_event_sym = SymbolTable::new_permanent_symbol("jdk/jfr/Event", Thread::current());
+    jdk_jfr_event_sym = SymbolTable::new_permanent_symbol("jdk/jfr/Event");
   }
   assert(jdk_jfr_event_sym != NULL, "invariant");
   const Symbol* const klass_name = klass->name();
@@ -141,7 +141,7 @@ void JfrTraceId::assign(const PackageEntry* package) {
 
 void JfrTraceId::assign(const ClassLoaderData* cld) {
   assert(cld != NULL, "invariant");
-  if (cld->is_unsafe_anonymous()) {
+  if (cld->has_class_mirror_holder()) {
     cld->set_trace_id(0);
     return;
   }
@@ -159,7 +159,7 @@ void JfrTraceId::remove(const Klass* k) {
   // This mechanism will retain the event specific flags
   // in the archive, allowing for event flag restoration
   // when renewing the traceid on klass revival.
-  k->set_trace_id(EVENT_FLAGS_MASK(k));
+  k->set_trace_id(EVENT_KLASS_MASK(k));
 }
 
 // used by CDS / APPCDS as part of "restore_unshareable_info"
@@ -181,12 +181,12 @@ traceid JfrTraceId::get(jclass jc) {
   return get(java_lang_Class::as_Klass(my_oop));
 }
 
-traceid JfrTraceId::use(jclass jc, bool leakp /* false */) {
+traceid JfrTraceId::use(jclass jc) {
   assert(jc != NULL, "invariant");
   assert(((JavaThread*)Thread::current())->thread_state() == _thread_in_vm, "invariant");
   const oop my_oop = JNIHandles::resolve(jc);
   assert(my_oop != NULL, "invariant");
-  return use(java_lang_Class::as_Klass(my_oop), leakp);
+  return use(java_lang_Class::as_Klass(my_oop));
 }
 
 bool JfrTraceId::in_visible_set(const jclass jc) {

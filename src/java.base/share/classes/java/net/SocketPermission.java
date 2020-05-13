@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,12 +37,12 @@ import java.security.PermissionCollection;
 import java.security.PrivilegedAction;
 import java.security.Security;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Enumeration;
-import java.util.Vector;
+import java.util.Map;
 import java.util.StringJoiner;
 import java.util.StringTokenizer;
-import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 import sun.net.util.IPAddressUtil;
 import sun.net.PortConfig;
 import sun.security.util.RegisteredDomain;
@@ -150,6 +150,7 @@ import sun.security.util.Debug;
 public final class SocketPermission extends Permission
     implements java.io.Serializable
 {
+    @java.io.Serial
     private static final long serialVersionUID = -7204263841984476862L;
 
     /**
@@ -286,6 +287,11 @@ public final class SocketPermission extends Permission
      * @param host the hostname or IP address of the computer, optionally
      * including a colon followed by a port or port range.
      * @param action the action string.
+     *
+     * @throws NullPointerException if any parameters are null
+     * @throws IllegalArgumentException if the format of {@code host} is
+     *         invalid, or if the {@code action} string is empty, malformed, or
+     *         contains an action other than the specified possible actions
      */
     public SocketPermission(String host, String action) {
         super(getHost(host));
@@ -588,14 +594,15 @@ public final class SocketPermission extends Permission
             // like "ackbarfaccept".  Also, skip to the comma.
             boolean seencomma = false;
             while (i >= matchlen && !seencomma) {
-                switch(a[i-matchlen]) {
-                case ',':
-                    seencomma = true;
-                    break;
+                switch (c = a[i-matchlen]) {
                 case ' ': case '\r': case '\n':
                 case '\f': case '\t':
                     break;
                 default:
+                    if (c == ',' && i > matchlen) {
+                        seencomma = true;
+                        break;
+                    }
                     throw new IllegalArgumentException(
                             "invalid permission: " + action);
                 }
@@ -1186,6 +1193,7 @@ public final class SocketPermission extends Permission
      * to a stream. The actions are serialized, and the superclass
      * takes care of the name.
      */
+    @java.io.Serial
     private synchronized void writeObject(java.io.ObjectOutputStream s)
         throws IOException
     {
@@ -1200,6 +1208,7 @@ public final class SocketPermission extends Permission
      * readObject is called to restore the state of the SocketPermission from
      * a stream.
      */
+    @java.io.Serial
     private synchronized void readObject(java.io.ObjectInputStream s)
          throws IOException, ClassNotFoundException
     {
@@ -1340,16 +1349,13 @@ final class SocketPermissionCollection extends PermissionCollection
     implements Serializable
 {
     // Not serialized; see serialization section at end of class
-    // A ConcurrentSkipListMap is used to preserve order, so that most
-    // recently added permissions are checked first (see JDK-4301064).
-    private transient ConcurrentSkipListMap<String, SocketPermission> perms;
+    private transient Map<String, SocketPermission> perms;
 
     /**
-     * Create an empty SocketPermissions object.
-     *
+     * Create an empty SocketPermissionCollection object.
      */
     public SocketPermissionCollection() {
-        perms = new ConcurrentSkipListMap<>(new SPCComparator());
+        perms = new ConcurrentHashMap<>();
     }
 
     /**
@@ -1358,10 +1364,10 @@ final class SocketPermissionCollection extends PermissionCollection
      *
      * @param permission the Permission object to add.
      *
-     * @exception IllegalArgumentException - if the permission is not a
+     * @throws    IllegalArgumentException   if the permission is not a
      *                                       SocketPermission
      *
-     * @exception SecurityException - if this SocketPermissionCollection object
+     * @throws    SecurityException   if this SocketPermissionCollection object
      *                                has been marked readonly
      */
     @Override
@@ -1422,6 +1428,18 @@ final class SocketPermissionCollection extends PermissionCollection
         int effective = 0;
         int needed = desired;
 
+        var hit = perms.get(np.getName());
+        if (hit != null) {
+            // fastpath, if the host was explicitly listed
+            if (((needed & hit.getMask()) != 0) && hit.impliesIgnoreMask(np)) {
+                effective |= hit.getMask();
+                if ((effective & desired) == desired) {
+                    return true;
+                }
+                needed = (desired & ~effective);
+            }
+        }
+
         //System.out.println("implies "+np);
         for (SocketPermission x : perms.values()) {
             //System.out.println("  trying "+x);
@@ -1430,7 +1448,7 @@ final class SocketPermissionCollection extends PermissionCollection
                 if ((effective & desired) == desired) {
                     return true;
                 }
-                needed = (desired ^ effective);
+                needed = (desired & ~effective);
             }
         }
         return false;
@@ -1448,6 +1466,7 @@ final class SocketPermissionCollection extends PermissionCollection
         return (Enumeration)Collections.enumeration(perms.values());
     }
 
+    @java.io.Serial
     private static final long serialVersionUID = 2787186408602843674L;
 
     // Need to maintain serialization interoperability with earlier releases,
@@ -1463,6 +1482,7 @@ final class SocketPermissionCollection extends PermissionCollection
      * @serialField permissions java.util.Vector
      *     A list of the SocketPermissions for this set.
      */
+    @java.io.Serial
     private static final ObjectStreamField[] serialPersistentFields = {
         new ObjectStreamField("permissions", Vector.class),
     };
@@ -1474,6 +1494,7 @@ final class SocketPermissionCollection extends PermissionCollection
      * Writes the contents of the perms field out as a Vector for
      * serialization compatibility with earlier releases.
      */
+    @java.io.Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
         // Don't call out.defaultWriteObject()
 
@@ -1488,6 +1509,7 @@ final class SocketPermissionCollection extends PermissionCollection
     /*
      * Reads in a Vector of SocketPermissions and saves them in the perms field.
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream in)
         throws IOException, ClassNotFoundException
     {
@@ -1499,22 +1521,9 @@ final class SocketPermissionCollection extends PermissionCollection
         // Get the one we want
         @SuppressWarnings("unchecked")
         Vector<SocketPermission> permissions = (Vector<SocketPermission>)gfields.get("permissions", null);
-        perms = new ConcurrentSkipListMap<>(new SPCComparator());
+        perms = new ConcurrentHashMap<>(permissions.size());
         for (SocketPermission sp : permissions) {
             perms.put(sp.getName(), sp);
-        }
-    }
-
-    /**
-     * A simple comparator that orders new non-equal entries at the beginning.
-     */
-    private static class SPCComparator implements Comparator<String> {
-        @Override
-        public int compare(String s1, String s2) {
-            if (s1.equals(s2)) {
-                return 0;
-            }
-            return -1;
         }
     }
 }

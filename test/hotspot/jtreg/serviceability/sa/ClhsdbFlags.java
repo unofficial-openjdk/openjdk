@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,7 +21,6 @@
  * questions.
  */
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,12 +48,10 @@ public class ClhsdbFlags {
         LingeredApp theApp = null;
         try {
             ClhsdbLauncher test = new ClhsdbLauncher();
-            List<String> vmArgs = new ArrayList<String>();
-            vmArgs.add("-XX:+UnlockExperimentalVMOptions");
-            vmArgs.add("-XX:+UnlockDiagnosticVMOptions");
-            vmArgs.add("-XX:-MaxFDLimit");
-            vmArgs.addAll(Utils.getVmOptions());
-            theApp = LingeredApp.startApp(vmArgs);
+            theApp = LingeredApp.startApp(
+                    "-XX:+UnlockExperimentalVMOptions",
+                    "-XX:+UnlockDiagnosticVMOptions",
+                    "-XX:-MaxFDLimit");
             System.out.println("Started LingeredApp with pid " + theApp.getPid());
 
             List<String> cmds = List.of(
@@ -100,19 +97,20 @@ public class ClhsdbFlags {
         LingeredApp theApp = null;
         try {
             ClhsdbLauncher test = new ClhsdbLauncher();
-            List<String> vmArgs = new ArrayList<String>();
-            vmArgs.add("-XX:+UnlockDiagnosticVMOptions");   // bool
-            vmArgs.add("-XX:ActiveProcessorCount=1");       // int
-            vmArgs.add("-XX:ParallelGCThreads=1");          // uint
-            vmArgs.add("-XX:MaxJavaStackTraceDepth=1024");  // intx
-            vmArgs.add("-XX:LogEventsBufferEntries=10");    // uintx
-            vmArgs.add("-XX:HeapSizePerGCThread=32m");      // size_t
-            vmArgs.add("-XX:NativeMemoryTracking=off");     // ccstr
-            vmArgs.add("-XX:OnError='echo error'");         // ccstrlist
-            vmArgs.add("-XX:CompileThresholdScaling=1.0");  // double
-            vmArgs.add("-XX:ErrorLogTimeout=120");          // uint64_t
-            vmArgs.addAll(Utils.getVmOptions());
-            theApp = LingeredApp.startApp(vmArgs);
+            // *Prepend* options to prevent interference with flags below
+            String[] vmArgs = Utils.prependTestJavaOpts(
+                "-XX:+UnlockDiagnosticVMOptions",  // bool
+                "-XX:ActiveProcessorCount=1",      // int
+                "-XX:ParallelGCThreads=1",         // uint
+                "-XX:MaxJavaStackTraceDepth=1024", // intx
+                "-XX:LogEventsBufferEntries=10",   // uintx
+                "-XX:HeapSizePerGCThread=32m",     // size_t
+                "-XX:NativeMemoryTracking=off",    // ccstr
+                "-XX:OnError='echo error'",        // ccstrlist
+                "-XX:CompileThresholdScaling=1.0", // double
+                "-XX:ErrorLogTimeout=120");        // uint64_t
+            theApp = new LingeredApp();
+            LingeredApp.startAppExactJvmOpts(theApp, vmArgs);
             System.out.println("Started LingeredApp with pid " + theApp.getPid());
 
             List<String> cmds = List.of("flags");

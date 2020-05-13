@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2017, SAP SE. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@
 #include "ci/ciTypeArrayKlass.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
+#include "utilities/powerOfTwo.hpp"
 #include "vmreg_ppc.inline.hpp"
 
 #ifdef ASSERT
@@ -574,13 +575,13 @@ inline bool can_handle_logic_op_as_uimm(ValueType *type, Bytecodes::Code bc) {
 
   // see Assembler::andi
   if (bc == Bytecodes::_iand &&
-      (is_power_of_2_long(int_or_long_const+1) ||
-       is_power_of_2_long(int_or_long_const) ||
-       is_power_of_2_long(-int_or_long_const))) return true;
+      (is_power_of_2(int_or_long_const+1) ||
+       is_power_of_2(int_or_long_const) ||
+       is_power_of_2(-int_or_long_const))) return true;
   if (bc == Bytecodes::_land &&
-      (is_power_of_2_long(int_or_long_const+1) ||
-       (Assembler::is_uimm(int_or_long_const, 32) && is_power_of_2_long(int_or_long_const)) ||
-       (int_or_long_const != min_jlong && is_power_of_2_long(-int_or_long_const)))) return true;
+      (is_power_of_2(int_or_long_const+1) ||
+       (Assembler::is_uimm(int_or_long_const, 32) && is_power_of_2(int_or_long_const)) ||
+       (int_or_long_const != min_jlong && is_power_of_2(-int_or_long_const)))) return true;
 
   // special case: xor -1
   if ((bc == Bytecodes::_ixor || bc == Bytecodes::_lxor) &&
@@ -648,7 +649,7 @@ LIR_Opr LIRGenerator::atomic_cmpxchg(BasicType type, LIR_Opr addr, LIRItem& cmp_
     __ membar_release();
   }
 
-  if (type == T_OBJECT || type == T_ARRAY) {
+  if (is_reference_type(type)) {
     if (UseCompressedOops) {
       t1 = new_register(T_OBJECT);
       t2 = new_register(T_OBJECT);

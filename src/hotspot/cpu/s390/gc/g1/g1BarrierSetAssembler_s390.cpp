@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2018, SAP SE. All rights reserved.
+ * Copyright (c) 2018, 2019, SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,7 +100,7 @@ void G1BarrierSetAssembler::gen_write_ref_array_post_barrier(MacroAssembler* mas
 
 void G1BarrierSetAssembler::load_at(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
                                     const Address& src, Register dst, Register tmp1, Register tmp2, Label *L_handle_null) {
-  bool on_oop = type == T_OBJECT || type == T_ARRAY;
+  bool on_oop = is_reference_type(type);
   bool on_weak = (decorators & ON_WEAK_OOP_REF) != 0;
   bool on_phantom = (decorators & ON_PHANTOM_OOP_REF) != 0;
   bool on_reference = on_weak || on_phantom;
@@ -269,7 +269,6 @@ void G1BarrierSetAssembler::g1_write_barrier_post(MacroAssembler* masm, Decorato
   Label callRuntime, filtered;
 
   CardTableBarrierSet* ct = barrier_set_cast<CardTableBarrierSet>(BarrierSet::barrier_set());
-  assert(sizeof(*ct->card_table()->byte_map_base()) == sizeof(jbyte), "adjust this code");
 
   BLOCK_COMMENT("g1_write_barrier_post {");
 
@@ -298,7 +297,6 @@ void G1BarrierSetAssembler::g1_write_barrier_post(MacroAssembler* masm, Decorato
   Rnew_val = noreg; // end of lifetime
 
   // Storing region crossing non-NULL, is card already dirty?
-  assert(sizeof(*ct->card_table()->byte_map_base()) == sizeof(jbyte), "adjust this code");
   assert_different_registers(Rtmp1, Rtmp2, Rtmp3);
   // Make sure not to use Z_R0 for any of these registers.
   Register Rcard_addr = (Rtmp1 != Z_R0_scratch) ? Rtmp1 : Rtmp3;
@@ -311,14 +309,12 @@ void G1BarrierSetAssembler::g1_write_barrier_post(MacroAssembler* masm, Decorato
   Rbase = noreg; // end of lifetime
 
   // Filter young.
-  assert((unsigned int)G1CardTable::g1_young_card_val() <= 255, "otherwise check this code");
   __ z_cli(0, Rcard_addr, G1CardTable::g1_young_card_val());
   __ z_bre(filtered);
 
   // Check the card value. If dirty, we're done.
   // This also avoids false sharing of the (already dirty) card.
   __ z_sync(); // Required to support concurrent cleaning.
-  assert((unsigned int)G1CardTable::dirty_card_val() <= 255, "otherwise check this code");
   __ z_cli(0, Rcard_addr, G1CardTable::dirty_card_val()); // Reload after membar.
   __ z_bre(filtered);
 
@@ -404,11 +400,11 @@ void G1BarrierSetAssembler::resolve_jobject(MacroAssembler* masm, Register value
 
   __ z_tmll(tmp1, JNIHandles::weak_tag_mask); // Test for jweak tag.
   __ z_braz(Lnot_weak);
-  __ verify_oop(value);
+  __ verify_oop(value, FILE_AND_LINE);
   DecoratorSet decorators = IN_NATIVE | ON_PHANTOM_OOP_REF;
   g1_write_barrier_pre(masm, decorators, (const Address*)NULL, value, noreg, tmp1, tmp2, true);
   __ bind(Lnot_weak);
-  __ verify_oop(value);
+  __ verify_oop(value, FILE_AND_LINE);
   __ bind(Ldone);
 }
 
@@ -542,7 +538,7 @@ void G1BarrierSetAssembler::generate_c1_post_barrier_runtime_stub(StubAssembler*
   Register cardtable = r1;   // Must be non-volatile, because it is used to save addr_card.
   CardTableBarrierSet* ctbs = barrier_set_cast<CardTableBarrierSet>(bs);
   CardTable* ct = ctbs->card_table();
-  jbyte* byte_map_base = ct->byte_map_base();
+  CardTable::CardValue* byte_map_base = ct->byte_map_base();
 
   // Save registers used below (see assertion in G1PreBarrierStub::emit_code()).
   __ z_stg(r1, 0*BytesPerWord + FrameMap::first_available_sp_in_frame, Z_SP);

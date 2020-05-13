@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
  * @bug      4924383 8149402 8196202
  * @summary  Test to make sure the -group option works correctly
  *           with the given pattern usages.
- * @author   jamieh
  * @library  ../../lib
  * @modules  jdk.javadoc/jdk.javadoc.internal.tool
  * @build    javadoc.tester.*
@@ -62,7 +61,6 @@ public class TestGroupOption extends JavadocTester {
     // Make sure that the headers of group that is defined using patterns are printed.
     public void test2() {
         javadoc("-d", "out-2",
-                "--frames",
                 "-sourcepath", testSrc,
                 "-group", "Group pkg*", "pkg*",
                 "-group", "Group abc*", "abc*",
@@ -71,8 +69,8 @@ public class TestGroupOption extends JavadocTester {
                 "pkg1", "pkg2", "pkg3", "abc1",  "abc2", "abc3", "other", testSrc("InUnnamedPackage.java"));
         checkExit(Exit.OK);
 
-        checkOutput("overview-summary.html", true, "Group pkg*", "Group abc*", "Other Packages");
-        checkOutput("overview-summary.html", false, "Empty group", "Group a*");
+        checkOutput("index.html", true, "Group pkg*", "Group abc*", "Other Packages");
+        checkOutput("index.html", false, "Empty group", "Group a*");
     }
 
     @Test

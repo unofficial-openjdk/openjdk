@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,6 +59,7 @@ import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.TreeInfo;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
+import java.util.function.BinaryOperator;
 import jdk.jshell.ExpressionToTypeInfo.ExpressionInfo.AnonymousDescription;
 import jdk.jshell.ExpressionToTypeInfo.ExpressionInfo.AnonymousDescription.VariableDesc;
 import jdk.jshell.TaskFactory.AnalyzeTask;
@@ -149,6 +150,7 @@ class ExpressionToTypeInfo {
     private static class Result extends Error {
 
         static final long serialVersionUID = -5942088234594905629L;
+        @SuppressWarnings("serial") // Not statically typed as Serializable
         final TreePath expressionPath;
 
         Result(TreePath path) {
@@ -405,9 +407,9 @@ class ExpressionToTypeInfo {
                                 Type accessibleType = accessibleTypes.size() == 1 ? accessibleTypes.head
                                             : types.makeIntersectionType(accessibleTypes);
                                 ei.declareTypeName =
-                                        varTypeName(accessibleType, false, AnonymousTypeKind.DECLARE);
+                                        varTypeName(accessibleType, (full, pkg) -> full, false, AnonymousTypeKind.DECLARE);
                                 ei.fullTypeName =
-                                        varTypeName(enhancedTypesAccessible ? accessibleType : type,
+                                        varTypeName(enhancedTypesAccessible ? accessibleType : type, (full, pkg) -> full,
                                                     true, AnonymousTypeKind.DECLARE);
                                 ei.displayTypeName =
                                         varTypeName(type, true, AnonymousTypeKind.DISPLAY);
@@ -509,11 +511,15 @@ class ExpressionToTypeInfo {
                            ElementKind.PARAMETER, ElementKind.RESOURCE_VARIABLE);
 
     private String varTypeName(Type type, boolean printIntersectionTypes, AnonymousTypeKind anonymousTypesKind) {
+        return varTypeName(type, state.maps::fullClassNameAndPackageToClass, printIntersectionTypes, anonymousTypesKind);
+    }
+
+    private String varTypeName(Type type, BinaryOperator<String> fullClassNameAndPackageToClass, boolean printIntersectionTypes, AnonymousTypeKind anonymousTypesKind) {
         try {
             Function<TypeSymbol, String> anonymousClass2DeclareName =
                     cs -> anon2Name.computeIfAbsent(cs, state.eval::computeDeclareName);
             TypePrinter tp = new TypePrinter(at.messages(),
-                    state.maps::fullClassNameAndPackageToClass, anonymousClass2DeclareName,
+                    fullClassNameAndPackageToClass, anonymousClass2DeclareName,
                     printIntersectionTypes, anonymousTypesKind);
             List<Type> captures = types.captures(type);
             String res = tp.toString(types.upward(type, captures));

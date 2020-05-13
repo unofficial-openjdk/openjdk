@@ -27,6 +27,7 @@
 
 #include "memory/memRegion.hpp"
 #include "utilities/debug.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 // Implements the common base functionality for arrays that contain provisions
 // for accessing its elements using a biased index.
@@ -126,6 +127,11 @@ public:
     idx_t biased_index = ((uintptr_t)value) >> this->shift_by();
     this->verify_biased_index(biased_index);
     return biased_base()[biased_index];
+  }
+
+  T* get_ref_by_index(uintptr_t index) const {
+    verify_index(index);
+    return &this->base()[index];
   }
 
   // Return the index of the element of the given array that covers the given

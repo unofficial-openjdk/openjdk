@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8195795 8201396 8196202
+ * @bug 8195795 8201396 8196202 8215582
  * @summary test the use of module directories in output,
  *          and the --no-module-directories option
  * @modules jdk.javadoc/jdk.javadoc.internal.api
@@ -76,41 +76,12 @@ public class TestModuleDirs extends JavadocTester {
                 .classes("package pa; public class A {}")
                 .exports("pa")
                 .write(src);
-        new ModuleBuilder(tb, "mb")
-                .classes("package pb; public class B {}")
-                .exports("pb")
-                .write(src);
 
         javadoc("-d", base.resolve("api").toString(),
-                "-quiet",
-                "--frames",
                 "--module-source-path", src.toString(),
                 "--no-module-directories",
                 "--module", "ma,mb");
-
-        checkExit(Exit.OK);
-        checkFiles(true,
-                "ma-frame.html",
-                "ma-summary.html",
-                "pa/package-summary.html");
-        checkFiles(false,
-                "ma/module-frame.html",
-                "ma/module-summary.html",
-                "ma/pa/package-summary.html");
-        checkOutput("ma-frame.html", true,
-                "<ul>\n"
-                + "<li><a href=\"allclasses-frame.html\" target=\"packageFrame\">All&nbsp;Classes</a></li>\n"
-                + "<li><a href=\"overview-frame.html\" target=\"packageListFrame\">All&nbsp;Packages</a></li>\n"
-                + "<li><a href=\"module-overview-frame.html\" target=\"packageListFrame\">All&nbsp;Modules</a></li>\n"
-                + "</ul>\n");
-        checkOutput("ma-summary.html", false,
-                "<ul class=\"navList\" id=\"allclasses_navbar_top\">\n"
-                + "<li><a href=\"allclasses-noframe.html\">All&nbsp;Classes</a></li>\n"
-                + "</ul>\n");
-        checkOutput("pa/package-summary.html", true,
-                "<li><a href=\"../deprecated-list.html\">Deprecated</a></li>\n"
-                + "<li><a href=\"../index-all.html\">Index</a></li>");
-
+        checkExit(Exit.ERROR);
     }
 
     @Test
@@ -127,32 +98,26 @@ public class TestModuleDirs extends JavadocTester {
 
         javadoc("-d", base.resolve("api").toString(),
                 "-quiet",
-                "--frames",
                 "--module-source-path", src.toString(),
                 "--module", "ma,mb");
 
         checkExit(Exit.OK);
         checkFiles(false,
-                "ma-frame.html",
                 "ma-summary.html",
                 "pa/package-summary.html");
         checkFiles(true,
-                "ma/module-frame.html",
                 "ma/module-summary.html",
                 "ma/pa/package-summary.html");
-        checkOutput("ma/module-frame.html", true,
-                "<ul>\n"
-                + "<li><a href=\"../allclasses-frame.html\" target=\"packageFrame\">All&nbsp;Classes</a></li>\n"
-                + "<li><a href=\"../overview-frame.html\" target=\"packageListFrame\">All&nbsp;Packages</a></li>\n"
-                + "<li><a href=\"../module-overview-frame.html\" target=\"packageListFrame\">All&nbsp;Modules</a></li>\n"
-                + "</ul>\n");
         checkOutput("ma/module-summary.html", false,
-                "<ul class=\"navList\" id=\"allclasses_navbar_top\">\n"
-                + "<li><a href=\"../allclasses-noframe.html\">All&nbsp;Classes</a></li>\n"
-                + "</ul>\n");
+                """
+                    <ul class="navList" id="allclasses_navbar_top">
+                    <li><a href="../allclasses-noframe.html">All&nbsp;Classes</a></li>
+                    </ul>
+                    """);
         checkOutput("ma/pa/package-summary.html", true,
-                "<li><a href=\"../../deprecated-list.html\">Deprecated</a></li>\n"
-                + "<li><a href=\"../../index-all.html\">Index</a></li>");
+                """
+                    <li><a href="../../deprecated-list.html">Deprecated</a></li>
+                    <li><a href="../../index-all.html">Index</a></li>""");
     }
 }
 

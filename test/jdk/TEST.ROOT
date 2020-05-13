@@ -22,7 +22,13 @@ com/apple/laf com/sun/java/accessibility com/sun/java/swing sanity/client demo/j
 javax/management sun/awt sun/java2d javax/xml/jaxp/testng/validation java/lang/ProcessHandle
 
 # Tests that cannot run concurrently
-exclusiveAccess.dirs=java/rmi/Naming java/util/prefs sun/management/jmxremote sun/tools/jstatd sun/security/mscapi java/util/stream java/util/Arrays/largeMemory java/util/BitSet/stream javax/rmi
+exclusiveAccess.dirs=java/math/BigInteger/largeMemory \
+java/rmi/Naming java/util/prefs sun/management/jmxremote \
+sun/tools/jstatd sun/tools/jcmd sun/tools/jhsdb sun/tools/jhsdb/heapconfig \
+sun/tools/jinfo sun/tools/jmap sun/tools/jps sun/tools/jstack sun/tools/jstat \
+com/sun/tools/attach sun/security/mscapi java/util/stream java/util/Arrays/largeMemory \
+java/util/BitSet/stream javax/rmi
+
 # Group definitions
 groups=TEST.groups
 
@@ -32,24 +38,27 @@ groups=TEST.groups
 # to determine additional characteristics of the system for use with the @requires tag.
 # Note: compiled bootlibs code will be located in the folder 'bootClasses'
 requires.extraPropDefns = ../jtreg-ext/requires/VMProps.java
-requires.extraPropDefns.bootlibs = ../lib/sun ../lib/jdk/test/lib/Platform.java
+requires.extraPropDefns.bootlibs = ../lib/sun \
+    ../lib/jdk/test/lib/Platform.java \
+    ../lib/jdk/test/lib/Container.java
 requires.extraPropDefns.vmOpts = -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:bootClasses
 requires.properties= \
     sun.arch.data.model \
     java.runtime.name \
     vm.gc.Z \
+    vm.gc.Shenandoah \
     vm.graal.enabled \
     vm.compiler1.enabled \
     vm.compiler2.enabled \
     vm.cds \
+    vm.debug \
     vm.hasSA \
-    vm.hasSAandCanAttach \
     vm.hasJFR \
     docker.support \
     release.implementor
 
 # Minimum jtreg version
-requiredVersion=4.2 b14
+requiredVersion=5.0 b1
 
 # Path to libraries in the topmost test directory. This is needed so @library
 # does not need ../../ notation to reach them
@@ -60,6 +69,3 @@ useNewOptions=true
 
 # Use --patch-module instead of -Xmodule:
 useNewPatchModule=true
-
-# disabled till JDK-8219408 is fixed
-allowSmartActionArgs=false

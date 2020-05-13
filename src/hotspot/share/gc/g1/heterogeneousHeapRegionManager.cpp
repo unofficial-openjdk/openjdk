@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -263,7 +263,7 @@ uint HeterogeneousHeapRegionManager::find_empty_in_range_reverse(uint start_idx,
   return num_regions_found;
 }
 
-HeapRegion* HeterogeneousHeapRegionManager::allocate_free_region(HeapRegionType type) {
+HeapRegion* HeterogeneousHeapRegionManager::allocate_free_region(HeapRegionType type, uint node_index) {
 
   // We want to prevent mutators from proceeding when we have borrowed regions from the last collection. This
   // will force a full collection to remedy the situation.
@@ -325,18 +325,28 @@ HeapRegion* HeterogeneousHeapRegionManager::allocate_free_region(HeapRegionType 
   return hr;
 }
 
-uint HeterogeneousHeapRegionManager::find_contiguous_only_empty(size_t num) {
+HeapRegion* HeterogeneousHeapRegionManager::allocate_humongous_from_free_list(uint num_regions) {
   if (has_borrowed_regions()) {
-      return G1_NO_HRM_INDEX;
+      return NULL;
   }
-  return find_contiguous(start_index_of_nvdimm(), end_index_of_nvdimm(), num, true);
+  uint candidate = find_contiguous(start_index_of_nvdimm(), end_index_of_nvdimm(), num_regions, true);
+  if (candidate == G1_NO_HRM_INDEX) {
+    return NULL;
+  }
+  return allocate_free_regions_starting_at(candidate, num_regions);
 }
 
-uint HeterogeneousHeapRegionManager::find_contiguous_empty_or_unavailable(size_t num) {
+HeapRegion* HeterogeneousHeapRegionManager::allocate_humongous_allow_expand(uint num_regions) {
   if (has_borrowed_regions()) {
-    return G1_NO_HRM_INDEX;
+    return NULL;
   }
-  return find_contiguous(start_index_of_nvdimm(), end_index_of_nvdimm(), num, false);
+  uint candidate = find_contiguous(start_index_of_nvdimm(), end_index_of_nvdimm(), num_regions, false);
+  if (candidate == G1_NO_HRM_INDEX) {
+    return NULL;
+  }
+
+  expand_exact(candidate, num_regions, NULL);
+  return allocate_free_regions_starting_at(candidate, num_regions);
 }
 
 uint HeterogeneousHeapRegionManager::find_contiguous(size_t start, size_t end, size_t num, bool empty_only) {

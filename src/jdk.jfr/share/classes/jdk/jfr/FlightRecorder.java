@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,7 +85,7 @@ public final class FlightRecorder {
     /**
      * Creates a snapshot of all available recorded data.
      * <p>
-     * A snapshot is a synthesized recording in a {@code STOPPPED} state. If no data is
+     * A snapshot is a synthesized recording in a {@code STOPPED} state. If no data is
      * available, a recording with size {@code 0} is returned.
      * <p>
      * A snapshot provides stable access to data for later operations (for example,
@@ -93,17 +93,15 @@ public final class FlightRecorder {
      * <p>
      * The following example shows how to create a snapshot and write a subset of the data to a file.
      *
-     * <pre>
-     * <code>
+     * <pre>{@literal
      * try (Recording snapshot = FlightRecorder.getFlightRecorder().takeSnapshot()) {
-     *   if (snapshot.getSize() &gt; 0) {
+     *   if (snapshot.getSize() > 0) {
      *     snapshot.setMaxSize(100_000_000);
      *     snapshot.setMaxAge(Duration.ofMinutes(5));
      *     snapshot.dump(Paths.get("snapshot.jfr"));
      *   }
      * }
-     * </code>
-     * </pre>
+     * }</pre>
      *
      * The caller must close the recording when access to the data is no longer
      * needed.
@@ -197,7 +195,7 @@ public final class FlightRecorder {
                 Logger.log(JFR, DEBUG, "samplethreads: " + Options.getSampleThreads());
                 Logger.log(JFR, DEBUG, "stackdepth: " + Options.getStackDepth());
                 Logger.log(JFR, DEBUG, "threadbuffersize: " + Options.getThreadBufferSize());
-                Logger.log(JFR, LogLevel.INFO, "Created repository " + Repository.getRepository().getRepositoryPath().toString());
+                Logger.log(JFR, LogLevel.INFO, "Repository base directory: " + Repository.getRepository().getBaseLocation());
                 PlatformRecorder.notifyRecorderInitialized(platformRecorder);
             }
         }

@@ -371,6 +371,10 @@ final class CertificateMessage {
                 T12CertificateMessage certificateMessage )throws IOException {
             List<byte[]> encodedCerts = certificateMessage.encodedCertChain;
             if (encodedCerts == null || encodedCerts.isEmpty()) {
+                // For empty Certificate messages, we should not expect
+                // a CertificateVerify message to follow
+                shc.handshakeConsumers.remove(
+                        SSLHandshake.CERTIFICATE_VERIFY.id);
                 if (shc.sslConfig.clientAuthType !=
                         ClientAuthType.CLIENT_AUTH_REQUESTED) {
                     // unexpected or require client authentication
@@ -1034,6 +1038,7 @@ final class CertificateMessage {
                 // Don't select a signature scheme unless we will be able to
                 // produce a CertificateVerify message later
                 if (SignatureScheme.getPreferableAlgorithm(
+                        hc.algorithmConstraints,
                         hc.peerRequestedSignatureSchemes,
                         ss, hc.negotiatedProtocol) == null) {
 
@@ -1164,6 +1169,10 @@ final class CertificateMessage {
                 T13CertificateMessage certificateMessage )throws IOException {
             if (certificateMessage.certEntries == null ||
                     certificateMessage.certEntries.isEmpty()) {
+                // For empty Certificate messages, we should not expect
+                // a CertificateVerify message to follow
+                shc.handshakeConsumers.remove(
+                        SSLHandshake.CERTIFICATE_VERIFY.id);
                 if (shc.sslConfig.clientAuthType == CLIENT_AUTH_REQUIRED) {
                     throw shc.conContext.fatal(Alert.BAD_CERTIFICATE,
                         "Empty client certificate chain");

@@ -136,11 +136,33 @@ public:
 // add / remove one region at a time or concatenate two lists.
 
 class FreeRegionListIterator;
+class G1NUMA;
 
 class FreeRegionList : public HeapRegionSetBase {
   friend class FreeRegionListIterator;
 
 private:
+
+  // This class is only initialized if there are multiple active nodes.
+  class NodeInfo : public CHeapObj<mtGC> {
+    G1NUMA* _numa;
+    uint*   _length_of_node;
+    uint    _num_nodes;
+
+  public:
+    NodeInfo();
+    ~NodeInfo();
+
+    inline void increase_length(uint node_index);
+    inline void decrease_length(uint node_index);
+
+    inline uint length(uint index) const;
+
+    void clear();
+
+    void add(NodeInfo* info);
+  };
+
   HeapRegion* _head;
   HeapRegion* _tail;
 
@@ -148,20 +170,27 @@ private:
   // time. It helps to improve performance when adding several ordered items in a row.
   HeapRegion* _last;
 
+  NodeInfo*   _node_info;
+
   static uint _unrealistically_long_length;
 
   inline HeapRegion* remove_from_head_impl();
   inline HeapRegion* remove_from_tail_impl();
+
+  inline void increase_length(uint node_index);
+  inline void decrease_length(uint node_index);
+
+  // Common checks for adding a list.
+  void add_list_common_start(FreeRegionList* from_list);
+  void add_list_common_end(FreeRegionList* from_list);
 
 protected:
   // See the comment for HeapRegionSetBase::clear()
   virtual void clear();
 
 public:
-  FreeRegionList(const char* name, HeapRegionSetChecker* checker = NULL):
-    HeapRegionSetBase(name, checker) {
-    clear();
-  }
+  FreeRegionList(const char* name, HeapRegionSetChecker* checker = NULL);
+  ~FreeRegionList();
 
   void verify_list();
 
@@ -177,25 +206,38 @@ public:
   // Assumes that the list is ordered and will preserve that order. The order
   // is determined by hrm_index.
   inline void add_ordered(HeapRegion* hr);
+  // Same restrictions as above, but adds the region last in the list.
+  inline void add_to_tail(HeapRegion* region_to_add);
 
   // Removes from head or tail based on the given argument.
   HeapRegion* remove_region(bool from_head);
 
+  HeapRegion* remove_region_with_node_index(bool from_head,
+                                            uint requested_node_index);
+
   // Merge two ordered lists. The result is also ordered. The order is
   // determined by hrm_index.
   void add_ordered(FreeRegionList* from_list);
+  void append_ordered(FreeRegionList* from_list);
 
   // It empties the list by removing all regions from it.
   void remove_all();
 
+  // Abandon current free list. Requires that all regions in the current list
+  // are taken care of separately, to allow a rebuild.
+  void abandon();
+
   // Remove all (contiguous) regions from first to first + num_regions -1 from
   // this list.
-  // Num_regions must be > 1.
+  // Num_regions must be >= 1.
   void remove_starting_at(HeapRegion* first, uint num_regions);
 
   virtual void verify();
 
   uint num_of_regions_in_range(uint start, uint end) const;
+
+  using HeapRegionSetBase::length;
+  uint length(uint node_index) const;
 };
 
 // Iterator class that provides a convenient way to iterate over the

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import java.util.function.IntConsumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.DontInline;
 
@@ -488,7 +489,7 @@ final class StringUTF16 {
             final char lo = Character.lowSurrogate(ch);
             checkBoundsBeginEnd(fromIndex, max, value);
             for (int i = fromIndex; i < max - 1; i++) {
-                if (getChar(value, i) == hi && getChar(value, i + 1 ) == lo) {
+                if (getChar(value, i) == hi && getChar(value, i + 1) == lo) {
                     return i;
                 }
             }
@@ -574,7 +575,7 @@ final class StringUTF16 {
             }
         }
         if (i < len) {
-            byte buf[] = new byte[value.length];
+            byte[] buf = new byte[value.length];
             for (int j = 0; j < i; j++) {
                 putChar(buf, j, getChar(value, j)); // TBD:arraycopy?
             }
@@ -582,19 +583,135 @@ final class StringUTF16 {
                 char c = getChar(value, i);
                 putChar(buf, i, c == oldChar ? newChar : c);
                 i++;
-           }
-           // Check if we should try to compress to latin1
-           if (String.COMPACT_STRINGS &&
-               !StringLatin1.canEncode(oldChar) &&
-               StringLatin1.canEncode(newChar)) {
-               byte[] val = compress(buf, 0, len);
-               if (val != null) {
-                   return new String(val, LATIN1);
-               }
-           }
-           return new String(buf, UTF16);
+            }
+            // Check if we should try to compress to latin1
+            if (String.COMPACT_STRINGS &&
+                !StringLatin1.canEncode(oldChar) &&
+                StringLatin1.canEncode(newChar)) {
+                byte[] val = compress(buf, 0, len);
+                if (val != null) {
+                    return new String(val, LATIN1);
+                }
+            }
+            return new String(buf, UTF16);
         }
         return null;
+    }
+
+    public static String replace(byte[] value, int valLen, boolean valLat1,
+                                 byte[] targ, int targLen, boolean targLat1,
+                                 byte[] repl, int replLen, boolean replLat1)
+    {
+        assert targLen > 0;
+        assert !valLat1 || !targLat1 || !replLat1;
+
+        //  Possible combinations of the arguments/result encodings:
+        //  +---+--------+--------+--------+-----------------------+
+        //  | # | VALUE  | TARGET | REPL   | RESULT                |
+        //  +===+========+========+========+=======================+
+        //  | 1 | Latin1 | Latin1 |  UTF16 | null or UTF16         |
+        //  +---+--------+--------+--------+-----------------------+
+        //  | 2 | Latin1 |  UTF16 | Latin1 | null                  |
+        //  +---+--------+--------+--------+-----------------------+
+        //  | 3 | Latin1 |  UTF16 |  UTF16 | null                  |
+        //  +---+--------+--------+--------+-----------------------+
+        //  | 4 |  UTF16 | Latin1 | Latin1 | null or UTF16         |
+        //  +---+--------+--------+--------+-----------------------+
+        //  | 5 |  UTF16 | Latin1 |  UTF16 | null or UTF16         |
+        //  +---+--------+--------+--------+-----------------------+
+        //  | 6 |  UTF16 |  UTF16 | Latin1 | null, Latin1 or UTF16 |
+        //  +---+--------+--------+--------+-----------------------+
+        //  | 7 |  UTF16 |  UTF16 |  UTF16 | null or UTF16         |
+        //  +---+--------+--------+--------+-----------------------+
+
+        if (String.COMPACT_STRINGS && valLat1 && !targLat1) {
+            // combinations 2 or 3
+            return null; // for string to return this;
+        }
+
+        int i = (String.COMPACT_STRINGS && valLat1)
+                        ? StringLatin1.indexOf(value, targ) :
+                (String.COMPACT_STRINGS && targLat1)
+                        ? indexOfLatin1(value, targ)
+                        : indexOf(value, targ);
+        if (i < 0) {
+            return null; // for string to return this;
+        }
+
+        // find and store indices of substrings to replace
+        int j, p = 0;
+        int[] pos = new int[16];
+        pos[0] = i;
+        i += targLen;
+        while ((j = ((String.COMPACT_STRINGS && valLat1)
+                            ? StringLatin1.indexOf(value, valLen, targ, targLen, i) :
+                     (String.COMPACT_STRINGS && targLat1)
+                            ? indexOfLatin1(value, valLen, targ, targLen, i)
+                            : indexOf(value, valLen, targ, targLen, i))) > 0)
+        {
+            if (++p == pos.length) {
+                pos = Arrays.copyOf(pos, ArraysSupport.newLength(p, 1, p >> 1));
+            }
+            pos[p] = j;
+            i = j + targLen;
+        }
+
+        int resultLen;
+        try {
+            resultLen = Math.addExact(valLen,
+                    Math.multiplyExact(++p, replLen - targLen));
+        } catch (ArithmeticException ignored) {
+            throw new OutOfMemoryError();
+        }
+        if (resultLen == 0) {
+            return "";
+        }
+
+        byte[] result = newBytesFor(resultLen);
+        int posFrom = 0, posTo = 0;
+        for (int q = 0; q < p; ++q) {
+            int nextPos = pos[q];
+            if (String.COMPACT_STRINGS && valLat1) {
+                while (posFrom < nextPos) {
+                    char c = (char)(value[posFrom++] & 0xff);
+                    putChar(result, posTo++, c);
+                }
+            } else {
+                while (posFrom < nextPos) {
+                    putChar(result, posTo++, getChar(value, posFrom++));
+                }
+            }
+            posFrom += targLen;
+            if (String.COMPACT_STRINGS && replLat1) {
+                for (int k = 0; k < replLen; ++k) {
+                    char c = (char)(repl[k] & 0xff);
+                    putChar(result, posTo++, c);
+                }
+            } else {
+                for (int k = 0; k < replLen; ++k) {
+                    putChar(result, posTo++, getChar(repl, k));
+                }
+            }
+        }
+        if (String.COMPACT_STRINGS && valLat1) {
+            while (posFrom < valLen) {
+                char c = (char)(value[posFrom++] & 0xff);
+                putChar(result, posTo++, c);
+            }
+        } else {
+            while (posFrom < valLen) {
+                putChar(result, posTo++, getChar(value, posFrom++));
+            }
+        }
+
+        if (String.COMPACT_STRINGS && replLat1 && !targLat1) {
+            // combination 6
+            byte[] lat1Result = compress(result, 0, resultLen);
+            if (lat1Result != null) {
+                return new String(lat1Result, LATIN1);
+            }
+        }
+        return new String(result, UTF16);
     }
 
     public static boolean regionMatchesCI(byte[] value, int toffset,
@@ -899,18 +1016,12 @@ final class StringUTF16 {
     public static String stripLeading(byte[] value) {
         int length = value.length >>> 1;
         int left = indexOfNonWhitespace(value);
-        if (left == length) {
-            return "";
-        }
         return (left != 0) ? newString(value, left, length - left) : null;
     }
 
     public static String stripTrailing(byte[] value) {
         int length = value.length >>> 1;
         int right = lastIndexOfNonWhitespace(value);
-        if (right == 0) {
-            return "";
-        }
         return (right != length) ? newString(value, 0, right) : null;
     }
 
@@ -1002,76 +1113,10 @@ final class StringUTF16 {
         static LinesSpliterator spliterator(byte[] value) {
             return new LinesSpliterator(value, 0, value.length >>> 1);
         }
-
-        static LinesSpliterator spliterator(byte[] value, int leading, int trailing) {
-            int length = value.length >>> 1;
-            int left = 0;
-            int index;
-            for (int l = 0; l < leading; l++) {
-                index = skipBlankForward(value, left, length);
-                if (index == left) {
-                    break;
-                }
-                left = index;
-            }
-            int right = length;
-            for (int t = 0; t < trailing; t++) {
-                index = skipBlankBackward(value, left, right);
-                if (index == right) {
-                    break;
-                }
-                right = index;
-            }
-            return new LinesSpliterator(value, left, right - left);
-        }
-
-        private static int skipBlankForward(byte[] value, int start, int length) {
-            int index = start;
-            while (index < length) {
-                char ch = getChar(value, index++);
-                if (ch == '\n') {
-                    return index;
-                }
-                if (ch == '\r') {
-                    if (index < length && getChar(value, index) == '\n') {
-                        return index + 1;
-                    }
-                    return index;
-                }
-                if (ch != ' ' && ch != '\t' && !Character.isWhitespace(ch)) {
-                    return start;
-                }
-            }
-            return length;
-        }
-
-        private static int skipBlankBackward(byte[] value, int start, int fence) {
-            int index = fence;
-            if (start < index && getChar(value, index - 1) == '\n') {
-                index--;
-            }
-            if (start < index && getChar(value, index - 1) == '\r') {
-                index--;
-            }
-            while (start < index) {
-                char ch = getChar(value, --index);
-                if (ch == '\r' || ch == '\n') {
-                    return index + 1;
-                }
-                if (ch != ' ' && ch != '\t' && !Character.isWhitespace(ch)) {
-                    return fence;
-                }
-            }
-            return start;
-        }
     }
 
-    static Stream<String> lines(byte[] value, int leading, int trailing) {
-        if (leading == 0 && trailing == 0) {
-            return StreamSupport.stream(LinesSpliterator.spliterator(value), false);
-        } else {
-            return StreamSupport.stream(LinesSpliterator.spliterator(value, leading, trailing), false);
-        }
+    static Stream<String> lines(byte[] value) {
+        return StreamSupport.stream(LinesSpliterator.spliterator(value), false);
     }
 
     private static void putChars(byte[] val, int index, char[] str, int off, int end) {
@@ -1081,6 +1126,9 @@ final class StringUTF16 {
     }
 
     public static String newString(byte[] val, int index, int len) {
+        if (len == 0) {
+            return "";
+        }
         if (String.COMPACT_STRINGS) {
             byte[] buf = compress(val, index, len);
             if (buf != null) {

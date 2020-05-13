@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@ package java.util;
 
 /**
  * <p>
- * The <code> TooManyListenersException </code> Exception is used as part of
+ * The {@code  TooManyListenersException } Exception is used as part of
  * the Java Event model to annotate and implement a unicast special case of
  * a multicast Event Source.
  * </p>
@@ -48,6 +48,7 @@ package java.util;
  */
 
 public class TooManyListenersException extends Exception {
+    @java.io.Serial
     private static final long serialVersionUID = 5074640544770687831L;
 
     /**

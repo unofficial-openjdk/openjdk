@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,9 +49,9 @@ import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.builder.ImageBuilder;
 import jdk.tools.jlink.internal.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
+import jdk.tools.jlink.internal.plugins.DefaultStripDebugPlugin;
 import jdk.tools.jlink.internal.plugins.ExcludeJmodSectionPlugin;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
-import jdk.tools.jlink.internal.plugins.StripDebugPlugin;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.plugin.Plugin.Category;
 import jdk.tools.jlink.plugin.PluginException;
@@ -64,8 +64,6 @@ public final class TaskHelper {
 
     public static final String JLINK_BUNDLE = "jdk.tools.jlink.resources.jlink";
     public static final String JIMAGE_BUNDLE = "jdk.tools.jimage.resources.jimage";
-
-    private static final String DEFAULTS_PROPERTY = "jdk.jlink.defaults";
 
     public final class BadArgs extends Exception {
 
@@ -206,16 +204,17 @@ public final class TaskHelper {
     }
 
     private static class PluginOption extends Option<PluginsHelper> {
-        public PluginOption(boolean hasArg,
-                Processing<PluginsHelper> processing, boolean hidden, String name, String shortname) {
+        public PluginOption(boolean hasArg, Processing<PluginsHelper> processing,
+                            boolean hidden, String name, String shortname) {
             super(hasArg, processing, hidden, name, shortname, false);
         }
 
-        public PluginOption(boolean hasArg,
-                Processing<PluginsHelper> processing, boolean hidden, String name) {
+        public PluginOption(boolean hasArg, Processing<PluginsHelper> processing,
+                            boolean hidden, String name) {
             super(hasArg, processing, hidden, name, "", false);
         }
 
+        @Override
         public String resourcePrefix() {
             return "plugin.opt.";
         }
@@ -223,6 +222,8 @@ public final class TaskHelper {
 
     private final class PluginsHelper {
 
+        // Duplicated here so as to avoid a direct dependency on platform specific plugin
+        private static final String STRIP_NATIVE_DEBUG_SYMBOLS_NAME = "strip-native-debug-symbols";
         private ModuleLayer pluginsLayer = ModuleLayer.boot();
         private final List<Plugin> plugins;
         private String lastSorter;
@@ -323,7 +324,7 @@ public final class TaskHelper {
 
                                 Map<String, String> m = addArgumentMap(plugin);
                                 // handle one or more arguments
-                                if (arg.indexOf(':') == -1) {
+                                if (plugin.hasRawArgument() || arg.indexOf(':') == -1) {
                                     // single argument case
                                     m.put(option, arg);
                                 } else {
@@ -375,7 +376,7 @@ public final class TaskHelper {
                                 m.put(DefaultCompressPlugin.NAME, DefaultCompressPlugin.LEVEL_2);
                             }, false, "--compress", "-c");
                     mainOptions.add(plugOption);
-                } else if (plugin instanceof StripDebugPlugin) {
+                } else if (plugin instanceof DefaultStripDebugPlugin) {
                     plugOption
                         = new PluginOption(false,
                             (task, opt, arg) -> {
@@ -424,6 +425,7 @@ public final class TaskHelper {
             }
 
             List<Plugin> pluginsList = new ArrayList<>();
+            Set<String> seenPlugins = new HashSet<>();
             for (Entry<Plugin, List<Map<String, String>>> entry : pluginToMaps.entrySet()) {
                 Plugin plugin = entry.getKey();
                 List<Map<String, String>> argsMaps = entry.getValue();
@@ -444,7 +446,17 @@ public final class TaskHelper {
                 }
 
                 if (!Utils.isDisabled(plugin)) {
+                    // make sure that --strip-debug and --strip-native-debug-symbols
+                    // aren't being used at the same time. --strip-debug invokes --strip-native-debug-symbols on
+                    // platforms that support it, so it makes little sense to allow both at the same time.
+                    if ((plugin instanceof DefaultStripDebugPlugin && seenPlugins.contains(STRIP_NATIVE_DEBUG_SYMBOLS_NAME)) ||
+                        (STRIP_NATIVE_DEBUG_SYMBOLS_NAME.equals(plugin.getName()) && seenPlugins.contains(DefaultStripDebugPlugin.NAME))) {
+                        throw new BadArgs("err.plugin.conflicts", "--" + DefaultStripDebugPlugin.NAME,
+                                                                "-G",
+                                                                "--" + STRIP_NATIVE_DEBUG_SYMBOLS_NAME);
+                    }
                     pluginsList.add(plugin);
+                    seenPlugins.add(plugin.getName());
                 }
             }
 
@@ -497,24 +509,8 @@ public final class TaskHelper {
             this.options = options;
         }
 
-        private boolean hasArgument(String optionName) throws BadArgs {
-            Option<?> opt = getOption(optionName);
-            if (opt == null) {
-                opt = pluginOptions.getOption(optionName);
-                if (opt == null) {
-                    throw new BadArgs("err.unknown.option", optionName).
-                            showUsage(true);
-                }
-            }
-            return opt.hasArg;
-        }
-
         public boolean shouldListPlugins() {
             return pluginOptions.listPlugins;
-        }
-
-        private String getPluginsPath(String[] args) throws BadArgs {
-            return null;
         }
 
         /**

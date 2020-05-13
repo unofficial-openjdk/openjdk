@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@
 
 #include "precompiled.hpp"
 #include "classfile/classLoaderData.inline.hpp"
-#include "classfile/dictionary.inline.hpp"
+#include "classfile/dictionary.hpp"
 #include "classfile/protectionDomainCache.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "logging/log.hpp"
@@ -33,8 +33,7 @@
 #include "memory/metaspaceClosure.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/atomic.hpp"
-#include "runtime/orderAccess.hpp"
+#include "runtime/mutexLocker.hpp"
 #include "runtime/safepointVerifiers.hpp"
 #include "utilities/hashtable.inline.hpp"
 
@@ -80,6 +79,8 @@ DictionaryEntry* Dictionary::new_entry(unsigned int hash, InstanceKlass* klass) 
 void Dictionary::free_entry(DictionaryEntry* entry) {
   // avoid recursion when deleting linked list
   // pd_set is accessed during a safepoint.
+  // This doesn't require a lock because nothing is reading this
+  // entry anymore.  The ClassLoader is dead.
   while (entry->pd_set() != NULL) {
     ProtectionDomainEntry* to_delete = entry->pd_set();
     entry->set_pd_set(to_delete->next());
@@ -146,14 +147,17 @@ bool Dictionary::resize_if_needed() {
 }
 
 bool DictionaryEntry::contains_protection_domain(oop protection_domain) const {
+  // Lock the pd_set list.  This lock cannot safepoint since the caller holds
+  // a Dictionary entry, which can be moved if the Dictionary is resized.
+  MutexLocker ml(ProtectionDomainSet_lock, Mutex::_no_safepoint_check_flag);
 #ifdef ASSERT
-  if (oopDesc::equals(protection_domain, instance_klass()->protection_domain())) {
+  if (protection_domain == instance_klass()->protection_domain()) {
     // Ensure this doesn't show up in the pd_set (invariant)
     bool in_pd_set = false;
-    for (ProtectionDomainEntry* current = pd_set_acquire();
+    for (ProtectionDomainEntry* current = pd_set();
                                 current != NULL;
                                 current = current->next()) {
-      if (oopDesc::equals(current->object_no_keepalive(), protection_domain)) {
+      if (current->object_no_keepalive() == protection_domain) {
         in_pd_set = true;
         break;
       }
@@ -165,15 +169,15 @@ bool DictionaryEntry::contains_protection_domain(oop protection_domain) const {
   }
 #endif /* ASSERT */
 
-  if (oopDesc::equals(protection_domain, instance_klass()->protection_domain())) {
+  if (protection_domain == instance_klass()->protection_domain()) {
     // Succeeds trivially
     return true;
   }
 
-  for (ProtectionDomainEntry* current = pd_set_acquire();
+  for (ProtectionDomainEntry* current = pd_set();
                               current != NULL;
                               current = current->next()) {
-    if (oopDesc::equals(current->object_no_keepalive(), protection_domain)) return true;
+    if (current->object_no_keepalive() == protection_domain) return true;
   }
   return false;
 }
@@ -183,13 +187,12 @@ void DictionaryEntry::add_protection_domain(Dictionary* dict, Handle protection_
   assert_locked_or_safepoint(SystemDictionary_lock);
   if (!contains_protection_domain(protection_domain())) {
     ProtectionDomainCacheEntry* entry = SystemDictionary::cache_get(protection_domain);
+    // The pd_set in the dictionary entry is protected by a low level lock.
+    // With concurrent PD table cleanup, these links could be broken.
+    MutexLocker ml(ProtectionDomainSet_lock, Mutex::_no_safepoint_check_flag);
     ProtectionDomainEntry* new_head =
                 new ProtectionDomainEntry(entry, pd_set());
-    // Warning: Preserve store ordering.  The SystemDictionary is read
-    //          without locks.  The new ProtectionDomainEntry must be
-    //          complete before other threads can be allowed to see it
-    //          via a store to _pd_set.
-    release_set_pd_set(new_head);
+    set_pd_set(new_head);
   }
   LogTarget(Trace, protectiondomain) lt;
   if (lt.is_enabled()) {
@@ -241,7 +244,7 @@ void Dictionary::all_entries_do(KlassClosure* closure) {
 
 // Used to scan and relocate the classes during CDS archive dump.
 void Dictionary::classes_do(MetaspaceClosure* it) {
-  assert(DumpSharedSpaces, "dump-time only");
+  Arguments::assert_is_dumping_archive();
   for (int index = 0; index < table_size(); index++) {
     for (DictionaryEntry* probe = bucket(index);
                           probe != NULL;
@@ -307,7 +310,6 @@ InstanceKlass* Dictionary::find(unsigned int hash, Symbol* name,
   }
 }
 
-
 InstanceKlass* Dictionary::find_class(int index, unsigned int hash,
                                       Symbol* name) {
   assert_locked_or_safepoint(SystemDictionary_lock);
@@ -347,6 +349,57 @@ bool Dictionary::is_valid_protection_domain(unsigned int hash,
   DictionaryEntry* entry = get_entry(index, hash, name);
   return entry->is_valid_protection_domain(protection_domain);
 }
+
+// During class loading we may have cached a protection domain that has
+// since been unreferenced, so this entry should be cleared.
+void Dictionary::clean_cached_protection_domains() {
+  assert_locked_or_safepoint(SystemDictionary_lock);
+  assert(!loader_data()->has_class_mirror_holder(), "cld should have a ClassLoader holder not a Class holder");
+
+  if (loader_data()->is_the_null_class_loader_data()) {
+    // Classes in the boot loader are not loaded with protection domains
+    return;
+  }
+
+  for (int index = 0; index < table_size(); index++) {
+    for (DictionaryEntry* probe = bucket(index);
+                          probe != NULL;
+                          probe = probe->next()) {
+      Klass* e = probe->instance_klass();
+
+      MutexLocker ml(ProtectionDomainSet_lock, Mutex::_no_safepoint_check_flag);
+      ProtectionDomainEntry* current = probe->pd_set();
+      ProtectionDomainEntry* prev = NULL;
+      while (current != NULL) {
+        if (current->object_no_keepalive() == NULL) {
+          LogTarget(Debug, protectiondomain) lt;
+          if (lt.is_enabled()) {
+            ResourceMark rm;
+            // Print out trace information
+            LogStream ls(lt);
+            ls.print_cr("PD in set is not alive:");
+            ls.print("class loader: "); loader_data()->class_loader()->print_value_on(&ls);
+            ls.print(" loading: "); probe->instance_klass()->print_value_on(&ls);
+            ls.cr();
+          }
+          if (probe->pd_set() == current) {
+            probe->set_pd_set(current->next());
+          } else {
+            assert(prev != NULL, "should be set by alive entry");
+            prev->set_next(current->next());
+          }
+          ProtectionDomainEntry* to_delete = current;
+          current = current->next();
+          delete to_delete;
+        } else {
+          prev = current;
+          current = current->next();
+        }
+      }
+    }
+  }
+}
+
 
 SymbolPropertyTable::SymbolPropertyTable(int table_size)
   : Hashtable<Symbol*, mtSymbol>(table_size, sizeof(SymbolPropertyEntry))
@@ -404,6 +457,25 @@ void SymbolPropertyTable::methods_do(void f(Method*)) {
   }
 }
 
+void DictionaryEntry::verify_protection_domain_set() {
+  MutexLocker ml(ProtectionDomainSet_lock, Mutex::_no_safepoint_check_flag);
+  for (ProtectionDomainEntry* current = pd_set(); // accessed at a safepoint
+                              current != NULL;
+                              current = current->_next) {
+    guarantee(oopDesc::is_oop_or_null(current->_pd_cache->object_no_keepalive()), "Invalid oop");
+  }
+}
+
+void DictionaryEntry::print_count(outputStream *st) {
+  MutexLocker ml(ProtectionDomainSet_lock, Mutex::_no_safepoint_check_flag);
+  int count = 0;
+  for (ProtectionDomainEntry* current = pd_set();  // accessed inside SD lock
+                              current != NULL;
+                              current = current->_next) {
+    count++;
+  }
+  st->print_cr("pd set count = #%d", count);
+}
 
 // ----------------------------------------------------------------------------
 
@@ -411,6 +483,7 @@ void Dictionary::print_on(outputStream* st) const {
   ResourceMark rm;
 
   assert(loader_data() != NULL, "loader data should not be null");
+  assert(!loader_data()->has_class_mirror_holder(), "cld should have a ClassLoader holder not a Class holder");
   st->print_cr("Java dictionary (table_size=%d, classes=%d, resizable=%s)",
                table_size(), number_of_entries(), BOOL_TO_STR(_resizable));
   st->print_cr("^ indicates that initiating loader is different from defining loader");

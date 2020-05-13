@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@ package java.lang;
  * @since   1.4
  */
 public class AssertionError extends Error {
+    @java.io.Serial
     private static final long serialVersionUID = -5013299493970297370L;
 
     /**
@@ -78,7 +79,7 @@ public class AssertionError extends Error {
 
     /**
      * Constructs an AssertionError with its detail message derived
-     * from the specified <code>boolean</code>, which is converted to
+     * from the specified {@code boolean}, which is converted to
      * a string as defined in section 15.18.1.1 of
      * <cite>The Java&trade; Language Specification</cite>.
      *
@@ -90,7 +91,7 @@ public class AssertionError extends Error {
 
     /**
      * Constructs an AssertionError with its detail message derived
-     * from the specified <code>char</code>, which is converted to a
+     * from the specified {@code char}, which is converted to a
      * string as defined in section 15.18.1.1 of
      * <cite>The Java&trade; Language Specification</cite>.
      *
@@ -102,7 +103,7 @@ public class AssertionError extends Error {
 
     /**
      * Constructs an AssertionError with its detail message derived
-     * from the specified <code>int</code>, which is converted to a
+     * from the specified {@code int}, which is converted to a
      * string as defined in section 15.18.1.1 of
      * <cite>The Java&trade; Language Specification</cite>.
      *
@@ -114,7 +115,7 @@ public class AssertionError extends Error {
 
     /**
      * Constructs an AssertionError with its detail message derived
-     * from the specified <code>long</code>, which is converted to a
+     * from the specified {@code long}, which is converted to a
      * string as defined in section 15.18.1.1 of
      * <cite>The Java&trade; Language Specification</cite>.
      *
@@ -126,7 +127,7 @@ public class AssertionError extends Error {
 
     /**
      * Constructs an AssertionError with its detail message derived
-     * from the specified <code>float</code>, which is converted to a
+     * from the specified {@code float}, which is converted to a
      * string as defined in section 15.18.1.1 of
      * <cite>The Java&trade; Language Specification</cite>.
      *
@@ -138,7 +139,7 @@ public class AssertionError extends Error {
 
     /**
      * Constructs an AssertionError with its detail message derived
-     * from the specified <code>double</code>, which is converted to a
+     * from the specified {@code double}, which is converted to a
      * string as defined in section 15.18.1.1 of
      * <cite>The Java&trade; Language Specification</cite>.
      *

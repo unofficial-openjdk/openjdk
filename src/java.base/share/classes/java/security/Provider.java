@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,6 +108,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class Provider extends Properties {
 
     // Declare serialVersionUID to be compatible with JDK1.1
+    @java.io.Serial
     private static final long serialVersionUID = -4298000515446427739L;
 
     private static final sun.security.util.Debug debug =
@@ -286,7 +287,7 @@ public abstract class Provider extends Properties {
      * @throws UnsupportedOperationException if a configuration argument is
      *         not supported.
      * @throws NullPointerException if the supplied configuration argument is
-               null.
+     *         null.
      * @throws InvalidParameterException if the supplied configuration argument
      *         is invalid.
      * @return a provider configured with the supplied configuration argument.
@@ -402,7 +403,7 @@ public abstract class Provider extends Properties {
      * Reads a property list (key and element pairs) from the input stream.
      *
      * @param inStream the input stream.
-     * @exception IOException if an error occurred when reading from the
+     * @throws    IOException if an error occurred when reading from the
      *               input stream.
      * @see java.util.Properties#load
      */
@@ -890,6 +891,7 @@ public abstract class Provider extends Properties {
     * @param in the {@code ObjectInputStream} to read
     * @serial
     */
+    @java.io.Serial
     private void readObject(ObjectInputStream in)
                 throws IOException, ClassNotFoundException {
         Map<Object,Object> copy = new HashMap<>();
@@ -1253,9 +1255,9 @@ public abstract class Provider extends Properties {
         }
         synchronized (this) {
             ensureLegacyParsed();
-        }
-        if (legacyMap != null && !legacyMap.isEmpty()) {
-            return legacyMap.get(key);
+            if (legacyMap != null && !legacyMap.isEmpty()) {
+                return legacyMap.get(key);
+            }
         }
         return null;
     }
@@ -1923,28 +1925,31 @@ public abstract class Provider extends Properties {
             Boolean b = hasKeyAttributes;
             if (b == null) {
                 synchronized (this) {
-                    String s;
-                    s = getAttribute("SupportedKeyFormats");
-                    if (s != null) {
-                        supportedFormats = s.split("\\|");
-                    }
-                    s = getAttribute("SupportedKeyClasses");
-                    if (s != null) {
-                        String[] classNames = s.split("\\|");
-                        List<Class<?>> classList =
-                            new ArrayList<>(classNames.length);
-                        for (String className : classNames) {
-                            Class<?> clazz = getKeyClass(className);
-                            if (clazz != null) {
-                                classList.add(clazz);
-                            }
+                    b = hasKeyAttributes;
+                    if (b == null) {
+                        String s;
+                        s = getAttribute("SupportedKeyFormats");
+                        if (s != null) {
+                            supportedFormats = s.split("\\|");
                         }
-                        supportedClasses = classList.toArray(CLASS0);
+                        s = getAttribute("SupportedKeyClasses");
+                        if (s != null) {
+                            String[] classNames = s.split("\\|");
+                            List<Class<?>> classList =
+                                new ArrayList<>(classNames.length);
+                            for (String className : classNames) {
+                                Class<?> clazz = getKeyClass(className);
+                                if (clazz != null) {
+                                    classList.add(clazz);
+                                }
+                            }
+                            supportedClasses = classList.toArray(CLASS0);
+                        }
+                        boolean bool = (supportedFormats != null)
+                            || (supportedClasses != null);
+                        b = Boolean.valueOf(bool);
+                        hasKeyAttributes = b;
                     }
-                    boolean bool = (supportedFormats != null)
-                        || (supportedClasses != null);
-                    b = Boolean.valueOf(bool);
-                    hasKeyAttributes = b;
                 }
             }
             return b.booleanValue();

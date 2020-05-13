@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2018, the original author or authors.
+ * Copyright (c) 2002-2019, the original author or authors.
  *
  * This software is distributable under the BSD license. See the terms of the
  * BSD license in the documentation provided with this software.
  *
- * http://www.opensource.org/licenses/bsd-license.php
+ * https://opensource.org/licenses/BSD-3-Clause
  */
 package jdk.internal.org.jline.reader;
 
@@ -46,9 +46,8 @@ public class Candidate implements Comparable<Candidate> {
      * @param complete the complete flag
      */
     public Candidate(String value, String displ, String group, String descr, String suffix, String key, boolean complete) {
-        Objects.requireNonNull(value);
-        this.value = value;
-        this.displ = displ;
+        this.value = Objects.requireNonNull(value);
+        this.displ = Objects.requireNonNull(displ);
         this.group = group;
         this.descr = descr;
         this.suffix = suffix;

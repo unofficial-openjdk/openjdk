@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,12 +39,11 @@ import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSocket;
-import sun.security.ssl.SupportedGroupsExtension.NamedGroup;
 
 /**
  * SSL/(D)TLS transportation context.
  */
-class TransportContext implements ConnectionContext {
+final class TransportContext implements ConnectionContext {
     final SSLTransport              transport;
 
     // registered plaintext consumers
@@ -90,7 +89,7 @@ class TransportContext implements ConnectionContext {
     // Called by SSLEngineImpl
     TransportContext(SSLContextImpl sslContext, SSLTransport transport,
             InputRecord inputRecord, OutputRecord outputRecord) {
-        this(sslContext, transport, new SSLConfiguration(sslContext, true),
+        this(sslContext, transport, new SSLConfiguration(sslContext, false),
                 inputRecord, outputRecord, true);
     }
 
@@ -131,7 +130,7 @@ class TransportContext implements ConnectionContext {
         this.isUnsureMode = isUnsureMode;
 
         // initial security parameters
-        this.conSession = SSLSessionImpl.nullSession;
+        this.conSession = new SSLSessionImpl();
         this.protocolVersion = this.sslConfig.maximumProtocolVersion;
         this.clientVerifyData = emptyByteArray;
         this.serverVerifyData = emptyByteArray;
@@ -159,14 +158,20 @@ class TransportContext implements ConnectionContext {
                 if (handshakeContext == null) {
                     if (type == SSLHandshake.KEY_UPDATE.id ||
                             type == SSLHandshake.NEW_SESSION_TICKET.id) {
-                        if (isNegotiated &&
-                                protocolVersion.useTLS13PlusSpec()) {
-                            handshakeContext = new PostHandshakeContext(this);
-                        } else {
+                        if (!isNegotiated) {
+                            throw fatal(Alert.UNEXPECTED_MESSAGE,
+                                    "Unexpected unnegotiated post-handshake" +
+                                            " message: " +
+                                            SSLHandshake.nameOf(type));
+                        }
+
+                        if (!PostHandshakeContext.isConsumable(this, type)) {
                             throw fatal(Alert.UNEXPECTED_MESSAGE,
                                     "Unexpected post-handshake message: " +
                                     SSLHandshake.nameOf(type));
                         }
+
+                        handshakeContext = new PostHandshakeContext(this);
                     } else {
                         handshakeContext = sslConfig.isClientMode ?
                                 new ClientHandshakeContext(sslContext, this) :
@@ -233,7 +238,7 @@ class TransportContext implements ConnectionContext {
                 (handshakeContext instanceof PostHandshakeContext);
     }
 
-    // Note: close_notify is delivered as a warning alert.
+    // Note: Don't use this method for close_nofity, use closeNotify() instead.
     void warning(Alert alert) {
         // For initial handshaking, don't send a warning alert message to peer
         // if handshaker has not started.
@@ -245,6 +250,33 @@ class TransportContext implements ConnectionContext {
                     SSLLogger.warning(
                         "Warning: failed to send warning alert " + alert, ioe);
                 }
+            }
+        }
+    }
+
+    // Note: close_notify is delivered as a warning alert.
+    void closeNotify(boolean isUserCanceled) throws IOException {
+        // Socket transport is special because of the SO_LINGER impact.
+        if (transport instanceof SSLSocketImpl) {
+            ((SSLSocketImpl)transport).closeNotify(isUserCanceled);
+        } else {
+            // Need a lock here so that the user_canceled alert and the
+            // close_notify alert can be delivered together.
+            outputRecord.recordLock.lock();
+            try {
+                try {
+                    // send a user_canceled alert if needed.
+                    if (isUserCanceled) {
+                        warning(Alert.USER_CANCELED);
+                    }
+
+                    // send a close_notify alert
+                    warning(Alert.CLOSE_NOTIFY);
+                } finally {
+                    outputRecord.close();
+                }
+            } finally {
+                outputRecord.recordLock.unlock();
             }
         }
     }
@@ -422,7 +454,7 @@ class TransportContext implements ConnectionContext {
                         sslContext.getDefaultCipherSuites(!useClientMode);
             }
 
-            sslConfig.isClientMode = useClientMode;
+            sslConfig.toggleClientMode();
         }
 
         isUnsureMode = false;
@@ -496,14 +528,7 @@ class TransportContext implements ConnectionContext {
             }
 
             if (needCloseNotify) {
-                synchronized (outputRecord) {
-                    try {
-                        // send a close_notify alert
-                        warning(Alert.CLOSE_NOTIFY);
-                    } finally {
-                        outputRecord.close();
-                    }
-                }
+                closeNotify(false);
             }
         }
     }
@@ -539,21 +564,7 @@ class TransportContext implements ConnectionContext {
             useUserCanceled = true;
         }
 
-        // Need a lock here so that the user_canceled alert and the
-        // close_notify alert can be delivered together.
-        synchronized (outputRecord) {
-            try {
-                // send a user_canceled alert if needed.
-                if (useUserCanceled) {
-                    warning(Alert.USER_CANCELED);
-                }
-
-                // send a close_notify alert
-                warning(Alert.CLOSE_NOTIFY);
-            } finally {
-                outputRecord.close();
-            }
-        }
+        closeNotify(useUserCanceled);
     }
 
     // Note; HandshakeStatus.FINISHED status is retrieved in other places.

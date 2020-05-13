@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,9 @@ include @SPEC@
 
 CC := @BUILD_CC@
 CXX := @BUILD_CXX@
+# Ideally this should be probed by configure but that is tricky to implement,
+# and this should work in most cases.
+CPP := @BUILD_CC@ -E
 LD := @BUILD_LD@
 LDCXX := @BUILD_LDCXX@
 AS := @BUILD_AS@
@@ -44,6 +47,7 @@ SYSROOT_LDFLAGS := @BUILD_SYSROOT_LDFLAGS@
 
 # These directories should not be moved to BUILDJDK_OUTPUTDIR
 HOTSPOT_OUTPUTDIR := $(patsubst $(OUTPUTDIR)%,$(BUILDJDK_OUTPUTDIR)%,$(HOTSPOT_OUTPUTDIR))
+BUILDTOOLS_OUTPUTDIR := $(patsubst $(OUTPUTDIR)%,$(BUILDJDK_OUTPUTDIR)%,$(BUILDTOOLS_OUTPUTDIR))
 SUPPORT_OUTPUTDIR := $(patsubst $(OUTPUTDIR)%,$(BUILDJDK_OUTPUTDIR)%,$(SUPPORT_OUTPUTDIR))
 JDK_OUTPUTDIR := $(patsubst $(OUTPUTDIR)%,$(BUILDJDK_OUTPUTDIR)%,$(JDK_OUTPUTDIR))
 IMAGES_OUTPUTDIR := $(patsubst $(OUTPUTDIR)%,$(BUILDJDK_OUTPUTDIR)%,$(IMAGES_OUTPUTDIR))
@@ -77,6 +81,8 @@ JVM_LIBS := @OPENJDK_BUILD_JVM_LIBS@
 
 FDLIBM_CFLAGS := @OPENJDK_BUILD_FDLIBM_CFLAGS@
 
+INTERIM_LANGTOOLS_ARGS := $(subst $(OUTPUTDIR),$(BUILDJDK_OUTPUTDIR),$(INTERIM_LANGTOOLS_ARGS))
+
 # The compiler for the build platform is likely not warning compatible with the official
 # compiler.
 WARNINGS_AS_ERRORS := false
@@ -85,11 +91,12 @@ DISABLE_WARNING_PREFIX := @BUILD_CC_DISABLE_WARNING_PREFIX@
 # Save speed and disk space by not enabling debug symbols for the buildjdk
 ENABLE_DEBUG_SYMBOLS := false
 
-# Control wether Hotspot builds gtest tests
+# Control whether Hotspot builds gtest tests
 BUILD_GTEST := false
 
 JVM_VARIANTS := server
 JVM_VARIANT_MAIN := server
+JVM_FEATURES_server := cds compiler1 compiler2 g1gc serialgc
 
 # Some users still set EXTRA_*FLAGS on the make command line. Must
 # make sure to override that when building buildjdk.

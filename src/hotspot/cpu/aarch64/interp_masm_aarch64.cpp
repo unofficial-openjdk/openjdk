@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,7 +32,7 @@
 #include "interpreter/interpreterRuntime.hpp"
 #include "logging/log.hpp"
 #include "oops/arrayOop.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
 #include "oops/method.hpp"
 #include "oops/methodData.hpp"
 #include "prims/jvmtiExport.hpp"
@@ -43,7 +43,7 @@
 #include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/thread.inline.hpp"
-
+#include "utilities/powerOfTwo.hpp"
 
 void InterpreterMacroAssembler::narrow(Register result) {
 
@@ -288,6 +288,18 @@ void InterpreterMacroAssembler::load_resolved_klass_at_offset(
   ldr(klass, Address(klass, Array<Klass*>::base_offset_in_bytes()));
 }
 
+void InterpreterMacroAssembler::load_resolved_method_at_index(int byte_no,
+                                                              Register method,
+                                                              Register cache) {
+  const int method_offset = in_bytes(
+    ConstantPoolCache::base_offset() +
+      ((byte_no == TemplateTable::f2_byte)
+       ? ConstantPoolCacheEntry::f2_offset()
+       : ConstantPoolCacheEntry::f1_offset()));
+
+  ldr(method, Address(cache, method_offset)); // get f1 Method*
+}
+
 // Generate a subtype check: branch to ok_is_subtype if sub_klass is a
 // subtype of super_klass.
 //
@@ -457,8 +469,7 @@ void InterpreterMacroAssembler::dispatch_base(TosState state,
 
   Label safepoint;
   address* const safepoint_table = Interpreter::safept_table(state);
-  bool needs_thread_local_poll = generate_poll &&
-    SafepointMechanism::uses_thread_local_poll() && table != safepoint_table;
+  bool needs_thread_local_poll = generate_poll && table != safepoint_table;
 
   if (needs_thread_local_poll) {
     NOT_PRODUCT(block_comment("Thread-local Safepoint poll"));
@@ -1141,38 +1152,10 @@ void InterpreterMacroAssembler::profile_virtual_call(Register receiver,
     bind(skip_receiver_profile);
 
     // The method data pointer needs to be updated to reflect the new target.
-#if INCLUDE_JVMCI
-    if (MethodProfileWidth == 0) {
-      update_mdp_by_constant(mdp, in_bytes(VirtualCallData::virtual_call_data_size()));
-    }
-#else // INCLUDE_JVMCI
-    update_mdp_by_constant(mdp,
-                           in_bytes(VirtualCallData::
-                                    virtual_call_data_size()));
-#endif // INCLUDE_JVMCI
-    bind(profile_continue);
-  }
-}
-
-#if INCLUDE_JVMCI
-void InterpreterMacroAssembler::profile_called_method(Register method, Register mdp, Register reg2) {
-  assert_different_registers(method, mdp, reg2);
-  if (ProfileInterpreter && MethodProfileWidth > 0) {
-    Label profile_continue;
-
-    // If no method data exists, go to profile_continue.
-    test_method_data_pointer(mdp, profile_continue);
-
-    Label done;
-    record_item_in_profile_helper(method, mdp, reg2, 0, done, MethodProfileWidth,
-      &VirtualCallData::method_offset, &VirtualCallData::method_count_offset, in_bytes(VirtualCallData::nonprofiled_receiver_count_offset()));
-    bind(done);
-
     update_mdp_by_constant(mdp, in_bytes(VirtualCallData::virtual_call_data_size()));
     bind(profile_continue);
   }
 }
-#endif // INCLUDE_JVMCI
 
 // This routine creates a state machine for updating the multi-row
 // type profile at a virtual call site (or other type-sensitive bytecode).

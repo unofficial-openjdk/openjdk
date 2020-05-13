@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,7 @@
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "utilities/macros.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 // Implementation of AddressLiteral
 
@@ -1345,7 +1346,7 @@ int MacroAssembler::biased_locking_enter(Register obj_reg, Register swap_reg, Re
   }
 #endif
 
-  assert(markOopDesc::age_shift == markOopDesc::lock_bits + markOopDesc::biased_lock_bits, "biased locking makes assumptions about bit layout");
+  assert(markWord::age_shift == markWord::lock_bits + markWord::biased_lock_bits, "biased locking makes assumptions about bit layout");
   Address mark_addr(obj_reg, oopDesc::mark_offset_in_bytes());
 
   // Biased locking
@@ -1367,8 +1368,8 @@ int MacroAssembler::biased_locking_enter(Register obj_reg, Register swap_reg, Re
   // On MP platform loads could return 'stale' values in some cases.
   // That is acceptable since either CAS or slow case path is taken in the worst case.
 
-  andr(tmp_reg, swap_reg, (uintx)markOopDesc::biased_lock_mask_in_place);
-  cmp(tmp_reg, markOopDesc::biased_lock_pattern);
+  andr(tmp_reg, swap_reg, markWord::biased_lock_mask_in_place);
+  cmp(tmp_reg, markWord::biased_lock_pattern);
 
   b(cas_label, ne);
 
@@ -1379,7 +1380,7 @@ int MacroAssembler::biased_locking_enter(Register obj_reg, Register swap_reg, Re
   orr(tmp_reg, tmp_reg, Rthread);
   eor(tmp_reg, tmp_reg, swap_reg);
 
-  bics(tmp_reg, tmp_reg, ((int) markOopDesc::age_mask_in_place));
+  bics(tmp_reg, tmp_reg, ((int) markWord::age_mask_in_place));
 
 #ifndef PRODUCT
   if (counters != NULL) {
@@ -1401,7 +1402,7 @@ int MacroAssembler::biased_locking_enter(Register obj_reg, Register swap_reg, Re
   // If the low three bits in the xor result aren't clear, that means
   // the prototype header is no longer biased and we have to revoke
   // the bias on this object.
-  tst(tmp_reg, (uintx)markOopDesc::biased_lock_mask_in_place);
+  tst(tmp_reg, markWord::biased_lock_mask_in_place);
   b(try_revoke_bias, ne);
 
   // Biasing is still enabled for this data type. See whether the
@@ -1413,7 +1414,7 @@ int MacroAssembler::biased_locking_enter(Register obj_reg, Register swap_reg, Re
   // that the current epoch is invalid in order to do this because
   // otherwise the manipulations it performs on the mark word are
   // illegal.
-  tst(tmp_reg, (uintx)markOopDesc::epoch_mask_in_place);
+  tst(tmp_reg, markWord::epoch_mask_in_place);
   b(try_rebias, ne);
 
   // tmp_reg has the age, epoch and pattern bits cleared
@@ -1431,10 +1432,10 @@ int MacroAssembler::biased_locking_enter(Register obj_reg, Register swap_reg, Re
 
   // until the assembler can be made smarter, we need to make some assumptions about the values
   // so we can optimize this:
-  assert((markOopDesc::biased_lock_mask_in_place | markOopDesc::age_mask_in_place | markOopDesc::epoch_mask_in_place) == 0x1ff, "biased bitmasks changed");
+  assert((markWord::biased_lock_mask_in_place | markWord::age_mask_in_place | markWord::epoch_mask_in_place) == 0x1ff, "biased bitmasks changed");
 
   mov(swap_reg, AsmOperand(swap_reg, lsl, 23));
-  mov(swap_reg, AsmOperand(swap_reg, lsr, 23)); // markOop with thread bits cleared (for CAS)
+  mov(swap_reg, AsmOperand(swap_reg, lsr, 23)); // markWord with thread bits cleared (for CAS)
 
   orr(tmp_reg, swap_reg, Rthread); // new mark
 
@@ -1519,8 +1520,8 @@ void MacroAssembler::biased_locking_exit(Register obj_reg, Register tmp_reg, Lab
   // the bias bit would be clear.
   ldr(tmp_reg, Address(obj_reg, oopDesc::mark_offset_in_bytes()));
 
-  andr(tmp_reg, tmp_reg, (uintx)markOopDesc::biased_lock_mask_in_place);
-  cmp(tmp_reg, markOopDesc::biased_lock_pattern);
+  andr(tmp_reg, tmp_reg, markWord::biased_lock_mask_in_place);
+  cmp(tmp_reg, markWord::biased_lock_pattern);
   b(done, eq);
 }
 
@@ -1625,57 +1626,6 @@ void MacroAssembler::lookup_interface_method(Register Rklass,
   }
 }
 
-#ifdef COMPILER2
-// TODO: 8 bytes at a time? pre-fetch?
-// Compare char[] arrays aligned to 4 bytes.
-void MacroAssembler::char_arrays_equals(Register ary1, Register ary2,
-                                        Register limit, Register result,
-                                      Register chr1, Register chr2, Label& Ldone) {
-  Label Lvector, Lloop;
-
-  // if (ary1 == ary2)
-  //     return true;
-  cmpoop(ary1, ary2);
-  b(Ldone, eq);
-
-  // Note: limit contains number of bytes (2*char_elements) != 0.
-  tst(limit, 0x2); // trailing character ?
-  b(Lvector, eq);
-
-  // compare the trailing char
-  sub(limit, limit, sizeof(jchar));
-  ldrh(chr1, Address(ary1, limit));
-  ldrh(chr2, Address(ary2, limit));
-  cmp(chr1, chr2);
-  mov(result, 0, ne);     // not equal
-  b(Ldone, ne);
-
-  // only one char ?
-  tst(limit, limit);
-  mov(result, 1, eq);
-  b(Ldone, eq);
-
-  // word by word compare, dont't need alignment check
-  bind(Lvector);
-
-  // Shift ary1 and ary2 to the end of the arrays, negate limit
-  add(ary1, limit, ary1);
-  add(ary2, limit, ary2);
-  neg(limit, limit);
-
-  bind(Lloop);
-  ldr_u32(chr1, Address(ary1, limit));
-  ldr_u32(chr2, Address(ary2, limit));
-  cmp_32(chr1, chr2);
-  mov(result, 0, ne);     // not equal
-  b(Ldone, ne);
-  adds(limit, limit, 2*sizeof(jchar));
-  b(Lloop, ne);
-
-  // Caller should set it:
-  // mov(result_reg, 1);  //equal
-}
-#endif
 
 void MacroAssembler::inc_counter(address counter_addr, Register tmpreg1, Register tmpreg2) {
   mov_slow(tmpreg1, counter_addr);
@@ -1969,88 +1919,19 @@ void MacroAssembler::resolve(DecoratorSet decorators, Register obj) {
   return bs->resolve(this, decorators, obj);
 }
 
-
-#ifdef COMPILER2
-void MacroAssembler::fast_lock(Register Roop, Register Rbox, Register Rscratch, Register Rscratch2, Register scratch3)
-{
-  assert(VM_Version::supports_ldrex(), "unsupported, yet?");
-
-  Register Rmark      = Rscratch2;
-
-  assert(Roop != Rscratch, "");
-  assert(Roop != Rmark, "");
-  assert(Rbox != Rscratch, "");
-  assert(Rbox != Rmark, "");
-
-  Label fast_lock, done;
-
-  if (UseBiasedLocking && !UseOptoBiasInlining) {
-    assert(scratch3 != noreg, "need extra temporary for -XX:-UseOptoBiasInlining");
-    biased_locking_enter(Roop, Rmark, Rscratch, false, scratch3, done, done);
-    // Fall through if lock not biased otherwise branch to done
-  }
-
-  // Invariant: Rmark loaded below does not contain biased lock pattern
-
-  ldr(Rmark, Address(Roop, oopDesc::mark_offset_in_bytes()));
-  tst(Rmark, markOopDesc::unlocked_value);
-  b(fast_lock, ne);
-
-  // Check for recursive lock
-  // See comments in InterpreterMacroAssembler::lock_object for
-  // explanations on the fast recursive locking check.
-  // -1- test low 2 bits
-  movs(Rscratch, AsmOperand(Rmark, lsl, 30));
-  // -2- test (hdr - SP) if the low two bits are 0
-  sub(Rscratch, Rmark, SP, eq);
-  movs(Rscratch, AsmOperand(Rscratch, lsr, exact_log2(os::vm_page_size())), eq);
-  // If still 'eq' then recursive locking OK
-  // set to zero if recursive lock, set to non zero otherwise (see discussion in JDK-8153107)
-  str(Rscratch, Address(Rbox, BasicLock::displaced_header_offset_in_bytes()));
-  b(done);
-
-  bind(fast_lock);
-  str(Rmark, Address(Rbox, BasicLock::displaced_header_offset_in_bytes()));
-
-  bool allow_fallthrough_on_failure = true;
-  bool one_shot = true;
-  cas_for_lock_acquire(Rmark, Rbox, Roop, Rscratch, done, allow_fallthrough_on_failure, one_shot);
-
-  bind(done);
-
-  // At this point flags are set as follows:
-  //  EQ -> Success
-  //  NE -> Failure, branch to slow path
+void MacroAssembler::safepoint_poll(Register tmp1, Label& slow_path) {
+  ldr_u32(tmp1, Address(Rthread, Thread::polling_page_offset()));
+  tst(tmp1, exact_log2(SafepointMechanism::poll_bit()));
+  b(slow_path, eq);
 }
 
-void MacroAssembler::fast_unlock(Register Roop, Register Rbox, Register Rscratch, Register Rscratch2)
-{
-  assert(VM_Version::supports_ldrex(), "unsupported, yet?");
-
-  Register Rmark      = Rscratch2;
-
-  assert(Roop != Rscratch, "");
-  assert(Roop != Rmark, "");
-  assert(Rbox != Rscratch, "");
-  assert(Rbox != Rmark, "");
-
-  Label done;
-
-  if (UseBiasedLocking && !UseOptoBiasInlining) {
-    biased_locking_exit(Roop, Rscratch, done);
-  }
-
-  ldr(Rmark, Address(Rbox, BasicLock::displaced_header_offset_in_bytes()));
-  // If hdr is NULL, we've got recursive locking and there's nothing more to do
-  cmp(Rmark, 0);
-  b(done, eq);
-
-  // Restore the object header
-  bool allow_fallthrough_on_failure = true;
-  bool one_shot = true;
-  cas_for_lock_release(Rmark, Rbox, Roop, Rscratch, done, allow_fallthrough_on_failure, one_shot);
-
-  bind(done);
-
+void MacroAssembler::get_polling_page(Register dest) {
+  ldr(dest, Address(Rthread, Thread::polling_page_offset()));
 }
-#endif // COMPILER2
+
+void MacroAssembler::read_polling_page(Register dest, relocInfo::relocType rtype) {
+  get_polling_page(dest);
+  relocate(rtype);
+  ldr(dest, Address(dest));
+}
+

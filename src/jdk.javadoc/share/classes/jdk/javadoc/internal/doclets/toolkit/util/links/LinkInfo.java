@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,8 +39,6 @@ import jdk.javadoc.internal.doclets.toolkit.Content;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- *  @author Jamie Ho
  */
 public abstract class LinkInfo {
 
@@ -70,12 +68,6 @@ public abstract class LinkInfo {
      * Set this to true to indicate that you are linking to a type parameter.
      */
     public boolean isTypeBound = false;
-
-    /**
-     * Whether the document element is in a Java 5 declaration
-     * location or not.
-     */
-    public boolean isJava5DeclarationLocation = true;
 
     /**
      * The label for the link.
@@ -145,11 +137,11 @@ public abstract class LinkInfo {
             return label;
         } else if (isLinkable()) {
             Content tlabel = newContent();
-            tlabel.addContent(configuration.utils.getSimpleName(typeElement));
+            tlabel.add(configuration.utils.getSimpleName(typeElement));
             return tlabel;
         } else {
             Content tlabel = newContent();
-            tlabel.addContent(configuration.getClassName(typeElement));
+            tlabel.add(configuration.getClassName(typeElement));
             return tlabel;
         }
     }
@@ -161,7 +153,6 @@ public abstract class LinkInfo {
                 ", type=" + type +
                 ", isVarArg=" + isVarArg +
                 ", isTypeBound=" + isTypeBound +
-                ", isJava5DeclarationLocation=" + isJava5DeclarationLocation +
                 ", label=" + label +
                 ", isStrong=" + isStrong +
                 ", includeTypeInClassLinkLabel=" + includeTypeInClassLinkLabel +

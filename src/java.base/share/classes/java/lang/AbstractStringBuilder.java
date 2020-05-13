@@ -26,6 +26,7 @@
 package java.lang;
 
 import jdk.internal.math.FloatingDecimal;
+
 import java.util.Arrays;
 import java.util.Spliterator;
 import java.util.stream.IntStream;
@@ -92,16 +93,57 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
     }
 
     /**
-     * Creates an AbstractStringBuilder with the specified coder and with
-     * the initial capacity equal to the smaller of (capacity + addition)
-     * and Integer.MAX_VALUE.
+     * Constructs an AbstractStringBuilder that contains the same characters
+     * as the specified {@code String}. The initial capacity of
+     * the string builder is {@code 16} plus the length of the
+     * {@code String} argument.
+     *
+     * @param      str   the string to copy.
      */
-    AbstractStringBuilder(byte coder, int capacity, int addition) {
-        this.coder = coder;
-        capacity = (capacity < Integer.MAX_VALUE - addition)
-                ? capacity + addition : Integer.MAX_VALUE;
-        value = (coder == LATIN1)
+    AbstractStringBuilder(String str) {
+        int length = str.length();
+        int capacity = (length < Integer.MAX_VALUE - 16)
+                ? length + 16 : Integer.MAX_VALUE;
+        final byte initCoder = str.coder();
+        coder = initCoder;
+        value = (initCoder == LATIN1)
                 ? new byte[capacity] : StringUTF16.newBytesFor(capacity);
+        append(str);
+    }
+
+    /**
+     * Constructs an AbstractStringBuilder that contains the same characters
+     * as the specified {@code CharSequence}. The initial capacity of
+     * the string builder is {@code 16} plus the length of the
+     * {@code CharSequence} argument.
+     *
+     * @param      seq   the sequence to copy.
+     */
+    AbstractStringBuilder(CharSequence seq) {
+        int length = seq.length();
+        if (length < 0) {
+            throw new NegativeArraySizeException("Negative length: " + length);
+        }
+        int capacity = (length < Integer.MAX_VALUE - 16)
+                ? length + 16 : Integer.MAX_VALUE;
+
+        final byte initCoder;
+        if (COMPACT_STRINGS) {
+            if (seq instanceof AbstractStringBuilder) {
+                initCoder = ((AbstractStringBuilder)seq).getCoder();
+            } else if (seq instanceof String) {
+                initCoder = ((String)seq).coder();
+            } else {
+                initCoder = LATIN1;
+            }
+        } else {
+            initCoder = UTF16;
+        }
+
+        coder = initCoder;
+        value = (initCoder == LATIN1)
+                ? new byte[capacity] : StringUTF16.newBytesFor(capacity);
+        append(seq);
     }
 
     /**
@@ -139,9 +181,9 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
     }
 
     /**
-     * Returns the current capacity. The capacity is the amount of storage
-     * available for newly inserted characters, beyond which an allocation
-     * will occur.
+     * Returns the current capacity. The capacity is the number of characters
+     * that can be stored (including already written characters), beyond which
+     * an allocation will occur.
      *
      * @return  the current capacity
      */
@@ -644,9 +686,14 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         checkRange(start, end, s.length());
         int len = end - start;
         ensureCapacityInternal(count + len);
-        appendChars(s, start, end);
+        if (s instanceof String) {
+            appendChars((String)s, start, end);
+        } else {
+            appendChars(s, start, end);
+        }
         return this;
     }
+
 
     /**
      * Appends the string representation of the {@code char} array
@@ -1700,6 +1747,35 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
             StringUTF16.putCharsSB(this.value, count, s, off, end);
         }
         this.count = count + end - off;
+    }
+
+    private final void appendChars(String s, int off, int end) {
+        if (isLatin1()) {
+            if (s.isLatin1()) {
+                System.arraycopy(s.value(), off, this.value, this.count, end - off);
+            } else {
+                // We might need to inflate, but do it as late as possible since
+                // the range of characters we're copying might all be latin1
+                byte[] val = this.value;
+                for (int i = off, j = count; i < end; i++) {
+                    char c = s.charAt(i);
+                    if (StringLatin1.canEncode(c)) {
+                        val[j++] = (byte) c;
+                    } else {
+                        count = j;
+                        inflate();
+                        System.arraycopy(s.value(), i << UTF16, this.value, j << UTF16, (end - i) << UTF16);
+                        count += end - i;
+                        return;
+                    }
+                }
+            }
+        } else if (s.isLatin1()) {
+            StringUTF16.putCharsSB(this.value, this.count, s, off, end);
+        } else { // both UTF16
+            System.arraycopy(s.value(), off << UTF16, this.value, this.count << UTF16, (end - off) << UTF16);
+        }
+        count += end - off;
     }
 
     private final void appendChars(CharSequence s, int off, int end) {

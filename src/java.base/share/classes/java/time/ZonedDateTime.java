@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -167,6 +167,7 @@ public final class ZonedDateTime
     /**
      * Serialization version.
      */
+    @java.io.Serial
     private static final long serialVersionUID = -6260982410461394882L;
 
     /**
@@ -2129,11 +2130,17 @@ public final class ZonedDateTime
     public long until(Temporal endExclusive, TemporalUnit unit) {
         ZonedDateTime end = ZonedDateTime.from(endExclusive);
         if (unit instanceof ChronoUnit) {
-            end = end.withZoneSameInstant(zone);
+            ZonedDateTime start = this;
+            try {
+                end = end.withZoneSameInstant(zone);
+            } catch (DateTimeException ex) {
+                // end may be out of valid range. Adjust to end's zone.
+                start = withZoneSameInstant(end.zone);
+            }
             if (unit.isDateBased()) {
-                return dateTime.until(end.dateTime, unit);
+                return start.dateTime.until(end.dateTime, unit);
             } else {
-                return toOffsetDateTime().until(end.toOffsetDateTime(), unit);
+                return start.toOffsetDateTime().until(end.toOffsetDateTime(), unit);
             }
         }
         return unit.between(this, end);
@@ -2235,6 +2242,7 @@ public final class ZonedDateTime
      *
      * @return the instance of {@code Ser}, not null
      */
+    @java.io.Serial
     private Object writeReplace() {
         return new Ser(Ser.ZONE_DATE_TIME_TYPE, this);
     }
@@ -2245,6 +2253,7 @@ public final class ZonedDateTime
      * @param s the stream to read
      * @throws InvalidObjectException always
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream s) throws InvalidObjectException {
         throw new InvalidObjectException("Deserialization via serialization delegate");
     }

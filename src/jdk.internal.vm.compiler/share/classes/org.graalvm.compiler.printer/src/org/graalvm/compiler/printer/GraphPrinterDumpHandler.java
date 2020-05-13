@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,10 +37,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import org.graalvm.compiler.core.common.CompilationIdentifier;
 import org.graalvm.compiler.debug.DebugContext;
 import org.graalvm.compiler.debug.DebugDumpHandler;
 import org.graalvm.compiler.debug.DebugDumpScope;
 import org.graalvm.compiler.debug.DebugOptions;
+import org.graalvm.compiler.debug.DebugOptions.PrintGraphTarget;
 import org.graalvm.compiler.debug.GraalError;
 import org.graalvm.compiler.debug.TTY;
 import org.graalvm.compiler.graph.Graph;
@@ -51,6 +53,7 @@ import org.graalvm.compiler.serviceprovider.GraalServices;
 
 import jdk.vm.ci.meta.JavaMethod;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
+import jdk.vm.ci.services.Services;
 
 //JaCoCo Exclude
 
@@ -64,6 +67,7 @@ public class GraphPrinterDumpHandler implements DebugDumpHandler {
     private final GraphPrinterSupplier printerSupplier;
     protected GraphPrinter printer;
     private List<String> previousInlineContext;
+    private CompilationIdentifier previousCompilationID = CompilationIdentifier.INVALID_COMPILATION_ID;
     private int[] dumpIds = {};
     private int failuresCount;
     private Map<Graph, List<String>> inlineContextMap;
@@ -85,7 +89,7 @@ public class GraphPrinterDumpHandler implements DebugDumpHandler {
         this.printerSupplier = printerSupplier;
         /* Add the JVM and Java arguments to the graph properties to help identify it. */
         this.jvmArguments = jvmArguments();
-        this.sunJavaCommand = System.getProperty("sun.java.command");
+        this.sunJavaCommand = Services.getSavedProperties().get("sun.java.command");
     }
 
     private static String jvmArguments() {
@@ -124,7 +128,7 @@ public class GraphPrinterDumpHandler implements DebugDumpHandler {
     @SuppressWarnings("try")
     public void dump(DebugContext debug, Object object, final String format, Object... arguments) {
         OptionValues options = debug.getOptions();
-        if (object instanceof Graph && DebugOptions.PrintGraph.getValue(options)) {
+        if (object instanceof Graph && DebugOptions.PrintGraph.getValue(options) != PrintGraphTarget.Disable) {
             final Graph graph = (Graph) object;
             ensureInitialized(debug, graph);
             if (printer == null) {
@@ -134,36 +138,42 @@ public class GraphPrinterDumpHandler implements DebugDumpHandler {
             // Get all current JavaMethod instances in the context.
             List<String> inlineContext = getInlineContext(graph);
 
-            if (inlineContext != previousInlineContext) {
+            if (graph instanceof StructuredGraph) {
+                CompilationIdentifier compilationID = ((StructuredGraph) graph).compilationId();
+                // If the graph to be dumped is with an invalid compilation id, it is likely derived
+                // from inlining.
+                if (compilationID != CompilationIdentifier.INVALID_COMPILATION_ID) {
+                    if (previousCompilationID != CompilationIdentifier.INVALID_COMPILATION_ID && !compilationID.equals(previousCompilationID)) {
+                        // Compilation ID does not match, close existing scopes.
+                        for (int inlineDepth = previousInlineContext.size() - 1; inlineDepth >= 0; --inlineDepth) {
+                            closeScope(debug, inlineDepth);
+                        }
+                        previousInlineContext = new ArrayList<>();
+                    }
+                    previousCompilationID = compilationID;
+                }
+            }
+
+            if (!inlineContext.equals(previousInlineContext)) {
                 Map<Object, Object> properties = new HashMap<>();
                 properties.put("graph", graph.toString());
                 addCompilationId(properties, graph);
-                if (inlineContext.equals(previousInlineContext)) {
-                    /*
-                     * two different graphs have the same inline context, so make sure they appear
-                     * in different folders by closing and reopening the top scope.
-                     */
-                    int inlineDepth = previousInlineContext.size() - 1;
-                    closeScope(debug, inlineDepth);
-                    openScope(debug, inlineContext.get(inlineDepth), inlineDepth, properties);
-                } else {
-                    // Check for method scopes that must be closed since the previous dump.
-                    for (int i = 0; i < previousInlineContext.size(); ++i) {
-                        if (i >= inlineContext.size() || !inlineContext.get(i).equals(previousInlineContext.get(i))) {
-                            for (int inlineDepth = previousInlineContext.size() - 1; inlineDepth >= i; --inlineDepth) {
-                                closeScope(debug, inlineDepth);
-                            }
-                            break;
+                // Check for method scopes that must be closed since the previous dump.
+                for (int i = 0; i < previousInlineContext.size(); ++i) {
+                    if (i >= inlineContext.size() || !inlineContext.get(i).equals(previousInlineContext.get(i))) {
+                        for (int inlineDepth = previousInlineContext.size() - 1; inlineDepth >= i; --inlineDepth) {
+                            closeScope(debug, inlineDepth);
                         }
+                        break;
                     }
-                    // Check for method scopes that must be opened since the previous dump.
-                    for (int i = 0; i < inlineContext.size(); ++i) {
-                        if (i >= previousInlineContext.size() || !inlineContext.get(i).equals(previousInlineContext.get(i))) {
-                            for (int inlineDepth = i; inlineDepth < inlineContext.size(); ++inlineDepth) {
-                                openScope(debug, inlineContext.get(inlineDepth), inlineDepth, inlineDepth == inlineContext.size() - 1 ? properties : null);
-                            }
-                            break;
+                }
+                // Check for method scopes that must be opened since the previous dump.
+                for (int i = 0; i < inlineContext.size(); ++i) {
+                    if (i >= previousInlineContext.size() || !inlineContext.get(i).equals(previousInlineContext.get(i))) {
+                        for (int inlineDepth = i; inlineDepth < inlineContext.size(); ++inlineDepth) {
+                            openScope(debug, inlineContext.get(inlineDepth), inlineDepth, inlineDepth == inlineContext.size() - 1 ? properties : null);
                         }
+                        break;
                     }
                 }
             }

@@ -31,8 +31,6 @@
 #include "gc/shared/stringdedup/stringDedup.hpp"
 #include "gc/shared/workgroup.hpp"
 
-class ParallelCleaningTask;
-
 class StringDedupCleaningTask : public AbstractGangTask {
   StringDedupUnlinkOrOopsDoClosure _dedup_closure;
 
@@ -85,25 +83,6 @@ public:
   }
 
   void work();
-};
-
-// Do cleanup of some weakly held data in the same parallel task.
-// Assumes a non-moving context.
-class ParallelCleaningTask : public AbstractGangTask {
-private:
-  bool                    _unloading_occurred;
-  StringDedupCleaningTask _string_dedup_task;
-  CodeCacheUnloadingTask  _code_cache_task;
-  KlassCleaningTask       _klass_cleaning_task;
-
-public:
-  // The constructor is run in the VMThread.
-  ParallelCleaningTask(BoolObjectClosure* is_alive,
-                       uint num_workers,
-                       bool unloading_occurred,
-                       bool resize_dedup_table);
-
-  void work(uint worker_id);
 };
 
 #endif // SHARE_GC_SHARED_PARALLELCLEANING_HPP

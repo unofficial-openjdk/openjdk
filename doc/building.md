@@ -120,6 +120,8 @@ At a minimum, a machine with 4 cores is advisable, as well as 4 GB of RAM. (The
 more cores to use, the more memory you need.) At least 8 GB of free disk space
 is required.
 
+Note: The sparc port is deprecated.
+
 ### Building on aarch64
 
 At a minimum, a machine with 8 cores is advisable, as well as 8 GB of RAM.
@@ -150,14 +152,14 @@ time of writing.
 
  Operating system   Vendor/version used
  -----------------  -------------------------------------------------------
- Linux              Oracle Enterprise Linux 6.4 / 7.1 (using kernel 3.8.13)
- Solaris            Solaris 11.1 SRU 21.4.1 / 11.2 SRU 5.5
- macOS              Mac OS X 10.9 (Mavericks) / 10.10 (Yosemite)
+ Linux              Oracle Enterprise Linux 6.4 / 7.6
+ Solaris            Solaris 11.3 SRU 20
+ macOS              Mac OS X 10.13 (High Sierra)
  Windows            Windows Server 2012 R2
 
-The double version numbers for Linux, Solaris and macOS is due to the hybrid
-model used at Oracle, where header files and external libraries from an older
-version are used when building on a more modern version of the OS.
+The double version numbers for Linux and Solaris are due to the hybrid model
+used at Oracle, where header files and external libraries from an older version
+are used when building on a more modern version of the OS.
 
 The Build Group has a wiki page with [Supported Build Platforms](
 https://wiki.openjdk.java.net/display/Build/Supported+Build+Platforms). From
@@ -258,6 +260,8 @@ needed if you want to have external debug symbols. Please make sure you are
 using at least version 2.21.1 of objcopy, or that you disable external debug
 symbols.
 
+Note: The Solaris port is deprecated.
+
 ### macOS
 
 Apple is using a quite aggressive scheme of pushing OS updates, and coupling
@@ -295,9 +299,9 @@ sudo yum groupinstall "Development Tools"
 
 ### AIX
 
-The regular builds by SAP is using AIX version 7.1, but AIX 5.3 is also
-supported. See the [OpenJDK PowerPC Port Status Page](
-http://cr.openjdk.java.net/~simonis/ppc-aix-port) for details.
+Please consult the AIX section of the [Supported Build Platforms](
+https://wiki.openjdk.java.net/display/Build/Supported+Build+Platforms) OpenJDK
+Build Wiki page for details about which versions of AIX are supported.
 
 ## Native Compiler (Toolchain) Requirements
 
@@ -323,17 +327,22 @@ issues.
 
  Operating system   Toolchain version
  ------------------ -------------------------------------------------------
- Linux              gcc 7.3.0
- macOS              Apple Xcode 9.4 (using clang 9.1.0)
- Solaris            Oracle Solaris Studio 12.4 (with compiler version 5.13)
- Windows            Microsoft Visual Studio 2017 update 15.5.5
+ Linux              gcc 9.2.0
+ macOS              Apple Xcode 10.1 (using clang 10.0.0)
+ Solaris            Oracle Solaris Studio 12.6 (with compiler version 5.15)
+ Windows            Microsoft Visual Studio 2019 update 16.5.3
+
+All compilers are expected to be able to compile to the C99 language standard,
+as some C99 features are used in the source code. Microsoft Visual Studio
+doesn't fully support C99 so in practice shared code is limited to using C99
+features that it does support.
 
 ### gcc
 
-The minimum accepted version of gcc is 4.8. Older versions will generate a warning
+The minimum accepted version of gcc is 5.0. Older versions will generate a warning
 by `configure` and are unlikely to work.
 
-The JDK is currently known to be able to compile with at least version 7.4 of
+The JDK is currently known to be able to compile with at least version 9.2 of
 gcc.
 
 In general, any version between these two should be usable.
@@ -404,7 +413,7 @@ CC: Sun C++ 5.13 SunOS_i386 151846-10 2015/10/30
 
 The minimum accepted version of Visual Studio is 2010. Older versions will not
 be accepted by `configure`. The maximum accepted version of Visual Studio is
-2017. Versions older than 2017 are unlikely to continue working for long.
+2019. Versions older than 2017 are unlikely to continue working for long.
 
 If you have multiple versions of Visual Studio installed, `configure` will by
 default pick the latest. You can request a specific version to be used by
@@ -419,11 +428,10 @@ https://stackoverflow.com/questions/10888391) for other suggestions.
 
 ### IBM XL C/C++
 
-The regular builds by SAP is using version 12.1, described as `IBM XL C/C++ for
-AIX, V12.1 (5765-J02, 5725-C72) Version: 12.01.0000.0017`.
+Please consult the AIX section of the [Supported Build Platforms](
+https://wiki.openjdk.java.net/display/Build/Supported+Build+Platforms) OpenJDK
+Build Wiki page for details about which versions of XLC are supported.
 
-See the [OpenJDK PowerPC Port Status Page](
-http://cr.openjdk.java.net/~simonis/ppc-aix-port) for details.
 
 ## Boot JDK Requirements
 
@@ -469,8 +477,8 @@ If a required library is not detected by `configure`, you need to provide the
 path to it. There are two forms of the `configure` arguments to point to an
 external library: `--with-<LIB>=<path>` or `--with-<LIB>-include=<path to
 include> --with-<LIB>-lib=<path to lib>`. The first variant is more concise,
-but require the include files an library files to reside in a default hierarchy
-under this directory. In most cases, it works fine.
+but require the include files and library files to reside in a default
+hierarchy under this directory. In most cases, it works fine.
 
 As a fallback, the second version allows you to point to the include directory
 and the lib directory separately.
@@ -480,7 +488,7 @@ and the lib directory separately.
 FreeType2 from [The FreeType Project](http://www.freetype.org/) is not required
 on any platform. The exception is on Unix-based platforms when configuring such
 that the build artifacts will reference a system installed library,
-rather than bundling the JDK’s own copy.
+rather than bundling the JDK's own copy.
 
   * To install on an apt-based Linux, try running `sudo apt-get install
     libfreetype6-dev`.
@@ -619,8 +627,8 @@ bash configure [options]
 
 This will create an output directory containing the configuration and setup an
 area for the build result. This directory typically looks like
-`build/linux-x64-normal-server-release`, but the actual name depends on your
-specific configuration. (It can also be set directly, see [Using Multiple
+`build/linux-x64-server-release`, but the actual name depends on your specific
+configuration. (It can also be set directly, see [Using Multiple
 Configurations](#using-multiple-configurations)). This directory is referred to
 as `$BUILD` in this documentation.
 
@@ -676,11 +684,14 @@ features, use `bash configure --help=short` instead.)
     (or variants) of Hotspot. Valid variants are: `server`, `client`,
     `minimal`, `core`, `zero`, `custom`. Note that not all
     variants are possible to combine in a single build.
-  * `--with-jvm-features=<feature>[,<feature>...]` - Use the specified JVM
-    features when building Hotspot. The list of features will be enabled on top
-    of the default list. For the `custom` JVM variant, this default list is
-    empty. A complete list of available JVM features can be found using `bash
-    configure --help`.
+  * `--enable-jvm-feature-<feature>` or `--disable-jvm-feature-<feature>` -
+    Include (or exclude) `<feature>` as a JVM feature in Hotspot. You can also
+    specify a list of features to be enabled, separated by space or comma, as
+    `--with-jvm-features=<feature>[,<feature>...]`. If you prefix `<feature>`
+    with a `-`, it will be disabled. These options will modify the default list
+    of features for the JVM variant(s) you are building. For the `custom` JVM
+    variant, the default list is empty. A complete list of valid JVM features
+    can be found using `bash configure --help`.
   * `--with-target-bits=<bits>` - Create a target binary suitable for running
     on a `<bits>` platform. Use this to create 32-bit output on a 64-bit build
     platform, instead of doing a full cross-compile. (This is known as a
@@ -723,9 +734,12 @@ can in turn be overriden at runtime by setting the `java.library.path` property.
 
 Certain third-party libraries used by the JDK (libjpeg, giflib, libpng, lcms
 and zlib) are included in the JDK repository. The default behavior of the
-JDK build is to use this version of these libraries, but they might be
-replaced by an external version. To do so, specify `system` as the `<source>`
-option in these arguments. (The default is `bundled`).
+JDK build is to use the included ("bundled") versions of libjpeg, giflib,
+libpng and lcms.
+For zlib, the system lib (if present) is used except on Windows and AIX.
+However the bundled libraries may be replaced by an external version.
+To do so, specify `system` as the `<source>` option in these arguments.
+(The default is `bundled`).
 
   * `--with-libjpeg=<source>` - Use the specified source for libjpeg
   * `--with-giflib=<source>` - Use the specified source for giflib
@@ -804,7 +818,7 @@ control variables.
 It is possible to build just a single module, a single phase, or a single phase
 of a single module, by creating make targets according to these followin
 patterns. A phase can be either of `gensrc`, `gendata`, `copy`, `java`,
-`launchers`, `libs` or `rmic`. See [Using Fine-Grained Make Targets](
+`launchers`, or `libs`. See [Using Fine-Grained Make Targets](
 #using-fine-grained-make-targets) for more details about this functionality.
 
   * `<phase>` - Build the specified phase and everything it depends on
@@ -864,6 +878,7 @@ Suggestions for Advanced Users](#hints-and-suggestions-for-advanced-users) and
   * `CONF_CHECK`
   * `COMPARE_BUILD`
   * `JDK_FILTER`
+  * `SPEC_FILTER`
 
 ## Running Tests
 
@@ -876,7 +891,7 @@ containing `lib/jtreg.jar` etc.
 
 The [Adoption Group](https://wiki.openjdk.java.net/display/Adoption) provides
 recent builds of jtreg [here](
-https://adopt-openjdk.ci.cloudbees.com/job/jtreg/lastSuccessfulBuild/artifact).
+https://ci.adoptopenjdk.net/view/Dependencies/job/jtreg/lastSuccessfulBuild/artifact).
 Download the latest `.tar.gz` file, unpack it, and point `--with-jtreg` to the
 `jtreg` directory that you just unpacked.
 
@@ -1025,14 +1040,6 @@ appending the directory when searching for cross-compilations tools
 (`--with-toolchain-path`). As a compact form, you can also use `--with-devkit`
 to point to a single directory, if it is correctly setup. (See `basics.m4` for
 details.)
-
-If you are unsure what toolchain and versions to use, these have been proved
-working at the time of writing:
-
-  * [aarch64](
-https://releases.linaro.org/archive/13.11/components/toolchain/binaries/gcc-linaro-aarch64-linux-gnu-4.8-2013.11_linux.tar.xz)
-  * [arm 32-bit hardware floating  point](
-https://launchpad.net/linaro-toolchain-unsupported/trunk/2012.09/+download/gcc-linaro-arm-linux-gnueabihf-raspbian-2012.09-20120921_linux.tar.bz2)
 
 ### Native Libraries
 
@@ -1612,7 +1619,6 @@ and other artifact the module consists of. The phases are:
   * `java` (Compile Java code)
   * `launchers` (Compile native executables)
   * `libs` (Compile native libraries)
-  * `rmic` (Run the `rmic` tool)
 
 You can build only a single phase for a module by using the notation
 `$MODULE-$PHASE`. For instance, to build the `gensrc` phase for `java.base`,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,8 @@ import sun.jvm.hotspot.oops.*;
 import sun.jvm.hotspot.utilities.*;
 import sun.jvm.hotspot.debugger.*;
 import sun.jvm.hotspot.types.*;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
 public class ObjectSynchronizer {
   static {
@@ -44,7 +46,7 @@ public class ObjectSynchronizer {
     Type type;
     try {
       type = db.lookupType("ObjectSynchronizer");
-      gBlockList = type.getAddressField("gBlockList").getValue();
+      gBlockList = type.getAddressField("g_block_list").getValue();
       blockSize = db.lookupIntConstant("ObjectSynchronizer::_BLOCKSIZE").intValue();
       defaultCacheLineSize = db.lookupIntConstant("DEFAULT_CACHE_LINE_SIZE").intValue();
     } catch (RuntimeException e) { }
@@ -101,14 +103,14 @@ public class ObjectSynchronizer {
     }
 
     public boolean hasNext() {
-      return (index > 0 || block.freeNext() != null);
+      return (index > 0 || block.nextOM() != null);
     }
 
     public Object next() {
       Address addr;
       if (index == 0) {
         // advance to next block
-        blockAddr = block.freeNext();
+        blockAddr = block.nextOM();
         if (blockAddr == null) {
           throw new NoSuchElementException();
         }

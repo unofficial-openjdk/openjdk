@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,8 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/classLoaderDataGraph.hpp"
+#include "classfile/dictionary.hpp"
 #include "classfile/protectionDomainCache.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "logging/log.hpp"
@@ -43,18 +45,38 @@ int ProtectionDomainCacheTable::index_for(Handle protection_domain) {
 }
 
 ProtectionDomainCacheTable::ProtectionDomainCacheTable(int table_size)
-  : Hashtable<ClassLoaderWeakHandle, mtClass>(table_size, sizeof(ProtectionDomainCacheEntry))
+  : Hashtable<WeakHandle<vm_class_loader_data>, mtClass>(table_size, sizeof(ProtectionDomainCacheEntry))
 {   _dead_entries = false;
     _total_oops_removed = 0;
 }
 
 void ProtectionDomainCacheTable::trigger_cleanup() {
-  MutexLockerEx ml(Service_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker ml(Service_lock, Mutex::_no_safepoint_check_flag);
   _dead_entries = true;
   Service_lock->notify_all();
 }
 
+class CleanProtectionDomainEntries : public CLDClosure {
+  void do_cld(ClassLoaderData* data) {
+    Dictionary* dictionary = data->dictionary();
+    if (dictionary != NULL) {
+      dictionary->clean_cached_protection_domains();
+    }
+  }
+};
+
 void ProtectionDomainCacheTable::unlink() {
+  {
+    // First clean cached pd lists in loaded CLDs
+    // It's unlikely, but some loaded classes in a dictionary might
+    // point to a protection_domain that has been unloaded.
+    // The dictionary pd_set points at entries in the ProtectionDomainCacheTable.
+    MutexLocker ml(ClassLoaderDataGraph_lock);
+    MutexLocker mldict(SystemDictionary_lock);  // need both.
+    CleanProtectionDomainEntries clean;
+    ClassLoaderDataGraph::loaded_cld_do(&clean);
+  }
+
   MutexLocker ml(SystemDictionary_lock);
   int oops_removed = 0;
   for (int i = 0; i < table_size(); ++i) {
@@ -138,7 +160,7 @@ ProtectionDomainCacheEntry* ProtectionDomainCacheTable::get(Handle protection_do
 ProtectionDomainCacheEntry* ProtectionDomainCacheTable::find_entry(int index, Handle protection_domain) {
   assert_locked_or_safepoint(SystemDictionary_lock);
   for (ProtectionDomainCacheEntry* e = bucket(index); e != NULL; e = e->next()) {
-    if (oopDesc::equals(e->object_no_keepalive(), protection_domain())) {
+    if (e->object_no_keepalive() == protection_domain()) {
       return e;
     }
   }
@@ -158,8 +180,8 @@ ProtectionDomainCacheEntry* ProtectionDomainCacheTable::add_entry(int index, uns
     protection_domain->print_value_on(&ls);
     ls.cr();
   }
-  ClassLoaderWeakHandle w = ClassLoaderWeakHandle::create(protection_domain);
+  WeakHandle<vm_class_loader_data> w = WeakHandle<vm_class_loader_data>::create(protection_domain);
   ProtectionDomainCacheEntry* p = new_entry(hash, w);
-  Hashtable<ClassLoaderWeakHandle, mtClass>::add_entry(index, p);
+  Hashtable<WeakHandle<vm_class_loader_data>, mtClass>::add_entry(index, p);
   return p;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,8 @@
 #include "code/codeCache.hpp"
 #include "interpreter/interpreter.hpp"
 #include "memory/resourceArea.hpp"
-#include "oops/markOop.hpp"
+#include "memory/universe.hpp"
+#include "oops/markWord.hpp"
 #include "oops/method.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/methodHandles.hpp"
@@ -176,23 +177,20 @@ bool frame::safe_for_sender(JavaThread *thread) {
   address _SP = (address) sp();
   address _FP = (address) fp();
   address _UNEXTENDED_SP = (address) unextended_sp();
-  // sp must be within the stack
-  bool sp_safe = (_SP <= thread->stack_base()) &&
-                 (_SP >= thread->stack_base() - thread->stack_size());
 
-  if (!sp_safe) {
+  // consider stack guards when trying to determine "safe" stack pointers
+  // sp must be within the usable part of the stack (not in guards)
+  if (!thread->is_in_usable_stack(_SP)) {
     return false;
   }
 
   // unextended sp must be within the stack and above or equal sp
-  bool unextended_sp_safe = (_UNEXTENDED_SP <= thread->stack_base()) &&
-                            (_UNEXTENDED_SP >= _SP);
-
-  if (!unextended_sp_safe) return false;
+  if (!thread->is_in_stack_range_incl(_UNEXTENDED_SP, _SP)) {
+    return false;
+  }
 
   // an fp must be within the stack and above (but not equal) sp
-  bool fp_safe = (_FP <= thread->stack_base()) &&
-                 (_FP > _SP);
+  bool fp_safe = thread->is_in_stack_range_excl(_FP, _SP);
 
   // We know sp/unextended_sp are safe only fp is questionable here
 
@@ -251,10 +249,7 @@ bool frame::safe_for_sender(JavaThread *thread) {
 
     // an fp must be within the stack and above (but not equal) current frame's _FP
 
-    bool sender_fp_safe = (sender_fp <= thread->stack_base()) &&
-                   (sender_fp > _FP);
-
-    if (!sender_fp_safe) {
+    if (!thread->is_in_stack_range_excl(sender_fp, _FP)) {
       return false;
     }
 
@@ -276,12 +271,9 @@ bool frame::safe_for_sender(JavaThread *thread) {
 
     if (sender.is_entry_frame()) {
       // Validate the JavaCallWrapper an entry frame must have
-
       address jcw = (address)sender.entry_frame_call_wrapper();
 
-      bool jcw_safe = (jcw <= thread->stack_base()) && (jcw > sender_fp);
-
-      return jcw_safe;
+      return thread->is_in_stack_range_excl(jcw, sender_fp);
     }
 
     // If the frame size is 0 something (or less) is bad because every nmethod has a non-zero frame size
@@ -558,9 +550,10 @@ frame frame::sender(RegisterMap* map) const {
 
 
 void frame::patch_pc(Thread* thread, address pc) {
+  assert(_cb == CodeCache::find_blob(pc), "unexpected pc");
   vmassert(_deopt_state != unknown, "frame is unpatchable");
-  if(thread == Thread::current()) {
-   StubRoutines::Sparc::flush_callers_register_windows_func()();
+  if (thread == Thread::current()) {
+    StubRoutines::Sparc::flush_callers_register_windows_func()();
   }
   if (TracePcPatching) {
     // QQQ this assert is invalid (or too strong anyway) sice _pc could
@@ -569,9 +562,7 @@ void frame::patch_pc(Thread* thread, address pc) {
     tty->print_cr("patch_pc at address " INTPTR_FORMAT " [" INTPTR_FORMAT " -> " INTPTR_FORMAT "]",
                   p2i(O7_addr()), p2i(_pc), p2i(pc));
   }
-  _cb = CodeCache::find_blob(pc);
   *O7_addr() = pc - pc_return_offset;
-  _cb = CodeCache::find_blob(_pc);
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
   if (original_pc != NULL) {
     assert(original_pc == _pc, "expected original to be stored before patching");
@@ -665,16 +656,12 @@ bool frame::is_interpreted_frame_valid(JavaThread* thread) const {
 
   // validate ConstantPoolCache*
   ConstantPoolCache* cp = *interpreter_frame_cache_addr();
-  if (cp == NULL || !cp->is_metaspace_object()) return false;
+  if (MetaspaceObj::is_valid(cp) == false) return false;
 
   // validate locals
 
   address locals =  (address) *interpreter_frame_locals_addr();
-
-  if (locals > thread->stack_base() || locals < (address) fp()) return false;
-
-  // We'd have to be pretty unlucky to be mislead at this point
-  return true;
+  return thread->is_in_stack_range_incl(locals, (address)fp());
 }
 
 

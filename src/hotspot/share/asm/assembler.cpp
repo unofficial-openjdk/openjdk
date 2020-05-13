@@ -27,7 +27,8 @@
 #include "asm/macroAssembler.hpp"
 #include "asm/macroAssembler.inline.hpp"
 #include "gc/shared/collectedHeap.hpp"
-#include "runtime/atomic.hpp"
+#include "memory/universe.hpp"
+#include "oops/compressedOops.hpp"
 #include "runtime/icache.hpp"
 #include "runtime/os.hpp"
 #include "runtime/thread.hpp"
@@ -216,85 +217,6 @@ void Label::patch_instructions(MacroAssembler* masm) {
   }
 }
 
-struct DelayedConstant {
-  typedef void (*value_fn_t)();
-  BasicType type;
-  intptr_t value;
-  value_fn_t value_fn;
-  // This limit of 20 is generous for initial uses.
-  // The limit needs to be large enough to store the field offsets
-  // into classes which do not have statically fixed layouts.
-  // (Initial use is for method handle object offsets.)
-  // Look for uses of "delayed_value" in the source code
-  // and make sure this number is generous enough to handle all of them.
-  enum { DC_LIMIT = 20 };
-  static DelayedConstant delayed_constants[DC_LIMIT];
-  static DelayedConstant* add(BasicType type, value_fn_t value_fn);
-  bool match(BasicType t, value_fn_t cfn) {
-    return type == t && value_fn == cfn;
-  }
-  static void update_all();
-};
-
-DelayedConstant DelayedConstant::delayed_constants[DC_LIMIT];
-// Default C structure initialization rules have the following effect here:
-// = { { (BasicType)0, (intptr_t)NULL }, ... };
-
-DelayedConstant* DelayedConstant::add(BasicType type,
-                                      DelayedConstant::value_fn_t cfn) {
-  for (int i = 0; i < DC_LIMIT; i++) {
-    DelayedConstant* dcon = &delayed_constants[i];
-    if (dcon->match(type, cfn))
-      return dcon;
-    if (dcon->value_fn == NULL) {
-        dcon->value_fn = cfn;
-        dcon->type = type;
-        return dcon;
-    }
-  }
-  // If this assert is hit (in pre-integration testing!) then re-evaluate
-  // the comment on the definition of DC_LIMIT.
-  guarantee(false, "too many delayed constants");
-  return NULL;
-}
-
-void DelayedConstant::update_all() {
-  for (int i = 0; i < DC_LIMIT; i++) {
-    DelayedConstant* dcon = &delayed_constants[i];
-    if (dcon->value_fn != NULL && dcon->value == 0) {
-      typedef int     (*int_fn_t)();
-      typedef address (*address_fn_t)();
-      switch (dcon->type) {
-      case T_INT:     dcon->value = (intptr_t) ((int_fn_t)    dcon->value_fn)(); break;
-      case T_ADDRESS: dcon->value = (intptr_t) ((address_fn_t)dcon->value_fn)(); break;
-      default:        break;
-      }
-    }
-  }
-}
-
-RegisterOrConstant AbstractAssembler::delayed_value(int(*value_fn)(), Register tmp, int offset) {
-  intptr_t val = (intptr_t) (*value_fn)();
-  if (val != 0)  return val + offset;
-  return delayed_value_impl(delayed_value_addr(value_fn), tmp, offset);
-}
-RegisterOrConstant AbstractAssembler::delayed_value(address(*value_fn)(), Register tmp, int offset) {
-  intptr_t val = (intptr_t) (*value_fn)();
-  if (val != 0)  return val + offset;
-  return delayed_value_impl(delayed_value_addr(value_fn), tmp, offset);
-}
-intptr_t* AbstractAssembler::delayed_value_addr(int(*value_fn)()) {
-  DelayedConstant* dcon = DelayedConstant::add(T_INT, (DelayedConstant::value_fn_t) value_fn);
-  return &dcon->value;
-}
-intptr_t* AbstractAssembler::delayed_value_addr(address(*value_fn)()) {
-  DelayedConstant* dcon = DelayedConstant::add(T_ADDRESS, (DelayedConstant::value_fn_t) value_fn);
-  return &dcon->value;
-}
-void AbstractAssembler::update_delayed_values() {
-  DelayedConstant::update_all();
-}
-
 void AbstractAssembler::block_comment(const char* comment) {
   if (sect() == CodeBuffer::SECT_INSTS) {
     code_section()->outer()->block_comment(offset(), comment);
@@ -311,25 +233,22 @@ const char* AbstractAssembler::code_string(const char* str) {
 bool MacroAssembler::uses_implicit_null_check(void* address) {
   // Exception handler checks the nmethod's implicit null checks table
   // only when this method returns false.
-  intptr_t int_address = reinterpret_cast<intptr_t>(address);
-  intptr_t cell_header_size = Universe::heap()->cell_header_size();
-  size_t region_size = os::vm_page_size() + cell_header_size;
+  uintptr_t addr = reinterpret_cast<uintptr_t>(address);
+  uintptr_t page_size = (uintptr_t)os::vm_page_size();
 #ifdef _LP64
-  if (UseCompressedOops && Universe::narrow_oop_base() != NULL) {
+  if (UseCompressedOops && CompressedOops::base() != NULL) {
     // A SEGV can legitimately happen in C2 code at address
     // (heap_base + offset) if  Matcher::narrow_oop_use_complex_address
     // is configured to allow narrow oops field loads to be implicitly
     // null checked
-    intptr_t start = ((intptr_t)Universe::narrow_oop_base()) - cell_header_size;
-    intptr_t end = start + region_size;
-    if (int_address >= start && int_address < end) {
+    uintptr_t start = (uintptr_t)CompressedOops::base();
+    uintptr_t end = start + page_size;
+    if (addr >= start && addr < end) {
       return true;
     }
   }
 #endif
-  intptr_t start = -cell_header_size;
-  intptr_t end = start + region_size;
-  return int_address >= start && int_address < end;
+  return addr < page_size;
 }
 
 bool MacroAssembler::needs_explicit_null_check(intptr_t offset) {
@@ -339,12 +258,8 @@ bool MacroAssembler::needs_explicit_null_check(intptr_t offset) {
   // with -1. Another example is GraphBuilder::access_field(...) which uses -1 as placeholder
   // for offsets to be patched in later. The -1 there means the offset is not yet known
   // and may lie outside of the zero-trapping page, and thus we need to ensure we're forcing
-  // an explicit null check for -1, even if it may otherwise be in the range
-  // [-cell_header_size, os::vm_page_size).
-  // TODO: Find and replace all relevant uses of -1 with a reasonably named constant.
-  if (offset == -1) return true;
+  // an explicit null check for -1.
 
-  // Check if offset is outside of [-cell_header_size, os::vm_page_size)
-  return offset < -Universe::heap()->cell_header_size() ||
-         offset >= os::vm_page_size();
+  // Check if offset is outside of [0, os::vm_page_size()]
+  return offset < 0 || offset >= os::vm_page_size();
 }

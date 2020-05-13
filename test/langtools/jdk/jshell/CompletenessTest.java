@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8149524 8131024 8165211 8080071 8130454 8167343 8129559 8114842 8182268
+ * @bug 8149524 8131024 8165211 8080071 8130454 8167343 8129559 8114842 8182268 8223782 8235474
  * @summary Test SourceCodeAnalysis
  * @build KullaTesting TestingInputStream
  * @run testng CompletenessTest
@@ -31,11 +31,15 @@
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.function.Consumer;
+import javax.lang.model.SourceVersion;
+import jdk.jshell.JShell;
 
 import org.testng.annotations.Test;
 import jdk.jshell.SourceCodeAnalysis.Completeness;
 
 import static jdk.jshell.SourceCodeAnalysis.Completeness.*;
+import org.testng.annotations.BeforeMethod;
 
 @Test
 public class CompletenessTest extends KullaTesting {
@@ -63,7 +67,9 @@ public class CompletenessTest extends KullaTesting {
         "foo: while (true) { printf(\"Innn\"); break foo; }",
         "class Case<E1 extends Enum<E1>, E2 extends Enum<E2>, E3 extends Enum<E3>> {}",
         ";",
-        "enum Tt { FOO, BAR, BAZ,; }"
+        "enum Tt { FOO, BAR, BAZ,; }",
+        "record D(int i) {}",
+        "static record D(int i) {}",
     };
 
     static final String[] expression = new String[] {
@@ -80,6 +86,10 @@ public class CompletenessTest extends KullaTesting {
         "i >= 0 && Character.isWhitespace(s.charAt(i))",
         "int.class",
         "String.class",
+        "record.any",
+        "record()",
+        "record(1)",
+        "record.length()"
     };
 
     static final String[] complete_with_semi = new String[] {
@@ -191,6 +201,28 @@ public class CompletenessTest extends KullaTesting {
         "var v = switch (x) { case ",
         "var v = switch (x) { case 0:",
         "var v = switch (x) { case 0: break 12; ",
+        "record D",
+        "record D(",
+        "record D(String",
+        "record D(String i",
+        "record D(String i,",
+        "record D(String i, String",
+        "record D(String i, String j",
+        "record D(String i)",
+        "record D(String i, String j)",
+        "record D(String i) {",
+        "record D(String i, String j) {",
+        "static record D",
+        "static record D(",
+        "static record D(String",
+        "static record D(String i",
+        "static record D(String i,",
+        "static record D(String i, String",
+        "static record D(String i, String j",
+        "static record D(String i)",
+        "static record D(String i, String j)",
+        "static record D(String i) {",
+        "static record D(String i, String j) {",
     };
 
     static final String[] unknown = new String[] {
@@ -239,7 +271,7 @@ public class CompletenessTest extends KullaTesting {
     }
 
     public void test_complete() {
-        assertStatus(complete, COMPLETE);
+         assertStatus(complete, COMPLETE);
     }
 
     public void test_expression() {
@@ -328,6 +360,18 @@ public class CompletenessTest extends KullaTesting {
         assertStatus("/**  test", DEFINITELY_INCOMPLETE, null);
     }
 
+    public void testTextBlocks() {
+        assertStatus("\"\"\"", DEFINITELY_INCOMPLETE, null);
+        assertStatus("\"\"\"broken", DEFINITELY_INCOMPLETE, null);
+        assertStatus("\"\"\"\ntext", DEFINITELY_INCOMPLETE, null);
+        assertStatus("\"\"\"\ntext\"\"", DEFINITELY_INCOMPLETE, "\"\"\"\ntext\"\"\"");
+        assertStatus("\"\"\"\ntext\"\"\"", COMPLETE, "\"\"\"\ntext\"\"\"");
+        assertStatus("\"\"\"\ntext\\\"\"\"\"", COMPLETE, "\"\"\"\ntext\\\"\"\"\"");
+        assertStatus("\"\"\"\ntext\\\"\"\"", DEFINITELY_INCOMPLETE, null);
+        assertStatus("\"\"\"\ntext\\\"\"\"\\\"\"\"", DEFINITELY_INCOMPLETE, null);
+        assertStatus("\"\"\"\ntext\\\"\"\"\\\"\"\"\"\"\"", COMPLETE, "\"\"\"\ntext\\\"\"\"\\\"\"\"\"\"\"");
+    }
+
     public void testMiscSource() {
         assertStatus("if (t) if ", DEFINITELY_INCOMPLETE, "if (t) if"); //Bug
         assertStatus("int m() {} dfd", COMPLETE, "int m() {}");
@@ -335,4 +379,10 @@ public class CompletenessTest extends KullaTesting {
         assertStatus("int[] m = {1, 2}, n = new int[0];  int i;", COMPLETE,
                      "int[] m = {1, 2}, n = new int[0];");
     }
+
+    @BeforeMethod
+    public void setUp() {
+        setUp(b -> b.compilerOptions("--enable-preview", "-source", String.valueOf(SourceVersion.latest().ordinal())));
+    }
+
 }

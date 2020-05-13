@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
 #include "memory/metaspace.hpp"
 #include "oops/oopHandle.hpp"
 #include "oops/weakHandle.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/mutex.hpp"
 #include "utilities/growableArray.hpp"
 #include "utilities/macros.hpp"
@@ -116,17 +117,20 @@ class ClassLoaderData : public CHeapObj<mtClass> {
                                     // classes in the class loader are allocated.
   Mutex* _metaspace_lock;  // Locks the metaspace for allocations and setup.
   bool _unloading;         // true if this class loader goes away
-  bool _is_unsafe_anonymous; // CLD is dedicated to one class and that class determines the CLDs lifecycle.
-                             // For example, an unsafe anonymous class.
+  bool _has_class_mirror_holder; // If true, CLD is dedicated to one class and that class determines
+                                 // the CLDs lifecycle.  For example, a non-strong hidden class or an
+                                 // unsafe anonymous class.  Arrays of these classes are also assigned
+                                 // to these class loader datas.
 
   // Remembered sets support for the oops in the class loader data.
   bool _modified_oops;             // Card Table Equivalent (YC/CMS support)
   bool _accumulated_modified_oops; // Mod Union Equivalent (CMS support)
 
-  s2 _keep_alive;          // if this CLD is kept alive.
-                           // Used for unsafe anonymous classes and the boot class
-                           // loader. _keep_alive does not need to be volatile or
-                           // atomic since there is one unique CLD per unsafe anonymous class.
+  int _keep_alive;         // if this CLD is kept alive.
+                           // Used for non-strong hidden classes, unsafe anonymous classes and the
+                           // boot class loader. _keep_alive does not need to be volatile or
+                           // atomic since there is one unique CLD per non-strong hidden class
+                           // or unsafe anonymous class.
 
   volatile int _claim; // non-zero if claimed, for example during GC traces.
                        // To avoid applying oop closure more than once.
@@ -159,9 +163,9 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   JFR_ONLY(DEFINE_TRACE_ID_FIELD;)
 
   void set_next(ClassLoaderData* next) { _next = next; }
-  ClassLoaderData* next() const        { return _next; }
+  ClassLoaderData* next() const        { return Atomic::load(&_next); }
 
-  ClassLoaderData(Handle h_class_loader, bool is_unsafe_anonymous);
+  ClassLoaderData(Handle h_class_loader, bool has_class_mirror_holder);
   ~ClassLoaderData();
 
   // The CLD are not placed in the Heap, so the Card Table or
@@ -205,16 +209,17 @@ class ClassLoaderData : public CHeapObj<mtClass> {
 
   // The "claim" is typically used to check if oops_do needs to be applied on
   // the CLD or not. Most GCs only perform strong marking during the marking phase.
-  enum {
-    _claim_none        = 0,
-    _claim_finalizable = 2,
-    _claim_strong      = 3
+  enum Claim {
+    _claim_none         = 0,
+    _claim_finalizable  = 2,
+    _claim_strong       = 3,
+    _claim_other        = 4
   };
   void clear_claim() { _claim = 0; }
+  void clear_claim(int claim);
   bool claimed() const { return _claim != 0; }
+  bool claimed(int claim) const { return (_claim & claim) == claim; }
   bool try_claim(int claim);
-  int get_claim() const { return _claim; }
-  void set_claim(int claim) { _claim = claim; }
 
   // Computes if the CLD is alive or not. This is safe to call in concurrent
   // contexts.
@@ -229,7 +234,7 @@ class ClassLoaderData : public CHeapObj<mtClass> {
 
   Mutex* metaspace_lock() const { return _metaspace_lock; }
 
-  bool is_unsafe_anonymous() const { return _is_unsafe_anonymous; }
+  bool has_class_mirror_holder() const { return _has_class_mirror_holder; }
 
   static void init_null_class_loader_data();
 
@@ -238,15 +243,15 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   }
 
   // Returns true if this class loader data is for the system class loader.
-  // (Note that the class loader data may be unsafe anonymous.)
+  // (Note that the class loader data may be for a non-strong hidden class or unsafe anonymous class)
   bool is_system_class_loader_data() const;
 
   // Returns true if this class loader data is for the platform class loader.
-  // (Note that the class loader data may be unsafe anonymous.)
+  // (Note that the class loader data may be for a non-strong hidden class or unsafe anonymous class)
   bool is_platform_class_loader_data() const;
 
   // Returns true if this class loader data is for the boot class loader.
-  // (Note that the class loader data may be unsafe anonymous.)
+  // (Note that the class loader data may be for a non-strong hidden class or unsafe anonymous class)
   inline bool is_boot_class_loader_data() const;
 
   bool is_builtin_class_loader_data() const;
@@ -267,7 +272,7 @@ class ClassLoaderData : public CHeapObj<mtClass> {
     return _unloading;
   }
 
-  // Used to refcount an unsafe anonymous class's CLD in order to
+  // Used to refcount a non-strong hidden class's or unsafe anonymous class's CLD in order to
   // indicate their aliveness.
   void inc_keep_alive();
   void dec_keep_alive();
@@ -282,9 +287,9 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   JNIMethodBlock* jmethod_ids() const              { return _jmethod_ids; }
   void set_jmethod_ids(JNIMethodBlock* new_block)  { _jmethod_ids = new_block; }
 
-  void print()                                     { print_on(tty); }
+  void print() const;
   void print_on(outputStream* out) const PRODUCT_RETURN;
-  void print_value()                               { print_value_on(tty); }
+  void print_value() const;
   void print_value_on(outputStream* out) const;
   void verify();
 
@@ -300,6 +305,10 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   ModuleEntryTable* modules();
   bool modules_defined() { return (_modules != NULL); }
 
+  // Offsets
+  static ByteSize holder_offset()     { return in_ByteSize(offset_of(ClassLoaderData, _holder)); }
+  static ByteSize keep_alive_offset() { return in_ByteSize(offset_of(ClassLoaderData, _keep_alive)); }
+
   // Loaded class dictionary
   Dictionary* dictionary() const { return _dictionary; }
 
@@ -307,7 +316,6 @@ class ClassLoaderData : public CHeapObj<mtClass> {
 
   static ClassLoaderData* class_loader_data(oop loader);
   static ClassLoaderData* class_loader_data_or_null(oop loader);
-  static ClassLoaderData* unsafe_anonymous_class_loader_data(Handle loader);
 
   // Returns Klass* of associated class loader, or NULL if associated loader is 'bootstrap'.
   // Also works if unloading.

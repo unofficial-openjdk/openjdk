@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,25 +27,25 @@
 #include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/softRefPolicy.hpp"
 #include "gc/z/zBarrierSet.hpp"
-#include "gc/z/zCollectorPolicy.hpp"
 #include "gc/z/zDirector.hpp"
 #include "gc/z/zDriver.hpp"
-#include "gc/z/zInitialize.hpp"
 #include "gc/z/zHeap.hpp"
+#include "gc/z/zInitialize.hpp"
 #include "gc/z/zRuntimeWorkers.hpp"
 #include "gc/z/zStat.hpp"
+#include "gc/z/zUncommitter.hpp"
 
 class ZCollectedHeap : public CollectedHeap {
   friend class VMStructs;
 
 private:
-  ZCollectorPolicy* _collector_policy;
   SoftRefPolicy     _soft_ref_policy;
   ZBarrierSet       _barrier_set;
   ZInitialize       _initialize;
   ZHeap             _heap;
   ZDirector*        _director;
   ZDriver*          _driver;
+  ZUncommitter*     _uncommitter;
   ZStat*            _stat;
   ZRuntimeWorkers   _runtime_workers;
 
@@ -56,25 +56,26 @@ private:
 public:
   static ZCollectedHeap* heap();
 
-  ZCollectedHeap(ZCollectorPolicy* policy);
+  ZCollectedHeap();
   virtual Name kind() const;
   virtual const char* name() const;
   virtual jint initialize();
   virtual void initialize_serviceability();
   virtual void stop();
 
-  virtual CollectorPolicy* collector_policy() const;
   virtual SoftRefPolicy* soft_ref_policy();
 
   virtual size_t max_capacity() const;
   virtual size_t capacity() const;
   virtual size_t used() const;
+  virtual size_t unused() const;
 
   virtual bool is_maximal_no_gc() const;
-  virtual bool is_scavengable(oop obj);
   virtual bool is_in(const void* p) const;
-  virtual bool is_in_closed_subset(const void* p) const;
 
+  virtual uint32_t hash_oop(oop obj) const;
+
+  virtual oop array_allocate(Klass* klass, int size, int length, bool do_zero, TRAPS);
   virtual HeapWord* mem_allocate(size_t size, bool* gc_overhead_limit_was_exceeded);
   virtual MetaWord* satisfy_failed_metadata_allocation(ClassLoaderData* loader_data,
                                                        size_t size,
@@ -97,14 +98,12 @@ public:
   virtual GrowableArray<MemoryPool*> memory_pools();
 
   virtual void object_iterate(ObjectClosure* cl);
-  virtual void safe_object_iterate(ObjectClosure* cl);
 
-  virtual HeapWord* block_start(const void* addr) const;
-  virtual size_t block_size(const HeapWord* addr) const;
-  virtual bool block_is_obj(const HeapWord* addr) const;
+  virtual void keep_alive(oop obj);
 
   virtual void register_nmethod(nmethod* nm);
   virtual void unregister_nmethod(nmethod* nm);
+  virtual void flush_nmethod(nmethod* nm);
   virtual void verify_nmethod(nmethod* nmethod);
 
   virtual WorkGang* get_safepoint_workers();
@@ -123,10 +122,12 @@ public:
   virtual void print_extended_on(outputStream* st) const;
   virtual void print_gc_threads_on(outputStream* st) const;
   virtual void print_tracing_info() const;
+  virtual bool print_location(outputStream* st, void* addr) const;
 
   virtual void prepare_for_verify();
   virtual void verify(VerifyOption option /* ignored */);
   virtual bool is_oop(oop object) const;
+  virtual bool supports_concurrent_gc_breakpoints() const;
 };
 
 #endif // SHARE_GC_Z_ZCOLLECTEDHEAP_HPP

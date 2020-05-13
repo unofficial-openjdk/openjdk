@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,13 @@ import java.text.*;
 import java.text.spi.*;
 import java.util.*;
 import java.util.spi.*;
+import java.util.stream.IntStream;
 import sun.util.locale.provider.LocaleProviderAdapter;
 
 public class LocaleProviders {
+
+    private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
+    private static final boolean IS_MAC = System.getProperty("os.name").startsWith("Mac");
 
     public static void main(String[] args) {
         String methodName = args[0];
@@ -72,6 +76,22 @@ public class LocaleProviders {
                 bug8027289Test(args[1]);
                 break;
 
+            case "bug8220227Test":
+                bug8220227Test();
+                break;
+
+            case "bug8228465Test":
+                bug8228465Test();
+                break;
+
+            case "bug8232871Test":
+                bug8232871Test();
+                break;
+
+            case "bug8232860Test":
+                bug8232860Test();
+                break;
+
             default:
                 throw new RuntimeException("Test method '"+methodName+"' not found.");
         }
@@ -102,7 +122,7 @@ public class LocaleProviders {
     static void bug7198834Test() {
         LocaleProviderAdapter lda = LocaleProviderAdapter.getAdapter(DateFormatProvider.class, Locale.US);
         LocaleProviderAdapter.Type type = lda.getAdapterType();
-        if (type == LocaleProviderAdapter.Type.HOST && System.getProperty("os.name").startsWith("Windows")) {
+        if (type == LocaleProviderAdapter.Type.HOST && IS_WINDOWS) {
             DateFormat df = DateFormat.getDateInstance(DateFormat.FULL, Locale.US);
             String date = df.format(new Date());
             if (date.charAt(date.length()-1) == ' ') {
@@ -129,7 +149,7 @@ public class LocaleProviders {
 
     // This test assumes Windows localized language/country display names.
     static void bug8010666Test() {
-        if (System.getProperty("os.name").startsWith("Windows")) {
+        if (IS_WINDOWS) {
             NumberFormat nf = NumberFormat.getInstance(Locale.US);
             try {
                 double ver = nf.parse(System.getProperty("os.version"))
@@ -211,7 +231,7 @@ public class LocaleProviders {
     }
 
     static void bug8013903Test() {
-        if (System.getProperty("os.name").startsWith("Windows")) {
+        if (IS_WINDOWS) {
             Date sampleDate = new Date(0x10000000000L);
             String hostResult = "\u5e73\u6210 16.11.03 (Wed) AM 11:53:47";
             String jreResult = "\u5e73\u6210 16.11.03 (\u6c34) \u5348\u524d 11:53:47";
@@ -237,7 +257,7 @@ public class LocaleProviders {
     }
 
     static void bug8027289Test(String expectedCodePoint) {
-        if (System.getProperty("os.name").startsWith("Windows")) {
+        if (IS_WINDOWS) {
             char[] expectedSymbol = Character.toChars(Integer.valueOf(expectedCodePoint, 16));
             NumberFormat nf = NumberFormat.getCurrencyInstance(Locale.CHINA);
             char formatted = nf.format(7000).charAt(0);
@@ -247,6 +267,111 @@ public class LocaleProviders {
                         "Unexpected Chinese currency symbol. returned: "
                                 + formatted + ", expected: " + expectedSymbol[0]);
             }
+        }
+    }
+
+    static void bug8220227Test() {
+        if (IS_WINDOWS) {
+            Locale l = new Locale("xx","XX");
+            String country = l.getDisplayCountry();
+            if (country.endsWith("(XX)")) {
+                throw new RuntimeException(
+                        "Unexpected Region name: " + country);
+            }
+        }
+    }
+
+    static void bug8228465Test() {
+        LocaleProviderAdapter lda = LocaleProviderAdapter.getAdapter(CalendarNameProvider.class, Locale.US);
+        LocaleProviderAdapter.Type type = lda.getAdapterType();
+        if (type == LocaleProviderAdapter.Type.HOST && IS_WINDOWS) {
+            var names =  new GregorianCalendar()
+                .getDisplayNames(Calendar.ERA, Calendar.SHORT_FORMAT, Locale.US);
+            if (!names.keySet().contains("AD") ||
+                names.get("AD").intValue() != 1) {
+                    throw new RuntimeException(
+                            "Short Era name for 'AD' is missing or incorrect");
+            } else {
+                System.out.println("bug8228465Test succeeded.");
+            }
+        }
+    }
+
+    static void bug8232871Test() {
+        LocaleProviderAdapter lda = LocaleProviderAdapter.getAdapter(CalendarNameProvider.class, Locale.US);
+        LocaleProviderAdapter.Type type = lda.getAdapterType();
+        var lang = Locale.getDefault().getLanguage();
+        var cal = Calendar.getInstance();
+        var calType = cal.getCalendarType();
+        var expected = "\u4ee4\u548c1\u5e745\u67081\u65e5 \u6c34\u66dc\u65e5 \u5348\u524d0:00:00 \u30a2\u30e1\u30ea\u30ab\u592a\u5e73\u6d0b\u590f\u6642\u9593";
+
+        if (type == LocaleProviderAdapter.Type.HOST &&
+            IS_MAC &&
+            lang.equals("ja") &&
+            calType.equals("japanese")) {
+            cal.set(1, 4, 1, 0, 0, 0);
+            cal.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
+            DateFormat df = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL,
+                            Locale.JAPAN);
+            df.setCalendar(cal);
+            var result = df.format(cal.getTime());
+            if (result.equals(expected)) {
+                System.out.println("bug8232871Test succeeded.");
+            } else {
+                throw new RuntimeException(
+                            "Japanese calendar names mismatch. result: " +
+                            result +
+                            ", expected: " +
+                            expected);
+            }
+        } else {
+            System.out.println("Test ignored. Either :-\n" +
+                "OS is not macOS, or\n" +
+                "provider is not HOST: " + type + ", or\n" +
+                "Language is not Japanese: " + lang + ", or\n" +
+                "native calendar is not JapaneseCalendar: " + calType);
+        }
+    }
+
+    static void bug8232860Test() {
+        var inputList = List.of(123, 123.4);
+        var nfExpectedList = List.of("123", "123.4");
+        var ifExpectedList = List.of("123", "123");
+
+        var defLoc = Locale.getDefault(Locale.Category.FORMAT);
+        var type = LocaleProviderAdapter.getAdapter(CalendarNameProvider.class, Locale.US)
+                                        .getAdapterType();
+        if (defLoc.equals(Locale.US) &&
+            type == LocaleProviderAdapter.Type.HOST &&
+            (IS_WINDOWS || IS_MAC)) {
+            final var numf = NumberFormat.getNumberInstance(Locale.US);
+            final var intf = NumberFormat.getIntegerInstance(Locale.US);
+
+            IntStream.range(0, inputList.size())
+                .forEach(i -> {
+                    var input = inputList.get(i);
+                    var nfExpected = nfExpectedList.get(i);
+                    var result = numf.format(input);
+                    if (!result.equals(nfExpected)) {
+                        throw new RuntimeException("Incorrect number format. " +
+                            "input: " + input + ", expected: " +
+                            nfExpected + ", result: " + result);
+                    }
+
+                    var ifExpected = ifExpectedList.get(i);
+                    result = intf.format(input);
+                    if (!result.equals(ifExpected)) {
+                        throw new RuntimeException("Incorrect integer format. " +
+                            "input: " + input + ", expected: " +
+                            ifExpected + ", result: " + result);
+                    }
+                });
+            System.out.println("bug8232860Test succeeded.");
+        } else {
+            System.out.println("Test ignored. Either :-\n" +
+                "Default format locale is not Locale.US: " + defLoc + ", or\n" +
+                "OS is neither macOS/Windows, or\n" +
+                "provider is not HOST: " + type);
         }
     }
 }

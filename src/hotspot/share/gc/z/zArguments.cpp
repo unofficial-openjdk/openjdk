@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,30 @@
  */
 
 #include "precompiled.hpp"
+#include "gc/z/zAddressSpaceLimit.hpp"
 #include "gc/z/zArguments.hpp"
 #include "gc/z/zCollectedHeap.hpp"
-#include "gc/z/zCollectorPolicy.hpp"
-#include "gc/z/zWorkers.hpp"
-#include "gc/shared/gcArguments.inline.hpp"
+#include "gc/z/zHeuristics.hpp"
+#include "gc/shared/gcArguments.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/globals_extension.hpp"
 
-size_t ZArguments::conservative_max_heap_alignment() {
-  return 0;
+void ZArguments::initialize_alignments() {
+  SpaceAlignment = ZGranuleSize;
+  HeapAlignment = SpaceAlignment;
 }
 
 void ZArguments::initialize() {
   GCArguments::initialize();
+
+  // Check mark stack size
+  const size_t mark_stack_space_limit = ZAddressSpaceLimit::mark_stack();
+  if (ZMarkStackSpaceLimit > mark_stack_space_limit) {
+    if (!FLAG_IS_DEFAULT(ZMarkStackSpaceLimit)) {
+      vm_exit_during_initialization("ZMarkStackSpaceLimit too large for limited address space");
+    }
+    FLAG_SET_DEFAULT(ZMarkStackSpaceLimit, mark_stack_space_limit);
+  }
 
   // Enable NUMA by default
   if (FLAG_IS_DEFAULT(UseNUMA)) {
@@ -49,7 +59,7 @@ void ZArguments::initialize() {
 
   // Select number of parallel threads
   if (FLAG_IS_DEFAULT(ParallelGCThreads)) {
-    FLAG_SET_DEFAULT(ParallelGCThreads, ZWorkers::calculate_nparallel());
+    FLAG_SET_DEFAULT(ParallelGCThreads, ZHeuristics::nparallel_workers());
   }
 
   if (ParallelGCThreads == 0) {
@@ -58,7 +68,7 @@ void ZArguments::initialize() {
 
   // Select number of concurrent threads
   if (FLAG_IS_DEFAULT(ConcGCThreads)) {
-    FLAG_SET_DEFAULT(ConcGCThreads, ZWorkers::calculate_nconcurrent());
+    FLAG_SET_DEFAULT(ConcGCThreads, ZHeuristics::nconcurrent_workers());
   }
 
   if (ConcGCThreads == 0) {
@@ -87,6 +97,11 @@ void ZArguments::initialize() {
   // same reason we need fixup_partial_loads
   FLAG_SET_DEFAULT(VerifyBeforeIteration, false);
 
+  if (VerifyBeforeGC || VerifyDuringGC || VerifyAfterGC) {
+    FLAG_SET_DEFAULT(ZVerifyRoots, true);
+    FLAG_SET_DEFAULT(ZVerifyObjects, true);
+  }
+
   // Verification of stacks not (yet) supported, for the same reason
   // we need fixup_partial_loads
   DEBUG_ONLY(FLAG_SET_DEFAULT(VerifyStack, false));
@@ -95,6 +110,14 @@ void ZArguments::initialize() {
   initialize_platform();
 }
 
+size_t ZArguments::conservative_max_heap_alignment() {
+  return 0;
+}
+
 CollectedHeap* ZArguments::create_heap() {
-  return create_heap_with_policy<ZCollectedHeap, ZCollectorPolicy>();
+  return new ZCollectedHeap();
+}
+
+bool ZArguments::is_supported() const {
+  return is_os_supported();
 }

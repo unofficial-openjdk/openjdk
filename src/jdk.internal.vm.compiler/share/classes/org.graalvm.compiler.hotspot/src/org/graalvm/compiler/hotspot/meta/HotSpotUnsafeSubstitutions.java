@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,26 +24,25 @@
 
 package org.graalvm.compiler.hotspot.meta;
 
-import static org.graalvm.compiler.serviceprovider.GraalServices.Java8OrEarlier;
-
 import org.graalvm.compiler.api.replacements.ClassSubstitution;
 import org.graalvm.compiler.api.replacements.MethodSubstitution;
-import org.graalvm.compiler.hotspot.HotSpotBackend;
-import org.graalvm.compiler.nodes.ComputeObjectAddressNode;
-import org.graalvm.compiler.word.Word;
-import jdk.internal.vm.compiler.word.WordFactory;
+import org.graalvm.compiler.hotspot.replacements.UnsafeCopyMemoryNode;
+import org.graalvm.compiler.serviceprovider.JavaVersionUtil;
 
 @ClassSubstitution(className = {"jdk.internal.misc.Unsafe", "sun.misc.Unsafe"})
 public class HotSpotUnsafeSubstitutions {
 
-    public static final String copyMemoryName = Java8OrEarlier ? "copyMemory" : "copyMemory0";
+    public static final String copyMemoryName = JavaVersionUtil.JAVA_SPEC <= 8 ? "copyMemory" : "copyMemory0";
 
     @SuppressWarnings("unused")
     @MethodSubstitution(isStatic = false)
     static void copyMemory(Object receiver, Object srcBase, long srcOffset, Object destBase, long destOffset, long bytes) {
-        Word srcAddr = WordFactory.unsigned(ComputeObjectAddressNode.get(srcBase, srcOffset));
-        Word dstAddr = WordFactory.unsigned(ComputeObjectAddressNode.get(destBase, destOffset));
-        Word size = WordFactory.signed(bytes);
-        HotSpotBackend.unsafeArraycopy(srcAddr, dstAddr, size);
+        UnsafeCopyMemoryNode.copyMemory(false, receiver, srcBase, srcOffset, destBase, destOffset, bytes);
+    }
+
+    @SuppressWarnings("unused")
+    @MethodSubstitution(value = "copyMemory", isStatic = false)
+    static void copyMemoryGuarded(Object receiver, Object srcBase, long srcOffset, Object destBase, long destOffset, long bytes) {
+        UnsafeCopyMemoryNode.copyMemory(true, receiver, srcBase, srcOffset, destBase, destOffset, bytes);
     }
 }

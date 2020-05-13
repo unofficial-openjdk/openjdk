@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,18 +42,17 @@ class BarrierSetC1;
 class LIRGenerator;
 class LIREmitter;
 class Invoke;
-class SwitchRange;
 class LIRItem;
 
 typedef GrowableArray<LIRItem*> LIRItemList;
 
-class SwitchRange: public CompilationResourceObj {
+class C1SwitchRange: public CompilationResourceObj {
  private:
   int _low_key;
   int _high_key;
   BlockBegin* _sux;
  public:
-  SwitchRange(int start_key, BlockBegin* sux): _low_key(start_key), _high_key(start_key), _sux(sux) {}
+  C1SwitchRange(int start_key, BlockBegin* sux): _low_key(start_key), _high_key(start_key), _sux(sux) {}
   void set_high_key(int key) { _high_key = key; }
 
   int high_key() const { return _high_key; }
@@ -61,8 +60,8 @@ class SwitchRange: public CompilationResourceObj {
   BlockBegin* sux() const { return _sux; }
 };
 
-typedef GrowableArray<SwitchRange*> SwitchRangeArray;
-typedef GrowableArray<SwitchRange*> SwitchRangeList;
+typedef GrowableArray<C1SwitchRange*> SwitchRangeArray;
+typedef GrowableArray<C1SwitchRange*> SwitchRangeList;
 
 class ResolveNode;
 
@@ -102,7 +101,7 @@ class ResolveNode: public CompilationResourceObj {
 
 
 // This is shared state to be used by the PhiResolver so the operand
-// arrays don't have to be reallocated for reach resolution.
+// arrays don't have to be reallocated for each resolution.
 class PhiResolverState: public CompilationResourceObj {
   friend class PhiResolver;
 
@@ -114,7 +113,7 @@ class PhiResolverState: public CompilationResourceObj {
  public:
   PhiResolverState() {}
 
-  void reset(int max_vregs);
+  void reset();
 };
 
 
@@ -146,7 +145,7 @@ class PhiResolver: public CompilationResourceObj {
   }
 
  public:
-  PhiResolver(LIRGenerator* _lir_gen, int max_vregs);
+  PhiResolver(LIRGenerator* _lir_gen);
   ~PhiResolver();
 
   void move(LIR_Opr src, LIR_Opr dest);

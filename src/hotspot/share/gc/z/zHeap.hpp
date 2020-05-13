@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,11 +24,8 @@
 #ifndef SHARE_GC_Z_ZHEAP_HPP
 #define SHARE_GC_Z_ZHEAP_HPP
 
-#include "gc/shared/gcTimer.hpp"
 #include "gc/z/zAllocationFlags.hpp"
-#include "gc/z/zArray.hpp"
-#include "gc/z/zList.hpp"
-#include "gc/z/zLock.hpp"
+#include "gc/z/zForwardingTable.hpp"
 #include "gc/z/zMark.hpp"
 #include "gc/z/zObjectAllocator.hpp"
 #include "gc/z/zPage.hpp"
@@ -37,13 +34,12 @@
 #include "gc/z/zReferenceProcessor.hpp"
 #include "gc/z/zRelocate.hpp"
 #include "gc/z/zRelocationSet.hpp"
-#include "gc/z/zRelocationSetSelector.hpp"
-#include "gc/z/zRootsIterator.hpp"
 #include "gc/z/zWeakRootsProcessor.hpp"
 #include "gc/z/zServiceability.hpp"
 #include "gc/z/zUnload.hpp"
 #include "gc/z/zWorkers.hpp"
-#include "memory/allocation.hpp"
+
+class ThreadClosure;
 
 class ZHeap {
   friend class VMStructs;
@@ -54,7 +50,8 @@ private:
   ZWorkers            _workers;
   ZObjectAllocator    _object_allocator;
   ZPageAllocator      _page_allocator;
-  ZPageTable          _pagetable;
+  ZPageTable          _page_table;
+  ZForwardingTable    _forwarding_table;
   ZMark               _mark;
   ZReferenceProcessor _reference_processor;
   ZWeakRootsProcessor _weak_roots_processor;
@@ -64,11 +61,14 @@ private:
   ZServiceability     _serviceability;
 
   size_t heap_min_size() const;
+  size_t heap_initial_size() const;
   size_t heap_max_size() const;
   size_t heap_max_reserve_size() const;
 
+  void flip_to_marked();
+  void flip_to_remapped();
+
   void out_of_memory();
-  void flip_views();
   void fixup_partial_loads();
 
 public:
@@ -81,12 +81,13 @@ public:
   // Heap metrics
   size_t min_capacity() const;
   size_t max_capacity() const;
-  size_t current_max_capacity() const;
+  size_t soft_max_capacity() const;
   size_t capacity() const;
   size_t max_reserve() const;
   size_t used_high() const;
   size_t used_low() const;
   size_t used() const;
+  size_t unused() const;
   size_t allocated() const;
   size_t reclaimed() const;
 
@@ -96,11 +97,7 @@ public:
   size_t unsafe_max_tlab_alloc() const;
 
   bool is_in(uintptr_t addr) const;
-
-  // Block
-  uintptr_t block_start(uintptr_t addr) const;
-  size_t block_size(uintptr_t addr) const;
-  bool block_is_obj(uintptr_t addr) const;
+  uint32_t hash_oop(uintptr_t addr) const;
 
   // Workers
   uint nconcurrent_worker_threads() const;
@@ -119,8 +116,10 @@ public:
   // Page allocation
   ZPage* alloc_page(uint8_t type, size_t size, ZAllocationFlags flags);
   void undo_alloc_page(ZPage* page);
-  bool retain_page(ZPage* page);
-  void release_page(ZPage* page, bool reclaimed);
+  void free_page(ZPage* page, bool reclaimed);
+
+  // Uncommit memory
+  uint64_t uncommit(uint64_t delay);
 
   // Object allocation
   uintptr_t alloc_tlab(size_t size);
@@ -133,29 +132,26 @@ public:
   // Marking
   bool is_object_live(uintptr_t addr) const;
   bool is_object_strongly_live(uintptr_t addr) const;
-  template <bool finalizable, bool publish> void mark_object(uintptr_t addr);
+  template <bool follow, bool finalizable, bool publish> void mark_object(uintptr_t addr);
   void mark_start();
   void mark(bool initial);
   void mark_flush_and_free(Thread* thread);
   bool mark_end();
-
-  // Post-marking & Pre-relocation
-  void destroy_detached_pages();
+  void keep_alive(oop obj);
 
   // Relocation set
   void select_relocation_set();
-  void prepare_relocation_set();
   void reset_relocation_set();
 
   // Relocation
-  bool is_relocating(uintptr_t addr) const;
   void relocate_start();
   uintptr_t relocate_object(uintptr_t addr);
-  uintptr_t forward_object(uintptr_t addr);
+  uintptr_t remap_object(uintptr_t addr);
   void relocate();
 
   // Iteration
-  void object_iterate(ObjectClosure* cl, bool visit_referents);
+  void object_iterate(ObjectClosure* cl, bool visit_weaks);
+  void pages_do(ZPageClosure* cl);
 
   // Serviceability
   void serviceability_initialize();
@@ -166,9 +162,10 @@ public:
   // Printing
   void print_on(outputStream* st) const;
   void print_extended_on(outputStream* st) const;
+  bool print_location(outputStream* st, uintptr_t addr) const;
 
   // Verification
-  bool is_oop(oop object) const;
+  bool is_oop(uintptr_t addr) const;
   void verify();
 };
 

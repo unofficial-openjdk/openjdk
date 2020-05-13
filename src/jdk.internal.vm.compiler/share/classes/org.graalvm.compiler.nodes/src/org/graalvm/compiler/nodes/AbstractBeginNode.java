@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import org.graalvm.compiler.core.common.type.StampFactory;
 import org.graalvm.compiler.graph.IterableNodeType;
 import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.graph.NodeClass;
+import org.graalvm.compiler.graph.Position;
 import org.graalvm.compiler.graph.iterators.NodeIterable;
 import org.graalvm.compiler.nodeinfo.InputType;
 import org.graalvm.compiler.nodeinfo.NodeInfo;
@@ -59,21 +60,20 @@ public abstract class AbstractBeginNode extends FixedWithNextNode implements LIR
         Node next = from;
         while (next != null) {
             if (next instanceof AbstractBeginNode) {
-                AbstractBeginNode begin = (AbstractBeginNode) next;
-                return begin;
+                return (AbstractBeginNode) next;
             }
             next = next.predecessor();
         }
         return null;
     }
 
-    private void evacuateGuards(FixedNode evacuateFrom) {
+    private void evacuateAnchored(FixedNode evacuateFrom) {
         if (!hasNoUsages()) {
             AbstractBeginNode prevBegin = prevBegin(evacuateFrom);
             assert prevBegin != null;
-            for (Node anchored : anchored().snapshot()) {
-                anchored.replaceFirstInput(this, prevBegin);
-            }
+            replaceAtUsages(InputType.Anchor, prevBegin);
+            replaceAtUsages(InputType.Guard, prevBegin);
+            assert anchored().isEmpty() : anchored().snapshot();
         }
     }
 
@@ -82,7 +82,7 @@ public abstract class AbstractBeginNode extends FixedWithNextNode implements LIR
     }
 
     public void prepareDelete(FixedNode evacuateFrom) {
-        evacuateGuards(evacuateFrom);
+        evacuateAnchored(evacuateFrom);
     }
 
     @Override
@@ -98,12 +98,29 @@ public abstract class AbstractBeginNode extends FixedWithNextNode implements LIR
         }
     }
 
+    public boolean isUsedAsGuardInput() {
+        if (this.hasUsages()) {
+            for (Node n : usages()) {
+                for (Position inputPosition : n.inputPositions()) {
+                    if (inputPosition.getInputType() == InputType.Guard && inputPosition.get(n) == this) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public NodeIterable<GuardNode> guards() {
         return usages().filter(GuardNode.class);
     }
 
     public NodeIterable<Node> anchored() {
         return usages();
+    }
+
+    public boolean hasAnchored() {
+        return this.hasUsages();
     }
 
     public NodeIterable<FixedNode> getBlockNodes() {

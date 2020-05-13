@@ -24,8 +24,11 @@
 
 package org.graalvm.compiler.nodes.graphbuilderconf;
 
+import java.util.function.Supplier;
+
 import org.graalvm.compiler.graph.Node.ValueNumberable;
 import org.graalvm.compiler.nodes.FixedWithNextNode;
+import org.graalvm.compiler.nodes.FrameState;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.extended.GuardingNode;
@@ -221,11 +224,15 @@ public interface NodePlugin extends GraphBuilderPlugin {
      * nodes) and fixed nodes must be manually {@linkplain FixedWithNextNode#setNext added} as
      * successors of {@code afterExceptionLoaded}.
      *
+     * The reason for this constraint is that when this plugin runs, it's inserting instructions
+     * into a different block than the one currently being parsed.
+     *
      * @param graph the graph being parsed
      * @param afterExceptionLoaded the last fixed node after loading the exception
+     * @param frameStateFunction a helper that produces a FrameState suitable for deopt
      * @return the last fixed node after instrumentation
      */
-    default FixedWithNextNode instrumentExceptionDispatch(StructuredGraph graph, FixedWithNextNode afterExceptionLoaded) {
+    default FixedWithNextNode instrumentExceptionDispatch(StructuredGraph graph, FixedWithNextNode afterExceptionLoaded, Supplier<FrameState> frameStateFunction) {
         return afterExceptionLoaded;
     }
 

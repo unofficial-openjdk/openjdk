@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -289,11 +289,17 @@ public abstract class IntegerLowerThanNode extends CompareNode {
             }
             if ((xResidue == 0 && left != null) || (yResidue == 0 && right != null)) {
                 if (left == null) {
+                    // Fortify: Suppress Null Dereference false positive
+                    assert leftCst != null;
+
                     left = ConstantNode.forIntegerBits(bits, leftCst.asLong() - min);
                 } else if (xResidue != 0) {
                     left = AddNode.create(left, ConstantNode.forIntegerBits(bits, xResidue), view);
                 }
                 if (right == null) {
+                    // Fortify: Suppress Null Dereference false positive
+                    assert rightCst != null;
+
                     right = ConstantNode.forIntegerBits(bits, rightCst.asLong() - min);
                 } else if (yResidue != 0) {
                     right = AddNode.create(right, ConstantNode.forIntegerBits(bits, yResidue), view);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,14 +33,13 @@ import org.graalvm.compiler.core.common.cfg.Loop;
 import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.nodeinfo.Verbosity;
 import org.graalvm.compiler.nodes.AbstractBeginNode;
-import org.graalvm.compiler.nodes.BeginNode;
 import org.graalvm.compiler.nodes.FixedNode;
 import org.graalvm.compiler.nodes.FixedWithNextNode;
 import org.graalvm.compiler.nodes.InvokeWithExceptionNode;
 import org.graalvm.compiler.nodes.LoopBeginNode;
 import org.graalvm.compiler.nodes.LoopEndNode;
-import org.graalvm.compiler.nodes.LoopExitNode;
-import org.graalvm.compiler.nodes.memory.MemoryCheckpoint;
+import org.graalvm.compiler.nodes.memory.MultiMemoryKill;
+import org.graalvm.compiler.nodes.memory.SingleMemoryKill;
 import jdk.internal.vm.compiler.word.LocationIdentity;
 
 public final class Block extends AbstractBlockBase<Block> {
@@ -67,21 +66,6 @@ public final class Block extends AbstractBlockBase<Block> {
 
     public FixedNode getEndNode() {
         return endNode;
-    }
-
-    /**
-     * Return the {@link LoopExitNode} for this block if it exists.
-     */
-    public LoopExitNode getLoopExit() {
-        if (beginNode instanceof BeginNode) {
-            if (beginNode.next() instanceof LoopExitNode) {
-                return (LoopExitNode) beginNode.next();
-            }
-        }
-        if (beginNode instanceof LoopExitNode) {
-            return (LoopExitNode) beginNode;
-        }
-        return null;
     }
 
     @Override
@@ -276,11 +260,11 @@ public final class Block extends AbstractBlockBase<Block> {
     private LocationSet calcKillLocations() {
         LocationSet result = new LocationSet();
         for (FixedNode node : this.getNodes()) {
-            if (node instanceof MemoryCheckpoint.Single) {
-                LocationIdentity identity = ((MemoryCheckpoint.Single) node).getLocationIdentity();
+            if (node instanceof SingleMemoryKill) {
+                LocationIdentity identity = ((SingleMemoryKill) node).getKilledLocationIdentity();
                 result.add(identity);
-            } else if (node instanceof MemoryCheckpoint.Multi) {
-                for (LocationIdentity identity : ((MemoryCheckpoint.Multi) node).getLocationIdentities()) {
+            } else if (node instanceof MultiMemoryKill) {
+                for (LocationIdentity identity : ((MultiMemoryKill) node).getKilledLocationIdentities()) {
                     result.add(identity);
                 }
             }
@@ -381,5 +365,27 @@ public final class Block extends AbstractBlockBase<Block> {
 
     protected void setPostDominator(Block postdominator) {
         this.postdominator = postdominator;
+    }
+
+    /**
+     * Checks whether {@code this} block is in the same loop or an outer loop of the block given as
+     * parameter.
+     */
+    public boolean isInSameOrOuterLoopOf(Block block) {
+
+        if (this.loop == null) {
+            // We are in no loop, so this holds true for every other block.
+            return true;
+        }
+
+        Loop<Block> l = block.loop;
+        while (l != null) {
+            if (l == this.loop) {
+                return true;
+            }
+            l = l.getParent();
+        }
+
+        return false;
     }
 }

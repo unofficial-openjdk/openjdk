@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@
  * <p>The key abstraction introduced in this package is <em>stream</em>.  The
  * classes {@link java.util.stream.Stream}, {@link java.util.stream.IntStream},
  * {@link java.util.stream.LongStream}, and {@link java.util.stream.DoubleStream}
- * are streams over objects and the primitive {@code int}, {@code long} and
+ * are streams over objects and the primitive {@code int}, {@code long}, and
  * {@code double} types.  Streams differ from collections in several ways:
  *
  * <ul>
@@ -176,7 +176,7 @@
  * do:
  *
  * <pre>{@code
- *     int sumOfWeights = widgets.}<code><b>parallelStream()</b></code>{@code
+ *     int sumOfWeights = widgets.parallelStream()
  *                               .filter(b -> b.getColor() == RED)
  *                               .mapToInt(b -> b.getWeight())
  *                               .sum();
@@ -242,7 +242,7 @@
  *     String s = sl.collect(joining(" "));
  * }</pre>
  *
- * First a list is created consisting of two strings: "one"; and "two". Then a
+ * First a list is created consisting of two strings: "one" and "two". Then a
  * stream is created from that list. Next the list is modified by adding a third
  * string: "three". Finally the elements of the stream are collected and joined
  * together. Since the list was modified before the terminal {@code collect}
@@ -316,7 +316,7 @@
  * see the API note documented on the {@link java.util.stream.Stream#count count}
  * operation.)
  *
- * <p>Many computations where one might be tempted to use side effects can be more
+ * <p>Many computations where one might be tempted to use side-effects can be more
  * safely and efficiently expressed without side-effects, such as using
  * <a href="package-summary.html#Reduction">reduction</a> instead of mutable
  * accumulators. However, side-effects such as using {@code println()} for debugging
@@ -344,7 +344,7 @@
  * parallelization:
  *
  * <pre>{@code
- *     List<String>results =
+ *     List<String> results =
  *         stream.filter(s -> pattern.matcher(s).matches())
  *               .collect(Collectors.toList());  // No side-effects!
  * }</pre>
@@ -445,7 +445,7 @@
  * required.
  *
  * <p>The "widgets" examples shown earlier shows how reduction combines with
- * other operations to replace for loops with bulk operations.  If {@code widgets}
+ * other operations to replace for-loops with bulk operations.  If {@code widgets}
  * is a collection of {@code Widget} objects, which have a {@code getWeight} method,
  * we can find the heaviest widget with:
  * <pre>{@code
@@ -729,7 +729,6 @@
  * timing of binding to the data, since the data could change between the time
  * the spliterator is created and the time the stream pipeline is executed.
  * Ideally, a spliterator for a stream would report a characteristic of
-
  * {@code IMMUTABLE} or {@code CONCURRENT}; if not it should be
  * <a href="../Spliterator.html#binding"><em>late-binding</em></a>. If a source
  * cannot directly supply a recommended spliterator, it may indirectly supply

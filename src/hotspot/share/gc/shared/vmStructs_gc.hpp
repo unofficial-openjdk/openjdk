@@ -27,6 +27,7 @@
 
 #include "gc/shared/ageTable.hpp"
 #include "gc/shared/cardGeneration.hpp"
+#include "gc/shared/cardTable.hpp"
 #include "gc/shared/cardTableRS.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/genCollectedHeap.hpp"
@@ -34,9 +35,6 @@
 #include "gc/shared/generationSpec.hpp"
 #include "gc/shared/oopStorage.hpp"
 #include "gc/shared/space.hpp"
-#if INCLUDE_CMSGC
-#include "gc/cms/vmStructs_cms.hpp"
-#endif
 #if INCLUDE_EPSILONGC
 #include "gc/epsilon/vmStructs_epsilon.hpp"
 #endif
@@ -61,9 +59,6 @@
                       volatile_nonstatic_field,                                                                                      \
                       static_field,                                                                                                  \
                       unchecked_nonstatic_field)                                                                                     \
-  CMSGC_ONLY(VM_STRUCTS_CMSGC(nonstatic_field,                                                                                       \
-                              volatile_nonstatic_field,                                                                              \
-                              static_field))                                                                                         \
   EPSILONGC_ONLY(VM_STRUCTS_EPSILONGC(nonstatic_field,                                                                               \
                                       volatile_nonstatic_field,                                                                      \
                                       static_field))                                                                                 \
@@ -106,8 +101,6 @@
   nonstatic_field(BlockOffsetArrayContigSpace, _next_offset_threshold,                        HeapWord*)                             \
   nonstatic_field(BlockOffsetArrayContigSpace, _next_offset_index,                            size_t)                                \
                                                                                                                                      \
-  nonstatic_field(BlockOffsetArrayNonContigSpace, _unallocated_block,                         HeapWord*)                             \
-                                                                                                                                     \
   nonstatic_field(CardGeneration,              _rs,                                           CardTableRS*)                          \
   nonstatic_field(CardGeneration,              _bts,                                          BlockOffsetSharedArray*)               \
   nonstatic_field(CardGeneration,              _shrink_factor,                                size_t)                                \
@@ -119,12 +112,12 @@
   nonstatic_field(CardTable,                   _last_valid_index,                             const size_t)                          \
   nonstatic_field(CardTable,                   _page_size,                                    const size_t)                          \
   nonstatic_field(CardTable,                   _byte_map_size,                                const size_t)                          \
-  nonstatic_field(CardTable,                   _byte_map,                                     jbyte*)                                \
+  nonstatic_field(CardTable,                   _byte_map,                                     CardTable::CardValue*)                                \
   nonstatic_field(CardTable,                   _cur_covered_regions,                          int)                                   \
   nonstatic_field(CardTable,                   _covered,                                      MemRegion*)                            \
   nonstatic_field(CardTable,                   _committed,                                    MemRegion*)                            \
   nonstatic_field(CardTable,                   _guard_region,                                 MemRegion)                             \
-  nonstatic_field(CardTable,                   _byte_map_base,                                jbyte*)                                \
+  nonstatic_field(CardTable,                   _byte_map_base,                                CardTable::CardValue*)                                \
   nonstatic_field(CardTableBarrierSet,         _defer_initial_card_mark,                      bool)                                  \
   nonstatic_field(CardTableBarrierSet,         _card_table,                                   CardTable*)                            \
                                                                                                                                      \
@@ -167,9 +160,6 @@
 #define VM_TYPES_GC(declare_type,                                         \
                     declare_toplevel_type,                                \
                     declare_integer_type)                                 \
-  CMSGC_ONLY(VM_TYPES_CMSGC(declare_type,                                 \
-                            declare_toplevel_type,                        \
-                            declare_integer_type))                        \
   EPSILONGC_ONLY(VM_TYPES_EPSILONGC(declare_type,                         \
                                     declare_toplevel_type,                \
                                     declare_integer_type))                \
@@ -212,11 +202,11 @@
   declare_toplevel_type(BlockOffsetTable)                                 \
            declare_type(BlockOffsetArray,             BlockOffsetTable)   \
            declare_type(BlockOffsetArrayContigSpace,  BlockOffsetArray)   \
-           declare_type(BlockOffsetArrayNonContigSpace, BlockOffsetArray) \
                                                                           \
   /* Miscellaneous other GC types */                                      \
                                                                           \
   declare_toplevel_type(AgeTable)                                         \
+  declare_toplevel_type(CardTable::CardValue)                             \
   declare_toplevel_type(Generation::StatRecord)                           \
   declare_toplevel_type(GenerationSpec)                                   \
   declare_toplevel_type(HeapWord)                                         \
@@ -250,8 +240,6 @@
 
 #define VM_INT_CONSTANTS_GC(declare_constant,                               \
                             declare_constant_with_value)                    \
-  CMSGC_ONLY(VM_INT_CONSTANTS_CMSGC(declare_constant,                       \
-                                    declare_constant_with_value))           \
   EPSILONGC_ONLY(VM_INT_CONSTANTS_EPSILONGC(declare_constant,               \
                                             declare_constant_with_value))   \
   G1GC_ONLY(VM_INT_CONSTANTS_G1GC(declare_constant,                         \
@@ -295,7 +283,6 @@
                                                                             \
   declare_constant(CollectedHeap::Serial)                                   \
   declare_constant(CollectedHeap::Parallel)                                 \
-  declare_constant(CollectedHeap::CMS)                                      \
   declare_constant(CollectedHeap::G1)                                       \
                                                                             \
   /* constants from Generation::Name enum */                                \

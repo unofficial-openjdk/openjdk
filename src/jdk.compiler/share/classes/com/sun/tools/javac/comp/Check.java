@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ package com.sun.tools.javac.comp;
 import java.util.*;
 import java.util.function.Supplier;
 
+import javax.lang.model.element.ElementKind;
 import javax.tools.JavaFileManager;
 
 import com.sun.tools.javac.code.*;
@@ -55,7 +56,6 @@ import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.comp.DeferredAttr.DeferredAttrContext;
-import com.sun.tools.javac.comp.Infer.FreeTypeListener;
 import com.sun.tools.javac.tree.JCTree.*;
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -93,6 +93,7 @@ public class Check {
     private final Source source;
     private final Target target;
     private final Profile profile;
+    private final Preview preview;
     private final boolean warnOnAnyAccessToMembers;
 
     // The set of lint options currently in effect. It is initialized
@@ -116,7 +117,7 @@ public class Check {
 
         names = Names.instance(context);
         dfltTargetMeta = new Name[] { names.PACKAGE, names.TYPE,
-            names.FIELD, names.METHOD, names.CONSTRUCTOR,
+            names.FIELD, names.RECORD_COMPONENT, names.METHOD, names.CONSTRUCTOR,
             names.ANNOTATION_TYPE, names.LOCAL_VARIABLE, names.PARAMETER};
         log = Log.instance(context);
         rs = Resolve.instance(context);
@@ -139,6 +140,7 @@ public class Check {
         syntheticNameChar = target.syntheticNameChar();
 
         profile = Profile.instance(context);
+        preview = Preview.instance(context);
 
         boolean verboseDeprecated = lint.isEnabled(LintCategory.DEPRECATION);
         boolean verboseRemoval = lint.isEnabled(LintCategory.REMOVAL);
@@ -155,6 +157,9 @@ public class Check {
                 enforceMandatoryWarnings, "sunapi", null);
 
         deferredLintHandler = DeferredLintHandler.instance(context);
+
+        allowRecords = (!preview.isPreview(Feature.RECORDS) || preview.isEnabled()) &&
+                Feature.RECORDS.allowedInSource(source);
     }
 
     /** Character for synthetic names
@@ -185,6 +190,10 @@ public class Check {
     /** A handler for deferred lint warnings.
      */
     private DeferredLintHandler deferredLintHandler;
+
+    /** Are records allowed
+     */
+    private final boolean allowRecords;
 
 /* *************************************************************************
  * Errors and Warnings
@@ -222,6 +231,23 @@ public class Check {
                 deprecationHandler.report(pos, Warnings.HasBeenDeprecated(sym, sym.location()));
             }
         }
+    }
+
+    /** Warn about deprecated symbol.
+     *  @param pos        Position to be used for error reporting.
+     *  @param sym        The deprecated symbol.
+     */
+    void warnPreview(DiagnosticPosition pos, Symbol sym) {
+        warnPreview(pos, Warnings.IsPreview(sym));
+    }
+
+    /** Log a preview warning.
+     *  @param pos        Position to be used for error reporting.
+     *  @param msg        A Warning describing the problem.
+     */
+    public void warnPreview(DiagnosticPosition pos, Warning warnKey) {
+        if (!lint.isSuppressed(LintCategory.PREVIEW))
+            preview.reportPreviewWarning(pos, warnKey);
     }
 
     /** Warn about unchecked operation.
@@ -314,11 +340,18 @@ public class Check {
                                                         kindName(sym.location().enclClass()),
                                                         sym.location().enclClass()));
             } else {
-                log.error(pos,
-                          Errors.AlreadyDefined(kindName(sym),
-                                                sym,
-                                                kindName(sym.location()),
-                                                sym.location()));
+                /* dont error if this is a duplicated parameter of a generated canonical constructor
+                 * as we should have issued an error for the duplicated fields
+                 */
+                if (location.kind != MTH ||
+                        ((sym.owner.flags_field & GENERATEDCONSTR) == 0) ||
+                        ((sym.owner.flags_field & RECORD) == 0)) {
+                    log.error(pos,
+                            Errors.AlreadyDefined(kindName(sym),
+                                    sym,
+                                    kindName(sym.location()),
+                                    sym.location()));
+                }
             }
         }
     }
@@ -407,7 +440,7 @@ public class Check {
      *    enclClass is the flat name of the enclosing class,
      *    classname is the simple name of the local class
      */
-    Name localClassName(ClassSymbol c) {
+    public Name localClassName(ClassSymbol c) {
         Name enclFlatname = c.owner.enclClass().flatname;
         String enclFlatnameStr = enclFlatname.toString();
         Pair<Name, Name> key = new Pair<>(enclFlatname, c.name);
@@ -422,7 +455,7 @@ public class Check {
         }
     }
 
-    void clearLocalClassNameIndexes(ClassSymbol c) {
+    public void clearLocalClassNameIndexes(ClassSymbol c) {
         if (c.owner != null && c.owner.kind != NIL) {
             localClassNameIndexes.remove(new Pair<>(
                     c.owner.enclClass().flatname, c.name));
@@ -432,6 +465,13 @@ public class Check {
     public void newRound() {
         compiled.clear();
         localClassNameIndexes.clear();
+    }
+
+    public void clear() {
+        deprecationHandler.clear();
+        removalHandler.clear();
+        uncheckedHandler.clear();
+        sunApiHandler.clear();
     }
 
     public void putCompiled(ClassSymbol csym) {
@@ -1159,6 +1199,8 @@ public class Check {
                 } else {
                     mask = implicit = InterfaceMethodFlags;
                 }
+            } else if ((sym.owner.flags_field & RECORD) != 0) {
+                mask = RecordMethodFlags;
             } else {
                 mask = MethodFlags;
             }
@@ -1169,19 +1211,29 @@ public class Check {
             break;
         case TYP:
             if (sym.isLocal()) {
-                mask = LocalClassFlags;
+                mask = (flags & RECORD) != 0 ? LocalRecordFlags : LocalClassFlags;
+                if ((flags & RECORD) != 0) {
+                    implicit = STATIC;
+                    if (sym.owner.kind == TYP) {
+                        log.error(pos, Errors.RecordDeclarationNotAllowedInInnerClasses);
+                    }
+                }
                 if ((sym.owner.flags_field & STATIC) == 0 &&
-                    (flags & ENUM) != 0)
+                    (flags & ENUM) != 0) {
                     log.error(pos, Errors.EnumsMustBeStatic);
+                }
             } else if (sym.owner.kind == TYP) {
-                mask = MemberClassFlags;
+                mask = (flags & RECORD) != 0 ? MemberRecordFlags : MemberClassFlags;
                 if (sym.owner.owner.kind == PCK ||
                     (sym.owner.flags_field & STATIC) != 0)
                     mask |= STATIC;
-                else if ((flags & ENUM) != 0)
+                else if ((flags & ENUM) != 0) {
                     log.error(pos, Errors.EnumsMustBeStatic);
+                } else if ((flags & RECORD) != 0) {
+                    log.error(pos, Errors.RecordDeclarationNotAllowedInInnerClasses);
+                }
                 // Nested interfaces and enums are always STATIC (Spec ???)
-                if ((flags & (INTERFACE | ENUM)) != 0 ) implicit = STATIC;
+                if ((flags & (INTERFACE | ENUM | RECORD)) != 0 ) implicit = STATIC;
             } else {
                 mask = ClassFlags;
             }
@@ -1192,6 +1244,11 @@ public class Check {
                 // enums can't be declared abstract or final
                 mask &= ~(ABSTRACT | FINAL);
                 implicit |= implicitEnumFinalFlag(tree);
+            }
+            if ((flags & RECORD) != 0) {
+                // records can't be declared abstract
+                mask &= ~ABSTRACT;
+                implicit |= FINAL;
             }
             // Imply STRICTFP if owner has STRICTFP set.
             implicit |= sym.owner.flags_field & STRICTFP;
@@ -1249,9 +1306,9 @@ public class Check {
 
     /** Determine if this enum should be implicitly final.
      *
-     *  If the enum has no specialized enum contants, it is final.
+     *  If the enum has no specialized enum constants, it is final.
      *
-     *  If the enum does have specialized enum contants, it is
+     *  If the enum does have specialized enum constants, it is
      *  <i>not</i> final.
      */
     private long implicitEnumFinalFlag(JCTree tree) {
@@ -1811,7 +1868,7 @@ public class Check {
             // because in that case, we will rediscover the issue when examining the method
             // in the supertype.
             // If the method, m, is not defined in an interface, then the only time we need to
-            // address the issue is when the method is the supertype implemementation: any other
+            // address the issue is when the method is the supertype implementation: any other
             // case, we will have dealt with when examining the supertype classes
             ClassSymbol mc = m.enclClass();
             Type st = types.supertype(origin.type);
@@ -1902,7 +1959,7 @@ public class Check {
      *  @param t1     The first type.
      *  @param t2     The second type.
      *  @param site   The most derived type.
-     *  @returns symbol from t2 that conflicts with one in t1.
+     *  @return symbol from t2 that conflicts with one in t1.
      */
     private Symbol firstIncompatibility(DiagnosticPosition pos, Type t1, Type t2, Type site) {
         Map<TypeSymbol,Type> interfaces1 = new HashMap<>();
@@ -1932,7 +1989,7 @@ public class Check {
         }
     }
 
-    /** Compute all the supertypes of t, indexed by type symbol (except thise in typesSkip). */
+    /** Compute all the supertypes of t, indexed by type symbol (except those in typesSkip). */
     private void closure(Type t, Map<TypeSymbol,Type> typesSkip, Map<TypeSymbol,Type> typeMap) {
         if (!t.hasTag(CLASS)) return;
         if (typesSkip.get(t.tsym) != null) return;
@@ -2088,8 +2145,10 @@ public class Check {
                     .tsym.members().findFirst(names.equals);
             MethodSymbol hashCodeAtObject = (MethodSymbol)syms.objectType
                     .tsym.members().findFirst(names.hashCode);
-            boolean overridesEquals = types.implementation(equalsAtObject,
-                someClass, false, equalsHasCodeFilter).owner == someClass;
+            MethodSymbol equalsImpl = types.implementation(equalsAtObject,
+                    someClass, false, equalsHasCodeFilter);
+            boolean overridesEquals = equalsImpl != null &&
+                                      equalsImpl.owner == someClass;
             boolean overridesHashCode = types.implementation(hashCodeAtObject,
                 someClass, false, equalsHasCodeFilter) != hashCodeAtObject;
 
@@ -2421,7 +2480,9 @@ public class Check {
 
         List<MethodSymbol> potentiallyAmbiguousList = List.nil();
         boolean overridesAny = false;
-        for (Symbol m1 : types.membersClosure(site, false).getSymbolsByName(sym.name, cf)) {
+        ArrayList<Symbol> symbolsByName = new ArrayList<>();
+        types.membersClosure(site, false).getSymbolsByName(sym.name, cf).forEach(symbolsByName::add);
+        for (Symbol m1 : symbolsByName) {
             if (!sym.overrides(m1, site.tsym, types, false)) {
                 if (m1 == sym) {
                     continue;
@@ -2439,7 +2500,7 @@ public class Check {
             }
 
             //...check each method m2 that is a member of 'site'
-            for (Symbol m2 : types.membersClosure(site, false).getSymbolsByName(sym.name, cf)) {
+            for (Symbol m2 : symbolsByName) {
                 if (m2 == m1) continue;
                 //if (i) the signature of 'sym' is not a subsignature of m1 (seen as
                 //a member of 'site') and (ii) m1 has the same erasure as m2, issue an error
@@ -2626,7 +2687,7 @@ public class Check {
             }
             if (potentiallyAmbiguous) {
                 //we found two incompatible functional interfaces with same arity
-                //this means a call site passing an implicit lambda would be ambigiuous
+                //this means a call site passing an implicit lambda would be ambiguous
                 msym1.flags_field |= POTENTIALLY_AMBIGUOUS;
                 msym2.flags_field |= POTENTIALLY_AMBIGUOUS;
                 log.warning(LintCategory.OVERLOADS, pos,
@@ -2811,9 +2872,9 @@ public class Check {
 
     /** Check the annotations of a symbol.
      */
-    public void validateAnnotations(List<JCAnnotation> annotations, Symbol s) {
+    public void validateAnnotations(List<JCAnnotation> annotations, JCTree declarationTree, Symbol s) {
         for (JCAnnotation a : annotations)
-            validateAnnotation(a, s);
+            validateAnnotation(a, declarationTree, s);
     }
 
     /** Check the type annotations.
@@ -2825,11 +2886,135 @@ public class Check {
 
     /** Check an annotation of a symbol.
      */
-    private void validateAnnotation(JCAnnotation a, Symbol s) {
+    private void validateAnnotation(JCAnnotation a, JCTree declarationTree, Symbol s) {
         validateAnnotationTree(a);
+        boolean isRecordMember = (s.flags_field & RECORD) != 0 || s.enclClass() != null && s.enclClass().isRecord();
 
-        if (a.type.tsym.isAnnotationType() && !annotationApplicable(a, s))
-            log.error(a.pos(), Errors.AnnotationTypeNotApplicable);
+        boolean isRecordField = isRecordMember &&
+                (s.flags_field & (Flags.PRIVATE | Flags.FINAL | Flags.GENERATED_MEMBER | Flags.RECORD)) != 0 &&
+                declarationTree.hasTag(VARDEF) &&
+                s.owner.kind == TYP;
+
+        if (isRecordField) {
+            // first we need to check if the annotation is applicable to records
+            Name[] targets = getTargetNames(a);
+            boolean appliesToRecords = false;
+            for (Name target : targets) {
+                appliesToRecords =
+                                target == names.FIELD ||
+                                target == names.PARAMETER ||
+                                target == names.METHOD ||
+                                target == names.TYPE_USE ||
+                                target == names.RECORD_COMPONENT;
+                if (appliesToRecords) {
+                    break;
+                }
+            }
+            if (!appliesToRecords) {
+                log.error(a.pos(), Errors.AnnotationTypeNotApplicable);
+            } else {
+                /* lets now find the annotations in the field that are targeted to record components and append them to
+                 * the corresponding record component
+                 */
+                ClassSymbol recordClass = (ClassSymbol) s.owner;
+                RecordComponent rc = recordClass.getRecordComponent((VarSymbol)s);
+                SymbolMetadata metadata = rc.getMetadata();
+                if (metadata == null || metadata.isEmpty()) {
+                    /* if not is empty then we have already been here, which is the case if multiple annotations are applied
+                     * to the record component declaration
+                     */
+                    rc.appendAttributes(s.getRawAttributes().stream().filter(anno ->
+                            Arrays.stream(getTargetNames(anno.type.tsym)).anyMatch(name -> name == names.RECORD_COMPONENT)
+                    ).collect(List.collector()));
+                    rc.setTypeAttributes(s.getRawTypeAttributes());
+                    // to get all the type annotations applied to the type
+                    rc.type = s.type;
+                }
+            }
+        }
+
+        /* the section below is tricky. Annotations applied to record components are propagated to the corresponding
+         * record member so if an annotation has target: FIELD, it is propagated to the corresponding FIELD, if it has
+         * target METHOD, it is propagated to the accessor and so on. But at the moment when method members are generated
+         * there is no enough information to propagate only the right annotations. So all the annotations are propagated
+         * to all the possible locations.
+         *
+         * At this point we need to remove all the annotations that are not in place before going on with the annotation
+         * party. On top of the above there is the issue that there is no AST representing record components, just symbols
+         * so the corresponding field has been holding all the annotations and it's metadata has been modified as if it
+         * was both a field and a record component.
+         *
+         * So there are two places where we need to trim annotations from: the metadata of the symbol and / or the modifiers
+         * in the AST. Whatever is in the metadata will be written to the class file, whatever is in the modifiers could
+         * be see by annotation processors.
+         *
+         * The metadata contains both type annotations and declaration annotations. At this point of the game we don't
+         * need to care about type annotations, they are all in the right place. But we could need to remove declaration
+         * annotations. So for declaration annotations if they are not applicable to the record member, excluding type
+         * annotations which are already correct, then we will remove it. For the AST modifiers if the annotation is not
+         * applicable either as type annotation and or declaration annotation, only in that case it will be removed.
+         *
+         * So it could be that annotation is removed as a declaration annotation but it is kept in the AST modifier for
+         * further inspection by annotation processors.
+         *
+         * For example:
+         *
+         *     import java.lang.annotation.*;
+         *
+         *     @Target({ElementType.TYPE_USE, ElementType.RECORD_COMPONENT})
+         *     @Retention(RetentionPolicy.RUNTIME)
+         *     @interface Anno { }
+         *
+         *     record R(@Anno String s) {}
+         *
+         * at this point we will have for the case of the generated field:
+         *   - @Anno in the modifier
+         *   - @Anno as a type annotation
+         *   - @Anno as a declaration annotation
+         *
+         * the last one should be removed because the annotation has not FIELD as target but it was applied as a
+         * declaration annotation because the field was being treated both as a field and as a record component
+         * as we have already copied the annotations to the record component, now the field doesn't need to hold
+         * annotations that are not intended for it anymore. Still @Anno has to be kept in the AST's modifiers as it
+         * is applicable as a type annotation to the type of the field.
+         */
+
+        if (a.type.tsym.isAnnotationType()) {
+            Optional<Set<Name>> applicableTargetsOp = getApplicableTargets(a, s);
+            if (!applicableTargetsOp.isEmpty()) {
+                Set<Name> applicableTargets = applicableTargetsOp.get();
+                boolean notApplicableOrIsTypeUseOnly = applicableTargets.isEmpty() ||
+                        applicableTargets.size() == 1 && applicableTargets.contains(names.TYPE_USE);
+                boolean isRecordMemberWithNonApplicableDeclAnno =
+                        isRecordMember && (s.flags_field & Flags.GENERATED_MEMBER) != 0 && notApplicableOrIsTypeUseOnly;
+
+                if (applicableTargets.isEmpty() || isRecordMemberWithNonApplicableDeclAnno) {
+                    if (isRecordMemberWithNonApplicableDeclAnno) {
+                            /* so we have found an annotation that is not applicable to a record member that was generated by the
+                             * compiler. This was intentionally done at TypeEnter, now is the moment strip away the annotations
+                             * that are not applicable to the given record member
+                             */
+                        JCModifiers modifiers = TreeInfo.getModifiers(declarationTree);
+                            /* lets first remove the annotation from the modifier if it is not applicable, we have to check again as
+                             * it could be a type annotation
+                             */
+                        if (modifiers != null && applicableTargets.isEmpty()) {
+                            ListBuffer<JCAnnotation> newAnnotations = new ListBuffer<>();
+                            for (JCAnnotation anno : modifiers.annotations) {
+                                if (anno != a) {
+                                    newAnnotations.add(anno);
+                                }
+                            }
+                            modifiers.annotations = newAnnotations.toList();
+                        }
+                        // now lets remove it from the symbol
+                        s.getMetadata().removeDeclarationMetadata(a.attribute);
+                    } else {
+                        log.error(a.pos(), Errors.AnnotationTypeNotApplicable);
+                    }
+                }
+            }
+        }
 
         if (a.annotationType.type.tsym == syms.functionalInterfaceType.tsym) {
             if (s.kind != TYP) {
@@ -2988,6 +3173,9 @@ public class Check {
             targets.add(names.ANNOTATION_TYPE);
             targets.add(names.CONSTRUCTOR);
             targets.add(names.FIELD);
+            if (allowRecords) {
+                targets.add(names.RECORD_COMPONENT);
+            }
             targets.add(names.LOCAL_VARIABLE);
             targets.add(names.METHOD);
             targets.add(names.PACKAGE);
@@ -3079,19 +3267,55 @@ public class Check {
         }
 
     /** Is the annotation applicable to the symbol? */
-    boolean annotationApplicable(JCAnnotation a, Symbol s) {
-        Attribute.Array arr = getAttributeTargetAttribute(a.annotationType.type.tsym);
-        Name[] targets;
+    Name[] getTargetNames(JCAnnotation a) {
+        return getTargetNames(a.annotationType.type.tsym);
+    }
 
+    public Name[] getTargetNames(TypeSymbol annoSym) {
+        Attribute.Array arr = getAttributeTargetAttribute(annoSym);
+        Name[] targets;
         if (arr == null) {
-            targets = defaultTargetMetaInfo(a, s);
+            targets = defaultTargetMetaInfo();
         } else {
             // TODO: can we optimize this?
             targets = new Name[arr.values.length];
             for (int i=0; i<arr.values.length; ++i) {
                 Attribute app = arr.values[i];
                 if (!(app instanceof Attribute.Enum)) {
-                    return true; // recovery
+                    return new Name[0];
+                }
+                Attribute.Enum e = (Attribute.Enum) app;
+                targets[i] = e.value.name;
+            }
+        }
+        return targets;
+    }
+
+    boolean annotationApplicable(JCAnnotation a, Symbol s) {
+        Optional<Set<Name>> targets = getApplicableTargets(a, s);
+        /* the optional could be emtpy if the annotation is unknown in that case
+         * we return that it is applicable and if it is erroneous that should imply
+         * an error at the declaration site
+         */
+        return targets.isEmpty() || targets.isPresent() && !targets.get().isEmpty();
+    }
+
+    @SuppressWarnings("preview")
+    Optional<Set<Name>> getApplicableTargets(JCAnnotation a, Symbol s) {
+        Attribute.Array arr = getAttributeTargetAttribute(a.annotationType.type.tsym);
+        Name[] targets;
+        Set<Name> applicableTargets = new HashSet<>();
+
+        if (arr == null) {
+            targets = defaultTargetMetaInfo();
+        } else {
+            // TODO: can we optimize this?
+            targets = new Name[arr.values.length];
+            for (int i=0; i<arr.values.length; ++i) {
+                Attribute app = arr.values[i];
+                if (!(app instanceof Attribute.Enum)) {
+                    // recovery
+                    return Optional.empty();
                 }
                 Attribute.Enum e = (Attribute.Enum) app;
                 targets[i] = e.value.name;
@@ -3100,53 +3324,56 @@ public class Check {
         for (Name target : targets) {
             if (target == names.TYPE) {
                 if (s.kind == TYP)
-                    return true;
+                    applicableTargets.add(names.TYPE);
             } else if (target == names.FIELD) {
                 if (s.kind == VAR && s.owner.kind != MTH)
-                    return true;
+                    applicableTargets.add(names.FIELD);
+            } else if (target == names.RECORD_COMPONENT) {
+                if (s.getKind() == ElementKind.RECORD_COMPONENT) {
+                    applicableTargets.add(names.RECORD_COMPONENT);
+                }
             } else if (target == names.METHOD) {
                 if (s.kind == MTH && !s.isConstructor())
-                    return true;
+                    applicableTargets.add(names.METHOD);
             } else if (target == names.PARAMETER) {
-                if (s.kind == VAR && s.owner.kind == MTH &&
-                      (s.flags() & PARAMETER) != 0) {
-                    return true;
+                if (s.kind == VAR &&
+                    (s.owner.kind == MTH && (s.flags() & PARAMETER) != 0)) {
+                    applicableTargets.add(names.PARAMETER);
                 }
             } else if (target == names.CONSTRUCTOR) {
                 if (s.kind == MTH && s.isConstructor())
-                    return true;
+                    applicableTargets.add(names.CONSTRUCTOR);
             } else if (target == names.LOCAL_VARIABLE) {
                 if (s.kind == VAR && s.owner.kind == MTH &&
                       (s.flags() & PARAMETER) == 0) {
-                    return true;
+                    applicableTargets.add(names.LOCAL_VARIABLE);
                 }
             } else if (target == names.ANNOTATION_TYPE) {
                 if (s.kind == TYP && (s.flags() & ANNOTATION) != 0) {
-                    return true;
+                    applicableTargets.add(names.ANNOTATION_TYPE);
                 }
             } else if (target == names.PACKAGE) {
                 if (s.kind == PCK)
-                    return true;
+                    applicableTargets.add(names.PACKAGE);
             } else if (target == names.TYPE_USE) {
                 if (s.kind == VAR && s.owner.kind == MTH && s.type.hasTag(NONE)) {
-                    //cannot type annotate implictly typed locals
-                    return false;
+                    //cannot type annotate implicitly typed locals
+                    continue;
                 } else if (s.kind == TYP || s.kind == VAR ||
                         (s.kind == MTH && !s.isConstructor() &&
                                 !s.type.getReturnType().hasTag(VOID)) ||
                         (s.kind == MTH && s.isConstructor())) {
-                    return true;
+                    applicableTargets.add(names.TYPE_USE);
                 }
             } else if (target == names.TYPE_PARAMETER) {
                 if (s.kind == TYP && s.type.hasTag(TYPEVAR))
-                    return true;
+                    applicableTargets.add(names.TYPE_PARAMETER);
             } else
-                return true; // Unknown ElementType. This should be an error at declaration site,
-                             // assume applicable.
+                return Optional.empty(); // Unknown ElementType. This should be an error at declaration site,
+                                         // assume applicable.
         }
-        return false;
+        return Optional.of(applicableTargets);
     }
-
 
     Attribute.Array getAttributeTargetAttribute(TypeSymbol s) {
         Attribute.Compound atTarget = s.getAnnotationTypeMetadata().getTarget();
@@ -3156,8 +3383,8 @@ public class Check {
         return (Attribute.Array) atValue;
     }
 
-    private final Name[] dfltTargetMeta;
-    private Name[] defaultTargetMetaInfo(JCAnnotation a, Symbol s) {
+    public final Name[] dfltTargetMeta;
+    private Name[] defaultTargetMetaInfo() {
         return dfltTargetMeta;
     }
 
@@ -3285,6 +3512,16 @@ public class Check {
     void checkProfile(final DiagnosticPosition pos, final Symbol s) {
         if (profile != Profile.DEFAULT && (s.flags() & NOT_IN_PROFILE) != 0) {
             log.error(pos, Errors.NotInProfile(s, profile));
+        }
+    }
+
+    void checkPreview(DiagnosticPosition pos, Symbol s) {
+        if ((s.flags() & PREVIEW_API) != 0) {
+            if ((s.flags() & PREVIEW_ESSENTIAL_API) != 0 && !preview.isEnabled()) {
+                log.error(pos, Errors.IsPreview(s));
+            } else {
+                deferredLintHandler.report(() -> warnPreview(pos, s));
+            }
         }
     }
 
@@ -3448,6 +3685,14 @@ public class Check {
                     duplicateErasureError(pos, sym, byName);
                     sym.flags_field |= CLASH;
                     return true;
+                } else if ((sym.flags() & MATCH_BINDING) != 0 &&
+                           (byName.flags() & MATCH_BINDING) != 0 &&
+                           (byName.flags() & MATCH_BINDING_TO_OUTER) == 0) {
+                    if (!sym.type.isErroneous()) {
+                        log.error(pos, Errors.MatchBindingExists);
+                        sym.flags_field |= CLASH;
+                    }
+                    return false;
                 } else {
                     duplicateError(pos, byName);
                     return false;

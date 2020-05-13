@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2016 SAP SE. All rights reserved.
+ * Copyright (c) 2016, 2019 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@
 
 // Included in orderAccess.hpp header file.
 
-#include "vm_version_s390.hpp"
+#include "runtime/vm_version.hpp"
 
 // Implementation of class OrderAccess.
 
@@ -74,13 +74,7 @@ inline void OrderAccess::storeload()  { inlasm_zarch_sync(); }
 inline void OrderAccess::acquire()    { inlasm_zarch_acquire(); }
 inline void OrderAccess::release()    { inlasm_zarch_release(); }
 inline void OrderAccess::fence()      { inlasm_zarch_sync(); }
-
-template<size_t byte_size>
-struct OrderAccess::PlatformOrderedLoad<byte_size, X_ACQUIRE>
-{
-  template <typename T>
-  T operator()(const volatile T* p) const { T t = *p; inlasm_zarch_acquire(); return t; }
-};
+inline void OrderAccess::cross_modify_fence() { inlasm_zarch_sync(); }
 
 #undef inlasm_compiler_barrier
 #undef inlasm_zarch_sync

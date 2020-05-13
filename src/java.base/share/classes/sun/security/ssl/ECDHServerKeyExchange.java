@@ -27,32 +27,22 @@ package sun.security.ssl;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.security.CryptoPrimitive;
+import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
-import java.security.interfaces.ECPublicKey;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPoint;
-import java.security.spec.ECPublicKeySpec;
-import java.security.spec.InvalidKeySpecException;
 import java.text.MessageFormat;
-import java.util.EnumSet;
 import java.util.Locale;
-import sun.security.ssl.ECDHKeyExchange.ECDHECredentials;
-import sun.security.ssl.ECDHKeyExchange.ECDHEPossession;
+import java.util.Map;
 import sun.security.ssl.SSLHandshake.HandshakeMessage;
-import sun.security.ssl.SupportedGroupsExtension.NamedGroup;
 import sun.security.ssl.SupportedGroupsExtension.SupportedGroups;
 import sun.security.ssl.X509Authentication.X509Credentials;
 import sun.security.ssl.X509Authentication.X509Possession;
-import sun.security.util.ECUtil;
 import sun.security.util.HexDumpEncoder;
 
 /**
@@ -80,13 +70,13 @@ final class ECDHServerKeyExchange {
         // signature bytes, or null if anonymous
         private final byte[] paramsSignature;
 
-        // public key object encapsulated in this message
-        private final ECPublicKey publicKey;
-
         private final boolean useExplicitSigAlgorithm;
 
         // the signature algorithm used by this ServerKeyExchange message
         private final SignatureScheme signatureScheme;
+
+        // the parsed credential object
+        private SSLCredentials sslCredentials;
 
         ECDHServerKeyExchangeMessage(
                 HandshakeContext handshakeContext) throws IOException {
@@ -96,38 +86,43 @@ final class ECDHServerKeyExchange {
             ServerHandshakeContext shc =
                     (ServerHandshakeContext)handshakeContext;
 
-            ECDHEPossession ecdhePossession = null;
+            // Find the Possessions needed
+            NamedGroupPossession namedGroupPossession = null;
             X509Possession x509Possession = null;
             for (SSLPossession possession : shc.handshakePossessions) {
-                if (possession instanceof ECDHEPossession) {
-                    ecdhePossession = (ECDHEPossession)possession;
+                if (possession instanceof NamedGroupPossession) {
+                    namedGroupPossession = (NamedGroupPossession)possession;
                     if (x509Possession != null) {
                         break;
                     }
                 } else if (possession instanceof X509Possession) {
                     x509Possession = (X509Possession)possession;
-                    if (ecdhePossession != null) {
+                    if (namedGroupPossession != null) {
                         break;
                     }
                 }
             }
 
-            if (ecdhePossession == null) {
+            if (namedGroupPossession == null) {
                 // unlikely
                 throw shc.conContext.fatal(Alert.ILLEGAL_PARAMETER,
                     "No ECDHE credentials negotiated for server key exchange");
             }
 
-            publicKey = ecdhePossession.publicKey;
-            ECParameterSpec params = publicKey.getParams();
-            ECPoint point = publicKey.getW();
-            publicPoint = ECUtil.encodePoint(point, params.getCurve());
-
-            this.namedGroup = NamedGroup.valueOf(params);
-            if ((namedGroup == null) || (namedGroup.oid == null) ) {
+            // Find the NamedGroup used for the ephemeral keys.
+            namedGroup = namedGroupPossession.getNamedGroup();
+            if ((namedGroup == null) || (!namedGroup.isAvailable)) {
                 // unlikely
                 throw shc.conContext.fatal(Alert.ILLEGAL_PARAMETER,
-                    "Unnamed EC parameter spec: " + params);
+                    "Missing or improper named group: " + namedGroup);
+            }
+
+            publicPoint = namedGroup.encodePossessionPublicKey(
+                    namedGroupPossession);
+            if (publicPoint == null) {
+                // unlikely
+                throw shc.conContext.fatal(Alert.ILLEGAL_PARAMETER,
+                    "Missing public point for named group: " + namedGroup);
             }
 
             if (x509Possession == null) {
@@ -140,26 +135,22 @@ final class ECDHServerKeyExchange {
                         shc.negotiatedProtocol.useTLS12PlusSpec();
                 Signature signer = null;
                 if (useExplicitSigAlgorithm) {
-                    signatureScheme = SignatureScheme.getPreferableAlgorithm(
-                            shc.peerRequestedSignatureSchemes,
-                            x509Possession.popPrivateKey,
-                            shc.negotiatedProtocol);
-                    if (signatureScheme == null) {
+                    Map.Entry<SignatureScheme, Signature> schemeAndSigner =
+                            SignatureScheme.getSignerOfPreferableAlgorithm(
+                                shc.algorithmConstraints,
+                                shc.peerRequestedSignatureSchemes,
+                                x509Possession,
+                                shc.negotiatedProtocol);
+                    if (schemeAndSigner == null) {
                         // Unlikely, the credentials generator should have
                         // selected the preferable signature algorithm properly.
                         throw shc.conContext.fatal(Alert.INTERNAL_ERROR,
-                                "No preferred signature algorithm for " +
+                                "No supported signature algorithm for " +
                                 x509Possession.popPrivateKey.getAlgorithm() +
                                 "  key");
-                    }
-                    try {
-                        signer = signatureScheme.getSignature(
-                                x509Possession.popPrivateKey);
-                    } catch (NoSuchAlgorithmException | InvalidKeyException |
-                            InvalidAlgorithmParameterException nsae) {
-                        throw shc.conContext.fatal(Alert.INTERNAL_ERROR,
-                            "Unsupported signature algorithm: " +
-                            signatureScheme.name, nsae);
+                    } else {
+                        signatureScheme = schemeAndSigner.getKey();
+                        signer = schemeAndSigner.getValue();
                     }
                 } else {
                     signatureScheme = null;
@@ -216,38 +207,22 @@ final class ECDHServerKeyExchange {
                     "Unsupported named group: " + namedGroup);
             }
 
-            if (namedGroup.oid == null) {
-                throw chc.conContext.fatal(Alert.ILLEGAL_PARAMETER,
-                    "Unknown named EC curve: " + namedGroup);
-            }
-
-            ECParameterSpec parameters =
-                    ECUtil.getECParameterSpec(null, namedGroup.oid);
-            if (parameters == null) {
-                throw chc.conContext.fatal(Alert.ILLEGAL_PARAMETER,
-                    "No supported EC parameter: " + namedGroup);
-            }
-
             publicPoint = Record.getBytes8(m);
             if (publicPoint.length == 0) {
                 throw chc.conContext.fatal(Alert.ILLEGAL_PARAMETER,
-                    "Insufficient ECPoint data: " + namedGroup);
+                    "Insufficient Point data: " + namedGroup);
             }
 
-            ECPublicKey ecPublicKey = null;
             try {
-                ECPoint point =
-                        ECUtil.decodePoint(publicPoint, parameters.getCurve());
-                KeyFactory factory = KeyFactory.getInstance("EC");
-                ecPublicKey = (ECPublicKey)factory.generatePublic(
-                    new ECPublicKeySpec(point, parameters));
-            } catch (NoSuchAlgorithmException |
-                    InvalidKeySpecException | IOException ex) {
-                throw chc.conContext.fatal(Alert.ILLEGAL_PARAMETER,
-                    "Invalid ECPoint: " + namedGroup, ex);
+                sslCredentials = namedGroup.decodeCredentials(
+                    publicPoint, handshakeContext.algorithmConstraints,
+                     s -> chc.conContext.fatal(Alert.INSUFFICIENT_SECURITY,
+                     "ServerKeyExchange " + namedGroup + ": " + (s)));
+            } catch (GeneralSecurityException ex) {
+                throw chc.conContext.fatal(Alert.UNEXPECTED_MESSAGE,
+                        "Cannot decode named group: " +
+                        NamedGroup.nameOf(namedGroupId));
             }
-
-            publicKey = ecPublicKey;
 
             X509Credentials x509Credentials = null;
             for (SSLCredentials cd : chc.handshakeCredentials) {
@@ -296,7 +271,7 @@ final class ECDHServerKeyExchange {
             Signature signer;
             if (useExplicitSigAlgorithm) {
                 try {
-                    signer = signatureScheme.getSignature(
+                    signer = signatureScheme.getVerifier(
                             x509Credentials.popPublicKey);
                 } catch (NoSuchAlgorithmException | InvalidKeyException |
                         InvalidAlgorithmParameterException nsae) {
@@ -529,6 +504,7 @@ final class ECDHServerKeyExchange {
             // The consuming happens in client side only.
             ClientHandshakeContext chc = (ClientHandshakeContext)context;
 
+            // AlgorithmConstraints are checked during decoding
             ECDHServerKeyExchangeMessage skem =
                     new ECDHServerKeyExchangeMessage(chc, message);
             if (SSLLogger.isOn && SSLLogger.isOn("ssl,handshake")) {
@@ -537,22 +513,9 @@ final class ECDHServerKeyExchange {
             }
 
             //
-            // validate
-            //
-            // check constraints of EC PublicKey
-            if (!chc.algorithmConstraints.permits(
-                    EnumSet.of(CryptoPrimitive.KEY_AGREEMENT),
-                    skem.publicKey)) {
-                throw chc.conContext.fatal(Alert.INSUFFICIENT_SECURITY,
-                        "ECDH ServerKeyExchange does not comply " +
-                        "to algorithm constraints");
-            }
-
-            //
             // update
             //
-            chc.handshakeCredentials.add(
-                    new ECDHECredentials(skem.publicKey, skem.namedGroup));
+            chc.handshakeCredentials.add(skem.sslCredentials);
 
             //
             // produce

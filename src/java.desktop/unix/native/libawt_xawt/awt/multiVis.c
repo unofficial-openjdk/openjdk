@@ -218,7 +218,11 @@ QueryColorMap(Display *disp, Colormap src_cmap, Visual *src_vis,
      XColor *colors ;
 
      ncolors = (unsigned) src_vis->map_entries ;
-     *src_colors = colors = (XColor *)malloc(ncolors * sizeof(XColor) ) ;
+/* JDK modification.
+ * use calloc instead of malloc to initialize allocated memory
+ *   *src_colors = colors = (XColor *)malloc(ncolors * sizeof(XColor) ) ;
+ */
+     *src_colors = colors = (XColor *)calloc(ncolors, sizeof(XColor));
 
      if(src_vis->class != TrueColor && src_vis->class != DirectColor)
      {
@@ -433,9 +437,9 @@ ReadRegionsInList(Display *disp, Visual *fakeVis, int depth, int format,
     bytes_per_line = ximage->bytes_per_line;
 
     if (format == ZPixmap)
-          ximage->data = malloc(height*bytes_per_line);
+          ximage->data = malloc((size_t) height * bytes_per_line);
     else
-        ximage->data = malloc(height*bytes_per_line*depth);
+        ximage->data = malloc((size_t) height * bytes_per_line * depth);
 
     ximage->bits_per_pixel = depth; /** Valid only if format is ZPixmap ***/
 

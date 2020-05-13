@@ -41,8 +41,8 @@ class OldObjectRoot : public AllStatic {
     _management,
     _jvmti,
     _code_cache,
-    _string_table,
     _aot,
+    JVMCI_ONLY(_jvmci COMMA)
     _number_of_systems
   };
 
@@ -77,10 +77,12 @@ class OldObjectRoot : public AllStatic {
         return "JVMTI";
       case _code_cache:
         return "Code Cache";
-      case _string_table:
-        return "String Table";
       case _aot:
         return "AOT";
+#if INCLUDE_JVMCI
+      case _jvmci:
+        return "JVMCI";
+#endif
       default:
         ShouldNotReachHere();
     }

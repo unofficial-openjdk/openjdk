@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import javax.lang.model.util.*;
 /**
  * Represents a class or interface program element.  Provides access
  * to information about the type and its members.  Note that an enum
- * type is a kind of class and an annotation type is a kind of
+ * type and a record type are kinds of classes and an annotation type is a kind of
  * interface.
  *
  * <p> While a {@code TypeElement} represents a class or interface
@@ -60,8 +60,31 @@ import javax.lang.model.util.*;
  */
 public interface TypeElement extends Element, Parameterizable, QualifiedNameable {
     /**
-     * Returns the fields, methods, constructors, and member types
-     * that are directly declared in this class or interface.
+     * Returns the type defined by this type element, returning the
+     * <i>prototypical</i> type for an element representing a generic type.
+     *
+     * <p>A generic element defines a family of types, not just one.
+     * If this is a generic element, a prototypical type is
+     * returned which has the element's invocation on the
+     * type variables corresponding to its own formal type parameters.
+     * For example,
+     * for the generic class element {@code C<N extends Number>},
+     * the parameterized type {@code C<N>} is returned.
+     * The {@link Types} utility interface has more general methods
+     * for obtaining the full range of types defined by an element.
+     *
+     * @return the type defined by this type element
+     *
+     * @see Types#asMemberOf(DeclaredType, Element)
+     * @see Types#getDeclaredType(TypeElement, TypeMirror...)
+     */
+    @Override
+    TypeMirror asType();
+
+    /**
+     * Returns the fields, methods, constructors, record components,
+     * and member types that are directly declared in this class or
+     * interface.
      *
      * This includes any {@linkplain Elements.Origin#MANDATED
      * mandated} elements such as the (implicit) default constructor
@@ -154,6 +177,32 @@ public interface TypeElement extends Element, Parameterizable, QualifiedNameable
      * if there are none
      */
     List<? extends TypeParameterElement> getTypeParameters();
+
+    /**
+     * {@preview Associated with records, a preview feature of the Java language.
+     *
+     *           This method is associated with <i>records</i>, a preview
+     *           feature of the Java language. Preview features
+     *           may be removed in a future release, or upgraded to permanent
+     *           features of the Java language.}
+     *
+     * Returns the record components of this type element in
+     * declaration order.
+     *
+     * @implSpec The default implementations of this method returns an
+     * empty and unmodifiable list.
+     *
+     * @return the record components, or an empty list if there are
+     * none
+     *
+     * @since 14
+     */
+    @jdk.internal.PreviewFeature(feature=jdk.internal.PreviewFeature.Feature.RECORDS,
+                                 essentialAPI=false)
+    @SuppressWarnings("preview")
+    default List<? extends RecordComponentElement> getRecordComponents() {
+        return List.of();
+    }
 
     /**
      * Returns the package of a top-level type and returns the

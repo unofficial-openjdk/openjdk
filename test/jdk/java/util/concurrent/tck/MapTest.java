@@ -32,13 +32,17 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-import junit.framework.Test;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
+
+import junit.framework.Test;
 
 /**
  * Contains tests applicable to all Map implementations.
@@ -122,6 +126,7 @@ public class MapTest extends JSR166TestCase {
      */
     public void testBug8186171() {
         if (!impl.supportsSetValue()) return;
+        if (!atLeastJava10()) return; // jdk9 is no longer maintained
         final ThreadLocalRandom rnd = ThreadLocalRandom.current();
         final boolean permitsNullValues = impl.permitsNullValues();
         final Object v1 = (permitsNullValues && rnd.nextBoolean())
@@ -198,6 +203,97 @@ public class MapTest extends JSR166TestCase {
         for (Object elt : m1Copy.keySet())
             assertSame(m1Copy.get(elt), m1.get(elt));
         assertEquals(size1 + size2, m1.size());
+    }
+
+    /**
+     * 8222930: ConcurrentSkipListMap.clone() shares size variable between original and clone
+     */
+    public void testClone() {
+        final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        final int size = rnd.nextInt(4);
+        final Map map = impl.emptyMap();
+        for (int i = 0; i < size; i++)
+            map.put(impl.makeKey(i), impl.makeValue(i));
+        final Map clone = cloneableClone(map);
+        if (clone == null) return;      // not cloneable?
+
+        assertEquals(size, map.size());
+        assertEquals(size, clone.size());
+        assertEquals(map.isEmpty(), clone.isEmpty());
+
+        clone.put(impl.makeKey(-1), impl.makeValue(-1));
+        assertEquals(size, map.size());
+        assertEquals(size + 1, clone.size());
+
+        clone.clear();
+        assertEquals(size, map.size());
+        assertEquals(0, clone.size());
+        assertTrue(clone.isEmpty());
+    }
+
+    /**
+     * Concurrent access by compute methods behaves as expected
+     */
+    public void testConcurrentAccess() throws Throwable {
+        final Map map = impl.emptyMap();
+        final long testDurationMillis = expensiveTests ? 1000 : 2;
+        final int nTasks = impl.isConcurrent()
+            ? ThreadLocalRandom.current().nextInt(1, 10)
+            : 1;
+        final AtomicBoolean done = new AtomicBoolean(false);
+        final boolean remappingFunctionCalledAtMostOnce
+            = impl.remappingFunctionCalledAtMostOnce();
+        final List<CompletableFuture> futures = new ArrayList<>();
+        final AtomicLong expectedSum = new AtomicLong(0);
+        final Action[] tasks = {
+            // repeatedly increment values using compute()
+            () -> {
+                long[] invocations = new long[2];
+                ThreadLocalRandom rnd = ThreadLocalRandom.current();
+                BiFunction<Object, Object, Object> incValue = (k, v) -> {
+                    invocations[1]++;
+                    int vi = (v == null) ? 1 : impl.valueToInt(v) + 1;
+                    return impl.makeValue(vi);
+                };
+                while (!done.getAcquire()) {
+                    invocations[0]++;
+                    Object key = impl.makeKey(3 * rnd.nextInt(10));
+                    map.compute(key, incValue);
+                }
+                if (remappingFunctionCalledAtMostOnce)
+                    assertEquals(invocations[0], invocations[1]);
+                expectedSum.getAndAdd(invocations[0]);
+            },
+            // repeatedly increment values using computeIfPresent()
+            () -> {
+                long[] invocations = new long[2];
+                ThreadLocalRandom rnd = ThreadLocalRandom.current();
+                BiFunction<Object, Object, Object> incValue = (k, v) -> {
+                    invocations[1]++;
+                    int vi = impl.valueToInt(v) + 1;
+                    return impl.makeValue(vi);
+                };
+                while (!done.getAcquire()) {
+                    Object key = impl.makeKey(3 * rnd.nextInt(10));
+                    if (map.computeIfPresent(key, incValue) != null)
+                        invocations[0]++;
+                }
+                if (remappingFunctionCalledAtMostOnce)
+                    assertEquals(invocations[0], invocations[1]);
+                expectedSum.getAndAdd(invocations[0]);
+            },
+        };
+        for (int i = nTasks; i--> 0; ) {
+            Action task = chooseRandomly(tasks);
+            futures.add(CompletableFuture.runAsync(checkedRunnable(task)));
+        }
+        Thread.sleep(testDurationMillis);
+        done.setRelease(true);
+        for (var future : futures)
+            checkTimedGet(future, null);
+
+        long sum = map.values().stream().mapToLong(x -> (int) x).sum();
+        assertEquals(expectedSum.get(), sum);
     }
 
 //     public void testFailsIntentionallyForDebugging() {

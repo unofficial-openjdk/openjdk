@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@
  * @bug 4696512
  * @summary HTTP client: Improve proxy server configuration and selection
  * @modules java.base/sun.net.www
- * @library ../../../sun/net/www/httptest/
+ * @library ../../../sun/net/www/httptest/ /test/lib
  * @build ClosedChannelList TestHttpServer HttpTransaction HttpCallback
  * @compile ProxyTest.java
  * @run main/othervm -Dhttp.proxyHost=inexistant -Dhttp.proxyPort=8080 ProxyTest
@@ -34,7 +34,8 @@
 
 import java.net.*;
 import java.io.*;
-import java.util.ArrayList;
+import java.util.List;
+import jdk.test.lib.net.URIBuilder;
 
 public class ProxyTest implements HttpCallback {
     static TestHttpServer server;
@@ -42,32 +43,30 @@ public class ProxyTest implements HttpCallback {
     public ProxyTest() {
     }
 
-    public void request (HttpTransaction req) {
-        req.setResponseEntityBody ("Hello .");
+    public void request(HttpTransaction req) {
+        req.setResponseEntityBody("Hello .");
         try {
-            req.sendResponse (200, "Ok");
+            req.sendResponse(200, "Ok");
             req.orderlyClose();
         } catch (IOException e) {
         }
     }
 
     static public class MyProxySelector extends ProxySelector {
-        private ProxySelector def = null;
-        private ArrayList<Proxy> noProxy;
-
-        public MyProxySelector() {
-            noProxy = new ArrayList<Proxy>(1);
-            noProxy.add(Proxy.NO_PROXY);
-        }
+        private static volatile URI lastURI;
+        private final static List<Proxy> NO_PROXY = List.of(Proxy.NO_PROXY);
 
         public java.util.List<Proxy> select(URI uri) {
-            return noProxy;
+            System.out.println("Selecting no proxy for " + uri);
+            lastURI = uri;
+            return NO_PROXY;
         }
 
         public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
         }
-    }
 
+        public static URI lastURI() { return lastURI; }
+    }
 
     public static void main(String[] args) {
         ProxySelector defSelector = ProxySelector.getDefault();
@@ -75,12 +74,21 @@ public class ProxyTest implements HttpCallback {
             throw new RuntimeException("Default ProxySelector is null");
         ProxySelector.setDefault(new MyProxySelector());
         try {
-            server = new TestHttpServer (new ProxyTest(), 1, 10, 0);
-            URL url = new URL("http://localhost:"+server.getLocalPort());
-            System.out.println ("client opening connection to: " + url);
-            HttpURLConnection urlc = (HttpURLConnection)url.openConnection ();
-            InputStream is = urlc.getInputStream ();
+            InetAddress loopback = InetAddress.getLoopbackAddress();
+            server = new TestHttpServer(new ProxyTest(), 1, 10, loopback, 0);
+            URL url = URIBuilder.newBuilder()
+                      .scheme("http")
+                      .loopback()
+                      .port(server.getLocalPort())
+                      .toURL();
+            System.out.println("client opening connection to: " + url);
+            HttpURLConnection urlc = (HttpURLConnection)url.openConnection();
+            InputStream is = urlc.getInputStream();
             is.close();
+            URI lastURI = MyProxySelector.lastURI();
+            if (!String.valueOf(lastURI).equals(url + "/")) {
+                throw new AssertionError("Custom proxy was not used: last URI was " + lastURI);
+            }
         } catch (Exception e) {
                 throw new RuntimeException(e);
         } finally {

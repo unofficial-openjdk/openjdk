@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,8 +108,18 @@ public abstract class NodeList<T extends Node> extends AbstractList<T> implement
         }
     }
 
-    public boolean isList() {
-        return true;
+    /**
+     * Removes null values from the list.
+     */
+    public void trim() {
+        int newSize = 0;
+        for (int i = 0; i < nodes.length; ++i) {
+            if (nodes[i] != null) {
+                nodes[newSize] = nodes[i];
+                newSize++;
+            }
+        }
+        size = newSize;
     }
 
     protected abstract void update(T oldNode, T newNode);
@@ -143,7 +153,7 @@ public abstract class NodeList<T extends Node> extends AbstractList<T> implement
     @SuppressWarnings("unchecked")
     @Override
     public boolean add(Node node) {
-        assert node == null || !node.isDeleted();
+        assert node == null || !node.isDeleted() : node;
         self.incModCount();
         incModCount();
         int length = nodes.length;
@@ -201,16 +211,24 @@ public abstract class NodeList<T extends Node> extends AbstractList<T> implement
         size = other.size;
     }
 
-    public boolean equals(NodeList<T> other) {
-        if (size != other.size) {
-            return false;
+    @Override
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
         }
-        for (int i = 0; i < size; i++) {
-            if (nodes[i] != other.nodes[i]) {
+        if (other instanceof List<?>) {
+            List<?> otherList = (List<?>) other;
+            if (size != otherList.size()) {
                 return false;
             }
+            for (int i = 0; i < size; i++) {
+                if (nodes[i] != otherList.get(i)) {
+                    return false;
+                }
+            }
+            return true;
         }
-        return true;
+        return false;
     }
 
     @SuppressWarnings("unchecked")

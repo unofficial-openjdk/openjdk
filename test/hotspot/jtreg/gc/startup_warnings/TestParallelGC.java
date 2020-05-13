@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,11 +27,12 @@ package gc.startup_warnings;
 * @test TestParallelGC
 * @key gc
 * @bug 8006398
+* @requires vm.gc.Parallel
 * @summary Test that ParallelGC does not print a warning message
 * @library /test/lib
 * @modules java.base/jdk.internal.misc
 *          java.management
-* @run main gc.startup_warnings.TestParallelGC
+* @run driver gc.startup_warnings.TestParallelGC
 */
 
 import jdk.test.lib.process.ProcessTools;

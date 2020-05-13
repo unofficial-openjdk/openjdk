@@ -42,13 +42,13 @@ import java.security.SignatureException;
 import java.text.MessageFormat;
 import java.util.EnumSet;
 import java.util.Locale;
+import java.util.Map;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
 import sun.security.ssl.DHKeyExchange.DHECredentials;
 import sun.security.ssl.DHKeyExchange.DHEPossession;
 import sun.security.ssl.SSLHandshake.HandshakeMessage;
-import sun.security.ssl.SupportedGroupsExtension.NamedGroup;
 import sun.security.ssl.X509Authentication.X509Credentials;
 import sun.security.ssl.X509Authentication.X509Possession;
 import sun.security.util.HexDumpEncoder;
@@ -125,24 +125,22 @@ final class DHServerKeyExchange {
                         shc.negotiatedProtocol.useTLS12PlusSpec();
                 Signature signer = null;
                 if (useExplicitSigAlgorithm) {
-                    signatureScheme = SignatureScheme.getPreferableAlgorithm(
-                            shc.peerRequestedSignatureSchemes,
-                            x509Possession.popPrivateKey,
-                            shc.negotiatedProtocol);
-                    if (signatureScheme == null) {
+                    Map.Entry<SignatureScheme, Signature> schemeAndSigner =
+                            SignatureScheme.getSignerOfPreferableAlgorithm(
+                                    shc.algorithmConstraints,
+                                    shc.peerRequestedSignatureSchemes,
+                                    x509Possession,
+                                    shc.negotiatedProtocol);
+                    if (schemeAndSigner == null) {
                         // Unlikely, the credentials generator should have
                         // selected the preferable signature algorithm properly.
                         throw shc.conContext.fatal(Alert.INTERNAL_ERROR,
-                            "No preferred signature algorithm");
-                    }
-                    try {
-                        signer = signatureScheme.getSignature(
-                                x509Possession.popPrivateKey);
-                    } catch (NoSuchAlgorithmException | InvalidKeyException |
-                            InvalidAlgorithmParameterException nsae) {
-                        throw shc.conContext.fatal(Alert.INTERNAL_ERROR,
-                            "Unsupported signature algorithm: " +
-                            signatureScheme.name, nsae);
+                                "No supported signature algorithm for " +
+                                x509Possession.popPrivateKey.getAlgorithm() +
+                                "  key");
+                    } else {
+                        signatureScheme = schemeAndSigner.getKey();
+                        signer = schemeAndSigner.getValue();
                     }
                 } else {
                     signatureScheme = null;
@@ -241,7 +239,7 @@ final class DHServerKeyExchange {
             Signature signer;
             if (useExplicitSigAlgorithm) {
                 try {
-                    signer = signatureScheme.getSignature(
+                    signer = signatureScheme.getVerifier(
                             x509Credentials.popPublicKey);
                 } catch (NoSuchAlgorithmException | InvalidKeyException |
                         InvalidAlgorithmParameterException nsae) {

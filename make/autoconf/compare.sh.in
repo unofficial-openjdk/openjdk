@@ -67,7 +67,6 @@ export STRIP="@STRIP@ @STRIPFLAGS@"
 export TAR="@TAR@"
 export TEE="@TEE@"
 export UNIQ="@UNIQ@"
-export UNPACK200="@FIXPATH@ @BOOT_JDK@/bin/unpack200"
 export UNARCHIVE="@UNZIP@ -q -o"
 
 export TOPDIR="@TOPDIR@"
@@ -95,6 +94,9 @@ if [ "$OPENJDK_TARGET_OS" = "windows" ]; then
     export PATH="@VS_PATH@"
   fi
 fi
+
+export HOTSPOT_BUILD_TIME="@HOTSPOT_BUILD_TIME@"
+export USE_PRECOMPILED_HEADER="@USE_PRECOMPILED_HEADER@"
 
 # Now locate the main script and run it.
 REAL_COMPARE_SCRIPT="$TOPDIR/make/scripts/compare.sh"

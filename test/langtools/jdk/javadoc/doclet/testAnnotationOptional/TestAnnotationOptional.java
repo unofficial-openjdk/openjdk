@@ -26,7 +26,6 @@
  * @bug 8025633 8081854 8182765
  * @summary  Make sure that annotations types with optional elements have
  *           element headers
- * @author   Mahmood Ali
  * @library  ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build    javadoc.tester.*
@@ -50,6 +49,7 @@ public class TestAnnotationOptional extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOutput("pkg/AnnotationOptional.html", true,
-            "<a id=\"annotation.type.element.detail\">");
+            """
+                <section class="details" id="annotation.type.element.detail">""");
     }
 }

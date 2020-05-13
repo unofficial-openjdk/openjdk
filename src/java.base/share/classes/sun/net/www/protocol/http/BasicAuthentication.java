@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,11 +29,17 @@ import java.net.URL;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.PasswordAuthentication;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Objects;
 import sun.net.www.HeaderParser;
+import sun.nio.cs.ISO_8859_1;
+import sun.nio.cs.UTF_8;
 
 /**
  * BasicAuthentication: Encapsulate an http server authentication using
@@ -45,41 +51,23 @@ import sun.net.www.HeaderParser;
 
 class BasicAuthentication extends AuthenticationInfo {
 
+    @java.io.Serial
     private static final long serialVersionUID = 100L;
 
     /** The authentication string for this host, port, and realm.  This is
         a simple BASE64 encoding of "login:password".    */
-    String auth;
+    final String auth;
 
     /**
      * Create a BasicAuthentication
      */
     public BasicAuthentication(boolean isProxy, String host, int port,
                                String realm, PasswordAuthentication pw,
-                               String authenticatorKey) {
+                               boolean isUTF8, String authenticatorKey) {
         super(isProxy ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
               AuthScheme.BASIC, host, port, realm,
               Objects.requireNonNull(authenticatorKey));
-        String plain = pw.getUserName() + ":";
-        byte[] nameBytes = null;
-        try {
-            nameBytes = plain.getBytes("ISO-8859-1");
-        } catch (java.io.UnsupportedEncodingException uee) {
-            assert false;
-        }
-
-        // get password bytes
-        char[] passwd = pw.getPassword();
-        byte[] passwdBytes = new byte[passwd.length];
-        for (int i=0; i<passwd.length; i++)
-            passwdBytes[i] = (byte)passwd[i];
-
-        // concatenate user name and password bytes and encode them
-        byte[] concat = new byte[nameBytes.length + passwdBytes.length];
-        System.arraycopy(nameBytes, 0, concat, 0, nameBytes.length);
-        System.arraycopy(passwdBytes, 0, concat, nameBytes.length,
-                         passwdBytes.length);
-        this.auth = "Basic " + Base64.getEncoder().encodeToString(concat);
+        this.auth = authValueFrom(pw, isUTF8);
         this.pw = pw;
     }
 
@@ -99,32 +87,29 @@ class BasicAuthentication extends AuthenticationInfo {
      * Create a BasicAuthentication
      */
     public BasicAuthentication(boolean isProxy, URL url, String realm,
-                               PasswordAuthentication pw,
+                               PasswordAuthentication pw, boolean isUTF8,
                                String authenticatorKey) {
         super(isProxy ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
               AuthScheme.BASIC, url, realm,
               Objects.requireNonNull(authenticatorKey));
-        String plain = pw.getUserName() + ":";
-        byte[] nameBytes = null;
-        try {
-            nameBytes = plain.getBytes("ISO-8859-1");
-        } catch (java.io.UnsupportedEncodingException uee) {
-            assert false;
-        }
-
-        // get password bytes
-        char[] passwd = pw.getPassword();
-        byte[] passwdBytes = new byte[passwd.length];
-        for (int i=0; i<passwd.length; i++)
-            passwdBytes[i] = (byte)passwd[i];
-
-        // concatenate user name and password bytes and encode them
-        byte[] concat = new byte[nameBytes.length + passwdBytes.length];
-        System.arraycopy(nameBytes, 0, concat, 0, nameBytes.length);
-        System.arraycopy(passwdBytes, 0, concat, nameBytes.length,
-                         passwdBytes.length);
-        this.auth = "Basic " + Base64.getEncoder().encodeToString(concat);
+        this.auth = authValueFrom(pw, isUTF8);
         this.pw = pw;
+    }
+
+    private static String authValueFrom(PasswordAuthentication pw, boolean isUTF8) {
+        String plain = pw.getUserName() + ":";
+        char[] password = pw.getPassword();
+        CharBuffer cbuf = CharBuffer.allocate(plain.length() + password.length);
+        cbuf.put(plain).put(password).flip();
+        Charset charset = isUTF8 ? UTF_8.INSTANCE : ISO_8859_1.INSTANCE;
+        ByteBuffer buf = charset.encode(cbuf);
+        ByteBuffer enc = Base64.getEncoder().encode(buf);
+        String ret = "Basic " + new String(enc.array(), enc.position(), enc.remaining(),
+                ISO_8859_1.INSTANCE);
+        Arrays.fill(buf.array(), (byte) 0);
+        Arrays.fill(enc.array(), (byte) 0);
+        Arrays.fill(cbuf.array(), (char) 0);
+        return ret;
     }
 
     /**

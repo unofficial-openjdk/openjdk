@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/nmethod.hpp"
+#include "compiler/compilationPolicy.hpp"
 #include "compiler/compileBroker.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/linkResolver.hpp"
@@ -33,7 +34,6 @@
 #include "oops/method.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/jniCheck.hpp"
-#include "runtime/compilationPolicy.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaCalls.hpp"
@@ -44,10 +44,6 @@
 #include "runtime/signature.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.inline.hpp"
-#if INCLUDE_JVMCI
-#include "jvmci/jvmciJavaClasses.hpp"
-#include "jvmci/jvmciRuntime.hpp"
-#endif
 
 // -----------------------------------------------------
 // Implementation of JavaCallWrapper
@@ -190,7 +186,7 @@ void JavaCalls::call_virtual(JavaValue* result, Klass* spec_klass, Symbol* name,
   LinkInfo link_info(spec_klass, name, signature);
   LinkResolver::resolve_virtual_call(
           callinfo, receiver, recvrKlass, link_info, true, CHECK);
-  methodHandle method = callinfo.selected_method();
+  methodHandle method(THREAD, callinfo.selected_method());
   assert(method.not_null(), "should have thrown exception");
 
   // Invoke the method
@@ -226,7 +222,7 @@ void JavaCalls::call_special(JavaValue* result, Klass* klass, Symbol* name, Symb
   CallInfo callinfo;
   LinkInfo link_info(klass, name, signature);
   LinkResolver::resolve_special_call(callinfo, args->receiver(), link_info, CHECK);
-  methodHandle method = callinfo.selected_method();
+  methodHandle method(THREAD, callinfo.selected_method());
   assert(method.not_null(), "should have thrown exception");
 
   // Invoke the method
@@ -261,7 +257,7 @@ void JavaCalls::call_static(JavaValue* result, Klass* klass, Symbol* name, Symbo
   CallInfo callinfo;
   LinkInfo link_info(klass, name, signature);
   LinkResolver::resolve_static_call(callinfo, link_info, true, CHECK);
-  methodHandle method = callinfo.selected_method();
+  methodHandle method(THREAD, callinfo.selected_method());
   assert(method.not_null(), "should have thrown exception");
 
   // Invoke the method
@@ -350,9 +346,6 @@ void JavaCalls::call_helper(JavaValue* result, const methodHandle& method, JavaC
   assert(!SafepointSynchronize::is_at_safepoint(), "call to Java code during VM operation");
   assert(!thread->handle_area()->no_handle_mark_active(), "cannot call out to Java here");
 
-
-  CHECK_UNHANDLED_OOPS_ONLY(thread->clear_unhandled_oops();)
-
 #if INCLUDE_JVMCI
   // Gets the nmethod (if any) that should be called instead of normal target
   nmethod* alternative_target = args->alternative_target();
@@ -397,11 +390,7 @@ void JavaCalls::call_helper(JavaValue* result, const methodHandle& method, JavaC
   // Figure out if the result value is an oop or not (Note: This is a different value
   // than result_type. result_type will be T_INT of oops. (it is about size)
   BasicType result_type = runtime_type_from(result);
-  bool oop_result_flag = (result->get_type() == T_OBJECT || result->get_type() == T_ARRAY);
-
-  // NOTE: if we move the computation of the result_val_address inside
-  // the call to call_stub, the optimizer produces wrong code.
-  intptr_t* result_val_address = (intptr_t*)(result->get_value_addr());
+  bool oop_result_flag = is_reference_type(result->get_type());
 
   // Find receiver
   Handle receiver = (!method->is_static()) ? args->receiver() : Handle();
@@ -440,6 +429,11 @@ void JavaCalls::call_helper(JavaValue* result, const methodHandle& method, JavaC
   { JavaCallWrapper link(method, receiver, result, CHECK);
     { HandleMark hm(thread);  // HandleMark used by HandleMarkCleaner
 
+      // NOTE: if we move the computation of the result_val_address inside
+      // the call to call_stub, the optimizer produces wrong code.
+      intptr_t* result_val_address = (intptr_t*)(result->get_value_addr());
+      intptr_t* parameter_address = args->parameters();
+
       StubRoutines::call_stub()(
         (address)&link,
         // (intptr_t*)&(result->_value), // see NOTE above (compiler problem)
@@ -447,7 +441,7 @@ void JavaCalls::call_helper(JavaValue* result, const methodHandle& method, JavaC
         result_type,
         method(),
         entry_point,
-        args->parameters(),
+        parameter_address,
         args->size_of_parameters(),
         CHECK
       );
@@ -466,7 +460,7 @@ void JavaCalls::call_helper(JavaValue* result, const methodHandle& method, JavaC
 
   // Restore possible oop return
   if (oop_result_flag) {
-    result->set_jobject((jobject)thread->vm_result());
+    result->set_jobject(cast_from_oop<jobject>(thread->vm_result()));
     thread->set_vm_result(NULL);
   }
 }
@@ -527,8 +521,6 @@ class SignatureChekker : public SignatureIterator {
    intptr_t* _value;
 
  public:
-  bool _is_return;
-
   SignatureChekker(Symbol* signature,
                    BasicType return_type,
                    bool is_static,
@@ -538,17 +530,19 @@ class SignatureChekker : public SignatureIterator {
     _pos(0),
     _return_type(return_type),
     _value_state(value_state),
-    _value(value),
-    _is_return(false)
+    _value(value)
   {
     if (!is_static) {
       check_value(true); // Receiver must be an oop
     }
+    do_parameters_on(this);
+    check_return_type(return_type);
   }
 
-  void check_value(bool type) {
+ private:
+  void check_value(bool is_reference) {
     uint state = _value_state[_pos++];
-    if (type) {
+    if (is_reference) {
       guarantee(is_value_state_indirect_oop(state),
                 "signature does not match pushed arguments: %u at %d",
                 state, _pos - 1);
@@ -559,38 +553,20 @@ class SignatureChekker : public SignatureIterator {
     }
   }
 
-  void check_doing_return(bool state) { _is_return = state; }
-
   void check_return_type(BasicType t) {
-    guarantee(_is_return && t == _return_type, "return type does not match");
+    guarantee(t == _return_type, "return type does not match");
   }
 
-  void check_int(BasicType t) {
-    if (_is_return) {
-      check_return_type(t);
-      return;
-    }
+  void check_single_word() {
     check_value(false);
   }
 
-  void check_double(BasicType t) { check_long(t); }
-
-  void check_long(BasicType t) {
-    if (_is_return) {
-      check_return_type(t);
-      return;
-    }
-
+  void check_double_word() {
     check_value(false);
     check_value(false);
   }
 
-  void check_obj(BasicType t) {
-    if (_is_return) {
-      check_return_type(t);
-      return;
-    }
-
+  void check_reference() {
     intptr_t v = _value[_pos];
     if (v != 0) {
       // v is a "handle" referring to an oop, cast to integral type.
@@ -607,17 +583,26 @@ class SignatureChekker : public SignatureIterator {
     check_value(true);          // Verify value state.
   }
 
-  void do_bool()                       { check_int(T_BOOLEAN);       }
-  void do_char()                       { check_int(T_CHAR);          }
-  void do_float()                      { check_int(T_FLOAT);         }
-  void do_double()                     { check_double(T_DOUBLE);     }
-  void do_byte()                       { check_int(T_BYTE);          }
-  void do_short()                      { check_int(T_SHORT);         }
-  void do_int()                        { check_int(T_INT);           }
-  void do_long()                       { check_long(T_LONG);         }
-  void do_void()                       { check_return_type(T_VOID);  }
-  void do_object(int begin, int end)   { check_obj(T_OBJECT);        }
-  void do_array(int begin, int end)    { check_obj(T_OBJECT);        }
+  friend class SignatureIterator;  // so do_parameters_on can call do_type
+  void do_type(BasicType type) {
+    switch (type) {
+    case T_BYTE:
+    case T_BOOLEAN:
+    case T_CHAR:
+    case T_SHORT:
+    case T_INT:
+    case T_FLOAT:  // this one also
+      check_single_word(); break;
+    case T_LONG:
+    case T_DOUBLE:
+      check_double_word(); break;
+    case T_ARRAY:
+    case T_OBJECT:
+      check_reference(); break;
+    default:
+      ShouldNotReachHere();
+    }
+  }
 };
 
 
@@ -625,7 +610,7 @@ void JavaCallArguments::verify(const methodHandle& method, BasicType return_type
   guarantee(method->size_of_parameters() == size_of_parameters(), "wrong no. of arguments pushed");
 
   // Treat T_OBJECT and T_ARRAY as the same
-  if (return_type == T_ARRAY) return_type = T_OBJECT;
+  if (is_reference_type(return_type)) return_type = T_OBJECT;
 
   // Check that oop information is correct
   Symbol* signature = method->signature();
@@ -635,7 +620,4 @@ void JavaCallArguments::verify(const methodHandle& method, BasicType return_type
                       method->is_static(),
                       _value_state,
                       _value);
-  sc.iterate_parameters();
-  sc.check_doing_return(true);
-  sc.iterate_returntype();
 }

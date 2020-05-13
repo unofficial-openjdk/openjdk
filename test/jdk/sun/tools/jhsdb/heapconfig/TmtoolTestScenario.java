@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import java.util.logging.Logger;
 
 import jdk.test.lib.apps.LingeredApp;
 import jdk.test.lib.JDKToolLauncher;
+import jdk.test.lib.SA.SATestUtils;
 import jdk.test.lib.Utils;
 
 public class TmtoolTestScenario {
@@ -64,14 +66,14 @@ public class TmtoolTestScenario {
      * @return STDOUT of test app
      */
     public List<String> getAppOutput() {
-        return theApp.getAppOutput();
+        return theApp.getOutput().getStdoutAsList();
     }
 
     /**
      * @return Value of the app output with -XX:+PrintFlagsFinal as a map.
      */
-    public Map<String, String>  parseFlagsFinal() {
-        List<String> astr = theApp.getAppOutput();
+    public Map<String, String> parseFlagsFinal() {
+        List<String> astr = getAppOutput();
         Map<String, String> vmMap = new HashMap<String, String>();
 
         for (String line : astr) {
@@ -90,14 +92,15 @@ public class TmtoolTestScenario {
      * @param vmArgs  - vm and java arguments to launch test app
      * @return exit code of tool
      */
-    public int launch(List<String> vmArgs) {
+    public int launch(String... vmArgs) {
         System.out.println("Starting LingeredApp");
         try {
             try {
                 List<String> vmArgsExtended = new ArrayList<String>();
                 vmArgsExtended.add("-XX:+UsePerfData");
-                vmArgsExtended.addAll(vmArgs);
-                theApp = LingeredApp.startApp(vmArgsExtended);
+                Collections.addAll(vmArgsExtended, vmArgs);
+                theApp = new LingeredApp();
+                LingeredApp.startAppExactJvmOpts(theApp, vmArgsExtended.toArray(new String[0]));
 
                 System.out.println("Starting " + toolName + " against " + theApp.getPid());
                 JDKToolLauncher launcher = JDKToolLauncher.createUsingTestJDK("jhsdb");
@@ -109,7 +112,7 @@ public class TmtoolTestScenario {
                 launcher.addToolArg("--pid");
                 launcher.addToolArg(Long.toString(theApp.getPid()));
 
-                ProcessBuilder processBuilder = new ProcessBuilder(launcher.getCommand());
+                ProcessBuilder processBuilder = SATestUtils.createProcessBuilder(launcher);
                 processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
                 Process toolProcess = processBuilder.start();
 
@@ -130,10 +133,6 @@ public class TmtoolTestScenario {
         } catch (IOException | InterruptedException ex) {
             throw new RuntimeException("Test ERROR " + ex, ex);
         }
-    }
-
-    public void launch(String... appArgs) throws IOException {
-        launch(Arrays.asList(appArgs));
     }
 
     private TmtoolTestScenario(String toolName, String[] toolArgs) {

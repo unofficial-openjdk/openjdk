@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,8 @@ import java.security.PrivilegedAction;
 import java.util.Objects;
 import java.util.Properties;
 
+import jdk.internal.access.JavaLangReflectAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.VM;
 import sun.reflect.misc.ReflectUtil;
 import sun.security.action.GetPropertyAction;
@@ -64,8 +66,7 @@ public class ReflectionFactory {
 
     private static boolean initted = false;
     private static final ReflectionFactory soleInstance = new ReflectionFactory();
-    // Provides access to package-private mechanisms in java.lang.reflect
-    private static volatile LangReflectAccess langReflectAccess;
+
 
     /* Method for static class initializer <clinit>, or null */
     private static volatile Method hasStaticInitializerMethod;
@@ -90,7 +91,9 @@ public class ReflectionFactory {
     // true if deserialization constructor checking is disabled
     private static boolean disableSerialConstructorChecks = false;
 
+    private final JavaLangReflectAccess langReflectAccess;
     private ReflectionFactory() {
+        this.langReflectAccess = SharedSecrets.getJavaLangReflectAccess();
     }
 
     /**
@@ -160,12 +163,7 @@ public class ReflectionFactory {
     //
     //
 
-    /** Called only by java.lang.reflect.Modifier's static initializer */
-    public void setLangReflectAccess(LangReflectAccess access) {
-        langReflectAccess = access;
-    }
-
-    /**
+    /*
      * Note: this routine can cause the declaring class for the field
      * be initialized and therefore must not be called until the
      * first get/set of this field.
@@ -178,7 +176,7 @@ public class ReflectionFactory {
         Field root = langReflectAccess.getRoot(field);
         if (root != null) {
             // FieldAccessor will use the root unless the modifiers have
-            // been overrridden
+            // been overridden
             if (root.getModifiers() == field.getModifiers() || !override) {
                 field = root;
             }
@@ -202,7 +200,8 @@ public class ReflectionFactory {
             method = root;
         }
 
-        if (noInflation && !ReflectUtil.isVMAnonymousClass(method.getDeclaringClass())) {
+        if (noInflation && !method.getDeclaringClass().isHidden()
+                && !ReflectUtil.isVMAnonymousClass(method.getDeclaringClass())) {
             return new MethodAccessorGenerator().
                 generateMethod(method.getDeclaringClass(),
                                method.getName(),
@@ -246,7 +245,8 @@ public class ReflectionFactory {
             return new BootstrapConstructorAccessorImpl(c);
         }
 
-        if (noInflation && !ReflectUtil.isVMAnonymousClass(c.getDeclaringClass())) {
+        if (noInflation && !c.getDeclaringClass().isHidden()
+                && !ReflectUtil.isVMAnonymousClass(c.getDeclaringClass())) {
             return new MethodAccessorGenerator().
                 generateConstructor(c.getDeclaringClass(),
                                     c.getParameterTypes(),
@@ -268,52 +268,6 @@ public class ReflectionFactory {
     //
     //
 
-    /** Creates a new java.lang.reflect.Field. Access checks as per
-        java.lang.reflect.AccessibleObject are not overridden. */
-    public Field newField(Class<?> declaringClass,
-                          String name,
-                          Class<?> type,
-                          int modifiers,
-                          int slot,
-                          String signature,
-                          byte[] annotations)
-    {
-        return langReflectAccess().newField(declaringClass,
-                                            name,
-                                            type,
-                                            modifiers,
-                                            slot,
-                                            signature,
-                                            annotations);
-    }
-
-    /** Creates a new java.lang.reflect.Method. Access checks as per
-        java.lang.reflect.AccessibleObject are not overridden. */
-    public Method newMethod(Class<?> declaringClass,
-                            String name,
-                            Class<?>[] parameterTypes,
-                            Class<?> returnType,
-                            Class<?>[] checkedExceptions,
-                            int modifiers,
-                            int slot,
-                            String signature,
-                            byte[] annotations,
-                            byte[] parameterAnnotations,
-                            byte[] annotationDefault)
-    {
-        return langReflectAccess().newMethod(declaringClass,
-                                             name,
-                                             parameterTypes,
-                                             returnType,
-                                             checkedExceptions,
-                                             modifiers,
-                                             slot,
-                                             signature,
-                                             annotations,
-                                             parameterAnnotations,
-                                             annotationDefault);
-    }
-
     /** Creates a new java.lang.reflect.Constructor. Access checks as
         per java.lang.reflect.AccessibleObject are not overridden. */
     public Constructor<?> newConstructor(Class<?> declaringClass,
@@ -325,30 +279,20 @@ public class ReflectionFactory {
                                          byte[] annotations,
                                          byte[] parameterAnnotations)
     {
-        return langReflectAccess().newConstructor(declaringClass,
-                                                  parameterTypes,
-                                                  checkedExceptions,
-                                                  modifiers,
-                                                  slot,
-                                                  signature,
-                                                  annotations,
-                                                  parameterAnnotations);
-    }
-
-    /** Gets the MethodAccessor object for a java.lang.reflect.Method */
-    public MethodAccessor getMethodAccessor(Method m) {
-        return langReflectAccess().getMethodAccessor(m);
-    }
-
-    /** Sets the MethodAccessor object for a java.lang.reflect.Method */
-    public void setMethodAccessor(Method m, MethodAccessor accessor) {
-        langReflectAccess().setMethodAccessor(m, accessor);
+        return langReflectAccess.newConstructor(declaringClass,
+                                                parameterTypes,
+                                                checkedExceptions,
+                                                modifiers,
+                                                slot,
+                                                signature,
+                                                annotations,
+                                                parameterAnnotations);
     }
 
     /** Gets the ConstructorAccessor object for a
         java.lang.reflect.Constructor */
     public ConstructorAccessor getConstructorAccessor(Constructor<?> c) {
-        return langReflectAccess().getConstructorAccessor(c);
+        return langReflectAccess.getConstructorAccessor(c);
     }
 
     /** Sets the ConstructorAccessor object for a
@@ -356,21 +300,21 @@ public class ReflectionFactory {
     public void setConstructorAccessor(Constructor<?> c,
                                        ConstructorAccessor accessor)
     {
-        langReflectAccess().setConstructorAccessor(c, accessor);
+        langReflectAccess.setConstructorAccessor(c, accessor);
     }
 
     /** Makes a copy of the passed method. The returned method is a
         "child" of the passed one; see the comments in Method.java for
         details. */
     public Method copyMethod(Method arg) {
-        return langReflectAccess().copyMethod(arg);
+        return langReflectAccess.copyMethod(arg);
     }
 
     /** Makes a copy of the passed method. The returned method is NOT
      * a "child" but a "sibling" of the Method in arg. Should only be
      * used on non-root methods. */
     public Method leafCopyMethod(Method arg) {
-        return langReflectAccess().leafCopyMethod(arg);
+        return langReflectAccess.leafCopyMethod(arg);
     }
 
 
@@ -378,30 +322,30 @@ public class ReflectionFactory {
         "child" of the passed one; see the comments in Field.java for
         details. */
     public Field copyField(Field arg) {
-        return langReflectAccess().copyField(arg);
+        return langReflectAccess.copyField(arg);
     }
 
     /** Makes a copy of the passed constructor. The returned
         constructor is a "child" of the passed one; see the comments
         in Constructor.java for details. */
     public <T> Constructor<T> copyConstructor(Constructor<T> arg) {
-        return langReflectAccess().copyConstructor(arg);
+        return langReflectAccess.copyConstructor(arg);
     }
 
     /** Gets the byte[] that encodes TypeAnnotations on an executable.
      */
     public byte[] getExecutableTypeAnnotationBytes(Executable ex) {
-        return langReflectAccess().getExecutableTypeAnnotationBytes(ex);
+        return langReflectAccess.getExecutableTypeAnnotationBytes(ex);
     }
 
     public Class<?>[] getExecutableSharedParameterTypes(Executable ex) {
-        return langReflectAccess().getExecutableSharedParameterTypes(ex);
+        return langReflectAccess.getExecutableSharedParameterTypes(ex);
     }
 
     public <T> T newInstance(Constructor<T> ctor, Object[] args, Class<?> caller)
         throws IllegalAccessException, InstantiationException, InvocationTargetException
     {
-        return langReflectAccess().newInstance(ctor, args, caller);
+        return langReflectAccess.newInstance(ctor, args, caller);
     }
 
     //--------------------------------------------------------------------------
@@ -526,13 +470,13 @@ public class ReflectionFactory {
                                           constructorToCall.getParameterTypes(),
                                           constructorToCall.getExceptionTypes(),
                                           constructorToCall.getModifiers(),
-                                          langReflectAccess().
+                                          langReflectAccess.
                                           getConstructorSlot(constructorToCall),
-                                          langReflectAccess().
+                                          langReflectAccess.
                                           getConstructorSignature(constructorToCall),
-                                          langReflectAccess().
+                                          langReflectAccess.
                                           getConstructorAnnotations(constructorToCall),
-                                          langReflectAccess().
+                                          langReflectAccess.
                                           getConstructorParameterAnnotations(constructorToCall));
         setConstructorAccessor(c, acc);
         c.setAccessible(true);
@@ -723,17 +667,6 @@ public class ReflectionFactory {
             "true".equals(props.getProperty("jdk.disableSerialConstructorChecks"));
 
         initted = true;
-    }
-
-    private static LangReflectAccess langReflectAccess() {
-        if (langReflectAccess == null) {
-            // Call a static method to get class java.lang.reflect.Modifier
-            // initialized. Its static initializer will cause
-            // setLangReflectAccess() to be called from the context of the
-            // java.lang.reflect package.
-            Modifier.isPublic(Modifier.PUBLIC);
-        }
-        return langReflectAccess;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -325,6 +325,20 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
             @Override
             void process(JavapTask task, String opt, String arg) throws BadArgs {
                 task.options.moduleName = arg;
+            }
+        },
+
+        // this option is processed by the launcher, and cannot be used when invoked via
+        // an API like ToolProvider. It exists here to be documented in the command-line help.
+        new Option(false, "-J") {
+            @Override
+            boolean matches(String opt) {
+                return opt.startsWith("-J");
+            }
+
+            @Override
+            void process(JavapTask task, String opt, String arg) throws BadArgs {
+                throw task.new BadArgs("err.only.for.launcher");
             }
         }
 
@@ -808,7 +822,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
             MessageDigest md  = null;
             if (options.sysInfo || options.verbose) {
                 try {
-                    md = MessageDigest.getInstance("MD5");
+                    md = MessageDigest.getInstance("SHA-256");
                 } catch (NoSuchAlgorithmException ignore) {
                 }
                 in = new DigestInputStream(in, md);
@@ -829,7 +843,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
         if (options.sysInfo || options.verbose) {
             classWriter.setFile(info.fo.toUri());
             classWriter.setLastModified(info.fo.getLastModified());
-            classWriter.setDigest("MD5", info.digest);
+            classWriter.setDigest("SHA-256", info.digest);
             classWriter.setFileSize(info.size);
         }
 
@@ -936,7 +950,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
         printLines(getMessage("main.usage", progname));
         for (Option o: recognizedOptions) {
             String name = o.aliases[0].replaceAll("^-+", "").replaceAll("-+", "_"); // there must always be at least one name
-            if (name.startsWith("X") || name.equals("fullversion") || name.equals("h") || name.equals("verify"))
+            if (name.startsWith("X") || name.equals("fullversion"))
                 continue;
             printLines(getMessage("main.opt." + name));
         }
@@ -944,7 +958,8 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
         String[] fmOptions = {
             "--module-path", "--system",
             "--class-path", "-classpath", "-cp",
-            "-bootclasspath"
+            "-bootclasspath",
+            "--multi-release"
         };
 
         for (String o: fmOptions) {

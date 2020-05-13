@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,7 +26,8 @@
 #ifndef SHARE_GC_EPSILON_EPSILON_GLOBALS_HPP
 #define SHARE_GC_EPSILON_EPSILON_GLOBALS_HPP
 
-#include "runtime/globals.hpp"
+#include "runtime/globals_shared.hpp"
+
 //
 // Defines all globals flags used by the Epsilon GC.
 //
@@ -42,8 +44,7 @@
                     product_rw,                                             \
                     lp64_product,                                           \
                     range,                                                  \
-                    constraint,                                             \
-                    writeable)                                              \
+                    constraint)                                             \
                                                                             \
   experimental(size_t, EpsilonPrintHeapSteps, 20,                           \
           "Print heap occupancy stats with this number of steps. "          \

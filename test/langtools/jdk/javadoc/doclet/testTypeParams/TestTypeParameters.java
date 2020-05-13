@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@
  *           in member summary. Also, test for type parameter links in package-summary and
  *           class-use pages. The class/annotation pages should check for type
  *           parameter links in the class/annotation signature section when -linksource is set.
- * @author   jamieh
  * @library  ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build    javadoc.tester.*
@@ -54,25 +53,27 @@ public class TestTypeParameters extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOutput("pkg/C.html", true,
-                "<td class=\"colFirst\"><code>&lt;W extends java.lang.String,&#8203;V extends "
-                + "java.util.List&gt;<br>java.lang.Object</code></td>",
+                """
+                    <td class="col-first"><code>&lt;W extends java.lang.String,&#8203;
+                    V extends java.util.List&gt;<br>java.lang.Object</code></td>""",
                 "<code>&lt;T&gt;&nbsp;java.lang.Object</code>");
 
         checkOutput("pkg/package-summary.html", true,
-                "C</a>&lt;E extends <a href=\"Parent.html\" "
-                + "title=\"class in pkg\">Parent</a>&gt;");
+                """
+                    C</a>&lt;E extends <a href="Parent.html" title="class in pkg">Parent</a>&gt;""");
 
         checkOutput("pkg/class-use/Foo4.html", true,
-                "<a href=\"../ClassUseTest3.html\" title=\"class in pkg\">"
-                + "ClassUseTest3</a>&lt;T extends <a href=\"../ParamTest2.html\" "
-                + "title=\"class in pkg\">ParamTest2</a>&lt;java.util.List&lt;? extends "
-                + "<a href=\"../Foo4.html\" title=\"class in pkg\">Foo4</a>&gt;&gt;&gt;");
+                """
+                    <a href="../ClassUseTest3.html" title="class in pkg">ClassUseTest3</a>&lt;T exte\
+                    nds <a href="../ParamTest2.html" title="class in pkg">ParamTest2</a>&lt;java.uti\
+                    l.List&lt;? extends <a href="../Foo4.html" title="class in pkg">Foo4</a>&gt;&gt;\
+                    &gt;""");
 
         // Nested type parameters
         checkOutput("pkg/C.html", true,
-                "<a id=\"formatDetails(java.util.Collection,java.util.Collection)\">\n"
-                + "<!--   -->\n"
-                + "</a>");
+                """
+                    <section class="detail" id="formatDetails(java.util.Collection,java.util.Collection)">
+                    <h3>formatDetails</h3>""");
     }
 
     @Test
@@ -84,9 +85,10 @@ public class TestTypeParameters extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOutput("pkg/ClassUseTest3.html", true,
-            "public class <a href=\"../src-html/pkg/ClassUseTest3.html#line.28\">" +
-            "ClassUseTest3</a>&lt;T extends <a href=\"ParamTest2.html\" " +
-            "title=\"class in pkg\">ParamTest2</a>&lt;java.util.List&lt;? extends " +
-            "<a href=\"Foo4.html\" title=\"class in pkg\">Foo4</a>&gt;&gt;&gt;");
+            """
+                public class <a href="../src-html/pkg/ClassUseTest3.html#line.28">ClassUseTest3<\
+                /a>&lt;T extends <a href="ParamTest2.html" title="class in pkg">ParamTest2</a>&l\
+                t;java.util.List&lt;? extends <a href="Foo4.html" title="class in pkg">Foo4</a>&\
+                gt;&gt;&gt;""");
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2019, Oracle and/or its affiliates. All rights reserved.
  */
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -51,7 +51,7 @@ import org.xml.sax.SAXException;
  * serializers (xml, html, text ...) that write output to a stream.
  *
  * @xsl.usage internal
- * @LastModified: Sept 2018
+ * @LastModified: Aug 2019
  */
 abstract public class ToStream extends SerializerBase {
 
@@ -198,7 +198,13 @@ abstract public class ToStream extends SerializerBase {
     /**
      * Default constructor
      */
-    public ToStream() { }
+    public ToStream() {
+        this(null);
+    }
+
+    public ToStream(ErrorListener l) {
+        m_errListener = l;
+    }
 
     /**
      * This helper method to writes out "]]>" when closing a CDATA section.
@@ -422,45 +428,30 @@ abstract public class ToStream extends SerializerBase {
                        // from what it was
 
                        EncodingInfo encodingInfo = Encodings.getEncodingInfo(newEncoding);
-                       if (newEncoding != null && encodingInfo.name == null) {
-                        // We tried to get an EncodingInfo for Object for the given
-                        // encoding, but it came back with an internall null name
-                        // so the encoding is not supported by the JDK, issue a message.
-                        final String msg = Utils.messages.createMessage(
-                                MsgKey.ER_ENCODING_NOT_SUPPORTED,new Object[]{ newEncoding });
+                       if (encodingInfo.name == null) {
+                            // We tried to get an EncodingInfo for Object for the given
+                            // encoding, but it came back with an internall null name
+                            // so the encoding is not supported by the JDK, issue a message.
+                            final String msg = Utils.messages.createMessage(
+                                    MsgKey.ER_ENCODING_NOT_SUPPORTED,new Object[]{ newEncoding });
 
-                        final String msg2 =
-                            "Warning: encoding \"" + newEncoding + "\" not supported, using "
-                                   + Encodings.DEFAULT_MIME_ENCODING;
-                        try {
-                                // Prepare to issue the warning message
-                                final Transformer tran = super.getTransformer();
-                                if (tran != null) {
-                                    final ErrorListener errHandler = tran
-                                            .getErrorListener();
-                                    // Issue the warning message
-                                    if (null != errHandler
-                                            && m_sourceLocator != null) {
-                                        errHandler
-                                                .warning(new TransformerException(
-                                                        msg, m_sourceLocator));
-                                        errHandler
-                                                .warning(new TransformerException(
-                                                        msg2, m_sourceLocator));
-                                    } else {
-                                        System.out.println(msg);
-                                        System.out.println(msg2);
-                                    }
-                                } else {
-                                    System.out.println(msg);
-                                    System.out.println(msg2);
+                            final String msg2 =
+                                "Warning: encoding \"" + newEncoding + "\" not supported, using "
+                                       + Encodings.DEFAULT_MIME_ENCODING;
+                            try {
+                                // refer to JDK-8229005, should throw Exception instead of warning and
+                                // then falling back to the default encoding. Keep it for now.
+                                if (m_errListener != null) {
+                                    m_errListener.warning(new TransformerException(msg, m_sourceLocator));
+                                    m_errListener.warning(new TransformerException(msg2, m_sourceLocator));
                                 }
                             } catch (Exception e) {
                             }
 
                             // We said we are using UTF-8, so use it
                             newEncoding = Encodings.DEFAULT_MIME_ENCODING;
-                            val = Encodings.DEFAULT_MIME_ENCODING; // to store the modified value into the properties a little later
+                            // to store the modified value into the properties a little later
+                            val = Encodings.DEFAULT_MIME_ENCODING;
                             encodingInfo = Encodings.getEncodingInfo(newEncoding);
                         }
                        // The encoding was good, or was forced to UTF-8 above
@@ -1231,7 +1222,7 @@ abstract public class ToStream extends SerializerBase {
                 m_elemContext.m_startTagOpen = false;
             }
 
-            if (!m_cdataTagOpen && shouldIndent())
+            if (!m_cdataTagOpen && shouldIndentForText())
                 indent();
 
             boolean writeCDataBrackets =
@@ -1270,6 +1261,7 @@ abstract public class ToStream extends SerializerBase {
                     closeCDATA();
             }
 
+            m_isprevtext = true;
             // time to fire off CDATA event
             if (m_tracer != null)
                 super.fireCDATAEvent(ch, old_start, length);
@@ -1536,11 +1528,13 @@ abstract public class ToStream extends SerializerBase {
     }
 
     /**
-     * Used to flush the buffered characters when indentation is on, this method
-     * will be called when the next node is traversed.
+     * Flushes the buffered characters when indentation is on. This method
+     * is called before the next node is traversed.
      *
+     * @param isText indicates whether the node to be traversed is text
+     * @throws org.xml.sax.SAXException
      */
-    final protected void flushCharactersBuffer() throws SAXException {
+    final protected void flushCharactersBuffer(boolean isText) throws SAXException {
         try {
             if (shouldFormatOutput() && m_charactersBuffer.isAnyCharactersBuffered()) {
                 if (m_elemContext.m_isCdataSection) {
@@ -1553,7 +1547,9 @@ abstract public class ToStream extends SerializerBase {
                     return;
                 }
 
-                m_childNodeNum++;
+                if (!isText) {
+                    m_childNodeNum++;
+                }
                 boolean skipBeginningNewlines = false;
                 if (shouldIndentForText()) {
                     indent();
@@ -1846,7 +1842,7 @@ abstract public class ToStream extends SerializerBase {
 
         if (m_doIndent) {
             m_childNodeNum++;
-            flushCharactersBuffer();
+            flushCharactersBuffer(false);
         }
 
         if (m_needToCallStartDocument)
@@ -2117,7 +2113,7 @@ abstract public class ToStream extends SerializerBase {
             return;
 
         if (m_doIndent) {
-            flushCharactersBuffer();
+            flushCharactersBuffer(false);
         }
         // namespaces declared at the current depth are no longer valid
         // so get rid of them
@@ -2309,7 +2305,7 @@ abstract public class ToStream extends SerializerBase {
             return;
         if (m_doIndent) {
             m_childNodeNum++;
-            flushCharactersBuffer();
+            flushCharactersBuffer(false);
         }
         if (m_elemContext.m_startTagOpen)
         {
@@ -2491,8 +2487,7 @@ abstract public class ToStream extends SerializerBase {
     public void startCDATA() throws org.xml.sax.SAXException
     {
         if (m_doIndent) {
-            m_childNodeNum++;
-            flushCharactersBuffer();
+            flushCharactersBuffer(true);
         }
 
         m_cdataStartCalled = true;

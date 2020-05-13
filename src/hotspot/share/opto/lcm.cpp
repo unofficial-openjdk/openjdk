@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "asm/macroAssembler.inline.hpp"
 #include "memory/allocation.inline.hpp"
+#include "oops/compressedOops.hpp"
 #include "opto/ad.hpp"
 #include "opto/block.hpp"
 #include "opto/c2compiler.hpp"
@@ -40,7 +41,7 @@
 // Check whether val is not-null-decoded compressed oop,
 // i.e. will grab into the base of the heap if it represents NULL.
 static bool accesses_heap_base_zone(Node *val) {
-  if (Universe::narrow_oop_base() != NULL) { // Implies UseCompressedOops.
+  if (CompressedOops::base() != NULL) { // Implies UseCompressedOops.
     if (val && val->is_Mach()) {
       if (val->as_Mach()->ideal_Opcode() == Op_DecodeN) {
         // This assumes all Decodes with TypePtr::NotNull are matched to nodes that
@@ -66,8 +67,8 @@ static bool needs_explicit_null_check_for_read(Node *val) {
     return false;  // Implicit null check will work.
   }
   // Also a read accessing the base of a heap-based compressed heap will trap.
-  if (accesses_heap_base_zone(val) &&                    // Hits the base zone page.
-      Universe::narrow_oop_use_implicit_null_checks()) { // Base zone page is protected.
+  if (accesses_heap_base_zone(val) &&         // Hits the base zone page.
+      CompressedOops::use_implicit_null_checks()) { // Base zone page is protected.
     return false;
   }
 
@@ -169,8 +170,6 @@ void PhaseCFG::implicit_null_check(Block* block, Node *proj, Node *val, int allo
     case Op_LoadI:
     case Op_LoadL:
     case Op_LoadP:
-    case Op_LoadBarrierSlowReg:
-    case Op_LoadBarrierWeakSlowReg:
     case Op_LoadN:
     case Op_LoadS:
     case Op_LoadKlass:
@@ -178,7 +177,6 @@ void PhaseCFG::implicit_null_check(Block* block, Node *proj, Node *val, int allo
     case Op_LoadRange:
     case Op_LoadD_unaligned:
     case Op_LoadL_unaligned:
-    case Op_ShenandoahReadBarrier:
       assert(mach->in(2) == val, "should be address");
       break;
     case Op_StoreB:
@@ -262,13 +260,13 @@ void PhaseCFG::implicit_null_check(Block* block, Node *proj, Node *val, int allo
         // Give up if offset is beyond page size or if heap base is not protected.
         if (val->bottom_type()->isa_narrowoop() &&
             (MacroAssembler::needs_explicit_null_check(offset) ||
-             !Universe::narrow_oop_use_implicit_null_checks()))
+             !CompressedOops::use_implicit_null_checks()))
           continue;
         // cannot reason about it; is probably not implicit null exception
       } else {
         const TypePtr* tptr;
-        if (UseCompressedOops && (Universe::narrow_oop_shift() == 0 ||
-                                  Universe::narrow_klass_shift() == 0)) {
+        if (UseCompressedOops && (CompressedOops::shift() == 0 ||
+                                  CompressedKlassPointers::shift() == 0)) {
           // 32-bits narrow oop can be the base of address expressions
           tptr = base->get_ptr_type();
         } else {
@@ -284,7 +282,7 @@ void PhaseCFG::implicit_null_check(Block* block, Node *proj, Node *val, int allo
           continue;
         // Give up if base is a decode node and the heap base is not protected.
         if (base->is_Mach() && base->as_Mach()->ideal_Opcode() == Op_DecodeN &&
-            !Universe::narrow_oop_use_implicit_null_checks())
+            !CompressedOops::use_implicit_null_checks())
           continue;
       }
     }
@@ -960,7 +958,7 @@ bool PhaseCFG::schedule_local(Block* block, GrowableArray<int>& ready_cnt, Vecto
       ready_cnt.at_put(n->_idx, local); // Count em up
 
 #ifdef ASSERT
-      if( UseConcMarkSweepGC || UseG1GC ) {
+      if (UseG1GC) {
         if( n->is_Mach() && n->as_Mach()->ideal_Opcode() == Op_StoreCM ) {
           // Check the precedence edges
           for (uint prec = n->req(); prec < n->len(); prec++) {

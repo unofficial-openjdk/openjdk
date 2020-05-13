@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2016, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2016, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -39,7 +40,6 @@
  *     - bit 0 set when marking in progress
  *     - bit 1 set when evacuation in progress
  *     - bit 2 set when update refs in progress
- *     - bit 3 set when traversal in progress
  *
  * two variable counters per region, with $max_regions (see above) counters:
  * - sun.gc.shenandoah.regions.region.$i.data

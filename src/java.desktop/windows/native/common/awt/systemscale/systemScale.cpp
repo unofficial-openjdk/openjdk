@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,6 @@
  * questions.
  */
 #include "systemScale.h"
-#include <d2d1.h>
-#pragma comment(lib, "d2d1")
 #include <jdk_util.h>
 #ifndef MDT_EFFECTIVE_DPI
 #define MDT_EFFECTIVE_DPI 0
@@ -73,12 +71,11 @@ void GetScreenDpi(HMONITOR hmon, float *dpiX, float *dpiY)
             *dpiY = static_cast<float>(y);
         }
     } else {
-        ID2D1Factory* m_pDirect2dFactory;
-        HRESULT res = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED,
-                                        &m_pDirect2dFactory);
-        if (res == S_OK) {
-            m_pDirect2dFactory->GetDesktopDpi(dpiX, dpiY);
-            m_pDirect2dFactory->Release();
+        HDC hdc = GetDC(NULL);
+        if (hdc) {
+            *dpiX = static_cast<float>(GetDeviceCaps(hdc, LOGPIXELSX));
+            *dpiY = static_cast<float>(GetDeviceCaps(hdc, LOGPIXELSY));
+            ReleaseDC(NULL, hdc);
         }
     }
     return;

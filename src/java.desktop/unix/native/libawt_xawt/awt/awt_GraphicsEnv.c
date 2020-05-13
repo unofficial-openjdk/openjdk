@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,11 +54,6 @@
 #include <dlfcn.h>
 #include "Trace.h"
 
-#ifdef NETSCAPE
-#include <signal.h>
-extern int awt_init_xt;
-#endif
-
 #ifndef HEADLESS
 
 int awt_numScreens;     /* Xinerama-aware number of screens */
@@ -112,17 +107,9 @@ static char *x11GraphicsConfigClassName = "sun/awt/X11GraphicsConfig";
  * pass the correct Display value, depending on the circumstances (a single
  * X display, multiple X displays, or a single X display with multiple
  * Xinerama screens).
- *
- * Solaris and Linux differ in the functions used to access Xinerama-related
- * data.  This is in part because at this time, the X consortium has not
- * finalized the "official" Xinerama API.  Once this spec is available, and
- * both OSes are conformant, one code base should be sufficient for Xinerama
- * operation on both OSes.  Until then, some of the Xinerama-related code
- * is ifdef'd appropriately.  -bchristi, 7/12/01
  */
 
 #define MAXFRAMEBUFFERS 16
-#if defined(__linux__) || defined(MACOSX)
 typedef struct {
    int   screen_number;
    short x_org;
@@ -132,15 +119,8 @@ typedef struct {
 } XineramaScreenInfo;
 
 typedef XineramaScreenInfo* XineramaQueryScreensFunc(Display*, int*);
-
-#else /* SOLARIS */
-typedef Status XineramaGetInfoFunc(Display* display, int screen_number,
-         XRectangle* framebuffer_rects, unsigned char* framebuffer_hints,
-         int* num_framebuffers);
-#endif
-
+static XineramaQueryScreensFunc* XineramaQueryScreens = NULL;
 Bool usingXinerama = False;
-XRectangle fbrects[MAXFRAMEBUFFERS];
 
 JNIEXPORT void JNICALL
 Java_sun_awt_X11GraphicsConfig_initIDs (JNIEnv *env, jclass cls)
@@ -152,13 +132,6 @@ Java_sun_awt_X11GraphicsConfig_initIDs (JNIEnv *env, jclass cls)
     CHECK_NULL(x11GraphicsConfigIDs.aData);
     x11GraphicsConfigIDs.bitsPerPixel = (*env)->GetFieldID (env, cls, "bitsPerPixel", "I");
     CHECK_NULL(x11GraphicsConfigIDs.bitsPerPixel);
-
-    if (x11GraphicsConfigIDs.aData == NULL ||
-            x11GraphicsConfigIDs.bitsPerPixel == NULL) {
-
-            JNU_ThrowNoSuchFieldError(env, "Can't find a field");
-            return;
-        }
 }
 
 #ifndef HEADLESS
@@ -193,6 +166,10 @@ findWithTemplate(XVisualInfo *vinfo,
         int id = -1;
         VisualID defaultVisual = XVisualIDFromVisual(DefaultVisual(awt_display, vinfo->screen));
         defaultConfig = ZALLOC(_AwtGraphicsConfigData);
+        if (defaultConfig == NULL) {
+            XFree(visualList);
+            return NULL;
+        }
         for (i = 0; i < visualsMatched; i++) {
             memcpy(&defaultConfig->awt_visInfo, &visualList[i], sizeof(XVisualInfo));
             defaultConfig->awt_depth = visualList[i].depth;
@@ -425,31 +402,37 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
     if (XQueryExtension(awt_display, "RENDER",
                         &major_opcode, &first_event, &first_error))
     {
+        DTRACE_PRINTLN("RENDER extension available");
         xrenderLibHandle = dlopen("libXrender.so.1", RTLD_LAZY | RTLD_GLOBAL);
 
-#ifdef MACOSX
-#define XRENDER_LIB "/usr/X11/lib/libXrender.dylib"
-#else
-#define XRENDER_LIB "libXrender.so"
-#endif
-
         if (xrenderLibHandle == NULL) {
-            xrenderLibHandle = dlopen(XRENDER_LIB,
-                                      RTLD_LAZY | RTLD_GLOBAL);
+            xrenderLibHandle = dlopen("libXrender.so", RTLD_LAZY | RTLD_GLOBAL);
         }
 
-#ifndef __linux__ /* SOLARIS */
+#if defined(__solaris__)
         if (xrenderLibHandle == NULL) {
             xrenderLibHandle = dlopen("/usr/lib/libXrender.so.1",
                                       RTLD_LAZY | RTLD_GLOBAL);
         }
+#elif defined(_AIX)
+        if (xrenderLibHandle == NULL) {
+            xrenderLibHandle = dlopen("libXrender.a(libXrender.so.0)",
+                                      RTLD_MEMBER | RTLD_LAZY | RTLD_GLOBAL);
+        }
 #endif
-
         if (xrenderLibHandle != NULL) {
+            DTRACE_PRINTLN("Loaded libXrender");
             xrenderFindVisualFormat =
                 (XRenderFindVisualFormatFunc*)dlsym(xrenderLibHandle,
                                                     "XRenderFindVisualFormat");
+            if (xrenderFindVisualFormat == NULL) {
+                DTRACE_PRINTLN1("Can't find 'XRenderFindVisualFormat' in libXrender (%s)", dlerror());
+            }
+        } else {
+            DTRACE_PRINTLN1("Can't load libXrender (%s)", dlerror());
         }
+    } else {
+        DTRACE_PRINTLN("RENDER extension NOT available");
     }
 
     for (i = 0; i < nTrue; i++) {
@@ -461,22 +444,31 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
         } else {
             ind = nConfig++;
         }
-        graphicsConfigs [ind] = ZALLOC (_AwtGraphicsConfigData);
-        graphicsConfigs [ind]->awt_depth = pVITrue [i].depth;
+        graphicsConfigs[ind] = ZALLOC (_AwtGraphicsConfigData);
+        if (graphicsConfigs[ind] == NULL) {
+            JNU_ThrowOutOfMemoryError(env, "allocation in getAllConfigs failed");
+            goto cleanup;
+        }
+        graphicsConfigs[ind]->awt_depth = pVITrue [i].depth;
         memcpy (&graphicsConfigs [ind]->awt_visInfo, &pVITrue [i],
                 sizeof (XVisualInfo));
-       if (xrenderFindVisualFormat != NULL) {
+        if (xrenderFindVisualFormat != NULL) {
             XRenderPictFormat *format = xrenderFindVisualFormat (awt_display,
-                    pVITrue [i].visual);
+                                                                 pVITrue [i].visual);
             if (format &&
                 format->type == PictTypeDirect &&
                 format->direct.alphaMask)
             {
+                DTRACE_PRINTLN1("GraphicsConfig[%d] supports Translucency", ind);
                 graphicsConfigs [ind]->isTranslucencySupported = 1;
                 memcpy(&graphicsConfigs [ind]->renderPictFormat, format,
                         sizeof(*format));
+            } else {
+                DTRACE_PRINTLN1(format ?
+                                "GraphicsConfig[%d] has no Translucency support" :
+                                "Error calling 'XRenderFindVisualFormat'", ind);
             }
-        }
+       }
     }
 
     if (xrenderLibHandle != NULL) {
@@ -491,8 +483,12 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
         } else {
             ind = nConfig++;
         }
-        graphicsConfigs [ind] = ZALLOC (_AwtGraphicsConfigData);
-        graphicsConfigs [ind]->awt_depth = pVI8p [i].depth;
+        graphicsConfigs[ind] = ZALLOC (_AwtGraphicsConfigData);
+        if (graphicsConfigs[ind] == NULL) {
+            JNU_ThrowOutOfMemoryError(env, "allocation in getAllConfigs failed");
+            goto cleanup;
+        }
+        graphicsConfigs[ind]->awt_depth = pVI8p [i].depth;
         memcpy (&graphicsConfigs [ind]->awt_visInfo, &pVI8p [i],
                 sizeof (XVisualInfo));
     }
@@ -504,8 +500,12 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
         } else {
             ind = nConfig++;
         }
-        graphicsConfigs [ind] = ZALLOC (_AwtGraphicsConfigData);
-        graphicsConfigs [ind]->awt_depth = pVI12p [i].depth;
+        graphicsConfigs[ind] = ZALLOC (_AwtGraphicsConfigData);
+        if (graphicsConfigs[ind] == NULL) {
+            JNU_ThrowOutOfMemoryError(env, "allocation in getAllConfigs failed");
+            goto cleanup;
+        }
+        graphicsConfigs[ind]->awt_depth = pVI12p [i].depth;
         memcpy (&graphicsConfigs [ind]->awt_visInfo, &pVI12p [i],
                 sizeof (XVisualInfo));
     }
@@ -517,8 +517,12 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
         } else {
             ind = nConfig++;
         }
-        graphicsConfigs [ind] = ZALLOC (_AwtGraphicsConfigData);
-        graphicsConfigs [ind]->awt_depth = pVI8s [i].depth;
+        graphicsConfigs[ind] = ZALLOC (_AwtGraphicsConfigData);
+        if (graphicsConfigs[ind] == NULL) {
+            JNU_ThrowOutOfMemoryError(env, "allocation in getAllConfigs failed");
+            goto cleanup;
+        }
+        graphicsConfigs[ind]->awt_depth = pVI8s [i].depth;
         memcpy (&graphicsConfigs [ind]->awt_visInfo, &pVI8s [i],
                 sizeof (XVisualInfo));
     }
@@ -530,8 +534,12 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
         } else {
             ind = nConfig++;
         }
-        graphicsConfigs [ind] = ZALLOC (_AwtGraphicsConfigData);
-        graphicsConfigs [ind]->awt_depth = pVI8gs [i].depth;
+        graphicsConfigs[ind] = ZALLOC (_AwtGraphicsConfigData);
+        if (graphicsConfigs[ind] == NULL) {
+            JNU_ThrowOutOfMemoryError(env, "allocation in getAllConfigs failed");
+            goto cleanup;
+        }
+        graphicsConfigs[ind]->awt_depth = pVI8gs [i].depth;
         memcpy (&graphicsConfigs [ind]->awt_visInfo, &pVI8gs [i],
                 sizeof (XVisualInfo));
     }
@@ -543,8 +551,12 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
         } else {
             ind = nConfig++;
         }
-        graphicsConfigs [ind] = ZALLOC (_AwtGraphicsConfigData);
-        graphicsConfigs [ind]->awt_depth = pVI8sg [i].depth;
+        graphicsConfigs[ind] = ZALLOC (_AwtGraphicsConfigData);
+        if (graphicsConfigs[ind] == NULL) {
+            JNU_ThrowOutOfMemoryError(env, "allocation in getAllConfigs failed");
+            goto cleanup;
+        }
+        graphicsConfigs[ind]->awt_depth = pVI8sg [i].depth;
         memcpy (&graphicsConfigs [ind]->awt_visInfo, &pVI8sg [i],
                 sizeof (XVisualInfo));
     }
@@ -556,12 +568,20 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
         } else {
             ind = nConfig++;
         }
-        graphicsConfigs [ind] = ZALLOC (_AwtGraphicsConfigData);
-        graphicsConfigs [ind]->awt_depth = pVI1sg [i].depth;
+        graphicsConfigs[ind] = ZALLOC (_AwtGraphicsConfigData);
+        if (graphicsConfigs[ind] == NULL) {
+            JNU_ThrowOutOfMemoryError(env, "allocation in getAllConfigs failed");
+            goto cleanup;
+        }
+        graphicsConfigs[ind]->awt_depth = pVI1sg [i].depth;
         memcpy (&graphicsConfigs [ind]->awt_visInfo, &pVI1sg [i],
                 sizeof (XVisualInfo));
     }
 
+    screenDataPtr->numConfigs = nConfig;
+    screenDataPtr->configs = graphicsConfigs;
+
+cleanup:
     if (n8p != 0)
        XFree (pVI8p);
     if (n12p != 0)
@@ -575,110 +595,22 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
     if (n1sg != 0)
        XFree (pVI1sg);
 
-    screenDataPtr->numConfigs = nConfig;
-    screenDataPtr->configs = graphicsConfigs;
-
     AWT_UNLOCK ();
 }
 
 #ifndef HEADLESS
-#if defined(__linux__) || defined(MACOSX)
-static void xinerama_init_linux()
-{
-    void* libHandle = NULL;
-    int32_t locNumScr = 0;
-    XineramaScreenInfo *xinInfo;
-    char* XineramaQueryScreensName = "XineramaQueryScreens";
-    XineramaQueryScreensFunc* XineramaQueryScreens = NULL;
-
-    /* load library */
-    libHandle = dlopen(VERSIONED_JNI_LIB_NAME("Xinerama", "1"),
-                       RTLD_LAZY | RTLD_GLOBAL);
-    if (libHandle == NULL) {
-        libHandle = dlopen(JNI_LIB_NAME("Xinerama"), RTLD_LAZY | RTLD_GLOBAL);
-    }
-    if (libHandle != NULL) {
-        XineramaQueryScreens = (XineramaQueryScreensFunc*)
-            dlsym(libHandle, XineramaQueryScreensName);
-
-        if (XineramaQueryScreens != NULL) {
-            DTRACE_PRINTLN("calling XineramaQueryScreens func on Linux");
-            xinInfo = (*XineramaQueryScreens)(awt_display, &locNumScr);
-            if (xinInfo != NULL && locNumScr > XScreenCount(awt_display)) {
-                int32_t idx;
-                DTRACE_PRINTLN("Enabling Xinerama support");
-                usingXinerama = True;
-                /* set global number of screens */
-                DTRACE_PRINTLN1(" num screens = %i\n", locNumScr);
-                awt_numScreens = locNumScr;
-
-                /* stuff values into fbrects */
-                for (idx = 0; idx < awt_numScreens; idx++) {
-                    DASSERT(xinInfo[idx].screen_number == idx);
-
-                    fbrects[idx].width = xinInfo[idx].width;
-                    fbrects[idx].height = xinInfo[idx].height;
-                    fbrects[idx].x = xinInfo[idx].x_org;
-                    fbrects[idx].y = xinInfo[idx].y_org;
-                }
-            } else {
-                DTRACE_PRINTLN("calling XineramaQueryScreens didn't work");
-            }
-        } else {
-            DTRACE_PRINTLN("couldn't load XineramaQueryScreens symbol");
-        }
-        dlclose(libHandle);
-    } else {
-        DTRACE_PRINTLN1("\ncouldn't open shared library: %s\n", dlerror());
-    }
-}
-#endif
-#if !defined(__linux__) && !defined(MACOSX) /* Solaris */
-static void xinerama_init_solaris()
-{
-    void* libHandle = NULL;
-    unsigned char fbhints[MAXFRAMEBUFFERS];
-    int32_t locNumScr = 0;
-    /* load and run XineramaGetInfo */
-    char* XineramaGetInfoName = "XineramaGetInfo";
-    XineramaGetInfoFunc* XineramaSolarisFunc = NULL;
-
-    /* load library */
-    libHandle = dlopen(JNI_LIB_NAME("Xext"), RTLD_LAZY | RTLD_GLOBAL);
-    if (libHandle != NULL) {
-        XineramaSolarisFunc = (XineramaGetInfoFunc*)dlsym(libHandle, XineramaGetInfoName);
-        if (XineramaSolarisFunc != NULL) {
-            DTRACE_PRINTLN("calling XineramaGetInfo func on Solaris");
-            if ((*XineramaSolarisFunc)(awt_display, 0, &fbrects[0],
-                                       &fbhints[0], &locNumScr) != 0 &&
-                locNumScr > XScreenCount(awt_display))
-            {
-                DTRACE_PRINTLN("Enabling Xinerama support");
-                usingXinerama = True;
-                /* set global number of screens */
-                DTRACE_PRINTLN1(" num screens = %i\n", locNumScr);
-                awt_numScreens = locNumScr;
-            } else {
-                DTRACE_PRINTLN("calling XineramaGetInfo didn't work");
-            }
-        } else {
-            DTRACE_PRINTLN("couldn't load XineramaGetInfo symbol");
-        }
-        dlclose(libHandle);
-    } else {
-        DTRACE_PRINTLN1("\ncouldn't open shared library: %s\n", dlerror());
-    }
-}
-#endif
 
 /*
- * Checks if Xinerama is running and perform Xinerama-related
- * platform dependent initialization.
+ * Checks if Xinerama is running and perform Xinerama-related initialization.
  */
 static void xineramaInit(void) {
     char* XinExtName = "XINERAMA";
     int32_t major_opcode, first_event, first_error;
     Bool gotXinExt = False;
+    void* libHandle = NULL;
+    int32_t locNumScr = 0;
+    XineramaScreenInfo *xinInfo;
+    char* XineramaQueryScreensName = "XineramaQueryScreens";
 
     gotXinExt = XQueryExtension(awt_display, XinExtName, &major_opcode,
                                 &first_event, &first_error);
@@ -689,11 +621,45 @@ static void xineramaInit(void) {
     }
 
     DTRACE_PRINTLN("Xinerama extension is available");
-#if defined(__linux__) || defined(MACOSX)
-    xinerama_init_linux();
-#else /* Solaris */
-    xinerama_init_solaris();
-#endif /* __linux__ || MACOSX */
+
+    /* load library */
+    libHandle = dlopen(VERSIONED_JNI_LIB_NAME("Xinerama", "1"),
+                       RTLD_LAZY | RTLD_GLOBAL);
+    if (libHandle == NULL) {
+#if defined(_AIX)
+        libHandle = dlopen("libXext.a(shr_64.o)", RTLD_MEMBER | RTLD_LAZY | RTLD_GLOBAL);
+#else
+        libHandle = dlopen(JNI_LIB_NAME("Xinerama"), RTLD_LAZY | RTLD_GLOBAL);
+#endif
+    }
+    if (libHandle != NULL) {
+        XineramaQueryScreens = (XineramaQueryScreensFunc*)
+            dlsym(libHandle, XineramaQueryScreensName);
+
+        if (XineramaQueryScreens == NULL) {
+            DTRACE_PRINTLN("couldn't load XineramaQueryScreens symbol");
+            dlclose(libHandle);
+        } else {
+            DTRACE_PRINTLN("calling XineramaQueryScreens func");
+            xinInfo = (*XineramaQueryScreens)(awt_display, &locNumScr);
+            if (xinInfo != NULL) {
+                if (locNumScr > XScreenCount(awt_display)) {
+                    DTRACE_PRINTLN("Enabling Xinerama support");
+                    usingXinerama = True;
+                    /* set global number of screens */
+                    DTRACE_PRINTLN1(" num screens = %i\n", locNumScr);
+                    awt_numScreens = locNumScr;
+                } else {
+                    DTRACE_PRINTLN("XineramaQueryScreens <= XScreenCount");
+                }
+                XFree(xinInfo);
+            } else {
+                DTRACE_PRINTLN("calling XineramaQueryScreens didn't work");
+            }
+        }
+    } else {
+        DTRACE_PRINTLN1("\ncouldn't open shared library: %s\n", dlerror());
+    }
 }
 #endif /* HEADLESS */
 
@@ -704,25 +670,10 @@ awt_init_Display(JNIEnv *env, jobject this)
     Display *dpy;
     char errmsg[128];
     int i;
-#ifdef NETSCAPE
-    sigset_t alarm_set, oldset;
-#endif
 
     if (awt_display) {
         return awt_display;
     }
-
-#ifdef NETSCAPE
-    /* Disable interrupts during XtOpenDisplay to avoid bugs in unix os select
-       code: some unix systems don't implement SA_RESTART properly and
-       because of this, select returns with EINTR. Most implementations of
-       gethostbyname don't cope with EINTR properly and as a result we get
-       stuck (forever) in the gethostbyname code
-    */
-    sigemptyset(&alarm_set);
-    sigaddset(&alarm_set, SIGALRM);
-    sigprocmask(SIG_BLOCK, &alarm_set, &oldset);
-#endif
 
     /* Load AWT lock-related methods in SunToolkit */
     klass = (*env)->FindClass(env, "sun/awt/SunToolkit");
@@ -743,9 +694,6 @@ awt_init_Display(JNIEnv *env, jobject this)
     }
 
     dpy = awt_display = XOpenDisplay(NULL);
-#ifdef NETSCAPE
-    sigprocmask(SIG_SETMASK, &oldset, NULL);
-#endif
     if (!dpy) {
         jio_snprintf(errmsg,
                      sizeof(errmsg),
@@ -828,11 +776,6 @@ AwtGraphicsConfigDataPtr
 getDefaultConfig(int screen) {
     ensureConfigsInited(NULL, screen);
     return x11Screens[screen].defaultConfig;
-}
-
-AwtScreenDataPtr
-getScreenData(int screen) {
-    return &(x11Screens[screen]);
 }
 #endif /* !HEADLESS */
 
@@ -1370,6 +1313,8 @@ Java_sun_awt_X11GraphicsConfig_pGetBounds(JNIEnv *env, jobject this, jint screen
     jmethodID mid;
     jobject bounds = NULL;
     AwtGraphicsConfigDataPtr adata;
+    int32_t locNumScr = 0;
+    XineramaScreenInfo *xinInfo;
 
     adata = (AwtGraphicsConfigDataPtr)
         JNU_GetLongFieldAsPtr(env, this, x11GraphicsConfigIDs.aData);
@@ -1380,17 +1325,30 @@ Java_sun_awt_X11GraphicsConfig_pGetBounds(JNIEnv *env, jobject this, jint screen
     if (mid != NULL) {
         if (usingXinerama) {
             if (0 <= screen && screen < awt_numScreens) {
-                bounds = (*env)->NewObject(env, clazz, mid, fbrects[screen].x,
-                                                            fbrects[screen].y,
-                                                            fbrects[screen].width,
-                                                            fbrects[screen].height);
+                AWT_LOCK();
+                xinInfo = (*XineramaQueryScreens)(awt_display, &locNumScr);
+                AWT_UNLOCK();
+                if (xinInfo != NULL && locNumScr > 0) {
+                    if (screen >= locNumScr) {
+                        screen = 0; // fallback to the main screen
+                    }
+                    DASSERT(xinInfo[screen].screen_number == screen);
+                    bounds = (*env)->NewObject(env, clazz, mid,
+                                               xinInfo[screen].x_org,
+                                               xinInfo[screen].y_org,
+                                               xinInfo[screen].width,
+                                               xinInfo[screen].height);
+                    XFree(xinInfo);
+                }
             } else {
                 jclass exceptionClass = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
                 if (exceptionClass != NULL) {
                     (*env)->ThrowNew(env, exceptionClass, "Illegal screen index");
                 }
             }
-        } else {
+        }
+        if (!bounds) {
+            // Xinerama cannot provide correct bounds, will try X11
             XWindowAttributes xwa;
             memset(&xwa, 0, sizeof(xwa));
 

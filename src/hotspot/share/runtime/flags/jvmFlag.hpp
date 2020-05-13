@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,8 +44,9 @@ struct JVMFlag {
     ERGONOMIC        = 5,
     ATTACH_ON_DEMAND = 6,
     INTERNAL         = 7,
+    JIMAGE_RESOURCE  = 8,
 
-    LAST_VALUE_ORIGIN = INTERNAL,
+    LAST_VALUE_ORIGIN = JIMAGE_RESOURCE,
     VALUE_ORIGIN_BITS = 4,
     VALUE_ORIGIN_MASK = right_n_bits(VALUE_ORIGIN_BITS),
 
@@ -118,8 +119,20 @@ struct JVMFlag {
   // number of flags
   static size_t numFlags;
 
-  static JVMFlag* find_flag(const char* name) { return find_flag(name, strlen(name), true, true); };
-  static JVMFlag* find_flag(const char* name, size_t length, bool allow_locked = false, bool return_flag = false);
+private:
+  static JVMFlag* find_flag(const char* name, size_t length, bool allow_locked, bool return_flag);
+
+public:
+  static JVMFlag* find_flag(const char* name) {
+    return find_flag(name, strlen(name), false, false);
+  }
+  static const JVMFlag* find_declared_flag(const char* name, size_t length) {
+    return find_flag(name, length, true, true);
+  }
+  static const JVMFlag* find_declared_flag(const char* name) {
+    return find_declared_flag(name, strlen(name));
+  }
+
   static JVMFlag* fuzzy_match(const char* name, size_t length, bool allow_locked = false);
 
   static const char* get_int_default_range_str();
@@ -130,44 +143,42 @@ struct JVMFlag {
   static const char* get_size_t_default_range_str();
   static const char* get_double_default_range_str();
 
-  JVMFlag::Error check_writable(bool changed);
-
   bool is_bool() const;
-  bool get_bool() const;
-  JVMFlag::Error set_bool(bool value);
+  bool get_bool() const                       { return *((bool*) _addr); }
+  void set_bool(bool value)                   { *((bool*) _addr) = value; }
 
   bool is_int() const;
-  int get_int() const;
-  JVMFlag::Error set_int(int value);
+  int get_int() const                         { return *((int*) _addr); }
+  void set_int(int value)                     { *((int*) _addr) = value; }
 
   bool is_uint() const;
-  uint get_uint() const;
-  JVMFlag::Error set_uint(uint value);
+  uint get_uint() const                       { return *((uint*) _addr); }
+  void set_uint(uint value)                   { *((uint*) _addr) = value; }
 
   bool is_intx() const;
-  intx get_intx() const;
-  JVMFlag::Error set_intx(intx value);
+  intx get_intx() const                       { return *((intx*) _addr); }
+  void set_intx(intx value)                   { *((intx*) _addr) = value; }
 
   bool is_uintx() const;
-  uintx get_uintx() const;
-  JVMFlag::Error set_uintx(uintx value);
+  uintx get_uintx() const                     { return *((uintx*) _addr); }
+  void set_uintx(uintx value)                 { *((uintx*) _addr) = value; }
 
   bool is_uint64_t() const;
-  uint64_t get_uint64_t() const;
-  JVMFlag::Error set_uint64_t(uint64_t value);
+  uint64_t get_uint64_t() const               { return *((uint64_t*) _addr); }
+  void set_uint64_t(uint64_t value)           { *((uint64_t*) _addr) = value; }
 
   bool is_size_t() const;
-  size_t get_size_t() const;
-  JVMFlag::Error set_size_t(size_t value);
+  size_t get_size_t() const                   { return *((size_t*) _addr); }
+  void set_size_t(size_t value)               { *((size_t*) _addr) = value; }
 
   bool is_double() const;
-  double get_double() const;
-  JVMFlag::Error set_double(double value);
+  double get_double() const                   { return *((double*) _addr); }
+  void set_double(double value)               { *((double*) _addr) = value; }
 
   bool is_ccstr() const;
   bool ccstr_accumulates() const;
-  ccstr get_ccstr() const;
-  JVMFlag::Error set_ccstr(ccstr value);
+  ccstr get_ccstr() const                     { return *((ccstr*) _addr); }
+  void set_ccstr(ccstr value)                 { *((ccstr*) _addr) = value; }
 
   Flags get_origin();
   void set_origin(Flags origin);
@@ -176,6 +187,7 @@ struct JVMFlag {
 
   bool is_default();
   bool is_ergonomic();
+  bool is_jimage_resource();
   bool is_command_line();
   void set_command_line();
 
@@ -194,12 +206,9 @@ struct JVMFlag {
   bool is_writeable() const;
   bool is_external() const;
 
-  bool is_unlocker_ext() const;
-  bool is_unlocked_ext() const;
-  bool is_writeable_ext() const;
-  bool is_external_ext() const;
-
   void clear_diagnostic();
+  void clear_experimental();
+  void set_product();
 
   JVMFlag::MsgType get_locked_message(char*, int) const;
   JVMFlag::MsgType get_locked_message_ext(char*, int) const;
@@ -213,63 +222,35 @@ struct JVMFlag {
   static const char* flag_error_str(JVMFlag::Error error);
 
 public:
-  static JVMFlag::Error boolAt(const char* name, size_t len, bool* value, bool allow_locked = false, bool return_flag = false);
-  static JVMFlag::Error boolAt(const char* name, bool* value, bool allow_locked = false, bool return_flag = false)      { return boolAt(name, strlen(name), value, allow_locked, return_flag); }
+  static JVMFlag::Error boolAt(const JVMFlag* flag, bool* value);
   static JVMFlag::Error boolAtPut(JVMFlag* flag, bool* value, JVMFlag::Flags origin);
-  static JVMFlag::Error boolAtPut(const char* name, size_t len, bool* value, JVMFlag::Flags origin);
-  static JVMFlag::Error boolAtPut(const char* name, bool* value, JVMFlag::Flags origin)   { return boolAtPut(name, strlen(name), value, origin); }
 
-  static JVMFlag::Error intAt(const char* name, size_t len, int* value, bool allow_locked = false, bool return_flag = false);
-  static JVMFlag::Error intAt(const char* name, int* value, bool allow_locked = false, bool return_flag = false)      { return intAt(name, strlen(name), value, allow_locked, return_flag); }
+  static JVMFlag::Error intAt(const JVMFlag* flag, int* value);
   static JVMFlag::Error intAtPut(JVMFlag* flag, int* value, JVMFlag::Flags origin);
-  static JVMFlag::Error intAtPut(const char* name, size_t len, int* value, JVMFlag::Flags origin);
-  static JVMFlag::Error intAtPut(const char* name, int* value, JVMFlag::Flags origin)   { return intAtPut(name, strlen(name), value, origin); }
 
-  static JVMFlag::Error uintAt(const char* name, size_t len, uint* value, bool allow_locked = false, bool return_flag = false);
-  static JVMFlag::Error uintAt(const char* name, uint* value, bool allow_locked = false, bool return_flag = false)      { return uintAt(name, strlen(name), value, allow_locked, return_flag); }
+  static JVMFlag::Error uintAt(const JVMFlag* flag, uint* value);
   static JVMFlag::Error uintAtPut(JVMFlag* flag, uint* value, JVMFlag::Flags origin);
-  static JVMFlag::Error uintAtPut(const char* name, size_t len, uint* value, JVMFlag::Flags origin);
-  static JVMFlag::Error uintAtPut(const char* name, uint* value, JVMFlag::Flags origin)   { return uintAtPut(name, strlen(name), value, origin); }
 
-  static JVMFlag::Error intxAt(const char* name, size_t len, intx* value, bool allow_locked = false, bool return_flag = false);
-  static JVMFlag::Error intxAt(const char* name, intx* value, bool allow_locked = false, bool return_flag = false)      { return intxAt(name, strlen(name), value, allow_locked, return_flag); }
+  static JVMFlag::Error intxAt(const JVMFlag* flag, intx* value);
   static JVMFlag::Error intxAtPut(JVMFlag* flag, intx* value, JVMFlag::Flags origin);
-  static JVMFlag::Error intxAtPut(const char* name, size_t len, intx* value, JVMFlag::Flags origin);
-  static JVMFlag::Error intxAtPut(const char* name, intx* value, JVMFlag::Flags origin)   { return intxAtPut(name, strlen(name), value, origin); }
 
-  static JVMFlag::Error uintxAt(const char* name, size_t len, uintx* value, bool allow_locked = false, bool return_flag = false);
-  static JVMFlag::Error uintxAt(const char* name, uintx* value, bool allow_locked = false, bool return_flag = false)    { return uintxAt(name, strlen(name), value, allow_locked, return_flag); }
+  static JVMFlag::Error uintxAt(const JVMFlag* flag, uintx* value);
   static JVMFlag::Error uintxAtPut(JVMFlag* flag, uintx* value, JVMFlag::Flags origin);
-  static JVMFlag::Error uintxAtPut(const char* name, size_t len, uintx* value, JVMFlag::Flags origin);
-  static JVMFlag::Error uintxAtPut(const char* name, uintx* value, JVMFlag::Flags origin) { return uintxAtPut(name, strlen(name), value, origin); }
 
-  static JVMFlag::Error size_tAt(const char* name, size_t len, size_t* value, bool allow_locked = false, bool return_flag = false);
-  static JVMFlag::Error size_tAt(const char* name, size_t* value, bool allow_locked = false, bool return_flag = false)    { return size_tAt(name, strlen(name), value, allow_locked, return_flag); }
+  static JVMFlag::Error size_tAt(const JVMFlag* flag, size_t* value);
   static JVMFlag::Error size_tAtPut(JVMFlag* flag, size_t* value, JVMFlag::Flags origin);
-  static JVMFlag::Error size_tAtPut(const char* name, size_t len, size_t* value, JVMFlag::Flags origin);
-  static JVMFlag::Error size_tAtPut(const char* name, size_t* value, JVMFlag::Flags origin) { return size_tAtPut(name, strlen(name), value, origin); }
 
-  static JVMFlag::Error uint64_tAt(const char* name, size_t len, uint64_t* value, bool allow_locked = false, bool return_flag = false);
-  static JVMFlag::Error uint64_tAt(const char* name, uint64_t* value, bool allow_locked = false, bool return_flag = false) { return uint64_tAt(name, strlen(name), value, allow_locked, return_flag); }
+  static JVMFlag::Error uint64_tAt(const JVMFlag* flag, uint64_t* value);
   static JVMFlag::Error uint64_tAtPut(JVMFlag* flag, uint64_t* value, JVMFlag::Flags origin);
-  static JVMFlag::Error uint64_tAtPut(const char* name, size_t len, uint64_t* value, JVMFlag::Flags origin);
-  static JVMFlag::Error uint64_tAtPut(const char* name, uint64_t* value, JVMFlag::Flags origin) { return uint64_tAtPut(name, strlen(name), value, origin); }
 
-  static JVMFlag::Error doubleAt(const char* name, size_t len, double* value, bool allow_locked = false, bool return_flag = false);
-  static JVMFlag::Error doubleAt(const char* name, double* value, bool allow_locked = false, bool return_flag = false)    { return doubleAt(name, strlen(name), value, allow_locked, return_flag); }
+  static JVMFlag::Error doubleAt(const JVMFlag* flag, double* value);
   static JVMFlag::Error doubleAtPut(JVMFlag* flag, double* value, JVMFlag::Flags origin);
-  static JVMFlag::Error doubleAtPut(const char* name, size_t len, double* value, JVMFlag::Flags origin);
-  static JVMFlag::Error doubleAtPut(const char* name, double* value, JVMFlag::Flags origin) { return doubleAtPut(name, strlen(name), value, origin); }
 
-  static JVMFlag::Error ccstrAt(const char* name, size_t len, ccstr* value, bool allow_locked = false, bool return_flag = false);
-  static JVMFlag::Error ccstrAt(const char* name, ccstr* value, bool allow_locked = false, bool return_flag = false)    { return ccstrAt(name, strlen(name), value, allow_locked, return_flag); }
+  static JVMFlag::Error ccstrAt(const JVMFlag* flag, ccstr* value);
   // Contract:  JVMFlag will make private copy of the incoming value.
   // Outgoing value is always malloc-ed, and caller MUST call free.
-  static JVMFlag::Error ccstrAtPut(const char* name, size_t len, ccstr* value, JVMFlag::Flags origin);
-  static JVMFlag::Error ccstrAtPut(const char* name, ccstr* value, JVMFlag::Flags origin) { return ccstrAtPut(name, strlen(name), value, origin); }
+  static JVMFlag::Error ccstrAtPut(JVMFlag* flag, ccstr* value, JVMFlag::Flags origin);
 
-  // Returns false if name is not a command line flag.
-  static bool wasSetOnCmdline(const char* name, bool* value);
   static void printSetFlags(outputStream* out);
 
   // printRanges will print out flags type, name and range values as expected by -XX:+PrintFlagsRanges

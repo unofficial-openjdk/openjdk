@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,14 +32,10 @@ package jdk.javadoc.internal.doclets.formats.html;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Bhavesh Patel
  */
 public enum SectionName {
 
     ANNOTATION_TYPE_ELEMENT_DETAIL("annotation.type.element.detail"),
-    ANNOTATION_TYPE_FIELD_DETAIL("annotation.type.field.detail"),
-    ANNOTATION_TYPE_FIELD_SUMMARY("annotation.type.field.summary"),
     ANNOTATION_TYPE_OPTIONAL_ELEMENT_SUMMARY("annotation.type.optional.element.summary"),
     ANNOTATION_TYPE_REQUIRED_ELEMENT_SUMMARY("annotation.type.required.element.summary"),
     CONSTRUCTOR_DETAIL("constructor.detail"),

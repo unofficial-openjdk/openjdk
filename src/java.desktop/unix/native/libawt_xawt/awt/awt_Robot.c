@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@
 
 #include "java_awt_event_InputEvent.h"
 
-#if defined(__linux__) || defined(MACOSX)
+#if defined(__linux__)
 #include <sys/socket.h>
 #endif
 
@@ -150,7 +150,7 @@ static Bool hasXCompositeOverlayExtension(Display *display) {
 static jboolean isXCompositeDisplay(Display *display, int screenNumber) {
 
     char NET_WM_CM_Sn[25];
-    snprintf(NET_WM_CM_Sn, sizeof(NET_WM_CM_Sn), "_NET_WM_CM_S%d\0", screenNumber);
+    snprintf(NET_WM_CM_Sn, sizeof(NET_WM_CM_Sn), "_NET_WM_CM_S%d", screenNumber);
 
     Atom managerSelection = XInternAtom(display, NET_WM_CM_Sn, 0);
     Window owner = XGetSelectionOwner(display, managerSelection);

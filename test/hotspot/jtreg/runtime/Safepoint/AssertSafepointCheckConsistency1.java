@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,18 +25,17 @@
  * @test
  * @bug 8047290
  * @summary Ensure that a Monitor::lock_without_safepoint_check fires an assert when it incorrectly acquires a lock which must always have safepoint checks.
+ * @requires vm.debug
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main AssertSafepointCheckConsistency1
+ * @run driver AssertSafepointCheckConsistency1
  */
 
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
-import jdk.test.lib.Platform;
 
 import sun.hotspot.WhiteBox;
 
@@ -44,18 +43,19 @@ public class AssertSafepointCheckConsistency1 {
     public static void main(String args[]) throws Exception {
         if (args.length > 0) {
             WhiteBox.getWhiteBox().assertMatchingSafepointCalls(true, true);
+            return;
         }
-        if (Platform.isDebugBuild()){
-            ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-                  "-Xbootclasspath/a:.",
-                  "-XX:+UnlockDiagnosticVMOptions",
-                  "-XX:+WhiteBoxAPI",
-                  "-XX:-CreateCoredumpOnCrash",
-                  "-Xmx128m",
-                  "AssertSafepointCheckConsistency1",
-                  "test");
-            OutputAnalyzer output = new OutputAnalyzer(pb.start());
-            output.shouldContain("assert").shouldContain("always");
-        }
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
+              "-Xbootclasspath/a:.",
+              "-XX:+UnlockDiagnosticVMOptions",
+              "-XX:+WhiteBoxAPI",
+              "-XX:-CreateCoredumpOnCrash",
+              "-Xmx128m",
+              "AssertSafepointCheckConsistency1",
+              "test");
+        OutputAnalyzer output = new OutputAnalyzer(pb.start());
+        output.shouldContain("assert")
+              .shouldContain("always")
+              .shouldNotHaveExitValue(0);
     }
 }

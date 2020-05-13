@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,8 +46,12 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import sun.nio.cs.ISO_8859_1;
+import sun.nio.cs.UTF_8;
+
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.util.ArraysSupport;
 import jdk.internal.util.xml.PropertiesDefaultHandler;
 
 /**
@@ -136,11 +140,11 @@ import jdk.internal.util.xml.PropertiesDefaultHandler;
  * @author  Xueming Shen
  * @since   1.0
  */
-public
-class Properties extends Hashtable<Object,Object> {
+public class Properties extends Hashtable<Object,Object> {
     /**
      * use serialVersionUID from JDK 1.1.X for interoperability
      */
+    @java.io.Serial
     private static final long serialVersionUID = 4112578634029874840L;
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
@@ -392,7 +396,7 @@ class Properties extends Hashtable<Object,Object> {
      * The specified stream remains open after this method returns.
      *
      * @param      inStream   the input stream.
-     * @exception  IOException  if an error occurred when reading from the
+     * @throws     IOException  if an error occurred when reading from the
      *             input stream.
      * @throws     IllegalArgumentException if the input stream contains a
      *             malformed Unicode escape sequence.
@@ -404,17 +408,15 @@ class Properties extends Hashtable<Object,Object> {
         load0(new LineReader(inStream));
     }
 
-    private void load0 (LineReader lr) throws IOException {
-        char[] convtBuf = new char[1024];
+    private void load0(LineReader lr) throws IOException {
+        StringBuilder outBuffer = new StringBuilder();
         int limit;
         int keyLen;
         int valueStart;
-        char c;
         boolean hasSep;
         boolean precedingBackslash;
 
         while ((limit = lr.readLine()) >= 0) {
-            c = 0;
             keyLen = 0;
             valueStart = limit;
             hasSep = false;
@@ -422,7 +424,7 @@ class Properties extends Hashtable<Object,Object> {
             //System.out.println("line=<" + new String(lineBuf, 0, limit) + ">");
             precedingBackslash = false;
             while (keyLen < limit) {
-                c = lr.lineBuf[keyLen];
+                char c = lr.lineBuf[keyLen];
                 //need check if escaped.
                 if ((c == '=' ||  c == ':') && !precedingBackslash) {
                     valueStart = keyLen + 1;
@@ -440,7 +442,7 @@ class Properties extends Hashtable<Object,Object> {
                 keyLen++;
             }
             while (valueStart < limit) {
-                c = lr.lineBuf[valueStart];
+                char c = lr.lineBuf[valueStart];
                 if (c != ' ' && c != '\t' &&  c != '\f') {
                     if (!hasSep && (c == '=' ||  c == ':')) {
                         hasSep = true;
@@ -450,8 +452,8 @@ class Properties extends Hashtable<Object,Object> {
                 }
                 valueStart++;
             }
-            String key = loadConvert(lr.lineBuf, 0, keyLen, convtBuf);
-            String value = loadConvert(lr.lineBuf, valueStart, limit - valueStart, convtBuf);
+            String key = loadConvert(lr.lineBuf, 0, keyLen, outBuffer);
+            String value = loadConvert(lr.lineBuf, valueStart, limit - valueStart, outBuffer);
             put(key, value);
         }
     }
@@ -462,64 +464,56 @@ class Properties extends Hashtable<Object,Object> {
      * Method returns the char length of the "logical line" and stores
      * the line in "lineBuf".
      */
-    class LineReader {
-        public LineReader(InputStream inStream) {
+    private static class LineReader {
+        LineReader(InputStream inStream) {
             this.inStream = inStream;
             inByteBuf = new byte[8192];
         }
 
-        public LineReader(Reader reader) {
+        LineReader(Reader reader) {
             this.reader = reader;
             inCharBuf = new char[8192];
         }
 
-        byte[] inByteBuf;
-        char[] inCharBuf;
         char[] lineBuf = new char[1024];
-        int inLimit = 0;
-        int inOff = 0;
-        InputStream inStream;
-        Reader reader;
+        private byte[] inByteBuf;
+        private char[] inCharBuf;
+        private int inLimit = 0;
+        private int inOff = 0;
+        private InputStream inStream;
+        private Reader reader;
 
         int readLine() throws IOException {
+            // use locals to optimize for interpreted performance
             int len = 0;
-            char c = 0;
+            int off = inOff;
+            int limit = inLimit;
 
             boolean skipWhiteSpace = true;
-            boolean isCommentLine = false;
-            boolean isNewLine = true;
             boolean appendedLineBegin = false;
             boolean precedingBackslash = false;
-            boolean skipLF = false;
+            boolean fromStream = inStream != null;
+            byte[] byteBuf = inByteBuf;
+            char[] charBuf = inCharBuf;
+            char[] lineBuf = this.lineBuf;
+            char c;
 
             while (true) {
-                if (inOff >= inLimit) {
-                    inLimit = (inStream==null)?reader.read(inCharBuf)
-                                              :inStream.read(inByteBuf);
-                    inOff = 0;
-                    if (inLimit <= 0) {
-                        if (len == 0 || isCommentLine) {
+                if (off >= limit) {
+                    inLimit = limit = fromStream ? inStream.read(byteBuf)
+                                                 : reader.read(charBuf);
+                    if (limit <= 0) {
+                        if (len == 0) {
                             return -1;
                         }
-                        if (precedingBackslash) {
-                            len--;
-                        }
-                        return len;
+                        return precedingBackslash ? len - 1 : len;
                     }
+                    off = 0;
                 }
-                if (inStream != null) {
-                    //The line below is equivalent to calling a
-                    //ISO8859-1 decoder.
-                    c = (char)(inByteBuf[inOff++] & 0xFF);
-                } else {
-                    c = inCharBuf[inOff++];
-                }
-                if (skipLF) {
-                    skipLF = false;
-                    if (c == '\n') {
-                        continue;
-                    }
-                }
+
+                // (char)(byte & 0xFF) is equivalent to calling a ISO8859-1 decoder.
+                c = (fromStream) ? (char)(byteBuf[off++] & 0xFF) : charBuf[off++];
+
                 if (skipWhiteSpace) {
                     if (c == ' ' || c == '\t' || c == '\f') {
                         continue;
@@ -529,81 +523,94 @@ class Properties extends Hashtable<Object,Object> {
                     }
                     skipWhiteSpace = false;
                     appendedLineBegin = false;
+
                 }
-                if (isNewLine) {
-                    isNewLine = false;
+                if (len == 0) { // Still on a new logical line
                     if (c == '#' || c == '!') {
-                        // Comment, quickly consume the rest of the line,
-                        // resume on line-break and backslash.
-                        if (inStream != null) {
-                            while (inOff < inLimit) {
-                                byte b = inByteBuf[inOff++];
-                                if (b == '\n' || b == '\r' || b == '\\') {
-                                    c = (char)(b & 0xFF);
-                                    break;
+                        // Comment, quickly consume the rest of the line
+
+                        // When checking for new line characters a range check,
+                        // starting with the higher bound ('\r') means one less
+                        // branch in the common case.
+                        commentLoop: while (true) {
+                            if (fromStream) {
+                                byte b;
+                                while (off < limit) {
+                                    b = byteBuf[off++];
+                                    if (b <= '\r' && (b == '\r' || b == '\n'))
+                                        break commentLoop;
                                 }
-                            }
-                        } else {
-                            while (inOff < inLimit) {
-                                c = inCharBuf[inOff++];
-                                if (c == '\n' || c == '\r' || c == '\\') {
-                                    break;
+                                if (off == limit) {
+                                    inLimit = limit = inStream.read(byteBuf);
+                                    if (limit <= 0) { // EOF
+                                        return -1;
+                                    }
+                                    off = 0;
+                                }
+                            } else {
+                                while (off < limit) {
+                                    c = charBuf[off++];
+                                    if (c <= '\r' && (c == '\r' || c == '\n'))
+                                        break commentLoop;
+                                }
+                                if (off == limit) {
+                                    inLimit = limit = reader.read(charBuf);
+                                    if (limit <= 0) { // EOF
+                                        return -1;
+                                    }
+                                    off = 0;
                                 }
                             }
                         }
-                        isCommentLine = true;
+                        skipWhiteSpace = true;
+                        continue;
                     }
                 }
 
                 if (c != '\n' && c != '\r') {
                     lineBuf[len++] = c;
                     if (len == lineBuf.length) {
-                        int newLength = lineBuf.length * 2;
-                        if (newLength < 0) {
-                            newLength = Integer.MAX_VALUE;
-                        }
-                        char[] buf = new char[newLength];
-                        System.arraycopy(lineBuf, 0, buf, 0, lineBuf.length);
-                        lineBuf = buf;
+                        lineBuf = new char[ArraysSupport.newLength(len, 1, len)];
+                        System.arraycopy(this.lineBuf, 0, lineBuf, 0, len);
+                        this.lineBuf = lineBuf;
                     }
-                    //flip the preceding backslash flag
-                    if (c == '\\') {
-                        precedingBackslash = !precedingBackslash;
-                    } else {
-                        precedingBackslash = false;
-                    }
-                }
-                else {
+                    // flip the preceding backslash flag
+                    precedingBackslash = (c == '\\') ? !precedingBackslash : false;
+                } else {
                     // reached EOL
-                    if (isCommentLine || len == 0) {
-                        isCommentLine = false;
-                        isNewLine = true;
+                    if (len == 0) {
                         skipWhiteSpace = true;
-                        len = 0;
                         continue;
                     }
-                    if (inOff >= inLimit) {
-                        inLimit = (inStream==null)
-                                  ?reader.read(inCharBuf)
-                                  :inStream.read(inByteBuf);
-                        inOff = 0;
-                        if (inLimit <= 0) {
-                            if (precedingBackslash) {
-                                len--;
-                            }
-                            return len;
+                    if (off >= limit) {
+                        inLimit = limit = fromStream ? inStream.read(byteBuf)
+                                                     : reader.read(charBuf);
+                        off = 0;
+                        if (limit <= 0) { // EOF
+                            return precedingBackslash ? len - 1 : len;
                         }
                     }
                     if (precedingBackslash) {
+                        // backslash at EOL is not part of the line
                         len -= 1;
-                        //skip the leading whitespace characters in following line
+                        // skip leading whitespace characters in the following line
                         skipWhiteSpace = true;
                         appendedLineBegin = true;
                         precedingBackslash = false;
+                        // take care not to include any subsequent \n
                         if (c == '\r') {
-                            skipLF = true;
+                            if (fromStream) {
+                                if (byteBuf[off] == '\n') {
+                                    off++;
+                                }
+                            } else {
+                                if (charBuf[off] == '\n') {
+                                    off++;
+                                }
+                            }
                         }
                     } else {
+                        inOff = off;
                         return len;
                     }
                 }
@@ -615,27 +622,38 @@ class Properties extends Hashtable<Object,Object> {
      * Converts encoded &#92;uxxxx to unicode chars
      * and changes special saved chars to their original forms
      */
-    private String loadConvert (char[] in, int off, int len, char[] convtBuf) {
-        if (convtBuf.length < len) {
-            int newLen = len * 2;
-            if (newLen < 0) {
-                newLen = Integer.MAX_VALUE;
-            }
-            convtBuf = new char[newLen];
-        }
+    private String loadConvert(char[] in, int off, int len, StringBuilder out) {
         char aChar;
-        char[] out = convtBuf;
-        int outLen = 0;
         int end = off + len;
+        int start = off;
+        while (off < end) {
+            aChar = in[off++];
+            if (aChar == '\\') {
+                break;
+            }
+        }
+        if (off == end) { // No backslash
+            return new String(in, start, len);
+        }
+
+        // backslash found at off - 1, reset the shared buffer, rewind offset
+        out.setLength(0);
+        off--;
+        out.append(in, start, off - start);
 
         while (off < end) {
             aChar = in[off++];
             if (aChar == '\\') {
+                // No need to bounds check since LineReader::readLine excludes
+                // unescaped \s at the end of the line
                 aChar = in[off++];
                 if(aChar == 'u') {
                     // Read the xxxx
-                    int value=0;
-                    for (int i=0; i<4; i++) {
+                    if (off > end - 4)
+                        throw new IllegalArgumentException(
+                                     "Malformed \\uxxxx encoding.");
+                    int value = 0;
+                    for (int i = 0; i < 4; i++) {
                         aChar = in[off++];
                         switch (aChar) {
                           case '0': case '1': case '2': case '3': case '4':
@@ -654,20 +672,20 @@ class Properties extends Hashtable<Object,Object> {
                               throw new IllegalArgumentException(
                                            "Malformed \\uxxxx encoding.");
                         }
-                     }
-                    out[outLen++] = (char)value;
+                    }
+                    out.append((char)value);
                 } else {
                     if (aChar == 't') aChar = '\t';
                     else if (aChar == 'r') aChar = '\r';
                     else if (aChar == 'n') aChar = '\n';
                     else if (aChar == 'f') aChar = '\f';
-                    out[outLen++] = aChar;
+                    out.append(aChar);
                 }
             } else {
-                out[outLen++] = aChar;
+                out.append(aChar);
             }
         }
-        return new String (out, 0, outLen);
+        return out.toString();
     }
 
     /*
@@ -785,7 +803,7 @@ class Properties extends Hashtable<Object,Object> {
      *
      * @param   out      an output stream.
      * @param   comments   a description of the property list.
-     * @exception  ClassCastException  if this {@code Properties} object
+     * @throws     ClassCastException  if this {@code Properties} object
      *             contains any keys or values that are not
      *             {@code Strings}.
      */
@@ -837,11 +855,11 @@ class Properties extends Hashtable<Object,Object> {
      *
      * @param   writer      an output character stream writer.
      * @param   comments   a description of the property list.
-     * @exception  IOException if writing this property list to the specified
+     * @throws     IOException if writing this property list to the specified
      *             output stream throws an {@code IOException}.
-     * @exception  ClassCastException  if this {@code Properties} object
+     * @throws     ClassCastException  if this {@code Properties} object
      *             contains any keys or values that are not {@code Strings}.
-     * @exception  NullPointerException  if {@code writer} is null.
+     * @throws     NullPointerException  if {@code writer} is null.
      * @since 1.6
      */
     public void store(Writer writer, String comments)
@@ -884,17 +902,17 @@ class Properties extends Hashtable<Object,Object> {
      *
      * @param   out      an output stream.
      * @param   comments   a description of the property list.
-     * @exception  IOException if writing this property list to the specified
+     * @throws     IOException if writing this property list to the specified
      *             output stream throws an {@code IOException}.
-     * @exception  ClassCastException  if this {@code Properties} object
+     * @throws     ClassCastException  if this {@code Properties} object
      *             contains any keys or values that are not {@code Strings}.
-     * @exception  NullPointerException  if {@code out} is null.
+     * @throws     NullPointerException  if {@code out} is null.
      * @since 1.2
      */
     public void store(OutputStream out, String comments)
         throws IOException
     {
-        store0(new BufferedWriter(new OutputStreamWriter(out, "8859_1")),
+        store0(new BufferedWriter(new OutputStreamWriter(out, ISO_8859_1.INSTANCE)),
                comments,
                true);
     }
@@ -986,7 +1004,7 @@ class Properties extends Hashtable<Object,Object> {
     public void storeToXML(OutputStream os, String comment)
         throws IOException
     {
-        storeToXML(os, comment, "UTF-8");
+        storeToXML(os, comment, UTF_8.INSTANCE);
     }
 
     /**

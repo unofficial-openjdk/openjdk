@@ -152,18 +152,26 @@ public:
   template<bool concurrent, bool is_const> class ParState;
 
   // Service thread cleanup support.
-  // Stops deleting if there is an in-progress concurrent iteration.
-  // Locks both the _allocation_mutex and the _active_mutex, and may
-  // safepoint.  Deletion may be throttled, with only some available
-  // work performed, in order to allow other Service thread subtasks
-  // to run.  Returns true if there may be more work to do, false if
-  // nothing to do.
+
+  // Called by the service thread to process any pending cleanups for this
+  // storage object.  Drains the _deferred_updates list, and deletes empty
+  // blocks.  Stops deleting if there is an in-progress concurrent
+  // iteration.  Locks both the _allocation_mutex and the _active_mutex, and
+  // may safepoint.  Deletion may be throttled, with only some available
+  // work performed, in order to allow other Service thread subtasks to run.
+  // Returns true if there may be more work to do, false if nothing to do.
   bool delete_empty_blocks();
 
-  // Service thread cleanup support.
-  // Called by the service thread (while holding Service_lock) to test
-  // whether a call to delete_empty_blocks should be made.
-  bool needs_delete_empty_blocks() const;
+  // Called by safepoint cleanup to notify the service thread (via
+  // Service_lock) that there may be some OopStorage objects with pending
+  // cleanups to process.
+  static void trigger_cleanup_if_needed();
+
+  // Called by the service thread (while holding Service_lock) to to test
+  // for pending cleanup requests, and resets the request state to allow
+  // recognition of new requests.  Returns true if there was a pending
+  // request.
+  static bool has_cleanup_work_and_reset();
 
   // Debugging and logging support.
   const char* name() const;
@@ -175,10 +183,7 @@ public:
   // private types by providing public typedefs for them.
   class TestAccess;
 
-  // xlC on AIX can't compile test_oopStorage.cpp with following private
-  // classes. C++03 introduced access for nested classes with DR45, but xlC
-  // version 12 rejects it.
-NOT_AIX( private: )
+private:
   class Block;                  // Fixed-size array of oops, plus bookkeeping.
   class ActiveArray;            // Array of Blocks, plus bookkeeping.
   class AllocationListEntry;    // Provides AllocationList links in a Block.
@@ -188,9 +193,7 @@ NOT_AIX( private: )
     const Block* _head;
     const Block* _tail;
 
-    // Noncopyable.
-    AllocationList(const AllocationList&);
-    AllocationList& operator=(const AllocationList&);
+    NONCOPYABLE(AllocationList);
 
   public:
     AllocationList();
@@ -216,10 +219,7 @@ private:
   const char* _name;
   ActiveArray* _active_array;
   AllocationList _allocation_list;
-AIX_ONLY(public:)               // xlC 12 on AIX doesn't implement C++ DR45.
   Block* volatile _deferred_updates;
-AIX_ONLY(private:)
-
   Mutex* _allocation_mutex;
   Mutex* _active_mutex;
 
@@ -232,7 +232,7 @@ AIX_ONLY(private:)
   // mutable because this gets set even for const iteration.
   mutable int _concurrent_iteration_count;
 
-  volatile uint _needs_cleanup;
+  volatile bool _needs_cleanup;
 
   bool try_add_block();
   Block* block_for_allocation();
@@ -240,10 +240,7 @@ AIX_ONLY(private:)
   Block* find_block_or_null(const oop* ptr) const;
   void delete_empty_block(const Block& block);
   bool reduce_deferred_updates();
-  void notify_needs_cleanup();
-AIX_ONLY(public:)               // xlC 12 on AIX doesn't implement C++ DR45.
   void record_needs_cleanup();
-AIX_ONLY(private:)
 
   // Managing _active_array.
   bool expand_active_array();

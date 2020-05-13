@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2018, SAP SE. All rights reserved.
+ * Copyright (c) 2018, 2019, SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -213,7 +213,6 @@ void G1BarrierSetAssembler::g1_write_barrier_post(MacroAssembler* masm, Decorato
   assert_different_registers(store_addr, new_val, tmp1, tmp2);
 
   CardTableBarrierSet* ct = barrier_set_cast<CardTableBarrierSet>(BarrierSet::barrier_set());
-  assert(sizeof(*ct->card_table()->byte_map_base()) == sizeof(jbyte), "adjust this code");
 
   // Does store cross heap regions?
   __ xorr(tmp1, store_addr, new_val);
@@ -306,7 +305,7 @@ void G1BarrierSetAssembler::oop_store_at(MacroAssembler* masm, DecoratorSet deco
 void G1BarrierSetAssembler::load_at(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
                                     Register base, RegisterOrConstant ind_or_offs, Register dst,
                                     Register tmp1, Register tmp2, bool needs_frame, Label *L_handle_null) {
-  bool on_oop = type == T_OBJECT || type == T_ARRAY;
+  bool on_oop = is_reference_type(type);
   bool on_weak = (decorators & ON_WEAK_OOP_REF) != 0;
   bool on_phantom = (decorators & ON_PHANTOM_OOP_REF) != 0;
   bool on_reference = on_weak || on_phantom;
@@ -336,12 +335,12 @@ void G1BarrierSetAssembler::resolve_jobject(MacroAssembler* masm, Register value
   __ ld(value, 0, tmp1);      // Resolve (untagged) jobject.
 
   __ beq(CCR0, not_weak);     // Test for jweak tag.
-  __ verify_oop(value);
+  __ verify_oop(value, FILE_AND_LINE);
   g1_write_barrier_pre(masm, IN_NATIVE | ON_PHANTOM_OOP_REF,
                        noreg, noreg, value,
                        tmp1, tmp2, needs_frame);
   __ bind(not_weak);
-  __ verify_oop(value);
+  __ verify_oop(value, FILE_AND_LINE);
   __ bind(done);
 }
 
@@ -478,7 +477,7 @@ void G1BarrierSetAssembler::generate_c1_post_barrier_runtime_stub(StubAssembler*
   Register tmp = R0;
   Register addr = R14;
   Register tmp2 = R15;
-  jbyte* byte_map_base = bs->card_table()->byte_map_base();
+  CardTable::CardValue* byte_map_base = bs->card_table()->byte_map_base();
 
   Label restart, refill, ret;
 

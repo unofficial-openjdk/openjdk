@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 /*
  * @test
  * @bug 4469866
+ * @library /test/lib
  * @summary Connecting to a link-local IPv6 address should not
  *          causes a SocketException to be thrown.
  * @library /test/lib
@@ -33,11 +34,12 @@
  * @run main/othervm -Djava.net.preferIPv4Stack=true LinkLocal
  */
 
-import jdk.test.lib.NetworkConfiguration;
-
 import java.net.*;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import jdk.test.lib.NetworkConfiguration;
+import jdk.test.lib.net.IPSupport;
 
 public class LinkLocal {
 
@@ -53,7 +55,8 @@ public class LinkLocal {
          * Create ServerSocket on wildcard address and then
          * try to connect Socket to link-local address.
          */
-        ServerSocket ss = new ServerSocket(0);
+        ServerSocket ss = new ServerSocket();
+        ss.bind(new InetSocketAddress(ia, 0));
 
         Socket s = new Socket();
         try {
@@ -85,7 +88,7 @@ public class LinkLocal {
         }
 
         DatagramSocket ds1 = new DatagramSocket();
-        DatagramSocket ds2 = new DatagramSocket();
+        DatagramSocket ds2 = new DatagramSocket(0, ia);
 
         try {
             byte b[] = "Hello".getBytes();
@@ -120,6 +123,7 @@ public class LinkLocal {
     }
 
     public static void main(String args[]) throws Exception {
+        IPSupport.throwSkippedExceptionIfNonOperational();
 
         /*
          * If an argument is provided ensure that it's

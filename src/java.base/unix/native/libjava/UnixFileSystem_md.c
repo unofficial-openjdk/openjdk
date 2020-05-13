@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,7 @@
 #include "jni.h"
 #include "jni_util.h"
 #include "jlong.h"
+#include "jdk_util.h"
 #include "io_util.h"
 #include "io_util_md.h"
 #include "java_io_FileSystem.h"
@@ -91,8 +92,6 @@ Java_java_io_UnixFileSystem_initIDs(JNIEnv *env, jclass cls)
 
 /* -- Path operations -- */
 
-extern int canonicalize(char *path, const char *out, int len);
-
 JNIEXPORT jstring JNICALL
 Java_java_io_UnixFileSystem_canonicalize0(JNIEnv *env, jobject this,
                                           jstring pathname)
@@ -101,7 +100,7 @@ Java_java_io_UnixFileSystem_canonicalize0(JNIEnv *env, jobject this,
 
     WITH_PLATFORM_STRING(env, pathname, path) {
         char canonicalPath[PATH_MAX];
-        if (canonicalize((char *)path,
+        if (JDK_Canonicalize((char *)path,
                          canonicalPath, PATH_MAX) < 0) {
             JNU_ThrowIOExceptionWithLastError(env, "Bad pathname");
         } else {
@@ -168,7 +167,9 @@ Java_java_io_UnixFileSystem_checkAccess(JNIEnv *env, jobject this,
     default: assert(0);
     }
     WITH_FIELD_PLATFORM_STRING(env, file, ids.path, path) {
-        if (access(path, mode) == 0) {
+        int res;
+        RESTARTABLE(access(path, mode), res);
+        if (res == 0) {
             rv = JNI_TRUE;
         }
     } END_PLATFORM_STRING(env, path);
@@ -188,6 +189,7 @@ Java_java_io_UnixFileSystem_setPermission(JNIEnv *env, jobject this,
     WITH_FIELD_PLATFORM_STRING(env, file, ids.path, path) {
         int amode = 0;
         int mode;
+        int res;
         switch (access) {
         case java_io_FileSystem_ACCESS_READ:
             if (owneronly)
@@ -215,7 +217,8 @@ Java_java_io_UnixFileSystem_setPermission(JNIEnv *env, jobject this,
                 mode |= amode;
             else
                 mode &= ~amode;
-            if (chmod(path, mode) >= 0) {
+            RESTARTABLE(chmod(path, mode), res);
+            if (res == 0) {
                 rv = JNI_TRUE;
             }
         }
@@ -280,10 +283,10 @@ Java_java_io_UnixFileSystem_createFileExclusively(JNIEnv *env, jclass cls,
             fd = handleOpen(path, O_RDWR | O_CREAT | O_EXCL, 0666);
             if (fd < 0) {
                 if (errno != EEXIST)
-                    JNU_ThrowIOExceptionWithLastError(env, path);
+                    JNU_ThrowIOExceptionWithLastError(env, "Could not open file");
             } else {
                 if (close(fd) == -1)
-                    JNU_ThrowIOExceptionWithLastError(env, path);
+                    JNU_ThrowIOExceptionWithLastError(env, "Could not close file");
                 rv = JNI_TRUE;
             }
         }
@@ -355,13 +358,15 @@ Java_java_io_UnixFileSystem_list(JNIEnv *env, jobject this,
     closedir(dir);
 
     /* Copy the final results into an appropriately-sized array */
-    old = rv;
-    rv = (*env)->NewObjectArray(env, len, str_class, NULL);
-    if (rv == NULL) {
-        return NULL;
-    }
-    if (JNU_CopyObjectArray(env, rv, old, len) < 0) {
-        return NULL;
+    if (len < maxlen) {
+        old = rv;
+        rv = (*env)->NewObjectArray(env, len, str_class, NULL);
+        if (rv == NULL) {
+            return NULL;
+        }
+        if (JNU_CopyObjectArray(env, rv, old, len) < 0) {
+            return NULL;
+        }
     }
     return rv;
 
@@ -446,8 +451,10 @@ Java_java_io_UnixFileSystem_setReadOnly(JNIEnv *env, jobject this,
 
     WITH_FIELD_PLATFORM_STRING(env, file, ids.path, path) {
         int mode;
+        int res;
         if (statMode(path, &mode)) {
-            if (chmod(path, mode & ~(S_IWUSR | S_IWGRP | S_IWOTH)) >= 0) {
+            RESTARTABLE(chmod(path, mode & ~(S_IWUSR | S_IWGRP | S_IWOTH)), res);
+            if (res == 0) {
                 rv = JNI_TRUE;
             }
         }
@@ -466,6 +473,7 @@ Java_java_io_UnixFileSystem_getSpace(JNIEnv *env, jobject this,
         struct statfs fsstat;
 #else
         struct statvfs64 fsstat;
+        int res;
 #endif
         memset(&fsstat, 0, sizeof(fsstat));
 #ifdef MACOSX
@@ -488,7 +496,8 @@ Java_java_io_UnixFileSystem_getSpace(JNIEnv *env, jobject this,
             }
         }
 #else
-        if (statvfs64(path, &fsstat) == 0) {
+        RESTARTABLE(statvfs64(path, &fsstat), res);
+        if (res == 0) {
             switch(t) {
             case java_io_FileSystem_SPACE_TOTAL:
                 rv = jlong_mul(long_to_jlong(fsstat.f_frsize),

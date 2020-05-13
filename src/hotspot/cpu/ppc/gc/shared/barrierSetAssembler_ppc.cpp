@@ -27,6 +27,8 @@
 #include "asm/macroAssembler.inline.hpp"
 #include "gc/shared/barrierSetAssembler.hpp"
 #include "interpreter/interp_masm.hpp"
+#include "oops/compressedOops.hpp"
+#include "runtime/jniHandles.hpp"
 
 #define __ masm->
 
@@ -82,7 +84,7 @@ void BarrierSetAssembler::load_at(MacroAssembler* masm, DecoratorSet decorators,
         __ beq(CCR0, *L_handle_null);
         __ decode_heap_oop_not_null(dst);
       } else if (not_null) { // Guaranteed to be not null.
-        Register narrowOop = (tmp1 != noreg && Universe::narrow_oop_base_disjoint()) ? tmp1 : dst;
+        Register narrowOop = (tmp1 != noreg && CompressedOops::base_disjoint()) ? tmp1 : dst;
         __ lwz(narrowOop, ind_or_offs, base);
         __ decode_heap_oop_not_null(dst, narrowOop);
       } else { // Any oop.
@@ -111,6 +113,12 @@ void BarrierSetAssembler::resolve_jobject(MacroAssembler* masm, Register value,
   __ clrrdi(tmp1, value, JNIHandles::weak_tag_size);
   __ ld(value, 0, tmp1);      // Resolve (untagged) jobject.
 
-  __ verify_oop(value);
+  __ verify_oop(value, FILE_AND_LINE);
   __ bind(done);
+}
+
+void BarrierSetAssembler::try_resolve_jobject_in_native(MacroAssembler* masm, Register dst, Register jni_env,
+                                                        Register obj, Register tmp, Label& slowpath) {
+  __ clrrdi(dst, obj, JNIHandles::weak_tag_size);
+  __ ld(dst, 0, dst);         // Resolve (untagged) jobject.
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,40 +24,42 @@
 
 package org.graalvm.compiler.hotspot.test;
 
-import java.util.function.IntPredicate;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import jdk.vm.ci.meta.ResolvedJavaMethod;
 import java.security.PrivilegedAction;
+import java.util.function.IntPredicate;
+
 import org.graalvm.compiler.core.common.GraalOptions;
-import org.graalvm.compiler.hotspot.meta.HotSpotClassInitializationPlugin;
+import org.graalvm.compiler.hotspot.meta.HotSpotAOTClassInitializationPlugin;
 import org.graalvm.compiler.hotspot.meta.HotSpotInvokeDynamicPlugin;
 import org.graalvm.compiler.hotspot.nodes.aot.ResolveDynamicConstantNode;
 import org.graalvm.compiler.hotspot.nodes.aot.ResolveDynamicStubCall;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
+import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderConfiguration.Plugins;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderContext;
 import org.graalvm.compiler.nodes.graphbuilderconf.InlineInvokePlugin.InlineInfo;
-import org.graalvm.compiler.nodes.ValueNode;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.nodes.spi.LoweringTool;
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.OptimisticOptimizations;
 import org.graalvm.compiler.phases.common.CanonicalizerPhase;
-import org.graalvm.compiler.phases.common.LoweringPhase;
 import org.graalvm.compiler.phases.common.FrameStateAssignmentPhase;
 import org.graalvm.compiler.phases.common.GuardLoweringPhase;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
+import org.graalvm.compiler.phases.common.LoweringPhase;
 import org.graalvm.compiler.phases.tiers.MidTierContext;
 import org.junit.Assert;
 import org.junit.Test;
+
+import jdk.vm.ci.meta.ResolvedJavaMethod;
 
 public class HotSpotInvokeDynamicPluginTest extends HotSpotGraalCompilerTest {
     @Override
     protected Plugins getDefaultGraphBuilderPlugins() {
         Plugins plugins = super.getDefaultGraphBuilderPlugins();
-        plugins.setClassInitializationPlugin(new HotSpotClassInitializationPlugin());
+        plugins.setClassInitializationPlugin(new HotSpotAOTClassInitializationPlugin());
         plugins.setInvokeDynamicPlugin(new HotSpotInvokeDynamicPlugin() {
             @Override
             public boolean isResolvedDynamicInvoke(GraphBuilderContext builder, int index, int opcode) {
@@ -91,10 +93,10 @@ public class HotSpotInvokeDynamicPluginTest extends HotSpotGraalCompilerTest {
         StructuredGraph graph = parseEager(name, AllowAssumptions.NO, new OptionValues(getInitialOptions(), GraalOptions.GeneratePIC, true));
         MidTierContext midTierContext = new MidTierContext(getProviders(), getTargetProvider(), OptimisticOptimizations.ALL, graph.getProfilingInfo());
 
-        CanonicalizerPhase canonicalizer = new CanonicalizerPhase();
+        CanonicalizerPhase canonicalizer = createCanonicalizerPhase();
         Assert.assertEquals(expectedResolves, graph.getNodes().filter(ResolveDynamicConstantNode.class).count());
         Assert.assertEquals(0, graph.getNodes().filter(ResolveDynamicStubCall.class).count());
-        PhaseContext context = new PhaseContext(getProviders());
+        CoreProviders context = getProviders();
         new LoweringPhase(canonicalizer, LoweringTool.StandardLoweringStage.HIGH_TIER).apply(graph, context);
         new GuardLoweringPhase().apply(graph, midTierContext);
         new LoweringPhase(canonicalizer, LoweringTool.StandardLoweringStage.MID_TIER).apply(graph, context);

@@ -126,6 +126,9 @@ class ciMethod : public ciMetadata {
   void assert_virtual_call_type_ok(int bci);
   void assert_call_type_ok(int bci);
 
+  // Check and update the profile counter in case of overflow
+  static int check_overflow(int c, Bytecodes::Code code);
+
  public:
   void check_is_loaded() const                   { assert(is_loaded(), "not loaded"); }
 
@@ -245,6 +248,8 @@ class ciMethod : public ciMetadata {
 
   ResourceBitMap live_local_oops_at_bci(int bci);
 
+  bool needs_clinit_barrier() const;
+
 #ifdef COMPILER1
   const BitMap& bci_block_start();
 #endif
@@ -351,6 +356,8 @@ class ciMethod : public ciMetadata {
   bool is_boxing_method() const;
   bool is_unboxing_method() const;
   bool is_object_initializer() const;
+
+  bool can_be_statically_bound(ciInstanceKlass* context) const;
 
   // Replay data methods
   void dump_name_as_ascii(outputStream* st);

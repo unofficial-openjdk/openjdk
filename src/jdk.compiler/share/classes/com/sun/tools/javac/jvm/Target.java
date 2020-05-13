@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,7 +73,13 @@ public enum Target {
     JDK1_12("12", 56, 0),
 
     /** JDK 13. */
-    JDK1_13("13", 57, 0);
+    JDK1_13("13", 57, 0),
+
+    /** JDK 14. */
+    JDK1_14("14", 58, 0),
+
+    /** JDK 15. */
+    JDK1_15("15", 59, 0);
 
     private static final Context.Key<Target> targetKey = new Context.Key<>();
 
@@ -161,6 +167,14 @@ public enum Target {
      */
     public boolean hasNestmateAccess() {
         return compareTo(JDK1_11) >= 0;
+    }
+
+    /** language runtime uses nest-based access.
+     *  e.g. lambda and string concat spin dynamic proxy class as a nestmate
+     *  of the target class
+     */
+    public boolean runtimeUseNestAccess() {
+        return compareTo(JDK1_15) >= 0;
     }
 
     /** Does the target VM support virtual private invocations?

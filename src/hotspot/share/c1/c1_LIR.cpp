@@ -72,21 +72,6 @@ LIR_Opr LIR_OprFact::value_type(ValueType* type) {
 }
 
 
-LIR_Opr LIR_OprFact::dummy_value_type(ValueType* type) {
-  switch (type->tag()) {
-    case objectTag: return LIR_OprFact::oopConst(NULL);
-    case addressTag:return LIR_OprFact::addressConst(0);
-    case intTag:    return LIR_OprFact::intConst(0);
-    case floatTag:  return LIR_OprFact::floatConst(0.0);
-    case longTag:   return LIR_OprFact::longConst(0);
-    case doubleTag: return LIR_OprFact::doubleConst(0.0);
-    default:        ShouldNotReachHere(); return LIR_OprFact::intConst(-1);
-  }
-  return illegalOpr;
-}
-
-
-
 //---------------------------------------------------
 
 
@@ -420,12 +405,8 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
   switch (op->code()) {
 
 // LIR_Op0
-    case lir_word_align:               // result and info always invalid
     case lir_backwardbranch_target:    // result and info always invalid
-    case lir_build_frame:              // result and info always invalid
     case lir_fpop_raw:                 // result and info always invalid
-    case lir_24bit_FPU:                // result and info always invalid
-    case lir_reset_FPU:                // result and info always invalid
     case lir_breakpoint:               // result and info always invalid
     case lir_membar:                   // result and info always invalid
     case lir_membar_acquire:           // result and info always invalid
@@ -467,7 +448,6 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
 // LIR_Op1
     case lir_fxch:           // input always valid, result and info always invalid
     case lir_fld:            // input always valid, result and info always invalid
-    case lir_ffree:          // input always valid, result and info always invalid
     case lir_push:           // input always valid, result and info always invalid
     case lir_pop:            // input always valid, result and info always invalid
     case lir_return:         // input always valid, result and info always invalid
@@ -1640,23 +1620,18 @@ const char * LIR_Op::name() const {
      case lir_membar_storestore:     s = "membar_storestore"; break;
      case lir_membar_loadstore:      s = "membar_loadstore";  break;
      case lir_membar_storeload:      s = "membar_storeload";  break;
-     case lir_word_align:            s = "word_align";    break;
      case lir_label:                 s = "label";         break;
      case lir_nop:                   s = "nop";           break;
      case lir_on_spin_wait:          s = "on_spin_wait";  break;
      case lir_backwardbranch_target: s = "backbranch";    break;
      case lir_std_entry:             s = "std_entry";     break;
      case lir_osr_entry:             s = "osr_entry";     break;
-     case lir_build_frame:           s = "build_frm";     break;
      case lir_fpop_raw:              s = "fpop_raw";      break;
-     case lir_24bit_FPU:             s = "24bit_FPU";     break;
-     case lir_reset_FPU:             s = "reset_FPU";     break;
      case lir_breakpoint:            s = "breakpoint";    break;
      case lir_get_thread:            s = "get_thread";    break;
      // LIR_Op1
      case lir_fxch:                  s = "fxch";          break;
      case lir_fld:                   s = "fld";           break;
-     case lir_ffree:                 s = "ffree";         break;
      case lir_push:                  s = "push";          break;
      case lir_pop:                   s = "pop";           break;
      case lir_null_check:            s = "null_check";    break;

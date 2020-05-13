@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2017, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,6 +26,7 @@
 #define SHARE_GC_SHENANDOAH_SHENANDOAHVERIFIER_HPP
 
 #include "gc/shared/markBitMap.hpp"
+#include "gc/shenandoah/shenandoahRootVerifier.hpp"
 #include "memory/allocation.hpp"
 #include "oops/oopsHierarchy.hpp"
 #include "utilities/stack.hpp"
@@ -73,7 +75,7 @@ public:
     _verify_marked_incomplete,
 
     // Objects should be marked in "complete" bitmap.
-    _verify_marked_complete,
+    _verify_marked_complete
   } VerifyMarked;
 
   typedef enum {
@@ -84,7 +86,7 @@ public:
     _verify_forwarded_none,
 
     // Objects may have forwardees.
-    _verify_forwarded_allow,
+    _verify_forwarded_allow
   } VerifyForwarded;
 
   typedef enum {
@@ -97,7 +99,7 @@ public:
     // May have references to cset, all should be forwarded.
     // Note: Allowing non-forwarded references to cset is equivalent
     // to _verify_cset_disable.
-    _verify_cset_forwarded,
+    _verify_cset_forwarded
   } VerifyCollectionSet;
 
   typedef enum {
@@ -109,7 +111,7 @@ public:
 
     // All objects should belong to live regions,
     // and liveness data should be accurate
-    _verify_liveness_complete,
+    _verify_liveness_complete
   } VerifyLiveness;
 
   typedef enum {
@@ -123,7 +125,7 @@ public:
     _verify_regions_nocset,
 
     // No trash and no cset regions allowed
-    _verify_regions_notrash_nocset,
+    _verify_regions_notrash_nocset
   } VerifyRegions;
 
   typedef enum {
@@ -135,7 +137,16 @@ public:
 
     // Nothing is in progress, some objects are forwarded
     _verify_gcstate_forwarded,
+
+    // Evacuation is in progress, some objects are forwarded
+    _verify_gcstate_evacuation
   } VerifyGCState;
+
+  typedef enum {
+    _verify_all_weak_roots,
+    _verify_serial_weak_roots,
+    _verify_concurrent_weak_roots
+  } VerifyWeakRoots;
 
   struct VerifyOptions {
     VerifyForwarded     _verify_forwarded;
@@ -144,17 +155,20 @@ public:
     VerifyLiveness      _verify_liveness;
     VerifyRegions       _verify_regions;
     VerifyGCState       _verify_gcstate;
+    VerifyWeakRoots     _verify_weak_roots;
 
     VerifyOptions(VerifyForwarded verify_forwarded,
                   VerifyMarked verify_marked,
                   VerifyCollectionSet verify_collection_set,
                   VerifyLiveness verify_liveness,
                   VerifyRegions verify_regions,
-                  VerifyGCState verify_gcstate) :
+                  VerifyGCState verify_gcstate,
+                  VerifyWeakRoots verify_weak_roots = _verify_all_weak_roots) :
             _verify_forwarded(verify_forwarded), _verify_marked(verify_marked),
             _verify_cset(verify_collection_set),
             _verify_liveness(verify_liveness), _verify_regions(verify_regions),
-            _verify_gcstate(verify_gcstate) {}
+            _verify_gcstate(verify_gcstate),
+            _verify_weak_roots(verify_weak_roots) {}
   };
 
 private:
@@ -164,7 +178,8 @@ private:
                            VerifyCollectionSet cset,
                            VerifyLiveness liveness,
                            VerifyRegions regions,
-                           VerifyGCState gcstate);
+                           VerifyGCState gcstate,
+                           VerifyWeakRoots weakRoots);
 
 public:
   ShenandoahVerifier(ShenandoahHeap* heap, MarkBitMap* verification_bitmap) :
@@ -173,15 +188,21 @@ public:
   void verify_before_concmark();
   void verify_after_concmark();
   void verify_before_evacuation();
+  void verify_during_evacuation();
   void verify_after_evacuation();
   void verify_before_updaterefs();
   void verify_after_updaterefs();
   void verify_before_fullgc();
   void verify_after_fullgc();
-  void verify_before_traversal();
-  void verify_after_traversal();
   void verify_after_degenerated();
   void verify_generic(VerifyOption option);
+
+  // Roots should only contain to-space oops
+  void verify_roots_in_to_space();
+  void verify_roots_in_to_space_except(ShenandoahRootVerifier::RootTypes types);
+
+  void verify_roots_no_forwarded();
+  void verify_roots_no_forwarded_except(ShenandoahRootVerifier::RootTypes types);
 };
 
 #endif // SHARE_GC_SHENANDOAH_SHENANDOAHVERIFIER_HPP

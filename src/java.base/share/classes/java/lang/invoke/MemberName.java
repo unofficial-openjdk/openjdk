@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,12 +70,14 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
  * and those seven fields omit much of the information in Method.
  * @author jrose
  */
-/*non-public*/ final class ResolvedMethodName {
+/*non-public*/
+final class ResolvedMethodName {
     //@Injected JVM_Method* vmtarget;
     //@Injected Class<?>    vmholder;
 };
 
-/*non-public*/ final class MemberName implements Member, Cloneable {
+/*non-public*/
+final class MemberName implements Member, Cloneable {
     private Class<?> clazz;       // class in which the member is defined
     private String   name;        // may be null if not yet materialized
     private Object   type;        // may be null if not yet materialized
@@ -310,7 +312,9 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
             return true;
         return false;
     }
-    /*non-public*/ boolean referenceKindIsConsistentWith(int originalRefKind) {
+
+    /*non-public*/
+    boolean referenceKindIsConsistentWith(int originalRefKind) {
         int refKind = getReferenceKind();
         if (refKind == originalRefKind)  return true;
         switch (originalRefKind) {
@@ -521,7 +525,7 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
     public boolean isAccessibleFrom(Class<?> lookupClass) {
         int mode = (ALL_ACCESS|MethodHandles.Lookup.PACKAGE|MethodHandles.Lookup.MODULE);
         return VerifyAccess.isMemberAccessible(this.getDeclaringClass(), this.getDeclaringClass(), flags,
-                                               lookupClass, mode);
+                                               lookupClass, null, mode);
     }
 
     /**
@@ -930,13 +934,21 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
                 message += ", from public Lookup";
             } else {
                 Module m;
+                Class<?> plc;
                 if (from instanceof MethodHandles.Lookup) {
                     MethodHandles.Lookup lookup = (MethodHandles.Lookup)from;
+                    from = lookup.lookupClass();
                     m = lookup.lookupClass().getModule();
+                    plc = lookup.previousLookupClass();
                 } else {
-                    m = from.getClass().getModule();
+                    m = ((Class<?>)from).getModule();
+                    plc = null;
                 }
                 message += ", from " + from + " (" + m + ")";
+                if (plc != null) {
+                    message += ", previous lookup " +
+                        plc.getName() + " (" + plc.getModule() + ")";
+                }
             }
         }
         return new IllegalAccessException(message);
@@ -969,13 +981,15 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
     }
 
     /** Actually making a query requires an access check. */
-    /*non-public*/ static Factory getFactory() {
+    /*non-public*/
+    static Factory getFactory() {
         return Factory.INSTANCE;
     }
     /** A factory type for resolving member names with the help of the VM.
      *  TBD: Define access-safe public constructors for this factory.
      */
-    /*non-public*/ static class Factory {
+    /*non-public*/
+    static class Factory {
         private Factory() { } // singleton pattern
         static Factory INSTANCE = new Factory();
 
@@ -1090,9 +1104,8 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
          *  If lookup fails or access is not permitted, a {@linkplain ReflectiveOperationException} is thrown.
          *  Otherwise a fresh copy of the given member is returned, with modifier bits filled in.
          */
-        public
-        <NoSuchMemberException extends ReflectiveOperationException>
-        MemberName resolveOrFail(byte refKind, MemberName m, Class<?> lookupClass,
+        public <NoSuchMemberException extends ReflectiveOperationException>
+                MemberName resolveOrFail(byte refKind, MemberName m, Class<?> lookupClass,
                                  Class<NoSuchMemberException> nsmClass)
                 throws IllegalAccessException, NoSuchMemberException {
             MemberName result = resolve(refKind, m, lookupClass, false);
@@ -1108,8 +1121,7 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
          *  If lookup fails or access is not permitted, return null.
          *  Otherwise a fresh copy of the given member is returned, with modifier bits filled in.
          */
-        public
-        MemberName resolveOrNull(byte refKind, MemberName m, Class<?> lookupClass) {
+        public MemberName resolveOrNull(byte refKind, MemberName m, Class<?> lookupClass) {
             MemberName result = resolve(refKind, m, lookupClass, true);
             if (result != null && result.isResolved())
                 return result;

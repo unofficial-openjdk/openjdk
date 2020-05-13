@@ -143,13 +143,13 @@ public:
   inline size_t removed() const { return _removed; }
 
   inline void move_to_next() {
-    if (oopDesc::equals_raw(_current_discovered, _next_discovered)) {
+    if (_current_discovered == _next_discovered) {
       // End of the list.
       _current_discovered = NULL;
     } else {
       _current_discovered = _next_discovered;
     }
-    assert(!oopDesc::equals_raw(_current_discovered, _first_seen), "cyclic ref_list found");
+    assert(_current_discovered != _first_seen, "cyclic ref_list found");
     _processed++;
   }
 };
@@ -217,8 +217,7 @@ private:
   // For collectors that do not keep GC liveness information
   // in the object header, this field holds a closure that
   // helps the reference processor determine the reachability
-  // of an oop. It is currently initialized to NULL for all
-  // collectors except for CMS and G1.
+  // of an oop.
   BoolObjectClosure* _is_alive_non_header;
 
   // Soft ref clearing policies

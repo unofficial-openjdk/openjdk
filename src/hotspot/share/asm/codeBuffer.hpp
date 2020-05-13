@@ -200,9 +200,38 @@ class CodeSection {
   }
 
   // Code emission
-  void emit_int8 ( int8_t  x)  { *((int8_t*)  end()) = x; set_end(end() + sizeof(int8_t)); }
-  void emit_int16( int16_t x)  { *((int16_t*) end()) = x; set_end(end() + sizeof(int16_t)); }
-  void emit_int32( int32_t x)  { *((int32_t*) end()) = x; set_end(end() + sizeof(int32_t)); }
+  void emit_int8(int8_t x1) {
+    address curr = end();
+    *((int8_t*)  curr++) = x1;
+    set_end(curr);
+  }
+
+  void emit_int16(int16_t x) { *((int16_t*) end()) = x; set_end(end() + sizeof(int16_t)); }
+  void emit_int16(int8_t x1, int8_t x2) {
+    address curr = end();
+    *((int8_t*)  curr++) = x1;
+    *((int8_t*)  curr++) = x2;
+    set_end(curr);
+  }
+
+  void emit_int24(int8_t x1, int8_t x2, int8_t x3)  {
+    address curr = end();
+    *((int8_t*)  curr++) = x1;
+    *((int8_t*)  curr++) = x2;
+    *((int8_t*)  curr++) = x3;
+    set_end(curr);
+  }
+
+  void emit_int32(int32_t x) { *((int32_t*) end()) = x; set_end(end() + sizeof(int32_t)); }
+  void emit_int32(int8_t x1, int8_t x2, int8_t x3, int8_t x4)  {
+    address curr = end();
+    *((int8_t*)  curr++) = x1;
+    *((int8_t*)  curr++) = x2;
+    *((int8_t*)  curr++) = x3;
+    *((int8_t*)  curr++) = x4;
+    set_end(curr);
+  }
+
   void emit_int64( int64_t x)  { *((int64_t*) end()) = x; set_end(end() + sizeof(int64_t)); }
 
   void emit_float( jfloat  x)  { *((jfloat*)  end()) = x; set_end(end() + sizeof(jfloat)); }
@@ -240,7 +269,6 @@ class CodeSection {
 
 #ifndef PRODUCT
   void decode();
-  void dump();
   void print(const char* name);
 #endif //PRODUCT
 };
@@ -250,6 +278,7 @@ class CodeStrings {
 private:
 #ifndef PRODUCT
   CodeString* _strings;
+  CodeString* _strings_last;
 #ifdef ASSERT
   // Becomes true after copy-out, forbids further use.
   bool _defunct; // Zero bit pattern is "valid", see memset call in decode_env::decode_env
@@ -263,6 +292,7 @@ private:
   void set_null_and_invalidate() {
 #ifndef PRODUCT
     _strings = NULL;
+    _strings_last = NULL;
 #ifdef ASSERT
     _defunct = true;
 #endif
@@ -273,6 +303,7 @@ public:
   CodeStrings() {
 #ifndef PRODUCT
     _strings = NULL;
+    _strings_last = NULL;
 #ifdef ASSERT
     _defunct = false;
 #endif
@@ -290,6 +321,7 @@ public:
   const char* add_string(const char * string) PRODUCT_RETURN_(return NULL;);
 
   void add_comment(intptr_t offset, const char * comment) PRODUCT_RETURN;
+  bool has_block_comment(intptr_t offset) const;
   void print_block_comment(outputStream* stream, intptr_t offset) const PRODUCT_RETURN;
   // MOVE strings from other to this; invalidate other.
   void assign(CodeStrings& other)  PRODUCT_RETURN;
@@ -297,6 +329,7 @@ public:
   void copy(CodeStrings& other)  PRODUCT_RETURN;
   // FREE strings; invalidate this.
   void free() PRODUCT_RETURN;
+
   // Guarantee that _strings are used at most once; assign and free invalidate a buffer.
   inline void check_valid() const {
 #ifdef ASSERT
@@ -378,6 +411,7 @@ class CodeBuffer: public StackObj {
 
   OopRecorder* _oop_recorder;
   CodeStrings  _code_strings;
+  bool         _collect_comments;      // Indicate if we need to collect block comments at all.
   OopRecorder  _default_oop_recorder;  // override with initialize_oop_recorder
   Arena*       _overflow_arena;
 
@@ -404,6 +438,15 @@ class CodeBuffer: public StackObj {
 #if INCLUDE_AOT
     _immutable_PIC   = false;
 #endif
+
+    // Collect block comments, but restrict collection to cases where a disassembly is output.
+    _collect_comments = ( PrintAssembly
+                       || PrintStubCode
+                       || PrintMethodHandleStubs
+                       || PrintInterpreter
+                       || PrintSignatureHandlers
+                       || UnlockDiagnosticVMOptions
+                        );
   }
 
   void initialize(address code_start, csize_t code_size) {
@@ -605,6 +648,23 @@ class CodeBuffer: public StackObj {
     }
   }
 
+  // Directly disassemble code buffer.
+  // Print the comment associated with offset on stream, if there is one.
+  virtual void print_block_comment(outputStream* stream, address block_begin) {
+#ifndef PRODUCT
+    intptr_t offset = (intptr_t)(block_begin - _total_start);  // I assume total_start is not correct for all code sections.
+    _code_strings.print_block_comment(stream, offset);
+#endif
+  }
+  bool has_block_comment(address block_begin) {
+#ifndef PRODUCT
+    intptr_t offset = (intptr_t)(block_begin - _total_start);  // I assume total_start is not correct for all code sections.
+    return _code_strings.has_block_comment(offset);
+#else
+    return false;
+#endif
+  }
+
   // Code generation
   void relocate(address at, RelocationHolder const& rspec, int format = 0) {
     _insts.relocate(at, rspec, format);
@@ -649,11 +709,10 @@ class CodeBuffer: public StackObj {
   // Printing / Decoding
   // decodes from decode_begin() to code_end() and sets decode_begin to end
   void    decode();
-  void    decode_all();         // decodes all the code
-  void    skip_decode();        // sets decode_begin to code_end();
   void    print();
 #endif
-
+  // Directly disassemble code buffer.
+  void    decode(address start, address end);
 
   // The following header contains architecture-specific implementations
 #include CPU_HEADER(codeBuffer)

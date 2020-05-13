@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,20 +28,21 @@
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "utilities/macros.hpp"
 
 void PreservedMarks::restore() {
   while (!_stack.is_empty()) {
-    const OopAndMarkOop elem = _stack.pop();
+    const OopAndMarkWord elem = _stack.pop();
     elem.set_mark();
   }
   assert_empty();
 }
 
 void PreservedMarks::adjust_during_full_gc() {
-  StackIterator<OopAndMarkOop, mtGC> iter(_stack);
+  StackIterator<OopAndMarkWord, mtGC> iter(_stack);
   while (!iter.is_empty()) {
-    OopAndMarkOop* elem = iter.next_addr();
+    OopAndMarkWord* elem = iter.next_addr();
 
     oop obj = elem->get_oop();
     if (obj->is_forwarded()) {
@@ -55,7 +56,7 @@ void PreservedMarks::restore_and_increment(volatile size_t* const total_size_add
   restore();
   // Only do the atomic add if the size is > 0.
   if (stack_size > 0) {
-    Atomic::add(stack_size, total_size_addr);
+    Atomic::add(total_size_addr, stack_size);
   }
 }
 
@@ -117,6 +118,36 @@ public:
   }
 };
 
+void PreservedMarksSet::restore(WorkGang* workers) {
+  volatile size_t total_size = 0;
+
+#ifdef ASSERT
+  // This is to make sure the total_size we'll calculate below is correct.
+  size_t total_size_before = 0;
+  for (uint i = 0; i < _num; i += 1) {
+    total_size_before += get(i)->size();
+  }
+#endif // def ASSERT
+
+  if (workers == NULL) {
+    for (uint i = 0; i < num(); i += 1) {
+      total_size += get(i)->size();
+      get(i)->restore();
+    }
+  } else {
+    ParRestoreTask task(workers->active_workers(), this, &total_size);
+    workers->run_task(&task);
+  }
+
+  assert_empty();
+
+  assert(total_size == total_size_before,
+         "total_size = " SIZE_FORMAT " before = " SIZE_FORMAT,
+         total_size, total_size_before);
+
+  log_trace(gc)("Restored " SIZE_FORMAT " marks", total_size);
+}
+
 void PreservedMarksSet::reclaim() {
   assert_empty();
 
@@ -141,16 +172,3 @@ void PreservedMarksSet::assert_empty() {
   }
 }
 #endif // ndef PRODUCT
-
-void SharedRestorePreservedMarksTaskExecutor::restore(PreservedMarksSet* preserved_marks_set,
-                                                      volatile size_t* total_size_addr) {
-  if (_workers == NULL) {
-    for (uint i = 0; i < preserved_marks_set->num(); i += 1) {
-      *total_size_addr += preserved_marks_set->get(i)->size();
-      preserved_marks_set->get(i)->restore();
-    }
-  } else {
-    ParRestoreTask task(_workers->active_workers(), preserved_marks_set, total_size_addr);
-    _workers->run_task(&task);
-  }
-}

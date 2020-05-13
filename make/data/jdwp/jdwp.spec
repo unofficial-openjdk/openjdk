@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,7 +70,8 @@ JDWP "Java(tm) Debug Wire Protocol"
     )
     (Command AllClasses=3
         "Returns reference types for all classes currently loaded by the "
-        "target VM."
+        "target VM. "
+        "See <a href=\"../jvmti.html#GetLoadedClasses\">JVM TI GetLoadedClasses</a>."
         (Out
         )
         (Reply
@@ -468,7 +469,7 @@ JDWP "Java(tm) Debug Wire Protocol"
         "<li>deleting a method</li>"
         "<li>changing class modifiers</li>"
         "<li>changing method modifiers</li>"
-        "<li>changing the <code>NestHost</code> or <code>NestMembers</code> class attributes</li>"
+        "<li>changing the <code>NestHost</code>, <code>NestMembers</code>, or <code>Record</code> class attributes</li>"
         "</ul>"
         "<p>"
         "Requires canRedefineClasses capability - see "
@@ -600,14 +601,9 @@ JDWP "Java(tm) Debug Wire Protocol"
 
 (CommandSet ReferenceType=2
     (Command Signature=1
-        "Returns the JNI signature of a reference type. "
-        "JNI signature formats are described in the "
-        "<a href=\"http://java.sun.com/products/jdk/1.2/docs/guide/jni/index.html\">Java Native Inteface Specification</a>"
-        "<p>
-        "For primitive classes "
-        "the returned signature is the signature of the corresponding primitive "
-        "type; for example, \"I\" is returned as the signature of the class "
-        "represented by java.lang.Integer.TYPE."
+        "Returns the type signature of a reference type. "
+        "Type signature formats are the same as specified in "
+        "<a href=\"../jvmti.html#GetClassSignature\">JVM TI GetClassSignature</a>."
         (Out
             (referenceType refType "The reference type ID.")
         )
@@ -2266,11 +2262,12 @@ JDWP "Java(tm) Debug Wire Protocol"
 )
 (CommandSet ClassLoaderReference=14
     (Command VisibleClasses=1
-        "Returns a list of all classes which this class loader has "
-        "been requested to load. This class loader is considered to be "
-        "an <i>initiating</i> class loader for each class in the returned "
-        "list. The list contains each "
-        "reference type defined by this loader and any types for which "
+        "Returns a list of all classes which this class loader can find "
+        "by name via <code>ClassLoader::loadClass</code>, "
+        "<code>Class::forName</code> and bytecode linkage. That is, "
+        "all classes for which this class loader has been recorded as an "
+        "<i>initiating</i> loader. The list contains each "
+        "reference type created by this loader and any types for which "
         "loading was delegated by this class loader to another class loader. "
         "<p>"
         "The visible class list has useful properties with respect to "
@@ -2280,6 +2277,8 @@ JDWP "Java(tm) Debug Wire Protocol"
         "this class loader must be resolved to that single type. "
         "<p>"
         "No ordering of the returned list is guaranteed. "
+        "<p>"
+        "See <a href=\"../jvmti.html#GetClassLoaderClasses\">JVM TI GetClassLoaderClasses</a>. "
         (Out
             (classLoaderObject classLoaderObject "The class loader object ID. ")
         )
@@ -3167,8 +3166,8 @@ JDWP "Java(tm) Debug Wire Protocol"
                                           "than its counterpart in the old class version and "
                                           "canUnrestrictedlyRedefineClasses is false.")
     (Constant CLASS_ATTRIBUTE_CHANGE_NOT_IMPLEMENTED
-                                     =72  "The new class version has different NestHost or "
-                                          "NestMembers class attribute and "
+                                     =72  "The new class version has a different NestHost, "
+                                          "NestMembers, or Record class attribute and "
                                           "canUnrestrictedlyRedefineClasses is false.")
     (Constant NOT_IMPLEMENTED        =99  "The functionality is not implemented in "
                                           "this virtual machine.")

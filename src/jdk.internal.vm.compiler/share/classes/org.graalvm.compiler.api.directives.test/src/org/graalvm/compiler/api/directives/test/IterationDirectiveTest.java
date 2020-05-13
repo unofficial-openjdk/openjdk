@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,13 +54,11 @@ public class IterationDirectiveTest extends GraalCompilerTest {
     }
 
     @Override
-    protected boolean checkLowTierGraph(StructuredGraph graph) {
+    protected void checkLowTierGraph(StructuredGraph graph) {
         NodeIterable<LoopBeginNode> loopBeginNodes = graph.getNodes(LoopBeginNode.TYPE);
         Assert.assertEquals("LoopBeginNode count", 1, loopBeginNodes.count());
 
         LoopBeginNode loopBeginNode = loopBeginNodes.first();
         Assert.assertEquals("loop frequency of " + loopBeginNode, 128, loopBeginNode.loopFrequency(), 0);
-
-        return true;
     }
 }

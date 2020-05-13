@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@
 #include "runtime/handles.hpp"
 #include "utilities/exceptions.hpp"
 #include "utilities/growableArray.hpp"
+#include "utilities/resourceHash.hpp"
 
 // The verifier class
 class Verifier : AllStatic {
@@ -246,14 +247,45 @@ class ErrorContext {
   void stackmap_details(outputStream* ss, const Method* method) const;
 };
 
+class sig_as_verification_types : public ResourceObj {
+ private:
+  int _num_args;  // Number of arguments, not including return type.
+  GrowableArray<VerificationType>* _sig_verif_types;
+
+ public:
+
+  sig_as_verification_types(GrowableArray<VerificationType>* sig_verif_types) :
+    _num_args(0), _sig_verif_types(sig_verif_types) {
+  }
+
+  int num_args() const { return _num_args; }
+  void set_num_args(int num_args) { _num_args = num_args; }
+
+  GrowableArray<VerificationType>* sig_verif_types() { return _sig_verif_types; }
+  void set_sig_verif_types(GrowableArray<VerificationType>* sig_verif_types) {
+    _sig_verif_types = sig_verif_types;
+  }
+
+};
+
+// This hashtable is indexed by the Utf8 constant pool indexes pointed to
+// by constant pool (Interface)Method_refs' NameAndType signature entries.
+typedef ResourceHashtable<int, sig_as_verification_types*,
+                          primitive_hash<int>, primitive_equals<int>, 1007>
+                          method_signatures_table_type;
+
 // A new instance of this class is created for each class being verified
 class ClassVerifier : public StackObj {
  private:
   Thread* _thread;
+
+  Symbol* _previous_symbol;          // cache of the previously looked up symbol
   GrowableArray<Symbol*>* _symbols;  // keep a list of symbols created
 
   Symbol* _exception_type;
   char* _message;
+
+  method_signatures_table_type* _method_signatures_table;
 
   ErrorContext _error_context;  // contains information about an error
 
@@ -381,6 +413,13 @@ class ClassVerifier : public StackObj {
   // the message_buffer will be filled in with the exception message.
   void verify_class(TRAPS);
 
+  // Translates method signature entries into verificationTypes and saves them
+  // in the growable array.
+  void translate_signature(Symbol* const method_sig, sig_as_verification_types* sig_verif_types, TRAPS);
+
+  // Initializes a sig_as_verification_types entry and puts it in the hash table.
+  void create_method_sig_entry(sig_as_verification_types* sig_verif_types, int sig_index, TRAPS);
+
   // Return status modes
   Symbol* result() const { return _exception_type; }
   bool has_error() const { return result() != NULL; }
@@ -398,8 +437,16 @@ class ClassVerifier : public StackObj {
 
   Klass* load_class(Symbol* name, TRAPS);
 
+  method_signatures_table_type* method_signatures_table() const {
+    return _method_signatures_table;
+  }
+
+  void set_method_signatures_table(method_signatures_table_type* method_signatures_table) {
+    _method_signatures_table = method_signatures_table;
+  }
+
   int change_sig_to_verificationType(
-    SignatureStream* sig_type, VerificationType* inference_type, TRAPS);
+    SignatureStream* sig_type, VerificationType* inference_type);
 
   VerificationType cp_index_to_type(int index, const constantPoolHandle& cp, TRAPS) {
     return VerificationType::reference_type(cp->klass_name_at(index));
@@ -409,29 +456,34 @@ class ClassVerifier : public StackObj {
   // their reference counts need to be decremented when the verifier object
   // goes out of scope.  Since these symbols escape the scope in which they're
   // created, we can't use a TempNewSymbol.
-  Symbol* create_temporary_symbol(const Symbol* s, int begin, int end, TRAPS);
-  Symbol* create_temporary_symbol(const char *s, int length, TRAPS);
-
+  Symbol* create_temporary_symbol(const char *s, int length);
   Symbol* create_temporary_symbol(Symbol* s) {
-    // This version just updates the reference count and saves the symbol to be
-    // dereferenced later.
-    s->increment_refcount();
-    _symbols->push(s);
+    if (s == _previous_symbol) {
+      return s;
+    }
+    if (!s->is_permanent()) {
+      s->increment_refcount();
+      if (_symbols == NULL) {
+        _symbols = new GrowableArray<Symbol*>(50, 0, NULL);
+      }
+      _symbols->push(s);
+    }
+    _previous_symbol = s;
     return s;
   }
 
-  TypeOrigin ref_ctx(const char* str, TRAPS);
+  TypeOrigin ref_ctx(const char* str);
 
 };
 
 inline int ClassVerifier::change_sig_to_verificationType(
-    SignatureStream* sig_type, VerificationType* inference_type, TRAPS) {
+    SignatureStream* sig_type, VerificationType* inference_type) {
   BasicType bt = sig_type->type();
   switch (bt) {
     case T_OBJECT:
     case T_ARRAY:
       {
-        Symbol* name = sig_type->as_symbol(CHECK_0);
+        Symbol* name = sig_type->as_symbol();
         // Create another symbol to save as signature stream unreferences this symbol.
         Symbol* name_copy = create_temporary_symbol(name);
         assert(name_copy == name, "symbols don't match");

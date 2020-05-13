@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -151,9 +151,13 @@ import static jdk.test.lib.Asserts.assertTrue;
    reference.
 */
 class Target {
+
+    static Class<?> topLevelHostA; // Prevent unloading of the class
+
     // We have to load all of the variants of the classes that we will
     // attempt to redefine. This requires some in-memory compilation
     // and use of additional classloaders.
+
     public static void main(String[] args) throws Throwable {
         String origin = args[0];
         System.out.println("Target: Testing original Host class from " + origin);
@@ -178,7 +182,7 @@ class Target {
             String hostA = "public class " + name + " {}";
             byte[] bytes = InMemoryJavaCompiler.compile(name, hostA);
             // And we have to load this into a new classloader
-            Class<?> topLevelHostA = ByteCodeLoader.load(name, bytes);
+            topLevelHostA = ByteCodeLoader.load(name, bytes);
             // The loaded class has not been linked (as per ClassLoader.resolveClass)
             // and so will be filtered out by VirtualMachine.allClasses(). There are
             // a number of ways to force linking - this is the simplest.
@@ -212,6 +216,8 @@ public class TestNestmateAttr extends TestScaffold {
     protected void startUp(String targetName) {
         List<String> argList = new ArrayList<>(Arrays.asList(args));
         argList.add(0, targetName); // pre-pend so it becomes the first "app" arg
+        // We need the class path that contains the path to jdk.test.lib.Asserts.
+        argList.add(0, " -cp " + System.getProperty("test.class.path"));
         println("run args: " + argList);
         connect((String[]) argList.toArray(args));
         waitForVMStart();

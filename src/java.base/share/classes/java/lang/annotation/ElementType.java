@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,8 +33,8 @@ package java.lang.annotation;
  * given type.
  *
  * <p>The syntactic locations where annotations may appear are split into
- * <em>declaration contexts</em> , where annotations apply to declarations, and
- * <em>type contexts</em> , where annotations apply to types used in
+ * <em>declaration contexts</em>, where annotations apply to declarations, and
+ * <em>type contexts</em>, where annotations apply to types used in
  * declarations and expressions.
  *
  * <p>The constants {@link #ANNOTATION_TYPE}, {@link #CONSTRUCTOR}, {@link
@@ -71,7 +71,8 @@ package java.lang.annotation;
  * @jls 4.1 The Kinds of Types and Values
  */
 public enum ElementType {
-    /** Class, interface (including annotation type), or enum declaration */
+    /** Class, interface (including annotation type), enum, or record
+     * declaration */
     TYPE,
 
     /** Field declaration (includes enum constants) */
@@ -114,5 +115,25 @@ public enum ElementType {
      *
      * @since 9
      */
-    MODULE
+    MODULE,
+
+    /**
+     * {@preview Associated with records, a preview feature of the Java language.
+     *
+     *           This constant is associated with <i>records</i>, a preview
+     *           feature of the Java language. Programs can only use this
+     *           constant when preview features are enabled. Preview features
+     *           may be removed in a future release, or upgraded to permanent
+     *           features of the Java language.}
+     *
+     * Record component
+     *
+     * @jls 8.10.3 Record Members
+     * @jls 9.7.4 Where Annotations May Appear
+     *
+     * @since 14
+     */
+    @jdk.internal.PreviewFeature(feature=jdk.internal.PreviewFeature.Feature.RECORDS,
+                                 essentialAPI=true)
+    RECORD_COMPONENT;
 }

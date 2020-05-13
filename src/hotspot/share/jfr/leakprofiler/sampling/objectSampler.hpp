@@ -28,23 +28,22 @@
 #include "memory/allocation.hpp"
 #include "jfr/utilities/jfrTime.hpp"
 
+typedef u8 traceid;
+
 class BoolObjectClosure;
+class JavaThread;
 class OopClosure;
 class ObjectSample;
-class ObjectSampler;
 class SampleList;
 class SamplePriorityQueue;
-class Thread;
 
 // Class reponsible for holding samples and
 // making sure the samples are evenly distributed as
 // new entries are added and removed.
 class ObjectSampler : public CHeapObj<mtTracing> {
   friend class LeakProfiler;
-  friend class ObjectSampleCheckpoint;
   friend class StartOperation;
   friend class StopOperation;
-  friend class EmitEventOperation;
  private:
   SamplePriorityQueue* _priority_queue;
   SampleList* _list;
@@ -52,25 +51,36 @@ class ObjectSampler : public CHeapObj<mtTracing> {
   size_t _total_allocated;
   size_t _threshold;
   size_t _size;
-  volatile int _tryLock;
   bool _dead_samples;
 
+  // Lifecycle
   explicit ObjectSampler(size_t size);
   ~ObjectSampler();
+  static bool create(size_t size);
+  static bool is_created();
+  static void destroy();
 
-  void add(HeapWord* object, size_t size, JavaThread* thread);
-  void remove_dead(ObjectSample* sample);
+  // Sampling
+  static void sample(HeapWord* object, size_t size, JavaThread* thread);
+  void add(HeapWord* object, size_t size, traceid thread_id, JavaThread* thread);
   void scavenge();
+  void remove_dead(ObjectSample* sample);
 
   // Called by GC
-  void oops_do(BoolObjectClosure* is_alive, OopClosure* f);
+  static void weak_oops_do(BoolObjectClosure* is_alive, OopClosure* f);
 
- public:
   const ObjectSample* item_at(int index) const;
   ObjectSample* item_at(int index);
   int item_count() const;
+
+ public:
+  static ObjectSampler* sampler();
+  // For operations that require exclusive access (non-safepoint)
+  static ObjectSampler* acquire();
+  static void release();
+
   const ObjectSample* first() const;
-  const ObjectSample* last() const;
+  ObjectSample* last() const;
   const ObjectSample* last_resolved() const;
   void set_last_resolved(const ObjectSample* sample);
   const JfrTicks& last_sweep() const;

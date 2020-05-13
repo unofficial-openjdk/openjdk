@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import java.io.BufferedInputStream;
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
 import java.io.FileNotFoundException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.SocketPermission;
 import java.net.UnknownHostException;
@@ -43,11 +44,13 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.Proxy;
 import java.net.ProxySelector;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Iterator;
 import java.security.Permission;
 import java.util.Properties;
 import sun.net.NetworkClient;
+import sun.net.util.IPAddressUtil;
 import sun.net.www.MessageHeader;
 import sun.net.www.MeteredStream;
 import sun.net.www.URLConnection;
@@ -157,6 +160,21 @@ public class FtpURLConnection extends URLConnection {
         }
     }
 
+    static URL checkURL(URL u) throws IllegalArgumentException {
+        if (u != null) {
+            if (u.toExternalForm().indexOf('\n') > -1) {
+                Exception mfue = new MalformedURLException("Illegal character in URL");
+                throw new IllegalArgumentException(mfue.getMessage(), mfue);
+            }
+        }
+        String s = IPAddressUtil.checkAuthority(u);
+        if (s != null) {
+            Exception mfue = new MalformedURLException(s);
+            throw new IllegalArgumentException(mfue.getMessage(), mfue);
+        }
+        return u;
+    }
+
     /**
      * Creates an FtpURLConnection from a URL.
      *
@@ -170,7 +188,7 @@ public class FtpURLConnection extends URLConnection {
      * Same as FtpURLconnection(URL) with a per connection proxy specified
      */
     FtpURLConnection(URL url, Proxy p) {
-        super(url);
+        super(checkURL(url));
         instProxy = p;
         host = url.getHost();
         port = url.getPort();
@@ -225,7 +243,13 @@ public class FtpURLConnection extends URLConnection {
                     });
             if (sel != null) {
                 URI uri = sun.net.www.ParseUtil.toURI(url);
-                Iterator<Proxy> it = sel.select(uri).iterator();
+                final List<Proxy> proxies;
+                try {
+                    proxies = sel.select(uri);
+                } catch (IllegalArgumentException iae) {
+                    throw new IOException("Failed to select a proxy", iae);
+                }
+                final Iterator<Proxy> it = proxies.iterator();
                 while (it.hasNext()) {
                     p = it.next();
                     if (p == null || p == Proxy.NO_PROXY ||

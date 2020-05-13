@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,7 +61,7 @@ public final class PlatformEventType extends Type {
     private boolean isInstrumented;
     private boolean markForInstrumentation;
     private boolean registered = true;
-    private boolean commitable = enabled && registered;
+    private boolean committable = enabled && registered;
 
 
     // package private
@@ -69,7 +69,7 @@ public final class PlatformEventType extends Type {
         super(name, Type.SUPER_TYPE_EVENT, id);
         this.dynamicSettings = dynamicSettings;
         this.isJVM = Type.isDefinedByJVM(id);
-        this.isMethodSampling = name.equals(Type.EVENT_NAME_PREFIX + "ExecutionSample") || name.equals(Type.EVENT_NAME_PREFIX + "NativeMethodSample");
+        this.isMethodSampling = isJVM && (name.equals(Type.EVENT_NAME_PREFIX + "ExecutionSample") || name.equals(Type.EVENT_NAME_PREFIX + "NativeMethodSample"));
         this.isJDK = isJDK;
         this.stackTraceOffset = stackTraceOffset(name, isJDK);
     }
@@ -161,7 +161,7 @@ public final class PlatformEventType extends Type {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-        updateCommitable();
+        updateCommittable();
         if (isJVM) {
             if (isMethodSampling) {
                 long p = enabled ? period : 0;
@@ -247,7 +247,7 @@ public final class PlatformEventType extends Type {
     public boolean setRegistered(boolean registered) {
         if (this.registered != registered) {
             this.registered = registered;
-            updateCommitable();
+            updateCommittable();
             LogTag logTag = isJVM() || isJDK() ? LogTag.JFR_SYSTEM_EVENT : LogTag.JFR_EVENT;
             if (registered) {
                 Logger.log(logTag, LogLevel.INFO, "Registered " + getLogName());
@@ -262,8 +262,8 @@ public final class PlatformEventType extends Type {
         return false;
     }
 
-    private void updateCommitable() {
-        this.commitable = enabled && registered;
+    private void updateCommittable() {
+        this.committable = enabled && registered;
     }
 
     public final boolean isRegistered() {
@@ -271,8 +271,8 @@ public final class PlatformEventType extends Type {
     }
 
     // Efficient check of enabled && registered
-    public boolean isCommitable() {
-        return commitable;
+    public boolean isCommittable() {
+        return committable;
     }
 
     public int getStackTraceOffset() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ import java.io.InputStreamReader;
 import java.util.regex.Pattern;
 
 import jdk.test.lib.process.OutputAnalyzer;
-import jdk.test.lib.Platform;
 import jdk.test.lib.process.ProcessTools;
 
 /*
@@ -37,18 +36,15 @@ import jdk.test.lib.process.ProcessTools;
  * @summary SafeFetch32 and SafeFetchN do not work in error handling
  * @modules java.base/jdk.internal.misc
  * @library /test/lib
+ * @requires vm.debug
+ * @requires vm.flavor != "zero"
  * @author Thomas Stuefe (SAP)
+ * @run driver SafeFetchInErrorHandlingTest
  */
 
 public class SafeFetchInErrorHandlingTest {
 
-
   public static void main(String[] args) throws Exception {
-
-    if (!Platform.isDebugBuild() || Platform.isZero()) {
-      return;
-    }
-
     ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
         "-XX:+UnlockDiagnosticVMOptions",
         "-Xmx100M",
@@ -61,7 +57,7 @@ public class SafeFetchInErrorHandlingTest {
 
     // we should have crashed with a SIGSEGV
     output_detail.shouldMatch("# A fatal error has been detected by the Java Runtime Environment:.*");
-    output_detail.shouldMatch("# +(?:SIGSEGV|EXCEPTION_ACCESS_VIOLATION).*");
+    output_detail.shouldMatch("# +(?:SIGSEGV|SIGBUS|EXCEPTION_ACCESS_VIOLATION).*");
 
     // extract hs-err file
     String hs_err_file = output_detail.firstMatch("# *(\\S*hs_err_pid\\d+\\.log)", 1);

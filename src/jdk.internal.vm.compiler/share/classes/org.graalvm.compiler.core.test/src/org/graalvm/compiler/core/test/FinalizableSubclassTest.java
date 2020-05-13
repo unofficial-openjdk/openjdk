@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderConfiguration;
 import org.graalvm.compiler.nodes.java.RegisterFinalizerNode;
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.OptimisticOptimizations;
-import org.graalvm.compiler.phases.common.CanonicalizerPhase;
 import org.graalvm.compiler.phases.tiers.HighTierContext;
 import org.junit.Assert;
 import org.junit.Test;
@@ -77,11 +76,10 @@ public class FinalizableSubclassTest extends GraalCompilerTest {
         StructuredGraph graph = new StructuredGraph.Builder(options, getDebugContext(options, null, javaMethod), allowAssumptions).method(javaMethod).build();
 
         GraphBuilderConfiguration conf = GraphBuilderConfiguration.getSnippetDefault(getDefaultGraphBuilderPlugins());
-        new GraphBuilderPhase.Instance(getMetaAccess(), getProviders().getStampProvider(), getProviders().getConstantReflection(), getProviders().getConstantFieldProvider(), conf,
-                        OptimisticOptimizations.ALL, null).apply(graph);
+        new GraphBuilderPhase.Instance(getProviders(), conf, OptimisticOptimizations.ALL, null).apply(graph);
         HighTierContext context = new HighTierContext(getProviders(), getDefaultGraphBuilderSuite(), OptimisticOptimizations.ALL);
         createInliningPhase().apply(graph, context);
-        new CanonicalizerPhase().apply(graph, context);
+        createCanonicalizerPhase().apply(graph, context);
         return graph;
     }
 

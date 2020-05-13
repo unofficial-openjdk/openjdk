@@ -31,7 +31,6 @@
 class MutableSpace;
 class ObjectStartArray;
 class PSPromotionManager;
-class GCTaskQueue;
 
 class PSCardTable: public CardTable {
  private:
@@ -54,8 +53,8 @@ class PSCardTable: public CardTable {
  public:
   PSCardTable(MemRegion whole_heap) : CardTable(whole_heap, /* scanned_concurrently */ false) {}
 
-  static jbyte youngergen_card_val() { return youngergen_card; }
-  static jbyte verify_card_val()     { return verify_card; }
+  static CardValue youngergen_card_val() { return youngergen_card; }
+  static CardValue verify_card_val()     { return verify_card; }
 
   // Scavenge support
   void scavenge_contents_parallel(ObjectStartArray* start_array,
@@ -68,7 +67,7 @@ class PSCardTable: public CardTable {
   bool addr_is_marked_imprecise(void *addr);
   bool addr_is_marked_precise(void *addr);
 
-  void set_card_newgen(void* addr)   { jbyte* p = byte_for(addr); *p = verify_card; }
+  void set_card_newgen(void* addr)   { CardValue* p = byte_for(addr); *p = verify_card; }
 
   // Testers for entries
   static bool card_is_dirty(int value)      { return value == dirty_card; }
@@ -78,7 +77,7 @@ class PSCardTable: public CardTable {
 
   // Card marking
   void inline_write_ref_field_gc(void* field, oop new_val) {
-    jbyte* byte = byte_for(field);
+    CardValue* byte = byte_for(field);
     *byte = youngergen_card;
   }
 
@@ -99,7 +98,7 @@ class PSCardTable: public CardTable {
   HeapWord* lowest_prev_committed_start(int ind) const;
 
 #ifdef ASSERT
-  bool is_valid_card_address(jbyte* addr) {
+  bool is_valid_card_address(CardValue* addr) {
     return (addr >= _byte_map) && (addr < _byte_map + _byte_map_size);
   }
 #endif // ASSERT

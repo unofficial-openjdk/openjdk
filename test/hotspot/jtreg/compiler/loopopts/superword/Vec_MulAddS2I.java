@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,57 +23,59 @@
 
 /**
  * @test
+ * @key randomness
  * @bug 8214751
- * @summary Add C2 x86 Superword support for VNNI VPDPWSSD Instruction
- * @requires os.arch=="x86" | os.arch=="i386" | os.arch=="amd64" | os.arch=="x86_64"
+ * @summary Test operations in C2 MulAddS2I and MulAddVS2VI nodes.
+ * @library /test/lib
  *
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:LoopUnrollLimit=250
+ * @run main/othervm -XX:LoopUnrollLimit=250
  *      -XX:CompileThresholdScaling=0.1
- *      -XX:+SuperWord
+ *      -XX:+UseSuperWord
  *      -XX:LoopMaxUnroll=2
  *      compiler.loopopts.superword.Vec_MulAddS2I
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:LoopUnrollLimit=250
+ * @run main/othervm -XX:LoopUnrollLimit=250
  *      -XX:CompileThresholdScaling=0.1
- *      -XX:-SuperWord
+ *      -XX:-UseSuperWord
  *      -XX:LoopMaxUnroll=2
  *      compiler.loopopts.superword.Vec_MulAddS2I
  *
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:LoopUnrollLimit=250
+ * @run main/othervm -XX:LoopUnrollLimit=250
  *      -XX:CompileThresholdScaling=0.1
- *      -XX:+SuperWord
+ *      -XX:+UseSuperWord
  *      -XX:LoopMaxUnroll=4
  *      compiler.loopopts.superword.Vec_MulAddS2I
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:LoopUnrollLimit=250
+ * @run main/othervm -XX:LoopUnrollLimit=250
  *      -XX:CompileThresholdScaling=0.1
- *      -XX:-SuperWord
+ *      -XX:-UseSuperWord
  *      -XX:LoopMaxUnroll=4
  *      compiler.loopopts.superword.Vec_MulAddS2I
  *
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:LoopUnrollLimit=250
+ * @run main/othervm -XX:LoopUnrollLimit=250
  *      -XX:CompileThresholdScaling=0.1
- *      -XX:+SuperWord
+ *      -XX:+UseSuperWord
  *      -XX:LoopMaxUnroll=8
  *      compiler.loopopts.superword.Vec_MulAddS2I
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:LoopUnrollLimit=250
+ * @run main/othervm -XX:LoopUnrollLimit=250
  *      -XX:CompileThresholdScaling=0.1
- *      -XX:-SuperWord
+ *      -XX:-UseSuperWord
  *      -XX:LoopMaxUnroll=8
  *      compiler.loopopts.superword.Vec_MulAddS2I
  *
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:LoopUnrollLimit=250
+ * @run main/othervm -XX:LoopUnrollLimit=250
  *      -XX:CompileThresholdScaling=0.1
- *      -XX:+SuperWord
+ *      -XX:+UseSuperWord
  *      -XX:LoopMaxUnroll=16
  *      compiler.loopopts.superword.Vec_MulAddS2I
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:LoopUnrollLimit=250
+ * @run main/othervm -XX:LoopUnrollLimit=250
  *      -XX:CompileThresholdScaling=0.1
- *      -XX:-SuperWord
+ *      -XX:-UseSuperWord
  *      -XX:LoopMaxUnroll=16
  *      compiler.loopopts.superword.Vec_MulAddS2I
  */
 
 package compiler.loopopts.superword;
 import java.util.Random;
+import jdk.test.lib.Utils;
 
 public class Vec_MulAddS2I {
         static final int NUM = 1024;
@@ -112,7 +114,7 @@ public class Vec_MulAddS2I {
         for (int i = 0; i < NUM; i++) {
             out[i] += ((in1[2*i] * in2[2*i]) + (in1[2*i+1] * in2[2*i+1]));
         }
-        Random rand = new Random();
+        Random rand = Utils.getRandomInstance();
         int n = rand.nextInt(NUM-1);
         return out[n];
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,23 +25,32 @@
 #include "precompiled.hpp"
 #include "gc/parallel/mutableNUMASpace.hpp"
 #include "gc/parallel/parallelScavengeHeap.hpp"
-#include "gc/parallel/psMarkSweepDecorator.hpp"
 #include "gc/parallel/psScavenge.hpp"
 #include "gc/parallel/psYoungGen.hpp"
 #include "gc/shared/gcUtil.hpp"
-#include "gc/shared/spaceDecorator.hpp"
+#include "gc/shared/genArguments.hpp"
+#include "gc/shared/spaceDecorator.inline.hpp"
 #include "logging/log.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/java.hpp"
 #include "utilities/align.hpp"
 
-PSYoungGen::PSYoungGen(size_t        initial_size,
-                       size_t        min_size,
-                       size_t        max_size) :
+PSYoungGen::PSYoungGen(ReservedSpace rs, size_t initial_size, size_t min_size, size_t max_size) :
+  _reserved(),
+  _virtual_space(NULL),
+  _eden_space(NULL),
+  _from_space(NULL),
+  _to_space(NULL),
   _init_gen_size(initial_size),
   _min_gen_size(min_size),
-  _max_gen_size(max_size)
-{}
+  _max_gen_size(max_size),
+  _gen_counters(NULL),
+  _eden_counters(NULL),
+  _from_counters(NULL),
+  _to_counters(NULL)
+{
+  initialize(rs, GenAlignment);
+}
 
 void PSYoungGen::initialize_virtual_space(ReservedSpace rs, size_t alignment) {
   assert(_init_gen_size != 0, "Should have a finite size");
@@ -81,32 +90,12 @@ void PSYoungGen::initialize_work() {
   _from_space = new MutableSpace(virtual_space()->alignment());
   _to_space   = new MutableSpace(virtual_space()->alignment());
 
-  if (_eden_space == NULL || _from_space == NULL || _to_space == NULL) {
-    vm_exit_during_initialization("Could not allocate a young gen space");
-  }
-
-  // Allocate the mark sweep views of spaces
-  _eden_mark_sweep =
-      new PSMarkSweepDecorator(_eden_space, NULL, MarkSweepDeadRatio);
-  _from_mark_sweep =
-      new PSMarkSweepDecorator(_from_space, NULL, MarkSweepDeadRatio);
-  _to_mark_sweep =
-      new PSMarkSweepDecorator(_to_space, NULL, MarkSweepDeadRatio);
-
-  if (_eden_mark_sweep == NULL ||
-      _from_mark_sweep == NULL ||
-      _to_mark_sweep == NULL) {
-    vm_exit_during_initialization("Could not complete allocation"
-                                  " of the young generation");
-  }
-
   // Generation Counters - generation 0, 3 subspaces
   _gen_counters = new PSGenerationCounters("new", 0, 3, _min_gen_size,
                                            _max_gen_size, _virtual_space);
 
   // Compute maximum space sizes for performance counters
-  ParallelScavengeHeap* heap = ParallelScavengeHeap::heap();
-  size_t alignment = heap->space_alignment();
+  size_t alignment = SpaceAlignment;
   size_t size = virtual_space()->reserved_size();
 
   size_t max_survivor_size;
@@ -155,17 +144,14 @@ void PSYoungGen::initialize_work() {
 }
 
 void PSYoungGen::compute_initial_space_boundaries() {
-  ParallelScavengeHeap* heap = ParallelScavengeHeap::heap();
-
   // Compute sizes
-  size_t alignment = heap->space_alignment();
   size_t size = virtual_space()->committed_size();
-  assert(size >= 3 * alignment, "Young space is not large enough for eden + 2 survivors");
+  assert(size >= 3 * SpaceAlignment, "Young space is not large enough for eden + 2 survivors");
 
   size_t survivor_size = size / InitialSurvivorRatio;
-  survivor_size = align_down(survivor_size, alignment);
+  survivor_size = align_down(survivor_size, SpaceAlignment);
   // ... but never less than an alignment
-  survivor_size = MAX2(survivor_size, alignment);
+  survivor_size = MAX2(survivor_size, SpaceAlignment);
 
   // Young generation is eden + 2 survivor spaces
   size_t eden_size = size - (2 * survivor_size);
@@ -209,13 +195,10 @@ void PSYoungGen::set_space_boundaries(size_t eden_size, size_t survivor_size) {
 
 #ifndef PRODUCT
 void PSYoungGen::space_invariants() {
-  ParallelScavengeHeap* heap = ParallelScavengeHeap::heap();
-  const size_t alignment = heap->space_alignment();
-
   // Currently, our eden size cannot shrink to zero
-  guarantee(eden_space()->capacity_in_bytes() >= alignment, "eden too small");
-  guarantee(from_space()->capacity_in_bytes() >= alignment, "from too small");
-  guarantee(to_space()->capacity_in_bytes() >= alignment, "to too small");
+  guarantee(eden_space()->capacity_in_bytes() >= SpaceAlignment, "eden too small");
+  guarantee(from_space()->capacity_in_bytes() >= SpaceAlignment, "from too small");
+  guarantee(to_space()->capacity_in_bytes() >= SpaceAlignment, "to too small");
 
   // Relationship of spaces to each other
   char* eden_start = (char*)eden_space()->bottom();
@@ -296,8 +279,7 @@ bool PSYoungGen::resize_generation(size_t eden_size, size_t survivor_size) {
   // Adjust new generation size
   const size_t eden_plus_survivors =
           align_up(eden_size + 2 * survivor_size, alignment);
-  size_t desired_size = MAX2(MIN2(eden_plus_survivors, max_size()),
-                             min_gen_size());
+  size_t desired_size = clamp(eden_plus_survivors, min_gen_size(), max_size());
   assert(desired_size <= max_size(), "just checking");
 
   if (desired_size > orig_size) {
@@ -472,8 +454,6 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
   char* to_start   = (char*)to_space()->bottom();
   char* to_end     = (char*)to_space()->end();
 
-  ParallelScavengeHeap* heap = ParallelScavengeHeap::heap();
-  const size_t alignment = heap->space_alignment();
   const bool maintain_minimum =
     (requested_eden_size + 2 * requested_survivor_size) <= min_gen_size();
 
@@ -527,9 +507,9 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
 
       // Should we be in this method if from_space is empty? Why not the set_space method? FIX ME!
       if (from_size == 0) {
-        from_size = alignment;
+        from_size = SpaceAlignment;
       } else {
-        from_size = align_up(from_size, alignment);
+        from_size = align_up(from_size, SpaceAlignment);
       }
 
       from_end = from_start + from_size;
@@ -572,7 +552,7 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
     // if the space sizes are to be increased by several times then
     // 'to_start' will point beyond the young generation. In this case
     // 'to_start' should be adjusted.
-    to_start = MAX2(to_start, eden_start + alignment);
+    to_start = MAX2(to_start, eden_start + SpaceAlignment);
 
     // Compute how big eden can be, then adjust end.
     // See  comments above on calculating eden_end.
@@ -590,7 +570,7 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
     // to_start = MAX2(to_start, eden_end);
 
     // Don't let eden shrink down to 0 or less.
-    eden_end = MAX2(eden_end, eden_start + alignment);
+    eden_end = MAX2(eden_end, eden_start + SpaceAlignment);
     to_start = MAX2(to_start, eden_end);
 
     log_trace(gc, ergo)("    [eden_start .. eden_end): [" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
@@ -680,14 +660,6 @@ void PSYoungGen::swap_spaces() {
   MutableSpace* s    = from_space();
   _from_space        = to_space();
   _to_space          = s;
-
-  // Now update the decorators.
-  PSMarkSweepDecorator* md = from_mark_sweep();
-  _from_mark_sweep           = to_mark_sweep();
-  _to_mark_sweep             = md;
-
-  assert(from_mark_sweep()->space() == from_space(), "Sanity");
-  assert(to_mark_sweep()->space() == to_space(), "Sanity");
 }
 
 size_t PSYoungGen::capacity_in_bytes() const {
@@ -730,29 +702,6 @@ void PSYoungGen::object_iterate(ObjectClosure* blk) {
   to_space()->object_iterate(blk);
 }
 
-#if INCLUDE_SERIALGC
-
-void PSYoungGen::precompact() {
-  eden_mark_sweep()->precompact();
-  from_mark_sweep()->precompact();
-  to_mark_sweep()->precompact();
-}
-
-void PSYoungGen::adjust_pointers() {
-  eden_mark_sweep()->adjust_pointers();
-  from_mark_sweep()->adjust_pointers();
-  to_mark_sweep()->adjust_pointers();
-}
-
-void PSYoungGen::compact() {
-  eden_mark_sweep()->compact(ZapUnusedHeapArea);
-  from_mark_sweep()->compact(ZapUnusedHeapArea);
-  // Mark sweep stores preserved markOops in to space, don't disturb!
-  to_mark_sweep()->compact(false);
-}
-
-#endif // INCLUDE_SERIALGC
-
 void PSYoungGen::print() const { print_on(tty); }
 void PSYoungGen::print_on(outputStream* st) const {
   st->print(" %-15s", "PSYoungGen");
@@ -762,22 +711,6 @@ void PSYoungGen::print_on(outputStream* st) const {
   st->print("  eden"); eden_space()->print_on(st);
   st->print("  from"); from_space()->print_on(st);
   st->print("  to  "); to_space()->print_on(st);
-}
-
-// Note that a space is not printed before the [NAME:
-void PSYoungGen::print_used_change(size_t prev_used) const {
-  log_info(gc, heap)("%s: "  SIZE_FORMAT "K->" SIZE_FORMAT "K("  SIZE_FORMAT "K)",
-      name(), prev_used / K, used_in_bytes() / K, capacity_in_bytes() / K);
-}
-
-size_t PSYoungGen::available_for_expansion() {
-  ShouldNotReachHere();
-  return 0;
-}
-
-size_t PSYoungGen::available_for_contraction() {
-  ShouldNotReachHere();
-  return 0;
 }
 
 size_t PSYoungGen::available_to_min_gen() {
@@ -790,10 +723,6 @@ size_t PSYoungGen::available_to_min_gen() {
 // from-space.
 size_t PSYoungGen::available_to_live() {
   size_t delta_in_survivor = 0;
-  ParallelScavengeHeap* heap = ParallelScavengeHeap::heap();
-  const size_t space_alignment = heap->space_alignment();
-  const size_t gen_alignment = heap->generation_alignment();
-
   MutableSpace* space_shrinking = NULL;
   if (from_space()->end() > to_space()->end()) {
     space_shrinking = from_space();
@@ -810,9 +739,9 @@ size_t PSYoungGen::available_to_live() {
 
   if (space_shrinking->is_empty()) {
     // Don't let the space shrink to 0
-    assert(space_shrinking->capacity_in_bytes() >= space_alignment,
+    assert(space_shrinking->capacity_in_bytes() >= SpaceAlignment,
       "Space is too small");
-    delta_in_survivor = space_shrinking->capacity_in_bytes() - space_alignment;
+    delta_in_survivor = space_shrinking->capacity_in_bytes() - SpaceAlignment;
   } else {
     delta_in_survivor = pointer_delta(space_shrinking->end(),
                                       space_shrinking->top(),
@@ -820,7 +749,7 @@ size_t PSYoungGen::available_to_live() {
   }
 
   size_t delta_in_bytes = unused_committed + delta_in_survivor;
-  delta_in_bytes = align_down(delta_in_bytes, gen_alignment);
+  delta_in_bytes = align_down(delta_in_bytes, GenAlignment);
   return delta_in_bytes;
 }
 
@@ -834,10 +763,6 @@ size_t PSYoungGen::limit_gen_shrink(size_t bytes) {
   // to maintain the minimum young gen size
   bytes = MIN3(bytes, available_to_min_gen(), available_to_live());
   return align_down(bytes, virtual_space()->alignment());
-}
-
-void PSYoungGen::reset_after_change() {
-  ShouldNotReachHere();
 }
 
 void PSYoungGen::reset_survivors_after_shrink() {

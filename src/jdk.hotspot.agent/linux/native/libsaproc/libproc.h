@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,12 +47,18 @@
 
 // This C bool type must be int for compatibility with Linux calls and
 // it would be a mistake to equivalence it to C++ bool on many platforms
-
+#ifndef __cplusplus
 typedef int bool;
 #define true  1
 #define false 0
+#endif
 
 struct ps_prochandle;
+struct lib_info;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // attach to a process
 JNIEXPORT struct ps_prochandle* JNICALL
@@ -94,6 +100,9 @@ uintptr_t get_lib_base(struct ps_prochandle* ph, int index);
 // returns true if given library is found in lib list
 bool find_lib(struct ps_prochandle* ph, const char *lib_name);
 
+// returns lib which contains pc
+struct lib_info *find_lib_by_address(struct ps_prochandle* ph, uintptr_t pc);
+
 // symbol lookup
 uintptr_t lookup_symbol(struct ps_prochandle* ph,  const char* object_name,
                        const char* sym_name);
@@ -104,5 +113,9 @@ const char* symbol_for_pc(struct ps_prochandle* ph, uintptr_t addr, uintptr_t* p
 struct ps_prochandle* get_proc_handle(JNIEnv* env, jobject this_obj);
 
 void throw_new_debugger_exception(JNIEnv* env, const char* errMsg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //__LIBPROC_H_

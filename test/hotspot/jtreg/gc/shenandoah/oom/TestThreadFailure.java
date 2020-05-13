@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,9 +26,9 @@
  * @test TestThreadFailure
  * @summary Test OOME in separate thread is recoverable
  * @key gc
- * @requires vm.gc.Shenandoah
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
  * @library /test/lib
- * @run main TestThreadFailure
+ * @run driver TestThreadFailure
  */
 
 import java.util.*;
@@ -63,21 +64,7 @@ public class TestThreadFailure {
 
         {
             ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-                    "-Xmx16m",
-                    "-XX:+UnlockExperimentalVMOptions",
-                    "-XX:+UseShenandoahGC",
-                    TestThreadFailure.class.getName(),
-                    "test");
-
-            OutputAnalyzer analyzer = new OutputAnalyzer(pb.start());
-            analyzer.shouldHaveExitValue(0);
-            analyzer.shouldContain("java.lang.OutOfMemoryError");
-            analyzer.shouldContain("All good");
-        }
-
-        {
-            ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-                    "-Xmx128m",
+                    "-Xmx32m",
                     "-XX:+UnlockExperimentalVMOptions",
                     "-XX:+UseShenandoahGC",
                     TestThreadFailure.class.getName(),

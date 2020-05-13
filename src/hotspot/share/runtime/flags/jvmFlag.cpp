@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@
 #include "runtime/arguments.hpp"
 #include "runtime/flags/jvmFlag.hpp"
 #include "runtime/flags/jvmFlagConstraintList.hpp"
-#include "runtime/flags/jvmFlagWriteableList.hpp"
 #include "runtime/flags/jvmFlagRangeList.hpp"
 #include "runtime/globals_extension.hpp"
 #include "utilities/defaultStream.hpp"
@@ -92,163 +91,36 @@ static bool is_product_build() {
 #endif
 }
 
-JVMFlag::Error JVMFlag::check_writable(bool changed) {
-  if (is_constant_in_binary()) {
-    fatal("flag is constant: %s", _name);
-  }
-
-  JVMFlag::Error error = JVMFlag::SUCCESS;
-  if (changed) {
-    JVMFlagWriteable* writeable = JVMFlagWriteableList::find(_name);
-    if (writeable) {
-      if (writeable->is_writeable() == false) {
-        switch (writeable->type())
-        {
-          case JVMFlagWriteable::Once:
-            error = JVMFlag::SET_ONLY_ONCE;
-            jio_fprintf(defaultStream::error_stream(), "Error: %s may not be set more than once\n", _name);
-            break;
-          case JVMFlagWriteable::CommandLineOnly:
-            error = JVMFlag::COMMAND_LINE_ONLY;
-            jio_fprintf(defaultStream::error_stream(), "Error: %s may be modified only from commad line\n", _name);
-            break;
-          default:
-            ShouldNotReachHere();
-            break;
-        }
-      }
-      writeable->mark_once();
-    }
-  }
-  return error;
-}
-
 bool JVMFlag::is_bool() const {
   return strcmp(_type, "bool") == 0;
-}
-
-bool JVMFlag::get_bool() const {
-  return *((bool*) _addr);
-}
-
-JVMFlag::Error JVMFlag::set_bool(bool value) {
-  JVMFlag::Error error = check_writable(value!=get_bool());
-  if (error == JVMFlag::SUCCESS) {
-    *((bool*) _addr) = value;
-  }
-  return error;
 }
 
 bool JVMFlag::is_int() const {
   return strcmp(_type, "int")  == 0;
 }
 
-int JVMFlag::get_int() const {
-  return *((int*) _addr);
-}
-
-JVMFlag::Error JVMFlag::set_int(int value) {
-  JVMFlag::Error error = check_writable(value!=get_int());
-  if (error == JVMFlag::SUCCESS) {
-    *((int*) _addr) = value;
-  }
-  return error;
-}
-
 bool JVMFlag::is_uint() const {
   return strcmp(_type, "uint")  == 0;
-}
-
-uint JVMFlag::get_uint() const {
-  return *((uint*) _addr);
-}
-
-JVMFlag::Error JVMFlag::set_uint(uint value) {
-  JVMFlag::Error error = check_writable(value!=get_uint());
-  if (error == JVMFlag::SUCCESS) {
-    *((uint*) _addr) = value;
-  }
-  return error;
 }
 
 bool JVMFlag::is_intx() const {
   return strcmp(_type, "intx")  == 0;
 }
 
-intx JVMFlag::get_intx() const {
-  return *((intx*) _addr);
-}
-
-JVMFlag::Error JVMFlag::set_intx(intx value) {
-  JVMFlag::Error error = check_writable(value!=get_intx());
-  if (error == JVMFlag::SUCCESS) {
-    *((intx*) _addr) = value;
-  }
-  return error;
-}
-
 bool JVMFlag::is_uintx() const {
   return strcmp(_type, "uintx") == 0;
-}
-
-uintx JVMFlag::get_uintx() const {
-  return *((uintx*) _addr);
-}
-
-JVMFlag::Error JVMFlag::set_uintx(uintx value) {
-  JVMFlag::Error error = check_writable(value!=get_uintx());
-  if (error == JVMFlag::SUCCESS) {
-    *((uintx*) _addr) = value;
-  }
-  return error;
 }
 
 bool JVMFlag::is_uint64_t() const {
   return strcmp(_type, "uint64_t") == 0;
 }
 
-uint64_t JVMFlag::get_uint64_t() const {
-  return *((uint64_t*) _addr);
-}
-
-JVMFlag::Error JVMFlag::set_uint64_t(uint64_t value) {
-  JVMFlag::Error error = check_writable(value!=get_uint64_t());
-  if (error == JVMFlag::SUCCESS) {
-    *((uint64_t*) _addr) = value;
-  }
-  return error;
-}
-
 bool JVMFlag::is_size_t() const {
   return strcmp(_type, "size_t") == 0;
 }
 
-size_t JVMFlag::get_size_t() const {
-  return *((size_t*) _addr);
-}
-
-JVMFlag::Error JVMFlag::set_size_t(size_t value) {
-  JVMFlag::Error error = check_writable(value!=get_size_t());
-  if (error == JVMFlag::SUCCESS) {
-    *((size_t*) _addr) = value;
-  }
-  return error;
-}
-
 bool JVMFlag::is_double() const {
   return strcmp(_type, "double") == 0;
-}
-
-double JVMFlag::get_double() const {
-  return *((double*) _addr);
-}
-
-JVMFlag::Error JVMFlag::set_double(double value) {
-  JVMFlag::Error error = check_writable(value!=get_double());
-  if (error == JVMFlag::SUCCESS) {
-    *((double*) _addr) = value;
-  }
-  return error;
 }
 
 bool JVMFlag::is_ccstr() const {
@@ -258,19 +130,6 @@ bool JVMFlag::is_ccstr() const {
 bool JVMFlag::ccstr_accumulates() const {
   return strcmp(_type, "ccstrlist") == 0;
 }
-
-ccstr JVMFlag::get_ccstr() const {
-  return *((ccstr*) _addr);
-}
-
-JVMFlag::Error JVMFlag::set_ccstr(ccstr value) {
-  JVMFlag::Error error = check_writable(value!=get_ccstr());
-  if (error == JVMFlag::SUCCESS) {
-    *((ccstr*) _addr) = value;
-  }
-  return error;
-}
-
 
 JVMFlag::Flags JVMFlag::get_origin() {
   return Flags(_flags & VALUE_ORIGIN_MASK);
@@ -292,6 +151,10 @@ bool JVMFlag::is_ergonomic() {
 
 bool JVMFlag::is_command_line() {
   return (_flags & ORIG_COMMAND_LINE) != 0;
+}
+
+bool JVMFlag::is_jimage_resource() {
+  return (get_origin() == JIMAGE_RESOURCE);
 }
 
 void JVMFlag::set_command_line() {
@@ -339,9 +202,8 @@ bool JVMFlag::is_constant_in_binary() const {
 }
 
 bool JVMFlag::is_unlocker() const {
-  return strcmp(_name, "UnlockDiagnosticVMOptions") == 0     ||
-  strcmp(_name, "UnlockExperimentalVMOptions") == 0   ||
-  is_unlocker_ext();
+  return strcmp(_name, "UnlockDiagnosticVMOptions") == 0 ||
+         strcmp(_name, "UnlockExperimentalVMOptions") == 0;
 }
 
 bool JVMFlag::is_unlocked() const {
@@ -351,13 +213,25 @@ bool JVMFlag::is_unlocked() const {
   if (is_experimental()) {
     return UnlockExperimentalVMOptions;
   }
-  return is_unlocked_ext();
+  return true;
 }
 
 void JVMFlag::clear_diagnostic() {
   assert(is_diagnostic(), "sanity");
   _flags = Flags(_flags & ~KIND_DIAGNOSTIC);
   assert(!is_diagnostic(), "sanity");
+}
+
+void JVMFlag::clear_experimental() {
+  assert(is_experimental(), "sanity");
+ _flags = Flags(_flags & ~KIND_EXPERIMENTAL);
+  assert(!is_experimental(), "sanity");
+}
+
+void JVMFlag::set_product() {
+  assert(!is_product(), "sanity");
+ _flags = Flags(_flags | KIND_PRODUCT);
+  assert(is_product(), "sanity");
 }
 
 // Get custom message for this locked flag, or NULL if
@@ -388,18 +262,18 @@ JVMFlag::MsgType JVMFlag::get_locked_message(char* buf, int buflen) const {
                  _name);
     return JVMFlag::NOTPRODUCT_FLAG_BUT_PRODUCT_BUILD;
   }
-  return get_locked_message_ext(buf, buflen);
+  return JVMFlag::NONE;
 }
 
 bool JVMFlag::is_writeable() const {
-  return is_manageable() || (is_product() && is_read_write()) || is_writeable_ext();
+  return is_manageable() || (is_product() && is_read_write());
 }
 
 // All flags except "manageable" are assumed to be internal flags.
 // Long term, we need to define a mechanism to specify which flags
 // are external/stable and change this function accordingly.
 bool JVMFlag::is_external() const {
-  return is_manageable() || is_external_ext();
+  return is_manageable();
 }
 
 // Helper function for JVMFlag::print_on().
@@ -436,11 +310,11 @@ void JVMFlag::print_on(outputStream* st, bool withComments, bool printRanges) {
     //  an eye-pleasing tabular output is created.
     //
     //  Sample output:
-    //       bool CMSScavengeBeforeRemark                  = false                                     {product} {default}
-    //      uintx CMSScheduleRemarkEdenPenetration         = 50                                        {product} {default}
-    //     size_t CMSScheduleRemarkEdenSizeThreshold       = 2097152                                   {product} {default}
-    //      uintx CMSScheduleRemarkSamplingRatio           = 5                                         {product} {default}
-    //     double CMSSmallCoalSurplusPercent               = 1.050000                                  {product} {default}
+    //       bool ThreadPriorityVerbose                    = false                                     {product} {default}
+    //      uintx ThresholdTolerance                       = 10                                        {product} {default}
+    //     size_t TLABSize                                 = 0                                         {product} {default}
+    //      uintx SurvivorRatio                            = 8                                         {product} {default}
+    //     double InitialRAMPercentage                     = 1.562500                                  {product} {default}
     //      ccstr CompileCommandFile                       = MyFile.cmd                                {product} {command line}
     //  ccstrlist CompileOnly                              = Method1
     //            CompileOnly                             += Method2                                   {product} {command line}
@@ -552,7 +426,7 @@ void JVMFlag::print_on(outputStream* st, bool withComments, bool printRanges) {
     //     double MinRAMPercentage                                   [ 0.000                     ...                   100.000 ]                            {product} {default}
     //      uintx MinSurvivorRatio                                   [ 3                         ...      18446744073709551615 ]                            {product} {default}
     //     size_t MinTLABSize                                        [ 1                         ...       9223372036854775807 ]                            {product} {default}
-    //       intx MonitorBound                                       [ 0                         ...                2147483647 ]                            {product} {default}
+    //       intx MaxInlineSize                                      [ 0                         ...                2147483647 ]                            {product} {default}
     //  |         |                                                  |                                                           |                                    |               |
     //  |         |                                                  |                                                           |                                    |               +-- col7
     //  |         |                                                  |                                                           |                                    +-- col6
@@ -604,7 +478,7 @@ void JVMFlag::print_on(outputStream* st, bool withComments, bool printRanges) {
       st->cr();
       return;
     }
-    JVMFlagRangeList::print(st, _name, func);
+    JVMFlagRangeList::print(st, this, func);
 
     fill_to_pos(st, col5_pos);
     print_kind(st, col5_width);
@@ -698,6 +572,8 @@ void JVMFlag::print_origin(outputStream* st, unsigned int width) {
       st->print("attach"); break;
     case INTERNAL:
       st->print("internal"); break;
+    case JIMAGE_RESOURCE:
+      st->print("jimage"); break;
   }
   st->print("}");
 }
@@ -822,8 +698,7 @@ static JVMFlag flagTable[] = {
            RUNTIME_PRODUCT_RW_FLAG_STRUCT, \
            RUNTIME_LP64_PRODUCT_FLAG_STRUCT, \
            IGNORE_RANGE, \
-           IGNORE_CONSTRAINT, \
-           IGNORE_WRITEABLE)
+           IGNORE_CONSTRAINT)
 
   RUNTIME_OS_FLAGS(RUNTIME_DEVELOP_FLAG_STRUCT, \
                    RUNTIME_PD_DEVELOP_FLAG_STRUCT, \
@@ -833,8 +708,7 @@ static JVMFlag flagTable[] = {
                    RUNTIME_PD_DIAGNOSTIC_FLAG_STRUCT, \
                    RUNTIME_NOTPRODUCT_FLAG_STRUCT, \
                    IGNORE_RANGE, \
-                   IGNORE_CONSTRAINT, \
-                   IGNORE_WRITEABLE)
+                   IGNORE_CONSTRAINT)
 #if INCLUDE_JVMCI
   JVMCI_FLAGS(JVMCI_DEVELOP_FLAG_STRUCT, \
               JVMCI_PD_DEVELOP_FLAG_STRUCT, \
@@ -845,8 +719,7 @@ static JVMFlag flagTable[] = {
               JVMCI_EXPERIMENTAL_FLAG_STRUCT, \
               JVMCI_NOTPRODUCT_FLAG_STRUCT, \
               IGNORE_RANGE, \
-              IGNORE_CONSTRAINT, \
-              IGNORE_WRITEABLE)
+              IGNORE_CONSTRAINT)
 #endif // INCLUDE_JVMCI
 #ifdef COMPILER1
   C1_FLAGS(C1_DEVELOP_FLAG_STRUCT, \
@@ -857,8 +730,7 @@ static JVMFlag flagTable[] = {
            C1_PD_DIAGNOSTIC_FLAG_STRUCT, \
            C1_NOTPRODUCT_FLAG_STRUCT, \
            IGNORE_RANGE, \
-           IGNORE_CONSTRAINT, \
-           IGNORE_WRITEABLE)
+           IGNORE_CONSTRAINT)
 #endif // COMPILER1
 #ifdef COMPILER2
   C2_FLAGS(C2_DEVELOP_FLAG_STRUCT, \
@@ -870,8 +742,7 @@ static JVMFlag flagTable[] = {
            C2_EXPERIMENTAL_FLAG_STRUCT, \
            C2_NOTPRODUCT_FLAG_STRUCT, \
            IGNORE_RANGE, \
-           IGNORE_CONSTRAINT, \
-           IGNORE_WRITEABLE)
+           IGNORE_CONSTRAINT)
 #endif // COMPILER2
   ARCH_FLAGS(ARCH_DEVELOP_FLAG_STRUCT, \
              ARCH_PRODUCT_FLAG_STRUCT, \
@@ -879,9 +750,7 @@ static JVMFlag flagTable[] = {
              ARCH_EXPERIMENTAL_FLAG_STRUCT, \
              ARCH_NOTPRODUCT_FLAG_STRUCT, \
              IGNORE_RANGE, \
-             IGNORE_CONSTRAINT, \
-             IGNORE_WRITEABLE)
-  FLAGTABLE_EXT
+             IGNORE_CONSTRAINT)
   {0, NULL, NULL}
 };
 
@@ -957,103 +826,88 @@ JVMFlag* JVMFlag::fuzzy_match(const char* name, size_t length, bool allow_locked
 }
 
 // Returns the address of the index'th element
-static JVMFlag* address_of_flag(JVMFlagsWithType flag) {
+JVMFlag* JVMFlagEx::flag_from_enum(JVMFlagsEnum flag) {
   assert((size_t)flag < JVMFlag::numFlags, "bad command line flag index");
   return &JVMFlag::flags[flag];
 }
 
-bool JVMFlagEx::is_default(JVMFlags flag) {
+bool JVMFlagEx::is_default(JVMFlagsEnum flag) {
+  return flag_from_enum(flag)->is_default();
+}
+
+bool JVMFlagEx::is_ergo(JVMFlagsEnum flag) {
+  return flag_from_enum(flag)->is_ergonomic();
+}
+
+bool JVMFlagEx::is_cmdline(JVMFlagsEnum flag) {
+  return flag_from_enum(flag)->is_command_line();
+}
+
+bool JVMFlagEx::is_jimage_resource(JVMFlagsEnum flag) {
   assert((size_t)flag < JVMFlag::numFlags, "bad command line flag index");
   JVMFlag* f = &JVMFlag::flags[flag];
-  return f->is_default();
+  return f->is_jimage_resource();
 }
 
-bool JVMFlagEx::is_ergo(JVMFlags flag) {
-  assert((size_t)flag < JVMFlag::numFlags, "bad command line flag index");
-  JVMFlag* f = &JVMFlag::flags[flag];
-  return f->is_ergonomic();
-}
-
-bool JVMFlagEx::is_cmdline(JVMFlags flag) {
-  assert((size_t)flag < JVMFlag::numFlags, "bad command line flag index");
-  JVMFlag* f = &JVMFlag::flags[flag];
-  return f->is_command_line();
-}
-
-bool JVMFlag::wasSetOnCmdline(const char* name, bool* value) {
-  JVMFlag* result = JVMFlag::find_flag((char*)name, strlen(name));
-  if (result == NULL) return false;
-  *value = result->is_command_line();
-  return true;
-}
-
-void JVMFlagEx::setOnCmdLine(JVMFlagsWithType flag) {
-  JVMFlag* faddr = address_of_flag(flag);
+void JVMFlagEx::setOnCmdLine(JVMFlagsEnum flag) {
+  JVMFlag* faddr = flag_from_enum(flag);
   assert(faddr != NULL, "Unknown flag");
   faddr->set_command_line();
 }
 
 template<class E, class T>
-static void trace_flag_changed(const char* name, const T old_value, const T new_value, const JVMFlag::Flags origin) {
+static void trace_flag_changed(const JVMFlag* flag, const T old_value, const T new_value, const JVMFlag::Flags origin) {
   E e;
-  e.set_name(name);
+  e.set_name(flag->_name);
   e.set_oldValue(old_value);
   e.set_newValue(new_value);
   e.set_origin(origin);
   e.commit();
 }
 
-static JVMFlag::Error apply_constraint_and_check_range_bool(const char* name, bool new_value, bool verbose) {
+static JVMFlag::Error apply_constraint_and_check_range_bool(const JVMFlag* flag, bool new_value, bool verbose) {
   JVMFlag::Error status = JVMFlag::SUCCESS;
-  JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(name);
+  JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(flag);
   if (constraint != NULL) {
     status = constraint->apply_bool(new_value, verbose);
   }
   return status;
 }
 
-JVMFlag::Error JVMFlag::boolAt(const char* name, size_t len, bool* value, bool allow_locked, bool return_flag) {
-  JVMFlag* result = JVMFlag::find_flag(name, len, allow_locked, return_flag);
-  if (result == NULL) return JVMFlag::INVALID_FLAG;
-  if (!result->is_bool()) return JVMFlag::WRONG_FORMAT;
-  *value = result->get_bool();
+JVMFlag::Error JVMFlag::boolAt(const JVMFlag* flag, bool* value) {
+  if (flag == NULL) return JVMFlag::INVALID_FLAG;
+  if (!flag->is_bool()) return JVMFlag::WRONG_FORMAT;
+  *value = flag->get_bool();
   return JVMFlag::SUCCESS;
 }
 
 JVMFlag::Error JVMFlag::boolAtPut(JVMFlag* flag, bool* value, JVMFlag::Flags origin) {
-  const char* name;
   if (flag == NULL) return JVMFlag::INVALID_FLAG;
   if (!flag->is_bool()) return JVMFlag::WRONG_FORMAT;
-  name = flag->_name;
-  JVMFlag::Error check = apply_constraint_and_check_range_bool(name, *value, !JVMFlagConstraintList::validated_after_ergo());
+  JVMFlag::Error check = apply_constraint_and_check_range_bool(flag, *value, !JVMFlagConstraintList::validated_after_ergo());
   if (check != JVMFlag::SUCCESS) return check;
   bool old_value = flag->get_bool();
-  trace_flag_changed<EventBooleanFlagChanged, bool>(name, old_value, *value, origin);
-  check = flag->set_bool(*value);
+  trace_flag_changed<EventBooleanFlagChanged, bool>(flag, old_value, *value, origin);
+  flag->set_bool(*value);
   *value = old_value;
   flag->set_origin(origin);
-  return check;
+  return JVMFlag::SUCCESS;
 }
 
-JVMFlag::Error JVMFlag::boolAtPut(const char* name, size_t len, bool* value, JVMFlag::Flags origin) {
-  JVMFlag* result = JVMFlag::find_flag(name, len);
-  return boolAtPut(result, value, origin);
-}
-
-JVMFlag::Error JVMFlagEx::boolAtPut(JVMFlagsWithType flag, bool value, JVMFlag::Flags origin) {
-  JVMFlag* faddr = address_of_flag(flag);
+JVMFlag::Error JVMFlagEx::boolAtPut(JVMFlagsEnum flag, bool value, JVMFlag::Flags origin) {
+  JVMFlag* faddr = flag_from_enum(flag);
   guarantee(faddr != NULL && faddr->is_bool(), "wrong flag type");
   return JVMFlag::boolAtPut(faddr, &value, origin);
 }
 
-static JVMFlag::Error apply_constraint_and_check_range_int(const char* name, int new_value, bool verbose) {
+static JVMFlag::Error apply_constraint_and_check_range_int(const JVMFlag* flag, int new_value, bool verbose) {
   JVMFlag::Error status = JVMFlag::SUCCESS;
-  JVMFlagRange* range = JVMFlagRangeList::find(name);
+  JVMFlagRange* range = JVMFlagRangeList::find(flag);
   if (range != NULL) {
     status = range->check_int(new_value, verbose);
   }
   if (status == JVMFlag::SUCCESS) {
-    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(name);
+    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(flag);
     if (constraint != NULL) {
       status = constraint->apply_int(new_value, verbose);
     }
@@ -1061,48 +915,40 @@ static JVMFlag::Error apply_constraint_and_check_range_int(const char* name, int
   return status;
 }
 
-JVMFlag::Error JVMFlag::intAt(const char* name, size_t len, int* value, bool allow_locked, bool return_flag) {
-  JVMFlag* result = JVMFlag::find_flag(name, len, allow_locked, return_flag);
-  if (result == NULL) return JVMFlag::INVALID_FLAG;
-  if (!result->is_int()) return JVMFlag::WRONG_FORMAT;
-  *value = result->get_int();
+JVMFlag::Error JVMFlag::intAt(const JVMFlag* flag, int* value) {
+  if (flag == NULL) return JVMFlag::INVALID_FLAG;
+  if (!flag->is_int()) return JVMFlag::WRONG_FORMAT;
+  *value = flag->get_int();
   return JVMFlag::SUCCESS;
 }
 
 JVMFlag::Error JVMFlag::intAtPut(JVMFlag* flag, int* value, JVMFlag::Flags origin) {
-  const char* name;
   if (flag == NULL) return JVMFlag::INVALID_FLAG;
   if (!flag->is_int()) return JVMFlag::WRONG_FORMAT;
-  name = flag->_name;
-  JVMFlag::Error check = apply_constraint_and_check_range_int(name, *value, !JVMFlagConstraintList::validated_after_ergo());
+  JVMFlag::Error check = apply_constraint_and_check_range_int(flag, *value, !JVMFlagConstraintList::validated_after_ergo());
   if (check != JVMFlag::SUCCESS) return check;
   int old_value = flag->get_int();
-  trace_flag_changed<EventIntFlagChanged, s4>(name, old_value, *value, origin);
-  check = flag->set_int(*value);
+  trace_flag_changed<EventIntFlagChanged, s4>(flag, old_value, *value, origin);
+  flag->set_int(*value);
   *value = old_value;
   flag->set_origin(origin);
-  return check;
+  return JVMFlag::SUCCESS;
 }
 
-JVMFlag::Error JVMFlag::intAtPut(const char* name, size_t len, int* value, JVMFlag::Flags origin) {
-  JVMFlag* result = JVMFlag::find_flag(name, len);
-  return intAtPut(result, value, origin);
-}
-
-JVMFlag::Error JVMFlagEx::intAtPut(JVMFlagsWithType flag, int value, JVMFlag::Flags origin) {
-  JVMFlag* faddr = address_of_flag(flag);
+JVMFlag::Error JVMFlagEx::intAtPut(JVMFlagsEnum flag, int value, JVMFlag::Flags origin) {
+  JVMFlag* faddr = flag_from_enum(flag);
   guarantee(faddr != NULL && faddr->is_int(), "wrong flag type");
   return JVMFlag::intAtPut(faddr, &value, origin);
 }
 
-static JVMFlag::Error apply_constraint_and_check_range_uint(const char* name, uint new_value, bool verbose) {
+static JVMFlag::Error apply_constraint_and_check_range_uint(const JVMFlag* flag, uint new_value, bool verbose) {
   JVMFlag::Error status = JVMFlag::SUCCESS;
-  JVMFlagRange* range = JVMFlagRangeList::find(name);
+  JVMFlagRange* range = JVMFlagRangeList::find(flag);
   if (range != NULL) {
     status = range->check_uint(new_value, verbose);
   }
   if (status == JVMFlag::SUCCESS) {
-    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(name);
+    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(flag);
     if (constraint != NULL) {
       status = constraint->apply_uint(new_value, verbose);
     }
@@ -1110,56 +956,47 @@ static JVMFlag::Error apply_constraint_and_check_range_uint(const char* name, ui
   return status;
 }
 
-JVMFlag::Error JVMFlag::uintAt(const char* name, size_t len, uint* value, bool allow_locked, bool return_flag) {
-  JVMFlag* result = JVMFlag::find_flag(name, len, allow_locked, return_flag);
-  if (result == NULL) return JVMFlag::INVALID_FLAG;
-  if (!result->is_uint()) return JVMFlag::WRONG_FORMAT;
-  *value = result->get_uint();
+JVMFlag::Error JVMFlag::uintAt(const JVMFlag* flag, uint* value) {
+  if (flag == NULL) return JVMFlag::INVALID_FLAG;
+  if (!flag->is_uint()) return JVMFlag::WRONG_FORMAT;
+  *value = flag->get_uint();
   return JVMFlag::SUCCESS;
 }
 
 JVMFlag::Error JVMFlag::uintAtPut(JVMFlag* flag, uint* value, JVMFlag::Flags origin) {
-  const char* name;
   if (flag == NULL) return JVMFlag::INVALID_FLAG;
   if (!flag->is_uint()) return JVMFlag::WRONG_FORMAT;
-  name = flag->_name;
-  JVMFlag::Error check = apply_constraint_and_check_range_uint(name, *value, !JVMFlagConstraintList::validated_after_ergo());
+  JVMFlag::Error check = apply_constraint_and_check_range_uint(flag, *value, !JVMFlagConstraintList::validated_after_ergo());
   if (check != JVMFlag::SUCCESS) return check;
   uint old_value = flag->get_uint();
-  trace_flag_changed<EventUnsignedIntFlagChanged, u4>(name, old_value, *value, origin);
-  check = flag->set_uint(*value);
+  trace_flag_changed<EventUnsignedIntFlagChanged, u4>(flag, old_value, *value, origin);
+  flag->set_uint(*value);
   *value = old_value;
   flag->set_origin(origin);
-  return check;
+  return JVMFlag::SUCCESS;
 }
 
-JVMFlag::Error JVMFlag::uintAtPut(const char* name, size_t len, uint* value, JVMFlag::Flags origin) {
-  JVMFlag* result = JVMFlag::find_flag(name, len);
-  return uintAtPut(result, value, origin);
-}
-
-JVMFlag::Error JVMFlagEx::uintAtPut(JVMFlagsWithType flag, uint value, JVMFlag::Flags origin) {
-  JVMFlag* faddr = address_of_flag(flag);
+JVMFlag::Error JVMFlagEx::uintAtPut(JVMFlagsEnum flag, uint value, JVMFlag::Flags origin) {
+  JVMFlag* faddr = flag_from_enum(flag);
   guarantee(faddr != NULL && faddr->is_uint(), "wrong flag type");
   return JVMFlag::uintAtPut(faddr, &value, origin);
 }
 
-JVMFlag::Error JVMFlag::intxAt(const char* name, size_t len, intx* value, bool allow_locked, bool return_flag) {
-  JVMFlag* result = JVMFlag::find_flag(name, len, allow_locked, return_flag);
-  if (result == NULL) return JVMFlag::INVALID_FLAG;
-  if (!result->is_intx()) return JVMFlag::WRONG_FORMAT;
-  *value = result->get_intx();
+JVMFlag::Error JVMFlag::intxAt(const JVMFlag* flag, intx* value) {
+  if (flag == NULL) return JVMFlag::INVALID_FLAG;
+  if (!flag->is_intx()) return JVMFlag::WRONG_FORMAT;
+  *value = flag->get_intx();
   return JVMFlag::SUCCESS;
 }
 
-static JVMFlag::Error apply_constraint_and_check_range_intx(const char* name, intx new_value, bool verbose) {
+static JVMFlag::Error apply_constraint_and_check_range_intx(const JVMFlag* flag, intx new_value, bool verbose) {
   JVMFlag::Error status = JVMFlag::SUCCESS;
-  JVMFlagRange* range = JVMFlagRangeList::find(name);
+  JVMFlagRange* range = JVMFlagRangeList::find(flag);
   if (range != NULL) {
     status = range->check_intx(new_value, verbose);
   }
   if (status == JVMFlag::SUCCESS) {
-    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(name);
+    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(flag);
     if (constraint != NULL) {
       status = constraint->apply_intx(new_value, verbose);
     }
@@ -1168,47 +1005,39 @@ static JVMFlag::Error apply_constraint_and_check_range_intx(const char* name, in
 }
 
 JVMFlag::Error JVMFlag::intxAtPut(JVMFlag* flag, intx* value, JVMFlag::Flags origin) {
-  const char* name;
   if (flag == NULL) return JVMFlag::INVALID_FLAG;
   if (!flag->is_intx()) return JVMFlag::WRONG_FORMAT;
-  name = flag->_name;
-  JVMFlag::Error check = apply_constraint_and_check_range_intx(name, *value, !JVMFlagConstraintList::validated_after_ergo());
+  JVMFlag::Error check = apply_constraint_and_check_range_intx(flag, *value, !JVMFlagConstraintList::validated_after_ergo());
   if (check != JVMFlag::SUCCESS) return check;
   intx old_value = flag->get_intx();
-  trace_flag_changed<EventLongFlagChanged, intx>(name, old_value, *value, origin);
-  check = flag->set_intx(*value);
+  trace_flag_changed<EventLongFlagChanged, intx>(flag, old_value, *value, origin);
+  flag->set_intx(*value);
   *value = old_value;
   flag->set_origin(origin);
-  return check;
+  return JVMFlag::SUCCESS;
 }
 
-JVMFlag::Error JVMFlag::intxAtPut(const char* name, size_t len, intx* value, JVMFlag::Flags origin) {
-  JVMFlag* result = JVMFlag::find_flag(name, len);
-  return intxAtPut(result, value, origin);
-}
-
-JVMFlag::Error JVMFlagEx::intxAtPut(JVMFlagsWithType flag, intx value, JVMFlag::Flags origin) {
-  JVMFlag* faddr = address_of_flag(flag);
+JVMFlag::Error JVMFlagEx::intxAtPut(JVMFlagsEnum flag, intx value, JVMFlag::Flags origin) {
+  JVMFlag* faddr = flag_from_enum(flag);
   guarantee(faddr != NULL && faddr->is_intx(), "wrong flag type");
   return JVMFlag::intxAtPut(faddr, &value, origin);
 }
 
-JVMFlag::Error JVMFlag::uintxAt(const char* name, size_t len, uintx* value, bool allow_locked, bool return_flag) {
-  JVMFlag* result = JVMFlag::find_flag(name, len, allow_locked, return_flag);
-  if (result == NULL) return JVMFlag::INVALID_FLAG;
-  if (!result->is_uintx()) return JVMFlag::WRONG_FORMAT;
-  *value = result->get_uintx();
+JVMFlag::Error JVMFlag::uintxAt(const JVMFlag* flag, uintx* value) {
+  if (flag == NULL) return JVMFlag::INVALID_FLAG;
+  if (!flag->is_uintx()) return JVMFlag::WRONG_FORMAT;
+  *value = flag->get_uintx();
   return JVMFlag::SUCCESS;
 }
 
-static JVMFlag::Error apply_constraint_and_check_range_uintx(const char* name, uintx new_value, bool verbose) {
+static JVMFlag::Error apply_constraint_and_check_range_uintx(const JVMFlag* flag, uintx new_value, bool verbose) {
   JVMFlag::Error status = JVMFlag::SUCCESS;
-  JVMFlagRange* range = JVMFlagRangeList::find(name);
+  JVMFlagRange* range = JVMFlagRangeList::find(flag);
   if (range != NULL) {
     status = range->check_uintx(new_value, verbose);
   }
   if (status == JVMFlag::SUCCESS) {
-    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(name);
+    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(flag);
     if (constraint != NULL) {
       status = constraint->apply_uintx(new_value, verbose);
     }
@@ -1217,47 +1046,39 @@ static JVMFlag::Error apply_constraint_and_check_range_uintx(const char* name, u
 }
 
 JVMFlag::Error JVMFlag::uintxAtPut(JVMFlag* flag, uintx* value, JVMFlag::Flags origin) {
-  const char* name;
   if (flag == NULL) return JVMFlag::INVALID_FLAG;
   if (!flag->is_uintx()) return JVMFlag::WRONG_FORMAT;
-  name = flag->_name;
-  JVMFlag::Error check = apply_constraint_and_check_range_uintx(name, *value, !JVMFlagConstraintList::validated_after_ergo());
+  JVMFlag::Error check = apply_constraint_and_check_range_uintx(flag, *value, !JVMFlagConstraintList::validated_after_ergo());
   if (check != JVMFlag::SUCCESS) return check;
   uintx old_value = flag->get_uintx();
-  trace_flag_changed<EventUnsignedLongFlagChanged, u8>(name, old_value, *value, origin);
-  check = flag->set_uintx(*value);
+  trace_flag_changed<EventUnsignedLongFlagChanged, u8>(flag, old_value, *value, origin);
+  flag->set_uintx(*value);
   *value = old_value;
   flag->set_origin(origin);
-  return check;
+  return JVMFlag::SUCCESS;
 }
 
-JVMFlag::Error JVMFlag::uintxAtPut(const char* name, size_t len, uintx* value, JVMFlag::Flags origin) {
-  JVMFlag* result = JVMFlag::find_flag(name, len);
-  return uintxAtPut(result, value, origin);
-}
-
-JVMFlag::Error JVMFlagEx::uintxAtPut(JVMFlagsWithType flag, uintx value, JVMFlag::Flags origin) {
-  JVMFlag* faddr = address_of_flag(flag);
+JVMFlag::Error JVMFlagEx::uintxAtPut(JVMFlagsEnum flag, uintx value, JVMFlag::Flags origin) {
+  JVMFlag* faddr = flag_from_enum(flag);
   guarantee(faddr != NULL && faddr->is_uintx(), "wrong flag type");
   return JVMFlag::uintxAtPut(faddr, &value, origin);
 }
 
-JVMFlag::Error JVMFlag::uint64_tAt(const char* name, size_t len, uint64_t* value, bool allow_locked, bool return_flag) {
-  JVMFlag* result = JVMFlag::find_flag(name, len, allow_locked, return_flag);
-  if (result == NULL) return JVMFlag::INVALID_FLAG;
-  if (!result->is_uint64_t()) return JVMFlag::WRONG_FORMAT;
-  *value = result->get_uint64_t();
+JVMFlag::Error JVMFlag::uint64_tAt(const JVMFlag* flag, uint64_t* value) {
+  if (flag == NULL) return JVMFlag::INVALID_FLAG;
+  if (!flag->is_uint64_t()) return JVMFlag::WRONG_FORMAT;
+  *value = flag->get_uint64_t();
   return JVMFlag::SUCCESS;
 }
 
-static JVMFlag::Error apply_constraint_and_check_range_uint64_t(const char* name, uint64_t new_value, bool verbose) {
+static JVMFlag::Error apply_constraint_and_check_range_uint64_t(const JVMFlag* flag, uint64_t new_value, bool verbose) {
   JVMFlag::Error status = JVMFlag::SUCCESS;
-  JVMFlagRange* range = JVMFlagRangeList::find(name);
+  JVMFlagRange* range = JVMFlagRangeList::find(flag);
   if (range != NULL) {
     status = range->check_uint64_t(new_value, verbose);
   }
   if (status == JVMFlag::SUCCESS) {
-    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(name);
+    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(flag);
     if (constraint != NULL) {
       status = constraint->apply_uint64_t(new_value, verbose);
     }
@@ -1266,47 +1087,39 @@ static JVMFlag::Error apply_constraint_and_check_range_uint64_t(const char* name
 }
 
 JVMFlag::Error JVMFlag::uint64_tAtPut(JVMFlag* flag, uint64_t* value, JVMFlag::Flags origin) {
-  const char* name;
   if (flag == NULL) return JVMFlag::INVALID_FLAG;
   if (!flag->is_uint64_t()) return JVMFlag::WRONG_FORMAT;
-  name = flag->_name;
-  JVMFlag::Error check = apply_constraint_and_check_range_uint64_t(name, *value, !JVMFlagConstraintList::validated_after_ergo());
+  JVMFlag::Error check = apply_constraint_and_check_range_uint64_t(flag, *value, !JVMFlagConstraintList::validated_after_ergo());
   if (check != JVMFlag::SUCCESS) return check;
   uint64_t old_value = flag->get_uint64_t();
-  trace_flag_changed<EventUnsignedLongFlagChanged, u8>(name, old_value, *value, origin);
-  check = flag->set_uint64_t(*value);
+  trace_flag_changed<EventUnsignedLongFlagChanged, u8>(flag, old_value, *value, origin);
+  flag->set_uint64_t(*value);
   *value = old_value;
   flag->set_origin(origin);
-  return check;
+  return JVMFlag::SUCCESS;
 }
 
-JVMFlag::Error JVMFlag::uint64_tAtPut(const char* name, size_t len, uint64_t* value, JVMFlag::Flags origin) {
-  JVMFlag* result = JVMFlag::find_flag(name, len);
-  return uint64_tAtPut(result, value, origin);
-}
-
-JVMFlag::Error JVMFlagEx::uint64_tAtPut(JVMFlagsWithType flag, uint64_t value, JVMFlag::Flags origin) {
-  JVMFlag* faddr = address_of_flag(flag);
+JVMFlag::Error JVMFlagEx::uint64_tAtPut(JVMFlagsEnum flag, uint64_t value, JVMFlag::Flags origin) {
+  JVMFlag* faddr = flag_from_enum(flag);
   guarantee(faddr != NULL && faddr->is_uint64_t(), "wrong flag type");
   return JVMFlag::uint64_tAtPut(faddr, &value, origin);
 }
 
-JVMFlag::Error JVMFlag::size_tAt(const char* name, size_t len, size_t* value, bool allow_locked, bool return_flag) {
-  JVMFlag* result = JVMFlag::find_flag(name, len, allow_locked, return_flag);
-  if (result == NULL) return JVMFlag::INVALID_FLAG;
-  if (!result->is_size_t()) return JVMFlag::WRONG_FORMAT;
-  *value = result->get_size_t();
+JVMFlag::Error JVMFlag::size_tAt(const JVMFlag* flag, size_t* value) {
+  if (flag == NULL) return JVMFlag::INVALID_FLAG;
+  if (!flag->is_size_t()) return JVMFlag::WRONG_FORMAT;
+  *value = flag->get_size_t();
   return JVMFlag::SUCCESS;
 }
 
-static JVMFlag::Error apply_constraint_and_check_range_size_t(const char* name, size_t new_value, bool verbose) {
+static JVMFlag::Error apply_constraint_and_check_range_size_t(const JVMFlag* flag, size_t new_value, bool verbose) {
   JVMFlag::Error status = JVMFlag::SUCCESS;
-  JVMFlagRange* range = JVMFlagRangeList::find(name);
+  JVMFlagRange* range = JVMFlagRangeList::find(flag);
   if (range != NULL) {
     status = range->check_size_t(new_value, verbose);
   }
   if (status == JVMFlag::SUCCESS) {
-    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(name);
+    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(flag);
     if (constraint != NULL) {
       status = constraint->apply_size_t(new_value, verbose);
     }
@@ -1316,47 +1129,39 @@ static JVMFlag::Error apply_constraint_and_check_range_size_t(const char* name, 
 
 
 JVMFlag::Error JVMFlag::size_tAtPut(JVMFlag* flag, size_t* value, JVMFlag::Flags origin) {
-  const char* name;
   if (flag == NULL) return JVMFlag::INVALID_FLAG;
   if (!flag->is_size_t()) return JVMFlag::WRONG_FORMAT;
-  name = flag->_name;
-  JVMFlag::Error check = apply_constraint_and_check_range_size_t(name, *value, !JVMFlagConstraintList::validated_after_ergo());
+  JVMFlag::Error check = apply_constraint_and_check_range_size_t(flag, *value, !JVMFlagConstraintList::validated_after_ergo());
   if (check != JVMFlag::SUCCESS) return check;
   size_t old_value = flag->get_size_t();
-  trace_flag_changed<EventUnsignedLongFlagChanged, u8>(name, old_value, *value, origin);
-  check = flag->set_size_t(*value);
+  trace_flag_changed<EventUnsignedLongFlagChanged, u8>(flag, old_value, *value, origin);
+  flag->set_size_t(*value);
   *value = old_value;
   flag->set_origin(origin);
-  return check;
+  return JVMFlag::SUCCESS;
 }
 
-JVMFlag::Error JVMFlag::size_tAtPut(const char* name, size_t len, size_t* value, JVMFlag::Flags origin) {
-  JVMFlag* result = JVMFlag::find_flag(name, len);
-  return size_tAtPut(result, value, origin);
-}
-
-JVMFlag::Error JVMFlagEx::size_tAtPut(JVMFlagsWithType flag, size_t value, JVMFlag::Flags origin) {
-  JVMFlag* faddr = address_of_flag(flag);
+JVMFlag::Error JVMFlagEx::size_tAtPut(JVMFlagsEnum flag, size_t value, JVMFlag::Flags origin) {
+  JVMFlag* faddr = flag_from_enum(flag);
   guarantee(faddr != NULL && faddr->is_size_t(), "wrong flag type");
   return JVMFlag::size_tAtPut(faddr, &value, origin);
 }
 
-JVMFlag::Error JVMFlag::doubleAt(const char* name, size_t len, double* value, bool allow_locked, bool return_flag) {
-  JVMFlag* result = JVMFlag::find_flag(name, len, allow_locked, return_flag);
-  if (result == NULL) return JVMFlag::INVALID_FLAG;
-  if (!result->is_double()) return JVMFlag::WRONG_FORMAT;
-  *value = result->get_double();
+JVMFlag::Error JVMFlag::doubleAt(const JVMFlag* flag, double* value) {
+  if (flag == NULL) return JVMFlag::INVALID_FLAG;
+  if (!flag->is_double()) return JVMFlag::WRONG_FORMAT;
+  *value = flag->get_double();
   return JVMFlag::SUCCESS;
 }
 
-static JVMFlag::Error apply_constraint_and_check_range_double(const char* name, double new_value, bool verbose) {
+static JVMFlag::Error apply_constraint_and_check_range_double(const JVMFlag* flag, double new_value, bool verbose) {
   JVMFlag::Error status = JVMFlag::SUCCESS;
-  JVMFlagRange* range = JVMFlagRangeList::find(name);
+  JVMFlagRange* range = JVMFlagRangeList::find(flag);
   if (range != NULL) {
     status = range->check_double(new_value, verbose);
   }
   if (status == JVMFlag::SUCCESS) {
-    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(name);
+    JVMFlagConstraint* constraint = JVMFlagConstraintList::find_if_needs_check(flag);
     if (constraint != NULL) {
       status = constraint->apply_double(new_value, verbose);
     }
@@ -1365,72 +1170,63 @@ static JVMFlag::Error apply_constraint_and_check_range_double(const char* name, 
 }
 
 JVMFlag::Error JVMFlag::doubleAtPut(JVMFlag* flag, double* value, JVMFlag::Flags origin) {
-  const char* name;
   if (flag == NULL) return JVMFlag::INVALID_FLAG;
   if (!flag->is_double()) return JVMFlag::WRONG_FORMAT;
-  name = flag->_name;
-  JVMFlag::Error check = apply_constraint_and_check_range_double(name, *value, !JVMFlagConstraintList::validated_after_ergo());
+  JVMFlag::Error check = apply_constraint_and_check_range_double(flag, *value, !JVMFlagConstraintList::validated_after_ergo());
   if (check != JVMFlag::SUCCESS) return check;
   double old_value = flag->get_double();
-  trace_flag_changed<EventDoubleFlagChanged, double>(name, old_value, *value, origin);
-  check = flag->set_double(*value);
+  trace_flag_changed<EventDoubleFlagChanged, double>(flag, old_value, *value, origin);
+  flag->set_double(*value);
   *value = old_value;
   flag->set_origin(origin);
-  return check;
+  return JVMFlag::SUCCESS;
 }
 
-JVMFlag::Error JVMFlag::doubleAtPut(const char* name, size_t len, double* value, JVMFlag::Flags origin) {
-  JVMFlag* result = JVMFlag::find_flag(name, len);
-  return doubleAtPut(result, value, origin);
-}
-
-JVMFlag::Error JVMFlagEx::doubleAtPut(JVMFlagsWithType flag, double value, JVMFlag::Flags origin) {
-  JVMFlag* faddr = address_of_flag(flag);
+JVMFlag::Error JVMFlagEx::doubleAtPut(JVMFlagsEnum flag, double value, JVMFlag::Flags origin) {
+  JVMFlag* faddr = flag_from_enum(flag);
   guarantee(faddr != NULL && faddr->is_double(), "wrong flag type");
   return JVMFlag::doubleAtPut(faddr, &value, origin);
 }
 
-JVMFlag::Error JVMFlag::ccstrAt(const char* name, size_t len, ccstr* value, bool allow_locked, bool return_flag) {
-  JVMFlag* result = JVMFlag::find_flag(name, len, allow_locked, return_flag);
-  if (result == NULL) return JVMFlag::INVALID_FLAG;
-  if (!result->is_ccstr()) return JVMFlag::WRONG_FORMAT;
-  *value = result->get_ccstr();
+JVMFlag::Error JVMFlag::ccstrAt(const JVMFlag* flag, ccstr* value) {
+  if (flag == NULL) return JVMFlag::INVALID_FLAG;
+  if (!flag->is_ccstr()) return JVMFlag::WRONG_FORMAT;
+  *value = flag->get_ccstr();
   return JVMFlag::SUCCESS;
 }
 
-JVMFlag::Error JVMFlag::ccstrAtPut(const char* name, size_t len, ccstr* value, JVMFlag::Flags origin) {
-  JVMFlag* result = JVMFlag::find_flag(name, len);
-  if (result == NULL) return JVMFlag::INVALID_FLAG;
-  if (!result->is_ccstr()) return JVMFlag::WRONG_FORMAT;
-  ccstr old_value = result->get_ccstr();
-  trace_flag_changed<EventStringFlagChanged, const char*>(name, old_value, *value, origin);
+JVMFlag::Error JVMFlag::ccstrAtPut(JVMFlag* flag, ccstr* value, JVMFlag::Flags origin) {
+  if (flag == NULL) return JVMFlag::INVALID_FLAG;
+  if (!flag->is_ccstr()) return JVMFlag::WRONG_FORMAT;
+  ccstr old_value = flag->get_ccstr();
+  trace_flag_changed<EventStringFlagChanged, const char*>(flag, old_value, *value, origin);
   char* new_value = NULL;
   if (*value != NULL) {
     new_value = os::strdup_check_oom(*value);
   }
-  JVMFlag::Error check = result->set_ccstr(new_value);
-  if (result->is_default() && old_value != NULL) {
+  flag->set_ccstr(new_value);
+  if (flag->is_default() && old_value != NULL) {
     // Prior value is NOT heap allocated, but was a literal constant.
     old_value = os::strdup_check_oom(old_value);
   }
   *value = old_value;
-  result->set_origin(origin);
-  return check;
+  flag->set_origin(origin);
+  return JVMFlag::SUCCESS;
 }
 
-JVMFlag::Error JVMFlagEx::ccstrAtPut(JVMFlagsWithType flag, ccstr value, JVMFlag::Flags origin) {
-  JVMFlag* faddr = address_of_flag(flag);
+JVMFlag::Error JVMFlagEx::ccstrAtPut(JVMFlagsEnum flag, ccstr value, JVMFlag::Flags origin) {
+  JVMFlag* faddr = flag_from_enum(flag);
   guarantee(faddr != NULL && faddr->is_ccstr(), "wrong flag type");
   ccstr old_value = faddr->get_ccstr();
-  trace_flag_changed<EventStringFlagChanged, const char*>(faddr->_name, old_value, value, origin);
+  trace_flag_changed<EventStringFlagChanged, const char*>(faddr, old_value, value, origin);
   char* new_value = os::strdup_check_oom(value);
-  JVMFlag::Error check = faddr->set_ccstr(new_value);
+  faddr->set_ccstr(new_value);
   if (!faddr->is_default() && old_value != NULL) {
     // Prior value is heap allocated so free it.
     FREE_C_HEAP_ARRAY(char, old_value);
   }
   faddr->set_origin(origin);
-  return check;
+  return JVMFlag::SUCCESS;
 }
 
 extern "C" {
@@ -1475,18 +1271,12 @@ void JVMFlag::verify() {
 
 void JVMFlag::printFlags(outputStream* out, bool withComments, bool printRanges, bool skipDefaults) {
   // Print the flags sorted by name
-  // note: this method is called before the thread structure is in place
-  //       which means resource allocation cannot be used.
+  // Note: This method may be called before the thread structure is in place
+  //       which means resource allocation cannot be used. Also, it may be
+  //       called as part of error reporting, so handle native OOMs gracefully.
 
   // The last entry is the null entry.
   const size_t length = JVMFlag::numFlags - 1;
-
-  // Sort
-  JVMFlag** array = NEW_C_HEAP_ARRAY(JVMFlag*, length, mtArguments);
-  for (size_t i = 0; i < length; i++) {
-    array[i] = &flagTable[i];
-  }
-  qsort(array, length, sizeof(JVMFlag*), compare_flags);
 
   // Print
   if (!printRanges) {
@@ -1495,12 +1285,28 @@ void JVMFlag::printFlags(outputStream* out, bool withComments, bool printRanges,
     out->print_cr("[Global flags ranges]");
   }
 
-  for (size_t i = 0; i < length; i++) {
-    if (array[i]->is_unlocked() && !(skipDefaults && array[i]->is_default())) {
-      array[i]->print_on(out, withComments, printRanges);
+  // Sort
+  JVMFlag** array = NEW_C_HEAP_ARRAY_RETURN_NULL(JVMFlag*, length, mtArguments);
+  if (array != NULL) {
+    for (size_t i = 0; i < length; i++) {
+      array[i] = &flagTable[i];
+    }
+    qsort(array, length, sizeof(JVMFlag*), compare_flags);
+
+    for (size_t i = 0; i < length; i++) {
+      if (array[i]->is_unlocked() && !(skipDefaults && array[i]->is_default())) {
+        array[i]->print_on(out, withComments, printRanges);
+      }
+    }
+    FREE_C_HEAP_ARRAY(JVMFlag*, array);
+  } else {
+    // OOM? Print unsorted.
+    for (size_t i = 0; i < length; i++) {
+      if (flagTable[i].is_unlocked() && !(skipDefaults && flagTable[i].is_default())) {
+        flagTable[i].print_on(out, withComments, printRanges);
+      }
     }
   }
-  FREE_C_HEAP_ARRAY(JVMFlag*, array);
 }
 
 void JVMFlag::printError(bool verbose, const char* msg, ...) {
@@ -1511,4 +1317,3 @@ void JVMFlag::printError(bool verbose, const char* msg, ...) {
     va_end(listPointer);
   }
 }
-

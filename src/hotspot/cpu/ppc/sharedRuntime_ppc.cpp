@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2018 SAP SE. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@
 #include "interpreter/interp_masm.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/compiledICHolder.hpp"
+#include "oops/klass.inline.hpp"
 #include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/vframeArray.hpp"
@@ -570,7 +571,6 @@ void SharedRuntime::generate_trampoline(MacroAssembler *masm, address destinatio
   __ bctr();
 }
 
-#ifdef COMPILER2
 static int reg2slot(VMReg r) {
   return r->reg2stack() + SharedRuntime::out_preserve_stack_slots();
 }
@@ -578,7 +578,6 @@ static int reg2slot(VMReg r) {
 static int reg2offset(VMReg r) {
   return (r->reg2stack() + SharedRuntime::out_preserve_stack_slots()) * VMRegImpl::stack_slot_size;
 }
-#endif
 
 // ---------------------------------------------------------------------------
 // Read the array of BasicTypes from a signature, and compute where the
@@ -1142,7 +1141,7 @@ void SharedRuntime::gen_i2c_adapter(MacroAssembler *masm,
       }
       if (!r_2->is_valid()) {
         // Not sure we need to do this but it shouldn't hurt.
-        if (sig_bt[i] == T_OBJECT || sig_bt[i] == T_ADDRESS || sig_bt[i] == T_ARRAY) {
+        if (is_reference_type(sig_bt[i]) || sig_bt[i] == T_ADDRESS) {
           __ ld(r, ld_offset, ld_ptr);
           ld_offset-=wordSize;
         } else {
@@ -1274,12 +1273,36 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
 
   // entry: c2i
 
-  c2i_entry = gen_c2i_adapter(masm, total_args_passed, comp_args_on_stack, sig_bt, regs, call_interpreter, ientry);
+  c2i_entry = __ pc();
 
-  return AdapterHandlerLibrary::new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry);
+  // Class initialization barrier for static methods
+  address c2i_no_clinit_check_entry = NULL;
+  if (VM_Version::supports_fast_class_init_checks()) {
+    Label L_skip_barrier;
+
+    { // Bypass the barrier for non-static methods
+      __ lwz(R0, in_bytes(Method::access_flags_offset()), R19_method);
+      __ andi_(R0, R0, JVM_ACC_STATIC);
+      __ beq(CCR0, L_skip_barrier); // non-static
+    }
+
+    Register klass = R11_scratch1;
+    __ load_method_holder(klass, R19_method);
+    __ clinit_barrier(klass, R16_thread, &L_skip_barrier /*L_fast_path*/);
+
+    __ load_const_optimized(klass, SharedRuntime::get_handle_wrong_method_stub(), R0);
+    __ mtctr(klass);
+    __ bctr();
+
+    __ bind(L_skip_barrier);
+    c2i_no_clinit_check_entry = __ pc();
+  }
+
+  gen_c2i_adapter(masm, total_args_passed, comp_args_on_stack, sig_bt, regs, call_interpreter, ientry);
+
+  return AdapterHandlerLibrary::new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry, c2i_no_clinit_check_entry);
 }
 
-#ifdef COMPILER2
 // An oop arg. Must pass a handle not the oop itself.
 static void object_move(MacroAssembler* masm,
                         int frame_size_in_slots,
@@ -1714,15 +1737,14 @@ static void verify_oop_args(MacroAssembler* masm,
   Register temp_reg = R19_method;  // not part of any compiled calling seq
   if (VerifyOops) {
     for (int i = 0; i < method->size_of_parameters(); i++) {
-      if (sig_bt[i] == T_OBJECT ||
-          sig_bt[i] == T_ARRAY) {
+      if (is_reference_type(sig_bt[i])) {
         VMReg r = regs[i].first();
         assert(r->is_valid(), "bad oop arg");
         if (r->is_stack()) {
           __ ld(temp_reg, reg2offset(r), R1_SP);
-          __ verify_oop(temp_reg);
+          __ verify_oop(temp_reg, FILE_AND_LINE);
         } else {
-          __ verify_oop(r->as_Register());
+          __ verify_oop(r->as_Register(), FILE_AND_LINE);
         }
       }
     }
@@ -1788,8 +1810,6 @@ static void gen_special_dispatch(MacroAssembler* masm,
                                                  receiver_reg, member_reg, /*for_compiler_entry:*/ true);
 }
 
-#endif // COMPILER2
-
 // ---------------------------------------------------------------------------
 // Generate a native wrapper for a given method. The method takes arguments
 // in the Java compiled code convention, marshals them to the native
@@ -1824,8 +1844,8 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
                                                 int compile_id,
                                                 BasicType *in_sig_bt,
                                                 VMRegPair *in_regs,
-                                                BasicType ret_type) {
-#ifdef COMPILER2
+                                                BasicType ret_type,
+                                                address critical_entry) {
   if (method->is_method_handle_intrinsic()) {
     vmIntrinsics::ID iid = method->intrinsic_id();
     intptr_t start = (intptr_t)__ pc();
@@ -1849,7 +1869,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   }
 
   bool is_critical_native = true;
-  address native_func = method->critical_native_function();
+  address native_func = critical_entry;
   if (native_func == NULL) {
     native_func = method->native_function();
     is_critical_native = false;
@@ -1908,34 +1928,21 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
       out_sig_bt[argc++] = in_sig_bt[i];
     }
   } else {
-    Thread* THREAD = Thread::current();
     in_elem_bt = NEW_RESOURCE_ARRAY(BasicType, total_c_args);
     SignatureStream ss(method->signature());
     int o = 0;
     for (int i = 0; i < total_in_args ; i++, o++) {
       if (in_sig_bt[i] == T_ARRAY) {
         // Arrays are passed as int, elem* pair
-        Symbol* atype = ss.as_symbol(CHECK_NULL);
-        const char* at = atype->as_C_string();
-        if (strlen(at) == 2) {
-          assert(at[0] == '[', "must be");
-          switch (at[1]) {
-            case 'B': in_elem_bt[o] = T_BYTE; break;
-            case 'C': in_elem_bt[o] = T_CHAR; break;
-            case 'D': in_elem_bt[o] = T_DOUBLE; break;
-            case 'F': in_elem_bt[o] = T_FLOAT; break;
-            case 'I': in_elem_bt[o] = T_INT; break;
-            case 'J': in_elem_bt[o] = T_LONG; break;
-            case 'S': in_elem_bt[o] = T_SHORT; break;
-            case 'Z': in_elem_bt[o] = T_BOOLEAN; break;
-            default: ShouldNotReachHere();
-          }
-        }
+        ss.skip_array_prefix(1);  // skip one '['
+        assert(ss.is_primitive(), "primitive type expected");
+        in_elem_bt[o] = ss.type();
       } else {
         in_elem_bt[o] = T_VOID;
       }
       if (in_sig_bt[i] != T_VOID) {
-        assert(in_sig_bt[i] == ss.type(), "must match");
+        assert(in_sig_bt[i] == ss.type() ||
+               in_sig_bt[i] == T_ARRAY, "must match");
         ss.next();
       }
     }
@@ -2083,12 +2090,12 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
 
   // Check ic: object class == cached class?
   if (!method_is_static) {
-  Register ic = as_Register(Matcher::inline_cache_reg_encode());
+  Register ic = R19_inline_cache_reg;
   Register receiver_klass = r_temp_1;
 
   __ cmpdi(CCR0, R3_ARG1, 0);
   __ beq(CCR0, ic_miss);
-  __ verify_oop(R3_ARG1);
+  __ verify_oop(R3_ARG1, FILE_AND_LINE);
   __ load_klass(receiver_klass, R3_ARG1);
 
   __ cmpd(CCR0, receiver_klass, ic);
@@ -2105,6 +2112,21 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     // because critical section can be large and
     // abort anyway. Also nmethod can be deoptimized.
     __ tabort_();
+  }
+
+  if (VM_Version::supports_fast_class_init_checks() && method->needs_clinit_barrier()) {
+    Label L_skip_barrier;
+    Register klass = r_temp_1;
+    // Notify OOP recorder (don't need the relocation)
+    AddressLiteral md = __ constant_metadata_address(method->method_holder());
+    __ load_const_optimized(klass, md.value(), R0);
+    __ clinit_barrier(klass, R16_thread, &L_skip_barrier /*L_fast_path*/);
+
+    __ load_const_optimized(klass, SharedRuntime::get_handle_wrong_method_stub(), R0);
+    __ mtctr(klass);
+    __ bctr();
+
+    __ bind(L_skip_barrier);
   }
 
   __ save_LR_CR(r_temp_1);
@@ -2562,7 +2584,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   // Unbox oop result, e.g. JNIHandles::resolve value.
   // --------------------------------------------------------------------------
 
-  if (ret_type == T_OBJECT || ret_type == T_ARRAY) {
+  if (is_reference_type(ret_type)) {
     __ resolve_jobject(R3_RET, r_temp_1, r_temp_2, /* needs_frame */ false);
   }
 
@@ -2598,12 +2620,10 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
 
   // Handler for pending exceptions (out-of-line).
   // --------------------------------------------------------------------------
-
   // Since this is a native call, we know the proper exception handler
   // is the empty function. We just pop this frame and then jump to
   // forward_exception_entry.
   if (!is_critical_native) {
-  __ align(InteriorEntryAlignment);
   __ bind(handle_pending_exception);
 
   __ pop_frame();
@@ -2616,7 +2636,6 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   // --------------------------------------------------------------------------
 
   if (!method_is_static) {
-  __ align(InteriorEntryAlignment);
   __ bind(ic_miss);
 
   __ b64_patchable((address)SharedRuntime::get_ic_miss_stub(),
@@ -2643,10 +2662,6 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   }
 
   return nm;
-#else
-  ShouldNotReachHere();
-  return NULL;
-#endif // COMPILER2
 }
 
 // This function returns the adjust size (in number of words) to a c2i adapter
@@ -2680,10 +2695,6 @@ static void push_skeleton_frame(MacroAssembler* masm, bool deopt,
   __ ld(frame_size_reg, 0, frame_sizes_reg);
   __ std(pc_reg, _abi(lr), R1_SP);
   __ push_frame(frame_size_reg, R0/*tmp*/);
-#ifdef ASSERT
-  __ load_const_optimized(pc_reg, 0x5afe);
-  __ std(pc_reg, _ijava_state_neg(ijava_reserved), R1_SP);
-#endif
   __ std(R1_SP, _ijava_state_neg(sender_sp), R1_SP);
   __ addi(number_of_frames_reg, number_of_frames_reg, -1);
   __ addi(frame_sizes_reg, frame_sizes_reg, wordSize);
@@ -2756,10 +2767,6 @@ static void push_skeleton_frames(MacroAssembler* masm, bool deopt,
   __ std(R12_scratch2, _abi(lr), R1_SP);
 
   // Initialize initial_caller_sp.
-#ifdef ASSERT
- __ load_const_optimized(pc_reg, 0x5afe);
- __ std(pc_reg, _ijava_state_neg(ijava_reserved), R1_SP);
-#endif
  __ std(frame_size_reg, _ijava_state_neg(sender_sp), R1_SP);
 
 #ifdef ASSERT
@@ -2831,7 +2838,7 @@ void SharedRuntime::generate_deopt_blob() {
   // We can't grab a free register here, because all registers may
   // contain live values, so let the RegisterSaver do the adjustment
   // of the return pc.
-  const int return_pc_adjustment_no_exception = -HandlerImpl::size_deopt_handler();
+  const int return_pc_adjustment_no_exception = -MacroAssembler::bl64_patchable_size;
 
   // Push the "unpack frame"
   // Save everything in sight.
@@ -3221,7 +3228,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
   // No exception case.
   __ BIND(noException);
 
-  if (SafepointMechanism::uses_thread_local_poll() && !cause_return) {
+  if (!cause_return) {
     Label no_adjust;
     // If our stashed return pc was modified by the runtime we avoid touching it
     __ ld(R0, frame_size_in_bytes + _abi(lr), R1_SP);

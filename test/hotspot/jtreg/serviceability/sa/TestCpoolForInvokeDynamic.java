@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,25 +33,26 @@ import sun.jvm.hotspot.utilities.MethodArray;
 import sun.jvm.hotspot.ui.classbrowser.HTMLGenerator;
 
 import jdk.test.lib.apps.LingeredApp;
+import jdk.test.lib.Asserts;
 import jdk.test.lib.JDKToolLauncher;
 import jdk.test.lib.JDKToolFinder;
 import jdk.test.lib.Platform;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.SA.SATestUtils;
 import jdk.test.lib.Utils;
-import jdk.test.lib.Asserts;
 
 /**
  * @test
  * @library /test/lib
- * @requires vm.hasSAandCanAttach & os.family != "mac"
+ * @requires vm.hasSA
  * @modules java.base/jdk.internal.misc
  *          jdk.hotspot.agent/sun.jvm.hotspot
  *          jdk.hotspot.agent/sun.jvm.hotspot.utilities
  *          jdk.hotspot.agent/sun.jvm.hotspot.oops
  *          jdk.hotspot.agent/sun.jvm.hotspot.debugger
  *          jdk.hotspot.agent/sun.jvm.hotspot.ui.classbrowser
- * @run main/othervm TestCpoolForInvokeDynamic
+ * @run main TestCpoolForInvokeDynamic
  */
 
 public class TestCpoolForInvokeDynamic {
@@ -89,8 +90,8 @@ public class TestCpoolForInvokeDynamic {
     private static void createAnotherToAttach(
                             String[] instanceKlassNames,
                             long lingeredAppPid) throws Exception {
-
-        String[] toolArgs = {
+        // Start a new process to attach to the lingered app
+        ProcessBuilder processBuilder = ProcessTools.createJavaProcessBuilder(
             "--add-modules=jdk.hotspot.agent",
             "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot=ALL-UNNAMED",
             "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.utilities=ALL-UNNAMED",
@@ -98,11 +99,8 @@ public class TestCpoolForInvokeDynamic {
             "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.debugger=ALL-UNNAMED",
             "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.ui.classbrowser=ALL-UNNAMED",
             "TestCpoolForInvokeDynamic",
-            Long.toString(lingeredAppPid)
-        };
-
-        // Start a new process to attach to the lingered app
-        ProcessBuilder processBuilder = ProcessTools.createJavaProcessBuilder(toolArgs);
+            Long.toString(lingeredAppPid));
+        SATestUtils.addPrivilegesIfNeeded(processBuilder);
         OutputAnalyzer SAOutput = ProcessTools.executeProcess(processBuilder);
         SAOutput.shouldHaveExitValue(0);
         System.out.println(SAOutput.getOutput());
@@ -115,6 +113,7 @@ public class TestCpoolForInvokeDynamic {
     }
 
     public static void main (String... args) throws Exception {
+        SATestUtils.skipIfCannotAttach(); // throws SkippedException if attach not expected to work.
 
         String[] instanceKlassNames = new String[] {
                                           "LingeredAppWithInvokeDynamic"
@@ -122,12 +121,8 @@ public class TestCpoolForInvokeDynamic {
 
         if (args == null || args.length == 0) {
             try {
-                List<String> vmArgs = new ArrayList<String>();
-                vmArgs.add("-XX:+UsePerfData");
-                vmArgs.addAll(Utils.getVmOptions());
-
                 theApp = new LingeredAppWithInvokeDynamic();
-                LingeredApp.startApp(vmArgs, theApp);
+                LingeredApp.startApp(theApp, "-XX:+UsePerfData");
                 createAnotherToAttach(instanceKlassNames,
                                       theApp.getPid());
             } finally {

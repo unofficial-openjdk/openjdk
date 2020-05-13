@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ import java.util.StringTokenizer;
  * signify a wildcard match. For example: "foo.*" and "*" signify a wildcard
  * match, while "*foo" and "a*b" do not.
  * <P>
- * The following table lists all the possible NetPermission target names,
+ * The following table lists the standard NetPermission target names,
  * and for each provides a description of what the permission allows
  * and a discussion of the risks of granting code the permission.
  *
@@ -145,6 +145,15 @@ import java.util.StringTokenizer;
  *   </tr>
  *
  * <tr>
+ *   <th scope="row">setSocketImpl</th>
+ *   <td>The ability to create a sub-class of Socket or ServerSocket with a
+ *   user specified SocketImpl.</td>
+ *   <td>Malicious user-defined SocketImpls can change the behavior of
+ *   Socket and ServerSocket in surprising ways, by virtue of their
+ *   ability to access the protected fields of SocketImpl.</td>
+ *   </tr>
+ *
+ * <tr>
  *   <th scope="row">specifyStreamHandler</th>
  *   <td>The ability
  *   to specify a stream handler when constructing a URL</td>
@@ -155,8 +164,12 @@ import java.util.StringTokenizer;
  *   creating a ProtectionDomain/CodeSource for a class even though
  *   that class really didn't come from that location.</td>
  * </tr>
-   </tbody>
+ * </tbody>
  * </table>
+ *
+ * @implNote
+ * Implementations may define additional target names, but should use naming
+ * conventions such as reverse domain name notation to avoid name clashes.
  *
  * @see java.security.BasicPermission
  * @see java.security.Permission
@@ -171,6 +184,7 @@ import java.util.StringTokenizer;
  */
 
 public final class NetPermission extends BasicPermission {
+    @java.io.Serial
     private static final long serialVersionUID = -8343910153355041693L;
 
     /**

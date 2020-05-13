@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,13 +39,15 @@
 #include "interpreter/interpreter.hpp"
 #include "logging/log.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/compiledICHolder.hpp"
+#include "oops/klass.inline.hpp"
 #include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/vframeArray.hpp"
+#include "runtime/vm_version.hpp"
 #include "utilities/align.hpp"
 #include "utilities/formatBuffer.hpp"
-#include "vm_version_x86.hpp"
 #include "vmreg_x86.inline.hpp"
 #ifdef COMPILER1
 #include "c1/c1_Runtime1.hpp"
@@ -970,10 +972,36 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
 
   address c2i_entry = __ pc();
 
+  // Class initialization barrier for static methods
+  address c2i_no_clinit_check_entry = NULL;
+  if (VM_Version::supports_fast_class_init_checks()) {
+    Label L_skip_barrier;
+    Register method = rbx;
+
+    { // Bypass the barrier for non-static methods
+      Register flags  = rscratch1;
+      __ movl(flags, Address(method, Method::access_flags_offset()));
+      __ testl(flags, JVM_ACC_STATIC);
+      __ jcc(Assembler::zero, L_skip_barrier); // non-static
+    }
+
+    Register klass = rscratch1;
+    __ load_method_holder(klass, method);
+    __ clinit_barrier(klass, r15_thread, &L_skip_barrier /*L_fast_path*/);
+
+    __ jump(RuntimeAddress(SharedRuntime::get_handle_wrong_method_stub())); // slow path
+
+    __ bind(L_skip_barrier);
+    c2i_no_clinit_check_entry = __ pc();
+  }
+
+  BarrierSetAssembler* bs = BarrierSet::barrier_set()->barrier_set_assembler();
+  bs->c2i_entry_barrier(masm);
+
   gen_c2i_adapter(masm, total_args_passed, comp_args_on_stack, sig_bt, regs, skip_fixup);
 
   __ flush();
-  return AdapterHandlerLibrary::new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry);
+  return AdapterHandlerLibrary::new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry, c2i_no_clinit_check_entry);
 }
 
 int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
@@ -1789,8 +1817,7 @@ static void verify_oop_args(MacroAssembler* masm,
   Register temp_reg = rbx;  // not part of any compiled calling seq
   if (VerifyOops) {
     for (int i = 0; i < method->size_of_parameters(); i++) {
-      if (sig_bt[i] == T_OBJECT ||
-          sig_bt[i] == T_ARRAY) {
+      if (is_reference_type(sig_bt[i])) {
         VMReg r = regs[i].first();
         assert(r->is_valid(), "bad oop arg");
         if (r->is_stack()) {
@@ -1897,7 +1924,8 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                                 int compile_id,
                                                 BasicType* in_sig_bt,
                                                 VMRegPair* in_regs,
-                                                BasicType ret_type) {
+                                                BasicType ret_type,
+                                                address critical_entry) {
   if (method->is_method_handle_intrinsic()) {
     vmIntrinsics::ID iid = method->intrinsic_id();
     intptr_t start = (intptr_t)__ pc();
@@ -1920,7 +1948,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                        (OopMapSet*)NULL);
   }
   bool is_critical_native = true;
-  address native_func = method->critical_native_function();
+  address native_func = critical_entry;
   if (native_func == NULL) {
     native_func = method->native_function();
     is_critical_native = false;
@@ -1967,7 +1995,6 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
       out_sig_bt[argc++] = in_sig_bt[i];
     }
   } else {
-    Thread* THREAD = Thread::current();
     in_elem_bt = NEW_RESOURCE_ARRAY(BasicType, total_in_args);
     SignatureStream ss(method->signature());
     for (int i = 0; i < total_in_args ; i++ ) {
@@ -1975,28 +2002,16 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
         // Arrays are passed as int, elem* pair
         out_sig_bt[argc++] = T_INT;
         out_sig_bt[argc++] = T_ADDRESS;
-        Symbol* atype = ss.as_symbol(CHECK_NULL);
-        const char* at = atype->as_C_string();
-        if (strlen(at) == 2) {
-          assert(at[0] == '[', "must be");
-          switch (at[1]) {
-            case 'B': in_elem_bt[i]  = T_BYTE; break;
-            case 'C': in_elem_bt[i]  = T_CHAR; break;
-            case 'D': in_elem_bt[i]  = T_DOUBLE; break;
-            case 'F': in_elem_bt[i]  = T_FLOAT; break;
-            case 'I': in_elem_bt[i]  = T_INT; break;
-            case 'J': in_elem_bt[i]  = T_LONG; break;
-            case 'S': in_elem_bt[i]  = T_SHORT; break;
-            case 'Z': in_elem_bt[i]  = T_BOOLEAN; break;
-            default: ShouldNotReachHere();
-          }
-        }
+        ss.skip_array_prefix(1);  // skip one '['
+        assert(ss.is_primitive(), "primitive type expected");
+        in_elem_bt[i] = ss.type();
       } else {
         out_sig_bt[argc++] = in_sig_bt[i];
         in_elem_bt[i] = T_VOID;
       }
       if (in_sig_bt[i] != T_VOID) {
-        assert(in_sig_bt[i] == ss.type(), "must match");
+        assert(in_sig_bt[i] == ss.type() ||
+               in_sig_bt[i] == T_ARRAY, "must match");
         ss.next();
       }
     }
@@ -2136,6 +2151,17 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   __ bind(hit);
 
   int vep_offset = ((intptr_t)__ pc()) - start;
+
+  if (VM_Version::supports_fast_class_init_checks() && method->needs_clinit_barrier()) {
+    Label L_skip_barrier;
+    Register klass = r10;
+    __ mov_metadata(klass, method->method_holder()); // InstanceKlass*
+    __ clinit_barrier(klass, r15_thread, &L_skip_barrier /*L_fast_path*/);
+
+    __ jump(RuntimeAddress(SharedRuntime::get_handle_wrong_method_stub())); // slow path
+
+    __ bind(L_skip_barrier);
+  }
 
 #ifdef COMPILER1
   // For Object.hashCode, System.identityHashCode try to pull hashCode from object header if available.
@@ -2679,7 +2705,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   __ reset_last_Java_frame(false);
 
   // Unbox oop result, e.g. JNIHandles::resolve value.
-  if (ret_type == T_OBJECT || ret_type == T_ARRAY) {
+  if (is_reference_type(ret_type)) {
     __ resolve_jobject(rax /* value */,
                        r15_thread /* thread */,
                        rcx /* tmp */);
@@ -3486,7 +3512,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
 #ifdef ASSERT
   Label bail;
 #endif
-  if (SafepointMechanism::uses_thread_local_poll() && !cause_return) {
+  if (!cause_return) {
     Label no_prefix, not_special;
 
     // If our stashed return pc was modified by the runtime we avoid touching it

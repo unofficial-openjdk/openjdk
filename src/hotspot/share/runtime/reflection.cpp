@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,11 @@
 #include "runtime/thread.inline.hpp"
 #include "runtime/vframe.inline.hpp"
 
-static void trace_class_resolution(const Klass* to_class) {
+static void trace_class_resolution(oop mirror) {
+  if (mirror == NULL || java_lang_Class::is_primitive(mirror)) {
+    return;
+  }
+  Klass* to_class = java_lang_Class::as_Klass(mirror);
   ResourceMark rm;
   int line_number = -1;
   const char * source_file = NULL;
@@ -92,7 +96,7 @@ oop Reflection::box(jvalue* value, BasicType type, TRAPS) {
   if (type == T_VOID) {
     return NULL;
   }
-  if (type == T_OBJECT || type == T_ARRAY) {
+  if (is_reference_type(type)) {
     // regular objects are not boxed
     return (oop) value->l;
   }
@@ -113,7 +117,7 @@ BasicType Reflection::unbox_for_primitive(oop box, jvalue* value, TRAPS) {
 
 BasicType Reflection::unbox_for_regular_object(oop box, jvalue* value) {
   // Note:  box is really the unboxed oop.  It might even be a Short, etc.!
-  value->l = (jobject) box;
+  value->l = cast_from_oop<jobject>(box);
   return T_OBJECT;
 }
 
@@ -224,7 +228,7 @@ BasicType Reflection::array_get(jvalue* value, arrayOop a, int index, TRAPS) {
     THROW_(vmSymbols::java_lang_ArrayIndexOutOfBoundsException(), T_ILLEGAL);
   }
   if (a->is_objArray()) {
-    value->l = (jobject) objArrayOop(a)->obj_at(index);
+    value->l = cast_from_oop<jobject>(objArrayOop(a)->obj_at(index));
     return T_OBJECT;
   } else {
     assert(a->is_typeArray(), "just checking");
@@ -707,7 +711,7 @@ bool Reflection::is_same_class_package(const Klass* class1, const Klass* class2)
 // Checks that the 'outer' klass has declared 'inner' as being an inner klass. If not,
 // throw an incompatible class change exception
 // If inner_is_member, require the inner to be a member of the outer.
-// If !inner_is_member, require the inner to be unsafe anonymous (a non-member).
+// If !inner_is_member, require the inner to be hidden or unsafe anonymous (non-members).
 // Caller is responsible for figuring out in advance which case must be true.
 void Reflection::check_for_inner_class(const InstanceKlass* outer, const InstanceKlass* inner,
                                        bool inner_is_member, TRAPS) {
@@ -750,33 +754,6 @@ void Reflection::check_for_inner_class(const InstanceKlass* outer, const Instanc
   );
 }
 
-// Utility method converting a single SignatureStream element into java.lang.Class instance
-static oop get_mirror_from_signature(const methodHandle& method,
-                                     SignatureStream* ss,
-                                     TRAPS) {
-
-
-  if (T_OBJECT == ss->type() || T_ARRAY == ss->type()) {
-    Symbol* name = ss->as_symbol(CHECK_NULL);
-    oop loader = method->method_holder()->class_loader();
-    oop protection_domain = method->method_holder()->protection_domain();
-    const Klass* k = SystemDictionary::resolve_or_fail(name,
-                                                       Handle(THREAD, loader),
-                                                       Handle(THREAD, protection_domain),
-                                                       true,
-                                                       CHECK_NULL);
-    if (log_is_enabled(Debug, class, resolve)) {
-      trace_class_resolution(k);
-    }
-    return k->java_mirror();
-  }
-
-  assert(ss->type() != T_VOID || ss->at_return_type(),
-    "T_VOID should only appear as return type");
-
-  return java_lang_Class::primitive_mirror(ss->type());
-}
-
 static objArrayHandle get_parameter_types(const methodHandle& method,
                                           int parameter_count,
                                           oop* return_type,
@@ -787,19 +764,20 @@ static objArrayHandle get_parameter_types(const methodHandle& method,
   int index = 0;
   // Collect parameter types
   ResourceMark rm(THREAD);
-  Symbol*  signature = method->signature();
-  SignatureStream ss(signature);
-  while (!ss.at_return_type()) {
-    oop mirror = get_mirror_from_signature(method, &ss, CHECK_(objArrayHandle()));
-    mirrors->obj_at_put(index++, mirror);
-    ss.next();
+  for (ResolvingSignatureStream ss(method()); !ss.is_done(); ss.next()) {
+    oop mirror = ss.as_java_mirror(SignatureStream::NCDFError, CHECK_(objArrayHandle()));
+    if (log_is_enabled(Debug, class, resolve)) {
+      trace_class_resolution(mirror);
+    }
+    if (!ss.at_return_type()) {
+      mirrors->obj_at_put(index++, mirror);
+    } else if (return_type != NULL) {
+      // Collect return type as well
+      assert(ss.at_return_type(), "return type should be present");
+      *return_type = mirror;
+    }
   }
   assert(index == parameter_count, "invalid parameter count");
-  if (return_type != NULL) {
-    // Collect return type as well
-    assert(ss.at_return_type(), "return type should be present");
-    *return_type = get_mirror_from_signature(method, &ss, CHECK_(objArrayHandle()));
-  }
   return mirrors;
 }
 
@@ -808,23 +786,11 @@ static objArrayHandle get_exception_types(const methodHandle& method, TRAPS) {
 }
 
 static Handle new_type(Symbol* signature, Klass* k, TRAPS) {
-  // Basic types
-  BasicType type = vmSymbols::signature_type(signature);
-  if (type != T_OBJECT) {
-    return Handle(THREAD, Universe::java_mirror(type));
-  }
-
-  Klass* result =
-    SystemDictionary::resolve_or_fail(signature,
-                                      Handle(THREAD, k->class_loader()),
-                                      Handle(THREAD, k->protection_domain()),
-                                      true, CHECK_(Handle()));
-
+  ResolvingSignatureStream ss(signature, k, false);
+  oop nt = ss.as_java_mirror(SignatureStream::NCDFError, CHECK_NH);
   if (log_is_enabled(Debug, class, resolve)) {
-    trace_class_resolution(result);
+    trace_class_resolution(nt);
   }
-
-  oop nt = result->java_mirror();
   return Handle(THREAD, nt);
 }
 
@@ -978,7 +944,7 @@ static methodHandle resolve_interface_call(InstanceKlass* klass,
                                        LinkInfo(klass, name, signature),
                                        true,
                                        CHECK_(methodHandle()));
-  return info.selected_method();
+  return methodHandle(THREAD, info.selected_method());
 }
 
 // Conversion
@@ -1085,11 +1051,12 @@ static oop invoke(InstanceKlass* klass,
           if (method->is_abstract()) {
             // new default: 6531596
             ResourceMark rm(THREAD);
+            stringStream ss;
+            ss.print("'");
+            Method::print_external_name(&ss, target_klass, method->name(), method->signature());
+            ss.print("'");
             Handle h_origexception = Exceptions::new_exception(THREAD,
-              vmSymbols::java_lang_AbstractMethodError(),
-              Method::name_and_sig_as_C_string(target_klass,
-              method->name(),
-              method->signature()));
+              vmSymbols::java_lang_AbstractMethodError(), ss.as_string());
             JavaCallArguments args(h_origexception);
             THROW_ARG_0(vmSymbols::java_lang_reflect_InvocationTargetException(),
               vmSymbols::throwable_void_signature(),
@@ -1104,10 +1071,13 @@ static oop invoke(InstanceKlass* klass,
   // an internal vtable bug. If you ever get this please let Karen know.
   if (method.is_null()) {
     ResourceMark rm(THREAD);
-    THROW_MSG_0(vmSymbols::java_lang_NoSuchMethodError(),
-                Method::name_and_sig_as_C_string(klass,
-                reflected_method->name(),
-                reflected_method->signature()));
+    stringStream ss;
+    ss.print("'");
+    Method::print_external_name(&ss, klass,
+                                     reflected_method->name(),
+                                     reflected_method->signature());
+    ss.print("'");
+    THROW_MSG_0(vmSymbols::java_lang_NoSuchMethodError(), ss.as_string());
   }
 
   assert(ptypes->is_objArray(), "just checking");

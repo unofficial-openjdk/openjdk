@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "asm/macroAssembler.hpp"
 #include "code/relocInfo.hpp"
+#include "memory/universe.hpp"
 #include "nativeInst_x86.hpp"
 #include "oops/compressedOops.inline.hpp"
 #include "oops/klass.inline.hpp"
@@ -50,7 +51,7 @@ void Relocation::pd_set_data_value(address x, intptr_t o, bool verify_only) {
   } else if (which == Assembler::narrow_oop_operand) {
     address disp = Assembler::locate_operand(addr(), which);
     // both compressed oops and compressed classes look the same
-    if (Universe::heap()->is_in_reserved((oop)x)) {
+    if (CompressedOops::is_in((void*)x)) {
     if (verify_only) {
       guarantee(*(uint32_t*) disp == CompressedOops::encode((oop)x), "instructions must match");
     } else {
@@ -58,9 +59,9 @@ void Relocation::pd_set_data_value(address x, intptr_t o, bool verify_only) {
     }
   } else {
       if (verify_only) {
-        guarantee(*(uint32_t*) disp == Klass::encode_klass((Klass*)x), "instructions must match");
+        guarantee(*(uint32_t*) disp == CompressedKlassPointers::encode((Klass*)x), "instructions must match");
       } else {
-        *(int32_t*) disp = Klass::encode_klass((Klass*)x);
+        *(int32_t*) disp = CompressedKlassPointers::encode((Klass*)x);
       }
     }
   } else {
@@ -181,28 +182,6 @@ address Relocation::pd_get_address_from_code() {
 }
 
 void poll_Relocation::fix_relocation_after_move(const CodeBuffer* src, CodeBuffer* dest) {
-#ifdef _LP64
-  typedef Assembler::WhichOperand WhichOperand;
-  WhichOperand which = (WhichOperand) format();
-#if !INCLUDE_JVMCI
-  if (SafepointMechanism::uses_global_page_poll()) {
-    assert((which == Assembler::disp32_operand) == !Assembler::is_polling_page_far(), "format not set correctly");
-  }
-#endif
-  if (which == Assembler::disp32_operand) {
-    assert(SafepointMechanism::uses_global_page_poll(), "should only have generated such a poll if global polling enabled");
-    address orig_addr = old_addr_for(addr(), src, dest);
-    NativeInstruction* oni = nativeInstruction_at(orig_addr);
-    int32_t* orig_disp = (int32_t*) Assembler::locate_operand(orig_addr, which);
-    // This poll_addr is incorrect by the size of the instruction it is irrelevant
-    intptr_t poll_addr = (intptr_t)oni + *orig_disp;
-    NativeInstruction* ni = nativeInstruction_at(addr());
-    intptr_t new_disp = poll_addr - (intptr_t) ni;
-
-    int32_t* disp = (int32_t*) Assembler::locate_operand(addr(), which);
-    * disp = (int32_t)new_disp;
-  }
-#endif // _LP64
 }
 
 void metadata_Relocation::pd_fix_value(address x) {

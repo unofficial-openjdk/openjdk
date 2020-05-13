@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,7 +90,7 @@ public abstract class BasicObjectCloneNode extends MacroStateSplitNode implement
      *
      * If yes, then the exact type is returned, otherwise it returns null.
      */
-    protected ResolvedJavaType getConcreteType(Stamp forStamp) {
+    public ResolvedJavaType getConcreteType(Stamp forStamp) {
         if (!(forStamp instanceof ObjectStamp)) {
             return null;
         }
@@ -154,7 +154,7 @@ public abstract class BasicObjectCloneNode extends MacroStateSplitNode implement
                     return;
                 }
                 int constantLength = lengthAlias.asJavaConstant().asInt();
-                if (constantLength >= 0 && constantLength < tool.getMaximumEntryCount()) {
+                if (constantLength >= 0 && constantLength <= tool.getMaximumEntryCount()) {
                     ValueNode[] state = new ValueNode[constantLength];
                     ResolvedJavaType componentType = type.getComponentType();
                     for (int i = 0; i < constantLength; i++) {

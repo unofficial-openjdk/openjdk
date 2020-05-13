@@ -26,6 +26,8 @@
 
  GIF construction tools
 
+SPDX-License-Identifier: MIT
+
 ****************************************************************************/
 
 #include <stdlib.h>
@@ -33,6 +35,7 @@
 #include <string.h>
 
 #include "gif_lib.h"
+#include "gif_lib_private.h"
 
 #define MAX(x, y)    (((x) > (y)) ? (x) : (y))
 
@@ -348,15 +351,17 @@ GifMakeSavedImage(GifFileType *GifFile, const SavedImage *CopyFrom)
 {
     if (GifFile->SavedImages == NULL)
         GifFile->SavedImages = (SavedImage *)malloc(sizeof(SavedImage));
-    else
-        GifFile->SavedImages = (SavedImage *)reallocarray(GifFile->SavedImages,
+    else {
+        SavedImage* newSavedImages = (SavedImage *)reallocarray(GifFile->SavedImages,
                                (GifFile->ImageCount + 1), sizeof(SavedImage));
-
+        if( newSavedImages == NULL)
+            return ((SavedImage *)NULL);
+        GifFile->SavedImages = newSavedImages;
+    }
     if (GifFile->SavedImages == NULL)
         return ((SavedImage *)NULL);
     else {
         SavedImage *sp = &GifFile->SavedImages[GifFile->ImageCount++];
-        memset((char *)sp, '\0', sizeof(SavedImage));
 
         if (CopyFrom != NULL) {
             memcpy((char *)sp, CopyFrom, sizeof(SavedImage));
@@ -368,7 +373,7 @@ GifMakeSavedImage(GifFileType *GifFile, const SavedImage *CopyFrom)
              */
 
             /* first, the local color map */
-            if (sp->ImageDesc.ColorMap != NULL) {
+            if (CopyFrom->ImageDesc.ColorMap != NULL) {
                 sp->ImageDesc.ColorMap = GifMakeMapObject(
                                          CopyFrom->ImageDesc.ColorMap->ColorCount,
                                          CopyFrom->ImageDesc.ColorMap->Colors);
@@ -392,7 +397,7 @@ GifMakeSavedImage(GifFileType *GifFile, const SavedImage *CopyFrom)
                    CopyFrom->ImageDesc.Width);
 
             /* finally, the extension blocks */
-            if (sp->ExtensionBlocks != NULL) {
+            if (CopyFrom->ExtensionBlocks != NULL) {
                 sp->ExtensionBlocks = (ExtensionBlock *)reallocarray(NULL,
                                       CopyFrom->ExtensionBlockCount,
                                       sizeof(ExtensionBlock));
@@ -403,6 +408,9 @@ GifMakeSavedImage(GifFileType *GifFile, const SavedImage *CopyFrom)
                 memcpy(sp->ExtensionBlocks, CopyFrom->ExtensionBlocks,
                        sizeof(ExtensionBlock) * CopyFrom->ExtensionBlockCount);
             }
+        }
+        else {
+            memset((char *)sp, '\0', sizeof(SavedImage));
         }
 
         return (sp);

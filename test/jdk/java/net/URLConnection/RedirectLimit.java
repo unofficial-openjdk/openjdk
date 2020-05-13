@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 /**
  * @test
  * @bug 4458085 7095949
+ * @library /test/lib
  * @summary  Redirects Limited to 5
  */
 
@@ -34,9 +35,12 @@
 
 import java.io.*;
 import java.net.*;
+import java.util.concurrent.CountDownLatch;
+
+import jdk.test.lib.net.URIBuilder;
 
 class RedirLimitServer extends Thread {
-    static final int TIMEOUT = 10 * 1000;
+    static final int TIMEOUT = 20 * 1000;
     static final int NUM_REDIRECTS = 9;
 
     static final String reply1 = "HTTP/1.1 307 Temporary Redirect\r\n" +
@@ -56,6 +60,7 @@ class RedirLimitServer extends Thread {
 
     final ServerSocket ss;
     final int port;
+    final CountDownLatch readyToStart = new CountDownLatch(1);
 
     RedirLimitServer(ServerSocket ss) throws IOException {
         this.ss = ss;
@@ -68,7 +73,9 @@ class RedirLimitServer extends Thread {
     // Read until the end of a HTTP request
     void readOneRequest(InputStream is) throws IOException {
         int requestEndCount = 0, r;
+        StringBuilder sb = new StringBuilder();
         while ((r = is.read()) != -1) {
+            sb.append((char)r);
             if (r == requestEnd[requestEndCount]) {
                 requestEndCount++;
                 if (requestEndCount == 4) {
@@ -78,48 +85,57 @@ class RedirLimitServer extends Thread {
                 requestEndCount = 0;
             }
         }
+        System.out.println("Server got request: " + sb.toString());
     }
 
     public void run() {
         try {
+            readyToStart.countDown();
             for (int i=0; i<NUM_REDIRECTS; i++) {
                 try (Socket s = ss.accept()) {
+                    System.out.println("Server accepted socket: " + s);
                     s.setSoTimeout(TIMEOUT);
                     readOneRequest(s.getInputStream());
+                    System.out.println("Redirecting to: /redirect" + i);
                     String reply = reply1 + port + "/redirect" + i + reply2;
                     s.getOutputStream().write(reply.getBytes());
                 }
             }
             try (Socket s = ss.accept()) {
+                System.out.println("Server accepted socket: " + s);
                 s.setSoTimeout(TIMEOUT);
                 readOneRequest(s.getInputStream());
+                System.out.println("Replying...");
                 s.getOutputStream().write(reply3.getBytes());
             }
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            try { ss.close(); } catch (IOException unused) {}
         }
     }
 };
 
 public class RedirectLimit {
     public static void main(String[] args) throws Exception {
-        ServerSocket ss = new ServerSocket (0);
-        int port = ss.getLocalPort();
-        RedirLimitServer server = new RedirLimitServer(ss);
-        server.start();
+        try (ServerSocket ss = new ServerSocket(0, 0, InetAddress.getLoopbackAddress())) {
+            int port = ss.getLocalPort();
+            RedirLimitServer server = new RedirLimitServer(ss);
+            server.start();
+            server.readyToStart.await();
+            URL url = URIBuilder.newBuilder()
+                    .scheme("http")
+                    .loopback()
+                    .port(port)
+                    .toURL();
+            URLConnection conURL = url.openConnection(Proxy.NO_PROXY);
 
-        URL url = new URL("http://localhost:" + port);
-        URLConnection conURL =  url.openConnection();
+            conURL.setDoInput(true);
+            conURL.setAllowUserInteraction(false);
+            conURL.setUseCaches(false);
 
-        conURL.setDoInput(true);
-        conURL.setAllowUserInteraction(false);
-        conURL.setUseCaches(false);
-
-        try (InputStream in = conURL.getInputStream()) {
-            if ((in.read() != (int)'W') || (in.read()!=(int)'o')) {
-                throw new RuntimeException("Unexpected string read");
+            try (InputStream in = conURL.getInputStream()) {
+                if ((in.read() != (int) 'W') || (in.read() != (int) 'o')) {
+                    throw new RuntimeException("Unexpected string read");
+                }
             }
         }
     }

@@ -25,7 +25,6 @@
 #include "precompiled.hpp"
 #include "code/nmethod.hpp"
 #include "memory/iterator.inline.hpp"
-#include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/globalDefinitions.hpp"
@@ -60,7 +59,7 @@ void CodeBlobToOopClosure::do_code_blob(CodeBlob* cb) {
 
 void MarkingCodeBlobClosure::do_code_blob(CodeBlob* cb) {
   nmethod* nm = cb->as_nmethod_or_null();
-  if (nm != NULL && !nm->test_set_oops_do_mark()) {
+  if (nm != NULL && nm->oops_do_try_claim()) {
     do_nmethod(nm);
   }
 }

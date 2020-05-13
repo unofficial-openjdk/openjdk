@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 #include "jfr/jfrEvents.hpp"
 #include "jfr/jni/jfrJavaSupport.hpp"
 #include "jfr/recorder/jfrRecorder.hpp"
+#include "jfr/recorder/checkpoint/jfrCheckpointManager.hpp"
 #include "jfr/recorder/repository/jfrChunkWriter.hpp"
 #include "jfr/recorder/service/jfrOptionSet.hpp"
 #include "jfr/recorder/service/jfrPostBox.hpp"
@@ -38,7 +39,6 @@
 #include "jfr/writers/jfrNativeEventWriter.hpp"
 #include "logging/log.hpp"
 #include "runtime/mutexLocker.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/os.inline.hpp"
 #include "runtime/safepoint.hpp"
 #include "runtime/thread.hpp"
@@ -234,7 +234,7 @@ static void write_data_loss_event(JfrBuffer* buffer, u8 unflushed_size, Thread* 
 static void write_data_loss(BufferPtr buffer, Thread* thread) {
   assert(buffer != NULL, "invariant");
   const size_t unflushed_size = buffer->unflushed_size();
-  buffer->concurrent_reinitialization();
+  buffer->reinitialize();
   if (unflushed_size == 0) {
     return;
   }
@@ -249,10 +249,22 @@ bool JfrStorage::flush_regular_buffer(BufferPtr buffer, Thread* thread) {
   assert(!buffer->transient(), "invariant");
   const size_t unflushed_size = buffer->unflushed_size();
   if (unflushed_size == 0) {
-    buffer->concurrent_reinitialization();
+    buffer->reinitialize();
     assert(buffer->empty(), "invariant");
     return true;
   }
+
+  if (buffer->excluded()) {
+    const bool thread_is_excluded = thread->jfr_thread_local()->is_excluded();
+    buffer->reinitialize(thread_is_excluded);
+    assert(buffer->empty(), "invariant");
+    if (!thread_is_excluded) {
+      // state change from exclusion to inclusion requires a thread checkpoint
+      JfrCheckpointManager::write_thread_checkpoint(thread);
+    }
+    return true;
+  }
+
   BufferPtr const promotion_buffer = get_promotion_buffer(unflushed_size, _global_mspace, *this, promotion_retry, thread);
   if (promotion_buffer == NULL) {
     write_data_loss(buffer, thread);
@@ -260,7 +272,7 @@ bool JfrStorage::flush_regular_buffer(BufferPtr buffer, Thread* thread) {
   }
   assert(promotion_buffer->acquired_by_self(), "invariant");
   assert(promotion_buffer->free_size() >= unflushed_size, "invariant");
-  buffer->concurrent_move_and_reinitialize(promotion_buffer, unflushed_size);
+  buffer->move(promotion_buffer, unflushed_size);
   assert(buffer->empty(), "invariant");
   return true;
 }
@@ -312,7 +324,11 @@ static JfrAgeNode* get_free_age_node(JfrStorageAgeMspace* age_mspace, Thread* th
 
 static bool insert_full_age_node(JfrAgeNode* age_node, JfrStorageAgeMspace* age_mspace, Thread* thread) {
   assert(JfrBuffer_lock->owned_by_self(), "invariant");
+  assert(age_node != NULL, "invariant");
+  assert(age_node->acquired_by_self(), "invariant");
   assert(age_node->retired_buffer()->retired(), "invariant");
+  age_node->release(); // drop identity claim on age node when inserting to full list
+  assert(age_node->identity() == NULL, "invariant");
   age_mspace->insert_full_head(age_node);
   return true;
 }
@@ -321,7 +337,7 @@ static bool full_buffer_registration(BufferPtr buffer, JfrStorageAgeMspace* age_
   assert(buffer != NULL, "invariant");
   assert(buffer->retired(), "invariant");
   assert(age_mspace != NULL, "invariant");
-  MutexLockerEx lock(JfrBuffer_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker lock(JfrBuffer_lock, Mutex::_no_safepoint_check_flag);
   JfrAgeNode* age_node = get_free_age_node(age_mspace, thread);
   if (age_node == NULL) {
     age_node = new_age_node(buffer, age_mspace, thread);
@@ -329,8 +345,8 @@ static bool full_buffer_registration(BufferPtr buffer, JfrStorageAgeMspace* age_
       return false;
     }
   }
-  assert(age_node->acquired_by_self(), "invariant");
   assert(age_node != NULL, "invariant");
+  assert(age_node->acquired_by_self(), "invariant");
   age_node->set_retired_buffer(buffer);
   control.increment_full();
   return insert_full_age_node(age_node, age_mspace, thread);
@@ -339,9 +355,9 @@ static bool full_buffer_registration(BufferPtr buffer, JfrStorageAgeMspace* age_
 void JfrStorage::register_full(BufferPtr buffer, Thread* thread) {
   assert(buffer != NULL, "invariant");
   assert(buffer->retired(), "invariant");
+  assert(buffer->acquired_by(thread), "invariant");
   if (!full_buffer_registration(buffer, _age_mspace, control(), thread)) {
     handle_registration_failure(buffer);
-    buffer->release();
   }
   if (control().should_post_buffer_full_message()) {
     _post_box.post(MSG_FULLBUFFER);
@@ -372,12 +388,12 @@ void JfrStorage::release(BufferPtr buffer, Thread* thread) {
   assert(!buffer->retired(), "invariant");
   if (!buffer->empty()) {
     if (!flush_regular_buffer(buffer, thread)) {
-      buffer->concurrent_reinitialization();
+      buffer->reinitialize();
     }
   }
   assert(buffer->empty(), "invariant");
+  assert(buffer->identity() != NULL, "invariant");
   control().increment_dead();
-  buffer->release();
   buffer->set_retired();
 }
 
@@ -412,20 +428,21 @@ void JfrStorage::discard_oldest(Thread* thread) {
       if (oldest_age_node == NULL) {
         break;
       }
+      assert(oldest_age_node->identity() == NULL, "invariant");
       BufferPtr const buffer = oldest_age_node->retired_buffer();
       assert(buffer->retired(), "invariant");
-      discarded_size += buffer->unflushed_size();
+      assert(buffer->identity() != NULL, "invariant");
+      discarded_size += buffer->discard();
+      assert(buffer->unflushed_size() == 0, "invariant");
       num_full_post_discard = control().decrement_full();
+      mspace_release_full(oldest_age_node, _age_mspace);
       if (buffer->transient()) {
         mspace_release_full(buffer, _transient_mspace);
-        mspace_release_full(oldest_age_node, _age_mspace);
         continue;
-      } else {
-        mspace_release_full(oldest_age_node, _age_mspace);
-        buffer->reinitialize();
-        buffer->release(); // pusb
-        break;
       }
+      buffer->reinitialize();
+      buffer->release(); // publish
+      break;
     }
     JfrBuffer_lock->unlock();
     const size_t number_of_discards = num_full_pre_discard - num_full_post_discard;
@@ -447,7 +464,6 @@ static void assert_flush_precondition(ConstBufferPtr cur, size_t used, bool nati
 
 static void assert_flush_regular_precondition(ConstBufferPtr cur, const u1* const cur_pos, size_t used, size_t req, const Thread* t) {
   assert(t != NULL, "invariant");
-  assert(t->jfr_thread_local()->shelved_buffer() == NULL, "invariant");
   assert(cur != NULL, "invariant");
   assert(!cur->lease(), "invariant");
   assert(cur_pos != NULL, "invariant");
@@ -465,6 +481,7 @@ static void assert_flush_large_precondition(ConstBufferPtr cur, const u1* const 
   assert(t != NULL, "invariant");
   assert(cur != NULL, "invariant");
   assert(cur->lease(), "invariant");
+  assert(!cur->excluded(), "invariant");
   assert(cur_pos != NULL, "invariant");
   assert(native ? t->jfr_thread_local()->native_buffer() == cur : t->jfr_thread_local()->java_buffer() == cur, "invariant");
   assert(t->jfr_thread_local()->shelved_buffer() != NULL, "invariant");
@@ -491,8 +508,10 @@ BufferPtr JfrStorage::flush_regular(BufferPtr cur, const u1* const cur_pos, size
   // the case for stable thread local buffers; it is not the case for large buffers.
   if (!cur->empty()) {
     flush_regular_buffer(cur, t);
+    if (cur->excluded()) {
+      return cur;
+    }
   }
-  assert(t->jfr_thread_local()->shelved_buffer() == NULL, "invariant");
   if (cur->free_size() >= req) {
     // simplest case, no switching of buffers
     if (used > 0) {
@@ -503,6 +522,7 @@ BufferPtr JfrStorage::flush_regular(BufferPtr cur, const u1* const cur_pos, size
   }
   // Going for a "larger-than-regular" buffer.
   // Shelve the current buffer to make room for a temporary lease.
+  assert(t->jfr_thread_local()->shelved_buffer() == NULL, "invariant");
   t->jfr_thread_local()->shelve_buffer(cur);
   return provision_large(cur, cur_pos, used, req, native, t);
 }
@@ -579,28 +599,40 @@ BufferPtr JfrStorage::provision_large(BufferPtr cur, const u1* const cur_pos, si
 typedef UnBufferedWriteToChunk<JfrBuffer> WriteOperation;
 typedef MutexedWriteOp<WriteOperation> MutexedWriteOperation;
 typedef ConcurrentWriteOp<WriteOperation> ConcurrentWriteOperation;
-typedef ConcurrentWriteOpExcludeRetired<WriteOperation> ThreadLocalConcurrentWriteOperation;
+
+typedef Retired<JfrBuffer, true> NonRetired;
+typedef Excluded<JfrBuffer, true> NonExcluded;
+typedef CompositeOperation<NonRetired, NonExcluded> BufferPredicate;
+typedef PredicatedMutexedWriteOp<WriteOperation, BufferPredicate> ThreadLocalMutexedWriteOperation;
+typedef PredicatedConcurrentWriteOp<WriteOperation, BufferPredicate> ThreadLocalConcurrentWriteOperation;
 
 size_t JfrStorage::write() {
-  const size_t full_size_processed = write_full();
+  const size_t full_elements = write_full();
   WriteOperation wo(_chunkwriter);
-  ThreadLocalConcurrentWriteOperation tlwo(wo);
+  NonRetired nr;
+  NonExcluded ne;
+  BufferPredicate bp(&nr, &ne);
+  ThreadLocalConcurrentWriteOperation tlwo(wo, bp);
   process_full_list(tlwo, _thread_local_mspace);
   ConcurrentWriteOperation cwo(wo);
   process_free_list(cwo, _global_mspace);
-  return full_size_processed + wo.processed();
+  return full_elements + wo.elements();
 }
 
 size_t JfrStorage::write_at_safepoint() {
   assert(SafepointSynchronize::is_at_safepoint(), "invariant");
   WriteOperation wo(_chunkwriter);
   MutexedWriteOperation writer(wo); // mutexed write mode
-  process_full_list(writer, _thread_local_mspace);
+  NonRetired nr;
+  NonExcluded ne;
+  BufferPredicate bp(&nr, &ne);
+  ThreadLocalMutexedWriteOperation tlmwo(wo, bp);
+  process_full_list(tlmwo, _thread_local_mspace);
   assert(_transient_mspace->is_free_empty(), "invariant");
   process_full_list(writer, _transient_mspace);
   assert(_global_mspace->is_full_empty(), "invariant");
   process_free_list(writer, _global_mspace);
-  return wo.processed();
+  return wo.elements();
 }
 
 typedef DiscardOp<DefaultDiscarder<JfrStorage::Buffer> > DiscardOperation;
@@ -608,14 +640,14 @@ typedef ReleaseOp<JfrStorageMspace> ReleaseOperation;
 typedef CompositeOperation<MutexedWriteOperation, ReleaseOperation> FullOperation;
 
 size_t JfrStorage::clear() {
-  const size_t full_size_processed = clear_full();
+  const size_t full_elements = clear_full();
   DiscardOperation discarder(concurrent); // concurrent discard mode
   process_full_list(discarder, _thread_local_mspace);
   assert(_transient_mspace->is_free_empty(), "invariant");
   process_full_list(discarder, _transient_mspace);
   assert(_global_mspace->is_full_empty(), "invariant");
   process_free_list(discarder, _global_mspace);
-  return full_size_processed + discarder.processed();
+  return full_elements + discarder.elements();
 }
 
 static void insert_free_age_nodes(JfrStorageAgeMspace* age_mspace, JfrAgeNode* head, JfrAgeNode* tail, size_t count) {
@@ -623,7 +655,7 @@ static void insert_free_age_nodes(JfrStorageAgeMspace* age_mspace, JfrAgeNode* h
     assert(tail->next() == NULL, "invariant");
     assert(head != NULL, "invariant");
     assert(head->prev() == NULL, "invariant");
-    MutexLockerEx buffer_lock(JfrBuffer_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker buffer_lock(JfrBuffer_lock, Mutex::_no_safepoint_check_flag);
     age_mspace->insert_free_tail(head, tail, count);
   }
 }
@@ -637,12 +669,12 @@ static void process_age_list(Processor& processor, JfrStorageAgeMspace* age_mspa
   JfrAgeNode* last = NULL;
   while (node != NULL) {
     last = node;
+    assert(node->identity() == NULL, "invariant");
     BufferPtr const buffer = node->retired_buffer();
     assert(buffer != NULL, "invariant");
     assert(buffer->retired(), "invariant");
     processor.process(buffer);
     // at this point, buffer is already live or destroyed
-    node->clear_identity();
     JfrAgeNode* const next = (JfrAgeNode*)node->next();
     if (node->transient()) {
       // detach
@@ -674,7 +706,7 @@ static size_t process_full(Processor& processor, JfrStorageControl& control, Jfr
   JfrAgeNode* head;
   {
     // fetch age list
-    MutexLockerEx buffer_lock(JfrBuffer_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker buffer_lock(JfrBuffer_lock, Mutex::_no_safepoint_check_flag);
     count = age_mspace->full_count();
     head = age_mspace->clear_full();
     control.reset_full();
@@ -706,15 +738,25 @@ size_t JfrStorage::write_full() {
   ReleaseOperation ro(_transient_mspace, thread);
   FullOperation cmd(&writer, &ro);
   const size_t count = process_full(cmd, control(), _age_mspace);
-  log(count, writer.processed());
-  return writer.processed();
+  if (0 == count) {
+    assert(0 == writer.elements(), "invariant");
+    return 0;
+  }
+  const size_t size = writer.size();
+  log(count, size);
+  return count;
 }
 
 size_t JfrStorage::clear_full() {
   DiscardOperation discarder(mutexed); // a retired buffer implies mutexed access
   const size_t count = process_full(discarder, control(), _age_mspace);
-  log(count, discarder.processed(), true);
-  return discarder.processed();
+  if (0 == count) {
+    assert(0 == discarder.elements(), "invariant");
+    return 0;
+  }
+  const size_t size = discarder.size();
+  log(count, size, true);
+  return count;
 }
 
 static void scavenge_log(size_t count, size_t amount, size_t current) {
@@ -738,13 +780,18 @@ public:
   Scavenger(JfrStorageControl& control, Mspace* mspace) : _control(control), _mspace(mspace), _count(0), _amount(0) {}
   bool process(Type* t) {
     if (t->retired()) {
+      assert(t->identity() != NULL, "invariant");
+      assert(t->empty(), "invariant");
       assert(!t->transient(), "invariant");
       assert(!t->lease(), "invariant");
-      assert(t->empty(), "invariant");
-      assert(t->identity() == NULL, "invariant");
       ++_count;
       _amount += t->total_size();
+      if (t->excluded()) {
+        t->clear_excluded();
+      }
+      assert(!t->excluded(), "invariant");
       t->clear_retired();
+      t->release();
       _control.decrement_dead();
       mspace_release_full_critical(t, _mspace);
     }
@@ -761,6 +808,11 @@ size_t JfrStorage::scavenge() {
   }
   Scavenger<JfrThreadLocalMspace> scavenger(ctrl, _thread_local_mspace);
   process_full_list(scavenger, _thread_local_mspace);
-  scavenge_log(scavenger.processed(), scavenger.amount(), ctrl.dead_count());
-  return scavenger.processed();
+  const size_t count = scavenger.processed();
+  if (0 == count) {
+    assert(0 == scavenger.amount(), "invariant");
+    return 0;
+  }
+  scavenge_log(count, scavenger.amount(), ctrl.dead_count());
+  return count;
 }

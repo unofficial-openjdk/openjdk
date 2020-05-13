@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,6 +74,7 @@ public class TsacertOptionTest extends Test {
                 "-storepass", PASSWORD,
                 "-keypass", PASSWORD,
                 "-dname", "CN=CA",
+                "-ext", "bc:c",
                 "-validity", Integer.toString(VALIDITY)).shouldHaveExitValue(0);
         keytool(
                 "-genkey",
@@ -138,7 +139,7 @@ public class TsacertOptionTest extends Test {
 
             // sign jar file
             // specify -tsadigestalg option because
-            // TSA server uses SHA-1 digest algorithm
+            // TSA server uses SHA-512 digest algorithm
              OutputAnalyzer analyzer = jarsigner(
                     "-J-Dhttp.proxyHost=",
                     "-J-Dhttp.proxyPort=",
@@ -149,7 +150,7 @@ public class TsacertOptionTest extends Test {
                     "-keypass", PASSWORD,
                     "-signedjar", SIGNED_JARFILE,
                     "-tsacert", TSA_KEY_ALIAS,
-                    "-tsadigestalg", "SHA-1",
+                    "-tsadigestalg", "SHA-512",
                     UNSIGNED_JARFILE,
                     SIGNING_KEY_ALIAS);
 

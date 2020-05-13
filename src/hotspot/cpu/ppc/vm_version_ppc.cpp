@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2018, SAP SE. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,12 +32,16 @@
 #include "runtime/java.hpp"
 #include "runtime/os.hpp"
 #include "runtime/stubCodeGenerator.hpp"
+#include "runtime/vm_version.hpp"
 #include "utilities/align.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/globalDefinitions.hpp"
-#include "vm_version_ppc.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 #include <sys/sysinfo.h>
+#if defined(_AIX)
+#include <libperfstat.h>
+#endif
 
 #if defined(LINUX) && defined(VM_LITTLE_ENDIAN)
 #include <sys/auxv.h>
@@ -64,17 +68,17 @@ void VM_Version::initialize() {
   // If PowerArchitecturePPC64 hasn't been specified explicitly determine from features.
   if (FLAG_IS_DEFAULT(PowerArchitecturePPC64)) {
     if (VM_Version::has_darn()) {
-      FLAG_SET_ERGO(uintx, PowerArchitecturePPC64, 9);
+      FLAG_SET_ERGO(PowerArchitecturePPC64, 9);
     } else if (VM_Version::has_lqarx()) {
-      FLAG_SET_ERGO(uintx, PowerArchitecturePPC64, 8);
+      FLAG_SET_ERGO(PowerArchitecturePPC64, 8);
     } else if (VM_Version::has_popcntw()) {
-      FLAG_SET_ERGO(uintx, PowerArchitecturePPC64, 7);
+      FLAG_SET_ERGO(PowerArchitecturePPC64, 7);
     } else if (VM_Version::has_cmpb()) {
-      FLAG_SET_ERGO(uintx, PowerArchitecturePPC64, 6);
+      FLAG_SET_ERGO(PowerArchitecturePPC64, 6);
     } else if (VM_Version::has_popcntb()) {
-      FLAG_SET_ERGO(uintx, PowerArchitecturePPC64, 5);
+      FLAG_SET_ERGO(PowerArchitecturePPC64, 5);
     } else {
-      FLAG_SET_ERGO(uintx, PowerArchitecturePPC64, 0);
+      FLAG_SET_ERGO(PowerArchitecturePPC64, 0);
     }
   }
 
@@ -100,15 +104,15 @@ void VM_Version::initialize() {
     MSG(TrapBasedICMissChecks);
     MSG(TrapBasedNotEntrantChecks);
     MSG(TrapBasedNullChecks);
-    FLAG_SET_ERGO(bool, TrapBasedNotEntrantChecks, false);
-    FLAG_SET_ERGO(bool, TrapBasedNullChecks,       false);
-    FLAG_SET_ERGO(bool, TrapBasedICMissChecks,     false);
+    FLAG_SET_ERGO(TrapBasedNotEntrantChecks, false);
+    FLAG_SET_ERGO(TrapBasedNullChecks,       false);
+    FLAG_SET_ERGO(TrapBasedICMissChecks,     false);
   }
 
 #ifdef COMPILER2
   if (!UseSIGTRAP) {
     MSG(TrapBasedRangeChecks);
-    FLAG_SET_ERGO(bool, TrapBasedRangeChecks, false);
+    FLAG_SET_ERGO(TrapBasedRangeChecks, false);
   }
 
   // On Power6 test for section size.
@@ -120,7 +124,7 @@ void VM_Version::initialize() {
 
   if (PowerArchitecturePPC64 >= 8) {
     if (FLAG_IS_DEFAULT(SuperwordUseVSX)) {
-      FLAG_SET_ERGO(bool, SuperwordUseVSX, true);
+      FLAG_SET_ERGO(SuperwordUseVSX, true);
     }
   } else {
     if (SuperwordUseVSX) {
@@ -132,10 +136,13 @@ void VM_Version::initialize() {
 
   if (PowerArchitecturePPC64 >= 9) {
     if (FLAG_IS_DEFAULT(UseCountTrailingZerosInstructionsPPC64)) {
-      FLAG_SET_ERGO(bool, UseCountTrailingZerosInstructionsPPC64, true);
+      FLAG_SET_ERGO(UseCountTrailingZerosInstructionsPPC64, true);
     }
     if (FLAG_IS_DEFAULT(UseCharacterCompareIntrinsics)) {
-      FLAG_SET_ERGO(bool, UseCharacterCompareIntrinsics, true);
+      FLAG_SET_ERGO(UseCharacterCompareIntrinsics, true);
+    }
+    if (FLAG_IS_DEFAULT(UseVectorByteReverseInstructionsPPC64)) {
+      FLAG_SET_ERGO(UseVectorByteReverseInstructionsPPC64, true);
     }
   } else {
     if (UseCountTrailingZerosInstructionsPPC64) {
@@ -145,6 +152,10 @@ void VM_Version::initialize() {
     if (UseCharacterCompareIntrinsics) {
       warning("UseCharacterCompareIntrinsics specified, but needs at least Power9.");
       FLAG_SET_DEFAULT(UseCharacterCompareIntrinsics, false);
+    }
+    if (UseVectorByteReverseInstructionsPPC64) {
+      warning("UseVectorByteReverseInstructionsPPC64 specified, but needs at least Power9.");
+      FLAG_SET_DEFAULT(UseVectorByteReverseInstructionsPPC64, false);
     }
   }
 #endif
@@ -188,21 +199,20 @@ void VM_Version::initialize() {
   _supports_atomic_getset8 = true;
   _supports_atomic_getadd8 = true;
 
-  UseSSE = 0; // Only on x86 and x64
-
   intx cache_line_size = L1_data_cache_line_size();
+
+  if (PowerArchitecturePPC64 >= 9) {
+    if (os::supports_map_sync() == true) {
+      _data_cache_line_flush_size = cache_line_size;
+    }
+  }
 
   if (FLAG_IS_DEFAULT(AllocatePrefetchStyle)) AllocatePrefetchStyle = 1;
 
-  if (AllocatePrefetchStyle == 4) {
-    AllocatePrefetchStepSize = cache_line_size; // Need exact value.
-    if (FLAG_IS_DEFAULT(AllocatePrefetchLines)) AllocatePrefetchLines = 12; // Use larger blocks by default.
-    if (AllocatePrefetchDistance < 0) AllocatePrefetchDistance = 2*cache_line_size; // Default is not defined?
-  } else {
-    if (cache_line_size > AllocatePrefetchStepSize) AllocatePrefetchStepSize = cache_line_size;
-    if (FLAG_IS_DEFAULT(AllocatePrefetchLines)) AllocatePrefetchLines = 3; // Optimistic value.
-    if (AllocatePrefetchDistance < 0) AllocatePrefetchDistance = 3*cache_line_size; // Default is not defined?
-  }
+  if (cache_line_size > AllocatePrefetchStepSize) AllocatePrefetchStepSize = cache_line_size;
+  // PPC processors have an automatic prefetch engine.
+  if (FLAG_IS_DEFAULT(AllocatePrefetchLines)) AllocatePrefetchLines = 1;
+  if (AllocatePrefetchDistance < 0) AllocatePrefetchDistance = 3 * cache_line_size;
 
   assert(AllocatePrefetchLines > 0, "invalid value");
   if (AllocatePrefetchLines < 1) { // Set valid value in product VM.
@@ -214,6 +224,10 @@ void VM_Version::initialize() {
   }
 
   assert(AllocatePrefetchStyle >= 0, "AllocatePrefetchStyle should be positive");
+
+  if (FLAG_IS_DEFAULT(ContendedPaddingWidth) && (cache_line_size > ContendedPaddingWidth)) {
+    ContendedPaddingWidth = cache_line_size;
+  }
 
   // If running on Power8 or newer hardware, the implementation uses the available vector instructions.
   // In all other cases, the implementation uses only generally available instructions.
@@ -309,6 +323,7 @@ void VM_Version::initialize() {
     FLAG_SET_DEFAULT(UseSHA, false);
   }
 
+#ifdef COMPILER2
   if (FLAG_IS_DEFAULT(UseSquareToLenIntrinsic)) {
     UseSquareToLenIntrinsic = true;
   }
@@ -324,6 +339,7 @@ void VM_Version::initialize() {
   if (FLAG_IS_DEFAULT(UseMontgomerySquareIntrinsic)) {
     UseMontgomerySquareIntrinsic = true;
   }
+#endif
 
   if (UseVectorizedMismatchIntrinsic) {
     warning("UseVectorizedMismatchIntrinsic specified, but not available on this CPU.");
@@ -370,15 +386,135 @@ void VM_Version::initialize() {
     if (UseRTMDeopt) {
       FLAG_SET_DEFAULT(UseRTMDeopt, false);
     }
+#ifdef COMPILER2
     if (PrintPreciseRTMLockingStatistics) {
       FLAG_SET_DEFAULT(PrintPreciseRTMLockingStatistics, false);
     }
+#endif
   }
 
   // This machine allows unaligned memory accesses
   if (FLAG_IS_DEFAULT(UseUnalignedAccesses)) {
     FLAG_SET_DEFAULT(UseUnalignedAccesses, true);
   }
+
+  check_virtualizations();
+}
+
+void VM_Version::check_virtualizations() {
+#if defined(_AIX)
+  int rc = 0;
+  perfstat_partition_total_t pinfo;
+  rc = perfstat_partition_total(NULL, &pinfo, sizeof(perfstat_partition_total_t), 1);
+  if (rc == 1) {
+    Abstract_VM_Version::_detected_virtualization = PowerVM;
+  }
+#else
+  const char* info_file = "/proc/ppc64/lparcfg";
+  // system_type=...qemu indicates PowerKVM
+  // e.g. system_type=IBM pSeries (emulated by qemu)
+  char line[500];
+  FILE* fp = fopen(info_file, "r");
+  if (fp == NULL) {
+    return;
+  }
+  const char* system_type="system_type=";  // in case this line contains qemu, it is KVM
+  const char* num_lpars="NumLpars="; // in case of non-KVM : if this line is found it is PowerVM
+  bool num_lpars_found = false;
+
+  while (fgets(line, sizeof(line), fp) != NULL) {
+    if (strncmp(line, system_type, strlen(system_type)) == 0) {
+      if (strstr(line, "qemu") != 0) {
+        Abstract_VM_Version::_detected_virtualization = PowerKVM;
+        fclose(fp);
+        return;
+      }
+    }
+    if (strncmp(line, num_lpars, strlen(num_lpars)) == 0) {
+      num_lpars_found = true;
+    }
+  }
+  if (num_lpars_found) {
+    Abstract_VM_Version::_detected_virtualization = PowerVM;
+  } else {
+    Abstract_VM_Version::_detected_virtualization = PowerFullPartitionMode;
+  }
+  fclose(fp);
+#endif
+}
+
+void VM_Version::print_platform_virtualization_info(outputStream* st) {
+#if defined(_AIX)
+  // more info about perfstat API see
+  // https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.prftools/idprftools_perfstat_glob_partition.htm
+  int rc = 0;
+  perfstat_partition_total_t pinfo;
+  memset(&pinfo, 0, sizeof(perfstat_partition_total_t));
+  rc = perfstat_partition_total(NULL, &pinfo, sizeof(perfstat_partition_total_t), 1);
+  if (rc != 1) {
+    return;
+  } else {
+    st->print_cr("Virtualization type   : PowerVM");
+  }
+  // CPU information
+  perfstat_cpu_total_t cpuinfo;
+  memset(&cpuinfo, 0, sizeof(perfstat_cpu_total_t));
+  rc = perfstat_cpu_total(NULL, &cpuinfo, sizeof(perfstat_cpu_total_t), 1);
+  if (rc != 1) {
+    return;
+  }
+
+  st->print_cr("Processor description : %s", cpuinfo.description);
+  st->print_cr("Processor speed       : %llu Hz", cpuinfo.processorHZ);
+
+  st->print_cr("LPAR partition name           : %s", pinfo.name);
+  st->print_cr("LPAR partition number         : %u", pinfo.lpar_id);
+  st->print_cr("LPAR partition type           : %s", pinfo.type.b.shared_enabled ? "shared" : "dedicated");
+  st->print_cr("LPAR mode                     : %s", pinfo.type.b.donate_enabled ? "donating" : pinfo.type.b.capped ? "capped" : "uncapped");
+  st->print_cr("LPAR partition group ID       : %u", pinfo.group_id);
+  st->print_cr("LPAR shared pool ID           : %u", pinfo.pool_id);
+
+  st->print_cr("AMS (active memory sharing)   : %s", pinfo.type.b.ams_capable ? "capable" : "not capable");
+  st->print_cr("AMS (active memory sharing)   : %s", pinfo.type.b.ams_enabled ? "on" : "off");
+  st->print_cr("AME (active memory expansion) : %s", pinfo.type.b.ame_enabled ? "on" : "off");
+
+  if (pinfo.type.b.ame_enabled) {
+    st->print_cr("AME true memory in bytes      : %llu", pinfo.true_memory);
+    st->print_cr("AME expanded memory in bytes  : %llu", pinfo.expanded_memory);
+  }
+
+  st->print_cr("SMT : %s", pinfo.type.b.smt_capable ? "capable" : "not capable");
+  st->print_cr("SMT : %s", pinfo.type.b.smt_enabled ? "on" : "off");
+  int ocpus = pinfo.online_cpus > 0 ?  pinfo.online_cpus : 1;
+  st->print_cr("LPAR threads              : %d", cpuinfo.ncpus/ocpus);
+  st->print_cr("LPAR online virtual cpus  : %d", pinfo.online_cpus);
+  st->print_cr("LPAR logical cpus         : %d", cpuinfo.ncpus);
+  st->print_cr("LPAR maximum virtual cpus : %u", pinfo.max_cpus);
+  st->print_cr("LPAR minimum virtual cpus : %u", pinfo.min_cpus);
+  st->print_cr("LPAR entitled capacity    : %4.2f", (double) (pinfo.entitled_proc_capacity/100.0));
+  st->print_cr("LPAR online memory        : %llu MB", pinfo.online_memory);
+  st->print_cr("LPAR maximum memory       : %llu MB", pinfo.max_memory);
+  st->print_cr("LPAR minimum memory       : %llu MB", pinfo.min_memory);
+#else
+  const char* info_file = "/proc/ppc64/lparcfg";
+  const char* kw[] = { "system_type=", // qemu indicates PowerKVM
+                       "partition_entitled_capacity=", // entitled processor capacity percentage
+                       "partition_max_entitled_capacity=",
+                       "capacity_weight=", // partition CPU weight
+                       "partition_active_processors=",
+                       "partition_potential_processors=",
+                       "entitled_proc_capacity_available=",
+                       "capped=", // 0 - uncapped, 1 - vcpus capped at entitled processor capacity percentage
+                       "shared_processor_mode=", // (non)dedicated partition
+                       "system_potential_processors=",
+                       "pool=", // CPU-pool number
+                       "pool_capacity=",
+                       "NumLpars=", // on non-KVM machines, NumLpars is not found for full partition mode machines
+                       NULL };
+  if (!print_matching_lines_from_file(info_file, st, kw)) {
+    st->print_cr("  <%s Not Available>", info_file);
+  }
+#endif
 }
 
 bool VM_Version::use_biased_locking() {
@@ -404,6 +540,13 @@ bool VM_Version::use_biased_locking() {
 
 void VM_Version::print_features() {
   tty->print_cr("Version: %s L1_data_cache_line_size=%d", features_string(), L1_data_cache_line_size());
+
+  if (Verbose) {
+    if (ContendedPaddingWidth > 0) {
+      tty->cr();
+      tty->print_cr("ContendedPaddingWidth " INTX_FORMAT, ContendedPaddingWidth);
+    }
+  }
 }
 
 #ifdef COMPILER2
@@ -587,6 +730,8 @@ void VM_Version::determine_section_size() {
   uint32_t *code_end = (uint32_t *)a->pc();
   a->flush();
 
+  cb.insts()->set_end((u_char*)code_end);
+
   double loop1_seconds,loop2_seconds, rel_diff;
   uint64_t start1, stop1;
 
@@ -604,10 +749,11 @@ void VM_Version::determine_section_size() {
 
   rel_diff = (loop2_seconds - loop1_seconds) / loop1_seconds *100;
 
-  if (PrintAssembly) {
+  if (PrintAssembly || PrintStubCode) {
     ttyLocker ttyl;
     tty->print_cr("Decoding section size detection stub at " INTPTR_FORMAT " before execution:", p2i(code));
-    Disassembler::decode((u_char*)code, (u_char*)code_end, tty);
+    // Use existing decode function. This enables the [MachCode] format which is needed to DecodeErrorFile.
+    Disassembler::decode(&cb, (u_char*)code, (u_char*)code_end, tty);
     tty->print_cr("Time loop1 :%f", loop1_seconds);
     tty->print_cr("Time loop2 :%f", loop2_seconds);
     tty->print_cr("(time2 - time1) / time1 = %f %%", rel_diff);

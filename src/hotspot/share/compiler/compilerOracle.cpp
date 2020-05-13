@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "jvm.h"
+#include "classfile/symbolTable.hpp"
 #include "compiler/compilerOracle.hpp"
 #include "compiler/methodMatcher.hpp"
 #include "memory/allocation.inline.hpp"
@@ -379,10 +380,12 @@ static OracleCommand parse_command_name(const char * line, int* bytes_read) {
 
   *bytes_read = 0;
   char command[33];
-  int result = sscanf(line, "%32[a-z]%n", command, bytes_read);
-  for (uint i = 0; i < ARRAY_SIZE(command_names); i++) {
-    if (strcmp(command, command_names[i]) == 0) {
-      return (OracleCommand)i;
+  int matches = sscanf(line, "%32[a-z]%n", command, bytes_read);
+  if (matches > 0) {
+    for (uint i = 0; i < ARRAY_SIZE(command_names); i++) {
+      if (strcmp(command, command_names[i]) == 0) {
+        return (OracleCommand)i;
+      }
     }
   }
   return UnknownCommand;
@@ -738,30 +741,6 @@ void CompilerOracle::parse_from_string(const char* str, void (*parse_line)(char*
   parse_line(token);
 }
 
-void CompilerOracle::append_comment_to_file(const char* message) {
-  assert(has_command_file(), "command file must be specified");
-  fileStream stream(fopen(cc_file(), "at"));
-  stream.print("# ");
-  for (int index = 0; message[index] != '\0'; index++) {
-    stream.put(message[index]);
-    if (message[index] == '\n') stream.print("# ");
-  }
-  stream.cr();
-}
-
-void CompilerOracle::append_exclude_to_file(const methodHandle& method) {
-  assert(has_command_file(), "command file must be specified");
-  fileStream stream(fopen(cc_file(), "at"));
-  stream.print("exclude ");
-  method->method_holder()->name()->print_symbol_on(&stream);
-  stream.print(".");
-  method->name()->print_symbol_on(&stream);
-  method->signature()->print_symbol_on(&stream);
-  stream.cr();
-  stream.cr();
-}
-
-
 void compilerOracle_init() {
   CompilerOracle::parse_from_string(CompileCommand, CompilerOracle::parse_from_line);
   CompilerOracle::parse_from_string(CompileOnly, CompilerOracle::parse_compile_only);
@@ -852,8 +831,8 @@ void CompilerOracle::parse_compile_only(char * line) {
       }
 
       EXCEPTION_MARK;
-      Symbol* c_name = SymbolTable::new_symbol(className, CHECK);
-      Symbol* m_name = SymbolTable::new_symbol(methodName, CHECK);
+      Symbol* c_name = SymbolTable::new_symbol(className);
+      Symbol* m_name = SymbolTable::new_symbol(methodName);
       Symbol* signature = NULL;
 
       BasicMatcher* bm = new BasicMatcher();

@@ -25,7 +25,6 @@ package com.sun.org.apache.bcel.internal.generic;
  * ISHL - Arithmetic shift left int
  * <PRE>Stack: ..., value1, value2 -&gt; ..., result</PRE>
  *
- * @version $Id: ISHL.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public class ISHL extends ArithmeticInstruction {
 

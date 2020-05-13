@@ -115,6 +115,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
     private transient String toStringCache;
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
+    @java.io.Serial
     static final long serialVersionUID = 3388685877147921107L;
 
     /**
@@ -148,8 +149,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
      */
     @HotSpotIntrinsicCandidate
     public StringBuffer(String str) {
-        super(str.coder(), str.length(), 16);
-        append(str);
+        super(str);
     }
 
     /**
@@ -157,17 +157,12 @@ import jdk.internal.HotSpotIntrinsicCandidate;
      * as the specified {@code CharSequence}. The initial capacity of
      * the string buffer is {@code 16} plus the length of the
      * {@code CharSequence} argument.
-     * <p>
-     * If the length of the specified {@code CharSequence} is
-     * less than or equal to zero, then an empty buffer of capacity
-     * {@code 16} is returned.
      *
      * @param      seq   the sequence to copy.
      * @since 1.5
      */
     public StringBuffer(CharSequence seq) {
-        super(String.LATIN1, seq.length(), 16);
-        append(seq);
+        super(seq);
     }
 
     /**
@@ -729,6 +724,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
      *              A flag indicating whether the backing array is shared.
      *              The value is ignored upon deserialization.
      */
+    @java.io.Serial
     private static final java.io.ObjectStreamField[] serialPersistentFields =
     {
         new java.io.ObjectStreamField("value", char[].class),
@@ -740,6 +736,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
      * readObject is called to restore the state of the StringBuffer from
      * a stream.
      */
+    @java.io.Serial
     private synchronized void writeObject(java.io.ObjectOutputStream s)
         throws java.io.IOException {
         java.io.ObjectOutputStream.PutField fields = s.putFields();
@@ -759,6 +756,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
      * readObject is called to restore the state of the StringBuffer from
      * a stream.
      */
+    @java.io.Serial
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.IOException, ClassNotFoundException {
         java.io.ObjectInputStream.GetField fields = s.readFields();

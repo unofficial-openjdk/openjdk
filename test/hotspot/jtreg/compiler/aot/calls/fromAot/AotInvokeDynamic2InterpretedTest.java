@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,16 +28,15 @@
  * @modules java.base/jdk.internal.org.objectweb.asm
  *          java.base/jdk.internal.misc
  * @build compiler.calls.common.InvokeDynamic
- *        compiler.calls.common.InvokeDynamicPatcher
- *        compiler.aot.AotCompiler
+ *        sun.hotspot.WhiteBox
  * @run driver compiler.calls.common.InvokeDynamicPatcher
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *      sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run driver compiler.aot.AotCompiler
  *      -libname AotInvokeDynamic2InterpretedTest.so
  *      -class compiler.calls.common.InvokeDynamic
  *      -compile compiler.calls.common.InvokeDynamic.caller()V
- * @run main/othervm -XX:AOTLibrary=./AotInvokeDynamic2InterpretedTest.so
+ * @run main/othervm -XX:+UnlockExperimentalVMOptions
+ *      -XX:AOTLibrary=./AotInvokeDynamic2InterpretedTest.so
  *      -XX:CompileCommand=exclude,compiler.calls.common.InvokeDynamic::callee
  *      -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
  *      -XX:+UseAOT compiler.calls.common.InvokeDynamic -checkCallerCompileLevel -1

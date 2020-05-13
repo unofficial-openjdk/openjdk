@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -200,7 +200,7 @@ public class TypeAnnotations {
         if (e.value.name == names.TYPE) {
             if (s.kind == TYP)
                 return AnnotationType.DECLARATION;
-        } else if (e.value.name == names.FIELD) {
+        } else if (e.value.name == names.FIELD || e.value.name == names.RECORD_COMPONENT) {
             if (s.kind == VAR &&
                     s.owner.kind != MTH)
                 return AnnotationType.DECLARATION;
@@ -390,22 +390,26 @@ public class TypeAnnotations {
                 sym.getKind() == ElementKind.LOCAL_VARIABLE ||
                 sym.getKind() == ElementKind.RESOURCE_VARIABLE ||
                 sym.getKind() == ElementKind.EXCEPTION_PARAMETER) {
-                // Make sure all type annotations from the symbol are also
-                // on the owner. If the owner is an initializer block, propagate
-                // to the type.
-                final long ownerFlags = sym.owner.flags();
-                if ((ownerFlags & Flags.BLOCK) != 0) {
-                    // Store init and clinit type annotations with the ClassSymbol
-                    // to allow output in Gen.normalizeDefs.
-                    ClassSymbol cs = (ClassSymbol) sym.owner.owner;
-                    if ((ownerFlags & Flags.STATIC) != 0) {
-                        cs.appendClassInitTypeAttributes(typeAnnotations);
-                    } else {
-                        cs.appendInitTypeAttributes(typeAnnotations);
-                    }
+                appendTypeAnnotationsToOwner(sym, typeAnnotations);
+            }
+        }
+
+        private void appendTypeAnnotationsToOwner(Symbol sym, List<Attribute.TypeCompound> typeAnnotations) {
+            // Make sure all type annotations from the symbol are also
+            // on the owner. If the owner is an initializer block, propagate
+            // to the type.
+            final long ownerFlags = sym.owner.flags();
+            if ((ownerFlags & Flags.BLOCK) != 0) {
+                // Store init and clinit type annotations with the ClassSymbol
+                // to allow output in Gen.normalizeDefs.
+                ClassSymbol cs = (ClassSymbol) sym.owner.owner;
+                if ((ownerFlags & Flags.STATIC) != 0) {
+                    cs.appendClassInitTypeAttributes(typeAnnotations);
                 } else {
-                    sym.owner.appendUniqueTypeAttributes(sym.getRawTypeAttributes());
+                    cs.appendInitTypeAttributes(typeAnnotations);
                 }
+            } else {
+                sym.owner.appendUniqueTypeAttributes(typeAnnotations);
             }
         }
 
@@ -766,6 +770,7 @@ public class TypeAnnotations {
                 case CLASS:
                 case ENUM:
                 case INTERFACE:
+                case RECORD:
                     if (((JCClassDecl)frame).extending == tree) {
                         return TypeAnnotationPosition
                             .classExtends(location.toList(), currentLambda,
@@ -943,12 +948,14 @@ public class TypeAnnotations {
                                                  " within frame " + frame);
                     }
 
+                case BINDING_PATTERN:
                 case VARIABLE:
-                    VarSymbol v = ((JCVariableDecl)frame).sym;
+                    VarSymbol v = frame.hasTag(Tag.BINDINGPATTERN) ? ((JCBindingPattern) frame).symbol : ((JCVariableDecl) frame).sym;
                     if (v.getKind() != ElementKind.FIELD) {
-                        v.owner.appendUniqueTypeAttributes(v.getRawTypeAttributes());
+                        appendTypeAnnotationsToOwner(v, v.getRawTypeAttributes());
                     }
                     switch (v.getKind()) {
+                        case BINDING_VARIABLE:
                         case LOCAL_VARIABLE:
                             return TypeAnnotationPosition
                                 .localVariable(location.toList(), currentLambda,
@@ -1122,6 +1129,9 @@ public class TypeAnnotations {
                 scan(tree.implementing);
             }
             scan(tree.defs);
+            if (tree.sym.isRecord()) {
+                tree.sym.getRecordComponents().stream().forEach(rc -> scan(rc.accessorMeth));
+            }
         }
 
         /**
@@ -1266,7 +1276,7 @@ public class TypeAnnotations {
                 // No type annotations can occur here.
             } else {
                 // There is nothing else in a variable declaration that needs separation.
-                Assert.error("Unhandled variable kind");
+                Assert.error("Unhandled variable kind: " + tree.sym.getKind());
             }
 
             scan(tree.mods);

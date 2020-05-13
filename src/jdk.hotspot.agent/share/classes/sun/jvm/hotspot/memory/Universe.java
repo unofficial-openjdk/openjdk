@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,11 @@
 package sun.jvm.hotspot.memory;
 
 import java.io.PrintStream;
-import java.util.Observable;
-import java.util.Observer;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
 import sun.jvm.hotspot.debugger.Address;
 import sun.jvm.hotspot.debugger.OopHandle;
-import sun.jvm.hotspot.gc.cms.CMSHeap;
 import sun.jvm.hotspot.gc.epsilon.EpsilonHeap;
 import sun.jvm.hotspot.gc.g1.G1CollectedHeap;
 import sun.jvm.hotspot.gc.parallel.ParallelScavengeHeap;
@@ -41,6 +40,7 @@ import sun.jvm.hotspot.gc.z.ZCollectedHeap;
 import sun.jvm.hotspot.oops.Oop;
 import sun.jvm.hotspot.runtime.BasicType;
 import sun.jvm.hotspot.runtime.VM;
+import sun.jvm.hotspot.runtime.VMObject;
 import sun.jvm.hotspot.runtime.VirtualConstructor;
 import sun.jvm.hotspot.types.AddressField;
 import sun.jvm.hotspot.types.CIntegerField;
@@ -53,17 +53,6 @@ public class Universe {
   private static VirtualConstructor heapConstructor;
   private static sun.jvm.hotspot.types.OopField mainThreadGroupField;
   private static sun.jvm.hotspot.types.OopField systemThreadGroupField;
-
-  private static AddressField narrowOopBaseField;
-  private static CIntegerField narrowOopShiftField;
-  private static AddressField narrowKlassBaseField;
-  private static CIntegerField narrowKlassShiftField;
-
-  public enum NARROW_OOP_MODE {
-    UnscaledNarrowOop,
-    ZeroBasedNarrowOop,
-    HeapBasedNarrowOop
-  }
 
   static {
     VM.registerVMInitializedObserver(new Observer() {
@@ -82,7 +71,7 @@ public class Universe {
       return true;
   }
 
-  private static void addHeapTypeIfInDB(TypeDataBase db, Class heapClass) {
+  private static void addHeapTypeIfInDB(TypeDataBase db, Class<? extends VMObject> heapClass) {
       String heapName = heapClass.getSimpleName();
       if (typeExists(db, heapName)) {
           heapConstructor.addMapping(heapName, heapClass);
@@ -95,7 +84,6 @@ public class Universe {
     collectedHeapField = type.getAddressField("_collectedHeap");
 
     heapConstructor = new VirtualConstructor(db);
-    addHeapTypeIfInDB(db, CMSHeap.class);
     addHeapTypeIfInDB(db, SerialHeap.class);
     addHeapTypeIfInDB(db, ParallelScavengeHeap.class);
     addHeapTypeIfInDB(db, G1CollectedHeap.class);
@@ -106,53 +94,13 @@ public class Universe {
     mainThreadGroupField   = type.getOopField("_main_thread_group");
     systemThreadGroupField = type.getOopField("_system_thread_group");
 
-    narrowOopBaseField = type.getAddressField("_narrow_oop._base");
-    narrowOopShiftField = type.getCIntegerField("_narrow_oop._shift");
-    narrowKlassBaseField = type.getAddressField("_narrow_klass._base");
-    narrowKlassShiftField = type.getCIntegerField("_narrow_klass._shift");
-
     UniverseExt.initialize(heapConstructor);
   }
 
   public Universe() {
   }
-  public static String narrowOopModeToString(NARROW_OOP_MODE mode) {
-    switch (mode) {
-    case UnscaledNarrowOop:
-      return "32-bits Oops";
-    case ZeroBasedNarrowOop:
-      return "zero based Compressed Oops";
-    case HeapBasedNarrowOop:
-      return "Compressed Oops with base";
-    }
-    return "";
-  }
   public CollectedHeap heap() {
     return (CollectedHeap) heapConstructor.instantiateWrapperFor(collectedHeapField.getValue());
-  }
-
-  public static long getNarrowOopBase() {
-    if (narrowOopBaseField.getValue() == null) {
-      return 0;
-    } else {
-      return narrowOopBaseField.getValue().minus(null);
-    }
-  }
-
-  public static int getNarrowOopShift() {
-    return (int)narrowOopShiftField.getValue();
-  }
-
-  public static long getNarrowKlassBase() {
-    if (narrowKlassBaseField.getValue() == null) {
-      return 0;
-    } else {
-      return narrowKlassBaseField.getValue().minus(null);
-    }
-  }
-
-  public static int getNarrowKlassShift() {
-    return (int)narrowKlassShiftField.getValue();
   }
 
 

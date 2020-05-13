@@ -1,15 +1,17 @@
 /*
- * Copyright (c) 2002-2018, the original author or authors.
+ * Copyright (c) 2002-2020, the original author or authors.
  *
  * This software is distributable under the BSD license. See the terms of the
  * BSD license in the documentation provided with this software.
  *
- * http://www.opensource.org/licenses/bsd-license.php
+ * https://opensource.org/licenses/BSD-3-Clause
  */
 package jdk.internal.org.jline.reader.impl;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import jdk.internal.org.jline.reader.CompletingParsedLine;
 import jdk.internal.org.jline.reader.EOFError;
@@ -18,6 +20,13 @@ import jdk.internal.org.jline.reader.Parser;
 
 public class DefaultParser implements Parser {
 
+    public enum Bracket {
+        ROUND,   // ()
+        CURLY,   // {}
+        SQUARE,  // []
+        ANGLE;   // <>
+    }
+
     private char[] quoteChars = {'\'', '"'};
 
     private char[] escapeChars = {'\\'};
@@ -25,6 +34,14 @@ public class DefaultParser implements Parser {
     private boolean eofOnUnclosedQuote;
 
     private boolean eofOnEscapedNewLine;
+
+    private char[] openingBrackets = null;
+
+    private char[] closingBrackets = null;
+
+    private String regexVariable = "[a-zA-Z_]{1,}[a-zA-Z0-9_-]*((.|\\['|\\[\\\"|\\[)[a-zA-Z0-9_-]*(|'\\]|\\\"\\]|\\])){0,1}";
+    private String regexCommand = "[:]{0,1}[a-zA-Z]{1,}[a-zA-Z0-9_-]*";
+    private int commandGroup = 4;
 
     //
     // Chainable setters
@@ -45,8 +62,28 @@ public class DefaultParser implements Parser {
         return this;
     }
 
+    public DefaultParser eofOnUnclosedBracket(Bracket... brackets) {
+        setEofOnUnclosedBracket(brackets);
+        return this;
+    }
+
     public DefaultParser eofOnEscapedNewLine(boolean eofOnEscapedNewLine) {
         this.eofOnEscapedNewLine = eofOnEscapedNewLine;
+        return this;
+    }
+
+    public DefaultParser regexVariable(String regexVariable) {
+        this.regexVariable = regexVariable;
+        return this;
+    }
+
+    public DefaultParser regexCommand(String regexCommand) {
+        this.regexCommand = regexCommand;
+        return this;
+    }
+
+    public DefaultParser commandGroup(int commandGroup) {
+        this.commandGroup = commandGroup;
         return this;
     }
 
@@ -86,6 +123,93 @@ public class DefaultParser implements Parser {
         return eofOnEscapedNewLine;
     }
 
+    public void setEofOnUnclosedBracket(Bracket... brackets) {
+        if (brackets == null) {
+            openingBrackets = null;
+            closingBrackets = null;
+        } else {
+            Set<Bracket> bs = new HashSet<>(Arrays.asList(brackets));
+            openingBrackets = new char[bs.size()];
+            closingBrackets = new char[bs.size()];
+            int i = 0;
+            for (Bracket b : bs) {
+                switch (b) {
+                case ROUND:
+                    openingBrackets[i] = '(';
+                    closingBrackets[i] = ')';
+                    break;
+                case CURLY:
+                    openingBrackets[i] = '{';
+                    closingBrackets[i] = '}';
+                    break;
+                case SQUARE:
+                    openingBrackets[i] = '[';
+                    closingBrackets[i] = ']';
+                    break;
+                case ANGLE:
+                    openingBrackets[i] = '<';
+                    closingBrackets[i] = '>';
+                    break;
+                }
+                i++;
+            }
+        }
+    }
+
+    public void setRegexVariable(String regexVariable) {
+        this.regexVariable = regexVariable;
+    }
+
+    public void setRegexCommand(String regexCommand) {
+        this.regexCommand = regexCommand;
+    }
+
+    public void setCommandGroup(int commandGroup) {
+        this.commandGroup = commandGroup;
+    }
+
+    @Override
+    public boolean validCommandName(String name) {
+        return name != null && name.matches(regexCommand);
+    }
+
+    @Override
+    public boolean validVariableName(String name) {
+        return name != null && name.matches(regexVariable);
+    }
+
+
+    @Override
+    public String getCommand(final String line) {
+        String out = "";
+        Pattern  patternCommand = Pattern.compile("^\\s*" + regexVariable + "=(" + regexCommand + ")(\\s+.*|$)");
+        Matcher matcher = patternCommand.matcher(line);
+        if (matcher.find()) {
+            out = matcher.group(commandGroup);
+        } else {
+            out = line.trim().split("\\s+")[0];
+            int idx = out.indexOf("=");
+            if (idx > -1) {
+                out = out.substring(idx + 1);
+            }
+            if (!out.matches(regexCommand)) {
+                out = "";
+            }
+        }
+        return out;
+    }
+
+    @Override
+    public String getVariable(final String line) {
+        String out = null;
+        Pattern  patternCommand = Pattern.compile("^\\s*(" + regexVariable + ")\\s*=[^=~].*");
+        Matcher matcher = patternCommand.matcher(line);
+        if (matcher.find()) {
+            out = matcher.group(1);
+        }
+        return out;
+    }
+
     public ParsedLine parse(final String line, final int cursor, ParseContext context) {
         List<String> words = new LinkedList<>();
         StringBuilder current = new StringBuilder();
@@ -95,6 +219,8 @@ public class DefaultParser implements Parser {
         int rawWordCursor = -1;
         int rawWordLength = -1;
         int rawWordStart = 0;
+        BracketChecker bracketChecker = new BracketChecker(cursor);
+        boolean quotedWord = false;
 
         for (int i = 0; (line != null) && (i < line.length()); i++) {
             // once we reach the cursor, set the
@@ -110,37 +236,41 @@ public class DefaultParser implements Parser {
             if (quoteStart < 0 && isQuoteChar(line, i)) {
                 // Start a quote block
                 quoteStart = i;
-            } else if (quoteStart >= 0) {
-                // In a quote block
-                if (line.charAt(quoteStart) == line.charAt(i) && !isEscaped(line, i)) {
-                    // End the block; arg could be empty, but that's fine
-                    words.add(current.toString());
-                    current.setLength(0);
-                    quoteStart = -1;
-                    if (rawWordCursor >= 0 && rawWordLength < 0) {
-                        rawWordLength = i - rawWordStart + 1;
+                if (current.length()==0) {
+                    quotedWord = true;
+                    if (context == ParseContext.SPLIT_LINE) {
+                        current.append(line.charAt(i));
                     }
                 } else {
-                    if (!isEscapeChar(line, i)) {
-                        // Take the next character
-                        current.append(line.charAt(i));
+                    current.append(line.charAt(i));
+                }
+            } else if (quoteStart >= 0 && line.charAt(quoteStart) == line.charAt(i) && !isEscaped(line, i)) {
+                // End quote block
+                if (!quotedWord || context == ParseContext.SPLIT_LINE) {
+                    current.append(line.charAt(i));
+                } else if (rawWordCursor >= 0 && rawWordLength < 0) {
+                    rawWordLength = i - rawWordStart + 1;
+                }
+                quoteStart = -1;
+                quotedWord = false;
+            } else if (quoteStart < 0 && isDelimiter(line, i)) {
+                // Delimiter
+                if (current.length() > 0) {
+                    words.add(current.toString());
+                    current.setLength(0); // reset the arg
+                    if (rawWordCursor >= 0 && rawWordLength < 0) {
+                        rawWordLength = i - rawWordStart;
                     }
                 }
+                rawWordStart = i + 1;
             } else {
-                // Not in a quote block
-                if (isDelimiter(line, i)) {
-                    if (current.length() > 0) {
-                        words.add(current.toString());
-                        current.setLength(0); // reset the arg
-                        if (rawWordCursor >= 0 && rawWordLength < 0) {
-                            rawWordLength = i - rawWordStart;
-                        }
+                if (!isEscapeChar(line, i)) {
+                    current.append(line.charAt(i));
+                    if (quoteStart < 0) {
+                        bracketChecker.check(line, i);
                     }
-                    rawWordStart = i + 1;
-                } else {
-                    if (!isEscapeChar(line, i)) {
-                        current.append(line.charAt(i));
-                    }
+                } else if (context == ParseContext.SPLIT_LINE) {
+                    current.append(line.charAt(i));
                 }
             }
         }
@@ -159,21 +289,36 @@ public class DefaultParser implements Parser {
             rawWordLength = rawWordCursor;
         }
 
-        if (eofOnEscapedNewLine && isEscapeChar(line, line.length() - 1)) {
-            throw new EOFError(-1, -1, "Escaped new line", "newline");
-        }
-        if (eofOnUnclosedQuote && quoteStart >= 0 && context != ParseContext.COMPLETE) {
-            throw new EOFError(-1, -1, "Missing closing quote", line.charAt(quoteStart) == '\''
-                    ? "quote" : "dquote");
+        if (context != ParseContext.COMPLETE) {
+            if (eofOnEscapedNewLine && isEscapeChar(line, line.length() - 1)) {
+                throw new EOFError(-1, -1, "Escaped new line", "newline");
+            }
+            if (eofOnUnclosedQuote && quoteStart >= 0) {
+                throw new EOFError(-1, -1, "Missing closing quote", line.charAt(quoteStart) == '\''
+                        ? "quote" : "dquote");
+            }
+            if (bracketChecker.isClosingBracketMissing() || bracketChecker.isOpeningBracketMissing()) {
+                String message = null;
+                String missing = null;
+                if (bracketChecker.isClosingBracketMissing()) {
+                    message = "Missing closing brackets";
+                    missing = "add: " + bracketChecker.getMissingClosingBrackets();
+                } else {
+                    message = "Missing opening bracket";
+                    missing = "missing: " + bracketChecker.getMissingOpeningBracket();
+                }
+                throw new EOFError(-1, -1, message, missing,
+                        bracketChecker.getOpenBrackets(), bracketChecker.getNextClosingBracket());
+            }
         }
 
-        String openingQuote = quoteStart >= 0 ? line.substring(quoteStart, quoteStart + 1) : null;
+        String openingQuote = quotedWord ? line.substring(quoteStart, quoteStart + 1) : null;
         return new ArgumentList(line, words, wordIndex, wordCursor, cursor, openingQuote, rawWordCursor, rawWordLength);
     }
 
     /**
      * Returns true if the specified character is a whitespace parameter. Check to ensure that the character is not
-     * escaped by any of {@link #getQuoteChars}, and is not escaped by ant of the {@link #getEscapeChars}, and
+     * escaped by any of {@link #getQuoteChars}, and is not escaped by any of the {@link #getEscapeChars}, and
      * returns true from {@link #isDelimiterChar}.
      *
      * @param buffer    The complete command buffer
@@ -202,6 +347,18 @@ public class DefaultParser implements Parser {
         return false;
     }
 
+    @Override
+    public boolean isEscapeChar(char ch) {
+        if (escapeChars != null) {
+            for (char e : escapeChars) {
+                if (e == ch) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Check if this character is a valid escape char (i.e. one that has not been escaped)
      *
@@ -216,14 +373,8 @@ public class DefaultParser implements Parser {
         if (pos < 0) {
             return false;
         }
-        if (escapeChars != null) {
-            for (char e : escapeChars) {
-                if (e == buffer.charAt(pos)) {
-                    return !isEscaped(buffer, pos);
-                }
-            }
-        }
-        return false;
+        char ch = buffer.charAt(pos);
+        return isEscapeChar(ch) && !isEscaped(buffer, pos);
     }
 
     /**
@@ -245,7 +396,7 @@ public class DefaultParser implements Parser {
 
     /**
      * Returns true if the character at the specified position if a delimiter. This method will only be called if
-     * the character is not enclosed in any of the {@link #getQuoteChars}, and is not escaped by ant of the
+     * the character is not enclosed in any of the {@link #getQuoteChars}, and is not escaped by any of the
      * {@link #getEscapeChars}. To perform escaping manually, override {@link #isDelimiter} instead.
      *
      * @param buffer
@@ -278,6 +429,86 @@ public class DefaultParser implements Parser {
             }
         }
         return false;
+    }
+
+    private class BracketChecker {
+        private int missingOpeningBracket = -1;
+        private List<Integer> nested = new ArrayList<>();
+        private int openBrackets = 0;
+        private int cursor;
+        private String nextClosingBracket;
+
+        public BracketChecker(int cursor) {
+            this.cursor = cursor;
+        }
+
+        public void check(final CharSequence buffer, final int pos) {
+            if (openingBrackets == null || pos < 0) {
+                return;
+            }
+            int bid = bracketId(openingBrackets, buffer, pos);
+            if (bid >= 0) {
+                nested.add(bid);
+            } else {
+                bid = bracketId(closingBrackets, buffer, pos);
+                if (bid >= 0) {
+                    if (!nested.isEmpty() && bid == nested.get(nested.size()-1)) {
+                        nested.remove(nested.size()-1);
+                    } else {
+                        missingOpeningBracket = bid;
+                    }
+                }
+            }
+            if (cursor > pos) {
+                openBrackets = nested.size();
+                if (nested.size() > 0) {
+                    nextClosingBracket = String.valueOf(closingBrackets[nested.get(nested.size() - 1)]);
+                }
+            }
+        }
+
+        public boolean isOpeningBracketMissing() {
+            return missingOpeningBracket != -1;
+        }
+
+        public String getMissingOpeningBracket() {
+            if (!isOpeningBracketMissing()) {
+                return null;
+            }
+            return Character.toString(openingBrackets[missingOpeningBracket]);
+        }
+
+        public boolean isClosingBracketMissing() {
+            return !nested.isEmpty();
+        }
+
+        public String getMissingClosingBrackets() {
+            if (!isClosingBracketMissing()) {
+                return null;
+            }
+            StringBuilder out = new StringBuilder();
+            for (int i = nested.size() - 1; i > -1; i--) {
+                out.append(closingBrackets[nested.get(i)]);
+            }
+            return out.toString();
+        }
+
+        public int getOpenBrackets() {
+            return openBrackets;
+        }
+
+        public String getNextClosingBracket() {
+            return nested.size() == 2 ? nextClosingBracket : null;
+        }
+
+        private int bracketId(final char[] brackets, final CharSequence buffer, final int pos) {
+            for (int i=0; i < brackets.length; i++) {
+                if (buffer.charAt(pos) == brackets[i]) {
+                    return i;
+                }
+            }
+            return -1;
+        }
     }
 
     /**
@@ -367,26 +598,50 @@ public class DefaultParser implements Parser {
         public CharSequence escape(CharSequence candidate, boolean complete) {
             StringBuilder sb = new StringBuilder(candidate);
             Predicate<Integer> needToBeEscaped;
-            // Completion is protected by an opening quote:
-            // Delimiters (spaces) don't need to be escaped, nor do other quotes, but everything else does.
-            // Also, close the quote at the end
-            if (openingQuote != null) {
-                needToBeEscaped = i -> isRawEscapeChar(sb.charAt(i)) || String.valueOf(sb.charAt(i)).equals(openingQuote);
-            }
-            // No quote protection, need to escape everything: delimiter chars (spaces), quote chars
-            // and escapes themselves
-            else {
-                needToBeEscaped = i -> isDelimiterChar(sb, i) || isRawEscapeChar(sb.charAt(i)) || isRawQuoteChar(sb.charAt(i));
-            }
-            for (int i = 0; i < sb.length(); i++) {
-                if (needToBeEscaped.test(i)) {
-                    sb.insert(i++, escapeChars[0]);
+            String quote = openingQuote;
+            boolean middleQuotes = false;
+            if (openingQuote==null) {
+                for (int i=0; i < sb.length(); i++) {
+                    if (isQuoteChar(sb, i)) {
+                        middleQuotes = true;
+                        break;
+                    }
                 }
             }
-            if (openingQuote != null) {
-                sb.insert(0, openingQuote);
+            if (escapeChars != null) {
+                // Completion is protected by an opening quote:
+                // Delimiters (spaces) don't need to be escaped, nor do other quotes, but everything else does.
+                // Also, close the quote at the end
+                if (openingQuote != null) {
+                    needToBeEscaped = i -> isRawEscapeChar(sb.charAt(i)) || String.valueOf(sb.charAt(i)).equals(openingQuote);
+                }
+                // Completion is protected by middle quotes:
+                // Delimiters (spaces) don't need to be escaped, nor do quotes, but everything else does.
+                else if (middleQuotes) {
+                    needToBeEscaped = i -> isRawEscapeChar(sb.charAt(i));
+                }
+                // No quote protection, need to escape everything: delimiter chars (spaces), quote chars
+                // and escapes themselves
+                else {
+                    needToBeEscaped = i -> isDelimiterChar(sb, i) || isRawEscapeChar(sb.charAt(i)) || isRawQuoteChar(sb.charAt(i));
+                }
+                for (int i = 0; i < sb.length(); i++) {
+                    if (needToBeEscaped.test(i)) {
+                        sb.insert(i++, escapeChars[0]);
+                    }
+                }
+            } else if (openingQuote == null && !middleQuotes) {
+                for (int i = 0; i < sb.length(); i++) {
+                    if (isDelimiterChar(sb, i)) {
+                        quote = "'";
+                        break;
+                    }
+                }
+            }
+            if (quote != null) {
+                sb.insert(0, quote);
                 if (complete) {
-                    sb.append(openingQuote);
+                    sb.append(quote);
                 }
             }
             return sb;

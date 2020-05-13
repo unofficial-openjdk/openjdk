@@ -25,7 +25,6 @@
  * @test
  * @bug      4934778 4777599 6553182 8146427 8146475 8175055 8185371
  * @summary  Make sure that --help, -helpfile and -nohelp options work correctly.
- * @author   jamieh
  * @library ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build    javadoc.tester.* TestHelpOption
@@ -89,7 +88,8 @@ public class TestHelpOption extends JavadocTester {
                 "-sourcepath", testSrc,
                 "-nohelp",
                 testSrc("Sample.java"));
-        checkOutput("Sample.html", false, "<li><a href=\"../help-doc.html\">Help</a></li>");
+        checkOutput("Sample.html", false, """
+            <li><a href="../help-doc.html">Help</a></li>""");
         checkExit(Exit.OK);
     }
 
@@ -101,7 +101,8 @@ public class TestHelpOption extends JavadocTester {
                 testSrc("Sample.java"));
         checkExit(Exit.OK);
         checkOutput("Sample.html", true,
-                "<li><a href=\"test-help.html\">Help</a></li>");
+                """
+                    <li><a href="test-help.html">Help</a></li>""");
         checkOutput("test-help.html", true,
                 "Help, help.");
     }
@@ -174,6 +175,7 @@ public class TestHelpOption extends JavadocTester {
                 "-sourcetab ");
 
         checkFileAndOutput("Sample.html", !withOption,
-                "<li><a href=\"help-doc.html\">Help</a></li>");
+                """
+                    <li><a href="help-doc.html">Help</a></li>""");
     }
 }

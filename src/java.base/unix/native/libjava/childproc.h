@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,6 +101,7 @@ typedef struct _ChildStuff
     const char **envv;
     const char *pdir;
     int redirectErrorStream;
+    int sendAlivePing;
 } ChildStuff;
 
 /* following used in addition when mode is SPAWN */
@@ -114,11 +115,18 @@ typedef struct _SpawnInfo {
     int parentPathvBytes; /* total number of bytes in parentPathv array */
 } SpawnInfo;
 
+/* If ChildStuff.sendAlivePing is true, child shall signal aliveness to
+ * the parent the moment it gains consciousness, before any subsequent
+ * pre-exec errors could happen.
+ * This code must fit into an int and not be a valid errno value on any of
+ * our platforms. */
+#define CHILD_IS_ALIVE      65535
+
 /**
  * The cached and split version of the JDK's effective PATH.
  * (We don't support putenv("PATH=...") in native code)
  */
-const char * const *parentPathv;
+extern const char * const *parentPathv;
 
 ssize_t restartableWrite(int fd, const void *buf, size_t count);
 int restartableDup2(int fd_from, int fd_to);

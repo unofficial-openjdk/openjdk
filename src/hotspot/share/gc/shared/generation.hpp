@@ -30,7 +30,6 @@
 #include "logging/log.hpp"
 #include "memory/allocation.hpp"
 #include "memory/memRegion.hpp"
-#include "memory/universe.hpp"
 #include "memory/virtualspace.hpp"
 #include "runtime/mutex.hpp"
 #include "runtime/perfData.hpp"
@@ -42,19 +41,12 @@
 //
 // Generation                      - abstract base class
 // - DefNewGeneration              - allocation area (copy collected)
-//   - ParNewGeneration            - a DefNewGeneration that is collected by
-//                                   several threads
 // - CardGeneration                 - abstract class adding offset array behavior
 //   - TenuredGeneration             - tenured (old object) space (markSweepCompact)
-//   - ConcurrentMarkSweepGeneration - Mostly Concurrent Mark Sweep Generation
-//                                       (Detlefs-Printezis refinement of
-//                                       Boehm-Demers-Schenker)
 //
-// The system configurations currently allowed are:
+// The system configuration currently allowed is:
 //
 //   DefNewGeneration + TenuredGeneration
-//
-//   ParNewGeneration + ConcurrentMarkSweepGeneration
 //
 
 class DefNewGeneration;
@@ -123,9 +115,7 @@ class Generation: public CHeapObj<mtGC> {
   // The set of possible generation kinds.
   enum Name {
     DefNew,
-    ParNew,
     MarkSweepCompact,
-    ConcurrentMarkSweep,
     Other
   };
 
@@ -301,7 +291,7 @@ class Generation: public CHeapObj<mtGC> {
   // word of "obj" may have been overwritten with a forwarding pointer, and
   // also taking care to copy the klass pointer *last*.  Returns the new
   // object if successful, or else NULL.
-  virtual oop par_promote(int thread_num, oop obj, markOop m, size_t word_sz);
+  virtual oop par_promote(int thread_num, oop obj, markWord m, size_t word_sz);
 
   // Informs the current generation that all par_promote_alloc's in the
   // collection have been completed; any supporting data structures can be
@@ -479,11 +469,6 @@ class Generation: public CHeapObj<mtGC> {
   // Iterate over all objects in the generation, calling "cl.do_object" on
   // each.
   virtual void object_iterate(ObjectClosure* cl);
-
-  // Iterate over all safe objects in the generation, calling "cl.do_object" on
-  // each.  An object is safe if its references point to other objects in
-  // the heap.  This defaults to object_iterate() unless overridden.
-  virtual void safe_object_iterate(ObjectClosure* cl);
 
   // Apply "cl->do_oop" to (the address of) all and only all the ref fields
   // in the current generation that contain pointers to objects in younger

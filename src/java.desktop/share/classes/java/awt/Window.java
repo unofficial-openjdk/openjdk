@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,8 +96,9 @@ import sun.util.logging.PlatformLogger;
  * possible, as shown in the following figure.
  * <p>
  * <img src="doc-files/MultiScreen.gif"
- * alt="Diagram shows virtual device containing 4 physical screens. Primary physical screen shows coords (0,0), other screen shows (-80,-100)."
- * style="float:center; margin: 7px 10px;">
+ * alt="Diagram shows virtual device containing 4 physical screens. Primary
+ * physical screen shows coords (0,0), other screen shows (-80,-100)."
+ * style="margin: 7px 10px;">
  * <p>
  * In such an environment, when calling {@code setLocation},
  * you must pass a virtual coordinate to this method.  Similarly,
@@ -132,6 +133,11 @@ import sun.util.logging.PlatformLogger;
  * management system may ignore such requests, or modify the requested
  * geometry in order to place and size the {@code Window} in a way
  * that more closely matches the desktop settings.
+ * <p>
+ * Visual effects such as halos, shadows, motion effects and animations may be
+ * applied to the window by the desktop window management system. These are
+ * outside the knowledge and control of the AWT and so for the purposes of this
+ * specification are not considered part of the top-level window.
  * <p>
  * Due to the asynchronous nature of native event handling, the results
  * returned by {@code getBounds}, {@code getLocation},
@@ -371,6 +377,7 @@ public class Window extends Container implements Accessible {
      * @see #setShape(Shape)
      * @since 1.7
      */
+    @SuppressWarnings("serial") // Not statically typed as Serializable
     private Shape shape = null;
 
     private static final String base = "win";

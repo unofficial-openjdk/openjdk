@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import static org.graalvm.compiler.bytecode.Bytecodes.POP2;
 import static org.graalvm.compiler.bytecode.Bytecodes.SWAP;
 import static org.graalvm.compiler.debug.GraalError.shouldNotReachHere;
 import static org.graalvm.compiler.nodes.FrameState.TWO_SLOT_MARKER;
+import static org.graalvm.compiler.nodes.util.GraphUtil.originalValue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,11 +44,11 @@ import java.util.function.Function;
 
 import org.graalvm.compiler.bytecode.Bytecode;
 import org.graalvm.compiler.bytecode.ResolvedJavaMethodBytecode;
-import org.graalvm.compiler.core.common.GraalOptions;
 import org.graalvm.compiler.core.common.PermanentBailoutException;
 import org.graalvm.compiler.core.common.type.StampFactory;
 import org.graalvm.compiler.core.common.type.StampPair;
 import org.graalvm.compiler.debug.DebugContext;
+import org.graalvm.compiler.debug.GraalError;
 import org.graalvm.compiler.graph.NodeSourcePosition;
 import org.graalvm.compiler.java.BciBlockMapping.BciBlock;
 import org.graalvm.compiler.nodeinfo.Verbosity;
@@ -70,7 +71,6 @@ import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderTool;
 import org.graalvm.compiler.nodes.graphbuilderconf.IntrinsicContext.SideEffectsState;
 import org.graalvm.compiler.nodes.graphbuilderconf.ParameterPlugin;
 import org.graalvm.compiler.nodes.java.MonitorIdNode;
-import org.graalvm.compiler.nodes.util.GraphUtil;
 
 import jdk.vm.ci.code.BytecodeFrame;
 import jdk.vm.ci.meta.Assumptions;
@@ -118,17 +118,18 @@ public final class FrameStateBuilder implements SideEffectsState {
      * @param graph the target graph of Graal nodes created by the builder
      */
     public FrameStateBuilder(GraphBuilderTool tool, ResolvedJavaMethod method, StructuredGraph graph) {
-        this(tool, new ResolvedJavaMethodBytecode(method), graph);
+        this(tool, new ResolvedJavaMethodBytecode(method), graph, false);
     }
 
     /**
      * Creates a new frame state builder for the given code attribute, method and the given target
-     * graph.
+     * graph. Additionally specifies if nonLiveLocals should be retained.
      *
      * @param code the bytecode in which the frame exists
      * @param graph the target graph of Graal nodes created by the builder
+     * @param shouldRetainLocalVariables specifies if nonLiveLocals should be retained in state.
      */
-    public FrameStateBuilder(GraphBuilderTool tool, Bytecode code, StructuredGraph graph) {
+    public FrameStateBuilder(GraphBuilderTool tool, Bytecode code, StructuredGraph graph, boolean shouldRetainLocalVariables) {
         this.tool = tool;
         if (tool instanceof BytecodeParser) {
             this.parser = (BytecodeParser) tool;
@@ -144,7 +145,7 @@ public final class FrameStateBuilder implements SideEffectsState {
 
         this.monitorIds = EMPTY_MONITOR_ARRAY;
         this.graph = graph;
-        this.clearNonLiveLocals = GraalOptions.OptClearNonLiveLocals.getValue(graph.getOptions());
+        this.clearNonLiveLocals = !shouldRetainLocalVariables;
         this.canVerifyKind = true;
     }
 
@@ -273,8 +274,6 @@ public final class FrameStateBuilder implements SideEffectsState {
         clearNonLiveLocals = other.clearNonLiveLocals;
         monitorIds = other.monitorIds.length == 0 ? other.monitorIds : other.monitorIds.clone();
 
-        assert locals.length == code.getMaxLocals();
-        assert stack.length == Math.max(1, code.getMaxStackSize());
         assert lockedObjects.length == monitorIds.length;
     }
 
@@ -329,8 +328,7 @@ public final class FrameStateBuilder implements SideEffectsState {
             outerFrameState = parent.getFrameStateBuilder().create(parent.bci(), parent.getNonIntrinsicAncestor(), true, null, null);
         }
         if (bci == BytecodeFrame.AFTER_EXCEPTION_BCI && parent != null) {
-            FrameState newFrameState = outerFrameState.duplicateModified(outerFrameState.bci, true, false, JavaKind.Void, new JavaKind[]{JavaKind.Object}, new ValueNode[]{stack[0]});
-            return newFrameState;
+            return outerFrameState.duplicateModified(graph, outerFrameState.bci, true, false, JavaKind.Void, new JavaKind[]{JavaKind.Object}, new ValueNode[]{stack[0]});
         }
         if (bci == BytecodeFrame.INVALID_FRAMESTATE_BCI) {
             throw shouldNotReachHere();
@@ -385,34 +383,54 @@ public final class FrameStateBuilder implements SideEffectsState {
         return new FrameStateBuilder(this);
     }
 
-    public boolean isCompatibleWith(FrameStateBuilder other) {
+    private String incompatibilityErrorMessage(String reason, FrameStateBuilder other) {
+        return String.format("Frame states being merged are incompatible: %s%n This frame state: %s%nOther frame state: %s%nParser context: %s", reason, this, other, parser);
+    }
+
+    /**
+     * Checks invariants that must hold when merging {@code other} into this frame state.
+     *
+     * @param other
+     * @throws PermanentBailoutException if the frame states are incompatible with respect to their
+     *             locked objects. This indicates bytecode that has unstructured or unbalanced
+     *             locks.
+     * @throws GraalError if the frame states are incompatible in terms of {@link #rethrowException}
+     *             or stack slots
+     */
+    public void checkCompatibleWith(FrameStateBuilder other) {
         assert code.equals(other.code) && graph == other.graph && localsSize() == other.localsSize() : "Can only compare frame states of the same method";
         assert lockedObjects.length == monitorIds.length && other.lockedObjects.length == other.monitorIds.length : "mismatch between lockedObjects and monitorIds";
 
+        if (rethrowException != other.rethrowException) {
+            throw new GraalError(incompatibilityErrorMessage("mismatch in rethrowException flag", other));
+        }
+
         if (stackSize() != other.stackSize()) {
-            return false;
+            throw new GraalError(incompatibilityErrorMessage("mismatch in stack sizes", other));
         }
         for (int i = 0; i < stackSize(); i++) {
             ValueNode x = stack[i];
             ValueNode y = other.stack[i];
             assert x != null && y != null;
             if (x != y && (x == TWO_SLOT_MARKER || x.isDeleted() || y == TWO_SLOT_MARKER || y.isDeleted() || x.getStackKind() != y.getStackKind())) {
-                return false;
+                throw new GraalError(incompatibilityErrorMessage("mismatch in stack types", other));
             }
         }
         if (lockedObjects.length != other.lockedObjects.length) {
-            return false;
+            throw new PermanentBailoutException(incompatibilityErrorMessage("unbalanced monitors - locked objects do not match", other));
         }
         for (int i = 0; i < lockedObjects.length; i++) {
-            if (GraphUtil.originalValue(lockedObjects[i]) != GraphUtil.originalValue(other.lockedObjects[i]) || monitorIds[i] != other.monitorIds[i]) {
-                throw new PermanentBailoutException("unbalanced monitors");
+            if (originalValue(lockedObjects[i], false) != originalValue(other.lockedObjects[i], false)) {
+                throw new PermanentBailoutException(incompatibilityErrorMessage("unbalanced monitors - locked objects do not match", other));
+            }
+            if (monitorIds[i] != other.monitorIds[i]) {
+                throw new PermanentBailoutException(incompatibilityErrorMessage("unbalanced monitors - monitors do not match", other));
             }
         }
-        return true;
     }
 
     public void merge(AbstractMergeNode block, FrameStateBuilder other) {
-        assert isCompatibleWith(other);
+        checkCompatibleWith(other);
 
         for (int i = 0; i < localsSize(); i++) {
             locals[i] = merge(locals[i], other.locals[i], block);
@@ -508,21 +526,21 @@ public final class FrameStateBuilder implements SideEffectsState {
             ValueNode value = locals[i];
             if (value != null && value != TWO_SLOT_MARKER && (!loopEntryState.contains(value) || loopExit.loopBegin().isPhiAtMerge(value))) {
                 debug.log(" inserting proxy for %s", value);
-                locals[i] = ProxyNode.forValue(value, loopExit, graph);
+                locals[i] = ProxyNode.forValue(value, loopExit);
             }
         }
         for (int i = 0; i < stackSize(); i++) {
             ValueNode value = stack[i];
             if (value != null && value != TWO_SLOT_MARKER && (!loopEntryState.contains(value) || loopExit.loopBegin().isPhiAtMerge(value))) {
                 debug.log(" inserting proxy for %s", value);
-                stack[i] = ProxyNode.forValue(value, loopExit, graph);
+                stack[i] = ProxyNode.forValue(value, loopExit);
             }
         }
         for (int i = 0; i < lockedObjects.length; i++) {
             ValueNode value = lockedObjects[i];
             if (value != null && (!loopEntryState.contains(value) || loopExit.loopBegin().isPhiAtMerge(value))) {
                 debug.log(" inserting proxy for %s", value);
-                lockedObjects[i] = ProxyNode.forValue(value, loopExit, graph);
+                lockedObjects[i] = ProxyNode.forValue(value, loopExit);
             }
         }
     }
@@ -630,12 +648,12 @@ public final class FrameStateBuilder implements SideEffectsState {
 
     public void clearNonLiveLocals(BciBlock block, LocalLiveness liveness, boolean liveIn) {
         /*
-         * (lstadler) if somebody is tempted to remove/disable this clearing code: it's possible to
-         * remove it for normal compilations, but not for OSR compilations - otherwise dead object
-         * slots at the OSR entry aren't cleared. it is also not enough to rely on PiNodes with
-         * Kind.Illegal, because the conflicting branch might not have been parsed.
+         * Non-live local clearing is mandatory for the entry block of an OSR compilation so that
+         * dead object slots at the OSR entry are cleared. It's not sufficient to rely on PiNodes
+         * with Kind.Illegal, because the conflicting branch might not have been parsed.
          */
-        if (!clearNonLiveLocals) {
+        boolean isOSREntryBlock = graph.isOSR() && getMethod().equals(graph.method()) && graph.getEntryBCI() == block.startBci;
+        if (!clearNonLiveLocals && !isOSREntryBlock) {
             return;
         }
         if (liveIn) {
@@ -737,6 +755,13 @@ public final class FrameStateBuilder implements SideEffectsState {
         }
         locals[i] = x;
         if (slotKind.needsTwoSlots()) {
+            if (i < locals.length - 2 && locals[i + 2] == TWO_SLOT_MARKER) {
+                /*
+                 * Writing a two-slot marker to an index previously occupied by a two-slot value:
+                 * clear the old marker of the second slot.
+                 */
+                locals[i + 2] = null;
+            }
             /* Writing a two-slot value: mark the second slot. */
             locals[i + 1] = TWO_SLOT_MARKER;
         } else if (i < locals.length - 1 && locals[i + 1] == TWO_SLOT_MARKER) {
@@ -778,7 +803,7 @@ public final class FrameStateBuilder implements SideEffectsState {
     public ValueNode pop(JavaKind slotKind) {
         if (slotKind.needsTwoSlots()) {
             ValueNode s = xpop();
-            assert s == TWO_SLOT_MARKER;
+            assert s == TWO_SLOT_MARKER : s;
         }
         ValueNode x = xpop();
         assert verifyKind(slotKind, x);
@@ -802,6 +827,12 @@ public final class FrameStateBuilder implements SideEffectsState {
         return result;
     }
 
+    public ValueNode peekObject() {
+        ValueNode x = xpeek();
+        assert verifyKind(JavaKind.Object, x);
+        return x;
+    }
+
     /**
      * Pop the specified number of slots off of this stack and return them as an array of
      * instructions.
@@ -816,7 +847,7 @@ public final class FrameStateBuilder implements SideEffectsState {
                 /* Ignore second slot of two-slot value. */
                 x = xpop();
             }
-            assert x != null && x != TWO_SLOT_MARKER;
+            assert x != null && x != TWO_SLOT_MARKER : x;
             result[i] = x;
         }
         return result;
@@ -995,5 +1026,18 @@ public final class FrameStateBuilder implements SideEffectsState {
             sideEffects = new ArrayList<>(4);
         }
         sideEffects.add(sideEffect);
+    }
+
+    public void replaceValue(ValueNode oldValue, ValueNode newValue) {
+        for (int i = 0; i < locals.length; ++i) {
+            if (locals[i] == oldValue) {
+                locals[i] = newValue;
+            }
+        }
+        for (int i = 0; i < stack.length; ++i) {
+            if (stack[i] == oldValue) {
+                stack[i] = newValue;
+            }
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 #define CPU_ARM_MACROASSEMBLER_ARM_HPP
 
 #include "code/relocInfo.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 class BiasedLockingCounters;
 
@@ -433,6 +434,26 @@ public:
 
   void fpops(FloatRegister fd, AsmCondition cond = al) {
     fldmias(SP, FloatRegisterSet(fd), writeback, cond);
+  }
+
+  void fpush(FloatRegisterSet reg_set) {
+    fstmdbd(SP, reg_set, writeback);
+  }
+
+  void fpop(FloatRegisterSet reg_set) {
+    fldmiad(SP, reg_set, writeback);
+  }
+
+  void fpush_hardfp(FloatRegisterSet reg_set) {
+#ifndef __SOFTFP__
+    fpush(reg_set);
+#endif
+  }
+
+  void fpop_hardfp(FloatRegisterSet reg_set) {
+#ifndef __SOFTFP__
+    fpop(reg_set);
+#endif
   }
 
   // Order access primitives
@@ -1047,11 +1068,6 @@ public:
                                Register temp_reg2,
                                Label& L_no_such_interface);
 
-  // Compare char[] arrays aligned to 4 bytes.
-  void char_arrays_equals(Register ary1, Register ary2,
-                          Register limit, Register result,
-                          Register chr1, Register chr2, Label& Ldone);
-
 
   void floating_cmp(Register dst);
 
@@ -1069,12 +1085,9 @@ public:
 
   void restore_default_fp_mode();
 
-#ifdef COMPILER2
-  void fast_lock(Register obj, Register box, Register scratch, Register scratch2, Register scratch3 = noreg);
-  void fast_unlock(Register obj, Register box, Register scratch, Register scratch2);
-#endif
-
-
+  void safepoint_poll(Register tmp1, Label& slow_path);
+  void get_polling_page(Register dest);
+  void read_polling_page(Register dest, relocInfo::relocType rtype);
 };
 
 

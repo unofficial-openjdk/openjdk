@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2016, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2016, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -27,8 +28,8 @@
 #include "gc/shenandoah/shenandoahHeap.inline.hpp"
 #include "gc/shenandoah/shenandoahHeapRegionSet.hpp"
 #include "gc/shenandoah/shenandoahMarkingContext.inline.hpp"
-#include "gc/shenandoah/shenandoahTraversalGC.hpp"
 #include "logging/logStream.hpp"
+#include "runtime/orderAccess.hpp"
 
 ShenandoahFreeSet::ShenandoahFreeSet(ShenandoahHeap* heap, size_t max_regions) :
   _heap(heap),
@@ -40,7 +41,7 @@ ShenandoahFreeSet::ShenandoahFreeSet(ShenandoahHeap* heap, size_t max_regions) :
 }
 
 void ShenandoahFreeSet::increase_used(size_t num_bytes) {
-  assert_heaplock_owned_by_current_thread();
+  shenandoah_assert_heaplocked();
   _used += num_bytes;
 
   assert(_used <= _capacity, "must not use more than we have: used: " SIZE_FORMAT
@@ -114,7 +115,7 @@ HeapWord* ShenandoahFreeSet::allocate_single(ShenandoahAllocRequest& req, bool& 
         size_t idx = c - 1;
         if (is_mutator_free(idx)) {
           ShenandoahHeapRegion* r = _heap->get_region(idx);
-          if (is_empty_or_trash(r)) {
+          if (can_allocate_from(r)) {
             flip_to_gc(r);
             HeapWord *result = try_allocate_in(r, req, in_new_region);
             if (result != NULL) {
@@ -124,18 +125,10 @@ HeapWord* ShenandoahFreeSet::allocate_single(ShenandoahAllocRequest& req, bool& 
         }
       }
 
-      // Try to mix the allocation into the mutator view:
-      if (ShenandoahAllowMixedAllocs) {
-        for (size_t c = _mutator_rightmost + 1; c > _mutator_leftmost; c--) {
-          size_t idx = c - 1;
-          if (is_mutator_free(idx)) {
-            HeapWord* result = try_allocate_in(_heap->get_region(idx), req, in_new_region);
-            if (result != NULL) {
-              return result;
-            }
-          }
-        }
-      }
+      // No dice. Do not try to mix mutator and GC allocations, because
+      // URWM moves due to GC allocations would expose unparsable mutator
+      // allocations.
+
       break;
     }
     default:
@@ -146,7 +139,12 @@ HeapWord* ShenandoahFreeSet::allocate_single(ShenandoahAllocRequest& req, bool& 
 }
 
 HeapWord* ShenandoahFreeSet::try_allocate_in(ShenandoahHeapRegion* r, ShenandoahAllocRequest& req, bool& in_new_region) {
-  assert (!has_no_alloc_capacity(r), "Performance: should avoid full regions on this path: " SIZE_FORMAT, r->region_number());
+  assert (!has_no_alloc_capacity(r), "Performance: should avoid full regions on this path: " SIZE_FORMAT, r->index());
+
+  if (_heap->is_concurrent_weak_root_in_progress() &&
+      r->is_trash()) {
+    return NULL;
+  }
 
   try_recycle_trashed(r);
 
@@ -177,13 +175,8 @@ HeapWord* ShenandoahFreeSet::try_allocate_in(ShenandoahHeapRegion* r, Shenandoah
     // Record actual allocation size
     req.set_actual_size(size);
 
-    if (req.is_gc_alloc() && _heap->is_concurrent_traversal_in_progress()) {
-      // Traversal needs to traverse through GC allocs. Adjust TAMS to the new top
-      // so that these allocations appear below TAMS, and thus get traversed.
-      // See top of shenandoahTraversal.cpp for an explanation.
-      _heap->marking_context()->capture_top_at_mark_start(r);
-      _heap->traversal_gc()->traversal_set()->add_region_check_for_duplicates(r);
-      OrderAccess::fence();
+    if (req.is_gc_alloc()) {
+      r->set_update_watermark(r->top());
     }
   }
 
@@ -204,7 +197,7 @@ HeapWord* ShenandoahFreeSet::try_allocate_in(ShenandoahHeapRegion* r, Shenandoah
       }
     }
 
-    size_t num = r->region_number();
+    size_t num = r->index();
     _collector_free_bitmap.clear_bit(num);
     _mutator_free_bitmap.clear_bit(num);
     // Touched the bounds? Need to update:
@@ -249,7 +242,7 @@ void ShenandoahFreeSet::adjust_bounds() {
 }
 
 HeapWord* ShenandoahFreeSet::allocate_contiguous(ShenandoahAllocRequest& req) {
-  assert_heaplock_owned_by_current_thread();
+  shenandoah_assert_heaplocked();
 
   size_t words_size = req.size();
   size_t num = ShenandoahHeapRegion::required_regions(words_size * HeapWordSize);
@@ -273,7 +266,7 @@ HeapWord* ShenandoahFreeSet::allocate_contiguous(ShenandoahAllocRequest& req) {
 
     // If regions are not adjacent, then current [beg; end] is useless, and we may fast-forward.
     // If region is not completely free, the current [beg; end] is useless, and we may fast-forward.
-    if (!is_mutator_free(end) || !is_empty_or_trash(_heap->get_region(end))) {
+    if (!is_mutator_free(end) || !can_allocate_from(_heap->get_region(end))) {
       end++;
       beg = end;
       continue;
@@ -294,7 +287,7 @@ HeapWord* ShenandoahFreeSet::allocate_contiguous(ShenandoahAllocRequest& req) {
     ShenandoahHeapRegion* r = _heap->get_region(i);
     try_recycle_trashed(r);
 
-    assert(i == beg || _heap->get_region(i-1)->region_number() + 1 == r->region_number(), "Should be contiguous");
+    assert(i == beg || _heap->get_region(i - 1)->index() + 1 == r->index(), "Should be contiguous");
     assert(r->is_empty(), "Should be empty");
 
     if (i == beg) {
@@ -312,9 +305,8 @@ HeapWord* ShenandoahFreeSet::allocate_contiguous(ShenandoahAllocRequest& req) {
     }
 
     r->set_top(r->bottom() + used_words);
-    r->reset_alloc_metadata_to_shared();
 
-    _mutator_free_bitmap.clear_bit(r->region_number());
+    _mutator_free_bitmap.clear_bit(r->index());
   }
 
   // While individual regions report their true use, all humongous regions are
@@ -336,8 +328,8 @@ HeapWord* ShenandoahFreeSet::allocate_contiguous(ShenandoahAllocRequest& req) {
   return _heap->get_region(beg)->bottom();
 }
 
-bool ShenandoahFreeSet::is_empty_or_trash(ShenandoahHeapRegion *r) {
-  return r->is_empty() || r->is_trash();
+bool ShenandoahFreeSet::can_allocate_from(ShenandoahHeapRegion *r) {
+  return r->is_empty() || (r->is_trash() && !_heap->is_concurrent_weak_root_in_progress());
 }
 
 size_t ShenandoahFreeSet::alloc_capacity(ShenandoahHeapRegion *r) {
@@ -362,7 +354,7 @@ void ShenandoahFreeSet::try_recycle_trashed(ShenandoahHeapRegion *r) {
 
 void ShenandoahFreeSet::recycle_trash() {
   // lock is not reentrable, check we don't have it
-  assert_heaplock_not_owned_by_current_thread();
+  shenandoah_assert_not_heaplocked();
 
   for (size_t i = 0; i < _heap->num_regions(); i++) {
     ShenandoahHeapRegion* r = _heap->get_region(i);
@@ -375,10 +367,10 @@ void ShenandoahFreeSet::recycle_trash() {
 }
 
 void ShenandoahFreeSet::flip_to_gc(ShenandoahHeapRegion* r) {
-  size_t idx = r->region_number();
+  size_t idx = r->index();
 
   assert(_mutator_free_bitmap.at(idx), "Should be in mutator view");
-  assert(is_empty_or_trash(r), "Should not be allocated");
+  assert(can_allocate_from(r), "Should not be allocated");
 
   _mutator_free_bitmap.clear_bit(idx);
   _collector_free_bitmap.set_bit(idx);
@@ -394,7 +386,7 @@ void ShenandoahFreeSet::flip_to_gc(ShenandoahHeapRegion* r) {
 }
 
 void ShenandoahFreeSet::clear() {
-  assert_heaplock_owned_by_current_thread();
+  shenandoah_assert_heaplocked();
   clear_internal();
 }
 
@@ -410,7 +402,7 @@ void ShenandoahFreeSet::clear_internal() {
 }
 
 void ShenandoahFreeSet::rebuild() {
-  assert_heaplock_owned_by_current_thread();
+  shenandoah_assert_heaplocked();
   clear();
 
   for (size_t idx = 0; idx < _heap->num_regions(); idx++) {
@@ -430,14 +422,14 @@ void ShenandoahFreeSet::rebuild() {
   }
 
   // Evac reserve: reserve trailing space for evacuations
-  size_t to_reserve = ShenandoahEvacReserve * _heap->capacity() / 100;
+  size_t to_reserve = _heap->max_capacity() / 100 * ShenandoahEvacReserve;
   size_t reserved = 0;
 
   for (size_t idx = _heap->num_regions() - 1; idx > 0; idx--) {
     if (reserved >= to_reserve) break;
 
     ShenandoahHeapRegion* region = _heap->get_region(idx);
-    if (_mutator_free_bitmap.at(idx) && is_empty_or_trash(region)) {
+    if (_mutator_free_bitmap.at(idx) && can_allocate_from(region)) {
       _mutator_free_bitmap.clear_bit(idx);
       _collector_free_bitmap.set_bit(idx);
       size_t ac = alloc_capacity(region);
@@ -451,7 +443,7 @@ void ShenandoahFreeSet::rebuild() {
 }
 
 void ShenandoahFreeSet::log_status() {
-  assert_heaplock_owned_by_current_thread();
+  shenandoah_assert_heaplocked();
 
   LogTarget(Info, gc, ergo) lt;
   if (lt.is_enabled()) {
@@ -466,6 +458,7 @@ void ShenandoahFreeSet::log_status() {
 
       size_t total_used = 0;
       size_t total_free = 0;
+      size_t total_free_ext = 0;
 
       for (size_t idx = _mutator_leftmost; idx <= _mutator_rightmost; idx++) {
         if (is_mutator_free(idx)) {
@@ -474,8 +467,13 @@ void ShenandoahFreeSet::log_status() {
 
           max = MAX2(max, free);
 
-          if (r->is_empty() && (last_idx + 1 == idx)) {
-            empty_contig++;
+          if (r->is_empty()) {
+            total_free_ext += free;
+            if (last_idx + 1 == idx) {
+              empty_contig++;
+            } else {
+              empty_contig = 1;
+            }
           } else {
             empty_contig = 0;
           }
@@ -491,16 +489,20 @@ void ShenandoahFreeSet::log_status() {
       size_t max_humongous = max_contig * ShenandoahHeapRegion::region_size_bytes();
       size_t free = capacity() - used();
 
-      ls.print("Free: " SIZE_FORMAT "M (" SIZE_FORMAT " regions), Max regular: " SIZE_FORMAT "K, Max humongous: " SIZE_FORMAT "K, ",
-               total_free / M, mutator_count(), max / K, max_humongous / K);
+      ls.print("Free: " SIZE_FORMAT "%s, Max: " SIZE_FORMAT "%s regular, " SIZE_FORMAT "%s humongous, ",
+               byte_size_in_proper_unit(total_free),    proper_unit_for_byte_size(total_free),
+               byte_size_in_proper_unit(max),           proper_unit_for_byte_size(max),
+               byte_size_in_proper_unit(max_humongous), proper_unit_for_byte_size(max_humongous)
+      );
 
+      ls.print("Frag: ");
       size_t frag_ext;
-      if (free > 0) {
-        frag_ext = 100 - (100 * max_humongous / free);
+      if (total_free_ext > 0) {
+        frag_ext = 100 - (100 * max_humongous / total_free_ext);
       } else {
         frag_ext = 0;
       }
-      ls.print("External frag: " SIZE_FORMAT "%%, ", frag_ext);
+      ls.print(SIZE_FORMAT "%% external, ", frag_ext);
 
       size_t frag_int;
       if (mutator_count() > 0) {
@@ -508,8 +510,7 @@ void ShenandoahFreeSet::log_status() {
       } else {
         frag_int = 0;
       }
-      ls.print("Internal frag: " SIZE_FORMAT "%%", frag_int);
-      ls.cr();
+      ls.print(SIZE_FORMAT "%% internal; ", frag_int);
     }
 
     {
@@ -525,14 +526,15 @@ void ShenandoahFreeSet::log_status() {
         }
       }
 
-      ls.print_cr("Evacuation Reserve: " SIZE_FORMAT "M (" SIZE_FORMAT " regions), Max regular: " SIZE_FORMAT "K",
-                  total_free / M, collector_count(), max / K);
+      ls.print_cr("Reserve: " SIZE_FORMAT "%s, Max: " SIZE_FORMAT "%s",
+                  byte_size_in_proper_unit(total_free), proper_unit_for_byte_size(total_free),
+                  byte_size_in_proper_unit(max),        proper_unit_for_byte_size(max));
     }
   }
 }
 
 HeapWord* ShenandoahFreeSet::allocate(ShenandoahAllocRequest& req, bool& in_new_region) {
-  assert_heaplock_owned_by_current_thread();
+  shenandoah_assert_heaplocked();
   assert_bounds();
 
   if (req.size() > ShenandoahHeapRegion::humongous_threshold_words()) {
@@ -587,15 +589,97 @@ void ShenandoahFreeSet::print_on(outputStream* out) const {
   }
 }
 
+/*
+ * Internal fragmentation metric: describes how fragmented the heap regions are.
+ *
+ * It is derived as:
+ *
+ *               sum(used[i]^2, i=0..k)
+ *   IF = 1 - ------------------------------
+ *              C * sum(used[i], i=0..k)
+ *
+ * ...where k is the number of regions in computation, C is the region capacity, and
+ * used[i] is the used space in the region.
+ *
+ * The non-linearity causes IF to be lower for the cases where the same total heap
+ * used is densely packed. For example:
+ *   a) Heap is completely full  => IF = 0
+ *   b) Heap is half full, first 50% regions are completely full => IF = 0
+ *   c) Heap is half full, each region is 50% full => IF = 1/2
+ *   d) Heap is quarter full, first 50% regions are completely full => IF = 0
+ *   e) Heap is quarter full, each region is 25% full => IF = 3/4
+ *   f) Heap has one small object per each region => IF =~ 1
+ */
+double ShenandoahFreeSet::internal_fragmentation() {
+  double squared = 0;
+  double linear = 0;
+  int count = 0;
+
+  for (size_t index = _mutator_leftmost; index <= _mutator_rightmost; index++) {
+    if (is_mutator_free(index)) {
+      ShenandoahHeapRegion* r = _heap->get_region(index);
+      size_t used = r->used();
+      squared += used * used;
+      linear += used;
+      count++;
+    }
+  }
+
+  if (count > 0) {
+    double s = squared / (ShenandoahHeapRegion::region_size_bytes() * linear);
+    return 1 - s;
+  } else {
+    return 0;
+  }
+}
+
+/*
+ * External fragmentation metric: describes how fragmented the heap is.
+ *
+ * It is derived as:
+ *
+ *   EF = 1 - largest_contiguous_free / total_free
+ *
+ * For example:
+ *   a) Heap is completely empty => EF = 0
+ *   b) Heap is completely full => EF = 0
+ *   c) Heap is first-half full => EF = 1/2
+ *   d) Heap is half full, full and empty regions interleave => EF =~ 1
+ */
+double ShenandoahFreeSet::external_fragmentation() {
+  size_t last_idx = 0;
+  size_t max_contig = 0;
+  size_t empty_contig = 0;
+
+  size_t free = 0;
+
+  for (size_t index = _mutator_leftmost; index <= _mutator_rightmost; index++) {
+    if (is_mutator_free(index)) {
+      ShenandoahHeapRegion* r = _heap->get_region(index);
+      if (r->is_empty()) {
+        free += ShenandoahHeapRegion::region_size_bytes();
+        if (last_idx + 1 == index) {
+          empty_contig++;
+        } else {
+          empty_contig = 1;
+        }
+      } else {
+        empty_contig = 0;
+      }
+
+      max_contig = MAX2(max_contig, empty_contig);
+      last_idx = index;
+    }
+  }
+
+  if (free > 0) {
+    return 1 - (1.0 * max_contig * ShenandoahHeapRegion::region_size_bytes() / free);
+  } else {
+    return 0;
+  }
+}
+
 #ifdef ASSERT
-void ShenandoahFreeSet::assert_heaplock_owned_by_current_thread() const {
-  _heap->assert_heaplock_owned_by_current_thread();
-}
-
-void ShenandoahFreeSet::assert_heaplock_not_owned_by_current_thread() const {
-  _heap->assert_heaplock_not_owned_by_current_thread();
-}
-
 void ShenandoahFreeSet::assert_bounds() const {
   // Performance invariants. Failing these would not break the free set, but performance
   // would suffer.

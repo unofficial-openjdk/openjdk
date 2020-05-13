@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,16 +68,30 @@ public class TestShutdownEvent {
 
     public static void main(String[] args) throws Throwable {
         for (int i = 0; i < subTests.length; ++i) {
-            if (subTests[i].isApplicable()) {
-                runSubtest(i);
-            } else {
+            int attempts = subTests[i].attempts();
+            if (attempts == 0) {
                 System.out.println("Skipping non-applicable test: " + i);
             }
+            for (int j = 0; j < attempts -1; j++) {
+                try {
+                    runSubtest(i);
+                    return;
+                } catch (Exception e) {
+                    System.out.println("Failed: " + e.getMessage());
+                    System.out.println();
+                    System.out.println("Retry " + i + 1);
+                } catch (OutOfMemoryError | StackOverflowError e) {
+                    System.out.println("Error");
+                    // Can happen when parsing corrupt file. Abort test.
+                    return;
+                }
+            }
+            runSubtest(i);
         }
     }
 
     private static void runSubtest(int subTestIndex) throws Exception {
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(true,
+        ProcessBuilder pb = ProcessTools.createTestJvm(
                                 "-Xlog:jfr=debug",
                                 "-XX:-CreateCoredumpOnCrash",
                                 "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED",
@@ -115,8 +129,8 @@ public class TestShutdownEvent {
     }
 
     private interface ShutdownEventSubTest {
-        default boolean isApplicable() {
-            return true;
+        default int attempts() {
+            return 1;
         }
         void runTest();
         void verifyEvents(RecordedEvent event, int exitCode);
@@ -169,7 +183,15 @@ public class TestShutdownEvent {
         @Override
         public void verifyEvents(RecordedEvent event, int exitCode) {
             Events.assertField(event, "reason").equal("VM Error");
-            validateStackTrace(event.getStackTrace());
+            // for now avoid validating the stack trace, in case of compiled code
+            // the vframeStream based solution will not work in this special VMCrash case
+            // see 8219082 for details (running the crashed VM with -Xint would solve the issue too)
+            //validateStackTrace(event.getStackTrace());
+        }
+
+        @Override
+        public int attempts() {
+            return 3;
         }
     }
 
@@ -204,14 +226,14 @@ public class TestShutdownEvent {
         private final String signalName;
 
         @Override
-        public boolean isApplicable() {
+        public int  attempts() {
             if (Platform.isWindows()) {
-                return false;
+                return 0;
             }
             if (signalName.equals("HUP") && Platform.isSolaris()) {
-                return false;
+                return 0;
             }
-            return true;
+            return 1;
         }
 
         public TestSig(String signalName) {

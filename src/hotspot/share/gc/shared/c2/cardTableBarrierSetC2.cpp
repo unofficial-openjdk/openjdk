@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@
 
 Node* CardTableBarrierSetC2::byte_map_base_node(GraphKit* kit) const {
   // Get base of card map
-  jbyte* card_table_base = ci_card_table_address();
+  CardTable::CardValue* card_table_base = ci_card_table_address();
    if (card_table_base != NULL) {
      return kit->makecon(TypeRawPtr::make((address)card_table_base));
    } else {
@@ -45,7 +45,7 @@ Node* CardTableBarrierSetC2::byte_map_base_node(GraphKit* kit) const {
    }
 }
 
-// vanilla/CMS post barrier
+// vanilla post barrier
 // Insert a write-barrier store.  This is to let generational GC work; we have
 // to flag all oop-stores before the next GC point.
 void CardTableBarrierSetC2::post_barrier(GraphKit* kit,
@@ -187,6 +187,6 @@ void CardTableBarrierSetC2::eliminate_gc_barrier(PhaseMacroExpand* macro, Node* 
 }
 
 bool CardTableBarrierSetC2::array_copy_requires_gc_barriers(bool tightly_coupled_alloc, BasicType type, bool is_clone, ArrayCopyPhase phase) const {
-  bool is_oop = type == T_OBJECT || type == T_ARRAY;
+  bool is_oop = is_reference_type(type);
   return is_oop && (!tightly_coupled_alloc || !use_ReduceInitialCardMarks());
 }

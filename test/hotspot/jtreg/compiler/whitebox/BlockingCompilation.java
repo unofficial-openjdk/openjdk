@@ -30,7 +30,6 @@
  * @library /test/lib /
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm
  *        -Xbootclasspath/a:.
  *        -Xmixed
@@ -50,7 +49,7 @@ import java.util.Random;
 
 public class BlockingCompilation {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
-    private static final Random RANDOM = new Random();
+    private static final Random RANDOM = new Random(42);
 
     public static int foo() {
         return RANDOM.nextInt();

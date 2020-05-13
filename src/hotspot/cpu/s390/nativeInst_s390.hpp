@@ -490,13 +490,13 @@ class NativeMovConstReg: public NativeInstruction {
   // Patch data in code stream.
   address set_data_plain(intptr_t x, CodeBlob *code);
   // Patch data in code stream and oop pool if necessary.
-  void set_data(intptr_t x);
+  void set_data(intptr_t x, relocInfo::relocType expected_type = relocInfo::none);
 
   // Patch narrow oop constant in code stream.
   void set_narrow_oop(intptr_t data);
   void set_narrow_klass(intptr_t data);
-  void set_pcrel_addr(intptr_t addr, CompiledMethod *nm = NULL, bool copy_back_to_oop_pool=false);
-  void set_pcrel_data(intptr_t data, CompiledMethod *nm = NULL, bool copy_back_to_oop_pool=false);
+  void set_pcrel_addr(intptr_t addr, CompiledMethod *nm = NULL);
+  void set_pcrel_data(intptr_t data, CompiledMethod *nm = NULL);
 
   void verify();
 
@@ -535,6 +535,12 @@ class NativeMovRegMem;
 inline NativeMovRegMem* nativeMovRegMem_at (address address);
 class NativeMovRegMem: public NativeInstruction {
  public:
+  enum z_specific_constants {
+    instruction_size = 12 // load_const used with access_field_id
+  };
+
+  int num_bytes_to_end_of_patch() const { return instruction_size; }
+
   intptr_t offset() const {
     return nativeMovConstReg_at(addr_at(0))->data();
   }

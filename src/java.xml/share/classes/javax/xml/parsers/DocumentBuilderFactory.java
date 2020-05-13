@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,8 @@ import javax.xml.validation.Schema;
  */
 
 public abstract class DocumentBuilderFactory {
-
+    private static final String DEFAULT_IMPL =
+            "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl";
     private boolean validating = false;
     private boolean namespaceAware = false;
     private boolean whitespace = false;
@@ -52,6 +53,76 @@ public abstract class DocumentBuilderFactory {
      * Use {@link #newInstance()}.
      */
     protected DocumentBuilderFactory () {
+    }
+
+    /**
+     * Creates a new NamespaceAware instance of the {@code DocumentBuilderFactory}
+     * builtin system-default implementation. Parsers produced by the factory
+     * instance provides support for XML namespaces by default.
+     *
+     * @implSpec
+     * In addition to creating a factory instance using the same process as
+     * {@link #newDefaultInstance()}, this method must set NamespaceAware to true.
+     *
+     * @return a new instance of the {@code DocumentBuilderFactory} builtin
+     *         system-default implementation.
+     *
+     * @since 13
+     */
+    public static DocumentBuilderFactory newDefaultNSInstance() {
+        return makeNSAware(new DocumentBuilderFactoryImpl());
+    }
+
+    /**
+     * Creates a new NamespaceAware instance of a {@code DocumentBuilderFactory}.
+     * Parsers produced by the factory instance provides support for XML namespaces
+     * by default.
+     *
+     * @implSpec
+     * In addition to creating a factory instance using the same process as
+     * {@link #newInstance()}, this method must set NamespaceAware to true.
+     *
+     * @return a new instance of a {@code DocumentBuilderFactory}
+     *
+     * @throws FactoryConfigurationError in case of {@linkplain
+     *         java.util.ServiceConfigurationError service configuration error}
+     *         or if the implementation is not available or cannot be instantiated.
+     *
+     * @since 13
+     */
+    public static DocumentBuilderFactory newNSInstance() {
+        return makeNSAware(FactoryFinder.find(DocumentBuilderFactory.class, DEFAULT_IMPL));
+    }
+
+    /**
+     * Creates a new NamespaceAware instance of a {@code DocumentBuilderFactory}
+     * from the class name. Parsers produced by the factory instance provides
+     * support for XML namespaces by default.
+     *
+     * @implSpec
+     * In addition to creating a factory instance using the same process as
+     * {@link #newInstance(java.lang.String, java.lang.ClassLoader)}, this method
+     * must set NamespaceAware to true.
+     *
+     * @param factoryClassName a fully qualified factory class name that provides
+     *                         implementation of
+     *                         {@code javax.xml.parsers.DocumentBuilderFactory}.
+     *
+     * @param classLoader the {@code ClassLoader} used to load the factory class.
+     *                    If it is {@code null}, the current {@code Thread}'s
+     *                    context classLoader is used to load the factory class.
+     *
+     * @return a new instance of a {@code DocumentBuilderFactory}
+     *
+     * @throws FactoryConfigurationError if {@code factoryClassName} is {@code null}, or
+     *                                   the factory class cannot be loaded, instantiated.
+     *
+     * @since 13
+     */
+    public static DocumentBuilderFactory newNSInstance(String factoryClassName,
+            ClassLoader classLoader) {
+            return makeNSAware(FactoryFinder.newInstance(
+                    DocumentBuilderFactory.class, factoryClassName, classLoader, false));
     }
 
     /**
@@ -118,7 +189,7 @@ public abstract class DocumentBuilderFactory {
      * configure and obtain parser instances.
      *
      *
-     * <h2>Tip for Trouble-shooting</h2>
+     * <h4>Tip for Trouble-shooting</h4>
      * <p>
      * Setting the {@code jaxp.debug} system property will cause
      * this method to print a lot of debug messages
@@ -141,7 +212,7 @@ public abstract class DocumentBuilderFactory {
                 /* The default property name according to the JAXP spec */
                 DocumentBuilderFactory.class, // "javax.xml.parsers.DocumentBuilderFactory"
                 /* The fallback implementation class name */
-                "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
+                DEFAULT_IMPL);
     }
 
     /**
@@ -154,7 +225,7 @@ public abstract class DocumentBuilderFactory {
      * it can use the factory to configure and obtain parser instances.
      *
      *
-     * <h2>Tip for Trouble-shooting</h2>
+     * <h4>Tip for Trouble-shooting</h4>
      * <p>Setting the {@code jaxp.debug} system property will cause
      * this method to print a lot of debug messages
      * to {@code System.err} about what it is doing and where it is looking at.
@@ -183,6 +254,11 @@ public abstract class DocumentBuilderFactory {
             //do not fallback if given classloader can't find the class, throw exception
             return FactoryFinder.newInstance(DocumentBuilderFactory.class,
                         factoryClassName, classLoader, false);
+    }
+
+    private static DocumentBuilderFactory makeNSAware(DocumentBuilderFactory dbf) {
+        dbf.setNamespaceAware(true);
+        return dbf;
     }
 
     /**
@@ -549,7 +625,7 @@ public abstract class DocumentBuilderFactory {
      * exception when the {@link #newDocumentBuilder()} is invoked.
      *
      *
-     * <h3>Note for implementors</h3>
+     * <h4>Note for implementors</h4>
      *
      * <p>
      * A parser must be able to work with any {@link Schema}

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2013, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -24,18 +25,20 @@
 #ifndef SHARE_GC_SHENANDOAH_SHENANDOAHHEAPREGION_HPP
 #define SHARE_GC_SHENANDOAH_SHENANDOAHHEAPREGION_HPP
 
-#include "gc/shared/space.hpp"
+#include "gc/shared/spaceDecorator.hpp"
 #include "gc/shenandoah/shenandoahAllocRequest.hpp"
 #include "gc/shenandoah/shenandoahAsserts.hpp"
 #include "gc/shenandoah/shenandoahHeap.hpp"
 #include "gc/shenandoah/shenandoahPacer.hpp"
-#include "memory/universe.hpp"
+#include "gc/shenandoah/shenandoahPadding.hpp"
 #include "utilities/sizes.hpp"
 
 class VMStructs;
+class ShenandoahHeapRegionStateConstant;
 
-class ShenandoahHeapRegion : public ContiguousSpace {
+class ShenandoahHeapRegion {
   friend class VMStructs;
+  friend class ShenandoahHeapRegionStateConstant;
 private:
   /*
     Region state is described by a state machine. Transitions are guarded by
@@ -116,9 +119,10 @@ private:
     _pinned,                  // region is pinned
     _pinned_cset,             // region is pinned and in cset (evac failure path)
     _trash,                   // region contains only trash
+    _REGION_STATES_NUM        // last
   };
 
-  const char* region_state_to_string(RegionState s) const {
+  static const char* region_state_to_string(RegionState s) {
     switch (s) {
       case _empty_uncommitted:       return "Empty Uncommitted";
       case _empty_committed:         return "Empty Committed";
@@ -158,6 +162,10 @@ private:
   void report_illegal_transition(const char* method);
 
 public:
+  static const int region_states_num() {
+    return _REGION_STATES_NUM;
+  }
+
   // Allowed transitions from the outside code:
   void make_regular_allocation();
   void make_regular_bypass();
@@ -192,10 +200,14 @@ public:
 
   // Macro-properties:
   bool is_alloc_allowed()          const { return is_empty() || is_regular() || _state == _pinned; }
-  bool is_move_allowed()           const { return is_regular() || _state == _cset || (ShenandoahHumongousMoves && _state == _humongous_start); }
+  bool is_stw_move_allowed()       const { return is_regular() || _state == _cset || (ShenandoahHumongousMoves && _state == _humongous_start); }
 
   RegionState state()              const { return _state; }
   int  state_ordinal()             const { return region_state_to_ordinal(_state); }
+
+  void record_pin();
+  void record_unpin();
+  size_t pin_count() const;
 
 private:
   static size_t RegionCount;
@@ -210,56 +222,35 @@ private:
   static size_t MaxTLABSizeBytes;
   static size_t MaxTLABSizeWords;
 
-  // Global allocation counter, increased for each allocation under Shenandoah heap lock.
-  // Padded to avoid false sharing with the read-only fields above.
-  struct PaddedAllocSeqNum {
-    DEFINE_PAD_MINUS_SIZE(0, DEFAULT_CACHE_LINE_SIZE, sizeof(uint64_t));
-    uint64_t value;
-    DEFINE_PAD_MINUS_SIZE(1, DEFAULT_CACHE_LINE_SIZE, 0);
-
-    PaddedAllocSeqNum() {
-      // start with 1, reserve 0 for uninitialized value
-      value = 1;
-    }
-  };
-
-  static PaddedAllocSeqNum _alloc_seq_num;
-
   // Never updated fields
-  ShenandoahHeap* _heap;
-  ShenandoahPacer* _pacer;
-  MemRegion _reserved;
-  size_t _region_number;
+  size_t const _index;
+  HeapWord* const _bottom;
+  HeapWord* const _end;
 
   // Rarely updated fields
   HeapWord* _new_top;
-  size_t _critical_pins;
   double _empty_time;
 
   // Seldom updated fields
   RegionState _state;
 
   // Frequently updated fields
+  HeapWord* _top;
+
   size_t _tlab_allocs;
   size_t _gclab_allocs;
-  size_t _shared_allocs;
-
-  uint64_t _seqnum_first_alloc_mutator;
-  uint64_t _seqnum_first_alloc_gc;
-  uint64_t _seqnum_last_alloc_mutator;
-  uint64_t _seqnum_last_alloc_gc;
 
   volatile size_t _live_data;
+  volatile size_t _critical_pins;
 
-  // Claim some space at the end to protect next region
-  DEFINE_PAD_MINUS_SIZE(0, DEFAULT_CACHE_LINE_SIZE, 0);
+  HeapWord* volatile _update_watermark;
 
 public:
-  ShenandoahHeapRegion(ShenandoahHeap* heap, HeapWord* start, size_t size_words, size_t index, bool committed);
+  ShenandoahHeapRegion(HeapWord* start, size_t index, bool committed);
 
   static const size_t MIN_NUM_REGIONS = 10;
 
-  static void setup_sizes(size_t initial_heap_size, size_t max_heap_size);
+  static void setup_sizes(size_t max_heap_size);
 
   double empty_time() {
     return _empty_time;
@@ -337,19 +328,14 @@ public:
     return ShenandoahHeapRegion::MaxTLABSizeWords;
   }
 
-  static uint64_t seqnum_current_alloc() {
-    // Last used seq number
-    return _alloc_seq_num.value - 1;
+  inline size_t index() const {
+    return _index;
   }
-
-  size_t region_number() const;
 
   // Allocation (return NULL if full)
   inline HeapWord* allocate(size_t word_size, ShenandoahAllocRequest::Type type);
 
-  HeapWord* allocate(size_t word_size) shenandoah_not_implemented_return(NULL)
-
-  void clear_live_data();
+  inline void clear_live_data();
   void set_live_data(size_t s);
 
   // Increase live data for newly allocated region
@@ -358,65 +344,47 @@ public:
   // Increase live data for region scanned with GC
   inline void increase_live_data_gc_words(size_t s);
 
-  bool has_live() const;
-  size_t get_live_data_bytes() const;
-  size_t get_live_data_words() const;
+  inline bool has_live() const;
+  inline size_t get_live_data_bytes() const;
+  inline size_t get_live_data_words() const;
+
+  inline size_t garbage() const;
 
   void print_on(outputStream* st) const;
-
-  size_t garbage() const;
 
   void recycle();
 
   void oop_iterate(OopIterateClosure* cl);
 
-  HeapWord* block_start_const(const void* p) const;
-
-  bool in_collection_set() const;
+  HeapWord* block_start(const void* p) const;
+  size_t block_size(const HeapWord* p) const;
+  bool block_is_obj(const HeapWord* p) const { return p < top(); }
 
   // Find humongous start region that this region belongs to
   ShenandoahHeapRegion* humongous_start_region() const;
 
-  CompactibleSpace* next_compaction_space() const shenandoah_not_implemented_return(NULL);
-  void prepare_for_compaction(CompactPoint* cp)   shenandoah_not_implemented;
-  void adjust_pointers()                          shenandoah_not_implemented;
-  void compact()                                  shenandoah_not_implemented;
+  HeapWord* top() const         { return _top;     }
+  void set_top(HeapWord* v)     { _top = v;        }
 
-  void set_new_top(HeapWord* new_top) { _new_top = new_top; }
-  HeapWord* new_top() const { return _new_top; }
+  HeapWord* new_top() const     { return _new_top; }
+  void set_new_top(HeapWord* v) { _new_top = v;    }
+
+  HeapWord* bottom() const      { return _bottom;  }
+  HeapWord* end() const         { return _end;     }
+
+  size_t capacity() const       { return byte_size(bottom(), end()); }
+  size_t used() const           { return byte_size(bottom(), top()); }
+  size_t free() const           { return byte_size(top(),    end()); }
 
   inline void adjust_alloc_metadata(ShenandoahAllocRequest::Type type, size_t);
-  void reset_alloc_metadata_to_shared();
   void reset_alloc_metadata();
   size_t get_shared_allocs() const;
   size_t get_tlab_allocs() const;
   size_t get_gclab_allocs() const;
 
-  uint64_t seqnum_first_alloc() const {
-    if (_seqnum_first_alloc_mutator == 0) return _seqnum_first_alloc_gc;
-    if (_seqnum_first_alloc_gc == 0)      return _seqnum_first_alloc_mutator;
-    return MIN2(_seqnum_first_alloc_mutator, _seqnum_first_alloc_gc);
-  }
-
-  uint64_t seqnum_last_alloc() const {
-    return MAX2(_seqnum_last_alloc_mutator, _seqnum_last_alloc_gc);
-  }
-
-  uint64_t seqnum_first_alloc_mutator() const {
-    return _seqnum_first_alloc_mutator;
-  }
-
-  uint64_t seqnum_last_alloc_mutator()  const {
-    return _seqnum_last_alloc_mutator;
-  }
-
-  uint64_t seqnum_first_alloc_gc() const {
-    return _seqnum_first_alloc_gc;
-  }
-
-  uint64_t seqnum_last_alloc_gc()  const {
-    return _seqnum_last_alloc_gc;
-  }
+  inline HeapWord* get_update_watermark() const;
+  inline void set_update_watermark(HeapWord* w);
+  inline void set_update_watermark_at_safepoint(HeapWord* w);
 
 private:
   void do_commit();
@@ -426,6 +394,8 @@ private:
   void oop_iterate_humongous(OopIterateClosure* cl);
 
   inline void internal_increase_live_data(size_t s);
+
+  void set_state(RegionState to);
 };
 
 #endif // SHARE_GC_SHENANDOAH_SHENANDOAHHEAPREGION_HPP

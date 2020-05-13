@@ -30,13 +30,14 @@
 #include "interpreter/linkResolver.hpp"
 #include "interpreter/rewriter.hpp"
 #include "logging/log.hpp"
+#include "logging/logStream.hpp"
 #include "memory/heapShared.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceClosure.hpp"
 #include "memory/metaspaceShared.hpp"
 #include "memory/resourceArea.hpp"
-#include "memory/universe.hpp"
 #include "oops/access.inline.hpp"
+#include "oops/compressedOops.hpp"
 #include "oops/constantPool.inline.hpp"
 #include "oops/cpCache.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
@@ -44,7 +45,6 @@
 #include "prims/methodHandles.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/handles.inline.hpp"
-#include "runtime/orderAccess.hpp"
 #include "utilities/macros.hpp"
 
 // Implementation of ConstantPoolCacheEntry
@@ -97,7 +97,7 @@ void ConstantPoolCacheEntry::set_bytecode_1(Bytecodes::Code code) {
   assert(c == 0 || c == code || code == 0, "update must be consistent");
 #endif
   // Need to flush pending stores here before bytecode is written.
-  OrderAccess::release_store(&_indices, _indices | ((u_char)code << bytecode_1_shift));
+  Atomic::release_store(&_indices, _indices | ((u_char)code << bytecode_1_shift));
 }
 
 void ConstantPoolCacheEntry::set_bytecode_2(Bytecodes::Code code) {
@@ -107,17 +107,17 @@ void ConstantPoolCacheEntry::set_bytecode_2(Bytecodes::Code code) {
   assert(c == 0 || c == code || code == 0, "update must be consistent");
 #endif
   // Need to flush pending stores here before bytecode is written.
-  OrderAccess::release_store(&_indices, _indices | ((u_char)code << bytecode_2_shift));
+  Atomic::release_store(&_indices, _indices | ((u_char)code << bytecode_2_shift));
 }
 
 // Sets f1, ordering with previous writes.
 void ConstantPoolCacheEntry::release_set_f1(Metadata* f1) {
   assert(f1 != NULL, "");
-  OrderAccess::release_store(&_f1, f1);
+  Atomic::release_store(&_f1, f1);
 }
 
 void ConstantPoolCacheEntry::set_indy_resolution_failed() {
-  OrderAccess::release_store(&_flags, _flags | (1 << indy_resolution_failed_shift));
+  Atomic::release_store(&_flags, _flags | (1 << indy_resolution_failed_shift));
 }
 
 // Note that concurrent update of both bytecodes can leave one of them
@@ -159,7 +159,7 @@ void ConstantPoolCacheEntry::set_parameter_size(int value) {
   // sure that the final parameter size agrees with what was passed.
   if (_flags == 0) {
     intx newflags = (value & parameter_size_mask);
-    Atomic::cmpxchg(newflags, &_flags, (intx)0);
+    Atomic::cmpxchg(&_flags, (intx)0, newflags);
   }
   guarantee(parameter_size() == value,
             "size must not change: parameter_size=%d, value=%d", parameter_size(), value);
@@ -261,11 +261,22 @@ void ConstantPoolCacheEntry::set_direct_or_vtable_call(Bytecodes::Code invoke_co
         method->name() != vmSymbols::object_initializer_name()) {
       do_resolve = false;
     }
-    // Don't mark invokestatic to method as resolved if the holder class has not yet completed
-    // initialization. An invokestatic must only proceed if the class is initialized, but if
-    // we resolve it before then that class initialization check is skipped.
-    if (invoke_code == Bytecodes::_invokestatic && !method->method_holder()->is_initialized()) {
-      do_resolve = false;
+    if (invoke_code == Bytecodes::_invokestatic) {
+      assert(method->method_holder()->is_initialized() ||
+             method->method_holder()->is_reentrant_initialization(Thread::current()),
+             "invalid class initialization state for invoke_static");
+
+      if (!VM_Version::supports_fast_class_init_checks() && method->needs_clinit_barrier()) {
+        // Don't mark invokestatic to method as resolved if the holder class has not yet completed
+        // initialization. An invokestatic must only proceed if the class is initialized, but if
+        // we resolve it before then that class initialization check is skipped.
+        //
+        // When fast class initialization checks are supported (VM_Version::supports_fast_class_init_checks() == true),
+        // template interpreter supports fast class initialization check for
+        // invokestatic which doesn't require call site re-resolution to
+        // enforce class initialization barrier.
+        do_resolve = false;
+      }
     }
     if (do_resolve) {
       set_bytecode_1(invoke_code);
@@ -390,7 +401,7 @@ void ConstantPoolCacheEntry::set_method_handle_common(const constantPoolHandle& 
     return;
   }
 
-  const methodHandle adapter = call_info.resolved_method();
+  Method* adapter            = call_info.resolved_method();
   const Handle appendix      = call_info.resolved_appendix();
   const bool has_appendix    = appendix.not_null();
 
@@ -402,15 +413,18 @@ void ConstantPoolCacheEntry::set_method_handle_common(const constantPoolHandle& 
                    (                   1      << is_final_shift            ),
                    adapter->size_of_parameters());
 
-  if (TraceInvokeDynamic) {
-    ttyLocker ttyl;
-    tty->print_cr("set_method_handle bc=%d appendix=" PTR_FORMAT "%s method=" PTR_FORMAT " (local signature) ",
-                  invoke_code,
-                  p2i(appendix()),
-                  (has_appendix ? "" : " (unused)"),
-                  p2i(adapter()));
-    adapter->print();
-    if (has_appendix)  appendix()->print();
+  LogStream* log_stream = NULL;
+  LogStreamHandle(Debug, methodhandles, indy) lsh_indy;
+  if (lsh_indy.is_enabled()) {
+    ResourceMark rm;
+    log_stream = &lsh_indy;
+    log_stream->print_cr("set_method_handle bc=%d appendix=" PTR_FORMAT "%s method=" PTR_FORMAT " (local signature) ",
+                         invoke_code,
+                         p2i(appendix()),
+                         (has_appendix ? "" : " (unused)"),
+                         p2i(adapter));
+    adapter->print_on(log_stream);
+    if (has_appendix)  appendix()->print_on(log_stream);
   }
 
   // Method handle invokes and invokedynamic sites use both cp cache words.
@@ -440,15 +454,15 @@ void ConstantPoolCacheEntry::set_method_handle_common(const constantPoolHandle& 
     resolved_references->obj_at_put(appendix_index, appendix());
   }
 
-  release_set_f1(adapter());  // This must be the last one to set (see NOTE above)!
+  release_set_f1(adapter);  // This must be the last one to set (see NOTE above)!
 
   // The interpreter assembly code does not check byte_2,
   // but it is used by is_resolved, method_if_resolved, etc.
   set_bytecode_1(invoke_code);
   NOT_PRODUCT(verify(tty));
-  if (TraceInvokeDynamic) {
-    ttyLocker ttyl;
-    this->print(tty, 0);
+
+  if (log_stream != NULL) {
+    this->print(log_stream, 0);
   }
 
   assert(has_appendix == this->has_appendix(), "proper storage of appendix flag");
@@ -497,7 +511,7 @@ Method* ConstantPoolCacheEntry::method_if_resolved(const constantPoolHandle& cpo
       switch (invoke_code) {
       case Bytecodes::_invokeinterface:
         assert(f1->is_klass(), "");
-        return klassItable::method_for_itable_index((InstanceKlass*)f1, f2_as_index());
+        return f2_as_interface_method();
       case Bytecodes::_invokestatic:
       case Bytecodes::_invokespecial:
         assert(!has_appendix(), "");
@@ -697,7 +711,7 @@ void ConstantPoolCache::remove_unshareable_info() {
 }
 
 void ConstantPoolCache::walk_entries_for_initialization(bool check_only) {
-  assert(DumpSharedSpaces, "sanity");
+  Arguments::assert_is_dumping_archive();
   // When dumping the archive, we want to clean up the ConstantPoolCache
   // to remove any effect of linking due to the execution of Java code --
   // each ConstantPoolCacheEntry will have the same contents as if
@@ -712,10 +726,12 @@ void ConstantPoolCache::walk_entries_for_initialization(bool check_only) {
   bool* f2_used = NEW_RESOURCE_ARRAY(bool, length());
   memset(f2_used, 0, sizeof(bool) * length());
 
+  Thread* THREAD = Thread::current();
+
   // Find all the slots that we need to preserve f2
   for (int i = 0; i < ik->methods()->length(); i++) {
     Method* m = ik->methods()->at(i);
-    RawBytecodeStream bcs(m);
+    RawBytecodeStream bcs(methodHandle(THREAD, m));
     while (!bcs.is_last_bytecode()) {
       Bytecodes::Code opcode = bcs.raw_next();
       switch (opcode) {

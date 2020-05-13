@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,8 +34,8 @@ package java.util;
  * @see     java.util.Scanner
  * @since   1.5
  */
-public
-class InputMismatchException extends NoSuchElementException {
+public class InputMismatchException extends NoSuchElementException {
+    @java.io.Serial
     private static final long serialVersionUID = 8811230760997066428L;
 
     /**

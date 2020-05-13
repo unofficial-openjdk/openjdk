@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ package org.graalvm.compiler.replacements.test;
 
 import static org.graalvm.compiler.core.GraalCompiler.compileGraph;
 import static org.graalvm.compiler.core.common.GraalOptions.TrackNodeSourcePosition;
+import static org.graalvm.compiler.core.common.GraalOptions.UseEncodedGraphs;
 
 import java.util.List;
 
@@ -44,6 +45,7 @@ import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.OptimisticOptimizations;
 import org.graalvm.compiler.replacements.classfile.ClassfileBytecodeProvider;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 import jdk.vm.ci.meta.ResolvedJavaMethod;
@@ -82,7 +84,7 @@ public class SubstitutionNodeSourcePositionTest extends ReplacementsTest {
     protected void registerInvocationPlugins(InvocationPlugins invocationPlugins) {
         new PluginFactory_SubstitutionNodeSourcePositionTest().registerPlugins(invocationPlugins, null);
         ClassfileBytecodeProvider bytecodeProvider = getSystemClassLoaderBytecodeProvider();
-        InvocationPlugins.Registration r = new InvocationPlugins.Registration(invocationPlugins, TestMethod.class, bytecodeProvider);
+        InvocationPlugins.Registration r = new InvocationPlugins.Registration(invocationPlugins, TestMethod.class, getReplacements(), bytecodeProvider);
         r.registerMethodSubstitution(TestMethodSubstitution.class, "test", int.class);
         super.registerInvocationPlugins(invocationPlugins);
     }
@@ -100,6 +102,7 @@ public class SubstitutionNodeSourcePositionTest extends ReplacementsTest {
         //   at org.graalvm.compiler.replacements.test.SubstitutionNodeSourcePositionTest$TestMethod.test(int) [bci: -1]
         //   at org.graalvm.compiler.replacements.test.SubstitutionNodeSourcePositionTest.methodSubstitution(SubstitutionNodeSourcePositionTest.java:89) [bci: 2]
         // @formatter:on
+        Assume.assumeFalse(UseEncodedGraphs.getValue(getInitialOptions()));
         checkMappings("methodSubstitution", true, TestMethod.class, "test");
     }
 
@@ -119,6 +122,7 @@ public class SubstitutionNodeSourcePositionTest extends ReplacementsTest {
         //
         // The precise snippet bytecodes don't matter, just ensure that some actually appear after
         // lowering.
+        Assume.assumeFalse(UseEncodedGraphs.getValue(getInitialOptions()));
         checkMappings("snippetLowering", true, SubstitutionNodeSourcePositionTest.class, "snippetLowering");
     }
 

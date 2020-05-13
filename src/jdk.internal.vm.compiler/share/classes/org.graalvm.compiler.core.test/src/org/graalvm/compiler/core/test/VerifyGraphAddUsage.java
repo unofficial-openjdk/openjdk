@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,14 +41,14 @@ import org.graalvm.compiler.nodes.ValuePhiNode;
 import org.graalvm.compiler.nodes.ValueProxyNode;
 import org.graalvm.compiler.nodes.java.MethodCallTargetNode;
 import org.graalvm.compiler.nodes.java.NewInstanceNode;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.nodes.spi.LoweringProvider;
 import org.graalvm.compiler.phases.VerifyPhase;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 import jdk.vm.ci.meta.ResolvedJavaType;
 
-public class VerifyGraphAddUsage extends VerifyPhase<PhaseContext> {
+public class VerifyGraphAddUsage extends VerifyPhase<CoreProviders> {
     private static final Method ADD_OR_UNIQUE;
     private static final Method CONSTRUCTOR_NEW_INSTANCE;
     private static final EconomicSet<Class<?>> ALLOWED_CLASSES = EconomicSet.create();
@@ -66,7 +66,7 @@ public class VerifyGraphAddUsage extends VerifyPhase<PhaseContext> {
     }
 
     @Override
-    protected boolean verify(StructuredGraph graph, PhaseContext context) {
+    protected void verify(StructuredGraph graph, CoreProviders context) {
         boolean allowed = false;
         for (Class<?> cls : ALLOWED_CLASSES) {
             ResolvedJavaType declaringClass = graph.method().getDeclaringClass();
@@ -85,11 +85,9 @@ public class VerifyGraphAddUsage extends VerifyPhase<PhaseContext> {
                 }
             }
         }
-
-        return true;
     }
 
-    private void checkNonFactory(StructuredGraph graph, EconomicSet<Node> seen, PhaseContext context, ValueNode node) {
+    private void checkNonFactory(StructuredGraph graph, EconomicSet<Node> seen, CoreProviders context, ValueNode node) {
         if (seen.contains(node)) {
             return;
         }

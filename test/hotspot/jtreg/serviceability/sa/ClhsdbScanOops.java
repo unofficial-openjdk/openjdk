@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,20 @@
  * @test
  * @bug 8192985
  * @summary Test the clhsdb 'scanoops' command
+ * @requires vm.gc.Parallel
  * @requires vm.hasSA
  * @library /test/lib
- * @run main/othervm/timeout=1200 ClhsdbScanOops
+ * @run main/othervm/timeout=1200 ClhsdbScanOops UseParallelGC
+ */
+
+/**
+ * @test
+ * @bug 8192985
+ * @summary Test the clhsdb 'scanoops' command
+ * @requires vm.gc.Serial
+ * @requires vm.hasSA
+ * @library /test/lib
+ * @run main/othervm/timeout=1200 ClhsdbScanOops UseSerialGC
  */
 
 import java.util.HashMap;
@@ -46,9 +57,7 @@ public class ClhsdbScanOops {
 
         try {
             ClhsdbLauncher test = new ClhsdbLauncher();
-            List<String> vmArgs = new ArrayList<String>();
-            vmArgs.add(gc);
-            theApp = LingeredApp.startApp(vmArgs);
+            theApp = LingeredApp.startApp(gc);
 
             System.out.println ("Started LingeredApp with the GC option " + gc +
                                 " and pid " + theApp.getPid());
@@ -101,9 +110,9 @@ public class ClhsdbScanOops {
     }
 
     public static void main(String[] args) throws Exception {
+        String gc = args[0];
         System.out.println("Starting the ClhsdbScanOops test");
-        testWithGcType("-XX:+UseParallelGC");
-        testWithGcType("-XX:+UseSerialGC");
+        testWithGcType("-XX:+" + gc);
         System.out.println("Test PASSED");
     }
 }

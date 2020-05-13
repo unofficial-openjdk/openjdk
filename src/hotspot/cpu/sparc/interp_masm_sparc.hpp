@@ -302,7 +302,6 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void profile_call(Register scratch);
   void profile_final_call(Register scratch);
   void profile_virtual_call(Register receiver, Register scratch, bool receiver_can_be_null = false);
-  void profile_called_method(Register method, Register scratch) NOT_JVMCI_RETURN;
   void profile_ret(TosState state, Register return_bci, Register scratch);
   void profile_null_seen(Register scratch);
   void profile_typecheck(Register klass, Register scratch);
@@ -321,7 +320,7 @@ class InterpreterMacroAssembler: public MacroAssembler {
   // Debugging
   void interp_verify_oop(Register reg, TosState state, const char * file, int line);    // only if +VerifyOops && state == atos
   void verify_oop_or_return_address(Register reg, Register rtmp); // for astore
-  void verify_FPU(int stack_depth, TosState state = ftos); // only if +VerifyFPU  && (state == ftos || state == dtos)
+  void verify_FPU(int stack_depth, TosState state = ftos) {}      // No-op.
 
   // support for JVMTI/Dtrace
   typedef enum { NotifyJVMTI, SkipNotifyJVMTI } NotifyMethodExitMode;

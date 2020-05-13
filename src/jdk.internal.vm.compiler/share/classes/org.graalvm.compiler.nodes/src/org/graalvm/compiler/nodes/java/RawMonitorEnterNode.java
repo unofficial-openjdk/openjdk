@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ import org.graalvm.compiler.nodeinfo.NodeInfo;
 import org.graalvm.compiler.nodes.NodeView;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.extended.MonitorEnter;
-import org.graalvm.compiler.nodes.memory.MemoryCheckpoint;
+import org.graalvm.compiler.nodes.memory.SingleMemoryKill;
 import org.graalvm.compiler.nodes.spi.Lowerable;
 import org.graalvm.compiler.nodes.spi.LoweringTool;
 import org.graalvm.compiler.nodes.spi.Virtualizable;
@@ -51,7 +51,7 @@ import jdk.internal.vm.compiler.word.LocationIdentity;
           cyclesRationale = "Rough estimation of the enter operation",
           size = SIZE_64)
 // @formatter:on
-public final class RawMonitorEnterNode extends AccessMonitorNode implements Virtualizable, Lowerable, IterableNodeType, MonitorEnter, MemoryCheckpoint.Single {
+public final class RawMonitorEnterNode extends AccessMonitorNode implements Virtualizable, Lowerable, IterableNodeType, MonitorEnter, SingleMemoryKill {
 
     public static final NodeClass<RawMonitorEnterNode> TYPE = NodeClass.create(RawMonitorEnterNode.class);
 
@@ -63,8 +63,14 @@ public final class RawMonitorEnterNode extends AccessMonitorNode implements Virt
         this.hub = hub;
     }
 
+    public RawMonitorEnterNode(ValueNode object, ValueNode hub, MonitorIdNode monitorId, boolean biasable) {
+        super(TYPE, object, monitorId, biasable);
+        assert ((ObjectStamp) object.stamp(NodeView.DEFAULT)).nonNull();
+        this.hub = hub;
+    }
+
     @Override
-    public LocationIdentity getLocationIdentity() {
+    public LocationIdentity getKilledLocationIdentity() {
         return LocationIdentity.any();
     }
 
@@ -88,4 +94,5 @@ public final class RawMonitorEnterNode extends AccessMonitorNode implements Virt
     public ValueNode getHub() {
         return hub;
     }
+
 }

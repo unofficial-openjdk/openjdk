@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,8 +56,6 @@ import static javax.tools.Diagnostic.Kind.*;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
  */
 public abstract class AbstractDoclet implements Doclet {
 
@@ -104,6 +102,7 @@ public abstract class AbstractDoclet implements Doclet {
         configuration.initConfiguration(docEnv);
         utils = configuration.utils;
         messages = configuration.getMessages();
+        BaseOptions options = configuration.getOptions();
 
         if (!isValidDoclet()) {
             return false;
@@ -127,16 +126,16 @@ public abstract class AbstractDoclet implements Doclet {
                     messages.error("doclet.exception.write.file",
                             e.fileName.getPath(), e.getCause());
             }
-            dumpStack(configuration.dumpOnError, e);
+            dumpStack(options.dumpOnError(), e);
 
         } catch (ResourceIOException e) {
             messages.error("doclet.exception.read.resource",
                     e.resource.getPath(), e.getCause());
-            dumpStack(configuration.dumpOnError, e);
+            dumpStack(options.dumpOnError(), e);
 
         } catch (SimpleDocletException e) {
             configuration.reporter.print(ERROR, e.getMessage());
-            dumpStack(configuration.dumpOnError, e);
+            dumpStack(options.dumpOnError(), e);
 
         } catch (InternalException e) {
             configuration.reporter.print(ERROR, e.getMessage());
@@ -152,7 +151,7 @@ public abstract class AbstractDoclet implements Doclet {
 
     private void reportInternalError(Throwable t) {
         if (getClass().equals(StandardDoclet.class) || getClass().equals(HtmlDoclet.class)) {
-            System.err.println(configuration.getResources().getText("doclet.internal.report.bug"));
+            System.err.println(configuration.getDocResources().getText("doclet.internal.report.bug"));
         }
         dumpStack(true, t);
     }
@@ -202,7 +201,7 @@ public abstract class AbstractDoclet implements Doclet {
         }
         messages.notice("doclet.build_version",
             configuration.getDocletVersion());
-        ClassTree classtree = new ClassTree(configuration, configuration.nodeprecated);
+        ClassTree classtree = new ClassTree(configuration, configuration.getOptions().noDeprecated());
 
         generateClassFiles(docEnv, classtree);
 
@@ -266,7 +265,7 @@ public abstract class AbstractDoclet implements Doclet {
     protected void generateClassFiles(DocletEnvironment docEnv, ClassTree classtree)
             throws DocletException {
         generateClassFiles(classtree);
-        SortedSet<PackageElement> packages = new TreeSet<>(utils.makePackageComparator());
+        SortedSet<PackageElement> packages = new TreeSet<>(utils.comparators.makePackageComparator());
         packages.addAll(configuration.getSpecifiedPackageElements());
         configuration.modulePackages.values().stream().forEach(packages::addAll);
         for (PackageElement pkg : packages) {

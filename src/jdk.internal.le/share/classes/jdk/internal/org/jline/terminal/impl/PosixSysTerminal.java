@@ -4,7 +4,7 @@
  * This software is distributable under the BSD license. See the terms of the
  * BSD license in the documentation provided with this software.
  *
- * http://www.opensource.org/licenses/bsd-license.php
+ * https://opensource.org/licenses/BSD-3-Clause
  */
 package jdk.internal.org.jline.terminal.impl;
 
@@ -87,12 +87,12 @@ public class PosixSysTerminal extends AbstractPosixTerminal {
     }
 
     @Override
-    public void close() throws IOException {
+    protected void doClose() throws IOException {
         ShutdownHooks.remove(closer);
         for (Map.Entry<Signal, Object> entry : nativeHandlers.entrySet()) {
             Signals.unregister(entry.getKey().name(), entry.getValue());
         }
-        super.close();
+        super.doClose();
         // Do not call reader.close()
         reader.shutdown();
     }

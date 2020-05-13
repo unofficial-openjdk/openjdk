@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2016, 2018 SAP SE. All rights reserved.
+ * Copyright (c) 2016, 2019 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,8 @@
 #define CPU_S390_VM_VERSION_S390_HPP
 
 
+#include "runtime/abstract_vm_version.hpp"
 #include "runtime/globals_extension.hpp"
-#include "runtime/vm_version.hpp"
 
 class VM_Version: public Abstract_VM_Version {
 
@@ -345,6 +345,12 @@ class VM_Version: public Abstract_VM_Version {
   static void initialize();
   static void print_features();
   static bool is_determine_features_test_running() { return _is_determine_features_test_running; }
+
+  // Override Abstract_VM_Version implementation
+  static void print_platform_virtualization_info(outputStream*);
+
+  // s390 supports fast class initialization checks for static methods.
+  static bool supports_fast_class_init_checks() { return true; }
 
   // CPU feature query functions
   static const char* get_model_string()       { return _model_string; }

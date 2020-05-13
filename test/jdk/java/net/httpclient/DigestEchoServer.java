@@ -26,6 +26,8 @@ import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
 import com.sun.net.httpserver.HttpsServer;
+
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -80,6 +82,8 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
             Boolean.parseBoolean(System.getProperty("test.debug", "false"));
     public static final boolean NO_LINGER =
             Boolean.parseBoolean(System.getProperty("test.nolinger", "false"));
+    public static final boolean TUNNEL_REQUIRES_HOST =
+            Boolean.parseBoolean(System.getProperty("test.requiresHost", "false"));
     public enum HttpAuthType {
         SERVER, PROXY, SERVER307, PROXY305
         /* add PROXY_AND_SERVER and SERVER_PROXY_NONE */
@@ -1522,6 +1526,36 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
             }
         }
 
+        boolean badRequest(StringBuilder response, String hostport, List<String> hosts) {
+            String message = null;
+            if (hosts.isEmpty()) {
+                message = "No host header provided\r\n";
+            } else if (hosts.size() > 1) {
+                message = "Multiple host headers provided\r\n";
+                for (String h : hosts) {
+                    message = message + "host: " + h + "\r\n";
+                }
+            } else {
+                String h = hosts.get(0);
+                if (!hostport.equalsIgnoreCase(h)
+                        && !hostport.equalsIgnoreCase(h + ":80")
+                        && !hostport.equalsIgnoreCase(h + ":443")) {
+                    message = "Bad host provided: [" + h
+                            + "] doesnot match [" + hostport + "]\r\n";
+                }
+            }
+            if (message != null) {
+                int length = message.getBytes(StandardCharsets.UTF_8).length;
+                response.append("HTTP/1.1 400 BadRequest\r\n")
+                        .append("Content-Length: " + length)
+                        .append("\r\n\r\n")
+                        .append(message);
+                return true;
+            }
+
+            return false;
+        }
+
         boolean authorize(StringBuilder response, String requestLine, String headers) {
             if (authorization != null) {
                 return authorization.authorize(response, requestLine, headers);
@@ -1536,8 +1570,8 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
                 @Override
                 public void run() {
                     try {
+                        int c = 0;
                         try {
-                            int c;
                             while ((c = is.read()) != -1) {
                                 os.write(c);
                                 os.flush();
@@ -1546,11 +1580,13 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
                                 if (DEBUG) System.out.print(tag);
                             }
                             is.close();
+                        } catch (IOException ex) {
+                            if (DEBUG || !stopped && c >  -1)
+                                ex.printStackTrace(System.out);
+                            end.completeExceptionally(ex);
                         } finally {
-                            os.close();
+                            try {os.close();} catch (Throwable t) {}
                         }
-                    } catch (IOException ex) {
-                        if (DEBUG) ex.printStackTrace(System.out);
                     } finally {
                         end.complete(null);
                     }
@@ -1600,10 +1636,12 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
         @Override
         public void run() {
             Socket clientConnection = null;
+            Socket targetConnection = null;
             try {
                 while (!stopped) {
                     System.out.println(now() + "Tunnel: Waiting for client");
                     Socket toClose;
+                    targetConnection = clientConnection = null;
                     try {
                         toClose = clientConnection = ss.accept();
                         if (NO_LINGER) {
@@ -1617,7 +1655,6 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
                     }
                     System.out.println(now() + "Tunnel: Client accepted");
                     StringBuilder headers = new StringBuilder();
-                    Socket targetConnection = null;
                     InputStream  ccis = clientConnection.getInputStream();
                     OutputStream ccos = clientConnection.getOutputStream();
                     Writer w = new OutputStreamWriter(
@@ -1635,6 +1672,7 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
                         assert connect.equalsIgnoreCase("connect");
                         String hostport = tokenizer.nextToken();
                         InetSocketAddress targetAddress;
+                        List<String> hosts = new ArrayList<>();
                         try {
                             URI uri = new URI("https", hostport, "/", null, null);
                             int port = uri.getPort();
@@ -1659,9 +1697,30 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
                             System.out.println(now() + "Tunnel: Reading header: "
                                                + (line = readLine(ccis)));
                             headers.append(line).append("\r\n");
+                            int index = line.indexOf(':');
+                            if (index >= 0) {
+                                String key = line.substring(0, index).trim();
+                                if (key.equalsIgnoreCase("host")) {
+                                    hosts.add(line.substring(index+1).trim());
+                                }
+                            }
+                        }
+                        StringBuilder response = new StringBuilder();
+                        if (TUNNEL_REQUIRES_HOST) {
+                            if (badRequest(response, hostport, hosts)) {
+                                System.out.println(now() + "Tunnel: Sending " + response);
+                                // send the 400 response
+                                pw.print(response.toString());
+                                pw.flush();
+                                toClose.close();
+                                continue;
+                            } else {
+                                assert hosts.size() == 1;
+                                System.out.println(now()
+                                        + "Tunnel: Host header verified " + hosts);
+                            }
                         }
 
-                        StringBuilder response = new StringBuilder();
                         final boolean authorize = authorize(response, requestLine, headers.toString());
                         if (!authorize) {
                             System.out.println(now() + "Tunnel: Sending "
@@ -1715,26 +1774,42 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
                             end1 = new CompletableFuture<>());
                     Thread t2 = pipe(targetConnection.getInputStream(), ccos, '-',
                             end2 = new CompletableFuture<>());
-                    end = CompletableFuture.allOf(end1, end2);
+                    var end11 = end1.whenComplete((r, t) -> exceptionally(end2, t));
+                    var end22 = end2.whenComplete((r, t) ->  exceptionally(end1, t));
+                    end = CompletableFuture.allOf(end11, end22);
+                    Socket tc = targetConnection;
                     end.whenComplete(
                             (r,t) -> {
                                 try { toClose.close(); } catch (IOException x) { }
+                                try { tc.close(); } catch (IOException x) { }
                                 finally {connectionCFs.remove(end);}
                             });
                     connectionCFs.add(end);
+                    targetConnection = clientConnection = null;
                     t1.start();
                     t2.start();
                 }
             } catch (Throwable ex) {
-                try {
-                    ss.close();
-                } catch (IOException ex1) {
-                    ex.addSuppressed(ex1);
-                }
+                close(clientConnection, ex);
+                close(targetConnection, ex);
+                close(ss, ex);
                 ex.printStackTrace(System.err);
             } finally {
                 System.out.println(now() + "Tunnel: exiting (stopped=" + stopped + ")");
                 connectionCFs.forEach(cf -> cf.complete(null));
+            }
+        }
+
+        void exceptionally(CompletableFuture<?> cf, Throwable t) {
+            if (t != null) cf.completeExceptionally(t);
+        }
+
+        void close(Closeable c, Throwable e) {
+            if (c == null) return;
+            try {
+                c.close();
+            } catch (IOException x) {
+                e.addSuppressed(x);
             }
         }
     }

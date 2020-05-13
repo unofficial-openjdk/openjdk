@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -65,7 +66,7 @@ import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Options;
 
 /**
- * Utility methods for building a filemanager.
+ * Utility methods for building a file manager.
  * There are no references here to file-system specific objects such as
  * java.io.File or java.nio.file.Path.
  */
@@ -91,7 +92,7 @@ public abstract class BaseFileManager implements JavaFileManager {
 
         // Setting this option is an indication that close() should defer actually closing
         // the file manager until after a specified period of inactivity.
-        // This is to accomodate clients which save references to Symbols created for use
+        // This is to accommodate clients which save references to Symbols created for use
         // within doclets or annotation processors, and which then attempt to use those
         // references after the tool exits, having closed any internally managed file manager.
         // Ideally, such clients should run the tool via the javax.tools API, providing their
@@ -173,6 +174,10 @@ public abstract class BaseFileManager implements JavaFileManager {
     private long lastUsedTime = System.currentTimeMillis();
     protected long deferredCloseTimeout = 0;
 
+    public void clear() {
+        new HashSet<>(options.keySet()).forEach(k -> options.remove(k));
+    }
+
     protected ClassLoader getClassLoader(URL[] urls) {
         ClassLoader thisClassLoader = getClass().getClassLoader();
 
@@ -196,6 +201,10 @@ public abstract class BaseFileManager implements JavaFileManager {
 
     public boolean isDefaultBootClassPath() {
         return locations.isDefaultBootClassPath();
+    }
+
+    public boolean isDefaultSystemModulesPath() {
+        return locations.isDefaultSystemModulesPath();
     }
 
     // <editor-fold defaultstate="collapsed" desc="Option handling">
@@ -237,7 +246,7 @@ public abstract class BaseFileManager implements JavaFileManager {
         return true;
     }
     // where
-        private static final Set<Option> javacFileManagerOptions =
+        protected static final Set<Option> javacFileManagerOptions =
             Option.getJavacFileManagerOptions();
 
     @Override @DefinedBy(Api.COMPILER)

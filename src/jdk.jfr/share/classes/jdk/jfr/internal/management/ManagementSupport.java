@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,18 +25,24 @@
 
 package jdk.jfr.internal.management;
 
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import jdk.jfr.EventType;
+import jdk.jfr.Recording;
 import jdk.jfr.internal.JVMSupport;
 import jdk.jfr.internal.LogLevel;
 import jdk.jfr.internal.LogTag;
 import jdk.jfr.internal.Logger;
 import jdk.jfr.internal.MetadataRepository;
+import jdk.jfr.internal.PlatformRecording;
+import jdk.jfr.internal.PrivateAccess;
 import jdk.jfr.internal.Utils;
+import jdk.jfr.internal.WriteableUserPath;
 import jdk.jfr.internal.instrument.JDKEvents;
 
 /**
@@ -53,7 +59,7 @@ public final class ManagementSupport {
     // This allows:
     //
     // 1) discoverability, so event settings can be exposed without the need to
-    // create a new Recording in FlightrecorderMXBean.
+    // create a new Recording in FlightRecorderMXBean.
     //
     // 2) a graphical JMX client to list all attributes to the user, without
     // loading JFR memory buffers. This is especially important when there is
@@ -85,5 +91,21 @@ public final class ManagementSupport {
     // Reuse internal logging mechanism
     public static void logError(String message) {
         Logger.log(LogTag.JFR, LogLevel.ERROR, message);
+    }
+
+    // Get the textual representation when the destination was set, which
+    // requires access to jdk.jfr.internal.PlatformRecording
+    public static String getDestinationOriginalText(Recording recording) {
+        PlatformRecording pr = PrivateAccess.getInstance().getPlatformRecording(recording);
+        WriteableUserPath wup = pr.getDestination();
+        return wup == null ? null : wup.getOriginalText();
+    }
+
+    public static void checkSetDestination(Recording recording, String destination) throws IOException{
+        PlatformRecording pr = PrivateAccess.getInstance().getPlatformRecording(recording);
+        if(destination != null){
+            WriteableUserPath wup = new WriteableUserPath(Paths.get(destination));
+            pr.checkSetDestination(wup);
+        }
     }
 }

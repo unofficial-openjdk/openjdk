@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,8 +33,10 @@ import sun.jvm.hotspot.memory.*;
 import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.types.*;
 import sun.jvm.hotspot.utilities.*;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
-public class ConstMethod extends VMObject {
+public class ConstMethod extends Metadata {
   static {
     VM.registerVMInitializedObserver(new Observer() {
         public void update(Observable o, Object data) {
@@ -192,6 +194,17 @@ public class ConstMethod extends VMObject {
 
   // bytecode accessors
 
+  /** See if address is in the Method's bytecodes */
+  public boolean isAddressInMethod(Address bcp) {
+    Address bytecodeStart = getAddress().addOffsetTo(bytecodeOffset);
+    Address bytecodeEnd = bytecodeStart.addOffsetTo(getCodeSize() - 1);
+    if (bcp.greaterThanOrEqual(bytecodeStart) && bcp.lessThanOrEqual(bytecodeEnd)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   /** Get a bytecode or breakpoint at the given bci */
   public int getBytecodeOrBPAt(int bci) {
     return getAddress().getJByteAt(bytecodeOffset + bci) & 0xFF;
@@ -294,7 +307,8 @@ public class ConstMethod extends VMObject {
     }
 
     if (Assert.ASSERTS_ENABLED) {
-      Assert.that(bci == 0 || 0 <= bci && bci < getCodeSize(), "illegal bci");
+        Assert.that(0 <= bci && bci < getCodeSize(),
+                    "illegal bci(" + bci + ") codeSize(" + getCodeSize() + ")");
     }
     int bestBCI  =  0;
     int bestLine = -1;

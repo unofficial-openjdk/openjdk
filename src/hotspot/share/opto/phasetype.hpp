@@ -52,10 +52,14 @@ enum CompilerPhaseType {
   PHASE_MATCHING,
   PHASE_INCREMENTAL_INLINE,
   PHASE_INCREMENTAL_BOXING_INLINE,
-  PHASE_BEFORE_BARRIER_EXPAND,
-  PHASE_BEFORE_MACRO_EXPANSION,
+  PHASE_CALL_CATCH_CLEANUP,
+  PHASE_INSERT_BARRIER,
+  PHASE_MACRO_EXPANSION,
+  PHASE_BARRIER_EXPANSION,
+  PHASE_ADD_UNSAFE_BARRIER,
   PHASE_END,
   PHASE_FAILURE,
+  PHASE_DEBUG,
 
   PHASE_NUM_TYPES
 };
@@ -90,10 +94,14 @@ class CompilerPhaseTypeHelper {
       case PHASE_MATCHING:                   return "After matching";
       case PHASE_INCREMENTAL_INLINE:         return "Incremental Inline";
       case PHASE_INCREMENTAL_BOXING_INLINE:  return "Incremental Boxing Inline";
-      case PHASE_BEFORE_BARRIER_EXPAND:      return "Before Barrier Expand";
-      case PHASE_BEFORE_MACRO_EXPANSION:     return "Before macro expansion";
+      case PHASE_CALL_CATCH_CLEANUP:         return "Call catch cleanup";
+      case PHASE_INSERT_BARRIER:             return "Insert barrier";
+      case PHASE_MACRO_EXPANSION:            return "Macro expand";
+      case PHASE_BARRIER_EXPANSION:          return "Barrier expand";
+      case PHASE_ADD_UNSAFE_BARRIER:         return "Add barrier to unsafe op";
       case PHASE_END:                        return "End";
       case PHASE_FAILURE:                    return "Failure";
+      case PHASE_DEBUG:                      return "Debug";
       default:
         ShouldNotReachHere();
         return NULL;

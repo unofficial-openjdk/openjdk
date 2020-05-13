@@ -32,10 +32,15 @@ class ZArguments : public GCArguments {
 private:
   void initialize_platform();
 
-public:
+  virtual void initialize_alignments();
+
   virtual void initialize();
   virtual size_t conservative_max_heap_alignment();
   virtual CollectedHeap* create_heap();
+
+  virtual bool is_supported() const;
+
+  bool is_os_supported() const;
 };
 
 #endif // SHARE_GC_Z_ZARGUMENTS_HPP

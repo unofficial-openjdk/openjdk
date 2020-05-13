@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,9 +23,7 @@
  */
 
 #include "precompiled.hpp"
-#include "gc/shared/barrierSet.hpp"
-#include "gc/shared/collectedHeap.hpp"
-#include "gc/shared/collectedHeap.inline.hpp"
+#include "memory/universe.hpp"
 #include "oops/oopsHierarchy.hpp"
 #include "runtime/thread.inline.hpp"
 #include "utilities/globalDefinitions.hpp"
@@ -39,8 +37,6 @@ void oop::register_oop() {
   Thread* t = Thread::current_or_null();
   if (t != NULL && t->is_Java_thread()) {
      frame fr = os::current_frame();
-     // This points to the oop creator, I guess current frame points to caller
-     assert (fr.pc(), "should point to a vm frame");
      t->unhandled_oops()->register_unhandled_oop(this, fr.pc());
   }
 }
@@ -53,16 +49,6 @@ void oop::unregister_oop() {
   if (t != NULL && t->is_Java_thread()) {
     t->unhandled_oops()->unregister_unhandled_oop(this);
   }
-}
-
-bool oop::operator==(const oop o) const {
-  assert(BarrierSet::barrier_set()->oop_equals_operator_allowed(), "Not allowed");
-  return obj() == o.obj();
-}
-
-bool oop::operator!=(const volatile oop o) const {
-  assert(BarrierSet::barrier_set()->oop_equals_operator_allowed(), "Not allowed");
-  return obj() != o.obj();
 }
 
 #endif // CHECK_UNHANDLED_OOPS

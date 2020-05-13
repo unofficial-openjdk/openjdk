@@ -28,7 +28,6 @@ package com.sun.org.apache.bcel.internal.generic;
  * @see BranchHandle
  * @see LocalVariableGen
  * @see CodeExceptionGen
- * @version $Id: InstructionTargeter.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public interface InstructionTargeter {
 

@@ -31,23 +31,43 @@
 package sun.security.krb5;
 
 import sun.security.krb5.internal.*;
+import sun.security.krb5.internal.crypto.KeyUsage;
+import sun.security.util.DerInputStream;
 
 abstract class KrbKdcRep {
 
     static void check(
                       boolean isAsReq,
                       KDCReq req,
-                      KDCRep rep
+                      KDCRep rep,
+                      EncryptionKey replyKey
                       ) throws KrbApErrException {
 
-        if (isAsReq && !req.reqBody.cname.equals(rep.cname)) {
+        // cname change in AS-REP is allowed only if the client
+        // sent CANONICALIZE or an NT-ENTERPRISE cname in the request, and the
+        // server supports RFC 6806 - Section 11 FAST scheme (ENC-PA-REP flag).
+        if (isAsReq && !req.reqBody.cname.equals(rep.cname) &&
+                ((!req.reqBody.kdcOptions.get(KDCOptions.CANONICALIZE) &&
+                req.reqBody.cname.getNameType() !=
+                PrincipalName.KRB_NT_ENTERPRISE) ||
+                !rep.encKDCRepPart.flags.get(Krb5.TKT_OPTS_ENC_PA_REP))) {
             rep.encKDCRepPart.key.destroy();
             throw new KrbApErrException(Krb5.KRB_AP_ERR_MODIFIED);
         }
 
+        // sname change in TGS-REP is allowed only if client
+        // sent CANONICALIZE and new sname is a referral of
+        // the form krbtgt/TO-REALM.COM@FROM-REALM.COM.
         if (!req.reqBody.sname.equals(rep.encKDCRepPart.sname)) {
-            rep.encKDCRepPart.key.destroy();
-            throw new KrbApErrException(Krb5.KRB_AP_ERR_MODIFIED);
+            String[] snameStrings = rep.encKDCRepPart.sname.getNameStrings();
+            if (isAsReq || !req.reqBody.kdcOptions.get(KDCOptions.CANONICALIZE) ||
+                    snameStrings == null || snameStrings.length != 2 ||
+                    !snameStrings[0].equals(PrincipalName.TGS_DEFAULT_SRV_NAME) ||
+                    !rep.encKDCRepPart.sname.getRealmString().equals(
+                            req.reqBody.sname.getRealmString())) {
+                rep.encKDCRepPart.key.destroy();
+                throw new KrbApErrException(Krb5.KRB_AP_ERR_MODIFIED);
+            }
         }
 
         if (req.reqBody.getNonce() != rep.encKDCRepPart.nonce) {
@@ -116,6 +136,50 @@ abstract class KrbKdcRep {
                     rep.encKDCRepPart.key.destroy();
                     throw new KrbApErrException(Krb5.KRB_AP_ERR_MODIFIED);
                 }
+            }
+        }
+
+        // RFC 6806 - Section 11 mechanism check
+        // The availability of the ENC-PA-REP flag in the KDC response is
+        // mandatory on some cases (see Krb5.TKT_OPTS_ENC_PA_REP check above).
+        if (rep.encKDCRepPart.flags.get(Krb5.TKT_OPTS_ENC_PA_REP)) {
+            boolean reqPaReqEncPaRep = false;
+            boolean repPaReqEncPaRepValid = false;
+
+            for (PAData pa : req.pAData) {
+                if (pa.getType() == Krb5.PA_REQ_ENC_PA_REP) {
+                    // The KDC supports RFC 6806 and ENC-PA-REP was sent in
+                    // the request (AS-REQ). A valid checksum is now required.
+                    reqPaReqEncPaRep = true;
+                    break;
+                }
+            }
+
+            if (rep.encKDCRepPart.pAData != null) {
+                for (PAData pa : rep.encKDCRepPart.pAData) {
+                    if (pa.getType() == Krb5.PA_REQ_ENC_PA_REP) {
+                        try {
+                            Checksum repCksum = new Checksum(
+                                    new DerInputStream(
+                                            pa.getValue()).getDerValue());
+                            // The checksum is inside encKDCRepPart so we don't
+                            // care if it's keyed or not.
+                            repPaReqEncPaRepValid =
+                                    repCksum.verifyAnyChecksum(
+                                            req.asn1Encode(), replyKey,
+                                            KeyUsage.KU_AS_REQ);
+                        } catch (Exception e) {
+                            if (Krb5.DEBUG) {
+                                e.printStackTrace();
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (reqPaReqEncPaRep && !repPaReqEncPaRepValid) {
+                throw new KrbApErrException(Krb5.KRB_AP_ERR_MODIFIED);
             }
         }
     }

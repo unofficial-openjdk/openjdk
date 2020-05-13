@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,8 +44,8 @@
 #include "classfile/systemDictionary.hpp"
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "memory/allocation.inline.hpp"
+#include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/fieldType.hpp"
 #include "runtime/handles.inline.hpp"
 #include "utilities/macros.hpp"
 
@@ -148,7 +148,8 @@ void ciObjectFactory::init_shared_objects() {
 
   for (int i = T_BOOLEAN; i <= T_CONFLICT; i++) {
     BasicType t = (BasicType)i;
-    if (type2name(t) != NULL && t != T_OBJECT && t != T_ARRAY && t != T_NARROWOOP && t != T_NARROWKLASS) {
+    if (type2name(t) != NULL && !is_reference_type(t) &&
+        t != T_NARROWOOP && t != T_NARROWKLASS) {
       ciType::_basic_types[t] = new (_arena) ciType(t);
       init_ident_of(ciType::_basic_types[t]);
     }
@@ -238,7 +239,7 @@ void ciObjectFactory::remove_symbols() {
 ciObject* ciObjectFactory::get(oop key) {
   ASSERT_IN_VM;
 
-  assert(Universe::heap()->is_in_reserved(key), "must be");
+  assert(Universe::heap()->is_in(key), "must be");
 
   NonPermObject* &bucket = find_non_perm(key);
   if (bucket != NULL) {
@@ -249,9 +250,9 @@ ciObject* ciObjectFactory::get(oop key) {
   // into the cache.
   Handle keyHandle(Thread::current(), key);
   ciObject* new_object = create_new_object(keyHandle());
-  assert(oopDesc::equals(keyHandle(), new_object->get_oop()), "must be properly recorded");
+  assert(keyHandle() == new_object->get_oop(), "must be properly recorded");
   init_ident_of(new_object);
-  assert(Universe::heap()->is_in_reserved(new_object->get_oop()), "must be");
+  assert(Universe::heap()->is_in(new_object->get_oop()), "must be");
 
   // Not a perm-space object.
   insert_non_perm(bucket, keyHandle(), new_object);
@@ -416,6 +417,7 @@ ciMethod* ciObjectFactory::get_unloaded_method(ciInstanceKlass* holder,
                                                ciSymbol*        name,
                                                ciSymbol*        signature,
                                                ciInstanceKlass* accessor) {
+  assert(accessor != NULL, "need origin of access");
   ciSignature* that = NULL;
   for (int i = 0; i < _unloaded_methods->length(); i++) {
     ciMethod* entry = _unloaded_methods->at(i);
@@ -468,8 +470,8 @@ ciKlass* ciObjectFactory::get_unloaded_klass(ciKlass* accessing_klass,
   for (int i=0; i<_unloaded_klasses->length(); i++) {
     ciKlass* entry = _unloaded_klasses->at(i);
     if (entry->name()->equals(name) &&
-        oopDesc::equals(entry->loader(), loader) &&
-        oopDesc::equals(entry->protection_domain(), domain)) {
+        entry->loader() == loader &&
+        entry->protection_domain() == domain) {
       // We've found a match.
       return entry;
     }
@@ -484,22 +486,16 @@ ciKlass* ciObjectFactory::get_unloaded_klass(ciKlass* accessing_klass,
 
   // Two cases: this is an unloaded ObjArrayKlass or an
   // unloaded InstanceKlass.  Deal with both.
-  if (name->char_at(0) == '[') {
+  if (name->char_at(0) == JVM_SIGNATURE_ARRAY) {
     // Decompose the name.'
-    FieldArrayInfo fd;
-    BasicType element_type = FieldType::get_array_info(name->get_symbol(),
-                                                       fd, THREAD);
-    if (HAS_PENDING_EXCEPTION) {
-      CLEAR_PENDING_EXCEPTION;
-      CURRENT_THREAD_ENV->record_out_of_memory_failure();
-      return ciEnv::_unloaded_ciobjarrayklass;
-    }
-    int dimension = fd.dimension();
+    SignatureStream ss(name->get_symbol(), false);
+    int dimension = ss.skip_array_prefix();  // skip all '['s
+    BasicType element_type = ss.type();
     assert(element_type != T_ARRAY, "unsuccessful decomposition");
     ciKlass* element_klass = NULL;
     if (element_type == T_OBJECT) {
       ciEnv *env = CURRENT_THREAD_ENV;
-      ciSymbol* ci_name = env->get_symbol(fd.object_key());
+      ciSymbol* ci_name = env->get_symbol(ss.as_symbol());
       element_klass =
         env->get_klass_by_name(accessing_klass, ci_name, false)->as_instance_klass();
     } else {
@@ -643,7 +639,7 @@ static ciObjectFactory::NonPermObject* emptyBucket = NULL;
 // If there is no entry in the cache corresponding to this oop, return
 // the null tail of the bucket into which the oop should be inserted.
 ciObjectFactory::NonPermObject* &ciObjectFactory::find_non_perm(oop key) {
-  assert(Universe::heap()->is_in_reserved(key), "must be");
+  assert(Universe::heap()->is_in(key), "must be");
   ciMetadata* klass = get_metadata(key->klass());
   NonPermObject* *bp = &_non_perm_bucket[(unsigned) klass->hash() % NON_PERM_BUCKETS];
   for (NonPermObject* p; (p = (*bp)) != NULL; bp = &p->next()) {
@@ -671,7 +667,7 @@ inline ciObjectFactory::NonPermObject::NonPermObject(ciObjectFactory::NonPermObj
 //
 // Insert a ciObject into the non-perm table.
 void ciObjectFactory::insert_non_perm(ciObjectFactory::NonPermObject* &where, oop key, ciObject* obj) {
-  assert(Universe::heap()->is_in_reserved_or_null(key), "must be");
+  assert(Universe::heap()->is_in_or_null(key), "must be");
   assert(&where != &emptyBucket, "must not try to fill empty bucket");
   NonPermObject* p = new (arena()) NonPermObject(where, key, obj);
   assert(where == p && is_equal(p, key) && p->object() == obj, "entry must match");
@@ -689,11 +685,11 @@ ciSymbol* ciObjectFactory::vm_symbol_at(int index) {
 
 // ------------------------------------------------------------------
 // ciObjectFactory::metadata_do
-void ciObjectFactory::metadata_do(void f(Metadata*)) {
+void ciObjectFactory::metadata_do(MetadataClosure* f) {
   if (_ci_metadata == NULL) return;
   for (int j = 0; j< _ci_metadata->length(); j++) {
     Metadata* o = _ci_metadata->at(j)->constant_encoding();
-    f(o);
+    f->do_metadata(o);
   }
 }
 

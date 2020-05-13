@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,8 @@
 #define CPU_X86_ASSEMBLER_X86_HPP
 
 #include "asm/register.hpp"
-#include "vm_version_x86.hpp"
+#include "runtime/vm_version.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 class BiasedLockingCounters;
 
@@ -338,15 +339,15 @@ class Address {
 
  private:
   bool base_needs_rex() const {
-    return _base != noreg && _base->encoding() >= 8;
+    return _base->is_valid() && _base->encoding() >= 8;
   }
 
   bool index_needs_rex() const {
-    return _index != noreg &&_index->encoding() >= 8;
+    return _index->is_valid() &&_index->encoding() >= 8;
   }
 
   bool xmmindex_needs_rex() const {
-    return _xmmindex != xnoreg && _xmmindex->encoding() >= 8;
+    return _xmmindex->is_valid() && _xmmindex->encoding() >= 8;
   }
 
   relocInfo::relocType reloc() const { return _rspec.type(); }
@@ -630,6 +631,17 @@ class Assembler : public AbstractAssembler  {
     _true = 7
   };
 
+  //---<  calculate length of instruction  >---
+  // As instruction size can't be found out easily on x86/x64,
+  // we just use '4' for len and maxlen.
+  // instruction must start at passed address
+  static unsigned int instr_len(unsigned char *instr) { return 4; }
+
+  //---<  longest instructions  >---
+  // Max instruction length is not specified in architecture documentation.
+  // We could use a "safe enough" estimate (15), but just default to
+  // instruction length guess from above.
+  static unsigned int instr_maxlen() { return 4; }
 
   // NOTE: The general philopsophy of the declarations here is that 64bit versions
   // of instructions are freely declared without the need for wrapping them an ifdef.
@@ -647,33 +659,37 @@ private:
   bool _legacy_mode_dq;
   bool _legacy_mode_vl;
   bool _legacy_mode_vlbw;
-  bool _is_managed;
-  bool _vector_masking;    // For stub code use only
+  NOT_LP64(bool _is_managed;)
 
   class InstructionAttr *_attributes;
 
   // 64bit prefixes
-  int prefix_and_encode(int reg_enc, bool byteinst = false);
-  int prefixq_and_encode(int reg_enc);
+  void prefix(Register reg);
+  void prefix(Register dst, Register src, Prefix p);
+  void prefix(Register dst, Address adr, Prefix p);
 
+  void prefix(Address adr);
+  void prefix(Address adr, Register reg,  bool byteinst = false);
+  void prefix(Address adr, XMMRegister reg);
+
+  int prefix_and_encode(int reg_enc, bool byteinst = false);
   int prefix_and_encode(int dst_enc, int src_enc) {
     return prefix_and_encode(dst_enc, false, src_enc, false);
   }
   int prefix_and_encode(int dst_enc, bool dst_is_byte, int src_enc, bool src_is_byte);
-  int prefixq_and_encode(int dst_enc, int src_enc);
 
-  void prefix(Register reg);
-  void prefix(Register dst, Register src, Prefix p);
-  void prefix(Register dst, Address adr, Prefix p);
-  void prefix(Address adr);
+  // Some prefixq variants always emit exactly one prefix byte, so besides a
+  // prefix-emitting method we provide a method to get the prefix byte to emit,
+  // which can then be folded into a byte stream.
+  int8_t get_prefixq(Address adr);
+  int8_t get_prefixq(Address adr, Register reg);
+
   void prefixq(Address adr);
-
-  void prefix(Address adr, Register reg,  bool byteinst = false);
-  void prefix(Address adr, XMMRegister reg);
   void prefixq(Address adr, Register reg);
   void prefixq(Address adr, XMMRegister reg);
 
-  void prefetch_prefix(Address src);
+  int prefixq_and_encode(int reg_enc);
+  int prefixq_and_encode(int dst_enc, int src_enc);
 
   void rex_prefix(Address adr, XMMRegister xreg,
                   VexSimdPrefix pre, VexOpcode opc, bool rex_w);
@@ -709,20 +725,39 @@ private:
 
   bool emit_compressed_disp_byte(int &disp);
 
+  void emit_modrm(int mod, int dst_enc, int src_enc);
+  void emit_modrm_disp8(int mod, int dst_enc, int src_enc,
+                        int disp);
+  void emit_modrm_sib(int mod, int dst_enc, int src_enc,
+                      Address::ScaleFactor scale, int index_enc, int base_enc);
+  void emit_modrm_sib_disp8(int mod, int dst_enc, int src_enc,
+                            Address::ScaleFactor scale, int index_enc, int base_enc,
+                            int disp);
+
+  void emit_operand_helper(int reg_enc,
+                           int base_enc, int index_enc, Address::ScaleFactor scale,
+                           int disp,
+                           RelocationHolder const& rspec,
+                           int rip_relative_correction = 0);
+
   void emit_operand(Register reg,
                     Register base, Register index, Address::ScaleFactor scale,
                     int disp,
                     RelocationHolder const& rspec,
                     int rip_relative_correction = 0);
 
-  void emit_operand(XMMRegister reg, Register base, XMMRegister index,
-                    Address::ScaleFactor scale,
-                    int disp, RelocationHolder const& rspec);
+  void emit_operand(Register reg,
+                    Register base, XMMRegister index, Address::ScaleFactor scale,
+                    int disp,
+                    RelocationHolder const& rspec);
 
-  void emit_operand(Register reg, Address adr, int rip_relative_correction = 0);
+  void emit_operand(XMMRegister xreg,
+                    Register base, XMMRegister xindex, Address::ScaleFactor scale,
+                    int disp,
+                    RelocationHolder const& rspec);
 
-  // operands that only take the original 32bit registers
-  void emit_operand32(Register reg, Address adr);
+  void emit_operand(Register reg, Address adr,
+                    int rip_relative_correction = 0);
 
   void emit_operand(XMMRegister reg,
                     Register base, Register index, Address::ScaleFactor scale,
@@ -731,17 +766,8 @@ private:
 
   void emit_operand(XMMRegister reg, Address adr);
 
-  void emit_operand(MMXRegister reg, Address adr);
-
-  // workaround gcc (3.2.1-7) bug
-  void emit_operand(Address adr, MMXRegister reg);
-
-
   // Immediate-to-memory forms
   void emit_arith_operand(int op1, Register rm, Address adr, int32_t imm32);
-
-  void emit_farith(int b1, int b2, int i);
-
 
  protected:
   #ifdef ASSERT
@@ -846,7 +872,6 @@ private:
   static address locate_next_instruction(address inst);
 
   // Utilities
-  static bool is_polling_page_far() NOT_LP64({ return false;});
   static bool query_compressed_disp_byte(int disp, bool is_evex_inst, int vector_len,
                                          int cur_tuple_type, int in_size_in_bits, int cur_encoding);
 
@@ -859,21 +884,33 @@ private:
     _legacy_mode_dq = (VM_Version::supports_avx512dq() == false);
     _legacy_mode_vl = (VM_Version::supports_avx512vl() == false);
     _legacy_mode_vlbw = (VM_Version::supports_avx512vlbw() == false);
-    _is_managed = false;
-    _vector_masking = false;
+    NOT_LP64(_is_managed = false;)
     _attributes = NULL;
   }
 
   void set_attributes(InstructionAttr *attributes) { _attributes = attributes; }
   void clear_attributes(void) { _attributes = NULL; }
 
-  void set_managed(void) { _is_managed = true; }
-  void clear_managed(void) { _is_managed = false; }
-  bool is_managed(void) { return _is_managed; }
+  void set_managed(void) { NOT_LP64(_is_managed = true;) }
+  void clear_managed(void) { NOT_LP64(_is_managed = false;) }
+  bool is_managed(void) {
+    NOT_LP64(return _is_managed;)
+    LP64_ONLY(return false;) }
 
   void lea(Register dst, Address src);
 
   void mov(Register dst, Register src);
+
+#ifdef _LP64
+  // support caching the result of some routines
+
+  // must be called before pusha(), popa(), vzeroupper() - checked with asserts
+  static void precompute_instructions();
+
+  void pusha_uncached();
+  void popa_uncached();
+#endif
+  void vzeroupper_uncached();
 
   void pusha();
   void popa();
@@ -957,6 +994,9 @@ private:
   void aesenc(XMMRegister dst, XMMRegister src);
   void aesenclast(XMMRegister dst, Address src);
   void aesenclast(XMMRegister dst, XMMRegister src);
+  // Vector AES instructions
+  void vaesenc(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
+  void vaesenclast(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vaesdec(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vaesdeclast(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
 
@@ -1014,6 +1054,8 @@ private:
   void cld();
 
   void clflush(Address adr);
+  void clflushopt(Address adr);
+  void clwb(Address adr);
 
   void cmovl(Condition cc, Register dst, Register src);
   void cmovl(Condition cc, Register dst, Address src);
@@ -1094,6 +1136,7 @@ private:
   // Convert with Truncation Scalar Double-Precision Floating-Point Value to Doubleword Integer
   void cvttsd2sil(Register dst, Address src);
   void cvttsd2sil(Register dst, XMMRegister src);
+  void cvttsd2siq(Register dst, Address src);
   void cvttsd2siq(Register dst, XMMRegister src);
 
   // Convert with Truncation Scalar Single-Precision Floating-Point Value to Doubleword Integer
@@ -1101,6 +1144,15 @@ private:
   void cvttss2siq(Register dst, XMMRegister src);
 
   void cvttpd2dq(XMMRegister dst, XMMRegister src);
+
+  //Abs of packed Integer values
+  void pabsb(XMMRegister dst, XMMRegister src);
+  void pabsw(XMMRegister dst, XMMRegister src);
+  void pabsd(XMMRegister dst, XMMRegister src);
+  void vpabsb(XMMRegister dst, XMMRegister src, int vector_len);
+  void vpabsw(XMMRegister dst, XMMRegister src, int vector_len);
+  void vpabsd(XMMRegister dst, XMMRegister src, int vector_len);
+  void evpabsq(XMMRegister dst, XMMRegister src, int vector_len);
 
   // Divide Scalar Double-Precision Floating-Point Values
   void divsd(XMMRegister dst, Address src);
@@ -1110,6 +1162,15 @@ private:
   void divss(XMMRegister dst, Address src);
   void divss(XMMRegister dst, XMMRegister src);
 
+
+#ifndef _LP64
+ private:
+  // operands that only take the original 32bit registers
+  void emit_operand32(Register reg, Address adr);
+
+  void emit_farith(int b1, int b2, int i);
+
+ public:
   void emms();
 
   void fabs();
@@ -1245,16 +1306,17 @@ private:
 
   void fxch(int i = 1);
 
+  void fyl2x();
+  void frndint();
+  void f2xm1();
+  void fldl2e();
+#endif // !_LP64
+
   void fxrstor(Address src);
   void xrstor(Address src);
 
   void fxsave(Address dst);
   void xsave(Address dst);
-
-  void fyl2x();
-  void frndint();
-  void f2xm1();
-  void fldl2e();
 
   void hlt();
 
@@ -1381,6 +1443,7 @@ private:
   }
 
   void mfence();
+  void sfence();
 
   // Moves
 
@@ -1475,12 +1538,7 @@ private:
   void movq(Register dst, Register src);
   void movq(Register dst, Address src);
   void movq(Address  dst, Register src);
-#endif
 
-  void movq(Address     dst, MMXRegister src );
-  void movq(MMXRegister dst, Address src );
-
-#ifdef _LP64
   // These dummies prevent using movq from converting a zero (like NULL) into Register
   // by giving the compiler two choices it can't resolve
 
@@ -1566,6 +1624,9 @@ private:
 
 #ifdef _LP64
   void notq(Register dst);
+
+  void btsq(Address dst, int imm8);
+  void btrq(Address dst, int imm8);
 #endif
 
   void orl(Address dst, int32_t imm32);
@@ -1589,6 +1650,7 @@ private:
   // Pemutation of 64bit words
   void vpermq(XMMRegister dst, XMMRegister src, int imm8, int vector_len);
   void vpermq(XMMRegister dst, XMMRegister src, int imm8);
+  void vpermq(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vperm2i128(XMMRegister dst,  XMMRegister nds, XMMRegister src, int imm8);
   void vperm2f128(XMMRegister dst, XMMRegister nds, XMMRegister src, int imm8);
   void evpermi2q(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
@@ -1667,6 +1729,10 @@ private:
   void vpmovzxwd(XMMRegister dst, XMMRegister src, int vector_len);
 
   void evpmovdb(Address dst, XMMRegister src, int vector_len);
+
+  // Sign extend moves
+  void pmovsxbw(XMMRegister dst, XMMRegister src);
+  void vpmovsxbw(XMMRegister dst, XMMRegister src, int vector_len);
 
   // Multiply add
   void pmaddwd(XMMRegister dst, XMMRegister src);
@@ -1804,14 +1870,14 @@ private:
 
   void shldl(Register dst, Register src);
   void shldl(Register dst, Register src, int8_t imm8);
+  void shrdl(Register dst, Register src);
+  void shrdl(Register dst, Register src, int8_t imm8);
 
   void shll(Register dst, int imm8);
   void shll(Register dst);
 
   void shlq(Register dst, int imm8);
   void shlq(Register dst);
-
-  void shrdl(Register dst, Register src);
 
   void shrl(Register dst, int imm8);
   void shrl(Register dst);
@@ -1824,6 +1890,9 @@ private:
   // Compute Square Root of Scalar Double-Precision Floating-Point Value
   void sqrtsd(XMMRegister dst, Address src);
   void sqrtsd(XMMRegister dst, XMMRegister src);
+
+  void roundsd(XMMRegister dst, Address src, int32_t rmode);
+  void roundsd(XMMRegister dst, XMMRegister src, int32_t rmode);
 
   // Compute Square Root of Scalar Single-Precision Floating-Point Value
   void sqrtss(XMMRegister dst, Address src);
@@ -1934,6 +2003,11 @@ private:
   void vsubss(XMMRegister dst, XMMRegister nds, Address src);
   void vsubss(XMMRegister dst, XMMRegister nds, XMMRegister src);
 
+  void vmaxss(XMMRegister dst, XMMRegister nds, XMMRegister src);
+  void vmaxsd(XMMRegister dst, XMMRegister nds, XMMRegister src);
+  void vminss(XMMRegister dst, XMMRegister nds, XMMRegister src);
+  void vminsd(XMMRegister dst, XMMRegister nds, XMMRegister src);
+
   void shlxl(Register dst, Register src1, Register src2);
   void shlxq(Register dst, Register src1, Register src2);
 
@@ -1983,6 +2057,12 @@ private:
   void vsqrtpd(XMMRegister dst, Address src, int vector_len);
   void vsqrtps(XMMRegister dst, XMMRegister src, int vector_len);
   void vsqrtps(XMMRegister dst, Address src, int vector_len);
+
+  // Round Packed Double precision value.
+  void vroundpd(XMMRegister dst, XMMRegister src, int32_t rmode, int vector_len);
+  void vroundpd(XMMRegister dst, Address src, int32_t rmode, int vector_len);
+  void vrndscalepd(XMMRegister dst,  XMMRegister src,  int32_t rmode, int vector_len);
+  void vrndscalepd(XMMRegister dst, Address src, int32_t rmode, int vector_len);
 
   // Bitwise Logical AND of Packed Floating-Point Values
   void andpd(XMMRegister dst, XMMRegister src);
@@ -2089,6 +2169,11 @@ private:
   void vpsrad(XMMRegister dst, XMMRegister src, int shift, int vector_len);
   void vpsraw(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
   void vpsrad(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
+  void evpsraq(XMMRegister dst, XMMRegister src, int shift, int vector_len);
+  void evpsraq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
+
+  void vpshldvd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
+  void vpshrdvd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
 
   // And packed integers
   void pand(XMMRegister dst, XMMRegister src);
@@ -2113,6 +2198,9 @@ private:
   void evpxorq(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpxorq(XMMRegister dst, XMMRegister nds, Address src, int vector_len);
 
+  // Ternary logic instruction.
+  void vpternlogd(XMMRegister dst, int imm8, XMMRegister src2, XMMRegister src3, int vector_len);
+  void vpternlogd(XMMRegister dst, int imm8, XMMRegister src2, Address     src3, int vector_len);
 
   // vinserti forms
   void vinserti128(XMMRegister dst, XMMRegister nds, XMMRegister src, uint8_t imm8);
@@ -2161,10 +2249,10 @@ private:
   void evbroadcasti64x2(XMMRegister dst, Address src, int vector_len);
 
   // scalar single/double precision replicate
-  void vpbroadcastss(XMMRegister dst, XMMRegister src, int vector_len);
-  void vpbroadcastss(XMMRegister dst, Address src, int vector_len);
-  void vpbroadcastsd(XMMRegister dst, XMMRegister src, int vector_len);
-  void vpbroadcastsd(XMMRegister dst, Address src, int vector_len);
+  void vbroadcastss(XMMRegister dst, XMMRegister src, int vector_len);
+  void vbroadcastss(XMMRegister dst, Address src, int vector_len);
+  void vbroadcastsd(XMMRegister dst, XMMRegister src, int vector_len);
+  void vbroadcastsd(XMMRegister dst, Address src, int vector_len);
 
   // gpr sourced byte/word/dword/qword replicate
   void evpbroadcastb(XMMRegister dst, Register src, int vector_len);
@@ -2214,22 +2302,20 @@ public:
     bool no_reg_mask,   // when true, k0 is used when EVEX encoding is chosen, else embedded_opmask_register_specifier is used
     bool uses_vl)       // This instruction may have legacy constraints based on vector length for EVEX
     :
-      _avx_vector_len(vector_len),
       _rex_vex_w(rex_vex_w),
-      _rex_vex_w_reverted(false),
-      _legacy_mode(legacy_mode),
+      _legacy_mode(legacy_mode || UseAVX < 3),
       _no_reg_mask(no_reg_mask),
       _uses_vl(uses_vl),
-      _tuple_type(Assembler::EVEX_ETUP),
-      _input_size_in_bits(Assembler::EVEX_NObit),
+      _rex_vex_w_reverted(false),
       _is_evex_instruction(false),
-      _evex_encoding(0),
       _is_clear_context(true),
       _is_extended_context(false),
+      _avx_vector_len(vector_len),
+      _tuple_type(Assembler::EVEX_ETUP),
+      _input_size_in_bits(Assembler::EVEX_NObit),
+      _evex_encoding(0),
       _embedded_opmask_register_specifier(0), // hard code k0
-      _current_assembler(NULL) {
-    if (UseAVX < 3) _legacy_mode = true;
-  }
+      _current_assembler(NULL) { }
 
   ~InstructionAttr() {
     if (_current_assembler != NULL) {
@@ -2239,37 +2325,37 @@ public:
   }
 
 private:
-  int  _avx_vector_len;
   bool _rex_vex_w;
-  bool _rex_vex_w_reverted;
   bool _legacy_mode;
   bool _no_reg_mask;
   bool _uses_vl;
-  int  _tuple_type;
-  int  _input_size_in_bits;
+  bool _rex_vex_w_reverted;
   bool _is_evex_instruction;
-  int  _evex_encoding;
   bool _is_clear_context;
   bool _is_extended_context;
+  int  _avx_vector_len;
+  int  _tuple_type;
+  int  _input_size_in_bits;
+  int  _evex_encoding;
   int _embedded_opmask_register_specifier;
 
   Assembler *_current_assembler;
 
 public:
   // query functions for field accessors
-  int  get_vector_len(void) const { return _avx_vector_len; }
   bool is_rex_vex_w(void) const { return _rex_vex_w; }
-  bool is_rex_vex_w_reverted(void) { return _rex_vex_w_reverted; }
   bool is_legacy_mode(void) const { return _legacy_mode; }
   bool is_no_reg_mask(void) const { return _no_reg_mask; }
   bool uses_vl(void) const { return _uses_vl; }
-  int  get_tuple_type(void) const { return _tuple_type; }
-  int  get_input_size(void) const { return _input_size_in_bits; }
-  int  is_evex_instruction(void) const { return _is_evex_instruction; }
-  int  get_evex_encoding(void) const { return _evex_encoding; }
+  bool is_rex_vex_w_reverted(void) { return _rex_vex_w_reverted; }
+  bool is_evex_instruction(void) const { return _is_evex_instruction; }
   bool is_clear_context(void) const { return _is_clear_context; }
   bool is_extended_context(void) const { return _is_extended_context; }
-  int get_embedded_opmask_register_specifier(void) const { return _embedded_opmask_register_specifier; }
+  int  get_vector_len(void) const { return _avx_vector_len; }
+  int  get_tuple_type(void) const { return _tuple_type; }
+  int  get_input_size(void) const { return _input_size_in_bits; }
+  int  get_evex_encoding(void) const { return _evex_encoding; }
+  int  get_embedded_opmask_register_specifier(void) const { return _embedded_opmask_register_specifier; }
 
   // Set the vector len manually
   void set_vector_len(int vector_len) { _avx_vector_len = vector_len; }

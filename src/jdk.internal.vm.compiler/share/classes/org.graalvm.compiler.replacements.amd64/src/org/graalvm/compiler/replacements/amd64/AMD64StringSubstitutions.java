@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,36 +82,25 @@ public class AMD64StringSubstitutions {
             // The empty string contains nothing except the empty string.
             return -1;
         }
-        assert sourceCount - fromIndex > 0 && targetCount > 0;
 
         if (targetCount == 1) {
-            Pointer sourcePointer = Word.objectToTrackedPointer(source).add(charArrayBaseOffset(INJECTED)).add(totalOffset * charArrayIndexScale(INJECTED));
-            int indexOfResult = AMD64ArrayIndexOf.indexOf1Char(sourcePointer, sourceCount - fromIndex, target[targetOffset]);
-            if (indexOfResult >= 0) {
-                return indexOfResult + totalOffset;
-            }
-            return indexOfResult;
-        } else if (targetCount == 2) {
-            Pointer sourcePointer = Word.objectToTrackedPointer(source).add(charArrayBaseOffset(INJECTED)).add(totalOffset * charArrayIndexScale(INJECTED));
-            int indexOfResult = AMD64ArrayIndexOf.indexOfTwoConsecutiveChars(sourcePointer, sourceCount - fromIndex, target[targetOffset], target[targetOffset + 1]);
-            if (indexOfResult >= 0) {
-                return indexOfResult + totalOffset;
-            }
-            return indexOfResult;
+            return AMD64ArrayIndexOf.indexOf1Char(source, sourceCount, totalOffset, target[targetOffset]);
         } else {
-            int haystackLength = sourceCount - (fromIndex + (targetCount - 2));
-            while (haystackLength > 0) {
-                Pointer sourcePointer = Word.objectToTrackedPointer(source).add(charArrayBaseOffset(INJECTED)).add(totalOffset * charArrayIndexScale(INJECTED));
-                int indexOfResult = AMD64ArrayIndexOf.indexOfTwoConsecutiveChars(sourcePointer, haystackLength, target[targetOffset], target[targetOffset + 1]);
+            int haystackLength = sourceCount - (targetCount - 2);
+            while (totalOffset < haystackLength) {
+                int indexOfResult = AMD64ArrayIndexOf.indexOfTwoConsecutiveChars(source, haystackLength, totalOffset, target[targetOffset], target[targetOffset + 1]);
                 if (indexOfResult < 0) {
                     return -1;
                 }
-                totalOffset += indexOfResult;
-                haystackLength -= (indexOfResult + 1);
-                Pointer cmpSourcePointer = Word.objectToTrackedPointer(source).add(charArrayBaseOffset(INJECTED)).add(totalOffset * charArrayIndexScale(INJECTED));
-                Pointer targetPointer = Word.objectToTrackedPointer(target).add(charArrayBaseOffset(INJECTED)).add(targetOffset * charArrayIndexScale(INJECTED));
-                if (ArrayRegionEqualsNode.regionEquals(cmpSourcePointer, targetPointer, targetCount, JavaKind.Char)) {
+                totalOffset = indexOfResult;
+                if (targetCount == 2) {
                     return totalOffset;
+                } else {
+                    Pointer cmpSourcePointer = Word.objectToTrackedPointer(source).add(charArrayBaseOffset(INJECTED)).add(totalOffset * charArrayIndexScale(INJECTED));
+                    Pointer targetPointer = Word.objectToTrackedPointer(target).add(charArrayBaseOffset(INJECTED)).add(targetOffset * charArrayIndexScale(INJECTED));
+                    if (ArrayRegionEqualsNode.regionEquals(cmpSourcePointer, targetPointer, targetCount, JavaKind.Char)) {
+                        return totalOffset;
+                    }
                 }
                 totalOffset++;
             }
@@ -134,13 +123,7 @@ public class AMD64StringSubstitutions {
 
         if (ch < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
             char[] sourceArray = StringSubstitutions.getValue(source);
-
-            Pointer sourcePointer = Word.objectToTrackedPointer(sourceArray).add(charArrayBaseOffset(INJECTED)).add(fromIndex * charArrayIndexScale(INJECTED));
-            int result = AMD64ArrayIndexOf.indexOf1Char(sourcePointer, sourceCount - fromIndex, (char) ch);
-            if (result != -1) {
-                return result + fromIndex;
-            }
-            return result;
+            return AMD64ArrayIndexOf.indexOf1Char(sourceArray, sourceCount, fromIndex, (char) ch);
         } else {
             return indexOf(source, ch, origFromIndex);
         }

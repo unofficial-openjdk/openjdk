@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,15 @@ package java.lang;
 import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.misc.VM;
 
+import java.lang.constant.Constable;
+import java.lang.constant.DynamicConstantDesc;
+import java.util.Optional;
+
+import static java.lang.constant.ConstantDescs.BSM_EXPLICIT_CAST;
+import static java.lang.constant.ConstantDescs.CD_byte;
+import static java.lang.constant.ConstantDescs.CD_int;
+import static java.lang.constant.ConstantDescs.DEFAULT_NAME;
+
 /**
  *
  * The {@code Byte} class wraps a value of primitive type {@code byte}
@@ -44,7 +53,7 @@ import jdk.internal.misc.VM;
  * @see     java.lang.Number
  * @since   1.1
  */
-public final class Byte extends Number implements Comparable<Byte> {
+public final class Byte extends Number implements Comparable<Byte>, Constable {
 
     /**
      * A constant holding the minimum value a {@code byte} can
@@ -75,6 +84,18 @@ public final class Byte extends Number implements Comparable<Byte> {
      */
     public static String toString(byte b) {
         return Integer.toString((int)b, 10);
+    }
+
+    /**
+     * Returns an {@link Optional} containing the nominal descriptor for this
+     * instance.
+     *
+     * @return an {@link Optional} describing the {@linkplain Byte} instance
+     * @since 15
+     */
+    @Override
+    public Optional<DynamicConstantDesc<Byte>> describeConstable() {
+        return Optional.of(DynamicConstantDesc.ofNamed(BSM_EXPLICIT_CAST, DEFAULT_NAME, CD_byte, intValue()));
     }
 
     private static class ByteCache {
@@ -356,7 +377,7 @@ public final class Byte extends Number implements Comparable<Byte> {
     /**
      * Returns the value of this {@code Byte} as a {@code short} after
      * a widening primitive conversion.
-     * @jls 5.1.2 Widening Primitive Conversions
+     * @jls 5.1.2 Widening Primitive Conversion
      */
     public short shortValue() {
         return (short)value;
@@ -365,7 +386,7 @@ public final class Byte extends Number implements Comparable<Byte> {
     /**
      * Returns the value of this {@code Byte} as an {@code int} after
      * a widening primitive conversion.
-     * @jls 5.1.2 Widening Primitive Conversions
+     * @jls 5.1.2 Widening Primitive Conversion
      */
     public int intValue() {
         return (int)value;
@@ -374,7 +395,7 @@ public final class Byte extends Number implements Comparable<Byte> {
     /**
      * Returns the value of this {@code Byte} as a {@code long} after
      * a widening primitive conversion.
-     * @jls 5.1.2 Widening Primitive Conversions
+     * @jls 5.1.2 Widening Primitive Conversion
      */
     public long longValue() {
         return (long)value;
@@ -383,7 +404,7 @@ public final class Byte extends Number implements Comparable<Byte> {
     /**
      * Returns the value of this {@code Byte} as a {@code float} after
      * a widening primitive conversion.
-     * @jls 5.1.2 Widening Primitive Conversions
+     * @jls 5.1.2 Widening Primitive Conversion
      */
     public float floatValue() {
         return (float)value;
@@ -392,7 +413,7 @@ public final class Byte extends Number implements Comparable<Byte> {
     /**
      * Returns the value of this {@code Byte} as a {@code double}
      * after a widening primitive conversion.
-     * @jls 5.1.2 Widening Primitive Conversions
+     * @jls 5.1.2 Widening Primitive Conversion
      */
     public double doubleValue() {
         return (double)value;
@@ -561,5 +582,6 @@ public final class Byte extends Number implements Comparable<Byte> {
     public static final int BYTES = SIZE / Byte.SIZE;
 
     /** use serialVersionUID from JDK 1.1. for interoperability */
+    @java.io.Serial
     private static final long serialVersionUID = -7183698231559129828L;
 }

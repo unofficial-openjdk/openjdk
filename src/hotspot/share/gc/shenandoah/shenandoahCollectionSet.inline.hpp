@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2017, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -29,16 +30,21 @@
 #include "gc/shenandoah/shenandoahHeap.inline.hpp"
 #include "gc/shenandoah/shenandoahHeapRegion.hpp"
 
-bool ShenandoahCollectionSet::is_in(size_t region_number) const {
-  assert(region_number < _heap->num_regions(), "Sanity");
-  return _cset_map[region_number] == 1;
+bool ShenandoahCollectionSet::is_in(size_t region_idx) const {
+  assert(region_idx < _heap->num_regions(), "Sanity");
+  return _cset_map[region_idx] == 1;
 }
 
 bool ShenandoahCollectionSet::is_in(ShenandoahHeapRegion* r) const {
-  return is_in(r->region_number());
+  return is_in(r->index());
 }
 
-bool ShenandoahCollectionSet::is_in(HeapWord* p) const {
+bool ShenandoahCollectionSet::is_in(oop p) const {
+  shenandoah_assert_in_heap(NULL, p);
+  return is_in_loc(cast_from_oop<void*>(p));
+}
+
+bool ShenandoahCollectionSet::is_in_loc(void* p) const {
   assert(_heap->is_in(p), "Must be in the heap");
   uintx index = ((uintx) p) >> _region_size_bytes_shift;
   // no need to subtract the bottom of the heap from p,

@@ -151,18 +151,22 @@ public final class JapaneseEra
      */
     public static final JapaneseEra HEISEI = new JapaneseEra(2, LocalDate.of(1989, 1, 8));
     /**
-     * The singleton instance for the 'NewEra' era (2019-05-01 - current)
-     * which has the value 3.
+     * The singleton instance for the 'Reiwa' era (2019-05-01 - )
+     * which has the value 3. The end date of this era is not specified, unless
+     * the Japanese Government defines it.
+     *
+     * @since 13
      */
-    private static final JapaneseEra NEWERA = new JapaneseEra(3, LocalDate.of(2019, 5, 1));
+    public static final JapaneseEra REIWA = new JapaneseEra(3, LocalDate.of(2019, 5, 1));
 
     // The number of predefined JapaneseEra constants.
     // There may be a supplemental era defined by the property.
-    private static final int N_ERA_CONSTANTS = NEWERA.getValue() + ERA_OFFSET;
+    private static final int N_ERA_CONSTANTS = REIWA.getValue() + ERA_OFFSET;
 
     /**
      * Serialization version.
      */
+    @java.io.Serial
     private static final long serialVersionUID = 1466499369062886794L;
 
     // array for the singleton JapaneseEra instances
@@ -176,7 +180,7 @@ public final class JapaneseEra
         KNOWN_ERAS[1] = TAISHO;
         KNOWN_ERAS[2] = SHOWA;
         KNOWN_ERAS[3] = HEISEI;
-        KNOWN_ERAS[4] = NEWERA;
+        KNOWN_ERAS[4] = REIWA;
         for (int i = N_ERA_CONSTANTS; i < ERA_CONFIG.length; i++) {
             CalendarDate date = ERA_CONFIG[i].getSinceDate();
             LocalDate isoDate = LocalDate.of(date.getYear(), date.getMonth(), date.getDayOfMonth());
@@ -423,6 +427,7 @@ public final class JapaneseEra
      * @param s the stream to read
      * @throws InvalidObjectException always
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream s) throws InvalidObjectException {
         throw new InvalidObjectException("Deserialization via serialization delegate");
     }
@@ -439,6 +444,7 @@ public final class JapaneseEra
      *
      * @return the instance of {@code Ser}, not null
      */
+    @java.io.Serial
     private Object writeReplace() {
         return new Ser(Ser.JAPANESE_ERA_TYPE, this);
     }

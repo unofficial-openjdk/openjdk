@@ -29,6 +29,7 @@
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "memory/oopFactory.hpp"
+#include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "prims/stackwalk.hpp"
@@ -49,7 +50,7 @@ void BaseFrameStream::setup_magic_on_entry(objArrayHandle frames_array) {
 bool BaseFrameStream::check_magic(objArrayHandle frames_array) {
   oop   m1 = frames_array->obj_at(magic_pos);
   jlong m2 = _anchor;
-  if (oopDesc::equals(m1, _thread->threadObj()) && m2 == address_value())  return true;
+  if (m1 == _thread->threadObj() && m2 == address_value())  return true;
   return false;
 }
 
@@ -80,7 +81,7 @@ BaseFrameStream* BaseFrameStream::from_current(JavaThread* thread, jlong magic,
 {
   assert(thread != NULL && thread->is_Java_thread(), "");
   oop m1 = frames_array->obj_at(magic_pos);
-  if (!oopDesc::equals(m1, thread->threadObj())) return NULL;
+  if (m1 != thread->threadObj()) return NULL;
   if (magic == 0L)                    return NULL;
   BaseFrameStream* stream = (BaseFrameStream*) (intptr_t) magic;
   if (!stream->is_valid_in(thread, frames_array))   return NULL;
@@ -151,11 +152,11 @@ int StackWalk::fill_in_frames(jlong mode, BaseFrameStream& stream,
           index == start_index && method->caller_sensitive()) {
       ResourceMark rm(THREAD);
       THROW_MSG_0(vmSymbols::java_lang_UnsupportedOperationException(),
-        err_msg("StackWalker::getCallerClass called from @CallerSensitive %s method",
-                method->name_and_sig_as_C_string()));
+        err_msg("StackWalker::getCallerClass called from @CallerSensitive '%s' method",
+                method->external_name()));
     }
     // fill in StackFrameInfo and initialize MemberName
-    stream.fill_frame(index, frames_array, method, CHECK_0);
+    stream.fill_frame(index, frames_array, methodHandle(THREAD, method), CHECK_0);
     if (++frames_decoded >= max_nframes)  break;
   }
   return frames_decoded;
@@ -186,7 +187,7 @@ void JavaFrameStream::fill_frame(int index, objArrayHandle  frames_array,
 // T_OBJECT, or T_CONFLICT.
 oop LiveFrameStream::create_primitive_slot_instance(StackValueCollection* values,
                                                     int i, BasicType type, TRAPS) {
-  Klass* k = SystemDictionary::resolve_or_null(vmSymbols::java_lang_LiveStackFrameInfo(), CHECK_NULL);
+  Klass* k = SystemDictionary::LiveStackFrameInfo_klass();
   InstanceKlass* ik = InstanceKlass::cast(k);
 
   JavaValue result(T_OBJECT);

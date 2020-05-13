@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,9 +23,15 @@
 
 /**
  * @test
+ * @key randomness
  * @bug 8209951
  * @summary SIGBUS in com.sun.crypto.provider.CipherBlockChaining
- * @run main/othervm/timeout=300 -Xbatch
+ * @library /test/lib /
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *
+ * @run main/othervm -Xbatch
+ *     -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
  *      compiler.codegen.aes.TestCipherBlockChainingEncrypt
  */
 
@@ -40,6 +46,11 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
+import compiler.whitebox.CompilerWhiteBoxTest;
+import sun.hotspot.code.Compiler;
+import jdk.test.lib.Utils;
+import jtreg.SkippedException;
+
 public class TestCipherBlockChainingEncrypt {
     private static String algorithm = "PBEWithHmacSHA1AndAES_256";
     private static final String PBEPASS = "Hush, it's supposed to be a secret!";
@@ -53,8 +64,11 @@ public class TestCipherBlockChainingEncrypt {
     private static Cipher ci;
 
     public static void main(String[] args) throws Exception {
-     for(int i=0; i<5_000; i++) {
-        if (!(new TestCipherBlockChainingEncrypt().test(args))) {
+        if (!Compiler.isIntrinsicAvailable(CompilerWhiteBoxTest.COMP_LEVEL_FULL_OPTIMIZATION, "com.sun.crypto.provider.CipherBlockChaining", "implEncrypt", byte[].class, int.class, int.class, byte[].class, int.class)) {
+            throw new SkippedException("Base64 intrinsic is not available");
+        }
+        for(int i=0; i<2_000; i++) {
+          if (!(new TestCipherBlockChainingEncrypt().test(args))) {
             throw new RuntimeException("TestCipherBlockChainingEncrypt test failed");
        }
      }
@@ -71,7 +85,7 @@ public class TestCipherBlockChainingEncrypt {
         // generate input data
         byte[] inputText = new byte[INPUT_LENGTH + NUM_PAD_BYTES
                 + PBKDF2_ADD_PAD_BYTES];
-        new Random().nextBytes(inputText);
+        Utils.getRandomInstance().nextBytes(inputText);
 
         try {
             // Encrypt

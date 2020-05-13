@@ -2,7 +2,7 @@
  * @test /nodynamiccopyright/
  * @bug 8206986
  * @summary Check types inferred for switch expressions.
- * @compile/fail/ref=ExpressionSwitchInfer.out -XDrawDiagnostics --enable-preview -source ${jdk.version} ExpressionSwitchInfer.java
+ * @compile/fail/ref=ExpressionSwitchInfer.out -XDrawDiagnostics ExpressionSwitchInfer.java
  */
 
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ public class ExpressionSwitchInfer {
 
         String str = switch (param) {
             case "" -> {
-                break 0;
+                yield 0;
             } default ->"default";
         };
 

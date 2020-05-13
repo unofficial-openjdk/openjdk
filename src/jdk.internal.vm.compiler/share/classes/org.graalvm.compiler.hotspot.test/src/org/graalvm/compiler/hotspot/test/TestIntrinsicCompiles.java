@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,7 +72,7 @@ public class TestIntrinsicCompiles extends GraalCompilerTest {
                 if (plugin instanceof MethodSubstitutionPlugin) {
                     ResolvedJavaMethod method = CheckGraalIntrinsics.resolveIntrinsic(getMetaAccess(), intrinsic);
                     if (!method.isNative()) {
-                        StructuredGraph graph = providers.getReplacements().getIntrinsicGraph(method, INVALID_COMPILATION_ID, debug);
+                        StructuredGraph graph = providers.getReplacements().getIntrinsicGraph(method, INVALID_COMPILATION_ID, debug, null);
                         getCode(method, graph);
                     }
                 }

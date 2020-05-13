@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -94,6 +94,7 @@ import com.sun.tools.javac.util.Iterators;
 import com.sun.tools.javac.util.Pair;
 import com.sun.tools.javac.util.StringUtils;
 
+import static javax.tools.StandardLocation.SYSTEM_MODULES;
 import static javax.tools.StandardLocation.PLATFORM_CLASS_PATH;
 
 import static com.sun.tools.javac.main.Option.BOOT_CLASS_PATH;
@@ -185,6 +186,12 @@ public class Locations {
         return h.isDefault();
     }
 
+    boolean isDefaultSystemModulesPath() {
+        SystemModulesLocationHandler h
+                = (SystemModulesLocationHandler) getHandler(SYSTEM_MODULES);
+        return !h.isExplicit();
+    }
+
     /**
      * Split a search path into its elements. Empty path elements will be ignored.
      *
@@ -226,7 +233,7 @@ public class Locations {
     }
 
     public void setMultiReleaseValue(String multiReleaseValue) {
-        fsEnv = Collections.singletonMap("multi-release", multiReleaseValue);
+        fsEnv = Collections.singletonMap("releaseVersion", multiReleaseValue);
     }
 
     private boolean contains(Collection<Path> searchPath, Path file) throws IOException {
@@ -273,7 +280,7 @@ public class Locations {
         private static final long serialVersionUID = 0;
 
         private boolean expandJarClassPaths = false;
-        private final Set<Path> canonicalValues = new HashSet<>();
+        private final transient Set<Path> canonicalValues = new HashSet<>();
 
         public SearchPath expandJarClassPaths(boolean x) {
             expandJarClassPaths = x;
@@ -283,7 +290,7 @@ public class Locations {
         /**
          * What to use when path element is the empty string
          */
-        private Path emptyPathDefault = null;
+        private transient Path emptyPathDefault = null;
 
         public SearchPath emptyPathDefault(Path x) {
             emptyPathDefault = x;
@@ -379,7 +386,7 @@ public class Locations {
                         /* Not a recognized extension; open it to see if
                          it looks like a valid zip file. */
                         try {
-                            FileSystems.newFileSystem(file, null).close();
+                            FileSystems.newFileSystem(file, (ClassLoader)null).close();
                             if (warn) {
                                 log.warning(Lint.LintCategory.PATH,
                                             Warnings.UnexpectedArchiveFile(file));
@@ -972,7 +979,7 @@ public class Locations {
     }
 
     /**
-     * A LocationHander to represent modules found from a module-oriented
+     * A LocationHandler to represent modules found from a module-oriented
      * location such as MODULE_SOURCE_PATH, UPGRADE_MODULE_PATH,
      * SYSTEM_MODULES and MODULE_PATH.
      *

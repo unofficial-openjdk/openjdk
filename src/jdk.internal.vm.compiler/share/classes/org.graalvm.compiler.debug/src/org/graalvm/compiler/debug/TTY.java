@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -118,6 +118,7 @@ public class TTY {
 
     /**
      * The {@link PrintStream} to which all non-suppressed output from {@link TTY} is written.
+     * Substituted by {@code com.oracle.svm.graal.Target_org_graalvm_compiler_debug_TTY}.
      */
     public static final PrintStream out;
     static {

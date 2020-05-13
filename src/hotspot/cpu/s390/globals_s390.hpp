@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2016, 2018 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,10 +33,6 @@
 // (see globals.hpp)
 // Sorted according to sparc.
 
-// z/Architecture remembers branch targets, so don't share vtables.
-define_pd_global(bool,  ShareVtableStubs,            true);
-define_pd_global(bool,  NeedsDeoptSuspend,           false); // Only register window machines need this.
-
 define_pd_global(bool,  ImplicitNullChecks,          true);  // Generate code for implicit null checks.
 define_pd_global(bool,  TrapBasedNullChecks,         true);
 define_pd_global(bool,  UncommonNullCast,            true);  // Uncommon-trap NULLs passed to check cast.
@@ -55,7 +51,7 @@ define_pd_global(intx,  InlineSmallCode,             2000);
 #define DEFAULT_STACK_RED_PAGES      (1)
 // Java_java_net_SocketOutputStream_socketWrite0() uses a 64k buffer on the
 // stack. To pass stack overflow tests we need 20 shadow pages.
-#define DEFAULT_STACK_SHADOW_PAGES   (20 DEBUG_ONLY(+2))
+#define DEFAULT_STACK_SHADOW_PAGES   (20 DEBUG_ONLY(+4))
 #define DEFAULT_STACK_RESERVED_PAGES (1)
 
 #define MIN_STACK_YELLOW_PAGES     DEFAULT_STACK_YELLOW_PAGES
@@ -73,9 +69,6 @@ define_pd_global(bool, RewriteFrequentPairs, true);
 
 define_pd_global(bool, PreserveFramePointer, false);
 
-// GC Ergo Flags
-define_pd_global(size_t, CMSYoungGenPerWorker, 16*M);  // Default max size of CMS young gen, per GC worker thread.
-
 define_pd_global(uintx, TypeProfileLevel, 111);
 
 define_pd_global(bool, CompactStrings, true);
@@ -83,16 +76,13 @@ define_pd_global(bool, CompactStrings, true);
 // 8146801 (Short Array Allocation): No performance work done here yet.
 define_pd_global(intx, InitArrayShortSize, 1*BytesPerLong);
 
-define_pd_global(bool, ThreadLocalHandshakes, true);
-
 #define ARCH_FLAGS(develop,      \
                    product,      \
                    diagnostic,   \
                    experimental, \
                    notproduct,   \
                    range,        \
-                   constraint,   \
-                   writeable)    \
+                   constraint)   \
                                                                               \
   /* Reoptimize code-sequences of calls at runtime, e.g. replace an */        \
   /* indirect call by a direct call.                                */        \

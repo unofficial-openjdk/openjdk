@@ -61,9 +61,7 @@ JNIEXPORT void JNICALL initInetAddressIDs(JNIEnv *env);
  * get_ methods that return int/boolean, return -1 on error
  * get_ methods that return objects return NULL on error.
  */
-extern jobject getInet6Address_scopeifname(JNIEnv *env, jobject ia6Obj);
 extern jboolean setInet6Address_scopeifname(JNIEnv *env, jobject ia6Obj, jobject scopeifname);
-extern jboolean getInet6Address_scopeid_set(JNIEnv *env, jobject ia6Obj);
 extern unsigned int getInet6Address_scopeid(JNIEnv *env, jobject ia6Obj);
 extern jboolean setInet6Address_scopeid(JNIEnv *env, jobject ia6Obj, int scopeid);
 extern jboolean getInet6Address_ipaddress(JNIEnv *env, jobject ia6Obj, char *dest);
@@ -74,7 +72,6 @@ extern void setInetAddress_family(JNIEnv *env, jobject iaObj, int family);
 extern void setInetAddress_hostName(JNIEnv *env, jobject iaObj, jobject h);
 extern int getInetAddress_addr(JNIEnv *env, jobject iaObj);
 extern int getInetAddress_family(JNIEnv *env, jobject iaObj);
-extern jobject getInetAddress_hostName(JNIEnv *env, jobject iaObj);
 
 extern jclass ia4_class;
 extern jmethodID ia4_ctrID;
@@ -107,7 +104,6 @@ extern jclass ia6_class;
 extern jfieldID ia6_holder6ID;
 extern jfieldID ia6_ipaddressID;
 extern jfieldID ia6_scopeidID;
-extern jfieldID ia6_cachedscopeidID;
 extern jfieldID ia6_scopeidsetID;
 extern jfieldID ia6_scopeifnameID;
 extern jmethodID ia6_ctrID;
@@ -126,6 +122,7 @@ void NET_ThrowCurrent(JNIEnv *env, char *msg);
 
 jfieldID NET_GetFileDescriptorID(JNIEnv *env);
 
+JNIEXPORT jint JNICALL ipv4_available();
 JNIEXPORT jint JNICALL ipv6_available();
 
 JNIEXPORT jint JNICALL reuseport_available();

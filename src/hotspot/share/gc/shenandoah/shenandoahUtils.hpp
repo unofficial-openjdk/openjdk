@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2017, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -24,14 +25,15 @@
 #ifndef SHARE_GC_SHENANDOAH_SHENANDOAHUTILS_HPP
 #define SHARE_GC_SHENANDOAH_SHENANDOAHUTILS_HPP
 
-#include "jfr/jfrEvents.hpp"
-
 #include "gc/shared/gcCause.hpp"
+#include "gc/shared/gcTraceTime.inline.hpp"
+#include "gc/shared/gcVMOperations.hpp"
 #include "gc/shared/isGCActiveMark.hpp"
 #include "gc/shared/suspendibleThreadSet.hpp"
-#include "gc/shared/gcVMOperations.hpp"
+#include "gc/shared/weakProcessorPhaseTimes.hpp"
 #include "gc/shenandoah/shenandoahPhaseTimings.hpp"
 #include "gc/shenandoah/shenandoahThreadLocalData.hpp"
+#include "jfr/jfrEvents.hpp"
 #include "memory/allocation.hpp"
 #include "runtime/safepoint.hpp"
 #include "runtime/vmThread.hpp"
@@ -39,7 +41,6 @@
 #include "services/memoryService.hpp"
 
 class GCTimer;
-class GCTracer;
 
 class ShenandoahGCSession : public StackObj {
 private:
@@ -53,23 +54,76 @@ public:
   ~ShenandoahGCSession();
 };
 
-class ShenandoahGCPhase : public StackObj {
+/*
+ * ShenandoahGCPhaseTiming tracks Shenandoah specific timing information
+ * of a GC phase
+ */
+class ShenandoahTimingsTracker : public StackObj {
 private:
-  static const ShenandoahPhaseTimings::Phase _invalid_phase = ShenandoahPhaseTimings::_num_phases;
-  static ShenandoahPhaseTimings::Phase       _current_phase;
+  static ShenandoahPhaseTimings::Phase  _current_phase;
 
-  ShenandoahHeap* const _heap;
+  ShenandoahPhaseTimings* const         _timings;
   const ShenandoahPhaseTimings::Phase   _phase;
   ShenandoahPhaseTimings::Phase         _parent_phase;
+  double _start;
+
 public:
-  ShenandoahGCPhase(ShenandoahPhaseTimings::Phase phase);
-  ~ShenandoahGCPhase();
+  ShenandoahTimingsTracker(ShenandoahPhaseTimings::Phase phase);
+  ~ShenandoahTimingsTracker();
 
   static ShenandoahPhaseTimings::Phase current_phase() { return _current_phase; }
 
-  static bool is_valid_phase(ShenandoahPhaseTimings::Phase phase);
-  static bool is_current_phase_valid() { return is_valid_phase(current_phase()); }
-  static bool is_root_work_phase();
+  static bool is_current_phase_valid();
+};
+
+/*
+ * ShenandoahPausePhase tracks a STW pause and emits Shenandoah timing and
+ * a corresponding JFR event
+ */
+class ShenandoahPausePhase : public ShenandoahTimingsTracker {
+private:
+  GCTraceTimeWrapper<LogLevel::Info, LOG_TAGS(gc)> _tracer;
+  ConcurrentGCTimer* const _timer;
+
+public:
+  ShenandoahPausePhase(const char* title, ShenandoahPhaseTimings::Phase phase, bool log_heap_usage = false);
+  ~ShenandoahPausePhase();
+};
+
+/*
+ * ShenandoahConcurrentPhase tracks a concurrent GC phase and emits Shenandoah timing and
+ * a corresponding JFR event
+ */
+class ShenandoahConcurrentPhase : public ShenandoahTimingsTracker {
+private:
+  GCTraceTimeWrapper<LogLevel::Info, LOG_TAGS(gc)> _tracer;
+  ConcurrentGCTimer* const _timer;
+
+public:
+  ShenandoahConcurrentPhase(const char* title, ShenandoahPhaseTimings::Phase phase, bool log_heap_usage = false);
+  ~ShenandoahConcurrentPhase();
+};
+
+/*
+ * ShenandoahGCPhase tracks Shenandoah specific timing information
+ * and emits a corresponding JFR event of a GC phase
+ */
+class ShenandoahGCPhase : public ShenandoahTimingsTracker {
+private:
+  ConcurrentGCTimer* const _timer;
+
+public:
+  ShenandoahGCPhase(ShenandoahPhaseTimings::Phase phase);
+  ~ShenandoahGCPhase();
+};
+
+class ShenandoahGCWorkerPhase : public StackObj {
+private:
+  ShenandoahPhaseTimings* const       _timings;
+  const ShenandoahPhaseTimings::Phase _phase;
+public:
+  ShenandoahGCWorkerPhase(ShenandoahPhaseTimings::Phase phase);
+  ~ShenandoahGCWorkerPhase();
 };
 
 // Aggregates all the things that should happen before/after the pause.
@@ -83,17 +137,6 @@ private:
 
 public:
   ShenandoahGCPauseMark(uint gc_id, SvcGCMarker::reason_type type);
-  ~ShenandoahGCPauseMark();
-};
-
-class ShenandoahAllocTrace : public StackObj {
-private:
-  double _start;
-  size_t _size;
-  ShenandoahAllocRequest::Type _alloc_type;
-public:
-  ShenandoahAllocTrace(size_t words_size, ShenandoahAllocRequest::Type alloc_type);
-  ~ShenandoahAllocTrace();
 };
 
 class ShenandoahSafepoint : public AllStatic {
@@ -108,9 +151,6 @@ public:
     VM_Operation::VMOp_Type type = vm_op->type();
     return type == VM_Operation::VMOp_ShenandoahInitMark ||
            type == VM_Operation::VMOp_ShenandoahFinalMarkStartEvac ||
-           type == VM_Operation::VMOp_ShenandoahFinalEvac ||
-           type == VM_Operation::VMOp_ShenandoahInitTraversalGC ||
-           type == VM_Operation::VMOp_ShenandoahFinalTraversalGC ||
            type == VM_Operation::VMOp_ShenandoahInitUpdateRefs ||
            type == VM_Operation::VMOp_ShenandoahFinalUpdateRefs ||
            type == VM_Operation::VMOp_ShenandoahFullGC ||

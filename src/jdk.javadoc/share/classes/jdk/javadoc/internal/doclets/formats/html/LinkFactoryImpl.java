@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,11 +35,13 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
+import jdk.javadoc.internal.doclets.formats.html.markup.Entity;
 import jdk.javadoc.internal.doclets.toolkit.BaseConfiguration;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.Resources;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
+import jdk.javadoc.internal.doclets.toolkit.util.DocletConstants;
 import jdk.javadoc.internal.doclets.toolkit.util.links.LinkFactory;
 import jdk.javadoc.internal.doclets.toolkit.util.links.LinkInfo;
 
@@ -50,8 +52,6 @@ import jdk.javadoc.internal.doclets.toolkit.util.links.LinkInfo;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
  */
 public class LinkFactoryImpl extends LinkFactory {
 
@@ -64,17 +64,11 @@ public class LinkFactoryImpl extends LinkFactory {
         docPaths = writer.configuration.docPaths;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected Content newContent() {
         return new ContentBuilder();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected Content getClassLink(LinkInfo linkInfo) {
         BaseConfiguration configuration = m_writer.configuration;
@@ -97,14 +91,14 @@ public class LinkFactoryImpl extends LinkFactory {
                 DocPath filename = getPath(classLinkInfo);
                 if (linkInfo.linkToSelf ||
                                 !(docPaths.forName(typeElement)).equals(m_writer.filename)) {
-                        link.addContent(m_writer.links.createLink(
+                        link.add(m_writer.links.createLink(
                                 filename.fragment(classLinkInfo.where),
                                 label,
                                 classLinkInfo.isStrong,
                                 title,
                                 classLinkInfo.target));
                         if (noLabel && !classLinkInfo.excludeTypeParameterLinks) {
-                            link.addContent(getTypeParameterLinks(linkInfo));
+                            link.add(getTypeParameterLinks(linkInfo));
                         }
                         return link;
                 }
@@ -114,60 +108,56 @@ public class LinkFactoryImpl extends LinkFactory {
                 typeElement, classLinkInfo.where,
                 label, classLinkInfo.isStrong, true);
             if (crossLink != null) {
-                link.addContent(crossLink);
+                link.add(crossLink);
                 if (noLabel && !classLinkInfo.excludeTypeParameterLinks) {
-                    link.addContent(getTypeParameterLinks(linkInfo));
+                    link.add(getTypeParameterLinks(linkInfo));
                 }
                 return link;
             }
         }
         // Can't link so just write label.
-        link.addContent(label);
+        link.add(label);
         if (noLabel && !classLinkInfo.excludeTypeParameterLinks) {
-            link.addContent(getTypeParameterLinks(linkInfo));
+            link.add(getTypeParameterLinks(linkInfo));
         }
         return link;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    protected Content getTypeParameterLinks(LinkInfo linkInfo, boolean isClassLabel){
+    protected Content getTypeParameterLinks(LinkInfo linkInfo, boolean isClassLabel) {
         Content links = newContent();
         List<TypeMirror> vars = new ArrayList<>();
         TypeMirror ctype = linkInfo.type != null
                 ? utils.getComponentType(linkInfo.type)
                 : null;
         if (linkInfo.executableElement != null) {
-            linkInfo.executableElement.getTypeParameters().stream().forEach((t) -> {
-                vars.add(t.asType());
-            });
+            linkInfo.executableElement.getTypeParameters().forEach(t -> vars.add(t.asType()));
         } else if (linkInfo.type != null && utils.isDeclaredType(linkInfo.type)) {
-            ((DeclaredType)linkInfo.type).getTypeArguments().stream().forEach(vars::add);
+            vars.addAll(((DeclaredType) linkInfo.type).getTypeArguments());
         } else if (ctype != null && utils.isDeclaredType(ctype)) {
-            ((DeclaredType)ctype).getTypeArguments().stream().forEach(vars::add);
+            vars.addAll(((DeclaredType) ctype).getTypeArguments());
         } else if (linkInfo.typeElement != null) {
-            linkInfo.typeElement.getTypeParameters().stream().forEach((t) -> {
-                vars.add(t.asType());
-            });
+            linkInfo.typeElement.getTypeParameters().forEach(t -> vars.add(t.asType()));
         } else {
             // Nothing to document.
             return links;
         }
         if (((linkInfo.includeTypeInClassLinkLabel && isClassLabel)
                 || (linkInfo.includeTypeAsSepLink && !isClassLabel)) && !vars.isEmpty()) {
-            links.addContent("<");
+            links.add("<");
             boolean many = false;
             for (TypeMirror t : vars) {
                 if (many) {
-                    links.addContent(",");
-                    links.addContent(Contents.ZERO_WIDTH_SPACE);
+                    links.add(",");
+                    links.add(Entity.ZERO_WIDTH_SPACE);
+                    if (((LinkInfoImpl) linkInfo).getContext() == LinkInfoImpl.Kind.MEMBER_TYPE_PARAMS) {
+                        links.add(DocletConstants.NL);
+                    }
                 }
-                links.addContent(getTypeParameterLink(linkInfo, t));
+                links.add(getTypeParameterLink(linkInfo, t));
                 many = true;
             }
-            links.addContent(">");
+            links.add(">");
         }
         return links;
     }
@@ -185,7 +175,6 @@ public class LinkFactoryImpl extends LinkFactory {
         typeLinkInfo.excludeTypeBounds = linkInfo.excludeTypeBounds;
         typeLinkInfo.excludeTypeParameterLinks = linkInfo.excludeTypeParameterLinks;
         typeLinkInfo.linkToSelf = linkInfo.linkToSelf;
-        typeLinkInfo.isJava5DeclarationLocation = false;
         return getLink(typeLinkInfo);
     }
 
@@ -217,18 +206,18 @@ public class LinkFactoryImpl extends LinkFactory {
         if (annotations.isEmpty())
             return links;
 
-        List<Content> annos = m_writer.getAnnotations(0, annotations, false, linkInfo.isJava5DeclarationLocation);
+        List<Content> annos = m_writer.getAnnotations(annotations, false);
 
         boolean isFirst = true;
         for (Content anno : annos) {
             if (!isFirst) {
-                links.addContent(" ");
+                links.add(" ");
             }
-            links.addContent(anno);
+            links.add(anno);
             isFirst = false;
         }
         if (!annos.isEmpty()) {
-            links.addContent(" ");
+            links.add(" ");
         }
 
         return links;
@@ -241,7 +230,7 @@ public class LinkFactoryImpl extends LinkFactory {
      * @return the tool tip for the appropriate class.
      */
     private String getClassToolTip(TypeElement typeElement, boolean isTypeLink) {
-        Resources resources = m_writer.configuration.getResources();
+        Resources resources = m_writer.configuration.getDocResources();
         if (isTypeLink) {
             return resources.getText("doclet.Href_Type_Param_Title",
                     utils.getSimpleName(typeElement));

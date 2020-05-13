@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,6 +48,7 @@ import sun.security.util.*;
 final class DHPrivateKey implements PrivateKey,
 javax.crypto.interfaces.DHPrivateKey, Serializable {
 
+    @java.io.Serial
     static final long serialVersionUID = 7565477590005668886L;
 
     // only supported version of PKCS#8 PrivateKeyInfo
@@ -70,8 +71,6 @@ javax.crypto.interfaces.DHPrivateKey, Serializable {
 
     // the private-value length (optional)
     private int l;
-
-    private int DH_data[] = { 1, 2, 840, 113549, 1, 3, 1 };
 
     /**
      * Make a DH private key out of a private value <code>x</code>, a prime
@@ -219,7 +218,7 @@ javax.crypto.interfaces.DHPrivateKey, Serializable {
                 DerOutputStream algid = new DerOutputStream();
 
                 // store OID
-                algid.putOID(new ObjectIdentifier(DH_data));
+                algid.putOID(DHPublicKey.DH_OID);
                 // encode parameters
                 DerOutputStream params = new DerOutputStream();
                 params.putInteger(this.p);
@@ -313,6 +312,7 @@ javax.crypto.interfaces.DHPrivateKey, Serializable {
      * @throws java.io.ObjectStreamException if a new object representing
      * this DH private key could not be created
      */
+    @java.io.Serial
     private Object writeReplace() throws java.io.ObjectStreamException {
         return new KeyRep(KeyRep.Type.PRIVATE,
                         getAlgorithm(),

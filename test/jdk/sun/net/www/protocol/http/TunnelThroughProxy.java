@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,12 +60,14 @@ public class TunnelThroughProxy {
         ProxyTunnelServer proxy = setupProxy(true);
         try {
             int proxyPort = proxy.getPort();
-            ServerSocket server = new ServerSocket(0);
+            InetAddress proxyAddress = proxy.getInetAddress();
+            ServerSocket server = new ServerSocket(0, 0, InetAddress.getLoopbackAddress());
             int serverPort = server.getLocalPort();
 
             Socket sock;
-            sock = new Socket(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", proxyPort)));
-            InetSocketAddress dest = new InetSocketAddress("127.0.0.1", serverPort);
+            sock = new Socket(new Proxy(Proxy.Type.HTTP,
+                    new InetSocketAddress(proxyAddress, proxyPort)));
+            InetSocketAddress dest = new InetSocketAddress(server.getInetAddress(), serverPort);
             sock.connect(dest);
             int localPort = sock.getLocalPort();
             if (localPort == proxyPort)
@@ -83,14 +85,17 @@ public class TunnelThroughProxy {
     }
 
     static ProxyTunnelServer setupProxy(boolean makeTunnel) throws IOException {
-        ProxyTunnelServer pserver = new ProxyTunnelServer();
+        InetAddress proxyAddress = InetAddress.getLoopbackAddress();
+        ProxyTunnelServer pserver = new ProxyTunnelServer(proxyAddress);
         pserver.doTunnel(makeTunnel);
         int proxyPort = pserver.getPort();
 
         // disable proxy authentication
         pserver.needUserAuth(false);
         pserver.start();
-        System.setProperty("https.proxyHost", "localhost");
+        System.out.printf("Setting https.proxyHost='%s'%n", proxyAddress.getHostAddress());
+        System.setProperty("https.proxyHost", proxyAddress.getHostAddress());
+        System.out.printf("Setting https.proxyPort='%s'%n", String.valueOf(proxyPort));
         System.setProperty("https.proxyPort", String.valueOf(proxyPort));
         return pserver;
     }

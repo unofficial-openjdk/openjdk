@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Scope.WriteableScope;
+import com.sun.tools.javac.comp.DeferredAttr.AttributionMode;
 
 /** Contains information specific to the attribute and enter
  *  passes, to be used in place of the generic field in environments.
@@ -61,13 +62,17 @@ public class AttrContext {
      */
     boolean isSerializable = false;
 
+    /** Is this a serializable lambda?
+     */
+    boolean isSerializableLambda = false;
+
     /** Is this a lambda environment?
      */
     boolean isLambda = false;
 
     /** Is this a speculative attribution environment?
      */
-    boolean isSpeculative = false;
+    AttributionMode attributionMode = AttributionMode.FULL;
 
     /**
      *  Is this an attribution environment for an anonymous class instantiated using <> ?
@@ -101,10 +106,10 @@ public class AttrContext {
      */
     Attr.ResultInfo returnResult = null;
 
-    /** ResultInfo to be used for attributing 'break' statement expressions
+    /** ResultInfo to be used for attributing 'yield' statement expressions
      * (set by Attr.visitSwitchExpression)
      */
-    Attr.ResultInfo breakResult = null;
+    Attr.ResultInfo yieldResult = null;
 
     /** Symbol corresponding to the site of a qualified default super call
      */
@@ -129,11 +134,12 @@ public class AttrContext {
         info.lint = lint;
         info.enclVar = enclVar;
         info.returnResult = returnResult;
-        info.breakResult = breakResult;
+        info.yieldResult = yieldResult;
         info.defaultSuperCallSite = defaultSuperCallSite;
         info.isSerializable = isSerializable;
         info.isLambda = isLambda;
-        info.isSpeculative = isSpeculative;
+        info.isSerializableLambda = isSerializableLambda;
+        info.attributionMode = attributionMode;
         info.isAnonymousDiamond = isAnonymousDiamond;
         info.isNewClass = isNewClass;
         info.preferredTreeForDiagnostics = preferredTreeForDiagnostics;

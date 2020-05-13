@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,11 @@
  *
  * @test
  * @bug 6368984
+ * @key intermittent
  * @summary Configuring unconnected Socket before passing to implAccept
- *          can cause fd leak
+ *          can cause fd leak.
+ *          This test may fail intermittently if foreign processes will
+ *          try to establish connection to the test server socket.
  * @requires (os.family != "windows")
  * @library /test/lib
  * @build jdk.test.lib.Utils
@@ -38,9 +41,12 @@
  *        jdk.test.lib.process.*
  *        AcceptCauseFileDescriptorLeak
  * @run main/othervm AcceptCauseFileDescriptorLeak root
+ * @run main/othervm -Djdk.net.usePlainSocketImpl AcceptCauseFileDescriptorLeak root
  */
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
@@ -80,7 +86,7 @@ public class AcceptCauseFileDescriptorLeak {
             }
         }
 
-        final ServerSocket ss = new ServerSocket(0) {
+        final ServerSocket ss = new ServerSocket() {
             public Socket accept() throws IOException {
                 Socket s = new Socket() {
                 };
@@ -89,23 +95,29 @@ public class AcceptCauseFileDescriptorLeak {
                 return s;
             }
         };
+        ss.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0));
         Thread t = new Thread(new Runnable() {
             public void run() {
+                int repsCompleted = 0;
                 try {
-                    for (int i = 0; i < REPS; i++) {
-                        (new Socket("localhost", ss.getLocalPort())).close();
+                    for (; repsCompleted < REPS; repsCompleted++) {
+                        (new Socket(InetAddress.getLoopbackAddress(), ss.getLocalPort())).close();
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
+                } finally {
+                    System.out.println("Client iterations completed:" + repsCompleted);
                 }
             }
         });
         t.start();
+        int repsCompleted = 0;
         try {
-            for (int i = 0; i < REPS; i++) {
+            for (; repsCompleted < REPS; repsCompleted++) {
                 ss.accept().close();
             }
         } finally {
+            System.out.println("Server iterations completed:" + repsCompleted);
             ss.close();
         }
         t.join();

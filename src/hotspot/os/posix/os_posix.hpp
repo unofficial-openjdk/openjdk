@@ -41,6 +41,7 @@ protected:
   static void print_uname_info(outputStream* st);
   static void print_libversion_info(outputStream* st);
   static void print_load_average(outputStream* st);
+  static void print_uptime_info(outputStream* st);
 
   // Minimum stack size a thread can be created with (allowing
   // the VM to completely create the thread and enter user code).
@@ -116,6 +117,9 @@ public:
   // Returns true if either given uid is effective uid and given gid is
   // effective gid, or if given uid is root.
   static bool matches_effective_uid_and_gid_or_root(uid_t uid, gid_t gid);
+
+  static struct sigaction *get_preinstalled_handler(int);
+  static void save_preinstalled_handler(int, struct sigaction&);
 
   static void print_umask(outputStream* st, mode_t umsk);
 
@@ -229,18 +233,104 @@ class PlatformParker : public CHeapObj<mtSynchronizer> {
   PlatformParker();
 };
 
-// Platform specific implementation that underpins VM Monitor/Mutex class
-class PlatformMonitor : public CHeapObj<mtSynchronizer> {
+// Workaround for a bug in macOSX kernel's pthread support (fixed in Mojave?).
+// Avoid ever allocating a pthread_mutex_t at the same address as one of our
+// former pthread_cond_t, by using freelists of mutexes and condvars.
+// Conditional to avoid extra indirection and padding loss on other platforms.
+#ifdef __APPLE__
+#define PLATFORM_MONITOR_IMPL_INDIRECT 1
+#else
+#define PLATFORM_MONITOR_IMPL_INDIRECT 0
+#endif
+
+// Platform specific implementations that underpin VM Mutex/Monitor classes
+
+class PlatformMutex : public CHeapObj<mtSynchronizer> {
+#if PLATFORM_MONITOR_IMPL_INDIRECT
+  class Mutex : public CHeapObj<mtSynchronizer> {
+   public:
+    pthread_mutex_t _mutex;
+    Mutex* _next;
+
+    Mutex();
+    ~Mutex();
+  };
+
+  Mutex* _impl;
+
+  static pthread_mutex_t _freelist_lock; // used for mutex and cond freelists
+  static Mutex* _mutex_freelist;
+
+ protected:
+  class WithFreeListLocked;
+  pthread_mutex_t* mutex() { return &(_impl->_mutex); }
+
+ public:
+  PlatformMutex();              // Use freelist allocation of impl.
+  ~PlatformMutex();
+
+  static void init();           // Initialize the freelist.
+
+#else
+
+  pthread_mutex_t _mutex;
+
+ protected:
+  pthread_mutex_t* mutex() { return &_mutex; }
+
+ public:
+  static void init() {}         // Nothing needed for the non-indirect case.
+
+  PlatformMutex();
+  ~PlatformMutex();
+
+#endif // PLATFORM_MONITOR_IMPL_INDIRECT
+
  private:
-  pthread_mutex_t _mutex; // Native mutex for locking
-  pthread_cond_t  _cond;  // Native condition variable for blocking
+  NONCOPYABLE(PlatformMutex);
+
+ public:
+  void lock();
+  void unlock();
+  bool try_lock();
+};
+
+class PlatformMonitor : public PlatformMutex {
+#if PLATFORM_MONITOR_IMPL_INDIRECT
+  class Cond : public CHeapObj<mtSynchronizer> {
+   public:
+    pthread_cond_t _cond;
+    Cond* _next;
+
+    Cond();
+    ~Cond();
+  };
+
+  Cond* _impl;
+
+  static Cond* _cond_freelist;
+
+  pthread_cond_t* cond() { return &(_impl->_cond); }
+
+ public:
+  PlatformMonitor();            // Use freelist allocation of impl.
+  ~PlatformMonitor();
+
+#else
+
+  pthread_cond_t _cond;
+  pthread_cond_t* cond() { return &_cond; }
 
  public:
   PlatformMonitor();
   ~PlatformMonitor();
-  void lock();
-  void unlock();
-  bool try_lock();
+
+#endif // PLATFORM_MONITOR_IMPL_INDIRECT
+
+ private:
+  NONCOPYABLE(PlatformMonitor);
+
+ public:
   int wait(jlong millis);
   void notify();
   void notify_all();

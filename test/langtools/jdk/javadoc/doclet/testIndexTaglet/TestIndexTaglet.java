@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ public class TestIndexTaglet extends JavadocTester {
 
     public static void main(String... args) throws Exception {
         TestIndexTaglet tester = new TestIndexTaglet();
-        tester.runTests(m -> new Object[]{Paths.get(m.getName())});
+        tester.runTests(m -> new Object[] { Paths.get(m.getName()) });
     }
 
     TestIndexTaglet() {
@@ -75,13 +75,15 @@ public class TestIndexTaglet extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOrder("pkg/A.html",
-                "<h3>Method Detail</h3>\n",
-                "<div class=\"block\">test description with <a id=\"search_phrase_a\" "
-                 +    "class=\"searchTagResult\">search_phrase_a</a></div>");
+                "<h2>Method Details</h2>\n",
+                """
+                    <div class="block">test description with <span id="search_phrase_a" class="searc\
+                    h-tag-result">search_phrase_a</span></div>""");
 
         checkOrder("pkg/A.html",
-                "<h3>Method Summary</h3>\n",
-                "<div class=\"block\">test description with search_phrase_a</div>");
+                "<h2>Method Summary</h2>\n",
+                """
+                    <div class="block">test description with search_phrase_a</div>""");
     }
 
     @Test
@@ -103,5 +105,30 @@ public class TestIndexTaglet extends JavadocTester {
 
         checkOutput(Output.OUT, true,
                 "warning: {@index} tag, which expands to <a>, within <a>");
+    }
+
+    @Test
+    public void testDuplicateReferences(Path base) throws Exception {
+        Path srcDir = base.resolve("src");
+        Path outDir = base.resolve("out");
+
+        new ClassBuilder(tb, "pkg.A")
+                .setModifiers("public", "class")
+                .setComments("This is a class. Here is {@index foo first}.")
+                .addMembers(MethodBuilder.parse("public void m() {}")
+                        .setComments("This is a method. Here is {@index foo second}."))
+                .write(srcDir);
+
+        javadoc("-d", outDir.toString(),
+                "-sourcepath", srcDir.toString(),
+                "pkg");
+
+        checkExit(Exit.OK);
+
+        checkOutput("pkg/A.html", true,
+                """
+                    This is a class. Here is <span id="foo" class="search-tag-result">foo</span>.""",
+                """
+                    This is a method. Here is <span id="foo-1" class="search-tag-result">foo</span>.""");
     }
 }

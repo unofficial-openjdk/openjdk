@@ -31,13 +31,12 @@
 #include "gc/shared/genOopClosures.inline.hpp"
 #include "gc/shared/space.hpp"
 #include "gc/shared/space.inline.hpp"
-#include "gc/shared/spaceDecorator.hpp"
+#include "gc/shared/spaceDecorator.inline.hpp"
 #include "memory/iterator.inline.hpp"
 #include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/java.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/prefetch.inline.hpp"
 #include "runtime/safepoint.hpp"
 #include "utilities/align.hpp"
@@ -110,18 +109,6 @@ void DirtyCardToOopClosure::walk_mem_region(MemRegion mr,
 // we (or another worker thread) may already have scanned
 // or planning to scan.
 void DirtyCardToOopClosure::do_MemRegion(MemRegion mr) {
-
-  // Some collectors need to do special things whenever their dirty
-  // cards are processed. For instance, CMS must remember mutator updates
-  // (i.e. dirty cards) so as to re-scan mutated objects.
-  // Such work can be piggy-backed here on dirty card scanning, so as to make
-  // it slightly more efficient than doing a complete non-destructive pre-scan
-  // of the card table.
-  MemRegionClosure* pCl = _sp->preconsumptionDirtyCardClosure();
-  if (pCl != NULL) {
-    pCl->do_MemRegion(mr);
-  }
-
   HeapWord* bottom = mr.start();
   HeapWord* last = mr.last();
   HeapWord* top = mr.end();
@@ -386,7 +373,7 @@ HeapWord* CompactibleSpace::forward(oop q, size_t size,
   }
 
   // store the forwarding pointer into the mark word
-  if ((HeapWord*)q != compact_top) {
+  if (cast_from_oop<HeapWord*>(q) != compact_top) {
     q->forward_to(oop(compact_top));
     assert(q->is_gc_marked(), "encoding the pointer should preserve the mark");
   } else {
@@ -498,32 +485,11 @@ void ContiguousSpace::object_iterate(ObjectClosure* blk) {
   object_iterate_from(bottom(), blk);
 }
 
-// For a ContiguousSpace object_iterate() and safe_object_iterate()
-// are the same.
-void ContiguousSpace::safe_object_iterate(ObjectClosure* blk) {
-  object_iterate(blk);
-}
-
 void ContiguousSpace::object_iterate_from(HeapWord* mark, ObjectClosure* blk) {
   while (mark < top()) {
     blk->do_object(oop(mark));
     mark += oop(mark)->size();
   }
-}
-
-HeapWord*
-ContiguousSpace::object_iterate_careful(ObjectClosureCareful* blk) {
-  HeapWord * limit = concurrent_iteration_safe_limit();
-  assert(limit <= top(), "sanity check");
-  for (HeapWord* p = bottom(); p < limit;) {
-    size_t size = blk->do_object_careful(oop(p));
-    if (size == 0) {
-      return p;  // failed at p
-    } else {
-      p += size;
-    }
-  }
-  return NULL; // all done
 }
 
 // Very general, slow implementation.
@@ -587,7 +553,7 @@ inline HeapWord* ContiguousSpace::par_allocate_impl(size_t size) {
     HeapWord* obj = top();
     if (pointer_delta(end(), obj) >= size) {
       HeapWord* new_top = obj + size;
-      HeapWord* result = Atomic::cmpxchg(new_top, top_addr(), obj);
+      HeapWord* result = Atomic::cmpxchg(top_addr(), obj, new_top);
       // result can be one of two:
       //  the old top value: the exchange succeeded
       //  otherwise: the new value of the top is returned.
@@ -651,14 +617,14 @@ void ContiguousSpace::allocate_temporary_filler(int factor) {
     // allocate uninitialized int array
     typeArrayOop t = (typeArrayOop) allocate(size);
     assert(t != NULL, "allocation should succeed");
-    t->set_mark_raw(markOopDesc::prototype());
+    t->set_mark_raw(markWord::prototype());
     t->set_klass(Universe::intArrayKlassObj());
     t->set_length((int)length);
   } else {
     assert(size == CollectedHeap::min_fill_size(),
            "size for smallest fake object doesn't match");
     instanceOop obj = (instanceOop) allocate(size);
-    obj->set_mark_raw(markOopDesc::prototype());
+    obj->set_mark_raw(markWord::prototype());
     obj->set_klass_gap(0);
     obj->set_klass(SystemDictionary::Object_klass());
   }

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -230,7 +230,7 @@ else ifeq ($(OPENJDK_TARGET_OS), macosx)
   NUM_CORES := $(shell /usr/sbin/sysctl -n hw.ncpu)
   MEMORY_SIZE := $(shell $(EXPR) `/usr/sbin/sysctl -n hw.memsize` / 1024 / 1024)
 else ifeq ($(OPENJDK_TARGET_OS), solaris)
-  NUM_CORES := $(shell LC_MESSAGES=C /usr/sbin/psrinfo -v | $(GREP) -c on-line)
+  NUM_CORES := $(shell /usr/sbin/psrinfo -v | $(GREP) -c on-line)
   MEMORY_SIZE := $(shell \
       /usr/sbin/prtconf 2> /dev/null | $(GREP) "^Memory [Ss]ize" | $(AWK) '{print $$3}' \
   )
@@ -336,11 +336,21 @@ SPEC := $(NEW_SPEC)
 
 default: all
 
-run-test-prebuilt:
+test-prebuilt:
+        # Need to make sure the failure logs output dir exists since
+        # ExecuteWithLog is called in RunTests.gmk. The PrepareFailureLogs macro
+        # is unfortunately not available at this point.
+	$(call MakeDir, $(MAKESUPPORT_OUTPUTDIR)/failure-logs)
 	@$(RM) -f $(MAKESUPPORT_OUTPUTDIR)/exit-with-error
+        # The lazy initialization of the cache file in FindTests.gmk does not
+        # always work with RunTests.gmk. To guarantee that the jtreg test groups
+        # are always found and parsed, call FindTests.gmk stand alone once
+        # before calling RunTests.gmk.
+	@cd $(TOPDIR) && $(MAKE) $(MAKE_ARGS) -f make/common/FindTests.gmk \
+	    SPEC=$(SPEC) FINDTESTS_STAND_ALONE=true
 	@cd $(TOPDIR) && $(MAKE) $(MAKE_ARGS) -f make/RunTests.gmk run-test \
 	    TEST="$(TEST)"
 
-all: run-test-prebuilt
+all: test-prebuilt
 
-.PHONY: default all
+.PHONY: default all test-prebuilt

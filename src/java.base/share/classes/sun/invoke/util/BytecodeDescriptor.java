@@ -90,9 +90,7 @@ public class BytecodeDescriptor {
             i[0] = endc+1;
             String name = str.substring(begc, endc).replace('/', '.');
             try {
-                return (loader == null)
-                    ? Class.forName(name, false, null)
-                    : loader.loadClass(name);
+                return Class.forName(name, false, loader);
             } catch (ClassNotFoundException ex) {
                 throw new TypeNotPresentException(name, ex);
             }
@@ -156,11 +154,7 @@ public class BytecodeDescriptor {
         } else if (t == Object.class) {
             sb.append("Ljava/lang/Object;");
         } else {
-            boolean lsemi = (!t.isArray());
-            if (lsemi)  sb.append('L');
-            sb.append(t.getName().replace('.', '/'));
-            if (lsemi)  sb.append(';');
+            sb.append(t.descriptorString());
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -114,31 +114,37 @@ const Type* SubNode::Value(PhaseGVN* phase) const {
 }
 
 //=============================================================================
-
 //------------------------------Helper function--------------------------------
-static bool ok_to_convert(Node* inc, Node* iv) {
-    // Do not collapse (x+c0)-y if "+" is a loop increment, because the
-    // "-" is loop invariant and collapsing extends the live-range of "x"
-    // to overlap with the "+", forcing another register to be used in
-    // the loop.
-    // This test will be clearer with '&&' (apply DeMorgan's rule)
-    // but I like the early cutouts that happen here.
-    const PhiNode *phi;
-    if( ( !inc->in(1)->is_Phi() ||
-          !(phi=inc->in(1)->as_Phi()) ||
-          phi->is_copy() ||
-          !phi->region()->is_CountedLoop() ||
-          inc != phi->region()->as_CountedLoop()->incr() )
-       &&
-        // Do not collapse (x+c0)-iv if "iv" is a loop induction variable,
-        // because "x" maybe invariant.
-        ( !iv->is_loop_iv() )
-      ) {
-      return true;
-    } else {
-      return false;
-    }
+
+static bool is_cloop_increment(Node* inc) {
+  precond(inc->Opcode() == Op_AddI || inc->Opcode() == Op_AddL);
+
+  if (!inc->in(1)->is_Phi()) {
+    return false;
+  }
+  const PhiNode* phi = inc->in(1)->as_Phi();
+
+  if (phi->is_copy() || !phi->region()->is_CountedLoop()) {
+    return false;
+  }
+
+  return inc == phi->region()->as_CountedLoop()->incr();
 }
+
+// Given the expression '(x + C) - v', or
+//                      'v - (x + C)', we examine nodes '+' and 'v':
+//
+//  1. Do not convert if '+' is a counted-loop increment, because the '-' is
+//     loop invariant and converting extends the live-range of 'x' to overlap
+//     with the '+', forcing another register to be used in the loop.
+//
+//  2. Do not convert if 'v' is a counted-loop induction variable, because
+//     'x' might be invariant.
+//
+static bool ok_to_convert(Node* inc, Node* var) {
+  return !(is_cloop_increment(inc) || var->is_cloop_ind_var());
+}
+
 //------------------------------Ideal------------------------------------------
 Node *SubINode::Ideal(PhaseGVN *phase, bool can_reshape){
   Node *in1 = in(1);
@@ -244,6 +250,18 @@ Node *SubINode::Ideal(PhaseGVN *phase, bool can_reshape){
   if( op2 == Op_SubI && in2->outcnt() == 1) {
     Node *add1 = phase->transform( new AddINode( in1, in2->in(2) ) );
     return new SubINode( add1, in2->in(1) );
+  }
+
+  // Convert "0-(A>>31)" into "(A>>>31)"
+  if ( op2 == Op_RShiftI ) {
+    Node *in21 = in2->in(1);
+    Node *in22 = in2->in(2);
+    const TypeInt *zero = phase->type(in1)->isa_int();
+    const TypeInt *t21 = phase->type(in21)->isa_int();
+    const TypeInt *t22 = phase->type(in22)->isa_int();
+    if ( t21 && t22 && zero == TypeInt::ZERO && t22->is_con(31) ) {
+      return new URShiftINode(in21, in22);
+    }
   }
 
   return NULL;
@@ -353,6 +371,18 @@ Node *SubLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   if( op2 == Op_SubL && in2->outcnt() == 1) {
     Node *add1 = phase->transform( new AddLNode( in1, in2->in(2) ) );
     return new SubLNode( add1, in2->in(1) );
+  }
+
+  // Convert "0L-(A>>63)" into "(A>>>63)"
+  if ( op2 == Op_RShiftL ) {
+    Node *in21 = in2->in(1);
+    Node *in22 = in2->in(2);
+    const TypeLong *zero = phase->type(in1)->isa_long();
+    const TypeLong *t21 = phase->type(in21)->isa_long();
+    const TypeInt *t22 = phase->type(in22)->isa_int();
+    if ( t21 && t22 && zero == TypeLong::ZERO && t22->is_con(63) ) {
+      return new URShiftLNode(in21, in22);
+    }
   }
 
   return NULL;
@@ -813,9 +843,11 @@ const Type *CmpPNode::sub( const Type *t1, const Type *t2 ) const {
   }
 
   // See if it is 2 unrelated classes.
-  const TypeOopPtr* p0 = r0->isa_oopptr();
-  const TypeOopPtr* p1 = r1->isa_oopptr();
-  if (p0 && p1) {
+  const TypeOopPtr* oop_p0 = r0->isa_oopptr();
+  const TypeOopPtr* oop_p1 = r1->isa_oopptr();
+  bool both_oop_ptr = oop_p0 && oop_p1;
+
+  if (both_oop_ptr) {
     Node* in1 = in(1)->uncast();
     Node* in2 = in(2)->uncast();
     AllocateNode* alloc1 = AllocateNode::Ideal_allocation(in1, NULL);
@@ -823,13 +855,36 @@ const Type *CmpPNode::sub( const Type *t1, const Type *t2 ) const {
     if (MemNode::detect_ptr_independence(in1, alloc1, in2, alloc2, NULL)) {
       return TypeInt::CC_GT;  // different pointers
     }
-    ciKlass* klass0 = p0->klass();
-    bool    xklass0 = p0->klass_is_exact();
-    ciKlass* klass1 = p1->klass();
-    bool    xklass1 = p1->klass_is_exact();
-    int kps = (p0->isa_klassptr()?1:0) + (p1->isa_klassptr()?1:0);
+  }
+
+  const TypeKlassPtr* klass_p0 = r0->isa_klassptr();
+  const TypeKlassPtr* klass_p1 = r1->isa_klassptr();
+
+  if (both_oop_ptr || (klass_p0 && klass_p1)) { // both or neither are klass pointers
+    ciKlass* klass0 = NULL;
+    bool    xklass0 = false;
+    ciKlass* klass1 = NULL;
+    bool    xklass1 = false;
+
+    if (oop_p0) {
+      klass0 = oop_p0->klass();
+      xklass0 = oop_p0->klass_is_exact();
+    } else {
+      assert(klass_p0, "must be non-null if oop_p0 is null");
+      klass0 = klass_p0->klass();
+      xklass0 = klass_p0->klass_is_exact();
+    }
+
+    if (oop_p1) {
+      klass1 = oop_p1->klass();
+      xklass1 = oop_p1->klass_is_exact();
+    } else {
+      assert(klass_p1, "must be non-null if oop_p1 is null");
+      klass1 = klass_p1->klass();
+      xklass1 = klass_p1->klass_is_exact();
+    }
+
     if (klass0 && klass1 &&
-        kps != 1 &&             // both or neither are klass pointers
         klass0->is_loaded() && !klass0->is_interface() && // do not trust interfaces
         klass1->is_loaded() && !klass1->is_interface() &&
         (!klass0->is_obj_array_klass() ||
@@ -1048,73 +1103,8 @@ Node *CmpPNode::Ideal( PhaseGVN *phase, bool can_reshape ) {
 // Simplify an CmpN (compare 2 pointers) node, based on local information.
 // If both inputs are constants, compare them.
 const Type *CmpNNode::sub( const Type *t1, const Type *t2 ) const {
-  const TypePtr *r0 = t1->make_ptr(); // Handy access
-  const TypePtr *r1 = t2->make_ptr();
-
-  // Undefined inputs makes for an undefined result
-  if ((r0 == NULL) || (r1 == NULL) ||
-      TypePtr::above_centerline(r0->_ptr) ||
-      TypePtr::above_centerline(r1->_ptr)) {
-    return Type::TOP;
-  }
-  if (r0 == r1 && r0->singleton()) {
-    // Equal pointer constants (klasses, nulls, etc.)
-    return TypeInt::CC_EQ;
-  }
-
-  // See if it is 2 unrelated classes.
-  const TypeOopPtr* p0 = r0->isa_oopptr();
-  const TypeOopPtr* p1 = r1->isa_oopptr();
-  if (p0 && p1) {
-    ciKlass* klass0 = p0->klass();
-    bool    xklass0 = p0->klass_is_exact();
-    ciKlass* klass1 = p1->klass();
-    bool    xklass1 = p1->klass_is_exact();
-    int kps = (p0->isa_klassptr()?1:0) + (p1->isa_klassptr()?1:0);
-    if (klass0 && klass1 &&
-        kps != 1 &&             // both or neither are klass pointers
-        !klass0->is_interface() && // do not trust interfaces
-        !klass1->is_interface()) {
-      bool unrelated_classes = false;
-      // See if neither subclasses the other, or if the class on top
-      // is precise.  In either of these cases, the compare is known
-      // to fail if at least one of the pointers is provably not null.
-      if (klass0->equals(klass1)) { // if types are unequal but klasses are equal
-        // Do nothing; we know nothing for imprecise types
-      } else if (klass0->is_subtype_of(klass1)) {
-        // If klass1's type is PRECISE, then classes are unrelated.
-        unrelated_classes = xklass1;
-      } else if (klass1->is_subtype_of(klass0)) {
-        // If klass0's type is PRECISE, then classes are unrelated.
-        unrelated_classes = xklass0;
-      } else {                  // Neither subtypes the other
-        unrelated_classes = true;
-      }
-      if (unrelated_classes) {
-        // The oops classes are known to be unrelated. If the joined PTRs of
-        // two oops is not Null and not Bottom, then we are sure that one
-        // of the two oops is non-null, and the comparison will always fail.
-        TypePtr::PTR jp = r0->join_ptr(r1->_ptr);
-        if (jp != TypePtr::Null && jp != TypePtr::BotPTR) {
-          return TypeInt::CC_GT;
-        }
-      }
-    }
-  }
-
-  // Known constants can be compared exactly
-  // Null can be distinguished from any NotNull pointers
-  // Unknown inputs makes an unknown result
-  if( r0->singleton() ) {
-    intptr_t bits0 = r0->get_con();
-    if( r1->singleton() )
-      return bits0 == r1->get_con() ? TypeInt::CC_EQ : TypeInt::CC_GT;
-    return ( r1->_ptr == TypePtr::NotNull && bits0==0 ) ? TypeInt::CC_GT : TypeInt::CC;
-  } else if( r1->singleton() ) {
-    intptr_t bits1 = r1->get_con();
-    return ( r0->_ptr == TypePtr::NotNull && bits1==0 ) ? TypeInt::CC_GT : TypeInt::CC;
-  } else
-    return TypeInt::CC;
+  ShouldNotReachHere();
+  return bottom_type();
 }
 
 //------------------------------Ideal------------------------------------------
@@ -1279,7 +1269,7 @@ uint BoolNode::hash() const { return (Node::hash() << 3)|(_test._test+1); }
 uint BoolNode::size_of() const { return sizeof(BoolNode); }
 
 //------------------------------operator==-------------------------------------
-uint BoolNode::cmp( const Node &n ) const {
+bool BoolNode::cmp( const Node &n ) const {
   const BoolNode *b = (const BoolNode *)&n; // Cast up
   return (_test._test == b->_test._test);
 }
@@ -1386,7 +1376,7 @@ Node *BoolNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   Node *cmp = in(1);
   if( !cmp->is_Sub() ) return NULL;
   int cop = cmp->Opcode();
-  if( cop == Op_FastLock || cop == Op_FastUnlock) return NULL;
+  if( cop == Op_FastLock || cop == Op_FastUnlock || cmp->is_SubTypeCheck()) return NULL;
   Node *cmp1 = cmp->in(1);
   Node *cmp2 = cmp->in(2);
   if( !cmp1 ) return NULL;

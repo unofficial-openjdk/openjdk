@@ -28,11 +28,10 @@ import static jdk.test.lib.Asserts.assertEquals;
 import static jdk.test.lib.Asserts.assertFalse;
 import static jdk.test.lib.Asserts.assertTrue;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.time.Duration;
 import java.util.List;
-
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 
 import jdk.jfr.Event;
 import jdk.jfr.Recording;
@@ -48,50 +47,41 @@ import jdk.test.lib.jfr.Events;
  * @requires vm.hasJFR
  *
  * @library /test/lib
- * @modules java.scripting
- *          jdk.jfr
+ * @modules jdk.jfr
  *
  * @run main/othervm jdk.jfr.api.consumer.TestHiddenMethod
  */
 public final class TestHiddenMethod {
 
     public static void main(String[] args) throws Throwable {
-        Recording recording = new Recording();
-        recording.enable(MyEvent.class).withThreshold(Duration.ofMillis(0));
-        recording.start();
+        try (Recording recording = new Recording()) {
+            recording.enable(MyEvent.class).withThreshold(Duration.ofMillis(0));
+            recording.start();
+            // doPrivileged calls a method that has the @Hidden
+            // annotation
+            AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                @Override
+                public Void run() {
+                    MyEvent event = new MyEvent();
+                    event.commit();
+                    return null;
+                }
+            });
+            MyEvent event = new MyEvent();
+            event.commit();
+            recording.stop();
 
-        // Commit event with hidden methods
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("nashorn");
-        engine.eval(
-                "function emit() {"
-                + "  print('About to emit event from Javascript');"
-                + "  var TestEvent = Java.type(\"jdk.jfr.api.consumer.TestHiddenMethod$MyEvent\");"
-                + "  var event = new TestEvent;"
-                + "  event.begin();"
-                + "  event.end();"
-                + "  event.commit();"
-                + "  print('Event emitted from Javascript!');"
-                + "}"
-                + "emit();");
+            List<RecordedEvent> events = Events.fromRecording(recording);
+            assertEquals(2, events.size(), "Expected two events");
+            RecordedEvent hiddenEvent = events.get(0);
+            RecordedEvent visibleEvent = events.get(1);
 
-        // Commit event with visible method
-        MyEvent visible = new MyEvent();
-        visible.begin();
-        visible.end();
-        visible.commit();
-        recording.stop();
+            System.out.println("hiddenEvent:" + hiddenEvent);
+            System.out.println("visibleEvent:" + visibleEvent);
 
-        List<RecordedEvent> events = Events.fromRecording(recording);
-        assertEquals(2, events.size(), "Expected two events");
-        RecordedEvent hiddenEvent = events.get(0);
-        RecordedEvent visibleEvent = events.get(1);
-
-        System.out.println("hiddenEvent:" + hiddenEvent);
-        System.out.println("visibleEvent:" + visibleEvent);
-
-        assertTrue(hasHiddenStackFrame(hiddenEvent), "No hidden frame in hidden event: " + hiddenEvent);
-        assertFalse(hasHiddenStackFrame(visibleEvent), "Hidden frame in visible event: " + visibleEvent);
+            assertTrue(hasHiddenStackFrame(hiddenEvent), "No hidden frame in hidden event: " + hiddenEvent);
+            assertFalse(hasHiddenStackFrame(visibleEvent), "Hidden frame in visible event: " + visibleEvent);
+        }
     }
 
     private static boolean hasHiddenStackFrame(RecordedEvent event) throws Throwable {
@@ -108,5 +98,4 @@ public final class TestHiddenMethod {
 
     public static class MyEvent extends Event {
     }
-
 }

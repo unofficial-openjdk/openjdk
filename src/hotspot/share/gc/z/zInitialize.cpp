@@ -26,6 +26,7 @@
 #include "gc/z/zBarrierSet.hpp"
 #include "gc/z/zCPU.hpp"
 #include "gc/z/zGlobals.hpp"
+#include "gc/z/zHeuristics.hpp"
 #include "gc/z/zInitialize.hpp"
 #include "gc/z/zLargePages.hpp"
 #include "gc/z/zNUMA.hpp"
@@ -36,18 +37,21 @@
 #include "runtime/vm_version.hpp"
 
 ZInitialize::ZInitialize(ZBarrierSet* barrier_set) {
-  log_info(gc, init)("Initializing %s", ZGCName);
+  log_info(gc, init)("Initializing %s", ZName);
   log_info(gc, init)("Version: %s (%s)",
                      VM_Version::vm_release(),
                      VM_Version::jdk_debug_level());
 
   // Early initialization
-  ZAddressMasks::initialize();
+  ZAddress::initialize();
   ZNUMA::initialize();
   ZCPU::initialize();
   ZStatValue::initialize();
   ZThreadLocalAllocBuffer::initialize();
   ZTracer::initialize();
   ZLargePages::initialize();
+  ZHeuristics::set_medium_page_size();
   ZBarrierSet::set_barrier_set(barrier_set);
+
+  initialize_os();
 }

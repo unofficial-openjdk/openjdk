@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
  * @test
  * @bug 4714257 8164407 8205593
  * @summary Test to make sure that the title attribute shows up in links.
- * @author jamieh
  * @library ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build javadoc.tester.*
@@ -53,12 +52,14 @@ public class TestTitleInHref extends JavadocTester {
 
         checkOutput("pkg/Links.html", true,
                 //Test to make sure that the title shows up in a class link.
-                "<a href=\"Class.html\" title=\"class in pkg\">",
+                """
+                    <a href="Class.html" title="class in pkg">""",
                 //Test to make sure that the title shows up in an interface link.
-                "<a href=\"Interface.html\" title=\"interface in pkg\">",
+                """
+                    <a href="Interface.html" title="interface in pkg">""",
                 //Test to make sure that the title shows up in cross link shows up
-                "<a href=\"" + uri + "/java/io/File.html?is-external=true\" "
-                + "title=\"class or interface in java.io\" class=\"externalLink\">"
-                + "<code>This is a cross link to class File</code></a>");
+                "<a href=\"" + uri + """
+                    /java/io/File.html" title="class or interface in java.io" class="external-link">\
+                    <code>This is a cross link to class File</code></a>""");
     }
 }

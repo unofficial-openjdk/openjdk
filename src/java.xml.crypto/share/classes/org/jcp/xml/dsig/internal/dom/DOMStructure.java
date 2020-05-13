@@ -21,21 +21,32 @@
  * under the License.
  */
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * $Id: DOMStructure.java 1788465 2017-03-24 15:10:51Z coheigea $
+ * $Id: DOMStructure.java 1854026 2019-02-21 09:30:01Z coheigea $
  */
 package org.jcp.xml.dsig.internal.dom;
 
 import javax.xml.crypto.MarshalException;
-import javax.xml.crypto.XMLCryptoContext;
+import javax.xml.crypto.XMLStructure;
+import javax.xml.crypto.dom.DOMCryptoContext;
+import org.w3c.dom.Node;
 
 /**
  * DOM-based abstract implementation of XMLStructure.
  *
  */
-public abstract class DOMStructure extends BaseStructure {
+public abstract class DOMStructure implements XMLStructure {
 
-    public abstract void marshal(XmlWriter xwriter, String dsPrefix, XMLCryptoContext context) throws MarshalException;
+    public final boolean isFeatureSupported(String feature) {
+        if (feature == null) {
+            throw new NullPointerException();
+        } else {
+            return false;
+        }
+    }
+
+    public abstract void marshal(Node parent, String dsPrefix,
+        DOMCryptoContext context) throws MarshalException;
 }

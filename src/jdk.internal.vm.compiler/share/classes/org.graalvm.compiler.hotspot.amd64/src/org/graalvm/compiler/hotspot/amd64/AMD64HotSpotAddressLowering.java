@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,8 +84,7 @@ public class AMD64HotSpotAddressLowering extends AMD64CompressAddressLowering {
     @Override
     protected final boolean improveUncompression(AMD64AddressNode addr, CompressionNode compression, ValueNode other) {
         CompressEncoding encoding = compression.getEncoding();
-        Scale scale = Scale.fromShift(encoding.getShift());
-        if (scale == null) {
+        if (!Scale.isScaleShiftSupported(encoding.getShift())) {
             return false;
         }
 
@@ -117,7 +116,9 @@ public class AMD64HotSpotAddressLowering extends AMD64CompressAddressLowering {
             addr.setBase(other);
         }
 
+        Scale scale = Scale.fromShift(encoding.getShift());
         addr.setScale(scale);
+        addr.setUncompressionScale(scale);
         addr.setIndex(compression.getValue());
         return true;
     }
@@ -199,7 +200,7 @@ public class AMD64HotSpotAddressLowering extends AMD64CompressAddressLowering {
                 CountedLoopInfo countedLoopInfo = loop.counted();
                 IntegerStamp initStamp = (IntegerStamp) inductionVariable.initNode().stamp(NodeView.DEFAULT);
                 if (initStamp.isPositive()) {
-                    if (inductionVariable.isConstantExtremum()) {
+                    if (inductionVariable.isConstantExtremum() && countedLoopInfo.counterNeverOverflows()) {
                         long init = inductionVariable.constantInit();
                         long stride = inductionVariable.constantStride();
                         long extremum = inductionVariable.constantExtremum();
@@ -211,7 +212,9 @@ public class AMD64HotSpotAddressLowering extends AMD64CompressAddressLowering {
                             }
                         }
                     }
-                    if (countedLoopInfo.getCounter() == inductionVariable && inductionVariable.direction() == InductionVariable.Direction.Up && countedLoopInfo.getOverFlowGuard() != null) {
+                    if (countedLoopInfo.getCounter() == inductionVariable &&
+                                    inductionVariable.direction() == InductionVariable.Direction.Up &&
+                                    (countedLoopInfo.getOverFlowGuard() != null || countedLoopInfo.counterNeverOverflows())) {
                         return graph.unique(new ZeroExtendNode(input, INT_BITS, ADDRESS_BITS, true));
                     }
                 }

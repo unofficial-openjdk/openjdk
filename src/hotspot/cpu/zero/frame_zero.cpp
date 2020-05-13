@@ -28,7 +28,8 @@
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterRuntime.hpp"
 #include "memory/resourceArea.hpp"
-#include "oops/markOop.hpp"
+#include "memory/universe.hpp"
+#include "oops/markWord.hpp"
 #include "oops/method.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/frame.inline.hpp"
@@ -97,12 +98,10 @@ BasicObjectLock* frame::interpreter_frame_monitor_end() const {
 #endif // CC_INTERP
 
 void frame::patch_pc(Thread* thread, address pc) {
-
   if (pc != NULL) {
-    _cb = CodeCache::find_blob(pc);
+    assert(_cb == CodeCache::find_blob(pc), "unexpected pc");
     _pc = pc;
     _deopt_state = is_deoptimized;
-
   } else {
     // We borrow this call to set the thread pointer in the interpreter
     // state; the hook to set up deoptimized frames isn't supplied it.

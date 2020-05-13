@@ -27,75 +27,33 @@
 #
 #############################################################################
 
-java/lang/Class/getDeclaredField/ClassDeclaredFieldsTest.java           8185139   generic-all
-java/lang/Class/getDeclaredField/FieldSetAccessibleTest.java            8185139   generic-all
-java/lang/ProcessBuilder/SecurityManagerClinit.java                     8185139   generic-all
-java/lang/reflect/Proxy/nonPublicProxy/NonPublicProxyClass.java         8185139   generic-all
-java/lang/StackWalker/CallerSensitiveMethod/Main.java                   8185139   generic-all
-java/lang/StackWalker/GetCallerClassTest.java                           8185139   generic-all
-java/lang/String/concat/WithSecurityManager.java                        8185139   generic-all
-java/lang/System/Logger/custom/CustomLoggerTest.java                    8185139   generic-all
-java/lang/System/Logger/default/DefaultLoggerTest.java                  8185139   generic-all
-java/lang/System/LoggerFinder/BaseLoggerFinderTest/BaseLoggerFinderTest.java                        8185139   generic-all
-java/lang/System/LoggerFinder/DefaultLoggerFinderTest/DefaultLoggerFinderTest.java                  8185139   generic-all
-java/lang/System/LoggerFinder/internal/BaseDefaultLoggerFinderTest/BaseDefaultLoggerFinderTest.java 8185139   generic-all
-java/lang/System/LoggerFinder/internal/BaseLoggerBridgeTest/BaseLoggerBridgeTest.java               8185139   generic-all
-java/lang/System/LoggerFinder/internal/BasePlatformLoggerTest/BasePlatformLoggerTest.java           8185139   generic-all
-java/lang/System/LoggerFinder/internal/BootstrapLogger/BootstrapLoggerTest.java                     8185139   generic-all
-java/lang/System/LoggerFinder/internal/LoggerBridgeTest/LoggerBridgeTest.java                       8185139   generic-all
-java/lang/System/LoggerFinder/internal/LoggerFinderLoaderTest/LoggerFinderLoaderTest.java           8185139   generic-all
-java/lang/System/LoggerFinder/internal/PlatformLoggerBridgeTest/PlatformLoggerBridgeTest.java       8185139   generic-all
-java/lang/System/LoggerFinder/jdk/DefaultLoggerBridgeTest/DefaultLoggerBridgeTest.java              8185139   generic-all
-java/lang/System/LoggerFinder/LoggerFinderAPI/LoggerFinderAPI.java      8185139   generic-all
-java/util/concurrent/atomic/AtomicUpdaters.java                         8185139   generic-all
-java/util/concurrent/Executors/PrivilegedCallables.java                 8185139   generic-all
-java/util/logging/FileHandlerPath.java                                  8185139   generic-all
-java/util/logging/FileHandlerPatternExceptions.java                     8185139   generic-all
-java/util/logging/Logger/setResourceBundle/TestSetResourceBundle.java   8185139   generic-all
-java/util/logging/LogManager/Configuration/updateConfiguration/HandlersOnComplexResetUpdate.java    8185139   generic-all
-java/util/logging/LogManager/Configuration/updateConfiguration/HandlersOnComplexUpdate.java         8185139   generic-all
-java/util/logging/LogManager/Configuration/updateConfiguration/SimpleUpdateConfigurationTest.java   8185139   generic-all
-java/util/logging/LogManager/Configuration/updateConfiguration/SimpleUpdateConfigWithInputStreamTest.java   8185139   generic-all
-java/util/logging/LogManager/RootLogger/setLevel/TestRootLoggerLevel.java   8185139   generic-all
-java/util/logging/RootLogger/RootLevelInConfigFile.java                 8185139   generic-all
-java/util/logging/TestAppletLoggerContext.java                          8185139   generic-all
-java/util/logging/TestConfigurationListeners.java                       8185139   generic-all
-java/util/logging/LogManager/Configuration/ParentLoggerWithHandlerGC.java 8185139 generic-all
-java/util/logging/FileHandlerLongLimit.java                             8185139   generic-all
+java/lang/String/concat/WithSecurityManager.java                        8207267   generic-all
+java/lang/System/LoggerFinder/LoggerFinderAPI/LoggerFinderAPI.java      8207267   generic-all
 
 java/util/concurrent/tck/JSR166TestCase.java                            8187486   generic-all
 
 java/lang/ref/OOMEInReferenceHandler.java                               8196611   generic-all
-java/lang/Runtime/exec/LotsOfOutput.java                                8196611   generic-all
+java/lang/ref/SoftReference/Pin.java                                    8196611   generic-all
+java/lang/RuntimeTests/exec/LotsOfOutput.java                           8196611   generic-all
 java/util/concurrent/ScheduledThreadPoolExecutor/BasicCancelTest.java   8196611   generic-all
+com/sun/crypto/provider/KeyFactory/TestProviderLeak.java                8196611   generic-all
 
 # tests require pop_frame and force_early_return capabilities
-com/sun/jdi/RedefineTTYLineNumber.java                                  8195635   generic-all
-com/sun/jdi/RedefineG.java                                              8195635   generic-all
-com/sun/jdi/RedefineCrossStart.java                                     8195635   generic-all
-com/sun/jdi/PopSynchronousTest.java                                     8195635   generic-all
-com/sun/jdi/RedefineTTYLineNumber.java                                  8195635   generic-all
-com/sun/jdi/RedefineG.java                                              8195635   generic-all
-com/sun/jdi/RedefineCrossStart.java                                     8195635   generic-all
-com/sun/jdi/PopSynchronousTest.java                                     8195635   generic-all
-com/sun/jdi/PopAsynchronousTest.java                                    8195635   generic-all
+com/sun/jdi/EarlyReturnTest.java                                        8195635   generic-all
 com/sun/jdi/PopAndStepTest.java                                         8195635   generic-all
 com/sun/jdi/PopAsynchronousTest.java                                    8195635   generic-all
-com/sun/jdi/PopAndStepTest.java                                         8195635   generic-all
-com/sun/jdi/EarlyReturnTest.java                                        8195635   generic-all
-com/sun/jdi/RedefineTTYLineNumber.java                                  8195635   generic-all
-com/sun/jdi/RedefineG.java                                              8195635   generic-all
-com/sun/jdi/RedefineCrossStart.java                                     8195635   generic-all
 com/sun/jdi/PopSynchronousTest.java                                     8195635   generic-all
-com/sun/jdi/PopAsynchronousTest.java                                    8195635   generic-all
-com/sun/jdi/PopAndStepTest.java                                         8195635   generic-all
-com/sun/jdi/EarlyReturnTest.java                                        8195635   generic-all
-com/sun/jdi/EarlyReturnTest.java                                        8195635   generic-all
-
-com/sun/jdi/RedefineCrossEvent.java                                     8218396   generic-all
+com/sun/jdi/RedefineCrossStart.java                                     8195635   generic-all
+com/sun/jdi/RedefineG.java                                              8195635   generic-all
+com/sun/jdi/RedefineTTYLineNumber.java                                  8195635   generic-all
 
 # Next JFR tests fail with Graal. Assuming 8193210.
 jdk/jfr/event/compiler/TestCodeSweeper.java              8193210   generic-all
 jdk/jfr/event/compiler/TestCompilerInlining.java         8193210   generic-all
 jdk/jfr/event/compiler/TestCompilerPhase.java            8193210   generic-all
 
+# Next tests should be re-enabled once libgraal is introduced
+java/lang/ref/ReachabilityFenceTest.java                 8207267   generic-all
+
+# Next test failed to create new adapter because CodeCache is full with Graal compiled methods.
+java/lang/invoke/LFCaching/LFSingleThreadCachingTest.java 8207267   generic-all

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,10 @@
 
 package sun.tools.jcmd;
 
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.List;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.net.URISyntaxException;
 
@@ -41,6 +39,7 @@ import com.sun.tools.attach.AttachNotSupportedException;
 
 import sun.tools.attach.HotSpotVirtualMachine;
 import sun.tools.common.ProcessArgumentMatcher;
+import sun.tools.common.PrintStreamPrinter;
 import sun.tools.jstat.JStatLogger;
 import sun.jvmstat.monitor.Monitor;
 import sun.jvmstat.monitor.MonitoredHost;
@@ -121,22 +120,11 @@ public class JCmd {
             if (line.trim().equals("stop")) {
                 break;
             }
-            try (InputStream in = hvm.executeJCmd(line);) {
-                // read to EOF and just print output
-                byte b[] = new byte[256];
-                int n;
-                boolean messagePrinted = false;
-                do {
-                    n = in.read(b);
-                    if (n > 0) {
-                        String s = new String(b, 0, n, "UTF-8");
-                        System.out.print(s);
-                        messagePrinted = true;
-                    }
-                } while (n > 0);
-                if (!messagePrinted) {
-                    System.out.println("Command executed successfully");
-                }
+
+            InputStream is = hvm.executeJCmd(line);
+
+            if (PrintStreamPrinter.drainUTF8(is, System.out) == 0) {
+                System.out.println("Command executed successfully");
             }
         }
         vm.detach();

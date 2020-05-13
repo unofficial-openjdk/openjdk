@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,7 @@ import sun.hotspot.cpuinfo.CPUInfo;
 import sun.hotspot.gc.GC;
 import sun.hotspot.WhiteBox;
 import jdk.test.lib.Platform;
+import jdk.test.lib.Container;
 
 /**
  * The Class to be invoked by jtreg prior Test Suite execution to
@@ -95,9 +96,6 @@ public class VMProps implements Callable<Map<String, String>> {
         // vm.hasSA is "true" if the VM contains the serviceability agent
         // and jhsdb.
         map.put("vm.hasSA", this::vmHasSA);
-        // vm.hasSAandCanAttach is "true" if the VM contains the serviceability agent
-        // and jhsdb and it can attach to the VM.
-        map.put("vm.hasSAandCanAttach", this::vmHasSAandCanAttach);
         // vm.hasJFR is "true" if JFR is included in the build of the VM and
         // so tests can be executed.
         map.put("vm.hasJFR", this::vmHasJFR);
@@ -234,7 +232,22 @@ public class VMProps implements Callable<Map<String, String>> {
      */
     protected String vmJvmci() {
         // builds with jvmci have this flag
-        return "" + (WB.getBooleanVMFlag("EnableJVMCI") != null);
+        if (WB.getBooleanVMFlag("EnableJVMCI") == null) {
+            return "false";
+        }
+
+        switch (GC.selected()) {
+            case Serial:
+            case Parallel:
+            case G1:
+                // These GCs are supported with JVMCI
+                return "true";
+            default:
+                break;
+        }
+
+        // Every other GC is not supported
+        return "false";
     }
 
     /**
@@ -289,6 +302,7 @@ public class VMProps implements Callable<Map<String, String>> {
      */
     protected void vmOptFinalFlags(SafeMap map) {
         vmOptFinalFlag(map, "ClassUnloading");
+        vmOptFinalFlag(map, "ClassUnloadingWithConcurrentMark");
         vmOptFinalFlag(map, "UseCompressedOops");
         vmOptFinalFlag(map, "EnableJVMCI");
         vmOptFinalFlag(map, "EliminateAllocations");
@@ -299,19 +313,6 @@ public class VMProps implements Callable<Map<String, String>> {
      */
     protected String vmHasSA() {
         return "" + Platform.hasSA();
-    }
-
-    /**
-     * @return "true" if VM has a serviceability agent and it can
-     * attach to the VM.
-     */
-    protected String vmHasSAandCanAttach() {
-        try {
-            return "" + Platform.shouldSAAttach();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return errorWithMessage("Checking whether SA can attach to the VM failed.:" + e);
-        }
     }
 
     /**
@@ -355,7 +356,24 @@ public class VMProps implements Callable<Map<String, String>> {
         } else {
             jaotc = bin.resolve("jaotc");
         }
-        return "" + Files.exists(jaotc);
+
+        if (!Files.exists(jaotc)) {
+            // No jaotc => no AOT
+            return "false";
+        }
+
+        switch (GC.selected()) {
+            case Serial:
+            case Parallel:
+            case G1:
+                // These GCs are supported with AOT
+                return "true";
+            default:
+                break;
+        }
+
+        // Every other GC is not supported
+        return "false";
     }
 
     /*
@@ -455,7 +473,7 @@ public class VMProps implements Callable<Map<String, String>> {
     }
 
     private boolean checkDockerSupport() throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("docker", "ps");
+        ProcessBuilder pb = new ProcessBuilder(Container.ENGINE_COMMAND, "ps");
         Process p = pb.start();
         p.waitFor(10, TimeUnit.SECONDS);
 

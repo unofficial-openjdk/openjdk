@@ -398,6 +398,14 @@ public class Utilities {
                                    justificationData, false);
     }
 
+    static final int getTabbedTextOffset(View view, Segment s, FontMetrics metrics,
+                                         float x0, float x, TabExpander e,
+                                         int startOffset,
+                                         int[] justificationData) {
+        return getTabbedTextOffset(view, s, metrics, x0, x, e, startOffset, true,
+                justificationData, true);
+    }
+
     /**
      * Determines the relative offset into the given text that
      * best represents the given span in the view coordinate
@@ -657,7 +665,7 @@ public class Utilities {
     public static final int getBreakLocation(Segment s, FontMetrics metrics,
                                              float x0, float x, TabExpander e,
                                              int startOffset) {
-        return getBreakLocation(s, metrics, x0, x, e, startOffset, false);
+        return getBreakLocation(s, metrics, x0, x, e, startOffset, true);
     }
 
     /**

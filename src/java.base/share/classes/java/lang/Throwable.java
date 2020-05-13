@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,8 @@
 
 package java.lang;
 
-import  java.io.*;
-import  java.util.*;
+import java.io.*;
+import java.util.*;
 
 /**
  * The {@code Throwable} class is the superclass of all errors and
@@ -114,6 +114,7 @@ import  java.util.*;
  */
 public class Throwable implements Serializable {
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
+    @java.io.Serial
     private static final long serialVersionUID = -3042686055658047285L;
 
     /**
@@ -229,6 +230,7 @@ public class Throwable implements Serializable {
      * @serial
      * @since 1.7
      */
+    @SuppressWarnings("serial") // Not statically typed as Serializable
     private List<Throwable> suppressedExceptions = SUPPRESSED_SENTINEL;
 
     /** Message for trying to suppress a null exception. */
@@ -616,7 +618,7 @@ public class Throwable implements Serializable {
      *          ... 1 more
      * </pre>
      * Note that the "... n more" notation is used on suppressed exceptions
-     * just at it is used on causes. Unlike causes, suppressed exceptions are
+     * just as it is used on causes. Unlike causes, suppressed exceptions are
      * indented beyond their "containing exceptions."
      *
      * <p>An exception can have both a cause and one or more suppressed
@@ -693,7 +695,7 @@ public class Throwable implements Serializable {
                                          Set<Throwable> dejaVu) {
         assert Thread.holdsLock(s.lock());
         if (dejaVu.contains(this)) {
-            s.println("\t[CIRCULAR REFERENCE:" + this + "]");
+            s.println(prefix + caption + "[CIRCULAR REFERENCE: " + this + "]");
         } else {
             dejaVu.add(this);
             // Compute number of frames in common between this and enclosing trace
@@ -901,28 +903,40 @@ public class Throwable implements Serializable {
      * cause} field can hold; both {@code null} and {@code this} are
      * valid values for the field.
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream s)
         throws IOException, ClassNotFoundException {
         s.defaultReadObject();     // read in all fields
-        if (suppressedExceptions != null) {
-            List<Throwable> suppressed = null;
-            if (suppressedExceptions.isEmpty()) {
-                // Use the sentinel for a zero-length list
-                suppressed = SUPPRESSED_SENTINEL;
-            } else { // Copy Throwables to new list
-                suppressed = new ArrayList<>(1);
-                for (Throwable t : suppressedExceptions) {
+
+        // Set suppressed exceptions and stack trace elements fields
+        // to marker values until the contents from the serial stream
+        // are validated.
+        List<Throwable> candidateSuppressedExceptions = suppressedExceptions;
+        suppressedExceptions = SUPPRESSED_SENTINEL;
+
+        StackTraceElement[] candidateStackTrace = stackTrace;
+        stackTrace = UNASSIGNED_STACK.clone();
+
+        if (candidateSuppressedExceptions != null) {
+            int suppressedSize = validateSuppressedExceptionsList(candidateSuppressedExceptions);
+            if (suppressedSize > 0) { // Copy valid Throwables to new list
+                var suppList  = new ArrayList<Throwable>(Math.min(100, suppressedSize));
+
+                for (Throwable t : candidateSuppressedExceptions) {
                     // Enforce constraints on suppressed exceptions in
                     // case of corrupt or malicious stream.
-                    if (t == null)
-                        throw new NullPointerException(NULL_CAUSE_MESSAGE);
+                    Objects.requireNonNull(t, NULL_CAUSE_MESSAGE);
                     if (t == this)
                         throw new IllegalArgumentException(SELF_SUPPRESSION_MESSAGE);
-                    suppressed.add(t);
+                    suppList.add(t);
                 }
+                // If there are any invalid suppressed exceptions,
+                // implicitly use the sentinel value assigned earlier.
+                suppressedExceptions = suppList;
             }
-            suppressedExceptions = suppressed;
-        } // else a null suppressedExceptions field remains null
+        } else {
+            suppressedExceptions = null;
+        }
 
         /*
          * For zero-length stack traces, use a clone of
@@ -933,25 +947,41 @@ public class Throwable implements Serializable {
          * the stackTrace needs to be constructed from the information
          * in backtrace.
          */
-        if (stackTrace != null) {
-            if (stackTrace.length == 0) {
-                stackTrace = UNASSIGNED_STACK.clone();
-            }  else if (stackTrace.length == 1 &&
+        if (candidateStackTrace != null) {
+            // Work from a clone of the candidateStackTrace to ensure
+            // consistency of checks.
+            candidateStackTrace = candidateStackTrace.clone();
+            if (candidateStackTrace.length >= 1) {
+                if (candidateStackTrace.length == 1 &&
                         // Check for the marker of an immutable stack trace
-                        SentinelHolder.STACK_TRACE_ELEMENT_SENTINEL.equals(stackTrace[0])) {
-                stackTrace = null;
-            } else { // Verify stack trace elements are non-null.
-                for(StackTraceElement ste : stackTrace) {
-                    if (ste == null)
-                        throw new NullPointerException("null StackTraceElement in serial stream. ");
+                        SentinelHolder.STACK_TRACE_ELEMENT_SENTINEL.equals(candidateStackTrace[0])) {
+                    stackTrace = null;
+                } else { // Verify stack trace elements are non-null.
+                    for (StackTraceElement ste : candidateStackTrace) {
+                        Objects.requireNonNull(ste, "null StackTraceElement in serial stream.");
+                    }
+                    stackTrace = candidateStackTrace;
                 }
             }
+        }
+        // A null stackTrace field in the serial form can result from
+        // an exception serialized without that field in older JDK
+        // releases; treat such exceptions as having empty stack
+        // traces by leaving stackTrace assigned to a clone of
+        // UNASSIGNED_STACK.
+    }
+
+    private int validateSuppressedExceptionsList(List<Throwable> deserSuppressedExceptions)
+        throws IOException {
+        if (!Object.class.getModule().
+            equals(deserSuppressedExceptions.getClass().getModule())) {
+            throw new StreamCorruptedException("List implementation not in base module.");
         } else {
-            // A null stackTrace field in the serial form can result
-            // from an exception serialized without that field in
-            // older JDK releases; treat such exceptions as having
-            // empty stack traces.
-            stackTrace = UNASSIGNED_STACK.clone();
+            int size = deserSuppressedExceptions.size();
+            if (size < 0) {
+                throw new StreamCorruptedException("Negative list size reported.");
+            }
+            return size;
         }
     }
 
@@ -962,6 +992,7 @@ public class Throwable implements Serializable {
      * form as a one-element array whose element is equal to {@code
      * new StackTraceElement("", "", null, Integer.MIN_VALUE)}.
      */
+    @java.io.Serial
     private synchronized void writeObject(ObjectOutputStream s)
         throws IOException {
         // Ensure that the stackTrace field is initialized to a
@@ -1034,8 +1065,7 @@ public class Throwable implements Serializable {
         if (exception == this)
             throw new IllegalArgumentException(SELF_SUPPRESSION_MESSAGE, exception);
 
-        if (exception == null)
-            throw new NullPointerException(NULL_CAUSE_MESSAGE);
+        Objects.requireNonNull(exception, NULL_CAUSE_MESSAGE);
 
         if (suppressedExceptions == null) // Suppressed exceptions not recorded
             return;

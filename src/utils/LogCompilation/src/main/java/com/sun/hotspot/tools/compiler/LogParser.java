@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -866,11 +866,11 @@ public class LogParser extends DefaultHandler implements ErrorHandler {
             compile.setBCount(search(atts, "backedge_count", "0"));
             compile.setBCI(Integer.parseInt(search(atts, "osr_bci", "-1")));
             String compiler = atts.getValue("compiler");
-            if (compiler == null) {
-                compiler = "";
+            assert compiler == null : "Compiler is not specified in task";
+            long level = parseLong(search(atts, "level", "0"));
+            if (level != 0) {
+                compile.setLevel(level);
             }
-            compile.setCompiler(compiler);
-
             // Extract the name of the compiled method.
             String[] parts = spacePattern.split(atts.getValue("method"));
             String methodName = parts[0] + "::" + parts[1];
@@ -896,6 +896,7 @@ public class LogParser extends DefaultHandler implements ErrorHandler {
             m.setSignature(parts[2]);
             m.setFlags("0");
             m.setBytes(search(atts, "bytes", "unknown"));
+            m.setLevel(compile.getLevel());
             compile.setMethod(m);
             events.add(compile);
             compiles.put(id, compile);
@@ -931,6 +932,12 @@ public class LogParser extends DefaultHandler implements ErrorHandler {
                m.setBytes(search(atts, "bytes"));
                m.setIICount(search(atts, "iicount"));
                m.setFlags(search(atts, "flags"));
+            }
+            String compiler = search(atts, "compiler", "");
+            m.setCompiler(compiler);
+            long level = parseLong(search(atts, "level", "0"));
+            if (level != 0) {
+                m.setLevel(level);
             }
             methods.put(id, m);
         } else if (qname.equals("call")) {
@@ -1100,6 +1107,8 @@ public class LogParser extends DefaultHandler implements ErrorHandler {
             if (level != null) {
                 nm.setLevel(parseLong(level));
             }
+            String compiler = search(atts, "compiler", "");
+            nm.setCompiler(compiler);
             nmethods.put(id, nm);
             events.add(nm);
         } else if (qname.equals("parse")) {
@@ -1279,6 +1288,7 @@ public class LogParser extends DefaultHandler implements ErrorHandler {
                 types.clear();
                 methods.clear();
                 site = null;
+                lateInlining = false;
             }
         } catch (Exception e) {
             reportInternalError("exception while processing end element", e);

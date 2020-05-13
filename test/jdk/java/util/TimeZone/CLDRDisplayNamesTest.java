@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,8 @@
 
  /*
  * @test
- * @bug 8005471 8008577 8129881 8130845 8136518 8181157 8210490
+ * @bug 8005471 8008577 8129881 8130845 8136518 8181157 8210490 8220037
+ *      8234347 8236548
  * @modules jdk.localedata
  * @run main/othervm -Djava.locale.providers=CLDR CLDRDisplayNamesTest
  * @summary Make sure that localized time zone names of CLDR are used
@@ -95,12 +96,14 @@ public class CLDRDisplayNamesTest {
         }
 
         // for 8129881
+        /* 8234347: CLDR Converter will not pre-fill short display names from COMPAT anymore.
         tz = TimeZone.getTimeZone("Europe/Vienna");
         String name = tz.getDisplayName(false, SHORT, Locale.ENGLISH);
         if (!"CET".equals(name)) {
             System.err.printf("error: got '%s' expected 'CET' %n", name);
             errors++;
         }
+        */
 
         // for 8130845
         SimpleDateFormat fmtROOT = new SimpleDateFormat("EEE MMM d hh:mm:ss z yyyy", Locale.ROOT);
@@ -109,7 +112,7 @@ public class CLDRDisplayNamesTest {
         Locale originalLocale = Locale.getDefault();
         try {
             Locale.setDefault(Locale.ROOT);
-            fmtROOT.parse("Thu Nov 13 04:35:51 AKST 2008");
+            fmtROOT.parse("Thu Nov 13 04:35:51 GMT-09:00 2008");
             fmtUS.parse("Thu Nov 13 04:35:51 AKST 2008");
             fmtUK.parse("Thu Nov 13 04:35:51 GMT-09:00 2008");
         } catch (ParseException pe) {
@@ -130,13 +133,10 @@ public class CLDRDisplayNamesTest {
             System.err.printf("Wrong display name for timezone Etc/GMT-5 : expected GMT+05:00,  Actual " + displayName);
             errors++;
         }
-        if (errors > 0) {
-            throw new RuntimeException("test failed");
-        }
 
         // 8217366: No "no inheritance marker" should be left in the returned array
         // from DateFormatSymbols.getZoneStrings()
-        List.of(Locale.ROOT,
+        errors += List.of(Locale.ROOT,
                 Locale.CHINA,
                 Locale.GERMANY,
                 Locale.JAPAN,
@@ -149,11 +149,28 @@ public class CLDRDisplayNamesTest {
             .flatMap(zoneStrings -> Arrays.stream(zoneStrings))
             .filter(namesArray -> Arrays.stream(namesArray)
                 .anyMatch(aName -> aName.equals(NO_INHERITANCE_MARKER)))
-            .findAny()
-            .ifPresentOrElse(marker -> {
-                    throw new RuntimeException("No inheritance marker detected with tzid: "
+            .peek(marker -> {
+                 System.err.println("No-inheritance-marker is detected with tzid: "
                                                 + marker[0]);
-                },
-                () -> System.out.println("Success: No \"no inheritance marker\" detected."));
+            })
+            .count();
+
+        // 8220037: Make sure CLDRConverter uniquely produces bundles, regardless of the
+        // source file enumeration order.
+        /* 8234347: CLDR Converter will not pre-fill short display names from COMPAT anymore.
+        tz = TimeZone.getTimeZone("America/Argentina/La_Rioja");
+        if (!"ARST".equals(tz.getDisplayName(true, TimeZone.SHORT,
+                                new Locale.Builder()
+                                    .setLanguage("en")
+                                    .setRegion("CA")
+                                    .build()))) {
+            System.err.println("Short display name of \"" + tz.getID() + "\" was not \"ARST\"");
+            errors++;
+        }
+        */
+
+        if (errors > 0) {
+            throw new RuntimeException("test failed");
+        }
     }
 }

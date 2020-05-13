@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -228,14 +228,6 @@ public class BasicMenuItemUI extends MenuItemUI
             arrowIcon instanceof UIResource) {
             arrowIcon = UIManager.getIcon(prefix + ".arrowIcon");
         }
-        updateCheckIcon();
-    }
-
-    /**
-     * Updates check Icon based on column layout
-     */
-    private void updateCheckIcon() {
-        String prefix = getPropertyPrefix();
 
         if (checkIcon == null ||
             checkIcon instanceof UIResource) {
@@ -716,7 +708,7 @@ public class BasicMenuItemUI extends MenuItemUI
 
     private void paintAccText(Graphics g, MenuItemLayoutHelper lh,
                               MenuItemLayoutHelper.LayoutResult lr) {
-        if (!lh.getAccText().equals("")) {
+        if (!lh.getAccText().isEmpty()) {
             ButtonModel model = lh.getMenuItem().getModel();
             g.setFont(lh.getAccFontMetrics().getFont());
             if (!model.isEnabled()) {
@@ -754,7 +746,7 @@ public class BasicMenuItemUI extends MenuItemUI
 
     private void paintText(Graphics g, MenuItemLayoutHelper lh,
                            MenuItemLayoutHelper.LayoutResult lr) {
-        if (!lh.getText().equals("")) {
+        if (!lh.getText().isEmpty()) {
             if (lh.getHtmlView() != null) {
                 // Text is HTML
                 lh.getHtmlView().paint(g, lr.getTextRect());
@@ -1155,8 +1147,6 @@ public class BasicMenuItemUI extends MenuItemUI
                 BasicHTML.updateRenderer(lbl, text);
             } else if (name  == "iconTextGap") {
                 defaultTextIconGap = ((Number)e.getNewValue()).intValue();
-            } else if (name == "horizontalTextPosition") {
-                updateCheckIcon();
             }
         }
     }

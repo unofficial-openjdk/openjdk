@@ -31,7 +31,7 @@
 #include "gc/shared/collectedHeap.hpp"
 #include "interpreter/interpreter.hpp"
 #include "oops/arrayOop.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
 #include "runtime/basicLock.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/os.hpp"
@@ -40,7 +40,7 @@
 
 void C1_MacroAssembler::inline_cache_check(Register receiver, Register iCache) {
   Label ic_miss, ic_hit;
-  verify_oop(receiver);
+  verify_oop(receiver, FILE_AND_LINE);
   int klass_offset = oopDesc::klass_offset_in_bytes();
 
   if (!ImplicitNullChecks || MacroAssembler::needs_explicit_null_check(klass_offset)) {
@@ -83,7 +83,7 @@ void C1_MacroAssembler::lock_object(Register hdr, Register obj, Register disp_hd
   assert_different_registers(hdr, obj, disp_hdr);
   NearLabel done;
 
-  verify_oop(obj);
+  verify_oop(obj, FILE_AND_LINE);
 
   // Load object header.
   z_lg(hdr, Address(obj, hdr_offset));
@@ -96,7 +96,7 @@ void C1_MacroAssembler::lock_object(Register hdr, Register obj, Register disp_hd
   }
 
   // and mark it as unlocked.
-  z_oill(hdr, markOopDesc::unlocked_value);
+  z_oill(hdr, markWord::unlocked_value);
   // Save unlocked object header into the displaced header location on the stack.
   z_stg(hdr, Address(disp_hdr, (intptr_t)0));
   // Test if object header is still the same (i.e. unlocked), and if so, store the
@@ -115,19 +115,19 @@ void C1_MacroAssembler::lock_object(Register hdr, Register obj, Register disp_hd
   // If the object header was not the same, it is now in the hdr register.
   // => Test if it is a stack pointer into the same stack (recursive locking), i.e.:
   //
-  // 1) (hdr & markOopDesc::lock_mask_in_place) == 0
+  // 1) (hdr & markWord::lock_mask_in_place) == 0
   // 2) rsp <= hdr
   // 3) hdr <= rsp + page_size
   //
   // These 3 tests can be done by evaluating the following expression:
   //
-  // (hdr - Z_SP) & (~(page_size-1) | markOopDesc::lock_mask_in_place)
+  // (hdr - Z_SP) & (~(page_size-1) | markWord::lock_mask_in_place)
   //
   // assuming both the stack pointer and page_size have their least
   // significant 2 bits cleared and page_size is a power of 2
   z_sgr(hdr, Z_SP);
 
-  load_const_optimized(Z_R0_scratch, (~(os::vm_page_size()-1) | markOopDesc::lock_mask_in_place));
+  load_const_optimized(Z_R0_scratch, (~(os::vm_page_size()-1) | markWord::lock_mask_in_place));
   z_ngr(hdr, Z_R0_scratch); // AND sets CC (result eq/ne 0).
   // For recursive locking, the result is zero. => Save it in the displaced header
   // location (NULL in the displaced hdr location indicates recursive locking).
@@ -158,7 +158,7 @@ void C1_MacroAssembler::unlock_object(Register hdr, Register obj, Register disp_
     // Load object.
     z_lg(obj, Address(disp_hdr, BasicObjectLock::obj_offset_in_bytes()));
   }
-  verify_oop(obj);
+  verify_oop(obj, FILE_AND_LINE);
   // Test if object header is pointing to the displaced header, and if so, restore
   // the displaced header in the object. If the object header is not pointing to
   // the displaced header, get the object header instead.
@@ -192,7 +192,7 @@ void C1_MacroAssembler::initialize_header(Register obj, Register klass, Register
     z_lg(t1, Address(klass, Klass::prototype_header_offset()));
   } else {
     // This assumes that all prototype bits fit in an int32_t.
-    load_const_optimized(t1, (intx)markOopDesc::prototype());
+    load_const_optimized(t1, (intx)markWord::prototype().value());
   }
   z_stg(t1, Address(obj, oopDesc::mark_offset_in_bytes()));
 
@@ -278,7 +278,7 @@ void C1_MacroAssembler::initialize_object(
   //    call(RuntimeAddress(Runtime1::entry_for (Runtime1::dtrace_object_alloc_id)));
   //  }
 
-  verify_oop(obj);
+  verify_oop(obj, FILE_AND_LINE);
 }
 
 void C1_MacroAssembler::allocate_array(
@@ -336,16 +336,15 @@ void C1_MacroAssembler::allocate_array(
   //   call(RuntimeAddress(Runtime1::entry_for (Runtime1::dtrace_object_alloc_id)));
   // }
 
-  verify_oop(obj);
+  verify_oop(obj, FILE_AND_LINE);
 }
 
 
 #ifndef PRODUCT
 
 void C1_MacroAssembler::verify_stack_oop(int stack_offset) {
-  Unimplemented();
-  // if (!VerifyOops) return;
-  // verify_oop_addr(Address(SP, stack_offset + STACK_BIAS));
+  if (!VerifyOops) return;
+  verify_oop_addr(Address(Z_SP, stack_offset), FILE_AND_LINE);
 }
 
 void C1_MacroAssembler::verify_not_null_oop(Register r) {
@@ -354,7 +353,7 @@ void C1_MacroAssembler::verify_not_null_oop(Register r) {
   compareU64_and_branch(r, (intptr_t)0, bcondNotEqual, not_null);
   stop("non-null oop required");
   bind(not_null);
-  verify_oop(r);
+  verify_oop(r, FILE_AND_LINE);
 }
 
 void C1_MacroAssembler::invalidate_registers(Register preserve1,

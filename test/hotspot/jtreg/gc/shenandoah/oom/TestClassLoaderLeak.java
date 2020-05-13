@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,9 +26,9 @@
  * @test TestClassLoaderLeak
  * @summary Test OOME in due to classloader leak
  * @key gc
- * @requires vm.gc.Shenandoah
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
  * @library /test/lib
- * @run main TestClassLoaderLeak
+ * @run driver TestClassLoaderLeak
  */
 
 import java.util.*;
@@ -124,30 +125,31 @@ public class TestClassLoaderLeak {
             return;
         }
 
-        String[] heuristics = new String[] {
-                "adaptive",
-                "compact",
-                "static",
-                "traversal",
-                "aggressive",
-                "passive",
+        String[][][] modeHeuristics = new String[][][] {
+             {{"satb"},    {"adaptive", "compact", "static", "aggressive"}},
+             {{"iu"},      {"adaptive", "aggressive"}},
+             {{"passive"}, {"passive"}}
         };
 
-        for (String h : heuristics) {
-            // Forceful enabling should work
-            passWith("-XX:ShenandoahGCHeuristics=" + h, "-XX:+ClassUnloading");
-            passWith("-XX:ShenandoahGCHeuristics=" + h, "-XX:+ClassUnloadingWithConcurrentMark");
+        for (String[][] mh : modeHeuristics) {
+            String mode = mh[0][0];
+            String[] heuristics = mh[1];
+            for (String h : heuristics) {
+                // Forceful enabling should work
+                passWith("-XX:ShenandoahGCMode=" + mode, "-XX:ShenandoahGCHeuristics=" + h, "-XX:+ClassUnloading");
+                passWith("-XX:ShenandoahGCMode=" + mode, "-XX:ShenandoahGCHeuristics=" + h, "-XX:+ClassUnloadingWithConcurrentMark");
 
-            // Even when concurrent unloading is disabled, Full GC has to recover
-            passWith("-XX:ShenandoahGCHeuristics=" + h, "-XX:+ClassUnloading", "-XX:-ClassUnloadingWithConcurrentMark");
-            passWith("-XX:ShenandoahGCHeuristics=" + h, "-XX:+ClassUnloading", "-XX:-ClassUnloadingWithConcurrentMark", "-XX:ShenandoahUnloadClassesFrequency=0");
-            passWith("-XX:ShenandoahGCHeuristics=" + h, "-XX:+ClassUnloading", "-XX:+ClassUnloadingWithConcurrentMark", "-XX:ShenandoahUnloadClassesFrequency=0");
+                // Even when concurrent unloading is disabled, Full GC has to recover
+                passWith("-XX:ShenandoahGCMode=" + mode, "-XX:ShenandoahGCHeuristics=" + h, "-XX:+ClassUnloading", "-XX:-ClassUnloadingWithConcurrentMark");
+                passWith("-XX:ShenandoahGCMode=" + mode, "-XX:ShenandoahGCHeuristics=" + h, "-XX:+ClassUnloading", "-XX:-ClassUnloadingWithConcurrentMark", "-XX:ShenandoahUnloadClassesFrequency=0");
+                passWith("-XX:ShenandoahGCMode=" + mode, "-XX:ShenandoahGCHeuristics=" + h, "-XX:+ClassUnloading", "-XX:+ClassUnloadingWithConcurrentMark", "-XX:ShenandoahUnloadClassesFrequency=0");
 
-            // Should OOME when unloading forcefully disabled, even if local flags try to enable it back
-            failWith("-XX:ShenandoahGCHeuristics=" + h, "-XX:-ClassUnloading");
-            failWith("-XX:ShenandoahGCHeuristics=" + h, "-XX:-ClassUnloading", "-XX:+ClassUnloadingWithConcurrentMark");
-            failWith("-XX:ShenandoahGCHeuristics=" + h, "-XX:-ClassUnloading", "-XX:+ClassUnloadingWithConcurrentMark", "-XX:ShenandoahUnloadClassesFrequency=1");
-            failWith("-XX:ShenandoahGCHeuristics=" + h, "-XX:-ClassUnloading", "-XX:-ClassUnloadingWithConcurrentMark", "-XX:ShenandoahUnloadClassesFrequency=1");
+                // Should OOME when unloading forcefully disabled, even if local flags try to enable it back
+                failWith("-XX:ShenandoahGCMode=" + mode, "-XX:ShenandoahGCHeuristics=" + h, "-XX:-ClassUnloading");
+                failWith("-XX:ShenandoahGCMode=" + mode, "-XX:ShenandoahGCHeuristics=" + h, "-XX:-ClassUnloading", "-XX:+ClassUnloadingWithConcurrentMark");
+                failWith("-XX:ShenandoahGCMode=" + mode, "-XX:ShenandoahGCHeuristics=" + h, "-XX:-ClassUnloading", "-XX:+ClassUnloadingWithConcurrentMark", "-XX:ShenandoahUnloadClassesFrequency=1");
+                failWith("-XX:ShenandoahGCMode=" + mode, "-XX:ShenandoahGCHeuristics=" + h, "-XX:-ClassUnloading", "-XX:-ClassUnloadingWithConcurrentMark", "-XX:ShenandoahUnloadClassesFrequency=1");
+            }
         }
     }
 }

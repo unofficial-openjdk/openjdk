@@ -50,9 +50,9 @@ public class ParseIncomplete {
             "    }" +
             "    int t2(Integer i) {" +
             "        return switch (i) {" +
-            "            case null: break 0;" +
-            "            case 0, 1: break 1;" +
-            "            default: break 2;" +
+            "            case null: yield 0;" +
+            "            case 0, 1: yield 1;" +
+            "            default: yield 2;" +
             "        }" +
             "    }" +
             "}";
@@ -68,7 +68,7 @@ public class ParseIncomplete {
             StringWriter out = new StringWriter();
             try {
                 JavacTask ct = (JavacTask) tool.getTask(out, null, noErrors,
-                    List.of("-XDdev", "--enable-preview", "-source", sourceVersion), null,
+                    List.of("-XDdev"), null,
                     Arrays.asList(new MyFileObject(code)));
                 ct.parse().iterator().next();
             } catch (Throwable t) {

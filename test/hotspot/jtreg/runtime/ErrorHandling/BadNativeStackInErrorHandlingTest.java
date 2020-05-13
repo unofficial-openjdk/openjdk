@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.regex.Pattern;
 
-import jdk.test.lib.Platform;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
@@ -36,16 +35,15 @@ import jdk.test.lib.process.ProcessTools;
  * @bug 8194652
  * @summary Printing native stack shows an "error occurred during error reporting".
  * @modules java.base/jdk.internal.misc
+ * @requires vm.debug
+ * @requires vm.flavor != "zero"
  * @library /test/lib
+ * @run driver BadNativeStackInErrorHandlingTest
  */
 
 // This test was adapted from SafeFetchInErrorHandlingTest.java.
 public class BadNativeStackInErrorHandlingTest {
   public static void main(String[] args) throws Exception {
-    if (!Platform.isDebugBuild() || Platform.isZero()) {
-      return;
-    }
-
     ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
         "-XX:+UnlockDiagnosticVMOptions",
         "-Xmx100M",
@@ -57,7 +55,7 @@ public class BadNativeStackInErrorHandlingTest {
 
     // we should have crashed with a SIGSEGV
     output_detail.shouldMatch("# A fatal error has been detected by the Java Runtime Environment:.*");
-    output_detail.shouldMatch("# +(?:SIGSEGV|EXCEPTION_ACCESS_VIOLATION).*");
+    output_detail.shouldMatch("# +(?:SIGSEGV|SIGBUS|EXCEPTION_ACCESS_VIOLATION).*");
 
     // extract hs-err file
     String hs_err_file = output_detail.firstMatch("# *(\\S*hs_err_pid\\d+\\.log)", 1);

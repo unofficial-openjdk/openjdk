@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,14 +27,16 @@ package com.sun.security.sasl;
 
 import javax.security.sasl.*;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
-  * Implements the EXTERNAL SASL client mechanism.
-  * (<A HREF="http://www.ietf.org/rfc/rfc2222.txt">RFC 2222</A>).
-  * The EXTERNAL mechanism returns the optional authorization ID as
-  * the initial response. It processes no challenges.
-  *
-  * @author Rosanna Lee
-  */
+ * Implements the EXTERNAL SASL client mechanism.
+ * (<A HREF="http://www.ietf.org/rfc/rfc2222.txt">RFC 2222</A>).
+ * The EXTERNAL mechanism returns the optional authorization ID as
+ * the initial response. It processes no challenges.
+ *
+ * @author Rosanna Lee
+ */
 final class ExternalClient implements SaslClient {
     private byte[] username;
     private boolean completed = false;
@@ -43,17 +45,10 @@ final class ExternalClient implements SaslClient {
      * Constructs an External mechanism with optional authorization ID.
      *
      * @param authorizationID If non-null, used to specify authorization ID.
-     * @throws SaslException if cannot convert authorizationID into UTF-8
-     *     representation.
      */
-    ExternalClient(String authorizationID) throws SaslException {
+    ExternalClient(String authorizationID) {
         if (authorizationID != null) {
-            try {
-                username = authorizationID.getBytes("UTF8");
-            } catch (java.io.UnsupportedEncodingException e) {
-                throw new SaslException("Cannot convert " + authorizationID +
-                    " into UTF-8", e);
-            }
+            username = authorizationID.getBytes(UTF_8);
         } else {
             username = new byte[0];
         }
@@ -88,10 +83,9 @@ final class ExternalClient implements SaslClient {
      *
      * @param challengeData Ignored.
      * @return The possible empty initial response.
-     * @throws SaslException If authentication has already been called.
+     * @throws IllegalStateException If authentication has already been called.
      */
-    public byte[] evaluateChallenge(byte[] challengeData)
-        throws SaslException {
+    public byte[] evaluateChallenge(byte[] challengeData) {
         if (completed) {
             throw new IllegalStateException(
                 "EXTERNAL authentication already completed");
@@ -109,10 +103,10 @@ final class ExternalClient implements SaslClient {
     }
 
     /**
-      * Unwraps the incoming buffer.
-      *
-      * @throws SaslException Not applicable to this mechanism.
-      */
+     * Unwraps the incoming buffer.
+     *
+     * @throws SaslException Not applicable to this mechanism.
+     */
     public byte[] unwrap(byte[] incoming, int offset, int len)
         throws SaslException {
         if (completed) {
@@ -124,10 +118,10 @@ final class ExternalClient implements SaslClient {
     }
 
     /**
-      * Wraps the outgoing buffer.
-      *
-      * @throws SaslException Not applicable to this mechanism.
-      */
+     * Wraps the outgoing buffer.
+     *
+     * @throws SaslException Not applicable to this mechanism.
+     */
     public byte[] wrap(byte[] outgoing, int offset, int len)
         throws SaslException {
         if (completed) {

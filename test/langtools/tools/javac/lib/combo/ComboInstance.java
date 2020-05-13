@@ -26,6 +26,8 @@ package combo;
 import javax.tools.StandardJavaFileManager;
 import java.util.Optional;
 
+import com.sun.tools.javac.file.BaseFileManager;
+
 /**
  * This class is the common superclass of all combo test instances. It defines few helper methods
  * to build compilation tasks using the shared context object, as well as entry points for
@@ -57,6 +59,7 @@ public abstract class ComboInstance<X extends ComboInstance<X>> {
             env.info().lastError = Optional.of(ex);
         } finally {
             this.env = null;
+            ((BaseFileManager) env.fileManager()).clear();
         }
     }
 

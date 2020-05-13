@@ -154,14 +154,11 @@ define(`BFM_INSN',`
 instruct $4$1(iReg$1NoSp dst, iReg$1`'ORL2I($1) src, immI lshift_count, immI rshift_count)
 %{
   match(Set dst EXTEND($1, $3, src, lshift_count, rshift_count));
-  // Make sure we are not going to exceed what $4 can do.
-  predicate((unsigned int)n->in(2)->get_int() <= $2
-            && (unsigned int)n->in(1)->in(2)->get_int() <= $2);
-
   ins_cost(INSN_COST * 2);
   format %{ "$4  $dst, $src, $rshift_count - $lshift_count, #$2 - $lshift_count" %}
   ins_encode %{
-    int lshift = $lshift_count$$constant, rshift = $rshift_count$$constant;
+    int lshift = $lshift_count$$constant & $2;
+    int rshift = $rshift_count$$constant & $2;
     int s = $2 - lshift;
     int r = (rshift - lshift) & $2;
     __ $4(as_Register($dst$$reg),
@@ -181,31 +178,35 @@ define(`BFX_INSN',
 `instruct $3$1(iReg$1NoSp dst, iReg$1`'ORL2I($1) src, immI rshift, imm$1_bitmask mask)
 %{
   match(Set dst (And$1 ($2$1 src rshift) mask));
+  // Make sure we are not going to exceed what $3 can do.
+  predicate((exact_log2$6(n->in(2)->get_$5() + 1) + (n->in(1)->in(2)->get_int() & $4)) <= ($4 + 1));
 
   ins_cost(INSN_COST);
   format %{ "$3 $dst, $src, $rshift, $mask" %}
   ins_encode %{
-    int rshift = $rshift$$constant;
+    int rshift = $rshift$$constant & $4;
     long mask = $mask$$constant;
-    int width = exact_log2(mask+1);
+    int width = exact_log2$6(mask+1);
     __ $3(as_Register($dst$$reg),
             as_Register($src$$reg), rshift, width);
   %}
   ins_pipe(ialu_reg_shift);
 %}')
-BFX_INSN(I,URShift,ubfxw)
-BFX_INSN(L,URShift,ubfx)
+BFX_INSN(I, URShift, ubfxw, 31, int)
+BFX_INSN(L, URShift, ubfx,  63, long, _long)
 
 // We can use ubfx when extending an And with a mask when we know mask
 // is positive.  We know that because immI_bitmask guarantees it.
 instruct ubfxIConvI2L(iRegLNoSp dst, iRegIorL2I src, immI rshift, immI_bitmask mask)
 %{
   match(Set dst (ConvI2L (AndI (URShiftI src rshift) mask)));
+  // Make sure we are not going to exceed what ubfxw can do.
+  predicate((exact_log2(n->in(1)->in(2)->get_int() + 1) + (n->in(1)->in(1)->in(2)->get_int() & 31)) <= (31 + 1));
 
   ins_cost(INSN_COST * 2);
   format %{ "ubfx $dst, $src, $rshift, $mask" %}
   ins_encode %{
-    int rshift = $rshift$$constant;
+    int rshift = $rshift$$constant & 31;
     long mask = $mask$$constant;
     int width = exact_log2(mask+1);
     __ ubfx(as_Register($dst$$reg),
@@ -220,34 +221,32 @@ define(`UBFIZ_INSN',
 `instruct $2$1(iReg$1NoSp dst, iReg$1`'ORL2I($1) src, immI lshift, imm$1_bitmask mask)
 %{
   match(Set dst (LShift$1 (And$1 src mask) lshift));
-  predicate((unsigned int)n->in(2)->get_int() <= $3 &&
-    (exact_log2$5(n->in(1)->in(2)->get_$4()+1) + (unsigned int)n->in(2)->get_int()) <= ($3+1));
+  predicate((exact_log2$5(n->in(1)->in(2)->get_$4() + 1) + (n->in(2)->get_int() & $3)) <= ($3 + 1));
 
   ins_cost(INSN_COST);
   format %{ "$2 $dst, $src, $lshift, $mask" %}
   ins_encode %{
-    int lshift = $lshift$$constant;
+    int lshift = $lshift$$constant & $3;
     long mask = $mask$$constant;
-    int width = exact_log2(mask+1);
+    int width = exact_log2$5(mask+1);
     __ $2(as_Register($dst$$reg),
           as_Register($src$$reg), lshift, width);
   %}
   ins_pipe(ialu_reg_shift);
 %}')
 UBFIZ_INSN(I, ubfizw, 31, int)
-UBFIZ_INSN(L, ubfiz, 63, long, _long)
+UBFIZ_INSN(L, ubfiz,  63, long, _long)
 
 // If there is a convert I to L block between and AndI and a LShiftL, we can also match ubfiz
 instruct ubfizIConvI2L(iRegLNoSp dst, iRegIorL2I src, immI lshift, immI_bitmask mask)
 %{
-  match(Set dst (LShiftL (ConvI2L(AndI src mask)) lshift));
-  predicate((unsigned int)n->in(2)->get_int() <= 31 &&
-    (exact_log2((unsigned int)n->in(1)->in(1)->in(2)->get_int()+1) + (unsigned int)n->in(2)->get_int()) <= 32);
+  match(Set dst (LShiftL (ConvI2L (AndI src mask)) lshift));
+  predicate((exact_log2(n->in(1)->in(1)->in(2)->get_int() + 1) + (n->in(2)->get_int() & 63)) <= (63 + 1));
 
   ins_cost(INSN_COST);
   format %{ "ubfiz $dst, $src, $lshift, $mask" %}
   ins_encode %{
-    int lshift = $lshift$$constant;
+    int lshift = $lshift$$constant & 63;
     long mask = $mask$$constant;
     int width = exact_log2(mask+1);
     __ ubfiz(as_Register($dst$$reg),
@@ -262,7 +261,7 @@ define(`EXTRACT_INSN',
 `instruct extr$3$1(iReg$1NoSp dst, iReg$1`'ORL2I($1) src1, iReg$1`'ORL2I($1) src2, immI lshift, immI rshift, rFlagsReg cr)
 %{
   match(Set dst ($3$1 (LShift$1 src1 lshift) (URShift$1 src2 rshift)));
-  predicate(0 == ((n->in(1)->in(2)->get_int() + n->in(2)->in(2)->get_int()) & $2));
+  predicate(0 == (((n->in(1)->in(2)->get_int() & $2) + (n->in(2)->in(2)->get_int() & $2)) & $2));
 
   ins_cost(INSN_COST);
   format %{ "extr $dst, $src1, $src2, #$rshift" %}

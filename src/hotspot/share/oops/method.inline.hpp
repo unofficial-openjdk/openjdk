@@ -26,26 +26,59 @@
 #define SHARE_OOPS_METHOD_INLINE_HPP
 
 #include "oops/method.hpp"
-#include "runtime/orderAccess.hpp"
+#include "runtime/atomic.hpp"
 
 inline address Method::from_compiled_entry() const {
-  return OrderAccess::load_acquire(&_from_compiled_entry);
+  return Atomic::load_acquire(&_from_compiled_entry);
 }
 
 inline address Method::from_interpreted_entry() const {
-  return OrderAccess::load_acquire(&_from_interpreted_entry);
+  return Atomic::load_acquire(&_from_interpreted_entry);
 }
 
 inline void Method::set_method_data(MethodData* data) {
   // The store into method must be released. On platforms without
   // total store order (TSO) the reference may become visible before
   // the initialization of data otherwise.
-  OrderAccess::release_store(&_method_data, data);
+  Atomic::release_store(&_method_data, data);
 }
 
 inline CompiledMethod* volatile Method::code() const {
   assert( check_code(), "" );
-  return OrderAccess::load_acquire(&_code);
+  return Atomic::load_acquire(&_code);
+}
+
+// Write (bci, line number) pair to stream
+inline void CompressedLineNumberWriteStream::write_pair_regular(int bci_delta, int line_delta) {
+  // bci and line number does not compress into single byte.
+  // Write out escape character and use regular compression for bci and line number.
+  write_byte((jubyte)0xFF);
+  write_signed_int(bci_delta);
+  write_signed_int(line_delta);
+}
+
+inline void CompressedLineNumberWriteStream::write_pair_inline(int bci, int line) {
+  int bci_delta = bci - _bci;
+  int line_delta = line - _line;
+  _bci = bci;
+  _line = line;
+  // Skip (0,0) deltas - they do not add information and conflict with terminator.
+  if (bci_delta == 0 && line_delta == 0) return;
+  // Check if bci is 5-bit and line number 3-bit unsigned.
+  if (((bci_delta & ~0x1F) == 0) && ((line_delta & ~0x7) == 0)) {
+    // Compress into single byte.
+    jubyte value = ((jubyte) bci_delta << 3) | (jubyte) line_delta;
+    // Check that value doesn't match escape character.
+    if (value != 0xFF) {
+      write_byte(value);
+      return;
+    }
+  }
+  write_pair_regular(bci_delta, line_delta);
+}
+
+inline void CompressedLineNumberWriteStream::write_pair(int bci, int line) {
+  write_pair_inline(bci, line);
 }
 
 inline bool Method::has_compiled_code() const { return code() != NULL; }

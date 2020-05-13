@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -29,18 +29,12 @@
 JFR_TOOLS_SRCDIR := $(TOPDIR)/make/src/classes
 JFR_TOOLS_OUTPUTDIR := $(JVM_VARIANT_OUTPUTDIR)/buildtools/tools_classes
 
-$(eval $(call SetupJavaCompiler, GENERATE_JFRBYTECODE, \
-    JAVAC := $(JAVAC), \
-    FLAGS := $(DISABLE_WARNINGS), \
-    SERVER_DIR := $(SJAVAC_SERVER_DIR), \
-    SERVER_JVM := $(SJAVAC_SERVER_JAVA), \
-    DISABLE_SJAVAC := true, \
-))
-
 $(eval $(call SetupJavaCompilation, BUILD_JFR_TOOLS, \
-    SETUP := GENERATE_JFRBYTECODE, \
+    COMPILER := bootjdk, \
+    SMALL_JAVA := false, \
     SRC := $(JFR_TOOLS_SRCDIR), \
     BIN := $(JFR_TOOLS_OUTPUTDIR), \
+    DISABLED_WARNINGS := try, \
 ))
 
 TARGETS += $(BUILD_JFR_TOOLS)
@@ -57,11 +51,12 @@ JFR_SRCDIR := $(TOPDIR)/src/hotspot/share/jfr/metadata
 METADATA_XML := $(JFR_SRCDIR)/metadata.xml
 METADATA_XSD := $(JFR_SRCDIR)/metadata.xsd
 
-$(JFR_OUTPUTDIR)/jfrEventClasses.hpp: $(METADATA_XML) $(METADATA_XSD) \
-    $(BUILD_JFR_TOOLS)
-	$(call LogInfo, Generating $(@F))
-	$(call MakeDir, $(@D))
-	$(call ExecuteWithLog, $@, $(TOOL_JFR_GEN) $(METADATA_XML) $(METADATA_XSD) $(JFR_OUTPUTDIR))
-	test -f $@
+$(eval $(call SetupExecute, jfr_gen, \
+    INFO := Generating JFR header files, \
+    DEPS := $(METADATA_XML) $(METADATA_XSD) $(BUILD_JFR_TOOLS), \
+    OUTPUT_DIR := $(JFR_OUTPUTDIR), \
+    COMMAND := $(TOOL_JFR_GEN) $(METADATA_XML) $(METADATA_XSD) $(JFR_OUTPUTDIR), \
+))
 
-TARGETS += $(JFR_OUTPUTDIR)/jfrEventClasses.hpp
+JFR_FILES := $(jfr_gen_TARGET)
+TARGETS += $(JFR_FILES)

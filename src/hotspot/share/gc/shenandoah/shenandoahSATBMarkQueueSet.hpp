@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -30,25 +31,17 @@
 #include "runtime/thread.hpp"
 
 class ShenandoahSATBMarkQueue: public SATBMarkQueue {
+protected:
+  virtual void handle_completed_buffer();
 public:
-  ShenandoahSATBMarkQueue(SATBMarkQueueSet* qset) : SATBMarkQueue(qset, /* permanent = */ false) {}
-  virtual bool should_enqueue_buffer();
+  ShenandoahSATBMarkQueue(SATBMarkQueueSet* qset) : SATBMarkQueue(qset) {}
 };
 
 class ShenandoahSATBMarkQueueSet : public SATBMarkQueueSet {
-private:
-  ShenandoahHeap* _heap;
-  BufferNode::Allocator _satb_mark_queue_buffer_allocator;
 public:
-  ShenandoahSATBMarkQueueSet();
+  ShenandoahSATBMarkQueueSet(BufferNode::Allocator* allocator);
 
-  void initialize(ShenandoahHeap* const heap,
-                  Monitor* cbl_mon,
-                  int process_completed_threshold,
-                  uint buffer_enqueue_threshold_percentage,
-                  Mutex* lock);
-
-  virtual SATBMarkQueue& satb_queue_for_thread(JavaThread* const t) const;
+  virtual SATBMarkQueue& satb_queue_for_thread(Thread* const t) const;
   virtual void filter(SATBMarkQueue* queue);
 };
 

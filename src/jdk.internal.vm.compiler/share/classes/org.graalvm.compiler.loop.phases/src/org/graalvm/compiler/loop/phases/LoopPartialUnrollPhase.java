@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,9 +33,9 @@ import org.graalvm.compiler.loop.LoopsData;
 import org.graalvm.compiler.nodes.LoopBeginNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.extended.OpaqueNode;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.phases.common.CanonicalizerPhase;
 import org.graalvm.compiler.phases.common.util.EconomicSetNodeEventListener;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 
 public class LoopPartialUnrollPhase extends LoopPhase<LoopPolicies> {
 
@@ -48,7 +48,7 @@ public class LoopPartialUnrollPhase extends LoopPhase<LoopPolicies> {
 
     @Override
     @SuppressWarnings("try")
-    protected void run(StructuredGraph graph, PhaseContext context) {
+    protected void run(StructuredGraph graph, CoreProviders context) {
         if (graph.hasLoops()) {
             EconomicSetNodeEventListener listener = new EconomicSetNodeEventListener();
             boolean changed = true;

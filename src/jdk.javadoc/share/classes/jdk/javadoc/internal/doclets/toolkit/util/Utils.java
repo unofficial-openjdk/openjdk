@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,9 +32,28 @@ import java.text.CollationKey;
 import java.text.Collator;
 import java.text.ParseException;
 import java.text.RuleBasedCollator;
-import java.util.*;
-import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.lang.model.SourceVersion;
@@ -47,6 +66,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.ModuleElement.RequiresDirective;
 import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.RecordComponentElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
@@ -60,9 +80,9 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.ElementKindVisitor9;
+import javax.lang.model.util.ElementKindVisitor14;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.SimpleElementVisitor9;
+import javax.lang.model.util.SimpleElementVisitor14;
 import javax.lang.model.util.SimpleTypeVisitor9;
 import javax.lang.model.util.TypeKindVisitor9;
 import javax.lang.model.util.Types;
@@ -74,20 +94,24 @@ import javax.tools.StandardLocation;
 import com.sun.source.doctree.DocCommentTree;
 import com.sun.source.doctree.DocTree;
 import com.sun.source.doctree.DocTree.Kind;
+import com.sun.source.doctree.EndElementTree;
 import com.sun.source.doctree.ParamTree;
-import com.sun.source.doctree.SerialFieldTree;
+import com.sun.source.doctree.StartElementTree;
+import com.sun.source.doctree.TextTree;
+import com.sun.source.doctree.UnknownBlockTagTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.LineMap;
 import com.sun.source.util.DocSourcePositions;
 import com.sun.source.util.DocTrees;
 import com.sun.source.util.TreePath;
 import com.sun.tools.javac.model.JavacTypes;
-import jdk.javadoc.internal.doclets.formats.html.SearchIndexItem;
 import jdk.javadoc.internal.doclets.toolkit.BaseConfiguration;
+import jdk.javadoc.internal.doclets.toolkit.BaseOptions;
 import jdk.javadoc.internal.doclets.toolkit.CommentUtils.DocCommentDuo;
-import jdk.javadoc.internal.doclets.toolkit.Messages;
 import jdk.javadoc.internal.doclets.toolkit.Resources;
 import jdk.javadoc.internal.doclets.toolkit.WorkArounds;
+import jdk.javadoc.internal.doclets.toolkit.taglets.BaseTaglet;
+import jdk.javadoc.internal.doclets.toolkit.taglets.Taglet;
 import jdk.javadoc.internal.tool.DocEnvImpl;
 
 import static javax.lang.model.element.ElementKind.*;
@@ -104,27 +128,26 @@ import static jdk.javadoc.internal.doclets.toolkit.builders.ConstantsSummaryBuil
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Atul M Dambalkar
- * @author Jamie Ho
  */
 public class Utils {
     public final BaseConfiguration configuration;
-    public final Messages messages;
-    public final Resources resources;
+    private final BaseOptions options;
+    private final Resources resources;
     public final DocTrees docTrees;
     public final Elements elementUtils;
     public final Types typeUtils;
-    public final JavaScriptScanner javaScriptScanner;
+    public final Comparators comparators;
+    private final JavaScriptScanner javaScriptScanner;
 
     public Utils(BaseConfiguration c) {
         configuration = c;
-        messages = configuration.getMessages();
-        resources = configuration.getResources();
+        options = configuration.getOptions();
+        resources = configuration.getDocResources();
         elementUtils = c.docEnv.getElementUtils();
         typeUtils = c.docEnv.getTypeUtils();
         docTrees = c.docEnv.getDocTrees();
         javaScriptScanner = c.isAllowScriptInComments() ? null : new JavaScriptScanner();
+        comparators = new Comparators(this);
     }
 
     // our own little symbol table
@@ -190,11 +213,10 @@ public class Utils {
      *                    documentation is getting generated.
      */
     public List<Element> excludeDeprecatedMembers(List<? extends Element> members) {
-        List<Element> excludeList = members.stream()
-                .filter((member) -> (!isDeprecated(member)))
-                .sorted(makeGeneralPurposeComparator())
-                .collect(Collectors.<Element, List<Element>>toCollection(ArrayList::new));
-        return excludeList;
+        return members.stream()
+                      .filter(member -> !isDeprecated(member))
+                      .sorted(comparators.makeGeneralPurposeComparator())
+                      .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
@@ -206,8 +228,8 @@ public class Utils {
      */
     public ExecutableElement findMethod(TypeElement te, ExecutableElement method) {
         for (Element m : getMethods(te)) {
-            if (executableMembersEqual(method, (ExecutableElement)m)) {
-                return (ExecutableElement)m;
+            if (executableMembersEqual(method, (ExecutableElement) m)) {
+                return (ExecutableElement) m;
             }
         }
         return null;
@@ -221,15 +243,14 @@ public class Utils {
      * @return true if t1 is a superclass of t2.
      */
     public boolean isSubclassOf(TypeElement t1, TypeElement t2) {
-        return typeUtils.isSubtype(t1.asType(), t2.asType());
+        return typeUtils.isSubtype(typeUtils.erasure(t1.asType()), typeUtils.erasure(t2.asType()));
     }
 
     /**
      * @param e1 the first method to compare.
      * @param e2 the second method to compare.
-     * @return true if member1 overrides/hides or is overriden/hidden by member2.
+     * @return true if member1 overrides/hides or is overridden/hidden by member2.
      */
-
     public boolean executableMembersEqual(ExecutableElement e1, ExecutableElement e2) {
         // TODO: investigate if Elements.hides(..) will work here.
         if (isStatic(e1) && isStatic(e2)) {
@@ -249,7 +270,7 @@ public class Utils {
                     }
                 }
                 if (j == parameters1.size()) {
-                return true;
+                    return true;
                 }
             }
             return false;
@@ -301,8 +322,9 @@ public class Utils {
         return !e.getAnnotationMirrors().isEmpty();
     }
 
+    @SuppressWarnings("preview")
     public boolean isAnnotationType(Element e) {
-        return new SimpleElementVisitor9<Boolean, Void>() {
+        return new SimpleElementVisitor14<Boolean, Void>() {
             @Override
             public Boolean visitExecutable(ExecutableElement e, Void p) {
                 return visit(e.getEnclosingElement());
@@ -387,7 +409,7 @@ public class Utils {
     }
 
     public boolean isProperty(String name) {
-        return configuration.javafx && name.endsWith("Property");
+        return options.javafx() && name.endsWith("Property");
     }
 
     public String getPropertyName(String name) {
@@ -416,97 +438,133 @@ public class Utils {
         return typeUtils.isSubtype(e.asType(), getExternalizableType());
     }
 
+    @SuppressWarnings("preview")
+    public boolean isRecord(TypeElement e) {
+        return e.getKind() == ElementKind.RECORD;
+    }
+
+    @SuppressWarnings("preview")
+    public boolean isCanonicalRecordConstructor(ExecutableElement ee) {
+        TypeElement te = (TypeElement) ee.getEnclosingElement();
+        List<? extends RecordComponentElement> stateComps = te.getRecordComponents();
+        List<? extends VariableElement> params = ee.getParameters();
+        if (stateComps.size() != params.size()) {
+            return false;
+        }
+
+        Iterator<? extends RecordComponentElement> stateIter = stateComps.iterator();
+        Iterator<? extends VariableElement> paramIter = params.iterator();
+        while (paramIter.hasNext() && stateIter.hasNext()) {
+            VariableElement param = paramIter.next();
+            RecordComponentElement comp = stateIter.next();
+            if (!Objects.equals(param.getSimpleName(), comp.getSimpleName())
+                    || !typeUtils.isSameType(param.asType(), comp.asType())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public SortedSet<VariableElement> serializableFields(TypeElement aclass) {
-        return configuration.workArounds.getSerializableFields(this, aclass);
+        return configuration.workArounds.getSerializableFields(aclass);
     }
 
     public SortedSet<ExecutableElement> serializationMethods(TypeElement aclass) {
-        return configuration.workArounds.getSerializationMethods(this, aclass);
+        return configuration.workArounds.getSerializationMethods(aclass);
     }
 
     public boolean definesSerializableFields(TypeElement aclass) {
-        return configuration.workArounds.definesSerializableFields(this, aclass);
+        return configuration.workArounds.definesSerializableFields( aclass);
     }
 
+    @SuppressWarnings("preview")
     public String modifiersToString(Element e, boolean trailingSpace) {
-        SortedSet<Modifier> set = new TreeSet<>(e.getModifiers());
-        set.remove(Modifier.NATIVE);
-        set.remove(Modifier.STRICTFP);
-        set.remove(Modifier.SYNCHRONIZED);
+        SortedSet<Modifier> modifiers = new TreeSet<>(e.getModifiers());
+        modifiers.remove(NATIVE);
+        modifiers.remove(STRICTFP);
+        modifiers.remove(SYNCHRONIZED);
 
-        return new ElementKindVisitor9<String, SortedSet<Modifier>>() {
+        return new ElementKindVisitor14<String, SortedSet<Modifier>>() {
             final StringBuilder sb = new StringBuilder();
 
             void addVisibilityModifier(Set<Modifier> modifiers) {
                 if (modifiers.contains(PUBLIC)) {
-                    sb.append("public").append(" ");
+                    append("public");
                 } else if (modifiers.contains(PROTECTED)) {
-                    sb.append("protected").append(" ");
+                    append("protected");
                 } else if (modifiers.contains(PRIVATE)) {
-                    sb.append("private").append(" ");
+                    append("private");
                 }
             }
 
             void addStatic(Set<Modifier> modifiers) {
                 if (modifiers.contains(STATIC)) {
-                    sb.append("static").append(" ");
+                    append("static");
                 }
             }
 
-            void addModifers(Set<Modifier> modifiers) {
-                String s = set.stream().map(Modifier::toString).collect(Collectors.joining(" "));
-                sb.append(s);
-                if (!s.isEmpty())
+            void addModifiers(Set<Modifier> modifiers) {
+                modifiers.stream().map(Modifier::toString).forEachOrdered(this::append);
+            }
+
+            void append(String s) {
+                if (sb.length() > 0) {
                     sb.append(" ");
+                }
+                sb.append(s);
             }
 
             String finalString(String s) {
-                sb.append(s);
+                append(s);
                 if (trailingSpace) {
-                    if (sb.lastIndexOf(" ") == sb.length() - 1) {
-                        return sb.toString();
-                    } else {
-                        return sb.append(" ").toString();
-                    }
-                } else {
-                    return sb.toString().trim();
+                    sb.append(" ");
                 }
+                return sb.toString();
             }
 
             @Override
-            public String visitTypeAsInterface(TypeElement e, SortedSet<Modifier> p) {
-                addVisibilityModifier(p);
-                addStatic(p);
+            public String visitTypeAsInterface(TypeElement e, SortedSet<Modifier> mods) {
+                addVisibilityModifier(mods);
+                addStatic(mods);
                 return finalString("interface");
             }
 
             @Override
-            public String visitTypeAsEnum(TypeElement e, SortedSet<Modifier> p) {
-                addVisibilityModifier(p);
-                addStatic(p);
+            public String visitTypeAsEnum(TypeElement e, SortedSet<Modifier> mods) {
+                addVisibilityModifier(mods);
+                addStatic(mods);
                 return finalString("enum");
             }
 
             @Override
-            public String visitTypeAsAnnotationType(TypeElement e, SortedSet<Modifier> p) {
-                addVisibilityModifier(p);
-                addStatic(p);
+            public String visitTypeAsAnnotationType(TypeElement e, SortedSet<Modifier> mods) {
+                addVisibilityModifier(mods);
+                addStatic(mods);
                 return finalString("@interface");
             }
 
             @Override
-            public String visitTypeAsClass(TypeElement e, SortedSet<Modifier> p) {
-                addModifers(p);
-                return finalString("class");
+            public String visitTypeAsRecord(TypeElement e, SortedSet<Modifier> mods) {
+                mods.remove(FINAL); // suppress the implicit `final`
+                return visitTypeAsClass(e, mods);
             }
 
             @Override
-            protected String defaultAction(Element e, SortedSet<Modifier> p) {
-                addModifers(p);
+            @SuppressWarnings("preview")
+            public String visitTypeAsClass(TypeElement e, SortedSet<Modifier> mods) {
+                addModifiers(mods);
+                String keyword = e.getKind() == ElementKind.RECORD ? "record" : "class";
+                return finalString(keyword);
+            }
+
+            @Override
+            protected String defaultAction(Element e, SortedSet<Modifier> mods) {
+                addModifiers(mods);
                 return sb.toString().trim();
             }
 
-        }.visit(e, set);
+        }.visit(e, modifiers);
     }
 
     public boolean isFunctionalInterface(AnnotationMirror amirror) {
@@ -527,6 +585,11 @@ public class Utils {
             return false;
         }
         return true;
+    }
+
+    public boolean isUndocumentedEnclosure(TypeElement enclosingTypeElement) {
+        return (isPackagePrivate(enclosingTypeElement) || isPrivate(enclosingTypeElement))
+                && !isLinkable(enclosingTypeElement);
     }
 
     public boolean isError(TypeElement te) {
@@ -589,7 +652,7 @@ public class Utils {
 
     public boolean isTypeElement(Element e) {
         switch (e.getKind()) {
-            case CLASS: case ENUM: case INTERFACE: case ANNOTATION_TYPE:
+            case CLASS: case ENUM: case INTERFACE: case ANNOTATION_TYPE: case RECORD:
                 return true;
             default:
                 return false;
@@ -597,39 +660,44 @@ public class Utils {
     }
 
     /**
-     * Get the signature. It is the parameter list, type is qualified.
+     * Get the signature of an executable element with qualified parameter types
+     * in the context of type element {@code site}.
      * For instance, for a method {@code mymethod(String x, int y)},
-     * it will return {@code(java.lang.String,int)}.
+     * it will return {@code (java.lang.String,int)}.
      *
-     * @param e
-     * @return String
+     * @param e the executable element
+     * @param site the contextual site
+     * @return String signature with qualified parameter types
      */
-    public String signature(ExecutableElement e) {
-        return makeSignature(e, true);
+    public String signature(ExecutableElement e, TypeElement site) {
+        return makeSignature(e, site, true);
     }
 
     /**
-     * Get flat signature.  All types are not qualified.
-     * Return a String, which is the flat signature of this member.
-     * It is the parameter list, type is not qualified.
+     * Get the flat signature of an executable element with simple (unqualified)
+     * parameter types in the context of type element {@code site}.
      * For instance, for a method {@code mymethod(String x, int y)},
      * it will return {@code (String, int)}.
+     *
+     * @param e the executable element
+     * @param site the contextual site
+     * @return String signature with simple (unqualified) parameter types
      */
-    public String flatSignature(ExecutableElement e) {
-        return makeSignature(e, false);
+    public String flatSignature(ExecutableElement e, TypeElement site) {
+        return makeSignature(e, site, false);
     }
 
-    public String makeSignature(ExecutableElement e, boolean full) {
-        return makeSignature(e, full, false);
+    public String makeSignature(ExecutableElement e, TypeElement site, boolean full) {
+        return makeSignature(e, site, full, false);
     }
 
-    public String makeSignature(ExecutableElement e, boolean full, boolean ignoreTypeParameters) {
+    public String makeSignature(ExecutableElement e, TypeElement site, boolean full, boolean ignoreTypeParameters) {
         StringBuilder result = new StringBuilder();
         result.append("(");
-        Iterator<? extends VariableElement> iterator = e.getParameters().iterator();
+        ExecutableType executableType = asInstantiatedMethodType(site, e);
+        Iterator<? extends TypeMirror> iterator = executableType.getParameterTypes().iterator();
         while (iterator.hasNext()) {
-            VariableElement next = iterator.next();
-            TypeMirror type = next.asType();
+            TypeMirror type = iterator.next();
             result.append(getTypeSignature(type, full, ignoreTypeParameters));
             if (iterator.hasNext()) {
                 result.append(", ");
@@ -757,13 +825,51 @@ public class Utils {
     }
 
     /**
-     * Returns the TypeMirror of the ExecutableElement for all methods,
-     * a null if constructor.
+     * Returns the TypeMirror of the ExecutableElement if it is a method, or null
+     * if it is a constructor.
+     * @param site the contextual type
      * @param ee the ExecutableElement
-     * @return
+     * @return the return type
      */
-    public TypeMirror getReturnType(ExecutableElement ee) {
-        return ee.getKind() == CONSTRUCTOR ? null : ee.getReturnType();
+    public TypeMirror getReturnType(TypeElement site, ExecutableElement ee) {
+        return ee.getKind() == CONSTRUCTOR ? null : asInstantiatedMethodType(site, ee).getReturnType();
+    }
+
+    /**
+     * Returns the ExecutableType corresponding to the type of the method declaration seen as a
+     * member of a given declared type. This might cause type-variable substitution to kick in.
+     * @param site the contextual type.
+     * @param ee the method declaration.
+     * @return the instantiated method type.
+     */
+    public ExecutableType asInstantiatedMethodType(TypeElement site, ExecutableElement ee) {
+        return shouldInstantiate(site, ee) ?
+                (ExecutableType)typeUtils.asMemberOf((DeclaredType)site.asType(), ee) :
+                (ExecutableType)ee.asType();
+    }
+
+    /**
+     * Returns the TypeMirror corresponding to the type of the field declaration seen as a
+     * member of a given declared type. This might cause type-variable substitution to kick in.
+     * @param site the contextual type.
+     * @param ve the field declaration.
+     * @return the instantiated field type.
+     */
+    public TypeMirror asInstantiatedFieldType(TypeElement site, VariableElement ve) {
+        return shouldInstantiate(site, ve) ?
+                typeUtils.asMemberOf((DeclaredType)site.asType(), ve) :
+                ve.asType();
+    }
+
+    /*
+     * We should not instantiate if (i) there's no contextual type declaration, (ii) the declaration
+     * to which the member belongs to is the same as the one under consideration, (iii) if the
+     * delcaration to which the member belongs to is not generic.
+     */
+    private boolean shouldInstantiate(TypeElement site, Element e) {
+        return site != null &&
+                site != e.getEnclosingElement() &&
+               !((DeclaredType)e.getEnclosingElement().asType()).getTypeArguments().isEmpty();
     }
 
     /**
@@ -824,10 +930,8 @@ public class Utils {
     }
 
     public SortedSet<TypeElement> getTypeElementsAsSortedSet(Iterable<TypeElement> typeElements) {
-        SortedSet<TypeElement> set = new TreeSet<>(makeGeneralPurposeComparator());
-        for (TypeElement te : typeElements) {
-            set.add(te);
-        }
+        SortedSet<TypeElement> set = new TreeSet<>(comparators.makeGeneralPurposeComparator());
+        typeElements.forEach(set::add);
         return set;
     }
 
@@ -852,7 +956,7 @@ public class Utils {
      * @return
      */
     public TypeMirror getDeclaredType(Collection<TypeMirror> values,
-            TypeElement enclosing, TypeMirror target) {
+                                      TypeElement enclosing, TypeMirror target) {
         TypeElement targetElement = asTypeElement(target);
         List<? extends TypeParameterElement> targetTypeArgs = targetElement.getTypeParameters();
         if (targetTypeArgs.isEmpty()) {
@@ -1064,8 +1168,7 @@ public class Utils {
 
         // Allow for the behavior that members of undocumented supertypes
         // may be included in documented types
-        TypeElement enclElem = getEnclosingTypeElement(elem);
-        if (typeElem != enclElem && isSubclassOf(typeElem, enclElem)) {
+        if (isUndocumentedEnclosure(getEnclosingTypeElement(elem))) {
             return true;
         }
 
@@ -1101,7 +1204,7 @@ public class Utils {
 
             @Override
             public TypeElement visitTypeVariable(TypeVariable t, Void p) {
-               /* TODO, this may not be an optimimal fix.
+               /* TODO, this may not be an optimal fix.
                 * if we have an annotated type @DA T, then erasure returns a
                 * none, in this case we use asElement instead.
                 */
@@ -1144,7 +1247,7 @@ public class Utils {
      */
     public String getDimension(TypeMirror t) {
         return new SimpleTypeVisitor9<String, Void>() {
-            StringBuilder dimension = new StringBuilder("");
+            StringBuilder dimension = new StringBuilder();
             @Override
             public String visitArray(ArrayType t, Void p) {
                 dimension.append("[]");
@@ -1231,7 +1334,6 @@ public class Utils {
      *                      If false, the first letter of the name is capitalized.
      * @return
      */
-
     public String getTypeElementName(TypeElement te, boolean lowerCaseOnly) {
         String typeName = "";
         if (isInterface(te)) {
@@ -1306,8 +1408,8 @@ public class Utils {
         if (!text.contains("\t"))
             return text;
 
-        final int tabLength = configuration.sourcetab;
-        final String whitespace = configuration.tabSpaces;
+        final int tabLength = options.sourceTabSize();
+        final String whitespace = " ".repeat(tabLength);
         final int textLength = text.length();
         StringBuilder result = new StringBuilder(textLength);
         int pos = 0;
@@ -1357,37 +1459,6 @@ public class Utils {
         }
         sb.append(text, pos, textLength);
         return sb;
-    }
-
-    /**
-     * The documentation for values() and valueOf() in Enums are set by the
-     * doclet only iff the user or overridden methods are missing.
-     * @param elem
-     */
-    public void setEnumDocumentation(TypeElement elem) {
-        for (Element e : getMethods(elem)) {
-            ExecutableElement ee = (ExecutableElement)e;
-            if (!getFullBody(e).isEmpty()) // ignore if already set
-                continue;
-            if (ee.getSimpleName().contentEquals("values") && ee.getParameters().isEmpty()) {
-                removeCommentHelper(ee); // purge previous entry
-                configuration.cmtUtils.setEnumValuesTree(e);
-            }
-            if (ee.getSimpleName().contentEquals("valueOf") && ee.getParameters().size() == 1) {
-                removeCommentHelper(ee); // purge previous entry
-                configuration.cmtUtils.setEnumValueOfTree(e);
-            }
-        }
-    }
-
-    /**
-     * Returns a locale independent upper cased String. That is, it
-     * always uses US locale, this is a clone of the one in StringUtils.
-     * @param s to convert
-     * @return converted String
-     */
-    public static String toUpperCase(String s) {
-        return s.toUpperCase(Locale.US);
     }
 
     /**
@@ -1470,7 +1541,7 @@ public class Utils {
         if (!isIncluded(e)) {
             return false;
         }
-        if (configuration.javafx &&
+        if (options.javafx() &&
                 hasBlockTag(e, DocTree.Kind.UNKNOWN_BLOCK_TAG, "treatAsPrivate")) {
             return true;
         }
@@ -1483,8 +1554,7 @@ public class Utils {
      * @return true if there are no comments, false otherwise
      */
     public boolean isSimpleOverride(ExecutableElement m) {
-        if (!configuration.summarizeOverriddenMethods ||
-                !isIncluded(m)) {
+        if (!options.summarizeOverriddenMethods() || !isIncluded(m)) {
             return false;
         }
 
@@ -1508,7 +1578,7 @@ public class Utils {
     public SortedSet<TypeElement> filterOutPrivateClasses(Iterable<TypeElement> classlist,
             boolean javafx) {
         SortedSet<TypeElement> filteredOutClasses =
-                new TreeSet<>(makeGeneralPurposeComparator());
+                new TreeSet<>(comparators.makeGeneralPurposeComparator());
         if (!javafx) {
             for (Element te : classlist) {
                 if (!hasHiddenTag(te)) {
@@ -1575,7 +1645,7 @@ public class Utils {
     private DocCollator tertiaryCollator = null;
     private DocCollator secondaryCollator = null;
 
-    private int compareStrings(boolean caseSensitive, String s1, String s2) {
+    int compareStrings(boolean caseSensitive, String s1, String s2) {
         if (caseSensitive) {
             if (tertiaryCollator == null) {
                 tertiaryCollator = new DocCollator(configuration.locale, Collator.TERTIARY);
@@ -1586,6 +1656,40 @@ public class Utils {
             secondaryCollator = new DocCollator(configuration.locale, Collator.SECONDARY);
         }
         return secondaryCollator.compare(s1, s2);
+    }
+
+    public String getHTMLTitle(Element element) {
+        List<? extends DocTree> preamble = getPreamble(element);
+        StringBuilder sb = new StringBuilder();
+        boolean titleFound = false;
+        loop:
+        for (DocTree dt : preamble) {
+            switch (dt.getKind()) {
+                case START_ELEMENT:
+                    StartElementTree nodeStart = (StartElementTree)dt;
+                    if (Utils.toLowerCase(nodeStart.getName().toString()).equals("title")) {
+                        titleFound = true;
+                    }
+                    break;
+
+                case END_ELEMENT:
+                    EndElementTree nodeEnd = (EndElementTree)dt;
+                    if (Utils.toLowerCase(nodeEnd.getName().toString()).equals("title")) {
+                        break loop;
+                    }
+                    break;
+
+                case TEXT:
+                    TextTree nodeText = (TextTree)dt;
+                    if (titleFound)
+                        sb.append(nodeText.getBody());
+                    break;
+
+                default:
+                    // do nothing
+            }
+        }
+        return sb.toString().trim();
     }
 
     private static class DocCollator {
@@ -1629,246 +1733,8 @@ public class Utils {
         }
     }
 
-    private Comparator<Element> moduleComparator = null;
     /**
-     * Comparator for ModuleElements, simply compares the fully qualified names
-     * @return a Comparator
-     */
-    public Comparator<Element> makeModuleComparator() {
-        if (moduleComparator == null) {
-            moduleComparator = new Utils.ElementComparator() {
-                @Override
-                public int compare(Element mod1, Element mod2) {
-                    return compareFullyQualifiedNames(mod1, mod2);
-                }
-            };
-        }
-        return moduleComparator;
-    }
-
-    private Comparator<Element> allClassesComparator = null;
-    /**
-     * Returns a Comparator for all classes, compares the simple names of
-     * TypeElement, if equal then the fully qualified names.
-     *
-     * @return Comparator
-     */
-    public Comparator<Element> makeAllClassesComparator() {
-        if (allClassesComparator == null) {
-            allClassesComparator = new Utils.ElementComparator() {
-                @Override
-                public int compare(Element e1, Element e2) {
-                    int result = compareNames(e1, e2);
-                    if (result == 0)
-                        result = compareFullyQualifiedNames(e1, e2);
-
-                    return result;
-                }
-            };
-        }
-        return allClassesComparator;
-    }
-
-    private Comparator<Element> packageComparator = null;
-    /**
-     * Returns a Comparator for packages, by comparing the fully qualified names.
-     *
-     * @return a Comparator
-     */
-    public Comparator<Element> makePackageComparator() {
-        if (packageComparator == null) {
-            packageComparator = new Utils.ElementComparator() {
-                @Override
-                public int compare(Element pkg1, Element pkg2) {
-                    return compareFullyQualifiedNames(pkg1, pkg2);
-                }
-            };
-        }
-        return packageComparator;
-    }
-
-    private Comparator<Element> deprecatedComparator = null;
-    /**
-     * Returns a Comparator for deprecated items listed on deprecated list page, by comparing the
-     * fully qualified names.
-     *
-     * @return a Comparator
-     */
-    public Comparator<Element> makeDeprecatedComparator() {
-        if (deprecatedComparator == null) {
-            deprecatedComparator = new Utils.ElementComparator() {
-                @Override
-                public int compare(Element e1, Element e2) {
-                    return compareFullyQualifiedNames(e1, e2);
-                }
-            };
-        }
-        return deprecatedComparator;
-    }
-
-    private Comparator<SerialFieldTree> serialFieldTreeComparator = null;
-    /**
-     * Returns a Comparator for SerialFieldTree.
-     * @return a Comparator
-     */
-    public Comparator<SerialFieldTree> makeSerialFieldTreeComparator() {
-        if (serialFieldTreeComparator == null) {
-            serialFieldTreeComparator = (SerialFieldTree o1, SerialFieldTree o2) -> {
-                String s1 = o1.getName().toString();
-                String s2 = o2.getName().toString();
-                return s1.compareTo(s2);
-            };
-        }
-        return serialFieldTreeComparator;
-    }
-
-    /**
-     * Returns a general purpose comparator.
-     * @return a Comparator
-     */
-    public Comparator<Element> makeGeneralPurposeComparator() {
-        return makeClassUseComparator();
-    }
-
-    private Comparator<Element> overrideUseComparator = null;
-    /**
-     * Returns a Comparator for overrides and implements,
-     * used primarily on methods, compares the name first,
-     * then compares the simple names of the enclosing
-     * TypeElement and the fully qualified name of the enclosing TypeElement.
-     * @return a Comparator
-     */
-    public Comparator<Element> makeOverrideUseComparator() {
-        if (overrideUseComparator == null) {
-            overrideUseComparator = new Utils.ElementComparator() {
-                @Override
-                public int compare(Element o1, Element o2) {
-                    int result = compareStrings(getSimpleName(o1), getSimpleName(o2));
-                    if (result != 0) {
-                        return result;
-                    }
-                    if (!isTypeElement(o1) && !isTypeElement(o2) && !isPackage(o1) && !isPackage(o2)) {
-                        TypeElement t1 = getEnclosingTypeElement(o1);
-                        TypeElement t2 = getEnclosingTypeElement(o2);
-                        result = compareStrings(getSimpleName(t1), getSimpleName(t2));
-                        if (result != 0)
-                            return result;
-                    }
-                    result = compareStrings(getFullyQualifiedName(o1), getFullyQualifiedName(o2));
-                    if (result != 0)
-                        return result;
-                    return compareElementTypeKinds(o1, o2);
-                }
-            };
-        }
-        return overrideUseComparator;
-    }
-
-    private Comparator<Element> indexUseComparator = null;
-    /**
-     *  Returns a Comparator for index file presentations, and are sorted as follows.
-     *  If comparing modules and/or packages then simply compare the qualified names,
-     *  if comparing a module or a package with a type/member then compare the
-     *  FullyQualifiedName of the module or a package with the SimpleName of the entity,
-     *  otherwise:
-     *  1. compare the ElementKind ex: Module, Package, Interface etc.
-     *  2a. if equal and if the type is of ExecutableElement(Constructor, Methods),
-     *      a case insensitive comparison of parameter the type signatures
-     *  2b. if equal, case sensitive comparison of the type signatures
-     *  3. finally, if equal, compare the FQNs of the entities
-     * @return a comparator for index file use
-     */
-    public Comparator<Element> makeIndexUseComparator() {
-        if (indexUseComparator == null) {
-            indexUseComparator = new Utils.ElementComparator() {
-                /**
-                 * Compares two elements.
-                 *
-                 * @param e1 - an element.
-                 * @param e2 - an element.
-                 * @return a negative integer, zero, or a positive integer as the first
-                 * argument is less than, equal to, or greater than the second.
-                 */
-                @Override
-                public int compare(Element e1, Element e2) {
-                    int result;
-                    // first, compare names as appropriate
-                    if ((isModule(e1) || isPackage(e1)) && (isModule(e2) || isPackage(e2))) {
-                        result = compareFullyQualifiedNames(e1, e2);
-                    } else if (isModule(e1) || isPackage(e1)) {
-                        result = compareStrings(getFullyQualifiedName(e1), getSimpleName(e2));
-                    } else if (isModule(e2) || isPackage(e2)) {
-                        result = compareStrings(getSimpleName(e1), getFullyQualifiedName(e2));
-                    } else {
-                        result = compareNames(e1, e2);
-                    }
-                    if (result != 0) {
-                        return result;
-                    }
-                    // if names are the same, compare element kinds
-                    result = compareElementTypeKinds(e1, e2);
-                    if (result != 0) {
-                        return result;
-                    }
-                    // if element kinds are the same, and are methods,
-                    // compare the method parameters
-                    if (hasParameters(e1)) {
-                        List<? extends VariableElement> parameters1 = ((ExecutableElement)e1).getParameters();
-                        List<? extends VariableElement> parameters2 = ((ExecutableElement)e2).getParameters();
-                        result = compareParameters(false, parameters1, parameters2);
-                        if (result != 0) {
-                            return result;
-                        }
-                        result = compareParameters(true, parameters1, parameters2);
-                        if (result != 0) {
-                            return result;
-                        }
-                    }
-                    // else fall back on fully qualified names
-                    return compareFullyQualifiedNames(e1, e2);
-                }
-            };
-        }
-        return indexUseComparator;
-    }
-
-    private Comparator<TypeMirror> typeMirrorClassUseComparator = null;
-    /**
-     * Compares the FullyQualifiedNames of two TypeMirrors
-     * @return
-     */
-    public Comparator<TypeMirror> makeTypeMirrorClassUseComparator() {
-        if (typeMirrorClassUseComparator == null) {
-            typeMirrorClassUseComparator = (TypeMirror type1, TypeMirror type2) -> {
-                String s1 = getQualifiedTypeName(type1);
-                String s2 = getQualifiedTypeName(type2);
-                return compareStrings(s1, s2);
-            };
-        }
-        return typeMirrorClassUseComparator;
-    }
-
-    private Comparator<TypeMirror> typeMirrorIndexUseComparator = null;
-    /**
-     * Compares the SimpleNames of TypeMirrors if equal then the
-     * FullyQualifiedNames of TypeMirrors.
-     *
-     * @return
-     */
-    public Comparator<TypeMirror> makeTypeMirrorIndexUseComparator() {
-        if (typeMirrorIndexUseComparator == null) {
-            typeMirrorIndexUseComparator = (TypeMirror t1, TypeMirror t2) -> {
-                int result = compareStrings(getTypeName(t1, false), getTypeName(t2, false));
-                if (result != 0)
-                    return result;
-                return compareStrings(getQualifiedTypeName(t1), getQualifiedTypeName(t2));
-            };
-        }
-        return typeMirrorIndexUseComparator;
-    }
-
-    /**
-     * Get the qualified type name of a TypeMiror compatible with the Element's
+     * Get the qualified type name of a TypeMirror compatible with the Element's
      * getQualified name, returns  the qualified name of the Reference type
      * otherwise the primitive name.
      * @param t the type whose name is to be obtained.
@@ -1914,8 +1780,9 @@ public class Utils {
         return getFullyQualifiedName(e, true);
     }
 
+    @SuppressWarnings("preview")
     public String getFullyQualifiedName(Element e, final boolean outer) {
-        return new SimpleElementVisitor9<String, Void>() {
+        return new SimpleElementVisitor14<String, Void>() {
             @Override
             public String visitModule(ModuleElement e, Void p) {
                 return e.getQualifiedName().toString();
@@ -1938,252 +1805,13 @@ public class Utils {
         }.visit(e);
     }
 
-    private Comparator<Element> classUseComparator = null;
-    /**
-     * Comparator for ClassUse presentations, and sorts as follows:
-     * 1. member names
-     * 2. then fully qualified member names
-     * 3. then parameter types if applicable
-     * 4. finally the element kinds ie. package, class, interface etc.
-     * @return a comparator to sort classes and members for class use
-     */
-    public Comparator<Element> makeClassUseComparator() {
-        if (classUseComparator == null) {
-            classUseComparator = new Utils.ElementComparator() {
-                /**
-                 * Compares two Elements.
-                 *
-                 * @param e1 - an element.
-                 * @param e2 - an element.
-                 * @return a negative integer, zero, or a positive integer as the first
-                 * argument is less than, equal to, or greater than the second.
-                 */
-                @Override
-                public int compare(Element e1, Element e2) {
-                    int result = compareNames(e1, e2);
-                    if (result != 0) {
-                        return result;
-                    }
-                    result = compareFullyQualifiedNames(e1, e2);
-                    if (result != 0) {
-                        return result;
-                    }
-                    if (hasParameters(e1) && hasParameters(e2)) {
-                        @SuppressWarnings("unchecked")
-                        List<VariableElement> parameters1 = (List<VariableElement>)((ExecutableElement)e1).getParameters();
-                        @SuppressWarnings("unchecked")
-                        List<VariableElement> parameters2 = (List<VariableElement>)((ExecutableElement)e2).getParameters();
-                        result = compareParameters(false, parameters1, parameters2);
-                        if (result != 0) {
-                            return result;
-                        }
-                        result = compareParameters(true, parameters1, parameters2);
-                    }
-                    if (result != 0) {
-                        return result;
-                    }
-                    return compareElementTypeKinds(e1, e2);
-                }
-            };
-        }
-        return classUseComparator;
-    }
-
-    /**
-     * A general purpose comparator to sort Element entities, basically provides the building blocks
-     * for creating specific comparators for an use-case.
-     */
-    private abstract class ElementComparator implements Comparator<Element> {
-        /**
-         * compares two parameter arrays by first comparing the length of the arrays, and
-         * then each Type of the parameter in the array.
-         * @param params1 the first parameter array.
-         * @param params2 the first parameter array.
-         * @return a negative integer, zero, or a positive integer as the first
-         *         argument is less than, equal to, or greater than the second.
-         */
-        final EnumMap<ElementKind, Integer> elementKindOrder;
-        public ElementComparator() {
-            elementKindOrder = new EnumMap<>(ElementKind.class);
-            elementKindOrder.put(ElementKind.MODULE, 0);
-            elementKindOrder.put(ElementKind.PACKAGE, 1);
-            elementKindOrder.put(ElementKind.CLASS, 2);
-            elementKindOrder.put(ElementKind.ENUM, 3);
-            elementKindOrder.put(ElementKind.ENUM_CONSTANT, 4);
-            elementKindOrder.put(ElementKind.INTERFACE, 5);
-            elementKindOrder.put(ElementKind.ANNOTATION_TYPE, 6);
-            elementKindOrder.put(ElementKind.FIELD, 7);
-            elementKindOrder.put(ElementKind.CONSTRUCTOR, 8);
-            elementKindOrder.put(ElementKind.METHOD, 9);
-        }
-
-        protected int compareParameters(boolean caseSensitive, List<? extends VariableElement> params1,
-                                                               List<? extends VariableElement> params2) {
-
-            return compareStrings(caseSensitive, getParametersAsString(params1),
-                                                 getParametersAsString(params2));
-        }
-
-        String getParametersAsString(List<? extends VariableElement> params) {
-            StringBuilder sb = new StringBuilder();
-            for (VariableElement param : params) {
-                TypeMirror t = param.asType();
-                // prefix P for primitive and R for reference types, thus items will
-                // be ordered lexically and correctly.
-                sb.append(getTypeCode(t)).append("-").append(t).append("-");
-            }
-            return sb.toString();
-        }
-
-        private String getTypeCode(TypeMirror t) {
-            return new SimpleTypeVisitor9<String, Void>() {
-
-                @Override
-                public String visitPrimitive(PrimitiveType t, Void p) {
-                    return "P";
-                }
-                @Override
-                public String visitArray(ArrayType t, Void p) {
-                    return visit(t.getComponentType());
-                }
-                @Override
-                protected String defaultAction(TypeMirror e, Void p) {
-                    return "R";
-                }
-
-            }.visit(t);
-        }
-
-        /**
-         * Compares two Elements, typically the name of a method,
-         * field or constructor.
-         * @param e1 the first Element.
-         * @param e2 the second Element.
-         * @return a negative integer, zero, or a positive integer as the first
-         *         argument is less than, equal to, or greater than the second.
-         */
-        protected int compareNames(Element e1, Element e2) {
-            return compareStrings(getSimpleName(e1), getSimpleName(e2));
-        }
-
-        /**
-         * Compares the fully qualified names of the entities
-         * @param e1 the first Element.
-         * @param e2 the first Element.
-         * @return a negative integer, zero, or a positive integer as the first
-         *         argument is less than, equal to, or greater than the second.
-         */
-        protected int compareFullyQualifiedNames(Element e1, Element e2) {
-            // add simplename to be compatible
-            String thisElement = getFullyQualifiedName(e1);
-            String thatElement = getFullyQualifiedName(e2);
-            return compareStrings(thisElement, thatElement);
-        }
-        protected int compareElementTypeKinds(Element e1, Element e2) {
-            return Integer.compare(elementKindOrder.get(e1.getKind()),
-                                   elementKindOrder.get(e2.getKind()));
-        }
-        boolean hasParameters(Element e) {
-            return new SimpleElementVisitor9<Boolean, Void>() {
-                @Override
-                public Boolean visitExecutable(ExecutableElement e, Void p) {
-                    return true;
-                }
-
-                @Override
-                protected Boolean defaultAction(Element e, Void p) {
-                    return false;
-                }
-
-            }.visit(e);
-        }
-
-        /**
-         * The fully qualified names of the entities, used solely by the comparator.
-         *
-         * @return a negative integer, zero, or a positive integer as the first argument is less
-         * than, equal to, or greater than the second.
-         */
-        private String getFullyQualifiedName(Element e) {
-            return new SimpleElementVisitor9<String, Void>() {
-                @Override
-                public String visitModule(ModuleElement e, Void p) {
-                    return e.getQualifiedName().toString();
-                }
-
-                @Override
-                public String visitPackage(PackageElement e, Void p) {
-                    return e.getQualifiedName().toString();
-                }
-
-                @Override
-                public String visitExecutable(ExecutableElement e, Void p) {
-                    // For backward compatibility
-                    return getFullyQualifiedName(e.getEnclosingElement())
-                            + "." + e.getSimpleName().toString();
-                }
-
-                @Override
-                public String visitType(TypeElement e, Void p) {
-                    return e.getQualifiedName().toString();
-                }
-
-                @Override
-                protected String defaultAction(Element e, Void p) {
-                    return getEnclosingTypeElement(e).getQualifiedName().toString()
-                            + "." + e.getSimpleName().toString();
-                }
-            }.visit(e);
-        }
-    }
-
-    /**
-     * Returns a Comparator for SearchIndexItems representing types. Items are
-     * compared by short name, or full string representation if names are equal.
-     *
-     * @return a Comparator
-     */
-    public Comparator<SearchIndexItem> makeTypeSearchIndexComparator() {
-        return (SearchIndexItem sii1, SearchIndexItem sii2) -> {
-            int result = compareStrings(sii1.getSimpleName(), sii2.getSimpleName());
-            if (result == 0) {
-                // TreeSet needs this to be consistent with equal so we do
-                // a plain comparison of string representations as fallback.
-                result = sii1.toString().compareTo(sii2.toString());
-            }
-            return result;
-        };
-    }
-
-    private Comparator<SearchIndexItem> genericSearchIndexComparator = null;
-    /**
-     * Returns a Comparator for SearchIndexItems representing modules, packages, or members.
-     * Items are compared by label (member name plus signature for members, package name for
-     * packages, and module name for modules). If labels are equal then full string
-     * representation is compared.
-     *
-     * @return a Comparator
-     */
-    public Comparator<SearchIndexItem> makeGenericSearchIndexComparator() {
-        if (genericSearchIndexComparator == null) {
-            genericSearchIndexComparator = (SearchIndexItem sii1, SearchIndexItem sii2) -> {
-                int result = compareStrings(sii1.getLabel(), sii2.getLabel());
-                if (result == 0) {
-                    // TreeSet needs this to be consistent with equal so we do
-                    // a plain comparison of string representations as fallback.
-                    result = sii1.toString().compareTo(sii2.toString());
-                }
-                return result;
-            };
-        }
-        return genericSearchIndexComparator;
-    }
 
     public Iterable<TypeElement> getEnclosedTypeElements(PackageElement pkg) {
         List<TypeElement> out = getInterfaces(pkg);
         out.addAll(getClasses(pkg));
         out.addAll(getEnums(pkg));
         out.addAll(getAnnotationTypes(pkg));
+        out.addAll(getRecords(pkg));
         return out;
     }
 
@@ -2212,6 +1840,16 @@ public class Utils {
 
     public List<TypeElement> getAnnotationTypesUnfiltered(Element e) {
         return convertToTypeElement(getItems(e, false, ANNOTATION_TYPE));
+    }
+
+    @SuppressWarnings("preview")
+    public List<TypeElement> getRecords(Element e) {
+        return convertToTypeElement(getItems(e, true, RECORD));
+    }
+
+    @SuppressWarnings("preview")
+    public List<TypeElement> getRecordsUnfiltered(Element e) {
+        return convertToTypeElement(getItems(e, false, RECORD));
     }
 
     public List<VariableElement> getFields(Element e) {
@@ -2254,7 +1892,7 @@ public class Utils {
         if (modulePackageMap == null) {
             modulePackageMap = new HashMap<>();
             Set<PackageElement> pkgs = configuration.getIncludedPackageElements();
-            pkgs.forEach((pkg) -> {
+            pkgs.forEach(pkg -> {
                 ModuleElement mod = elementUtils.getModuleOf(pkg);
                 modulePackageMap.computeIfAbsent(mod, m -> new HashSet<>()).add(pkg);
             });
@@ -2263,7 +1901,7 @@ public class Utils {
     }
 
     public Map<ModuleElement, String> getDependentModules(ModuleElement mdle) {
-        Map<ModuleElement, String> result = new TreeMap<>(makeModuleComparator());
+        Map<ModuleElement, String> result = new TreeMap<>(comparators.makeModuleComparator());
         Deque<ModuleElement> queue = new ArrayDeque<>();
         // get all the requires for the element in question
         for (RequiresDirective rd : ElementFilter.requiresIn(mdle.getDirectives())) {
@@ -2295,7 +1933,7 @@ public class Utils {
 
     public String getModifiers(RequiresDirective rd) {
         StringBuilder modifiers = new StringBuilder();
-        String sep="";
+        String sep = "";
         if (rd.isTransitive()) {
             modifiers.append("transitive");
             sep = " ";
@@ -2368,7 +2006,8 @@ public class Utils {
         List<TypeElement> clist = getClassesUnfiltered(e);
         clist.addAll(getInterfacesUnfiltered(e));
         clist.addAll(getAnnotationTypesUnfiltered(e));
-        SortedSet<TypeElement> oset = new TreeSet<>(makeGeneralPurposeComparator());
+        clist.addAll(getRecordsUnfiltered(e));
+        SortedSet<TypeElement> oset = new TreeSet<>(comparators.makeGeneralPurposeComparator());
         oset.addAll(clist);
         return oset;
     }
@@ -2388,7 +2027,8 @@ public class Utils {
         clist.addAll(getInterfaces(e));
         clist.addAll(getAnnotationTypes(e));
         clist.addAll(getEnums(e));
-        oset = new TreeSet<>(makeGeneralPurposeComparator());
+        clist.addAll(getRecords(e));
+        oset = new TreeSet<>(comparators.makeGeneralPurposeComparator());
         oset.addAll(clist);
         cachedClasses.put(e, oset);
         return oset;
@@ -2456,9 +2096,10 @@ public class Utils {
                 .collect(Collectors.toList());
     }
 
+    @SuppressWarnings("preview")
     List<Element> getItems(Element e, boolean filter, ElementKind select) {
         List<Element> elements = new ArrayList<>();
-        return new SimpleElementVisitor9<List<Element>, Void>() {
+        return new SimpleElementVisitor14<List<Element>, Void>() {
 
             @Override
             public List<Element> visitPackage(PackageElement e, Void p) {
@@ -2474,7 +2115,7 @@ public class Utils {
         }.visit(e);
     }
 
-    EnumSet<ElementKind> nestedKinds = EnumSet.of(ANNOTATION_TYPE, CLASS, ENUM, INTERFACE);
+    Set<ElementKind> nestedKinds = EnumSet.of(ANNOTATION_TYPE, CLASS, ENUM, INTERFACE);
     void recursiveGetItems(Collection<Element> list, Element e, boolean filter, ElementKind... select) {
         list.addAll(getItems0(e, filter, select));
         List<Element> classes = getItems0(e, filter, nestedKinds);
@@ -2487,7 +2128,7 @@ public class Utils {
     }
 
     private List<Element> getItems0(Element te, boolean filter, ElementKind... select) {
-        EnumSet<ElementKind> kinds = EnumSet.copyOf(Arrays.asList(select));
+        Set<ElementKind> kinds = EnumSet.copyOf(Arrays.asList(select));
         return getItems0(te, filter, kinds);
     }
 
@@ -2503,11 +2144,13 @@ public class Utils {
         return elements;
     }
 
-    private SimpleElementVisitor9<Boolean, Void> shouldDocumentVisitor = null;
+    @SuppressWarnings("preview")
+    private SimpleElementVisitor14<Boolean, Void> shouldDocumentVisitor = null;
 
-    protected boolean shouldDocument(Element e) {
+    @SuppressWarnings("preview")
+    public boolean shouldDocument(Element e) {
         if (shouldDocumentVisitor == null) {
-            shouldDocumentVisitor = new SimpleElementVisitor9<Boolean, Void>() {
+            shouldDocumentVisitor = new SimpleElementVisitor14<Boolean, Void>() {
                 private boolean hasSource(TypeElement e) {
                     return configuration.docEnv.getFileKind(e) ==
                             javax.tools.JavaFileObject.Kind.SOURCE;
@@ -2531,7 +2174,7 @@ public class Utils {
 
                 @Override
                 public Boolean visitUnknown(Element e, Void p) {
-                    throw new AssertionError("unkown element: " + p);
+                    throw new AssertionError("unknown element: " + e);
                 }
             };
         }
@@ -2557,11 +2200,13 @@ public class Utils {
         return nameCache.computeIfAbsent(e, this::getSimpleName0);
     }
 
-    private SimpleElementVisitor9<String, Void> snvisitor = null;
+    @SuppressWarnings("preview")
+    private SimpleElementVisitor14<String, Void> snvisitor = null;
 
+    @SuppressWarnings("preview")
     private String getSimpleName0(Element e) {
         if (snvisitor == null) {
-            snvisitor = new SimpleElementVisitor9<String, Void>() {
+            snvisitor = new SimpleElementVisitor14<String, Void>() {
                 @Override
                 public String visitModule(ModuleElement e, Void p) {
                     return e.getQualifiedName().toString();  // temp fix for 8182736
@@ -2742,10 +2387,12 @@ public class Utils {
         return configuration.docEnv.isIncluded(e);
     }
 
-    private SimpleElementVisitor9<Boolean, Void> specifiedVisitor = null;
+    @SuppressWarnings("preview")
+    private SimpleElementVisitor14<Boolean, Void> specifiedVisitor = null;
+    @SuppressWarnings("preview")
     public boolean isSpecified(Element e) {
         if (specifiedVisitor == null) {
-            specifiedVisitor = new SimpleElementVisitor9<Boolean, Void>() {
+            specifiedVisitor = new SimpleElementVisitor14<Boolean, Void>() {
                 @Override
                 public Boolean visitModule(ModuleElement e, Void p) {
                     return configuration.getSpecifiedModuleElements().contains(e);
@@ -2924,84 +2571,46 @@ public class Utils {
         return  doctree.getKind() == match;
     }
 
-    private final WeakSoftHashMap wksMap = new WeakSoftHashMap(this);
+    private final CommentHelperCache commentHelperCache = new CommentHelperCache(this);
 
     public CommentHelper getCommentHelper(Element element) {
-        return wksMap.computeIfAbsent(element);
+        return commentHelperCache.computeIfAbsent(element);
     }
 
     public void removeCommentHelper(Element element) {
-        wksMap.remove(element);
-    }
-
-    public List<? extends DocTree> filteredList(List<? extends DocTree> dlist, DocTree.Kind... select) {
-        List<DocTree> list = new ArrayList<>(dlist.size());
-        if (select == null)
-            return dlist;
-        for (DocTree dt : dlist) {
-            if (dt.getKind() != ERRONEOUS) {
-                for (DocTree.Kind kind : select) {
-                    if (dt.getKind() == kind) {
-                        list.add(dt);
-                    }
-                }
-            }
-        }
-        return list;
-    }
-
-    private List<? extends DocTree> getBlockTags0(Element element, DocTree.Kind... kinds) {
-        DocCommentTree dcTree = getDocCommentTree(element);
-        if (dcTree == null)
-            return Collections.emptyList();
-
-        return filteredList(dcTree.getBlockTags(), kinds);
+        commentHelperCache.remove(element);
     }
 
     public List<? extends DocTree> getBlockTags(Element element) {
-        return getBlockTags0(element, (Kind[]) null);
+        DocCommentTree dcTree = getDocCommentTree(element);
+        return dcTree == null ? Collections.emptyList() : dcTree.getBlockTags();
     }
 
-    public List<? extends DocTree> getBlockTags(Element element, DocTree.Kind... kinds) {
-        return getBlockTags0(element, kinds);
+    public List<? extends DocTree> getBlockTags(Element element, Predicate<DocTree> filter) {
+        return getBlockTags(element).stream()
+                .filter(t -> t.getKind() != ERRONEOUS)
+                .filter(filter)
+                .collect(Collectors.toList());
     }
 
-    public List<? extends DocTree> getBlockTags(Element element, String tagName) {
-        DocTree.Kind kind = null;
-        switch (tagName) {
-            case "author":
-            case "deprecated":
-            case "hidden":
-            case "param":
-            case "return":
-            case "see":
-            case "serial":
-            case "since":
-            case "throws":
-            case "exception":
-            case "version":
-                kind = DocTree.Kind.valueOf(toUpperCase(tagName));
-                return getBlockTags(element, kind);
-            case "serialData":
-                kind = SERIAL_DATA;
-                return getBlockTags(element, kind);
-            case "serialField":
-                kind = SERIAL_FIELD;
-                return getBlockTags(element, kind);
-            default:
-                kind = DocTree.Kind.UNKNOWN_BLOCK_TAG;
-                break;
-        }
-        List<? extends DocTree> blockTags = getBlockTags(element, kind);
-        List<DocTree> out = new ArrayList<>();
-        String tname = tagName.startsWith("@") ? tagName.substring(1) : tagName;
-        CommentHelper ch = getCommentHelper(element);
-        for (DocTree dt : blockTags) {
-            if (ch.getTagName(dt).equals(tname)) {
-                out.add(dt);
+    public List<? extends DocTree> getBlockTags(Element element, DocTree.Kind kind) {
+        return getBlockTags(element, t -> t.getKind() == kind);
+    }
+
+    public List<? extends DocTree> getBlockTags(Element element, DocTree.Kind kind, DocTree.Kind altKind) {
+        return getBlockTags(element, t -> t.getKind() == kind || t.getKind() == altKind);
+    }
+
+    public List<? extends DocTree> getBlockTags(Element element, Taglet taglet) {
+        return getBlockTags(element, t -> {
+            if (taglet instanceof BaseTaglet) {
+                return ((BaseTaglet) taglet).accepts(t);
+            } else if (t instanceof UnknownBlockTagTree) {
+                return ((UnknownBlockTagTree) t).getTagName().equals(taglet.getName());
+            } else {
+                return false;
             }
-        }
-        return out;
+        });
     }
 
     public boolean hasBlockTag(Element element, DocTree.Kind kind) {
@@ -3032,11 +2641,11 @@ public class Utils {
      */
     public TreePath getTreePath(Element e) {
         DocCommentDuo duo = dcTreeCache.get(e);
-        if (isValidDuo(duo) && duo.treePath != null) {
+        if (duo != null && duo.treePath != null) {
             return duo.treePath;
         }
         duo = configuration.cmtUtils.getSyntheticCommentDuo(e);
-        if (isValidDuo(duo) && duo.treePath != null) {
+        if (duo != null && duo.treePath != null) {
             return duo.treePath;
         }
         Map<Element, TreePath> elementToTreePath = configuration.workArounds.getElementToTreePath();
@@ -3062,20 +2671,20 @@ public class Utils {
         ElementKind kind = element.getKind();
         if (kind == ElementKind.PACKAGE || kind == ElementKind.OTHER) {
             duo = dcTreeCache.get(element); // local cache
-            if (!isValidDuo(duo) && kind == ElementKind.PACKAGE) {
+            if (duo == null && kind == ElementKind.PACKAGE) {
                 // package-info.java
                 duo = getDocCommentTuple(element);
             }
-            if (!isValidDuo(duo)) {
+            if (duo == null) {
                 // package.html or overview.html
                 duo = configuration.cmtUtils.getHtmlCommentDuo(element); // html source
             }
         } else {
             duo = configuration.cmtUtils.getSyntheticCommentDuo(element);
-            if (!isValidDuo(duo)) {
+            if (duo == null) {
                 duo = dcTreeCache.get(element); // local cache
             }
-            if (!isValidDuo(duo)) {
+            if (duo == null) {
                 duo = getDocCommentTuple(element); // get the real mccoy
             }
         }
@@ -3137,13 +2746,13 @@ public class Utils {
     }
 
     public DocCommentTree getDocCommentTree(Element element) {
-        CommentHelper ch = wksMap.get(element);
+        CommentHelper ch = commentHelperCache.get(element);
         if (ch != null) {
-            return ch.dctree;
+            return ch.dcTree;
         }
         DocCommentTree dcTree = getDocCommentTree0(element);
         if (dcTree != null) {
-            wksMap.put(element, new CommentHelper(configuration, element, getTreePath(element), dcTree));
+            commentHelperCache.put(element, new CommentHelper(configuration, element, getTreePath(element), dcTree));
         }
         return dcTree;
     }
@@ -3193,31 +2802,27 @@ public class Utils {
         return getBlockTags(element, DocTree.Kind.EXCEPTION, DocTree.Kind.THROWS);
     }
 
-    public List<? extends DocTree> getTypeParamTrees(Element element) {
+    public List<? extends ParamTree> getTypeParamTrees(Element element) {
         return getParamTrees(element, true);
     }
 
-    public List<? extends DocTree> getParamTrees(Element element) {
+    public List<? extends ParamTree> getParamTrees(Element element) {
         return getParamTrees(element, false);
     }
 
-    private  List<? extends DocTree> getParamTrees(Element element, boolean isTypeParameters) {
-        List<DocTree> out = new ArrayList<>();
+    private  List<? extends ParamTree> getParamTrees(Element element, boolean isTypeParameters) {
+        List<ParamTree> out = new ArrayList<>();
         for (DocTree dt : getBlockTags(element, PARAM)) {
             ParamTree pt = (ParamTree) dt;
             if (pt.isTypeParameter() == isTypeParameters) {
-                out.add(dt);
+                out.add(pt);
             }
         }
         return out;
     }
 
     public  List<? extends DocTree> getReturnTrees(Element element) {
-        List<DocTree> out = new ArrayList<>();
-        for (DocTree dt : getBlockTags(element, RETURN)) {
-            out.add(dt);
-        }
-        return out;
+        return new ArrayList<>(getBlockTags(element, RETURN));
     }
 
     public List<? extends DocTree> getUsesTrees(Element element) {
@@ -3229,11 +2834,7 @@ public class Utils {
         if (dcTree == null) {
             return Collections.emptyList();
         }
-        List<DocTree> out = new ArrayList<>();
-        for (DocTree dt : dcTree.getFirstSentence()) {
-            out.add(dt);
-        }
-        return out;
+        return new ArrayList<>(dcTree.getFirstSentence());
     }
 
     public ModuleElement containingModule(Element e) {
@@ -3257,112 +2858,55 @@ public class Utils {
         return outer;
     }
 
-    static class WeakSoftHashMap implements Map<Element, CommentHelper> {
+    /**
+     * A memory-sensitive cache for {@link CommentHelper} objects,
+     * which are expensive to compute.
+     */
+    private static class CommentHelperCache {
 
-        private final WeakHashMap<Element, SoftReference<CommentHelper>> wkMap;
+        private final Map<Element, SoftReference<CommentHelper>> map;
         private final Utils utils;
-        public WeakSoftHashMap(Utils utils) {
-            wkMap = new WeakHashMap<>();
+
+        public CommentHelperCache(Utils utils) {
+            map = new HashMap<>();
             this.utils = utils;
         }
 
-        @Override
-        public boolean containsKey(Object key) {
-            return wkMap.containsKey(key);
-        }
-
-        @Override
-        public Collection<CommentHelper> values() {
-            Set<CommentHelper> out = new LinkedHashSet<>();
-            for (SoftReference<CommentHelper> v : wkMap.values()) {
-                out.add(v.get());
-            }
-            return out;
-        }
-
-        @Override
-        public boolean containsValue(Object value) {
-            return wkMap.containsValue(new SoftReference<>((CommentHelper)value));
-        }
-
-        @Override
-        public CommentHelper remove(Object key) {
-            SoftReference<CommentHelper> value = wkMap.remove(key);
+        public CommentHelper remove(Element key) {
+            SoftReference<CommentHelper> value = map.remove(key);
             return value == null ? null : value.get();
         }
 
-
-        @Override
         public CommentHelper put(Element key, CommentHelper value) {
-            SoftReference<CommentHelper> nvalue = wkMap.put(key, new SoftReference<>(value));
-            return nvalue == null ? null : nvalue.get();
+            SoftReference<CommentHelper> prev = map.put(key, new SoftReference<>(value));
+            return prev == null ? null : prev.get();
         }
 
-        @Override
         public CommentHelper get(Object key) {
-            SoftReference<CommentHelper> value = wkMap.get(key);
+            SoftReference<CommentHelper> value = map.get(key);
             return value == null ? null : value.get();
-        }
-
-        @Override
-        public int size() {
-            return wkMap.size();
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return wkMap.isEmpty();
-        }
-
-        @Override
-        public void clear() {
-            wkMap.clear();
         }
 
         public CommentHelper computeIfAbsent(Element key) {
-            if (wkMap.containsKey(key)) {
-                SoftReference<CommentHelper> value = wkMap.get(key);
+            SoftReference<CommentHelper> refValue = map.get(key);
+            if (refValue != null) {
+                CommentHelper value = refValue.get();
                 if (value != null) {
-                    CommentHelper cvalue = value.get();
-                    if (cvalue != null) {
-                        return cvalue;
-                    }
+                    return value;
                 }
             }
             CommentHelper newValue = new CommentHelper(utils.configuration, key, utils.getTreePath(key),
                     utils.getDocCommentTree(key));
-            wkMap.put(key, new SoftReference<>(newValue));
+            map.put(key, new SoftReference<>(newValue));
             return newValue;
-        }
-
-
-        @Override
-        public void putAll(Map<? extends Element, ? extends CommentHelper> map) {
-            for (Map.Entry<? extends Element, ? extends CommentHelper> entry : map.entrySet()) {
-                put(entry.getKey(), entry.getValue());
-            }
-        }
-
-        @Override
-        public Set<Element> keySet() {
-            return wkMap.keySet();
-        }
-
-        @Override
-        public Set<Entry<Element, CommentHelper>> entrySet() {
-            Set<Entry<Element, CommentHelper>> out = new LinkedHashSet<>();
-            for (Element e : wkMap.keySet()) {
-                SimpleEntry<Element, CommentHelper> n = new SimpleEntry<>(e, get(e));
-                out.add(n);
-            }
-            return out;
         }
     }
 
     /**
-     * A simple pair container.
-     * @param <K> first a value
-     * @param <L> second another value
+     * A container holding a pair of values (tuple).
+     *
+     * @param <K> the type of the first value
+     * @param <L> the type of the second value
      */
     public static class Pair<K, L> {
         public final K first;
@@ -3373,10 +2917,9 @@ public class Utils {
             this.second = second;
         }
 
+        @Override
         public String toString() {
-            StringBuffer out = new StringBuffer();
-            out.append(first + ":" + second);
-            return out.toString();
+            return first + ":" + second;
         }
     }
 }

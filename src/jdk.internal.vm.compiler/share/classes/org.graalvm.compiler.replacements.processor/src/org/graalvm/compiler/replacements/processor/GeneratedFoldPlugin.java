@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,7 +84,9 @@ public class GeneratedFoldPlugin extends GeneratedPlugin {
             if (processor.getAnnotation(param, processor.getType(INJECTED_PARAMETER_CLASS_NAME)) == null) {
                 constantArgument(processor, out, deps, argCount, param.asType(), argCount);
             } else {
-                out.printf("        assert checkInjectedArgument(b, args[%d], targetMethod);\n", argCount);
+                out.printf("        if (!checkInjectedArgument(b, args[%d], targetMethod)) {\n", argCount);
+                out.printf("            return false;\n");
+                out.printf("        }\n", argCount);
                 out.printf("        %s arg%d = %s;\n", param.asType(), argCount, deps.use(processor, (DeclaredType) param.asType()));
             }
             argCount++;

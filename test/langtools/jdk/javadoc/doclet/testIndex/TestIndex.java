@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,10 @@
 
 /*
  * @test
- * @bug      4852280 4517115 4973608 4994589 8026567 8071982 8196202
+ * @bug      4852280 4517115 4973608 4994589 8026567 8071982 8196202 8234746
  * @summary  Perform tests on index.html file.
  *           Also test that index-all.html has the appropriate output.
  *           Test for unnamed package in index.
- * @author   jamieh
  * @library  ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build    javadoc.tester.*
@@ -46,40 +45,38 @@ public class TestIndex extends JavadocTester {
     @Test
     public void test() {
         javadoc("-d", "out",
-                "--frames",
                 "-sourcepath", testSrc,
                 "pkg", testSrc("NoPackage.java"));
         checkExit(Exit.OK);
 
-        checkOutput("index.html", true,
-                "<iframe src=\"overview-summary.html\" name=\"classFrame\" title=\""
-                + "Package, class and interface descriptions\" class=\"rightIframe\">");
-
         //Test index-all.html
         checkOutput("index-all.html", true,
-                "<a href=\"pkg/C.html\" title=\"class in pkg\"><span class=\"typeNameLink\">C</span></a>"
-                + " - Class in <a href=\"pkg/package-summary.html\">pkg</a>",
-                "<a href=\"pkg/Interface.html\" title=\"interface in pkg\">"
-                + "<span class=\"typeNameLink\">Interface</span></a> - Interface in "
-                + "<a href=\"pkg/package-summary.html\">pkg</a>",
-                "<a href=\"pkg/AnnotationType.html\" title=\"annotation in pkg\">"
-                + "<span class=\"typeNameLink\">AnnotationType</span></a> - Annotation Type in "
-                + "<a href=\"pkg/package-summary.html\">pkg</a>",
-                "<a href=\"pkg/Coin.html\" title=\"enum in pkg\">"
-                + "<span class=\"typeNameLink\">Coin</span></a> - Enum in "
-                + "<a href=\"pkg/package-summary.html\">pkg</a>",
-                "Class in <a href=\"package-summary.html\">&lt;Unnamed&gt;</a>",
-                "<dl>\n"
-                + "<dt><span class=\"memberNameLink\"><a href=\"pkg/C.html#Java\">"
-                + "Java</a></span> - Static variable in class pkg.<a href=\"pkg/C.html\" "
-                + "title=\"class in pkg\">C</a></dt>\n"
-                + "<dd>&nbsp;</dd>\n"
-                + "<dt><span class=\"memberNameLink\"><a href=\"pkg/C.html#JDK\">JDK</a></span> "
-                + "- Static variable in class pkg.<a href=\"pkg/C.html\" title=\"class in pkg\">"
-                + "C</a></dt>\n"
-                + "<dd>&nbsp;</dd>\n"
-                + "</dl>",
-                "<dt><span class=\"searchTagLink\"><a href=\"pkg/Coin.html#Enum\">Enum</a>"
-                + "</span> - Search tag in pkg.Coin</dt>");
+                """
+                    <a href="pkg/C.html" title="class in pkg"><span class="type-name-link">C</span><\
+                    /a> - Class in <a href="pkg/package-summary.html">pkg</a>""",
+                """
+                    <a href="pkg/Interface.html" title="interface in pkg"><span class="type-name-lin\
+                    k">Interface</span></a> - Interface in <a href="pkg/package-summary.html">pkg</a\
+                    >""",
+                """
+                    <a href="pkg/AnnotationType.html" title="annotation in pkg"><span class="type-na\
+                    me-link">AnnotationType</span></a> - Annotation Type in <a href="pkg/package-sum\
+                    mary.html">pkg</a>""",
+                """
+                    <a href="pkg/Coin.html" title="enum in pkg"><span class="type-name-link">Coin</s\
+                    pan></a> - Enum in <a href="pkg/package-summary.html">pkg</a>""",
+                """
+                    Class in <a href="package-summary.html">&lt;Unnamed&gt;</a>""",
+                """
+                    <dl class="index">
+                    <dt><span class="member-name-link"><a href="pkg/C.html#Java">Java</a></span> - S\
+                    tatic variable in class pkg.<a href="pkg/C.html" title="class in pkg">C</a></dt>
+                    <dd>&nbsp;</dd>
+                    <dt><span class="member-name-link"><a href="pkg/C.html#JDK">JDK</a></span> - Sta\
+                    tic variable in class pkg.<a href="pkg/C.html" title="class in pkg">C</a></dt>
+                    <dd>&nbsp;</dd>
+                    </dl>""",
+                """
+                    <dt><span class="search-tag-link"><a href="pkg/Coin.html#Enum">Enum</a></span> - Search tag in enum pkg.Coin</dt>""");
     }
 }

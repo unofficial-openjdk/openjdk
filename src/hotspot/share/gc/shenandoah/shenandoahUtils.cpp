@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2017, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,32 +26,31 @@
 
 #include "jfr/jfrEvents.hpp"
 #include "gc/shared/gcCause.hpp"
-#include "gc/shared/gcTimer.hpp"
 #include "gc/shared/gcTrace.hpp"
 #include "gc/shared/gcWhen.hpp"
-#include "gc/shenandoah/shenandoahAllocTracker.hpp"
 #include "gc/shenandoah/shenandoahCollectorPolicy.hpp"
 #include "gc/shenandoah/shenandoahMarkCompact.hpp"
-#include "gc/shenandoah/shenandoahHeap.hpp"
-#include "gc/shenandoah/shenandoahHeuristics.hpp"
+#include "gc/shenandoah/shenandoahHeap.inline.hpp"
 #include "gc/shenandoah/shenandoahUtils.hpp"
+#include "gc/shenandoah/heuristics/shenandoahHeuristics.hpp"
+#include "utilities/debug.hpp"
 
-ShenandoahPhaseTimings::Phase ShenandoahGCPhase::_current_phase = ShenandoahGCPhase::_invalid_phase;
+ShenandoahPhaseTimings::Phase ShenandoahTimingsTracker::_current_phase = ShenandoahPhaseTimings::_invalid_phase;
 
 ShenandoahGCSession::ShenandoahGCSession(GCCause::Cause cause) :
   _heap(ShenandoahHeap::heap()),
   _timer(_heap->gc_timer()),
   _tracer(_heap->tracer()) {
-  assert(!ShenandoahGCPhase::is_valid_phase(ShenandoahGCPhase::current_phase()),
-    "No current GC phase");
+  assert(!ShenandoahGCPhase::is_current_phase_valid(), "No current GC phase");
 
+  _heap->set_gc_cause(cause);
   _timer->register_gc_start();
   _tracer->report_gc_start(cause, _timer->gc_start());
-  _heap->trace_heap(GCWhen::BeforeGC, _tracer);
+  _heap->trace_heap_before_gc(_tracer);
 
   _heap->shenandoah_policy()->record_cycle_start();
   _heap->heuristics()->record_cycle_start();
-  _trace_cycle.initialize(_heap->cycle_memory_manager(), _heap->gc_cause(),
+  _trace_cycle.initialize(_heap->cycle_memory_manager(), cause,
           /* allMemoryPoolsAffected */    true,
           /* recordGCBeginTime = */       true,
           /* recordPreGCUsage = */        true,
@@ -65,18 +65,14 @@ ShenandoahGCSession::ShenandoahGCSession(GCCause::Cause cause) :
 ShenandoahGCSession::~ShenandoahGCSession() {
   _heap->heuristics()->record_cycle_end();
   _timer->register_gc_end();
-  _heap->trace_heap(GCWhen::AfterGC, _tracer);
+  _heap->trace_heap_after_gc(_tracer);
   _tracer->report_gc_end(_timer->gc_end(), _timer->time_partitions());
-  assert(!ShenandoahGCPhase::is_valid_phase(ShenandoahGCPhase::current_phase()),
-    "No current GC phase");
+  assert(!ShenandoahGCPhase::is_current_phase_valid(), "No current GC phase");
+  _heap->set_gc_cause(GCCause::_no_gc);
 }
 
 ShenandoahGCPauseMark::ShenandoahGCPauseMark(uint gc_id, SvcGCMarker::reason_type type) :
   _heap(ShenandoahHeap::heap()), _gc_id_mark(gc_id), _svc_gc_mark(type), _is_gc_active_mark() {
-
-  // FIXME: It seems that JMC throws away level 0 events, which are the Shenandoah
-  // pause events. Create this pseudo level 0 event to push real events to level 1.
-  _heap->gc_timer()->register_gc_phase_start("Shenandoah", Ticks::now());
   _trace_pause.initialize(_heap->stw_memory_manager(), _heap->gc_cause(),
           /* allMemoryPoolsAffected */    true,
           /* recordGCBeginTime = */       true,
@@ -87,77 +83,67 @@ ShenandoahGCPauseMark::ShenandoahGCPauseMark(uint gc_id, SvcGCMarker::reason_typ
           /* recordGCEndTime = */         true,
           /* countCollection = */         true
   );
-
-  _heap->heuristics()->record_gc_start();
 }
 
-ShenandoahGCPauseMark::~ShenandoahGCPauseMark() {
-  _heap->gc_timer()->register_gc_phase_end(Ticks::now());
-  _heap->heuristics()->record_gc_end();
+ShenandoahPausePhase::ShenandoahPausePhase(const char* title, ShenandoahPhaseTimings::Phase phase, bool log_heap_usage) :
+  ShenandoahTimingsTracker(phase),
+  _tracer(title, NULL, GCCause::_no_gc, log_heap_usage),
+  _timer(ShenandoahHeap::heap()->gc_timer()) {
+  _timer->register_gc_pause_start(title);
 }
 
-ShenandoahGCPhase::ShenandoahGCPhase(const ShenandoahPhaseTimings::Phase phase) :
-  _heap(ShenandoahHeap::heap()), _phase(phase) {
-  assert(Thread::current()->is_VM_thread() ||
-         Thread::current()->is_ConcurrentGC_thread(),
-        "Must be set by these threads");
+ShenandoahPausePhase::~ShenandoahPausePhase() {
+  _timer->register_gc_pause_end();
+}
+
+ShenandoahConcurrentPhase::ShenandoahConcurrentPhase(const char* title, ShenandoahPhaseTimings::Phase phase, bool log_heap_usage) :
+  ShenandoahTimingsTracker(phase),
+  _tracer(title, NULL, GCCause::_no_gc, log_heap_usage),
+  _timer(ShenandoahHeap::heap()->gc_timer()) {
+  _timer->register_gc_concurrent_start(title);
+}
+
+ShenandoahConcurrentPhase::~ShenandoahConcurrentPhase() {
+  _timer->register_gc_concurrent_end();
+}
+
+ShenandoahTimingsTracker::ShenandoahTimingsTracker(ShenandoahPhaseTimings::Phase phase) :
+  _timings(ShenandoahHeap::heap()->phase_timings()), _phase(phase) {
+  assert(!Thread::current()->is_Worker_thread() &&
+              (Thread::current()->is_VM_thread() ||
+               Thread::current()->is_ConcurrentGC_thread()),
+          "Must be set by these threads");
   _parent_phase = _current_phase;
   _current_phase = phase;
-
-  _heap->phase_timings()->record_phase_start(_phase);
+  _start = os::elapsedTime();
 }
 
-ShenandoahGCPhase::~ShenandoahGCPhase() {
-  _heap->phase_timings()->record_phase_end(_phase);
+ShenandoahTimingsTracker::~ShenandoahTimingsTracker() {
+  _timings->record_phase_time(_phase, os::elapsedTime() - _start);
   _current_phase = _parent_phase;
 }
 
-bool ShenandoahGCPhase::is_valid_phase(ShenandoahPhaseTimings::Phase phase) {
-  return phase >= 0 && phase < ShenandoahPhaseTimings::_num_phases;
+bool ShenandoahTimingsTracker::is_current_phase_valid() {
+  return _current_phase < ShenandoahPhaseTimings::_num_phases;
 }
 
-bool ShenandoahGCPhase::is_root_work_phase() {
-  switch(current_phase()) {
-    case ShenandoahPhaseTimings::scan_roots:
-    case ShenandoahPhaseTimings::update_roots:
-    case ShenandoahPhaseTimings::init_evac:
-    case ShenandoahPhaseTimings::final_update_refs_roots:
-    case ShenandoahPhaseTimings::degen_gc_update_roots:
-    case ShenandoahPhaseTimings::init_traversal_gc_work:
-    case ShenandoahPhaseTimings::final_traversal_gc_work:
-    case ShenandoahPhaseTimings::final_traversal_update_roots:
-    case ShenandoahPhaseTimings::full_gc_roots:
-      return true;
-    default:
-      return false;
-  }
+ShenandoahGCPhase::ShenandoahGCPhase(ShenandoahPhaseTimings::Phase phase) :
+  ShenandoahTimingsTracker(phase),
+  _timer(ShenandoahHeap::heap()->gc_timer()) {
+  _timer->register_gc_phase_start(ShenandoahPhaseTimings::phase_name(phase), Ticks::now());
 }
 
-ShenandoahAllocTrace::ShenandoahAllocTrace(size_t words_size, ShenandoahAllocRequest::Type alloc_type) {
-  if (ShenandoahAllocationTrace) {
-    _start = os::elapsedTime();
-    _size = words_size;
-    _alloc_type = alloc_type;
-  } else {
-    _start = 0;
-    _size = 0;
-    _alloc_type = ShenandoahAllocRequest::Type(0);
-  }
+ShenandoahGCPhase::~ShenandoahGCPhase() {
+  _timer->register_gc_phase_end(Ticks::now());
 }
 
-ShenandoahAllocTrace::~ShenandoahAllocTrace() {
-  if (ShenandoahAllocationTrace) {
-    double stop = os::elapsedTime();
-    double duration_sec = stop - _start;
-    double duration_us = duration_sec * 1000000;
-    ShenandoahAllocTracker* tracker = ShenandoahHeap::heap()->alloc_tracker();
-    assert(tracker != NULL, "Must be");
-    tracker->record_alloc_latency(_size, _alloc_type, duration_us);
-    if (duration_us > ShenandoahAllocationStallThreshold) {
-      log_warning(gc)("Allocation stall: %.0f us (threshold: " INTX_FORMAT " us)",
-                      duration_us, ShenandoahAllocationStallThreshold);
-    }
-  }
+ShenandoahGCWorkerPhase::ShenandoahGCWorkerPhase(const ShenandoahPhaseTimings::Phase phase) :
+    _timings(ShenandoahHeap::heap()->phase_timings()), _phase(phase) {
+  _timings->record_workers_start(_phase);
+}
+
+ShenandoahGCWorkerPhase::~ShenandoahGCWorkerPhase() {
+  _timings->record_workers_end(_phase);
 }
 
 ShenandoahWorkerSession::ShenandoahWorkerSession(uint worker_id) : _worker_id(worker_id) {

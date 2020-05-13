@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,6 @@
  *             agent.jar
  *             compiler.jsr292.NonInlinedCall.RedefineTest
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  *                                compiler.jsr292.NonInlinedCall.RedefineTest
  * @run main/bootclasspath/othervm -javaagent:agent.jar
  *                                 -XX:+IgnoreUnrecognizedVMOptions
@@ -114,7 +113,7 @@ public class RedefineTest {
     static final WhiteBox WB = WhiteBox.getWhiteBox();
 
     @DontInline
-    static int invokeBasic() {
+    static int invokeExact() {
         try {
             return (int)mh.invokeExact();
         } catch (Throwable e) {
@@ -130,7 +129,7 @@ public class RedefineTest {
 
     public static void main(String[] args) throws Exception {
         for (int i = 0; i < 20_000; i++) {
-            int r = invokeBasic();
+            int r = invokeExact();
             if (r != 0) {
                 throw new Error(r + " != 0");
             }
@@ -142,7 +141,7 @@ public class RedefineTest {
         int exp = (instr != null) ? 1 : 0;
 
         for (int i = 0; i < 20_000; i++) {
-            if (invokeBasic() != exp) {
+            if (invokeExact() != exp) {
                 throw new Error();
             }
         }
@@ -150,7 +149,7 @@ public class RedefineTest {
         WB.clearInlineCaches();
 
         for (int i = 0; i < 20_000; i++) {
-            if (invokeBasic() != exp) {
+            if (invokeExact() != exp) {
                 throw new Error();
             }
         }

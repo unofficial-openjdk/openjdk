@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
  /*
  * @test
- * @bug 8189131
+ * @bug 8189131 8231887
  * @summary Interoperability tests with Comodo RSA, ECC, userTrust RSA, and
  *          userTrust ECC CAs
  * @build ValidatePathWithParams
@@ -110,113 +110,112 @@ class ComodoRSA {
             + "pLwltum95OmYdBbxN4SBB7SC\n"
             + "-----END CERTIFICATE-----";
 
-    // Owner: CN=COMODO RSA Extended Validation Secure Server CA,
-    // O=COMODO CA Limited, L=Salford, ST=Greater Manchester, C=GB
-    // Issuer: CN=COMODO RSA Certification Authority, O=COMODO CA Limited,
-    // L=Salford, ST=Greater Manchester, C=GB
-    // Serial number: 6a74380d4ebfed435b5a3f7e16abdd8
-    // Valid from: Sat Feb 11 16:00:00 PST 2012 until: Thu Feb 11 15:59:59 PST 2027
-    private static final String VALID = "-----BEGIN CERTIFICATE-----\n"
-            + "MIIH8jCCBtqgAwIBAgIQcgqiz6QAlFISJPkBqYSxZzANBgkqhkiG9w0BAQsFADCB\n"
-            + "kjELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4G\n"
-            + "A1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxODA2BgNV\n"
-            + "BAMTL0NPTU9ETyBSU0EgRXh0ZW5kZWQgVmFsaWRhdGlvbiBTZWN1cmUgU2VydmVy\n"
-            + "IENBMB4XDTE3MDYzMDAwMDAwMFoXDTE5MDkyOTIzNTk1OVowggFdMREwDwYDVQQF\n"
-            + "EwgwNDA1ODY5MDETMBEGCysGAQQBgjc8AgEDEwJHQjEdMBsGA1UEDxMUUHJpdmF0\n"
-            + "ZSBPcmdhbml6YXRpb24xCzAJBgNVBAYTAkdCMQ8wDQYDVQQREwZNNSAzRVExGzAZ\n"
-            + "BgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEWMBQG\n"
-            + "A1UECRMNVHJhZmZvcmQgUm9hZDEWMBQGA1UECRMNRXhjaGFuZ2UgUXVheTElMCMG\n"
-            + "A1UECRMcM3JkIEZsb29yLCAyNiBPZmZpY2UgVmlsbGFnZTEaMBgGA1UEChMRQ09N\n"
-            + "T0RPIENBIExpbWl0ZWQxGjAYBgNVBAsTEUNPTU9ETyBFViBTR0MgU1NMMTgwNgYD\n"
-            + "VQQDEy9jb21vZG9yc2FjZXJ0aWZpY2F0aW9uYXV0aG9yaXR5LWV2LmNvbW9kb2Nh\n"
-            + "LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAND/eZQBTjpBDsut\n"
-            + "eKwl+zpTitF8tJzwHAhcQHC2AaLF/GJl1rnjx4OfelMhKhN1Od9KU6onHGOd2w4m\n"
-            + "D4EiYK9TpXwuwTyzfkCmnkqxZjYK3KAJN013o4L+8y1zsGVUulpN/GfMaxTb4Xdm\n"
-            + "eSekTP91Phw3xezijBq3sa++1rO5RBaT1IHeHhHviC9WNrG8CIg/j5MyC9i43LZH\n"
-            + "iRXLER1LzT/MCIRsiG5AEbiYXV5BNd5SiiHtBJ1q0ZJH+AxL2ERaT41VCppboZwT\n"
-            + "hmJGGoky9FWjp6z8U6Enx0fAMJIZNEzW6LAJFKPEynEU004jFFCEumPUqqCC4ogx\n"
-            + "ulphY80CAwEAAaOCA3QwggNwMB8GA1UdIwQYMBaAFDna/8ooFIqodBMIueQOqdL6\n"
-            + "fp1pMB0GA1UdDgQWBBQ+S4ZhIrwOoeGs9BBT4uXq89Ux/jAOBgNVHQ8BAf8EBAMC\n"
-            + "BaAwDAYDVR0TAQH/BAIwADAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIw\n"
-            + "TwYDVR0gBEgwRjA7BgwrBgEEAbIxAQIBBQEwKzApBggrBgEFBQcCARYdaHR0cHM6\n"
-            + "Ly9zZWN1cmUuY29tb2RvLmNvbS9DUFMwBwYFZ4EMAQEwVgYDVR0fBE8wTTBLoEmg\n"
-            + "R4ZFaHR0cDovL2NybC5jb21vZG9jYS5jb20vQ09NT0RPUlNBRXh0ZW5kZWRWYWxp\n"
-            + "ZGF0aW9uU2VjdXJlU2VydmVyQ0EuY3JsMIGHBggrBgEFBQcBAQR7MHkwUQYIKwYB\n"
-            + "BQUHMAKGRWh0dHA6Ly9jcnQuY29tb2RvY2EuY29tL0NPTU9ET1JTQUV4dGVuZGVk\n"
-            + "VmFsaWRhdGlvblNlY3VyZVNlcnZlckNBLmNydDAkBggrBgEFBQcwAYYYaHR0cDov\n"
-            + "L29jc3AuY29tb2RvY2EuY29tMDoGA1UdEQQzMDGCL2NvbW9kb3JzYWNlcnRpZmlj\n"
-            + "YXRpb25hdXRob3JpdHktZXYuY29tb2RvY2EuY29tMIIBgAYKKwYBBAHWeQIEAgSC\n"
-            + "AXAEggFsAWoAdgCkuQmQtBhYFIe7E6LMZ3AKPDWYBPkb37jjd80OyA3cEAAAAVz5\n"
-            + "cV7GAAAEAwBHMEUCIQCpgc0Eqw3g4pr+oX88h5xgL1VEAiDpqAhbRtilgYwBbgIg\n"
-            + "UaIm+n8AHi55nB//Sb4Nz18GYVcfELfpIzRh1vW9HbYAdwBWFAaaL9fC7NP14b1E\n"
-            + "sj7HRna5vJkRXMDvlJhV1onQ3QAAAVz5cVybAAAEAwBIMEYCIQDdsgC4KZ++OP44\n"
-            + "X7LbUcNaxe0kFzbctF2L3bnmhp9nXQIhAM0/g+PrZBIBpYlOtzidePi8bBHrLWn2\n"
-            + "uBiP3pYIntl4AHcA7ku9t3XOYLrhQmkfq+GeZqMPfl+wctiDAMR7iXqo/csAAAFc\n"
-            + "+XFeoQAABAMASDBGAiEAoySTb/QKw7JwtZtPHnECEMzgENQSFy58Kl+Mvcd3SmcC\n"
-            + "IQD8cU66Ih3ejvt0OTX+lfxQPKyggQfm4Uk/lwn5LEJXbDANBgkqhkiG9w0BAQsF\n"
-            + "AAOCAQEAKEaSYWn3Hi8rfJS4cMTJoMkVp2vpPH2dGXySBEy67TEGRw9+f75w3q95\n"
-            + "r1m3P+xsR6dBoidTq/6wqUYI51lB4Fq9ylh1Stp5Gj54CuyT+S31l7lD7sl0KMsn\n"
-            + "HDUDQHId7hKeORYpiIZOcrKOglKdi1uiGwDgoiLKh98lUrZA6durrhH+sl69wqp2\n"
-            + "0XAu+3hurXzCoZFJfyngTO1kt9qcFUAxc5LofIa9QvC6VR7dI4aAh7dUpIRlnjG3\n"
-            + "jJ1mUMTqWO6TFTtddb+uQjDqNgkYYYNuSax1WMEIZWbIi13EjXK1GPQUXJe6gQin\n"
-            + "NUq9JH9NPK6m8A1YKT+wgzfTDeaV2Q==\n"
-            + "-----END CERTIFICATE-----";
+    // Owner: CN=comodorsacertificationauthority-ev.comodoca.com, OU=COMODO EV SGC SSL, O=Sectigo Limited,
+    // STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay, STREET=Trafford Road, L=Salford,
+    // OID.2.5.4.17=M5 3EQ, C=GB, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.3=GB,
+    // SERIALNUMBER=04058690
+    // Issuer: CN=COMODO RSA Extended Validation Secure Server CA, O=COMODO CA Limited, L=Salford,
+    // ST=Greater Manchester, C=GB
+    // Serial number: a0c7cabcc25ed9358ded02cc1d485545
+    // Valid from: Sun Sep 29 17:00:00 PDT 2019 until: Tue Dec 28 15:59:59 PST 2021
+    private static final String VALID = "-----BEGIN CERTIFICATE-----\n" +
+            "MIIH0TCCBrmgAwIBAgIRAKDHyrzCXtk1je0CzB1IVUUwDQYJKoZIhvcNAQELBQAw\n" +
+            "gZIxCzAJBgNVBAYTAkdCMRswGQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAO\n" +
+            "BgNVBAcTB1NhbGZvcmQxGjAYBgNVBAoTEUNPTU9ETyBDQSBMaW1pdGVkMTgwNgYD\n" +
+            "VQQDEy9DT01PRE8gUlNBIEV4dGVuZGVkIFZhbGlkYXRpb24gU2VjdXJlIFNlcnZl\n" +
+            "ciBDQTAeFw0xOTA5MzAwMDAwMDBaFw0yMTEyMjgyMzU5NTlaMIIBPjERMA8GA1UE\n" +
+            "BRMIMDQwNTg2OTAxEzARBgsrBgEEAYI3PAIBAxMCR0IxHTAbBgNVBA8TFFByaXZh\n" +
+            "dGUgT3JnYW5pemF0aW9uMQswCQYDVQQGEwJHQjEPMA0GA1UEERMGTTUgM0VRMRAw\n" +
+            "DgYDVQQHEwdTYWxmb3JkMRYwFAYDVQQJEw1UcmFmZm9yZCBSb2FkMRYwFAYDVQQJ\n" +
+            "Ew1FeGNoYW5nZSBRdWF5MSUwIwYDVQQJExwzcmQgRmxvb3IsIDI2IE9mZmljZSBW\n" +
+            "aWxsYWdlMRgwFgYDVQQKEw9TZWN0aWdvIExpbWl0ZWQxGjAYBgNVBAsTEUNPTU9E\n" +
+            "TyBFViBTR0MgU1NMMTgwNgYDVQQDEy9jb21vZG9yc2FjZXJ0aWZpY2F0aW9uYXV0\n" +
+            "aG9yaXR5LWV2LmNvbW9kb2NhLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC\n" +
+            "AQoCggEBAND/eZQBTjpBDsuteKwl+zpTitF8tJzwHAhcQHC2AaLF/GJl1rnjx4Of\n" +
+            "elMhKhN1Od9KU6onHGOd2w4mD4EiYK9TpXwuwTyzfkCmnkqxZjYK3KAJN013o4L+\n" +
+            "8y1zsGVUulpN/GfMaxTb4XdmeSekTP91Phw3xezijBq3sa++1rO5RBaT1IHeHhHv\n" +
+            "iC9WNrG8CIg/j5MyC9i43LZHiRXLER1LzT/MCIRsiG5AEbiYXV5BNd5SiiHtBJ1q\n" +
+            "0ZJH+AxL2ERaT41VCppboZwThmJGGoky9FWjp6z8U6Enx0fAMJIZNEzW6LAJFKPE\n" +
+            "ynEU004jFFCEumPUqqCC4ogxulphY80CAwEAAaOCA3EwggNtMB8GA1UdIwQYMBaA\n" +
+            "FDna/8ooFIqodBMIueQOqdL6fp1pMB0GA1UdDgQWBBQ+S4ZhIrwOoeGs9BBT4uXq\n" +
+            "89Ux/jAOBgNVHQ8BAf8EBAMCBaAwDAYDVR0TAQH/BAIwADAdBgNVHSUEFjAUBggr\n" +
+            "BgEFBQcDAQYIKwYBBQUHAwIwTwYDVR0gBEgwRjA7BgwrBgEEAbIxAQIBBQEwKzAp\n" +
+            "BggrBgEFBQcCARYdaHR0cHM6Ly9zZWN1cmUuY29tb2RvLmNvbS9DUFMwBwYFZ4EM\n" +
+            "AQEwVgYDVR0fBE8wTTBLoEmgR4ZFaHR0cDovL2NybC5jb21vZG9jYS5jb20vQ09N\n" +
+            "T0RPUlNBRXh0ZW5kZWRWYWxpZGF0aW9uU2VjdXJlU2VydmVyQ0EuY3JsMIGHBggr\n" +
+            "BgEFBQcBAQR7MHkwUQYIKwYBBQUHMAKGRWh0dHA6Ly9jcnQuY29tb2RvY2EuY29t\n" +
+            "L0NPTU9ET1JTQUV4dGVuZGVkVmFsaWRhdGlvblNlY3VyZVNlcnZlckNBLmNydDAk\n" +
+            "BggrBgEFBQcwAYYYaHR0cDovL29jc3AuY29tb2RvY2EuY29tMDoGA1UdEQQzMDGC\n" +
+            "L2NvbW9kb3JzYWNlcnRpZmljYXRpb25hdXRob3JpdHktZXYuY29tb2RvY2EuY29t\n" +
+            "MIIBfQYKKwYBBAHWeQIEAgSCAW0EggFpAWcAdQDuS723dc5guuFCaR+r4Z5mow9+\n" +
+            "X7By2IMAxHuJeqj9ywAAAW2DAXefAAAEAwBGMEQCIDqP1einOiPHnaG1fOZMDrEc\n" +
+            "RAxjq3vEl94fp4pkmke7AiBsJOvPE6irgcOO1/lnP7NRuln7iPJjU7T20PEK5/rm\n" +
+            "KwB2AFWB1MIWkDYBSuoLm1c8U/DA5Dh4cCUIFy+jqh0HE9MMAAABbYMBd0kAAAQD\n" +
+            "AEcwRQIhALgUI5XxM1NHbJDdr19h2pe3LhzK4tpuB/OQ9BgCyrGXAiBdr6mNCB/G\n" +
+            "rbdVx0u7iezwC7mq7iaWugR3rrWlSA8fWQB2ALvZ37wfinG1k5Qjl6qSe0c4V5UK\n" +
+            "q1LoGpCWZDaOHtGFAAABbYMBd1oAAAQDAEcwRQIgXbG32dagMeLhuZb+LSpJO1vI\n" +
+            "BmxmRnNdiz5FbG9cCbwCIQCr1X9f+ebT5fhlDUNBURUorTtM8QQciBiueBqvHk7+\n" +
+            "1DANBgkqhkiG9w0BAQsFAAOCAQEAM/A/1dgoc5NP1n+w3SX9qWcN7QT7ExdrnZSl\n" +
+            "Ygn0PF2fx4gz7cvNKucbpQJNA4C9awGydyYK8/o5KDUXt3K7eb1OAZ/NZBjygsJs\n" +
+            "ikXvxlBh8oEoqBOfOtr24l0NGUWnP8Qeu/VPcIMER4V8qX+in0pCXkSd67nkp6Bs\n" +
+            "EcqhDPgmzdSC1gQHsZuBdotG14OfdH1cG1bRK6GadISLG1h8BFukVem42B149v8F\n" +
+            "MCIUQAYprAVv2WlTZKBx9XzuK6IK3+klHZ07Jfvjvt7PPG5HKSMWBMnMaTHKcyQI\n" +
+            "G3t91yw7BnNNInZlBSsFtqjbHhDcr7uruZdbi0rerSsi2qDr0w==\n" +
+            "-----END CERTIFICATE-----";
 
-    // Owner: CN=comodorsacertificationauthority-ev.comodoca.com,
-    // OU=COMODO EV SGC SSL, O=COMODO CA Limited, STREET="3rd Floor, 26 Office Village",
-    // STREET=Exchange Quay, STREET=Trafford Road, L=Salford, ST=Greater Manchester,
-    // OID.2.5.4.17=M5 3EQ, C=GB, OID.2.5.4.15=Private Organization,
+    // Owner: CN=comodorsacertificationauthority-ev.comodoca.com, OU=COMODO EV SGC SSL, O=Sectigo Limited,
+    // STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay, STREET=Trafford Road, L=Salford,
+    // ST=Greater Manchester, OID.2.5.4.17=M5 3EQ, C=GB, OID.2.5.4.15=Private Organization,
     // OID.1.3.6.1.4.1.311.60.2.1.3=GB, SERIALNUMBER=04058690
-    // Issuer: CN=COMODO RSA Extended Validation Secure Server CA,
-    // O=COMODO CA Limited, L=Salford, ST=Greater Manchester, C=GB
-    // Serial number: ff6ecae8c73f9b5ca811a1d2b14768be
-    // Valid from: Tue Aug 16 17:00:00 PDT 2016 until: Fri Nov 16 15:59:59 PST 2018
-    private static final String REVOKED = "-----BEGIN CERTIFICATE-----\n"
-            + "MIIIGzCCBwOgAwIBAgIRAP9uyujHP5tcqBGh0rFHaL4wDQYJKoZIhvcNAQELBQAw\n"
-            + "gZIxCzAJBgNVBAYTAkdCMRswGQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAO\n"
-            + "BgNVBAcTB1NhbGZvcmQxGjAYBgNVBAoTEUNPTU9ETyBDQSBMaW1pdGVkMTgwNgYD\n"
-            + "VQQDEy9DT01PRE8gUlNBIEV4dGVuZGVkIFZhbGlkYXRpb24gU2VjdXJlIFNlcnZl\n"
-            + "ciBDQTAeFw0xNjA4MTcwMDAwMDBaFw0xODExMTYyMzU5NTlaMIIBXTERMA8GA1UE\n"
-            + "BRMIMDQwNTg2OTAxEzARBgsrBgEEAYI3PAIBAxMCR0IxHTAbBgNVBA8TFFByaXZh\n"
-            + "dGUgT3JnYW5pemF0aW9uMQswCQYDVQQGEwJHQjEPMA0GA1UEERMGTTUgM0VRMRsw\n"
-            + "GQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQxFjAU\n"
-            + "BgNVBAkTDVRyYWZmb3JkIFJvYWQxFjAUBgNVBAkTDUV4Y2hhbmdlIFF1YXkxJTAj\n"
-            + "BgNVBAkTHDNyZCBGbG9vciwgMjYgT2ZmaWNlIFZpbGxhZ2UxGjAYBgNVBAoTEUNP\n"
-            + "TU9ETyBDQSBMaW1pdGVkMRowGAYDVQQLExFDT01PRE8gRVYgU0dDIFNTTDE4MDYG\n"
-            + "A1UEAxMvY29tb2RvcnNhY2VydGlmaWNhdGlvbmF1dGhvcml0eS1ldi5jb21vZG9j\n"
-            + "YS5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDQ/3mUAU46QQ7L\n"
-            + "rXisJfs6U4rRfLSc8BwIXEBwtgGixfxiZda548eDn3pTISoTdTnfSlOqJxxjndsO\n"
-            + "Jg+BImCvU6V8LsE8s35App5KsWY2CtygCTdNd6OC/vMtc7BlVLpaTfxnzGsU2+F3\n"
-            + "ZnknpEz/dT4cN8Xs4owat7GvvtazuUQWk9SB3h4R74gvVjaxvAiIP4+TMgvYuNy2\n"
-            + "R4kVyxEdS80/zAiEbIhuQBG4mF1eQTXeUooh7QSdatGSR/gMS9hEWk+NVQqaW6Gc\n"
-            + "E4ZiRhqJMvRVo6es/FOhJ8dHwDCSGTRM1uiwCRSjxMpxFNNOIxRQhLpj1KqgguKI\n"
-            + "MbpaYWPNAgMBAAGjggOcMIIDmDAfBgNVHSMEGDAWgBQ52v/KKBSKqHQTCLnkDqnS\n"
-            + "+n6daTAdBgNVHQ4EFgQUPkuGYSK8DqHhrPQQU+Ll6vPVMf4wDgYDVR0PAQH/BAQD\n"
-            + "AgWgMAwGA1UdEwEB/wQCMAAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMC\n"
-            + "MEYGA1UdIAQ/MD0wOwYMKwYBBAGyMQECAQUBMCswKQYIKwYBBQUHAgEWHWh0dHBz\n"
-            + "Oi8vc2VjdXJlLmNvbW9kby5jb20vQ1BTMFYGA1UdHwRPME0wS6BJoEeGRWh0dHA6\n"
-            + "Ly9jcmwuY29tb2RvY2EuY29tL0NPTU9ET1JTQUV4dGVuZGVkVmFsaWRhdGlvblNl\n"
-            + "Y3VyZVNlcnZlckNBLmNybDCBhwYIKwYBBQUHAQEEezB5MFEGCCsGAQUFBzAChkVo\n"
-            + "dHRwOi8vY3J0LmNvbW9kb2NhLmNvbS9DT01PRE9SU0FFeHRlbmRlZFZhbGlkYXRp\n"
-            + "b25TZWN1cmVTZXJ2ZXJDQS5jcnQwJAYIKwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmNv\n"
-            + "bW9kb2NhLmNvbTBvBgNVHREEaDBmgi9jb21vZG9yc2FjZXJ0aWZpY2F0aW9uYXV0\n"
-            + "aG9yaXR5LWV2LmNvbW9kb2NhLmNvbYIzd3d3LmNvbW9kb3JzYWNlcnRpZmljYXRp\n"
-            + "b25hdXRob3JpdHktZXYuY29tb2RvY2EuY29tMIIBfAYKKwYBBAHWeQIEAgSCAWwE\n"
-            + "ggFoAWYAdQBo9pj4H2SCvjqM7rkoHUz8cVFdZ5PURNEKZ6y7T0/7xAAAAVaYyfL5\n"
-            + "AAAEAwBGMEQCIBW1F2heN1IccknFpDVED66I/tb4BpkqWLwqzn5dwWQXAiAzSPv7\n"
-            + "1zuXUelPvK6l1gOLB/6VlD7gwVGg7M3B1+Vt7wB1AFYUBpov18Ls0/XhvUSyPsdG\n"
-            + "drm8mRFcwO+UmFXWidDdAAABVpjJ8k0AAAQDAEYwRAIgfTjxLr4edpWLyOGi32TW\n"
-            + "48I3c0YWQMM5qsMe7zDzdrACIBng0I2+XksdOXoz5CKMAZGYict+TnZ/p7sRPAYo\n"
-            + "dl05AHYA7ku9t3XOYLrhQmkfq+GeZqMPfl+wctiDAMR7iXqo/csAAAFWmMnyzgAA\n"
-            + "BAMARzBFAiBiTeFCsfBnC4gKolnPUpL5S0eEkb0esucY40qhPqUnDgIhAOZrZz3G\n"
-            + "fLtEq73nEdAfvocUQC7IdMTEJRceb25Pk5J/MA0GCSqGSIb3DQEBCwUAA4IBAQBB\n"
-            + "YldVJKeAwqpPejxa0h3n3G8WefmAJXJtBcMKMDZ8thofgOyVDnVTkNVtY5UwwV8D\n"
-            + "a0bt0UhCzr88v7BrZ8PNci3qiTQgGz9q27s4x64og47sGREoil/0h3xdZ8cWVsAa\n"
-            + "i/aIHD0frCktX/PUZClpAuTQwJgKHurl1Apn1+RVZ3gozebOOopXmopscgp3FQV0\n"
-            + "RqBVietPoq6koeaJKf2ux102yW/Ef4RxXLJOLZ7ynV4tbIGyz4q+RhXbDknNrUcZ\n"
-            + "ugRTCaWUQ3cxtFQjA6MvY4G4eTycyiQTf/qFH5D7mrqY9ZLUuwH3AgLx49UZvQMk\n"
-            + "03iaUVSV6CNAsQVv4S5p\n"
-            + "-----END CERTIFICATE-----";
+    // Issuer: CN=COMODO RSA Extended Validation Secure Server CA, O=COMODO CA Limited, L=Salford,
+    // ST=Greater Manchester, C=GB
+    // Serial number: d3df2597cbed1ab6e02ee82021771614
+    // Valid from: Wed Nov 28 16:00:00 PST 2018 until: Fri Feb 26 15:59:59 PST 2021
+    private static final String REVOKED = "-----BEGIN CERTIFICATE-----\n" +
+            "MIIH7jCCBtagAwIBAgIRANPfJZfL7Rq24C7oICF3FhQwDQYJKoZIhvcNAQELBQAw\n" +
+            "gZIxCzAJBgNVBAYTAkdCMRswGQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAO\n" +
+            "BgNVBAcTB1NhbGZvcmQxGjAYBgNVBAoTEUNPTU9ETyBDQSBMaW1pdGVkMTgwNgYD\n" +
+            "VQQDEy9DT01PRE8gUlNBIEV4dGVuZGVkIFZhbGlkYXRpb24gU2VjdXJlIFNlcnZl\n" +
+            "ciBDQTAeFw0xODExMjkwMDAwMDBaFw0yMTAyMjYyMzU5NTlaMIIBWzERMA8GA1UE\n" +
+            "BRMIMDQwNTg2OTAxEzARBgsrBgEEAYI3PAIBAxMCR0IxHTAbBgNVBA8TFFByaXZh\n" +
+            "dGUgT3JnYW5pemF0aW9uMQswCQYDVQQGEwJHQjEPMA0GA1UEERMGTTUgM0VRMRsw\n" +
+            "GQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQxFjAU\n" +
+            "BgNVBAkTDVRyYWZmb3JkIFJvYWQxFjAUBgNVBAkTDUV4Y2hhbmdlIFF1YXkxJTAj\n" +
+            "BgNVBAkTHDNyZCBGbG9vciwgMjYgT2ZmaWNlIFZpbGxhZ2UxGDAWBgNVBAoTD1Nl\n" +
+            "Y3RpZ28gTGltaXRlZDEaMBgGA1UECxMRQ09NT0RPIEVWIFNHQyBTU0wxODA2BgNV\n" +
+            "BAMTL2NvbW9kb3JzYWNlcnRpZmljYXRpb25hdXRob3JpdHktZXYuY29tb2RvY2Eu\n" +
+            "Y29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0P95lAFOOkEOy614\n" +
+            "rCX7OlOK0Xy0nPAcCFxAcLYBosX8YmXWuePHg596UyEqE3U530pTqiccY53bDiYP\n" +
+            "gSJgr1OlfC7BPLN+QKaeSrFmNgrcoAk3TXejgv7zLXOwZVS6Wk38Z8xrFNvhd2Z5\n" +
+            "J6RM/3U+HDfF7OKMGrexr77Ws7lEFpPUgd4eEe+IL1Y2sbwIiD+PkzIL2LjctkeJ\n" +
+            "FcsRHUvNP8wIhGyIbkARuJhdXkE13lKKIe0EnWrRkkf4DEvYRFpPjVUKmluhnBOG\n" +
+            "YkYaiTL0VaOnrPxToSfHR8Awkhk0TNbosAkUo8TKcRTTTiMUUIS6Y9SqoILiiDG6\n" +
+            "WmFjzQIDAQABo4IDcTCCA20wHwYDVR0jBBgwFoAUOdr/yigUiqh0Ewi55A6p0vp+\n" +
+            "nWkwHQYDVR0OBBYEFD5LhmEivA6h4az0EFPi5erz1TH+MA4GA1UdDwEB/wQEAwIF\n" +
+            "oDAMBgNVHRMBAf8EAjAAMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjBP\n" +
+            "BgNVHSAESDBGMDsGDCsGAQQBsjEBAgEFATArMCkGCCsGAQUFBwIBFh1odHRwczov\n" +
+            "L3NlY3VyZS5jb21vZG8uY29tL0NQUzAHBgVngQwBATBWBgNVHR8ETzBNMEugSaBH\n" +
+            "hkVodHRwOi8vY3JsLmNvbW9kb2NhLmNvbS9DT01PRE9SU0FFeHRlbmRlZFZhbGlk\n" +
+            "YXRpb25TZWN1cmVTZXJ2ZXJDQS5jcmwwgYcGCCsGAQUFBwEBBHsweTBRBggrBgEF\n" +
+            "BQcwAoZFaHR0cDovL2NydC5jb21vZG9jYS5jb20vQ09NT0RPUlNBRXh0ZW5kZWRW\n" +
+            "YWxpZGF0aW9uU2VjdXJlU2VydmVyQ0EuY3J0MCQGCCsGAQUFBzABhhhodHRwOi8v\n" +
+            "b2NzcC5jb21vZG9jYS5jb20wOgYDVR0RBDMwMYIvY29tb2RvcnNhY2VydGlmaWNh\n" +
+            "dGlvbmF1dGhvcml0eS1ldi5jb21vZG9jYS5jb20wggF9BgorBgEEAdZ5AgQCBIIB\n" +
+            "bQSCAWkBZwB1AO5Lvbd1zmC64UJpH6vhnmajD35fsHLYgwDEe4l6qP3LAAABZ2Bx\n" +
+            "+EAAAAQDAEYwRAIgXot8xi2N4oV6A8n2aXJ/TI6oI5t30ZgiyR3jF8nY8tYCIGBB\n" +
+            "e7sTFniA3vzfxhMbYsyAEy50PNFCaqLjNoyOaGNqAHYAb1N2rDHwMRnYmQCkURX/\n" +
+            "dxUcEdkCwQApBo2yCJo32RMAAAFnYHH4LQAABAMARzBFAiBq8utPzn0fL5zPPQNB\n" +
+            "gueIXEFDXPw8s5D+pzD6+ySwegIhAJUCgsW++nO2JwYNwJTxPsHOWs7WpXqXCsVC\n" +
+            "/FlJ1HHbAHYAu9nfvB+KcbWTlCOXqpJ7RzhXlQqrUugakJZkNo4e0YUAAAFnYHH4\n" +
+            "OAAABAMARzBFAiA7rSUo9XVQDb3CBLo85qFMzYzsylF223s0u4WXQTUGqQIhAKJq\n" +
+            "j602nEd4imaE9Wr7OWdIbbhLcNm5dhVZerk4MD6GMA0GCSqGSIb3DQEBCwUAA4IB\n" +
+            "AQBPeidaCGBGyFDK60+Eh8GyKQSMowcRA74B6C+JlQYTBtl024xAV7d3fnbULtzY\n" +
+            "rs5EGxlEPIR/ZLAETTdEi1mAalXAi2l1QDrmTeOGW+FZXlcXQuNeg56D9gkApftR\n" +
+            "yFFRLNScchNDsMwR3UOlJnD05DJk1J+SeNvOlefwfDHIlZBiQIrSxdWS8GIIkKLp\n" +
+            "4PIy+N4lgNEudi2LuRheEjmrkN9+NcKlU+v7lzlwCfWCDna2hacGRPRo5fAao5O0\n" +
+            "mlUzAYm76dn5dGGBVVqA0cfWnUeVfSTrlVb/QN+uYno4vIrpR5VBYPuJYU47vgzL\n" +
+            "YrTYerPngjPbZB0bfLOja0vb\n" +
+            "-----END CERTIFICATE-----";
 
     public void runTest(ValidatePathWithParams pathValidator) throws Exception {
         // Validate valid
@@ -226,7 +225,7 @@ class ComodoRSA {
         // Validate Revoked
         pathValidator.validate(new String[]{REVOKED, INT},
                 ValidatePathWithParams.Status.REVOKED,
-                "Fri Jun 30 07:20:56 PDT 2017", System.out);
+                "Wed Oct 02 06:06:24 PDT 2019", System.out);
     }
 }
 
@@ -261,99 +260,96 @@ class ComodoECC {
             + "lnxmeeOBnnCaDIxAcA3aCj2Gtdt3sA==\n"
             + "-----END CERTIFICATE-----";
 
-    // Owner: CN=comodoecccertificationauthority-ev.comodoca.com, OU=COMODO EV SSL,
-    // O=COMODO CA Limited, STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay,
-    // STREET=Trafford Road, L=Salford, ST=Greater Manchester, OID.2.5.4.17=M5 3EQ,
-    // C=GB, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.3=GB,
+    // Owner: CN=comodoecccertificationauthority-ev.comodoca.com, OU=COMODO EV SSL, O=Sectigo Limited,
+    // STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay, STREET=Trafford Road, L=Salford,
+    // OID.2.5.4.17=M5 3EQ, C=GB, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.3=GB,
     // SERIALNUMBER=04058690
-    // Issuer: CN=COMODO ECC Extended Validation Secure Server CA, O=COMODO CA Limited,
-    // L=Salford, ST=Greater Manchester, C=GB
-    // Serial number: 414e5d66ec7d15ca504213f2811d57af
-    // Valid from: Mon Jul 03 17:00:00 PDT 2017 until: Thu Oct 03 16:59:59 PDT 2019
-    private static final String VALID = "-----BEGIN CERTIFICATE-----\n"
-            + "MIIGYDCCBgWgAwIBAgIQQU5dZux9FcpQQhPygR1XrzAKBggqhkjOPQQDAjCBkjEL\n"
-            + "MAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE\n"
-            + "BxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxODA2BgNVBAMT\n"
-            + "L0NPTU9ETyBFQ0MgRXh0ZW5kZWQgVmFsaWRhdGlvbiBTZWN1cmUgU2VydmVyIENB\n"
-            + "MB4XDTE3MDcwNDAwMDAwMFoXDTE5MTAwMzIzNTk1OVowggFZMREwDwYDVQQFEwgw\n"
-            + "NDA1ODY5MDETMBEGCysGAQQBgjc8AgEDEwJHQjEdMBsGA1UEDxMUUHJpdmF0ZSBP\n"
-            + "cmdhbml6YXRpb24xCzAJBgNVBAYTAkdCMQ8wDQYDVQQREwZNNSAzRVExGzAZBgNV\n"
-            + "BAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEWMBQGA1UE\n"
-            + "CRMNVHJhZmZvcmQgUm9hZDEWMBQGA1UECRMNRXhjaGFuZ2UgUXVheTElMCMGA1UE\n"
-            + "CRMcM3JkIEZsb29yLCAyNiBPZmZpY2UgVmlsbGFnZTEaMBgGA1UEChMRQ09NT0RP\n"
-            + "IENBIExpbWl0ZWQxFjAUBgNVBAsTDUNPTU9ETyBFViBTU0wxODA2BgNVBAMTL2Nv\n"
-            + "bW9kb2VjY2NlcnRpZmljYXRpb25hdXRob3JpdHktZXYuY29tb2RvY2EuY29tMFkw\n"
-            + "EwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEt26qBS7TRu/yfR+RiqLAzW2C+UspFZlO\n"
-            + "Rc4EhLfNYMgFkoZKjEnwJzudH6a+uRPqPOhPgUd6PFfRQFOcLjmhgaOCA3EwggNt\n"
-            + "MB8GA1UdIwQYMBaAFNNOwxm6WFnRHGC3YVNHO6d3j/iKMB0GA1UdDgQWBBTpZ0tz\n"
-            + "KscFw6Z3vCEDFzGR5VSkVzAOBgNVHQ8BAf8EBAMCBYAwDAYDVR0TAQH/BAIwADAd\n"
-            + "BgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwTwYDVR0gBEgwRjA7BgwrBgEE\n"
-            + "AbIxAQIBBQEwKzApBggrBgEFBQcCARYdaHR0cHM6Ly9zZWN1cmUuY29tb2RvLmNv\n"
-            + "bS9DUFMwBwYFZ4EMAQEwVgYDVR0fBE8wTTBLoEmgR4ZFaHR0cDovL2NybC5jb21v\n"
-            + "ZG9jYS5jb20vQ09NT0RPRUNDRXh0ZW5kZWRWYWxpZGF0aW9uU2VjdXJlU2VydmVy\n"
-            + "Q0EuY3JsMIGHBggrBgEFBQcBAQR7MHkwUQYIKwYBBQUHMAKGRWh0dHA6Ly9jcnQu\n"
-            + "Y29tb2RvY2EuY29tL0NPTU9ET0VDQ0V4dGVuZGVkVmFsaWRhdGlvblNlY3VyZVNl\n"
-            + "cnZlckNBLmNydDAkBggrBgEFBQcwAYYYaHR0cDovL29jc3AuY29tb2RvY2EuY29t\n"
-            + "MDoGA1UdEQQzMDGCL2NvbW9kb2VjY2NlcnRpZmljYXRpb25hdXRob3JpdHktZXYu\n"
-            + "Y29tb2RvY2EuY29tMIIBfQYKKwYBBAHWeQIEAgSCAW0EggFpAWcAdgCkuQmQtBhY\n"
-            + "FIe7E6LMZ3AKPDWYBPkb37jjd80OyA3cEAAAAV0NLqsqAAAEAwBHMEUCIAz9Jjq3\n"
-            + "qLUd/a2PYZnLGsEG/MrL7vab5rmGBg8RGAJxAiEA7JJnar07NIjCLLO77xJ3UFcu\n"
-            + "UMM3M8JgGC8wbuRwxbUAdgBWFAaaL9fC7NP14b1Esj7HRna5vJkRXMDvlJhV1onQ\n"
-            + "3QAAAV0NLqjmAAAEAwBHMEUCIHRvPWKr7vPMBWx1gLPkt8inPINWPNSoax178e5A\n"
-            + "D0cPAiEAvRL/VP4DLiyHvcU9AOqTzQXGuWCzswWKG59hSm7gS4kAdQDuS723dc5g\n"
-            + "uuFCaR+r4Z5mow9+X7By2IMAxHuJeqj9ywAAAV0NLqsDAAAEAwBGMEQCIFALT043\n"
-            + "X5IffLsxIAGXTrWgkZHf12QKgrYKXVB629eOAiAIeci2xi3fUW6mU8tT4LwyjowV\n"
-            + "DkrSCw1ZMo0JApsfzTAKBggqhkjOPQQDAgNJADBGAiEA7HUxjwx0MBC+4PuPx4Z1\n"
-            + "WpKz7jdHOMTh1sdaoVV5hNoCIQDrnjBFUopXHTvm/rj+aMFIeYejggPqv14KJOqT\n"
-            + "gym+uA==\n"
-            + "-----END CERTIFICATE-----";
+    // Issuer: CN=COMODO ECC Extended Validation Secure Server CA, O=COMODO CA Limited, L=Salford,
+    // ST=Greater Manchester, C=GB
+    // Serial number: 7972d9d8472a2d52ad1ee6edfb16cbe1
+    // Valid from: Sun Sep 29 17:00:00 PDT 2019 until: Tue Dec 28 15:59:59 PST 2021
+    private static final String VALID = "-----BEGIN CERTIFICATE-----\n" +
+            "MIIGPzCCBeWgAwIBAgIQeXLZ2EcqLVKtHubt+xbL4TAKBggqhkjOPQQDAjCBkjEL\n" +
+            "MAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE\n" +
+            "BxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxODA2BgNVBAMT\n" +
+            "L0NPTU9ETyBFQ0MgRXh0ZW5kZWQgVmFsaWRhdGlvbiBTZWN1cmUgU2VydmVyIENB\n" +
+            "MB4XDTE5MDkzMDAwMDAwMFoXDTIxMTIyODIzNTk1OVowggE6MREwDwYDVQQFEwgw\n" +
+            "NDA1ODY5MDETMBEGCysGAQQBgjc8AgEDEwJHQjEdMBsGA1UEDxMUUHJpdmF0ZSBP\n" +
+            "cmdhbml6YXRpb24xCzAJBgNVBAYTAkdCMQ8wDQYDVQQREwZNNSAzRVExEDAOBgNV\n" +
+            "BAcTB1NhbGZvcmQxFjAUBgNVBAkTDVRyYWZmb3JkIFJvYWQxFjAUBgNVBAkTDUV4\n" +
+            "Y2hhbmdlIFF1YXkxJTAjBgNVBAkTHDNyZCBGbG9vciwgMjYgT2ZmaWNlIFZpbGxh\n" +
+            "Z2UxGDAWBgNVBAoTD1NlY3RpZ28gTGltaXRlZDEWMBQGA1UECxMNQ09NT0RPIEVW\n" +
+            "IFNTTDE4MDYGA1UEAxMvY29tb2RvZWNjY2VydGlmaWNhdGlvbmF1dGhvcml0eS1l\n" +
+            "di5jb21vZG9jYS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAS3bqoFLtNG\n" +
+            "7/J9H5GKosDNbYL5SykVmU5FzgSEt81gyAWShkqMSfAnO50fpr65E+o86E+BR3o8\n" +
+            "V9FAU5wuOaGBo4IDcDCCA2wwHwYDVR0jBBgwFoAU007DGbpYWdEcYLdhU0c7p3eP\n" +
+            "+IowHQYDVR0OBBYEFOlnS3MqxwXDpne8IQMXMZHlVKRXMA4GA1UdDwEB/wQEAwIF\n" +
+            "gDAMBgNVHRMBAf8EAjAAMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjBP\n" +
+            "BgNVHSAESDBGMDsGDCsGAQQBsjEBAgEFATArMCkGCCsGAQUFBwIBFh1odHRwczov\n" +
+            "L3NlY3VyZS5jb21vZG8uY29tL0NQUzAHBgVngQwBATBWBgNVHR8ETzBNMEugSaBH\n" +
+            "hkVodHRwOi8vY3JsLmNvbW9kb2NhLmNvbS9DT01PRE9FQ0NFeHRlbmRlZFZhbGlk\n" +
+            "YXRpb25TZWN1cmVTZXJ2ZXJDQS5jcmwwgYcGCCsGAQUFBwEBBHsweTBRBggrBgEF\n" +
+            "BQcwAoZFaHR0cDovL2NydC5jb21vZG9jYS5jb20vQ09NT0RPRUNDRXh0ZW5kZWRW\n" +
+            "YWxpZGF0aW9uU2VjdXJlU2VydmVyQ0EuY3J0MCQGCCsGAQUFBzABhhhodHRwOi8v\n" +
+            "b2NzcC5jb21vZG9jYS5jb20wOgYDVR0RBDMwMYIvY29tb2RvZWNjY2VydGlmaWNh\n" +
+            "dGlvbmF1dGhvcml0eS1ldi5jb21vZG9jYS5jb20wggF8BgorBgEEAdZ5AgQCBIIB\n" +
+            "bASCAWgBZgB1AO5Lvbd1zmC64UJpH6vhnmajD35fsHLYgwDEe4l6qP3LAAABbYME\n" +
+            "EzgAAAQDAEYwRAIgbdo71lBleuJiq+D0ZLp51oVUyWD9EyrtgBSCNwIW4cMCIAqg\n" +
+            "0VFTWHEmAVjaV23fGj3Ybu3mpSiHr6viGlgA2lYaAHUAVYHUwhaQNgFK6gubVzxT\n" +
+            "8MDkOHhwJQgXL6OqHQcT0wwAAAFtgwQTKAAABAMARjBEAiBb/gW1RU7kgFBiNpHx\n" +
+            "LStujKIocyENUTXsMbsac+LktwIgXbEr8vOOCEdBdXQ2F/FKec8ft6gz57mHNmwl\n" +
+            "pp7phbQAdgC72d+8H4pxtZOUI5eqkntHOFeVCqtS6BqQlmQ2jh7RhQAAAW2DBBM6\n" +
+            "AAAEAwBHMEUCIQDjKN3h86ofR94+JxLFoYuoA+DRtxEY8XGg+NQXlZfUrgIgEoO2\n" +
+            "ZzKbGfohdwj/WtDwJDRX5pjXF4M0nECiwtYXDIwwCgYIKoZIzj0EAwIDSAAwRQIg\n" +
+            "AkIRVQBwrElFjrnqk5XPvnlnwkIm1A70ayqOf1FexoQCIQC8tBTn//RCfrhcgTjd\n" +
+            "ER4wRjFfFoc6lC68OHGVg9CZZg==\n" +
+            "-----END CERTIFICATE-----";
 
-    // Owner: CN=comodoecccertificationauthority-ev.comodoca.com, OU=COMODO EV SSL,
-    // O=COMODO CA Limited, STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay,
-    // STREET=Trafford Road, L=Salford, ST=Greater Manchester, OID.2.5.4.17=M5 3EQ,
-    // C=GB, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.3=GB,
-    // SERIALNUMBER=04058690
-    // Issuer: CN=COMODO ECC Extended Validation Secure Server CA, O=COMODO CA Limited,
-    // L=Salford, ST=Greater Manchester, C=GB
-    // Serial number: 6923086d88824ee9800742fcb82fdaa
-    // Valid from: Tue Aug 16 17:00:00 PDT 2016 until: Fri Nov 16 15:59:59 PST 2018
-    private static final String REVOKED = "-----BEGIN CERTIFICATE-----\n"
-            + "MIIGizCCBjGgAwIBAgIQBpIwhtiIJO6YAHQvy4L9qjAKBggqhkjOPQQDAjCBkjEL\n"
-            + "MAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE\n"
-            + "BxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxODA2BgNVBAMT\n"
-            + "L0NPTU9ETyBFQ0MgRXh0ZW5kZWQgVmFsaWRhdGlvbiBTZWN1cmUgU2VydmVyIENB\n"
-            + "MB4XDTE2MDgxNzAwMDAwMFoXDTE4MTExNjIzNTk1OVowggFZMREwDwYDVQQFEwgw\n"
-            + "NDA1ODY5MDETMBEGCysGAQQBgjc8AgEDEwJHQjEdMBsGA1UEDxMUUHJpdmF0ZSBP\n"
-            + "cmdhbml6YXRpb24xCzAJBgNVBAYTAkdCMQ8wDQYDVQQREwZNNSAzRVExGzAZBgNV\n"
-            + "BAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEWMBQGA1UE\n"
-            + "CRMNVHJhZmZvcmQgUm9hZDEWMBQGA1UECRMNRXhjaGFuZ2UgUXVheTElMCMGA1UE\n"
-            + "CRMcM3JkIEZsb29yLCAyNiBPZmZpY2UgVmlsbGFnZTEaMBgGA1UEChMRQ09NT0RP\n"
-            + "IENBIExpbWl0ZWQxFjAUBgNVBAsTDUNPTU9ETyBFViBTU0wxODA2BgNVBAMTL2Nv\n"
-            + "bW9kb2VjY2NlcnRpZmljYXRpb25hdXRob3JpdHktZXYuY29tb2RvY2EuY29tMFkw\n"
-            + "EwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEt26qBS7TRu/yfR+RiqLAzW2C+UspFZlO\n"
-            + "Rc4EhLfNYMgFkoZKjEnwJzudH6a+uRPqPOhPgUd6PFfRQFOcLjmhgaOCA50wggOZ\n"
-            + "MB8GA1UdIwQYMBaAFNNOwxm6WFnRHGC3YVNHO6d3j/iKMB0GA1UdDgQWBBTpZ0tz\n"
-            + "KscFw6Z3vCEDFzGR5VSkVzAOBgNVHQ8BAf8EBAMCBYAwDAYDVR0TAQH/BAIwADAd\n"
-            + "BgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwRgYDVR0gBD8wPTA7BgwrBgEE\n"
-            + "AbIxAQIBBQEwKzApBggrBgEFBQcCARYdaHR0cHM6Ly9zZWN1cmUuY29tb2RvLmNv\n"
-            + "bS9DUFMwVgYDVR0fBE8wTTBLoEmgR4ZFaHR0cDovL2NybC5jb21vZG9jYS5jb20v\n"
-            + "Q09NT0RPRUNDRXh0ZW5kZWRWYWxpZGF0aW9uU2VjdXJlU2VydmVyQ0EuY3JsMIGH\n"
-            + "BggrBgEFBQcBAQR7MHkwUQYIKwYBBQUHMAKGRWh0dHA6Ly9jcnQuY29tb2RvY2Eu\n"
-            + "Y29tL0NPTU9ET0VDQ0V4dGVuZGVkVmFsaWRhdGlvblNlY3VyZVNlcnZlckNBLmNy\n"
-            + "dDAkBggrBgEFBQcwAYYYaHR0cDovL29jc3AuY29tb2RvY2EuY29tMG8GA1UdEQRo\n"
-            + "MGaCL2NvbW9kb2VjY2NlcnRpZmljYXRpb25hdXRob3JpdHktZXYuY29tb2RvY2Eu\n"
-            + "Y29tgjN3d3cuY29tb2RvZWNjY2VydGlmaWNhdGlvbmF1dGhvcml0eS1ldi5jb21v\n"
-            + "ZG9jYS5jb20wggF9BgorBgEEAdZ5AgQCBIIBbQSCAWkBZwB3AGj2mPgfZIK+Oozu\n"
-            + "uSgdTPxxUV1nk9RE0QpnrLtPT/vEAAABVpjKocAAAAQDAEgwRgIhAKIobm0UJdom\n"
-            + "Hrg1HZv6ESYoYQtlqBj5bR5Ge8RGF+7pAiEAupYu0q3X27KNIsrQpmSzfiEsCQWY\n"
-            + "C97ToQgEhbBNZUYAdQBWFAaaL9fC7NP14b1Esj7HRna5vJkRXMDvlJhV1onQ3QAA\n"
-            + "AVaYyqEdAAAEAwBGMEQCIEWbMoAJpig9oTbuW2R1x/sZwDbt0Z1iUhkbEwqhkRWu\n"
-            + "AiByCmEY/MEtEmVcsu3uMXtJ/SMBo1JcfFCHbPf5VleQpAB1AO5Lvbd1zmC64UJp\n"
-            + "H6vhnmajD35fsHLYgwDEe4l6qP3LAAABVpjKoaYAAAQDAEYwRAIgVB/p/u8amjg4\n"
-            + "Qlq0rKv4oYYqIVKL/kFtpeH3Lm4hpnwCIDYdBZBo2cpF+KjKDn68kqFysy7MbP9r\n"
-            + "h/zPjAm72GeRMAoGCCqGSM49BAMCA0gAMEUCIHL5pdruv0yoFggKHPN7PXT4BfRr\n"
-            + "1ksLXKgF/xANjsuFAiEA9bt7u96U5OrAzJBgSkJFmNE20vEdwoQDL+99JeX4bAc=\n"
-            + "-----END CERTIFICATE-----";
+    // Owner: CN=comodoecccertificationauthority-ev.comodoca.com, OU=COMODO EV SSL, O=Sectigo Limited,
+    // STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay, STREET=Trafford Road, L=Salford,
+    // ST=Greater Manchester, OID.2.5.4.17=M5 3EQ, C=GB, OID.2.5.4.15=Private Organization,
+    // OID.1.3.6.1.4.1.311.60.2.1.3=GB, SERIALNUMBER=04058690
+    // Issuer: CN=COMODO ECC Extended Validation Secure Server CA, O=COMODO CA Limited, L=Salford,
+    // ST=Greater Manchester, C=GB
+    // Serial number: 603a5c2f85b63e00ba46ce8c3f6000b0
+    // Valid from: Wed Nov 28 16:00:00 PST 2018 until: Fri Feb 26 15:59:59 PST 2021
+    private static final String REVOKED = "-----BEGIN CERTIFICATE-----\n" +
+            "MIIGXzCCBgWgAwIBAgIQYDpcL4W2PgC6Rs6MP2AAsDAKBggqhkjOPQQDAjCBkjEL\n" +
+            "MAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE\n" +
+            "BxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxODA2BgNVBAMT\n" +
+            "L0NPTU9ETyBFQ0MgRXh0ZW5kZWQgVmFsaWRhdGlvbiBTZWN1cmUgU2VydmVyIENB\n" +
+            "MB4XDTE4MTEyOTAwMDAwMFoXDTIxMDIyNjIzNTk1OVowggFXMREwDwYDVQQFEwgw\n" +
+            "NDA1ODY5MDETMBEGCysGAQQBgjc8AgEDEwJHQjEdMBsGA1UEDxMUUHJpdmF0ZSBP\n" +
+            "cmdhbml6YXRpb24xCzAJBgNVBAYTAkdCMQ8wDQYDVQQREwZNNSAzRVExGzAZBgNV\n" +
+            "BAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEWMBQGA1UE\n" +
+            "CRMNVHJhZmZvcmQgUm9hZDEWMBQGA1UECRMNRXhjaGFuZ2UgUXVheTElMCMGA1UE\n" +
+            "CRMcM3JkIEZsb29yLCAyNiBPZmZpY2UgVmlsbGFnZTEYMBYGA1UEChMPU2VjdGln\n" +
+            "byBMaW1pdGVkMRYwFAYDVQQLEw1DT01PRE8gRVYgU1NMMTgwNgYDVQQDEy9jb21v\n" +
+            "ZG9lY2NjZXJ0aWZpY2F0aW9uYXV0aG9yaXR5LWV2LmNvbW9kb2NhLmNvbTBZMBMG\n" +
+            "ByqGSM49AgEGCCqGSM49AwEHA0IABLduqgUu00bv8n0fkYqiwM1tgvlLKRWZTkXO\n" +
+            "BIS3zWDIBZKGSoxJ8Cc7nR+mvrkT6jzoT4FHejxX0UBTnC45oYGjggNzMIIDbzAf\n" +
+            "BgNVHSMEGDAWgBTTTsMZulhZ0Rxgt2FTRzund4/4ijAdBgNVHQ4EFgQU6WdLcyrH\n" +
+            "BcOmd7whAxcxkeVUpFcwDgYDVR0PAQH/BAQDAgWAMAwGA1UdEwEB/wQCMAAwHQYD\n" +
+            "VR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCME8GA1UdIARIMEYwOwYMKwYBBAGy\n" +
+            "MQECAQUBMCswKQYIKwYBBQUHAgEWHWh0dHBzOi8vc2VjdXJlLmNvbW9kby5jb20v\n" +
+            "Q1BTMAcGBWeBDAEBMFYGA1UdHwRPME0wS6BJoEeGRWh0dHA6Ly9jcmwuY29tb2Rv\n" +
+            "Y2EuY29tL0NPTU9ET0VDQ0V4dGVuZGVkVmFsaWRhdGlvblNlY3VyZVNlcnZlckNB\n" +
+            "LmNybDCBhwYIKwYBBQUHAQEEezB5MFEGCCsGAQUFBzAChkVodHRwOi8vY3J0LmNv\n" +
+            "bW9kb2NhLmNvbS9DT01PRE9FQ0NFeHRlbmRlZFZhbGlkYXRpb25TZWN1cmVTZXJ2\n" +
+            "ZXJDQS5jcnQwJAYIKwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmNvbW9kb2NhLmNvbTA6\n" +
+            "BgNVHREEMzAxgi9jb21vZG9lY2NjZXJ0aWZpY2F0aW9uYXV0aG9yaXR5LWV2LmNv\n" +
+            "bW9kb2NhLmNvbTCCAX8GCisGAQQB1nkCBAIEggFvBIIBawFpAHYA7ku9t3XOYLrh\n" +
+            "Qmkfq+GeZqMPfl+wctiDAMR7iXqo/csAAAFnYHQLpwAABAMARzBFAiB0pm9GZG/W\n" +
+            "REFW/umEd07eSzGsPZpRkOXahkiAmXiuxgIhAOiYZKB4Gr4JlAuQsajqbrS715L9\n" +
+            "03E7walRViBHMA3XAHcAb1N2rDHwMRnYmQCkURX/dxUcEdkCwQApBo2yCJo32RMA\n" +
+            "AAFnYHQLmwAABAMASDBGAiEAqUN6xU8mcNaYExuxUSZQR1WP5SZrgrDnAl+DN4t3\n" +
+            "R1MCIQCJseJMXtpzP2jB1d1sz/WS6pDERjutjYc0ko//m+WjlAB2ALvZ37wfinG1\n" +
+            "k5Qjl6qSe0c4V5UKq1LoGpCWZDaOHtGFAAABZ2B0C6cAAAQDAEcwRQIgI42QfFzd\n" +
+            "f9W0a383BnL3nGgLQinrd7usIbA81LwOvlECIQD+fmSDEs6lwsS5EGtIvygWMs2F\n" +
+            "7FWI1I8ucE0ikP+wCjAKBggqhkjOPQQDAgNIADBFAiB3P9kNVyLpA8tovSGeRvdx\n" +
+            "VfA0Slz//EIeeHhbHz7D/AIhAN+WFuDimGKE1XcKrmucSBLSrYGWlY8XJcF6en3v\n" +
+            "KOC7\n" +
+            "-----END CERTIFICATE-----";
 
     public void runTest(ValidatePathWithParams pathValidator) throws Exception {
         // Validate valid
@@ -363,11 +359,53 @@ class ComodoECC {
         // Validate Revoked
         pathValidator.validate(new String[]{REVOKED, INT},
                 ValidatePathWithParams.Status.REVOKED,
-                "Tue Jul 04 03:34:40 PDT 2017", System.out);
+                "Wed Oct 02 06:05:57 PDT 2019", System.out);
     }
 }
 
 class ComodoUserTrustRSA {
+
+    // Owner: CN=Sectigo RSA Extended Validation Secure Server CA, O=Sectigo Limited, L=Salford,
+    // ST=Greater Manchester, C=GB
+    // Issuer: CN=USERTrust RSA Certification Authority, O=The USERTRUST Network, L=Jersey City, ST=New Jersey, C=US
+    // Serial number: 284e39c14b386d889c7299e58cd05a57
+    // Valid from: Thu Nov 01 17:00:00 PDT 2018 until: Tue Dec 31 15:59:59 PST 2030
+    private static final String INT_VALID = "-----BEGIN CERTIFICATE-----\n" +
+            "MIIGNDCCBBygAwIBAgIQKE45wUs4bYiccpnljNBaVzANBgkqhkiG9w0BAQwFADCB\n" +
+            "iDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCk5ldyBKZXJzZXkxFDASBgNVBAcTC0pl\n" +
+            "cnNleSBDaXR5MR4wHAYDVQQKExVUaGUgVVNFUlRSVVNUIE5ldHdvcmsxLjAsBgNV\n" +
+            "BAMTJVVTRVJUcnVzdCBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMTgx\n" +
+            "MTAyMDAwMDAwWhcNMzAxMjMxMjM1OTU5WjCBkTELMAkGA1UEBhMCR0IxGzAZBgNV\n" +
+            "BAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEYMBYGA1UE\n" +
+            "ChMPU2VjdGlnbyBMaW1pdGVkMTkwNwYDVQQDEzBTZWN0aWdvIFJTQSBFeHRlbmRl\n" +
+            "ZCBWYWxpZGF0aW9uIFNlY3VyZSBTZXJ2ZXIgQ0EwggEiMA0GCSqGSIb3DQEBAQUA\n" +
+            "A4IBDwAwggEKAoIBAQCaoslYBiqFev0Yc4TXPa0s9oliMcn9VaENfTUK4GVT7niB\n" +
+            "QXxC6Mt8kTtvyr5lU92hDQDh2WDPQsZ7oibh75t2kowT3z1S+Sy1GsUDM4NbdOde\n" +
+            "orcmzFm/b4bwD4G/G+pB4EX1HSfjN9eT0Hje+AGvCrd2MmnxJ+Yymv9BH9OB65jK\n" +
+            "rUO9Na4iHr48XWBDFvzsPCJ11Uioof6dRBVp+Lauj88Z7k2X8d606HeXn43h6acp\n" +
+            "LLURWyqXM0CrzedVWBzuXKuBEaqD6w/1VpLJvSU+wl3ScvXSLFp82DSRJVJONXWl\n" +
+            "dp9gjJioPGRByeZw11k3galbbF5gFK9xSnbDx29LAgMBAAGjggGNMIIBiTAfBgNV\n" +
+            "HSMEGDAWgBRTeb9aqitKz1SA4dibwJ3ysgNmyzAdBgNVHQ4EFgQULGn/gMmHkK40\n" +
+            "4bTnTJOFmUDpp7IwDgYDVR0PAQH/BAQDAgGGMBIGA1UdEwEB/wQIMAYBAf8CAQAw\n" +
+            "HQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMDoGA1UdIAQzMDEwLwYEVR0g\n" +
+            "ADAnMCUGCCsGAQUFBwIBFhlodHRwczovL2Nwcy51c2VydHJ1c3QuY29tMFAGA1Ud\n" +
+            "HwRJMEcwRaBDoEGGP2h0dHA6Ly9jcmwudXNlcnRydXN0LmNvbS9VU0VSVHJ1c3RS\n" +
+            "U0FDZXJ0aWZpY2F0aW9uQXV0aG9yaXR5LmNybDB2BggrBgEFBQcBAQRqMGgwPwYI\n" +
+            "KwYBBQUHMAKGM2h0dHA6Ly9jcnQudXNlcnRydXN0LmNvbS9VU0VSVHJ1c3RSU0FB\n" +
+            "ZGRUcnVzdENBLmNydDAlBggrBgEFBQcwAYYZaHR0cDovL29jc3AudXNlcnRydXN0\n" +
+            "LmNvbTANBgkqhkiG9w0BAQwFAAOCAgEAQ4AzPxVypLyy3IjUUmVl7FaxrHsXQq2z\n" +
+            "Zt2gKnHQShuA+5xpRPNndjvhHk4D08PZXUe6Im7E5knqxtyl5aYdldb+HI/7f+zd\n" +
+            "W/1ub2N4Vq4ZYUjcZ1ECOFK7Z2zoNicDmU+Fe/TreXPuPsDicTG/tMcWEVM558OQ\n" +
+            "TJkB2LK3ZhGukWM/RTMRcRdXaXOX8Lh0ylzRO1O0ObXytvOFpkkkD92HGsfS06i7\n" +
+            "NLDPJEeZXqzHE5Tqj7VSAj+2luwfaXaPLD8lQEVci8xmsPGOn0mXE1ZzsChEPhVq\n" +
+            "FYQUsbiRJRhidKauhd+G2CkRTcR5fpsuz+iStB9s5Fks9lKoXnn0hv78VYjvR78C\n" +
+            "Cvj5FW/ounHjWTWMb3il9S5ngbFGcelB1l/MQkR63+1ybdi2OpjNWJCftxOWUpkC\n" +
+            "xaRdnOnSj7GQY0NLn8Gtq9FcSZydtkVgXpouSFZkXNS/MYwbcCCcRKBbrk8ss0SI\n" +
+            "Xg1gTURjh9VP1OHm0OktYcUw9e90wHIDn7h0qA+bWOsZquSRzT4s2crF3ZSA3tuV\n" +
+            "/UJ33mjdVO8wBD8aI5y10QreSPJvZHHNDyCmoyjXvNhR+u3arXUoHWxO+MZBeXbi\n" +
+            "iF7Nwn/IEmQvWBW8l6D26CXIavcY1kAJcfyzHkrPbLo+fAOa/KFl3lIU+0biEVNk\n" +
+            "Q9zXE6hC6X4=\n" +
+            "-----END CERTIFICATE-----";
 
     // Owner: CN=USERTrust RSA Extended Validation Secure Server CA,
     // O=The USERTRUST Network, L=Jersey City, ST=New Jersey, C=US
@@ -375,7 +413,7 @@ class ComodoUserTrustRSA {
     // L=Jersey City, ST=New Jersey, C=US
     // Serial number: f6bb751efa7d2e8368e606407334f83
     // Valid from: Sat Feb 11 16:00:00 PST 2012 until: Thu Feb 11 15:59:59 PST 2027
-    private static final String INT = "-----BEGIN CERTIFICATE-----\n"
+    private static final String INT_REVOKED = "-----BEGIN CERTIFICATE-----\n"
             + "MIIGGTCCBAGgAwIBAgIQD2u3Ue+n0ug2jmBkBzNPgzANBgkqhkiG9w0BAQwFADCB\n"
             + "iDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCk5ldyBKZXJzZXkxFDASBgNVBAcTC0pl\n"
             + "cnNleSBDaXR5MR4wHAYDVQQKExVUaGUgVVNFUlRSVVNUIE5ldHdvcmsxLjAsBgNV\n"
@@ -411,130 +449,156 @@ class ComodoUserTrustRSA {
             + "4fokbdNREXoShKClNIPbB5iY+WdSzb9CKLyb96g=\n"
             + "-----END CERTIFICATE-----";
 
-    // Owner: CN=usertrustrsacertificationauthority-ev.comodoca.com, OU=COMODO EV SGC SSL,
-    // O=COMODO CA Limited, STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay,
-    // STREET=Trafford Road, L=Salford, ST=Greater Manchester, OID.2.5.4.17=M5 3EQ,
-    // C=GB, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.3=GB,
+    // Owner: CN=usertrustrsacertificationauthority-ev.comodoca.com, OU=COMODO EV SGC SSL, O=Sectigo Limited,
+    // STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay, STREET=Trafford Road, L=Salford, ST=Manchester,
+    // OID.2.5.4.17=M5 3EQ, C=GB, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.3=GB,
     // SERIALNUMBER=04058690
-    // Issuer: CN=USERTrust RSA Extended Validation Secure Server CA, O=The USERTRUST Network,
-    // L=Jersey City, ST=New Jersey, C=US
-    // Serial number: ffcada019c9fb1155a32300083cb99c9
-    // Valid from: Mon Jul 03 17:00:00 PDT 2017 until: Thu Oct 03 16:59:59 PDT 2019
-    private static final String VALID = "-----BEGIN CERTIFICATE-----\n"
-            + "MIIIATCCBumgAwIBAgIRAP/K2gGcn7EVWjIwAIPLmckwDQYJKoZIhvcNAQELBQAw\n"
-            + "gZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpOZXcgSmVyc2V5MRQwEgYDVQQHEwtK\n"
-            + "ZXJzZXkgQ2l0eTEeMBwGA1UEChMVVGhlIFVTRVJUUlVTVCBOZXR3b3JrMTswOQYD\n"
-            + "VQQDEzJVU0VSVHJ1c3QgUlNBIEV4dGVuZGVkIFZhbGlkYXRpb24gU2VjdXJlIFNl\n"
-            + "cnZlciBDQTAeFw0xNzA3MDQwMDAwMDBaFw0xOTEwMDMyMzU5NTlaMIIBYDERMA8G\n"
-            + "A1UEBRMIMDQwNTg2OTAxEzARBgsrBgEEAYI3PAIBAxMCR0IxHTAbBgNVBA8TFFBy\n"
-            + "aXZhdGUgT3JnYW5pemF0aW9uMQswCQYDVQQGEwJHQjEPMA0GA1UEERMGTTUgM0VR\n"
-            + "MRswGQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQx\n"
-            + "FjAUBgNVBAkTDVRyYWZmb3JkIFJvYWQxFjAUBgNVBAkTDUV4Y2hhbmdlIFF1YXkx\n"
-            + "JTAjBgNVBAkTHDNyZCBGbG9vciwgMjYgT2ZmaWNlIFZpbGxhZ2UxGjAYBgNVBAoT\n"
-            + "EUNPTU9ETyBDQSBMaW1pdGVkMRowGAYDVQQLExFDT01PRE8gRVYgU0dDIFNTTDE7\n"
-            + "MDkGA1UEAxMydXNlcnRydXN0cnNhY2VydGlmaWNhdGlvbmF1dGhvcml0eS1ldi5j\n"
-            + "b21vZG9jYS5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCeH+vF\n"
-            + "6JjCktrrnV4u8adH5ESuENaRNm2plwfD07Lskva4QvIQ9sz6/RrPjRwEdLRtBkll\n"
-            + "taZc26QxQxLAhvjPu3w5eXHP26/ES5++WoGXip4L/PcukUFFEcR6ujfIYpXCSh7V\n"
-            + "o/Y+rtR2L7uLt5Vll0DW2JzFlaj9QFT2bBsg5ip//jHNnobz3WEpv40C64R/Ebna\n"
-            + "9dmXyh0xOF8e4OWR9LudkxAFo7jQol5IQGGv7lMhLt3u1ZbJ78XqgRDT50cGIX0/\n"
-            + "JnV1eg7xq57/zSY/7QUxhOZEWwoeB7pmOiN8f1wuVHmROq0/lOqHkYFDjOne7IgE\n"
-            + "FTrKUqn080eR7AZRAgMBAAGjggN8MIIDeDAfBgNVHSMEGDAWgBQvgU/iZvq8aL+Z\n"
-            + "Q4RSiSA6gvOkpTAdBgNVHQ4EFgQUfPty8OfUth7Yz7PimXBCfuu33fwwDgYDVR0P\n"
-            + "AQH/BAQDAgWgMAwGA1UdEwEB/wQCMAAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsG\n"
-            + "AQUFBwMCMEsGA1UdIAREMEIwNwYMKwYBBAGyMQECAQUBMCcwJQYIKwYBBQUHAgEW\n"
-            + "GWh0dHBzOi8vY3BzLnVzZXJ0cnVzdC5jb20wBwYFZ4EMAQEwWgYDVR0fBFMwUTBP\n"
-            + "oE2gS4ZJaHR0cDovL2NybC51c2VydHJ1c3QuY29tL1VTRVJUcnVzdFJTQUV4dGVu\n"
-            + "ZGVkVmFsaWRhdGlvblNlY3VyZVNlcnZlckNBLmNybDCBjQYIKwYBBQUHAQEEgYAw\n"
-            + "fjBVBggrBgEFBQcwAoZJaHR0cDovL2NydC51c2VydHJ1c3QuY29tL1VTRVJUcnVz\n"
-            + "dFJTQUV4dGVuZGVkVmFsaWRhdGlvblNlY3VyZVNlcnZlckNBLmNydDAlBggrBgEF\n"
-            + "BQcwAYYZaHR0cDovL29jc3AudXNlcnRydXN0LmNvbTA9BgNVHREENjA0gjJ1c2Vy\n"
-            + "dHJ1c3Ryc2FjZXJ0aWZpY2F0aW9uYXV0aG9yaXR5LWV2LmNvbW9kb2NhLmNvbTCC\n"
-            + "AX8GCisGAQQB1nkCBAIEggFvBIIBawFpAHYApLkJkLQYWBSHuxOizGdwCjw1mAT5\n"
-            + "G9+443fNDsgN3BAAAAFdDU2iYQAABAMARzBFAiB0o4GnVHD8MeVQ32D0XYu+EQQW\n"
-            + "jvN78rmCfk0OEBxyFAIhAKgyctIn0IaDJiZzsrtAiqEnkcMtuh8o+R0Rqw1ygAjk\n"
-            + "AHcAVhQGmi/XwuzT9eG9RLI+x0Z2ubyZEVzA75SYVdaJ0N0AAAFdDU2gFgAABAMA\n"
-            + "SDBGAiEA7mcmZ8H5uHuNCdI0CVxsqDZQcZX/gVk94KckePkzQoACIQCHwm5hcvNC\n"
-            + "M8vNmFkboQN79DglRctHrlh143A6mUTk8QB2AO5Lvbd1zmC64UJpH6vhnmajD35f\n"
-            + "sHLYgwDEe4l6qP3LAAABXQ1NojoAAAQDAEcwRQIhAPqwijgE0Fr6uJ+yF+TvyXco\n"
-            + "Hduv9h7R5WWwJfghXiMyAiBB4+fJm4rIcOnJBZmOqFnRpIjPN0jwDqJT0nDHxaXA\n"
-            + "nDANBgkqhkiG9w0BAQsFAAOCAQEACXitF1bTEvV1HX11WrT/XuoMhsoPK4TS16rs\n"
-            + "FqztV4iXKlA1/h5qbsjYY1gVrM+/6kQkmEs5qrxsek2WNxY80NO3WAzroRJ3H9Sd\n"
-            + "mPn0No2P8LZ5Fs5hvaD/PfWO5xxey80c3kGyvWOej90P3IrL/1RiULyh95TrXBjI\n"
-            + "ddCBsZ28904wsQUrPBPMpiu0DKl1HR/em9WkcipMi+onJxxFWjucssz5PW/BzGYF\n"
-            + "jfWLDEI0tN5L4CWV3iVXFXOURY1Mwhtsey9jvlEyxSsys55QdKF40yGgtV9VC+os\n"
-            + "7hJP33+qA0cvCTaRytiPP6z/l2G/KSIXTyv6SxzGhsTFfzLAOg==\n"
-            + "-----END CERTIFICATE-----";
+    // Issuer: CN=Sectigo RSA Extended Validation Secure Server CA, O=Sectigo Limited, L=Salford,
+    // ST=Greater Manchester, C=GB
+    // Serial number: b07fd164b5790c9d5d1fddff5819cdb2
+    // Valid from: Sun Sep 29 17:00:00 PDT 2019 until: Tue Dec 28 15:59:59 PST 2021
+    private static final String VALID = "-----BEGIN CERTIFICATE-----\n" +
+            "MIIH5TCCBs2gAwIBAgIRALB/0WS1eQydXR/d/1gZzbIwDQYJKoZIhvcNAQELBQAw\n" +
+            "gZExCzAJBgNVBAYTAkdCMRswGQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAO\n" +
+            "BgNVBAcTB1NhbGZvcmQxGDAWBgNVBAoTD1NlY3RpZ28gTGltaXRlZDE5MDcGA1UE\n" +
+            "AxMwU2VjdGlnbyBSU0EgRXh0ZW5kZWQgVmFsaWRhdGlvbiBTZWN1cmUgU2VydmVy\n" +
+            "IENBMB4XDTE5MDkzMDAwMDAwMFoXDTIxMTIyODIzNTk1OVowggFWMREwDwYDVQQF\n" +
+            "EwgwNDA1ODY5MDETMBEGCysGAQQBgjc8AgEDEwJHQjEdMBsGA1UEDxMUUHJpdmF0\n" +
+            "ZSBPcmdhbml6YXRpb24xCzAJBgNVBAYTAkdCMQ8wDQYDVQQREwZNNSAzRVExEzAR\n" +
+            "BgNVBAgTCk1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQxFjAUBgNVBAkTDVRy\n" +
+            "YWZmb3JkIFJvYWQxFjAUBgNVBAkTDUV4Y2hhbmdlIFF1YXkxJTAjBgNVBAkTHDNy\n" +
+            "ZCBGbG9vciwgMjYgT2ZmaWNlIFZpbGxhZ2UxGDAWBgNVBAoTD1NlY3RpZ28gTGlt\n" +
+            "aXRlZDEaMBgGA1UECxMRQ09NT0RPIEVWIFNHQyBTU0wxOzA5BgNVBAMTMnVzZXJ0\n" +
+            "cnVzdHJzYWNlcnRpZmljYXRpb25hdXRob3JpdHktZXYuY29tb2RvY2EuY29tMIIB\n" +
+            "IjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnh/rxeiYwpLa651eLvGnR+RE\n" +
+            "rhDWkTZtqZcHw9Oy7JL2uELyEPbM+v0az40cBHS0bQZJZbWmXNukMUMSwIb4z7t8\n" +
+            "OXlxz9uvxEufvlqBl4qeC/z3LpFBRRHEero3yGKVwkoe1aP2Pq7Udi+7i7eVZZdA\n" +
+            "1ticxZWo/UBU9mwbIOYqf/4xzZ6G891hKb+NAuuEfxG52vXZl8odMThfHuDlkfS7\n" +
+            "nZMQBaO40KJeSEBhr+5TIS7d7tWWye/F6oEQ0+dHBiF9PyZ1dXoO8aue/80mP+0F\n" +
+            "MYTmRFsKHge6ZjojfH9cLlR5kTqtP5Tqh5GBQ4zp3uyIBBU6ylKp9PNHkewGUQID\n" +
+            "AQABo4IDbjCCA2owHwYDVR0jBBgwFoAULGn/gMmHkK404bTnTJOFmUDpp7IwHQYD\n" +
+            "VR0OBBYEFHz7cvDn1LYe2M+z4plwQn7rt938MA4GA1UdDwEB/wQEAwIFoDAMBgNV\n" +
+            "HRMBAf8EAjAAMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjBJBgNVHSAE\n" +
+            "QjBAMDUGDCsGAQQBsjEBAgEFATAlMCMGCCsGAQUFBwIBFhdodHRwczovL3NlY3Rp\n" +
+            "Z28uY29tL0NQUzAHBgVngQwBATBWBgNVHR8ETzBNMEugSaBHhkVodHRwOi8vY3Js\n" +
+            "LnNlY3RpZ28uY29tL1NlY3RpZ29SU0FFeHRlbmRlZFZhbGlkYXRpb25TZWN1cmVT\n" +
+            "ZXJ2ZXJDQS5jcmwwgYYGCCsGAQUFBwEBBHoweDBRBggrBgEFBQcwAoZFaHR0cDov\n" +
+            "L2NydC5zZWN0aWdvLmNvbS9TZWN0aWdvUlNBRXh0ZW5kZWRWYWxpZGF0aW9uU2Vj\n" +
+            "dXJlU2VydmVyQ0EuY3J0MCMGCCsGAQUFBzABhhdodHRwOi8vb2NzcC5zZWN0aWdv\n" +
+            "LmNvbTA9BgNVHREENjA0gjJ1c2VydHJ1c3Ryc2FjZXJ0aWZpY2F0aW9uYXV0aG9y\n" +
+            "aXR5LWV2LmNvbW9kb2NhLmNvbTCCAX4GCisGAQQB1nkCBAIEggFuBIIBagFoAHYA\n" +
+            "7ku9t3XOYLrhQmkfq+GeZqMPfl+wctiDAMR7iXqo/csAAAFtgzv54wAABAMARzBF\n" +
+            "AiB5PmhsK3zU3XdKvyxw/wWHMmLI7apHLa1yKdjkA8H+ggIhALdUx7Tl8aeWhK6z\n" +
+            "lh+PHvMAdCcAJK6w9qBJGQtSrYO5AHUAVYHUwhaQNgFK6gubVzxT8MDkOHhwJQgX\n" +
+            "L6OqHQcT0wwAAAFtgzv5zgAABAMARjBEAiBumSwAUamibqJXTN2cf/H3mjd0T35/\n" +
+            "UK9w2hu9gFobxgIgSXTLndHyqFUmcmquu3It0WC1yl6YMceGixbQL1e8BQcAdwC7\n" +
+            "2d+8H4pxtZOUI5eqkntHOFeVCqtS6BqQlmQ2jh7RhQAAAW2DO/nXAAAEAwBIMEYC\n" +
+            "IQDHRs10oYoXE5yq6WsiksjdQsUWZNpbSsrmz0u+KlxTVQIhAJ4rvHItKSeJLkaN\n" +
+            "S3YpVZnkN8tOwuxPsYeyVx/BtaNpMA0GCSqGSIb3DQEBCwUAA4IBAQAPFIsUFymo\n" +
+            "VTp0vntHrZpBApBQzDeriQv7Bi7tmou/Ng47RtXW3DjGdrePGSfOdl7h62k8qprU\n" +
+            "JeLyloDqhvmT/CG/hdwrfZ3Sv3N2xpetGcnW5S3oEi3m+/M1ls9eD+x1vybqV9Kd\n" +
+            "lcjuV7SYDlbvAS9w7TcygudhdW0cI8XTCvesGKohBkAlqaQ/MWYpt4WvsxHjbWgn\n" +
+            "5ZlIYR6A1ZFEjADifViH/5AA79lgGhAskkIWPjvRFalEVKTKtjhRK76eCfZs4Frr\n" +
+            "CEOpon+BeNKk+x/K/r10dSoWe0SV2uGVxTD83zkP++eREwo1hTgn8bXn7ftlnA3j\n" +
+            "7ml+Usz6udaD\n" +
+            "-----END CERTIFICATE-----";
 
-    // Owner: CN=usertrustrsacertificationauthority-ev.comodoca.com, OU=COMODO EV SGC SSL,
-    // O=COMODO CA Limited, STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay,
-    // STREET=Trafford Road, L=Salford, ST=Greater Manchester, OID.2.5.4.17=M5 3EQ,
-    // C=GB, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.3=GB,
-    // SERIALNUMBER=04058690
-    // Issuer: CN=USERTrust RSA Extended Validation Secure Server CA, O=The USERTRUST Network,
-    // L=Jersey City, ST=New Jersey, C=US
-    // Serial number: 643d7e2b0112d51a05a4efb266ebd70d
-    // Valid from: Tue Aug 16 17:00:00 PDT 2016 until: Fri Nov 16 15:59:59 PST 2018
-    private static final String REVOKED = "-----BEGIN CERTIFICATE-----\n"
-            + "MIIILjCCBxagAwIBAgIQZD1+KwES1RoFpO+yZuvXDTANBgkqhkiG9w0BAQsFADCB\n"
-            + "lTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCk5ldyBKZXJzZXkxFDASBgNVBAcTC0pl\n"
-            + "cnNleSBDaXR5MR4wHAYDVQQKExVUaGUgVVNFUlRSVVNUIE5ldHdvcmsxOzA5BgNV\n"
-            + "BAMTMlVTRVJUcnVzdCBSU0EgRXh0ZW5kZWQgVmFsaWRhdGlvbiBTZWN1cmUgU2Vy\n"
-            + "dmVyIENBMB4XDTE2MDgxNzAwMDAwMFoXDTE4MTExNjIzNTk1OVowggFgMREwDwYD\n"
-            + "VQQFEwgwNDA1ODY5MDETMBEGCysGAQQBgjc8AgEDEwJHQjEdMBsGA1UEDxMUUHJp\n"
-            + "dmF0ZSBPcmdhbml6YXRpb24xCzAJBgNVBAYTAkdCMQ8wDQYDVQQREwZNNSAzRVEx\n"
-            + "GzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEW\n"
-            + "MBQGA1UECRMNVHJhZmZvcmQgUm9hZDEWMBQGA1UECRMNRXhjaGFuZ2UgUXVheTEl\n"
-            + "MCMGA1UECRMcM3JkIEZsb29yLCAyNiBPZmZpY2UgVmlsbGFnZTEaMBgGA1UEChMR\n"
-            + "Q09NT0RPIENBIExpbWl0ZWQxGjAYBgNVBAsTEUNPTU9ETyBFViBTR0MgU1NMMTsw\n"
-            + "OQYDVQQDEzJ1c2VydHJ1c3Ryc2FjZXJ0aWZpY2F0aW9uYXV0aG9yaXR5LWV2LmNv\n"
-            + "bW9kb2NhLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJ4f68Xo\n"
-            + "mMKS2uudXi7xp0fkRK4Q1pE2bamXB8PTsuyS9rhC8hD2zPr9Gs+NHAR0tG0GSWW1\n"
-            + "plzbpDFDEsCG+M+7fDl5cc/br8RLn75agZeKngv89y6RQUURxHq6N8hilcJKHtWj\n"
-            + "9j6u1HYvu4u3lWWXQNbYnMWVqP1AVPZsGyDmKn/+Mc2ehvPdYSm/jQLrhH8Rudr1\n"
-            + "2ZfKHTE4Xx7g5ZH0u52TEAWjuNCiXkhAYa/uUyEu3e7VlsnvxeqBENPnRwYhfT8m\n"
-            + "dXV6DvGrnv/NJj/tBTGE5kRbCh4HumY6I3x/XC5UeZE6rT+U6oeRgUOM6d7siAQV\n"
-            + "OspSqfTzR5HsBlECAwEAAaOCA6owggOmMB8GA1UdIwQYMBaAFC+BT+Jm+rxov5lD\n"
-            + "hFKJIDqC86SlMB0GA1UdDgQWBBR8+3Lw59S2HtjPs+KZcEJ+67fd/DAOBgNVHQ8B\n"
-            + "Af8EBAMCBaAwDAYDVR0TAQH/BAIwADAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYB\n"
-            + "BQUHAwIwQgYDVR0gBDswOTA3BgwrBgEEAbIxAQIBBQEwJzAlBggrBgEFBQcCARYZ\n"
-            + "aHR0cHM6Ly9jcHMudXNlcnRydXN0LmNvbTBaBgNVHR8EUzBRME+gTaBLhklodHRw\n"
-            + "Oi8vY3JsLnVzZXJ0cnVzdC5jb20vVVNFUlRydXN0UlNBRXh0ZW5kZWRWYWxpZGF0\n"
-            + "aW9uU2VjdXJlU2VydmVyQ0EuY3JsMIGNBggrBgEFBQcBAQSBgDB+MFUGCCsGAQUF\n"
-            + "BzAChklodHRwOi8vY3J0LnVzZXJ0cnVzdC5jb20vVVNFUlRydXN0UlNBRXh0ZW5k\n"
-            + "ZWRWYWxpZGF0aW9uU2VjdXJlU2VydmVyQ0EuY3J0MCUGCCsGAQUFBzABhhlodHRw\n"
-            + "Oi8vb2NzcC51c2VydHJ1c3QuY29tMHUGA1UdEQRuMGyCMnVzZXJ0cnVzdHJzYWNl\n"
-            + "cnRpZmljYXRpb25hdXRob3JpdHktZXYuY29tb2RvY2EuY29tgjZ3d3cudXNlcnRy\n"
-            + "dXN0cnNhY2VydGlmaWNhdGlvbmF1dGhvcml0eS1ldi5jb21vZG9jYS5jb20wggF+\n"
-            + "BgorBgEEAdZ5AgQCBIIBbgSCAWoBaAB2AGj2mPgfZIK+OozuuSgdTPxxUV1nk9RE\n"
-            + "0QpnrLtPT/vEAAABVpjLYnEAAAQDAEcwRQIhAL6/noD1PEwlZBByj9MKJSXPrEpW\n"
-            + "jpL335zhD+hrmvuqAiBizohmz9W29E8DoEuhca5PzKL8lSl5DpAOUGjMN0ihmgB2\n"
-            + "AFYUBpov18Ls0/XhvUSyPsdGdrm8mRFcwO+UmFXWidDdAAABVpjLYOgAAAQDAEcw\n"
-            + "RQIhAIRRWFG7M/XEgivLEdgEHWVNN7hk2QdVTvjr1DfRV2c3AiADq0LWpJ3dV7Je\n"
-            + "2Z3zKvqJEmRFNj5Pn9TwsIcEe1iNNgB2AO5Lvbd1zmC64UJpH6vhnmajD35fsHLY\n"
-            + "gwDEe4l6qP3LAAABVpjLYZ8AAAQDAEcwRQIge8b8UhHJWJ8/XWGIg6rQpaVXGP6q\n"
-            + "evL01KFNB28t8VQCIQCzddHCr/LLTVE+dB4kZHxuW5pOB+AtZlrAAQcuLoEauDAN\n"
-            + "BgkqhkiG9w0BAQsFAAOCAQEAPYqfbjlMjMJ2CEoIOUih/1BBnzXXkmmqXsXFI9gJ\n"
-            + "/tV1u4OzYOXHwOPhy/1JHv5dtNDSzyoeagYcjxEpl64kAJHrtzYwFlrqCU1xSIwd\n"
-            + "qrfmupyc5JwRqGE0Q01lryCxflUikh/pyDBtsxED4r+Topb+QwVZCzIMtOr49/S9\n"
-            + "GHA7HJo6nwSoV6rfrnLDCtcJN4ezEzOs7MOOq9K1MiAoAOXa/maelXwqbNGVpN2p\n"
-            + "HihRuBRDqusdS8zNGPxhvbviCDf8mJRvFoPgk/5o6mxf6bKfjmtkWOxMApvJU3Nd\n"
-            + "ib1aMX9KArEiNFwHFxOSYmE8c8x/zhLlk1btOo7gQrVNyw==\n"
-            + "-----END CERTIFICATE-----";
+    // Owner: CN=usertrustrsacertificationauthority-ev.comodoca.com, OU=COMODO EV SGC SSL, O=Sectigo Limited,
+    // STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay, STREET=Trafford Road, L=Salford,
+    // ST=Greater Manchester, OID.2.5.4.17=M5 3EQ, C=GB, OID.2.5.4.15=Private Organization,
+    // OID.1.3.6.1.4.1.311.60.2.1.3=GB, SERIALNUMBER=04058690
+    // Issuer: CN=USERTrust RSA Extended Validation Secure Server CA, O=The USERTRUST Network, L=Jersey City,
+    // ST=New Jersey, C=US
+    // Serial number: d3c204e8df6a1539568cf15e97e57b1d
+    // Valid from: Wed Nov 28 16:00:00 PST 2018 until: Fri Feb 26 15:59:59 PST 2021
+    private static final String REVOKED = "-----BEGIN CERTIFICATE-----\n" +
+            "MIIIADCCBuigAwIBAgIRANPCBOjfahU5VozxXpflex0wDQYJKoZIhvcNAQELBQAw\n" +
+            "gZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpOZXcgSmVyc2V5MRQwEgYDVQQHEwtK\n" +
+            "ZXJzZXkgQ2l0eTEeMBwGA1UEChMVVGhlIFVTRVJUUlVTVCBOZXR3b3JrMTswOQYD\n" +
+            "VQQDEzJVU0VSVHJ1c3QgUlNBIEV4dGVuZGVkIFZhbGlkYXRpb24gU2VjdXJlIFNl\n" +
+            "cnZlciBDQTAeFw0xODExMjkwMDAwMDBaFw0yMTAyMjYyMzU5NTlaMIIBXjERMA8G\n" +
+            "A1UEBRMIMDQwNTg2OTAxEzARBgsrBgEEAYI3PAIBAxMCR0IxHTAbBgNVBA8TFFBy\n" +
+            "aXZhdGUgT3JnYW5pemF0aW9uMQswCQYDVQQGEwJHQjEPMA0GA1UEERMGTTUgM0VR\n" +
+            "MRswGQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQx\n" +
+            "FjAUBgNVBAkTDVRyYWZmb3JkIFJvYWQxFjAUBgNVBAkTDUV4Y2hhbmdlIFF1YXkx\n" +
+            "JTAjBgNVBAkTHDNyZCBGbG9vciwgMjYgT2ZmaWNlIFZpbGxhZ2UxGDAWBgNVBAoT\n" +
+            "D1NlY3RpZ28gTGltaXRlZDEaMBgGA1UECxMRQ09NT0RPIEVWIFNHQyBTU0wxOzA5\n" +
+            "BgNVBAMTMnVzZXJ0cnVzdHJzYWNlcnRpZmljYXRpb25hdXRob3JpdHktZXYuY29t\n" +
+            "b2RvY2EuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnh/rxeiY\n" +
+            "wpLa651eLvGnR+RErhDWkTZtqZcHw9Oy7JL2uELyEPbM+v0az40cBHS0bQZJZbWm\n" +
+            "XNukMUMSwIb4z7t8OXlxz9uvxEufvlqBl4qeC/z3LpFBRRHEero3yGKVwkoe1aP2\n" +
+            "Pq7Udi+7i7eVZZdA1ticxZWo/UBU9mwbIOYqf/4xzZ6G891hKb+NAuuEfxG52vXZ\n" +
+            "l8odMThfHuDlkfS7nZMQBaO40KJeSEBhr+5TIS7d7tWWye/F6oEQ0+dHBiF9PyZ1\n" +
+            "dXoO8aue/80mP+0FMYTmRFsKHge6ZjojfH9cLlR5kTqtP5Tqh5GBQ4zp3uyIBBU6\n" +
+            "ylKp9PNHkewGUQIDAQABo4IDfTCCA3kwHwYDVR0jBBgwFoAUL4FP4mb6vGi/mUOE\n" +
+            "UokgOoLzpKUwHQYDVR0OBBYEFHz7cvDn1LYe2M+z4plwQn7rt938MA4GA1UdDwEB\n" +
+            "/wQEAwIFoDAMBgNVHRMBAf8EAjAAMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEF\n" +
+            "BQcDAjBLBgNVHSAERDBCMDcGDCsGAQQBsjEBAgEFATAnMCUGCCsGAQUFBwIBFhlo\n" +
+            "dHRwczovL2Nwcy51c2VydHJ1c3QuY29tMAcGBWeBDAEBMFoGA1UdHwRTMFEwT6BN\n" +
+            "oEuGSWh0dHA6Ly9jcmwudXNlcnRydXN0LmNvbS9VU0VSVHJ1c3RSU0FFeHRlbmRl\n" +
+            "ZFZhbGlkYXRpb25TZWN1cmVTZXJ2ZXJDQS5jcmwwgY0GCCsGAQUFBwEBBIGAMH4w\n" +
+            "VQYIKwYBBQUHMAKGSWh0dHA6Ly9jcnQudXNlcnRydXN0LmNvbS9VU0VSVHJ1c3RS\n" +
+            "U0FFeHRlbmRlZFZhbGlkYXRpb25TZWN1cmVTZXJ2ZXJDQS5jcnQwJQYIKwYBBQUH\n" +
+            "MAGGGWh0dHA6Ly9vY3NwLnVzZXJ0cnVzdC5jb20wPQYDVR0RBDYwNIIydXNlcnRy\n" +
+            "dXN0cnNhY2VydGlmaWNhdGlvbmF1dGhvcml0eS1ldi5jb21vZG9jYS5jb20wggGA\n" +
+            "BgorBgEEAdZ5AgQCBIIBcASCAWwBagB3AO5Lvbd1zmC64UJpH6vhnmajD35fsHLY\n" +
+            "gwDEe4l6qP3LAAABZ2ElLBIAAAQDAEgwRgIhAM33ah4mcEfxzv4a8+BLysZKJygV\n" +
+            "jeARvesL/mH6y51bAiEA4hzW9aDRmEnuCcagONmIexMl0s3gMWfaU8/0s4ESJecA\n" +
+            "dgBvU3asMfAxGdiZAKRRFf93FRwR2QLBACkGjbIImjfZEwAAAWdhJSwQAAAEAwBH\n" +
+            "MEUCIQDCZ7GZayfWD3blSOWgk8PrAs/GVVpc5gJG3V+wq8LHMwIgH6n8DkoA46v1\n" +
+            "0UrmkVo7ND18ykuWyNH83QafsolTYSIAdwC72d+8H4pxtZOUI5eqkntHOFeVCqtS\n" +
+            "6BqQlmQ2jh7RhQAAAWdhJSwSAAAEAwBIMEYCIQC/XcbvfZzEqDpUthm3gYzndaiB\n" +
+            "8djqlQ89Mo29WDMS8AIhAKcWwmE5F2SuoTojiO0pPC5w5T38uW0vTXzb+fkj+6d5\n" +
+            "MA0GCSqGSIb3DQEBCwUAA4IBAQAmq2kRR74802+YMB2AaqklGcFRCuBVxU/ExbvE\n" +
+            "loNpNk64KH2eHwMK13ad0Lbc8/LaVgIJPtPz87LNqu00kQh0DL/kCnoO94+Z+usU\n" +
+            "ulQNYr8y3sg8+NZd9ui/VQTOcXrlovL+mnJnTgsCUzNYcoBIPq7lHxtZv5MG99AR\n" +
+            "6NyGTG28Aw8ZByCzhaasDOyT4YwlfveVUtsx1jKUC+0e6IhsGhxADnYOnrDD0cNd\n" +
+            "4bgX6SkpM0MCg6Nc3X/C4fo3WaSRM6FO4S98NY4g2DhNskT/7TmX2DsPwS005t0r\n" +
+            "3Ld31zbQaywKdpCsT74/hEBMfcDiP02mmtyrlqHD4R3tdYne\n" +
+            "-----END CERTIFICATE-----";
 
     public void runTest(ValidatePathWithParams pathValidator) throws Exception {
         // Validate valid
-        pathValidator.validate(new String[]{VALID, INT},
+        pathValidator.validate(new String[]{VALID, INT_VALID},
                 ValidatePathWithParams.Status.GOOD, null, System.out);
 
         // Validate Revoked
-        pathValidator.validate(new String[]{REVOKED, INT},
+        pathValidator.validate(new String[]{REVOKED, INT_REVOKED},
                 ValidatePathWithParams.Status.REVOKED,
-                "Tue Jul 04 04:09:55 PDT 2017", System.out);
+                "Wed Oct 02 06:07:12 PDT 2019", System.out);
     }
 }
 
 class ComodoUserTrustECC {
+
+    // Owner: CN=Sectigo ECC Extended Validation Secure Server CA, O=Sectigo Limited, L=Salford,
+    // ST=Greater Manchester, C=GB
+    // Issuer: CN=USERTrust ECC Certification Authority, O=The USERTRUST Network, L=Jersey City, ST=New Jersey, C=US
+    // Serial number: 80f5606d3a162b143adc12fbe8c2066f
+    // Valid from: Thu Nov 01 17:00:00 PDT 2018 until: Tue Dec 31 15:59:59 PST 2030
+    private static final String INT_VALID = "-----BEGIN CERTIFICATE-----\n" +
+            "MIIDyTCCA0+gAwIBAgIRAID1YG06FisUOtwS++jCBm8wCgYIKoZIzj0EAwMwgYgx\n" +
+            "CzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpOZXcgSmVyc2V5MRQwEgYDVQQHEwtKZXJz\n" +
+            "ZXkgQ2l0eTEeMBwGA1UEChMVVGhlIFVTRVJUUlVTVCBOZXR3b3JrMS4wLAYDVQQD\n" +
+            "EyVVU0VSVHJ1c3QgRUNDIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MB4XDTE4MTEw\n" +
+            "MjAwMDAwMFoXDTMwMTIzMTIzNTk1OVowgZExCzAJBgNVBAYTAkdCMRswGQYDVQQI\n" +
+            "ExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQxGDAWBgNVBAoT\n" +
+            "D1NlY3RpZ28gTGltaXRlZDE5MDcGA1UEAxMwU2VjdGlnbyBFQ0MgRXh0ZW5kZWQg\n" +
+            "VmFsaWRhdGlvbiBTZWN1cmUgU2VydmVyIENBMFkwEwYHKoZIzj0CAQYIKoZIzj0D\n" +
+            "AQcDQgAEAyJ5Ca9JyXq8bO+krLVWysbtm7fdMSJ54uFD23t0x6JAC4IjxevfQJzW\n" +
+            "z4T6yY+FybTBqtOa++ijJFnkB5wKy6OCAY0wggGJMB8GA1UdIwQYMBaAFDrhCYbU\n" +
+            "zxnClnZ0SXbc4DXGY2OaMB0GA1UdDgQWBBTvwSqVDDLa+3Mw3IoT2BVL9xPo+DAO\n" +
+            "BgNVHQ8BAf8EBAMCAYYwEgYDVR0TAQH/BAgwBgEB/wIBADAdBgNVHSUEFjAUBggr\n" +
+            "BgEFBQcDAQYIKwYBBQUHAwIwOgYDVR0gBDMwMTAvBgRVHSAAMCcwJQYIKwYBBQUH\n" +
+            "AgEWGWh0dHBzOi8vY3BzLnVzZXJ0cnVzdC5jb20wUAYDVR0fBEkwRzBFoEOgQYY/\n" +
+            "aHR0cDovL2NybC51c2VydHJ1c3QuY29tL1VTRVJUcnVzdEVDQ0NlcnRpZmljYXRp\n" +
+            "b25BdXRob3JpdHkuY3JsMHYGCCsGAQUFBwEBBGowaDA/BggrBgEFBQcwAoYzaHR0\n" +
+            "cDovL2NydC51c2VydHJ1c3QuY29tL1VTRVJUcnVzdEVDQ0FkZFRydXN0Q0EuY3J0\n" +
+            "MCUGCCsGAQUFBzABhhlodHRwOi8vb2NzcC51c2VydHJ1c3QuY29tMAoGCCqGSM49\n" +
+            "BAMDA2gAMGUCMQCjHztBDL90GCRXHlGqm0H7kzP04hd0MxwakKjWzOmstXNFLONj\n" +
+            "RFa0JqI/iKUJMFcCMCbLgyzcFW7DihtY5XE0XCLCw+git0NjxiFB6FaOFIlyDdqT\n" +
+            "j+Th+DJ92JLvICVD/g==\n" +
+            "-----END CERTIFICATE-----";
 
     // Owner: CN=USERTrust ECC Extended Validation Secure Server CA, O=The USERTRUST Network,
     // L=Jersey City, ST=New Jersey, C=US
@@ -542,7 +606,7 @@ class ComodoUserTrustECC {
     // L=Jersey City, ST=New Jersey, C=US
     // Serial number: 3d09b24f5c08a7ce8eb85a51d3c1aa52
     // Valid from: Sun Apr 14 17:00:00 PDT 2013 until: Fri Apr 14 16:59:59 PDT 2028
-    private static final String INT = "-----BEGIN CERTIFICATE-----\n"
+    private static final String INT_REVOKED = "-----BEGIN CERTIFICATE-----\n"
             + "MIIDwTCCA0igAwIBAgIQPQmyT1wIp86OuFpR08GqUjAKBggqhkjOPQQDAzCBiDEL\n"
             + "MAkGA1UEBhMCVVMxEzARBgNVBAgTCk5ldyBKZXJzZXkxFDASBgNVBAcTC0plcnNl\n"
             + "eSBDaXR5MR4wHAYDVQQKExVUaGUgVVNFUlRSVVNUIE5ldHdvcmsxLjAsBgNVBAMT\n"
@@ -566,109 +630,105 @@ class ComodoUserTrustECC {
             + "s1rWGRU=\n"
             + "-----END CERTIFICATE-----";
 
-    // Owner: CN=usertrustecccertificationauthority-ev.comodoca.com, OU=COMODO EV SGC SSL,
-    // O=COMODO CA Limited, STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay,
-    // STREET=Trafford Road, L=Salford, ST=Greater Manchester, OID.2.5.4.17=M5 3EQ,
-    // C=GB, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.3=GB,
+    // Owner: CN=usertrustecccertificationauthority-ev.comodoca.com, OU=COMODO EV SGC SSL, O=Sectigo Limited,
+    // STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay, STREET=Trafford Road, L=Salford,
+    // OID.2.5.4.17=M5 3EQ, C=GB, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.3=GB,
     // SERIALNUMBER=04058690
-    // Issuer: CN=USERTrust ECC Extended Validation Secure Server CA, O=The USERTRUST Network,
-    // L=Jersey City, ST=New Jersey, C=US
-    // Serial number: 9bd0c93cac9ca2edc1a7dd923316b3c6
-    // Valid from: Mon Jul 03 17:00:00 PDT 2017 until: Thu Oct 03 16:59:59 PDT 2019
-    private static final String VALID = "-----BEGIN CERTIFICATE-----\n"
-            + "MIIGhzCCBi2gAwIBAgIRAJvQyTysnKLtwafdkjMWs8YwCgYIKoZIzj0EAwIwgZUx\n"
-            + "CzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpOZXcgSmVyc2V5MRQwEgYDVQQHEwtKZXJz\n"
-            + "ZXkgQ2l0eTEeMBwGA1UEChMVVGhlIFVTRVJUUlVTVCBOZXR3b3JrMTswOQYDVQQD\n"
-            + "EzJVU0VSVHJ1c3QgRUNDIEV4dGVuZGVkIFZhbGlkYXRpb24gU2VjdXJlIFNlcnZl\n"
-            + "ciBDQTAeFw0xNzA3MDQwMDAwMDBaFw0xOTEwMDMyMzU5NTlaMIIBYDERMA8GA1UE\n"
-            + "BRMIMDQwNTg2OTAxEzARBgsrBgEEAYI3PAIBAxMCR0IxHTAbBgNVBA8TFFByaXZh\n"
-            + "dGUgT3JnYW5pemF0aW9uMQswCQYDVQQGEwJHQjEPMA0GA1UEERMGTTUgM0VRMRsw\n"
-            + "GQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQxFjAU\n"
-            + "BgNVBAkTDVRyYWZmb3JkIFJvYWQxFjAUBgNVBAkTDUV4Y2hhbmdlIFF1YXkxJTAj\n"
-            + "BgNVBAkTHDNyZCBGbG9vciwgMjYgT2ZmaWNlIFZpbGxhZ2UxGjAYBgNVBAoTEUNP\n"
-            + "TU9ETyBDQSBMaW1pdGVkMRowGAYDVQQLExFDT01PRE8gRVYgU0dDIFNTTDE7MDkG\n"
-            + "A1UEAxMydXNlcnRydXN0ZWNjY2VydGlmaWNhdGlvbmF1dGhvcml0eS1ldi5jb21v\n"
-            + "ZG9jYS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQtMl8R33ZaWD6H8BW0\n"
-            + "+wybBf0+6+L5YYK/eyAVGm6vwjLaQZWlcdFBMKfaP1qTLi0VAabs4baSUkD8wR56\n"
-            + "8pVpo4IDjjCCA4owHwYDVR0jBBgwFoAUKpxa+U6hMNpASyvpS/H1nNwC+S4wHQYD\n"
-            + "VR0OBBYEFLOtYfOaIfDHZGubtKNELRR6A2srMA4GA1UdDwEB/wQEAwIFgDAMBgNV\n"
-            + "HRMBAf8EAjAAMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjBQBgNVHSAE\n"
-            + "STBHMDwGDCsGAQQBsjEBAgEFATAsMCoGCCsGAQUFBwIBFh5odHRwczovL2Nwcy50\n"
-            + "cnVzdC1wcm92aWRlci5jb20wBwYFZ4EMAQEwXwYDVR0fBFgwVjBUoFKgUIZOaHR0\n"
-            + "cDovL2NybC50cnVzdC1wcm92aWRlci5jb20vVVNFUlRydXN0RUNDRXh0ZW5kZWRW\n"
-            + "YWxpZGF0aW9uU2VjdXJlU2VydmVyQ0EuY3JsMIGYBggrBgEFBQcBAQSBizCBiDBa\n"
-            + "BggrBgEFBQcwAoZOaHR0cDovL2NydC50cnVzdC1wcm92aWRlci5jb20vVVNFUlRy\n"
-            + "dXN0RUNDRXh0ZW5kZWRWYWxpZGF0aW9uU2VjdXJlU2VydmVyQ0EuY3J0MCoGCCsG\n"
-            + "AQUFBzABhh5odHRwOi8vb2NzcC50cnVzdC1wcm92aWRlci5jb20wPQYDVR0RBDYw\n"
-            + "NIIydXNlcnRydXN0ZWNjY2VydGlmaWNhdGlvbmF1dGhvcml0eS1ldi5jb21vZG9j\n"
-            + "YS5jb20wggF8BgorBgEEAdZ5AgQCBIIBbASCAWgBZgB1AKS5CZC0GFgUh7sTosxn\n"
-            + "cAo8NZgE+RvfuON3zQ7IDdwQAAABXQ0/jQ0AAAQDAEYwRAIgPbaNWgoi6OfyNwL2\n"
-            + "+jiySsoLrkx+0d4NJE1WnZQcfzwCICW4yvsXaMxoOXpQp3EPgrYk5Ajfvy/dY3Ui\n"
-            + "0/dbQtHxAHYAVhQGmi/XwuzT9eG9RLI+x0Z2ubyZEVzA75SYVdaJ0N0AAAFdDT+K\n"
-            + "xwAABAMARzBFAiB3GQasrX+akoHX02ZvXCcvhWCqv6qQOhLCUqflPoRbuAIhALwe\n"
-            + "hrQo8S1Tm5vbMcxGiViq5ZcawxENWhxZ9hS0BZweAHUA7ku9t3XOYLrhQmkfq+Ge\n"
-            + "ZqMPfl+wctiDAMR7iXqo/csAAAFdDT+M4AAABAMARjBEAiAjvp8w/fdTVW1VGE0T\n"
-            + "I0YcCIXTYFDgzUMsEUiKHANAgwIgETQUcac7Hiis2fgQ+GdGF9yuh+xMo2Z8QXNu\n"
-            + "1Cknf+8wCgYIKoZIzj0EAwIDSAAwRQIgQ5UiUI7xodmmMYNs3CmqlZHw/04BQRAR\n"
-            + "4gRm7blZSIMCIQDHvIWTaPzSO6vwVzs6wSD6FqebLiFxoddC6aZG8Nm0wQ==\n"
-            + "-----END CERTIFICATE-----";
+    // Issuer: CN=Sectigo ECC Extended Validation Secure Server CA, O=Sectigo Limited, L=Salford,
+    // ST=Greater Manchester, C=GB
+    // Serial number: 8b72489b7f505a55e2a22659c90ed2ab
+    // Valid from: Sun Sep 29 17:00:00 PDT 2019 until: Tue Dec 28 15:59:59 PST 2021
+    private static final String VALID = "-----BEGIN CERTIFICATE-----\n" +
+            "MIIGRTCCBeugAwIBAgIRAItySJt/UFpV4qImWckO0qswCgYIKoZIzj0EAwIwgZEx\n" +
+            "CzAJBgNVBAYTAkdCMRswGQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNV\n" +
+            "BAcTB1NhbGZvcmQxGDAWBgNVBAoTD1NlY3RpZ28gTGltaXRlZDE5MDcGA1UEAxMw\n" +
+            "U2VjdGlnbyBFQ0MgRXh0ZW5kZWQgVmFsaWRhdGlvbiBTZWN1cmUgU2VydmVyIENB\n" +
+            "MB4XDTE5MDkzMDAwMDAwMFoXDTIxMTIyODIzNTk1OVowggFBMREwDwYDVQQFEwgw\n" +
+            "NDA1ODY5MDETMBEGCysGAQQBgjc8AgEDEwJHQjEdMBsGA1UEDxMUUHJpdmF0ZSBP\n" +
+            "cmdhbml6YXRpb24xCzAJBgNVBAYTAkdCMQ8wDQYDVQQREwZNNSAzRVExEDAOBgNV\n" +
+            "BAcTB1NhbGZvcmQxFjAUBgNVBAkTDVRyYWZmb3JkIFJvYWQxFjAUBgNVBAkTDUV4\n" +
+            "Y2hhbmdlIFF1YXkxJTAjBgNVBAkTHDNyZCBGbG9vciwgMjYgT2ZmaWNlIFZpbGxh\n" +
+            "Z2UxGDAWBgNVBAoTD1NlY3RpZ28gTGltaXRlZDEaMBgGA1UECxMRQ09NT0RPIEVW\n" +
+            "IFNHQyBTU0wxOzA5BgNVBAMTMnVzZXJ0cnVzdGVjY2NlcnRpZmljYXRpb25hdXRo\n" +
+            "b3JpdHktZXYuY29tb2RvY2EuY29tMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE\n" +
+            "LTJfEd92Wlg+h/AVtPsMmwX9Puvi+WGCv3sgFRpur8Iy2kGVpXHRQTCn2j9aky4t\n" +
+            "FQGm7OG2klJA/MEeevKVaaOCA28wggNrMB8GA1UdIwQYMBaAFO/BKpUMMtr7czDc\n" +
+            "ihPYFUv3E+j4MB0GA1UdDgQWBBSzrWHzmiHwx2Rrm7SjRC0UegNrKzAOBgNVHQ8B\n" +
+            "Af8EBAMCB4AwDAYDVR0TAQH/BAIwADAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYB\n" +
+            "BQUHAwIwSQYDVR0gBEIwQDA1BgwrBgEEAbIxAQIBBQEwJTAjBggrBgEFBQcCARYX\n" +
+            "aHR0cHM6Ly9zZWN0aWdvLmNvbS9DUFMwBwYFZ4EMAQEwVgYDVR0fBE8wTTBLoEmg\n" +
+            "R4ZFaHR0cDovL2NybC5zZWN0aWdvLmNvbS9TZWN0aWdvRUNDRXh0ZW5kZWRWYWxp\n" +
+            "ZGF0aW9uU2VjdXJlU2VydmVyQ0EuY3JsMIGGBggrBgEFBQcBAQR6MHgwUQYIKwYB\n" +
+            "BQUHMAKGRWh0dHA6Ly9jcnQuc2VjdGlnby5jb20vU2VjdGlnb0VDQ0V4dGVuZGVk\n" +
+            "VmFsaWRhdGlvblNlY3VyZVNlcnZlckNBLmNydDAjBggrBgEFBQcwAYYXaHR0cDov\n" +
+            "L29jc3Auc2VjdGlnby5jb20wPQYDVR0RBDYwNIIydXNlcnRydXN0ZWNjY2VydGlm\n" +
+            "aWNhdGlvbmF1dGhvcml0eS1ldi5jb21vZG9jYS5jb20wggF/BgorBgEEAdZ5AgQC\n" +
+            "BIIBbwSCAWsBaQB2AO5Lvbd1zmC64UJpH6vhnmajD35fsHLYgwDEe4l6qP3LAAAB\n" +
+            "bYL/SJoAAAQDAEcwRQIhAL7EJt/Rgz6NBnx2v8Hevux3Gpcxy64kaeyLVgFeNqFk\n" +
+            "AiBRf+OWLOtZzEav/oERljrk8hgZB4CR1nj/Tn98cmRrwwB2AFWB1MIWkDYBSuoL\n" +
+            "m1c8U/DA5Dh4cCUIFy+jqh0HE9MMAAABbYL/SIgAAAQDAEcwRQIgVtZZaiBMC2lu\n" +
+            "atBzUHQmOq4qrUQP7nS83cd3VzPhToECIQDnlpOCdaxJwr8C0MtkvYpKSabwBPFL\n" +
+            "ASEkwmOpjuQErAB3ALvZ37wfinG1k5Qjl6qSe0c4V5UKq1LoGpCWZDaOHtGFAAAB\n" +
+            "bYL/SJoAAAQDAEgwRgIhAI8OgzP/kzF1bOJRHU2S/ewij/6HpGPy7Mbm7Hyuv3IU\n" +
+            "AiEAxDmX2FmORlgeerQmQ+ar3D9/TwA9RQckVDu5IrgweREwCgYIKoZIzj0EAwID\n" +
+            "SAAwRQIhAPwQWGWd3oR7YJ7ngCDQ9TAbdPgND51SiR34WfEgaTQtAiAxD4umKm02\n" +
+            "59GEMj5NpyF2ZQEq5mEGcjJNojrn+PC4zg==\n" +
+            "-----END CERTIFICATE-----";
 
-    // Owner: CN=usertrustecccertificationauthority-ev.comodoca.com, OU=COMODO EV SGC SSL,
-    // O=COMODO CA Limited, STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay,
-    // STREET=Trafford Road, L=Salford, ST=Greater Manchester, OID.2.5.4.17=M5 3EQ,
-    // C=GB, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.3=GB,
-    // SERIALNUMBER=04058690
-    // Issuer: CN=USERTrust ECC Extended Validation Secure Server CA, O=The USERTRUST Network,
-    // L=Jersey City, ST=New Jersey, C=US
-    // Serial number: 4a2545ad661540057c81281ff8c101b9
-    // Valid from: Tue Aug 16 17:00:00 PDT 2016 until: Fri Nov 16 15:59:59 PST 2018
-    private static final String REVOKED = "-----BEGIN CERTIFICATE-----\n"
-            + "MIIGtzCCBlygAwIBAgIQSiVFrWYVQAV8gSgf+MEBuTAKBggqhkjOPQQDAjCBlTEL\n"
-            + "MAkGA1UEBhMCVVMxEzARBgNVBAgTCk5ldyBKZXJzZXkxFDASBgNVBAcTC0plcnNl\n"
-            + "eSBDaXR5MR4wHAYDVQQKExVUaGUgVVNFUlRSVVNUIE5ldHdvcmsxOzA5BgNVBAMT\n"
-            + "MlVTRVJUcnVzdCBFQ0MgRXh0ZW5kZWQgVmFsaWRhdGlvbiBTZWN1cmUgU2VydmVy\n"
-            + "IENBMB4XDTE2MDgxNzAwMDAwMFoXDTE4MTExNjIzNTk1OVowggFgMREwDwYDVQQF\n"
-            + "EwgwNDA1ODY5MDETMBEGCysGAQQBgjc8AgEDEwJHQjEdMBsGA1UEDxMUUHJpdmF0\n"
-            + "ZSBPcmdhbml6YXRpb24xCzAJBgNVBAYTAkdCMQ8wDQYDVQQREwZNNSAzRVExGzAZ\n"
-            + "BgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEWMBQG\n"
-            + "A1UECRMNVHJhZmZvcmQgUm9hZDEWMBQGA1UECRMNRXhjaGFuZ2UgUXVheTElMCMG\n"
-            + "A1UECRMcM3JkIEZsb29yLCAyNiBPZmZpY2UgVmlsbGFnZTEaMBgGA1UEChMRQ09N\n"
-            + "T0RPIENBIExpbWl0ZWQxGjAYBgNVBAsTEUNPTU9ETyBFViBTR0MgU1NMMTswOQYD\n"
-            + "VQQDEzJ1c2VydHJ1c3RlY2NjZXJ0aWZpY2F0aW9uYXV0aG9yaXR5LWV2LmNvbW9k\n"
-            + "b2NhLmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABC0yXxHfdlpYPofwFbT7\n"
-            + "DJsF/T7r4vlhgr97IBUabq/CMtpBlaVx0UEwp9o/WpMuLRUBpuzhtpJSQPzBHnry\n"
-            + "lWmjggO+MIIDujAfBgNVHSMEGDAWgBQqnFr5TqEw2kBLK+lL8fWc3AL5LjAdBgNV\n"
-            + "HQ4EFgQUs61h85oh8Mdka5u0o0QtFHoDayswDgYDVR0PAQH/BAQDAgWAMAwGA1Ud\n"
-            + "EwEB/wQCMAAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMEcGA1UdIARA\n"
-            + "MD4wPAYMKwYBBAGyMQECAQUBMCwwKgYIKwYBBQUHAgEWHmh0dHBzOi8vY3BzLnRy\n"
-            + "dXN0LXByb3ZpZGVyLmNvbTBfBgNVHR8EWDBWMFSgUqBQhk5odHRwOi8vY3JsLnRy\n"
-            + "dXN0LXByb3ZpZGVyLmNvbS9VU0VSVHJ1c3RFQ0NFeHRlbmRlZFZhbGlkYXRpb25T\n"
-            + "ZWN1cmVTZXJ2ZXJDQS5jcmwwgZgGCCsGAQUFBwEBBIGLMIGIMFoGCCsGAQUFBzAC\n"
-            + "hk5odHRwOi8vY3J0LnRydXN0LXByb3ZpZGVyLmNvbS9VU0VSVHJ1c3RFQ0NFeHRl\n"
-            + "bmRlZFZhbGlkYXRpb25TZWN1cmVTZXJ2ZXJDQS5jcnQwKgYIKwYBBQUHMAGGHmh0\n"
-            + "dHA6Ly9vY3NwLnRydXN0LXByb3ZpZGVyLmNvbTB1BgNVHREEbjBsgjJ1c2VydHJ1\n"
-            + "c3RlY2NjZXJ0aWZpY2F0aW9uYXV0aG9yaXR5LWV2LmNvbW9kb2NhLmNvbYI2d3d3\n"
-            + "LnVzZXJ0cnVzdGVjY2NlcnRpZmljYXRpb25hdXRob3JpdHktZXYuY29tb2RvY2Eu\n"
-            + "Y29tMIIBfQYKKwYBBAHWeQIEAgSCAW0EggFpAWcAdQBo9pj4H2SCvjqM7rkoHUz8\n"
-            + "cVFdZ5PURNEKZ6y7T0/7xAAAAVaYy/EsAAAEAwBGMEQCIATN694opYRAY9yCNZXZ\n"
-            + "TBJapGSqKHg1GBtlifmy+WB+AiACeljNAF3VK9Ma1bbJiRtB9ZRAN7mPbzaC3wha\n"
-            + "+5riaAB2AFYUBpov18Ls0/XhvUSyPsdGdrm8mRFcwO+UmFXWidDdAAABVpjL8F8A\n"
-            + "AAQDAEcwRQIgLq1mfWnNQWNTtQYtNCWm8wUm1Jez6AqfzmFLKJc4NC8CIQCsaHIH\n"
-            + "b/nKPPyKL9hxi2o5n0K3DpnHFv5V+0dtTBjOCgB2AO5Lvbd1zmC64UJpH6vhnmaj\n"
-            + "D35fsHLYgwDEe4l6qP3LAAABVpjL8RMAAAQDAEcwRQIhAOR5Hx0Mq6iX7lE6mfIR\n"
-            + "efJknMqXCnjcDsvzk6ZiXwSQAiB31TTkVHIVyscNYsup34Vcid7nWMuZiLjEElBo\n"
-            + "vYYh3jAKBggqhkjOPQQDAgNJADBGAiEA0CZ8Utr9boJ2y9mfVkOv2US4Nk9oWT/y\n"
-            + "P5YGb+ox/EICIQCBHZdD3tPNJ5BDkIdUCjnaFkNsHJchsU8e5a+1CV4knQ==\n"
-            + "-----END CERTIFICATE-----";
+    // Owner: CN=usertrustecccertificationauthority-ev.comodoca.com, OU=COMODO EV SGC SSL, O=Sectigo Limited,
+    // STREET="3rd Floor, 26 Office Village", STREET=Exchange Quay, STREET=Trafford Road, L=Salford,
+    // ST=Greater Manchester, OID.2.5.4.17=M5 3EQ, C=GB, OID.2.5.4.15=Private Organization,
+    // OID.1.3.6.1.4.1.311.60.2.1.3=GB, SERIALNUMBER=04058690
+    // Issuer: CN=USERTrust ECC Extended Validation Secure Server CA, O=The USERTRUST Network, L=Jersey City,
+    // ST=New Jersey, C=US
+    // Serial number: ab1455f9833ae7783f95de8744181f6a
+    // Valid from: Wed Nov 28 16:00:00 PST 2018 until: Fri Feb 26 15:59:59 PST 2021
+    private static final String REVOKED = "-----BEGIN CERTIFICATE-----\n" +
+            "MIIGhjCCBiygAwIBAgIRAKsUVfmDOud4P5Xeh0QYH2owCgYIKoZIzj0EAwIwgZUx\n" +
+            "CzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpOZXcgSmVyc2V5MRQwEgYDVQQHEwtKZXJz\n" +
+            "ZXkgQ2l0eTEeMBwGA1UEChMVVGhlIFVTRVJUUlVTVCBOZXR3b3JrMTswOQYDVQQD\n" +
+            "EzJVU0VSVHJ1c3QgRUNDIEV4dGVuZGVkIFZhbGlkYXRpb24gU2VjdXJlIFNlcnZl\n" +
+            "ciBDQTAeFw0xODExMjkwMDAwMDBaFw0yMTAyMjYyMzU5NTlaMIIBXjERMA8GA1UE\n" +
+            "BRMIMDQwNTg2OTAxEzARBgsrBgEEAYI3PAIBAxMCR0IxHTAbBgNVBA8TFFByaXZh\n" +
+            "dGUgT3JnYW5pemF0aW9uMQswCQYDVQQGEwJHQjEPMA0GA1UEERMGTTUgM0VRMRsw\n" +
+            "GQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQxFjAU\n" +
+            "BgNVBAkTDVRyYWZmb3JkIFJvYWQxFjAUBgNVBAkTDUV4Y2hhbmdlIFF1YXkxJTAj\n" +
+            "BgNVBAkTHDNyZCBGbG9vciwgMjYgT2ZmaWNlIFZpbGxhZ2UxGDAWBgNVBAoTD1Nl\n" +
+            "Y3RpZ28gTGltaXRlZDEaMBgGA1UECxMRQ09NT0RPIEVWIFNHQyBTU0wxOzA5BgNV\n" +
+            "BAMTMnVzZXJ0cnVzdGVjY2NlcnRpZmljYXRpb25hdXRob3JpdHktZXYuY29tb2Rv\n" +
+            "Y2EuY29tMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAELTJfEd92Wlg+h/AVtPsM\n" +
+            "mwX9Puvi+WGCv3sgFRpur8Iy2kGVpXHRQTCn2j9aky4tFQGm7OG2klJA/MEeevKV\n" +
+            "aaOCA48wggOLMB8GA1UdIwQYMBaAFCqcWvlOoTDaQEsr6Uvx9ZzcAvkuMB0GA1Ud\n" +
+            "DgQWBBSzrWHzmiHwx2Rrm7SjRC0UegNrKzAOBgNVHQ8BAf8EBAMCBYAwDAYDVR0T\n" +
+            "AQH/BAIwADAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwUAYDVR0gBEkw\n" +
+            "RzA8BgwrBgEEAbIxAQIBBQEwLDAqBggrBgEFBQcCARYeaHR0cHM6Ly9jcHMudHJ1\n" +
+            "c3QtcHJvdmlkZXIuY29tMAcGBWeBDAEBMF8GA1UdHwRYMFYwVKBSoFCGTmh0dHA6\n" +
+            "Ly9jcmwudHJ1c3QtcHJvdmlkZXIuY29tL1VTRVJUcnVzdEVDQ0V4dGVuZGVkVmFs\n" +
+            "aWRhdGlvblNlY3VyZVNlcnZlckNBLmNybDCBmAYIKwYBBQUHAQEEgYswgYgwWgYI\n" +
+            "KwYBBQUHMAKGTmh0dHA6Ly9jcnQudHJ1c3QtcHJvdmlkZXIuY29tL1VTRVJUcnVz\n" +
+            "dEVDQ0V4dGVuZGVkVmFsaWRhdGlvblNlY3VyZVNlcnZlckNBLmNydDAqBggrBgEF\n" +
+            "BQcwAYYeaHR0cDovL29jc3AudHJ1c3QtcHJvdmlkZXIuY29tMD0GA1UdEQQ2MDSC\n" +
+            "MnVzZXJ0cnVzdGVjY2NlcnRpZmljYXRpb25hdXRob3JpdHktZXYuY29tb2RvY2Eu\n" +
+            "Y29tMIIBfQYKKwYBBAHWeQIEAgSCAW0EggFpAWcAdgDuS723dc5guuFCaR+r4Z5m\n" +
+            "ow9+X7By2IMAxHuJeqj9ywAAAWdhJc3KAAAEAwBHMEUCIQCPBqO6bw8GSm3HxUf5\n" +
+            "vRcv74BOEAwZxEr0+PyszJHDbQIgCDXHPzlznU2jbaPdbZ65OQ78mRL5aDDMt1vf\n" +
+            "/foQr/wAdQBvU3asMfAxGdiZAKRRFf93FRwR2QLBACkGjbIImjfZEwAAAWdhJc3B\n" +
+            "AAAEAwBGMEQCICIvBLk08NTaEWtKdH8xl2VjjYUo+yQmtdqwMiVMjEB8AiAc50at\n" +
+            "gCogvZhdlIlGAqg5oND0K74+iglilBVvuTcIoQB2ALvZ37wfinG1k5Qjl6qSe0c4\n" +
+            "V5UKq1LoGpCWZDaOHtGFAAABZ2ElzcsAAAQDAEcwRQIhALDnAxdhUQvt2HkslYbG\n" +
+            "J8mYzWbDSSoidZzF4EF4bredAiB3xrSKOKFdTF3KUFHJANqT0c6Xxmo5dVUtovwM\n" +
+            "QMb1vTAKBggqhkjOPQQDAgNIADBFAiEA2ZwNj/BD8n2yR5BMBQvw7utv9XWrJvKQ\n" +
+            "11EPtBSCEhUCIBcyI0yl5dRff6+4x8IeCrLiAOYsfzM7Y/a5uRKFnbYz\n" +
+            "-----END CERTIFICATE-----";
 
     public void runTest(ValidatePathWithParams pathValidator) throws Exception {
         // Validate valid
-        pathValidator.validate(new String[]{VALID, INT},
+        pathValidator.validate(new String[]{VALID, INT_VALID},
                 ValidatePathWithParams.Status.GOOD, null, System.out);
 
         // Validate Revoked
-        pathValidator.validate(new String[]{REVOKED, INT},
+        pathValidator.validate(new String[]{REVOKED, INT_REVOKED},
                 ValidatePathWithParams.Status.REVOKED,
-                "Tue Jul 04 03:51:20 PDT 2017", System.out);
+                "Wed Oct 02 06:06:50 PDT 2019", System.out);
     }
 }

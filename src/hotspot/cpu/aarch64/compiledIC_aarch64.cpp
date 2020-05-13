@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, 2018, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -61,14 +61,14 @@ address CompiledStaticCall::emit_to_interp_stub(CodeBuffer &cbuf, address mark) 
   // Don't create a Metadata reloc if we're generating immutable PIC.
   if (cbuf.immutable_PIC()) {
     __ movptr(rmethod, 0);
-  } else {
-    __ mov_metadata(rmethod, (Metadata*)NULL);
-  }
-#else
-  __ mov_metadata(rmethod, (Metadata*)NULL);
+    __ movptr(rscratch1, 0);
+    __ br(rscratch1);
+
+  } else
 #endif
-  __ movptr(rscratch1, 0);
-  __ br(rscratch1);
+  {
+    __ emit_static_call_stub();
+  }
 
   assert((__ offset() - offset) <= (int)to_interp_stub_size(), "stub too big");
   __ end_a_stub();
@@ -77,7 +77,8 @@ address CompiledStaticCall::emit_to_interp_stub(CodeBuffer &cbuf, address mark) 
 #undef __
 
 int CompiledStaticCall::to_interp_stub_size() {
-  return 7 * NativeInstruction::instruction_size;
+  // isb; movk; movz; movz; movk; movz; movz; br
+  return 8 * NativeInstruction::instruction_size;
 }
 
 int CompiledStaticCall::to_trampoline_stub_size() {
@@ -159,17 +160,14 @@ void CompiledDirectStaticCall::set_to_interpreted(const methodHandle& callee, ad
   }
 
   // Creation also verifies the object.
-  NativeMovConstReg* method_holder = nativeMovConstReg_at(stub);
-#ifndef PRODUCT
-  NativeGeneralJump* jump = nativeGeneralJump_at(method_holder->next_instruction_address());
+  NativeMovConstReg* method_holder
+    = nativeMovConstReg_at(stub + NativeInstruction::instruction_size);
 
-  // read the value once
-  volatile intptr_t data = method_holder->data();
-  assert(data == 0 || data == (intptr_t)callee(),
-         "a) MT-unsafe modification of inline cache");
-  assert(data == 0 || jump->jump_destination() == entry,
-         "b) MT-unsafe modification of inline cache");
+#ifdef ASSERT
+  NativeGeneralJump* jump = nativeGeneralJump_at(method_holder->next_instruction_address());
+  verify_mt_safe(callee, entry, method_holder, jump);
 #endif
+
   // Update stub.
   method_holder->set_data((intptr_t)callee());
   NativeGeneralJump::insert_unconditional(method_holder->next_instruction_address(), entry);
@@ -184,8 +182,13 @@ void CompiledDirectStaticCall::set_stub_to_clean(static_stub_Relocation* static_
   assert(stub != NULL, "stub not found");
   assert(CompiledICLocker::is_safe(stub), "mt unsafe call");
   // Creation also verifies the object.
-  NativeMovConstReg* method_holder = nativeMovConstReg_at(stub);
+  NativeMovConstReg* method_holder
+    = nativeMovConstReg_at(stub + NativeInstruction::instruction_size);
   method_holder->set_data(0);
+  if (!static_stub->is_aot()) {
+    NativeJump* jump = nativeJump_at(method_holder->next_instruction_address());
+    jump->set_jump_destination((address)-1);
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -201,8 +204,9 @@ void CompiledDirectStaticCall::verify() {
   address stub = find_stub(false /* is_aot */);
   assert(stub != NULL, "no stub found for static call");
   // Creation also verifies the object.
-  NativeMovConstReg* method_holder = nativeMovConstReg_at(stub);
-  NativeJump*        jump          = nativeJump_at(method_holder->next_instruction_address());
+  NativeMovConstReg* method_holder
+    = nativeMovConstReg_at(stub + NativeInstruction::instruction_size);
+  NativeJump* jump = nativeJump_at(method_holder->next_instruction_address());
 
   // Verify state.
   assert(is_clean() || is_call_to_compiled() || is_call_to_interpreted(), "sanity check");

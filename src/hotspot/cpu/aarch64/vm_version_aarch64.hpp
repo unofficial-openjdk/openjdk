@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2014, Red Hat Inc. All rights reserved.
+ * Copyright (c) 2014, 2019, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,8 @@
 #ifndef CPU_AARCH64_VM_VERSION_AARCH64_HPP
 #define CPU_AARCH64_VM_VERSION_AARCH64_HPP
 
+#include "runtime/abstract_vm_version.hpp"
 #include "runtime/globals_extension.hpp"
-#include "runtime/vm_version.hpp"
 #include "utilities/sizes.hpp"
 
 class VM_Version : public Abstract_VM_Version {
@@ -40,7 +40,7 @@ protected:
   static int _variant;
   static int _revision;
   static int _stepping;
-
+  static bool _dcpop;
   struct PsrInfo {
     uint32_t dczid_el0;
     uint32_t ctr_el0;
@@ -67,11 +67,16 @@ public:
     return false;
   }
 
+  // The CPU implementer codes can be found in
+  // ARM Architecture Reference Manual ARMv8, for ARMv8-A architecture profile
+  // https://developer.arm.com/docs/ddi0487/latest
   enum Family {
+    CPU_AMPERE    = 0xC0,
     CPU_ARM       = 'A',
     CPU_BROADCOM  = 'B',
     CPU_CAVIUM    = 'C',
     CPU_DEC       = 'D',
+    CPU_HISILICON = 'H',
     CPU_INFINEON  = 'I',
     CPU_MOTOROLA  = 'M',
     CPU_NVIDIA    = 'N',
@@ -101,6 +106,7 @@ public:
   static int cpu_model2()                     { return _model2; }
   static int cpu_variant()                    { return _variant; }
   static int cpu_revision()                   { return _revision; }
+  static bool supports_dcpop()                { return _dcpop; }
   static ByteSize dczid_el0_offset() { return byte_offset_of(PsrInfo, dczid_el0); }
   static ByteSize ctr_el0_offset()   { return byte_offset_of(PsrInfo, ctr_el0); }
   static bool is_zva_enabled() {
@@ -119,6 +125,7 @@ public:
   static int dcache_line_size() {
     return (1 << ((_psr_info.ctr_el0 >> 16) & 0x0f)) * 4;
   }
+  static bool supports_fast_class_init_checks() { return true; }
 };
 
 #endif // CPU_AARCH64_VM_VERSION_AARCH64_HPP

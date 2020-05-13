@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.ref.WeakReference;
 import java.security.AccessController;
 
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.VM;
 import jdk.internal.module.IllegalAccessLogger;
 import jdk.internal.reflect.CallerSensitive;
@@ -56,7 +57,10 @@ import sun.security.util.SecurityConstants;
  * {@code Field}s, {@code Method}s, or {@code Constructor}s are used to get or
  * set fields, to invoke methods, or to create and initialize new instances of
  * classes, respectively. Every reflected object checks that the code using it
- * is in an appropriate class, package, or module. </p>
+ * is in an appropriate class, package, or module. The check when invoked by
+ * <a href="{@docRoot}/../specs/jni/index.html">JNI code</a> with no Java
+ * class on the stack only succeeds if the member and the declaring class are
+ * public, and the class is in a package that is exported to all modules. </p>
  *
  * <p> The one variation from Java language access control is that the checks
  * by reflected objects assume readability. That is, the module containing
@@ -74,6 +78,10 @@ import sun.security.util.SecurityConstants;
  * @spec JPMS
  */
 public class AccessibleObject implements AnnotatedElement {
+    static {
+        // AccessibleObject is initialized early in initPhase1
+        SharedSecrets.setJavaLangReflectAccess(new ReflectAccess());
+    }
 
     static void checkPermission() {
         SecurityManager sm = System.getSecurityManager();
@@ -167,6 +175,12 @@ public class AccessibleObject implements AnnotatedElement {
      * protected constructors when the declaring class is in a different module
      * to the caller and the package containing the declaring class is not open
      * to the caller's module. </p>
+     *
+     * <p> This method cannot be used to enable {@linkplain Field#set <em>write</em>}
+     * access to a final field declared in a {@linkplain Class#isHidden() hidden class},
+     * since such fields are not modifiable.  The {@code accessible} flag when
+     * {@code true} suppresses Java language access control checks to only
+     * enable {@linkplain Field#get <em>read</em>} access to such fields.
      *
      * <p> If there is a security manager, its
      * {@code checkPermission} method is first called with a
@@ -501,15 +515,22 @@ public class AccessibleObject implements AnnotatedElement {
             new ReflectionFactory.GetReflectionFactoryAction());
 
     /**
+     * {@inheritDoc}
+     *
+     * <p> Note that any annotation returned by this method is a
+     * declaration annotation.
+     *
      * @throws NullPointerException {@inheritDoc}
      * @since 1.5
      */
+    @Override
     public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
         throw new AssertionError("All subclasses should override this method");
     }
 
     /**
      * {@inheritDoc}
+     *
      * @throws NullPointerException {@inheritDoc}
      * @since 1.5
      */
@@ -519,6 +540,11 @@ public class AccessibleObject implements AnnotatedElement {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * <p> Note that any annotations returned by this method are
+     * declaration annotations.
+     *
      * @throws NullPointerException {@inheritDoc}
      * @since 1.8
      */
@@ -528,13 +554,24 @@ public class AccessibleObject implements AnnotatedElement {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * <p> Note that any annotations returned by this method are
+     * declaration annotations.
+     *
      * @since 1.5
      */
+    @Override
     public Annotation[] getAnnotations() {
         return getDeclaredAnnotations();
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * <p> Note that any annotation returned by this method is a
+     * declaration annotation.
+     *
      * @throws NullPointerException {@inheritDoc}
      * @since 1.8
      */
@@ -547,6 +584,11 @@ public class AccessibleObject implements AnnotatedElement {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * <p> Note that any annotations returned by this method are
+     * declaration annotations.
+     *
      * @throws NullPointerException {@inheritDoc}
      * @since 1.8
      */
@@ -559,8 +601,14 @@ public class AccessibleObject implements AnnotatedElement {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * <p> Note that any annotations returned by this method are
+     * declaration annotations.
+     *
      * @since 1.5
      */
+    @Override
     public Annotation[] getDeclaredAnnotations()  {
         throw new AssertionError("All subclasses should override this method");
     }
@@ -670,6 +718,13 @@ public class AccessibleObject implements AnnotatedElement {
     private boolean slowVerifyAccess(Class<?> caller, Class<?> memberClass,
                                      Class<?> targetClass, int modifiers)
     {
+
+        if (caller == null) {
+            // No caller frame when a native thread attaches to the VM
+            // only allow access to a public accessible member
+            return Reflection.verifyPublicMemberAccess(memberClass, modifiers);
+        }
+
         if (!Reflection.verifyMemberAccess(caller, memberClass, targetClass, modifiers)) {
             // access denied
             return false;

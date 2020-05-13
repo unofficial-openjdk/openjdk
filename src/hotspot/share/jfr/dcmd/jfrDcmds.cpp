@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -171,8 +171,8 @@ static oop construct_dcmd_instance(JfrJavaArguments* args, TRAPS) {
   assert(args != NULL, "invariant");
   DEBUG_ONLY(JfrJavaSupport::check_java_thread_in_vm(THREAD));
   assert(args->klass() != NULL, "invariant");
-  args->set_name("<init>", CHECK_NULL);
-  args->set_signature("()V", CHECK_NULL);
+  args->set_name("<init>");
+  args->set_signature("()V");
   JfrJavaSupport::new_object(args, CHECK_NULL);
   return (oop)args->result()->get_jobject();
 }
@@ -342,13 +342,14 @@ void JfrCheckFlightRecordingDCmd::execute(DCmdSource source, TRAPS) {
 JfrStartFlightRecordingDCmd::JfrStartFlightRecordingDCmd(outputStream* output,
                                                          bool heap) : DCmdWithParser(output, heap),
   _name("name", "Name that can be used to identify recording, e.g. \\\"My Recording\\\"", "STRING", false, NULL),
-  _settings("settings", "Settings file(s), e.g. profile or default. See JRE_HOME/lib/jfr", "STRING SET", false),
+  _settings("settings", "Settings file(s), e.g. profile or default. See JAVA_HOME/lib/jfr", "STRING SET", false),
   _delay("delay", "Delay recording start with (s)econds, (m)inutes), (h)ours), or (d)ays, e.g. 5h.", "NANOTIME", false, "0"),
   _duration("duration", "Duration of recording in (s)econds, (m)inutes, (h)ours, or (d)ays, e.g. 300s.", "NANOTIME", false, "0"),
   _disk("disk", "Recording should be persisted to disk", "BOOLEAN", false),
   _filename("filename", "Resulting recording filename, e.g. \\\"" JFR_FILENAME_EXAMPLE "\\\"", "STRING", false),
   _maxage("maxage", "Maximum time to keep recorded data (on disk) in (s)econds, (m)inutes, (h)ours, or (d)ays, e.g. 60m, or 0 for no limit", "NANOTIME", false, "0"),
   _maxsize("maxsize", "Maximum amount of bytes to keep (on disk) in (k)B, (M)B or (G)B, e.g. 500M, or 0 for no limit", "MEMORY SIZE", false, "0"),
+  _flush_interval("flush-interval", "Minimum time before flushing buffers, measured in (s)econds, e.g. 4 s, or 0 for flushing when a recording ends", "NANOTIME", false, "1s"),
   _dump_on_exit("dumponexit", "Dump running recording when JVM shuts down", "BOOLEAN", false),
   _path_to_gc_roots("path-to-gc-roots", "Collect path to GC roots", "BOOLEAN", false, "false") {
   _dcmdparser.add_dcmd_option(&_name);
@@ -359,6 +360,7 @@ JfrStartFlightRecordingDCmd::JfrStartFlightRecordingDCmd(outputStream* output,
   _dcmdparser.add_dcmd_option(&_filename);
   _dcmdparser.add_dcmd_option(&_maxage);
   _dcmdparser.add_dcmd_option(&_maxsize);
+  _dcmdparser.add_dcmd_option(&_flush_interval);
   _dcmdparser.add_dcmd_option(&_dump_on_exit);
   _dcmdparser.add_dcmd_option(&_path_to_gc_roots);
 };
@@ -411,6 +413,10 @@ void JfrStartFlightRecordingDCmd::execute(DCmdSource source, TRAPS) {
     maxsize = JfrJavaSupport::new_java_lang_Long(_maxsize.value()._size, CHECK);
   }
 
+  jobject flush_interval = NULL;
+  if (_flush_interval.is_set()) {
+    flush_interval = JfrJavaSupport::new_java_lang_Long(_flush_interval.value()._nanotime, CHECK);
+  }
   jobject duration = NULL;
   if (_duration.is_set()) {
     duration = JfrJavaSupport::new_java_lang_Long(_duration.value()._nanotime, CHECK);
@@ -438,7 +444,13 @@ void JfrStartFlightRecordingDCmd::execute(DCmdSource source, TRAPS) {
 
   jobjectArray settings = NULL;
   if (_settings.is_set()) {
-    const int length = _settings.value()->array()->length();
+    int length = _settings.value()->array()->length();
+    if (length == 1) {
+      const char* c_str = _settings.value()->array()->at(0);
+      if (strcmp(c_str, "none") == 0) {
+        length = 0;
+      }
+    }
     settings = JfrJavaSupport::new_string_array(length, CHECK);
     assert(settings != NULL, "invariant");
     for (int i = 0; i < length; ++i) {
@@ -458,7 +470,7 @@ void JfrStartFlightRecordingDCmd::execute(DCmdSource source, TRAPS) {
   static const char method[] = "execute";
   static const char signature[] = "(Ljava/lang/String;[Ljava/lang/String;Ljava/lang/Long;"
     "Ljava/lang/Long;Ljava/lang/Boolean;Ljava/lang/String;"
-    "Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;Ljava/lang/Boolean;)Ljava/lang/String;";
+    "Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;Ljava/lang/Boolean;)Ljava/lang/String;";
 
   JfrJavaArguments execute_args(&result, klass, method, signature, CHECK);
   execute_args.set_receiver(h_dcmd_instance);
@@ -472,6 +484,7 @@ void JfrStartFlightRecordingDCmd::execute(DCmdSource source, TRAPS) {
   execute_args.push_jobject(filename);
   execute_args.push_jobject(maxage);
   execute_args.push_jobject(maxsize);
+  execute_args.push_jobject(flush_interval);
   execute_args.push_jobject(dump_on_exit);
   execute_args.push_jobject(path_to_gc_roots);
 
@@ -550,7 +563,8 @@ JfrConfigureFlightRecorderDCmd::JfrConfigureFlightRecorderDCmd(outputStream* out
   _thread_buffer_size("thread_buffer_size", "Size of a thread buffer", "MEMORY SIZE", false, "8k"),
   _memory_size("memorysize", "Overall memory size, ", "MEMORY SIZE", false, "10m"),
   _max_chunk_size("maxchunksize", "Size of an individual disk chunk", "MEMORY SIZE", false, "12m"),
-  _sample_threads("samplethreads", "Activate Thread sampling", "BOOLEAN", false, "true") {
+  _sample_threads("samplethreads", "Activate Thread sampling", "BOOLEAN", false, "true"),
+  _verbose(true) {
   _dcmdparser.add_dcmd_option(&_repository_path);
   _dcmdparser.add_dcmd_option(&_dump_path);
   _dcmdparser.add_dcmd_option(&_stack_depth);
@@ -637,7 +651,7 @@ void JfrConfigureFlightRecorderDCmd::execute(DCmdSource source, TRAPS) {
 
   static const char klass[] = "jdk/jfr/internal/dcmd/DCmdConfigure";
   static const char method[] = "execute";
-  static const char signature[] = "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;"
+  static const char signature[] = "(ZLjava/lang/String;Ljava/lang/String;Ljava/lang/Integer;"
     "Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;"
     "Ljava/lang/Long;Ljava/lang/Boolean;)Ljava/lang/String;";
 
@@ -645,6 +659,7 @@ void JfrConfigureFlightRecorderDCmd::execute(DCmdSource source, TRAPS) {
   execute_args.set_receiver(h_dcmd_instance);
 
   // params
+  execute_args.push_int(_verbose ? 1 : 0);
   execute_args.push_jobject(repository_path);
   execute_args.push_jobject(dump_path);
   execute_args.push_jobject(stack_depth);

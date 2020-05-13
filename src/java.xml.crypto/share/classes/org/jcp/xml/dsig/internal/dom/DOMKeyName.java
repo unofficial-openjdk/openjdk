@@ -21,22 +21,27 @@
  * under the License.
  */
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * $Id: DOMKeyName.java 1788465 2017-03-24 15:10:51Z coheigea $
+ * $Id: DOMKeyName.java 1854026 2019-02-21 09:30:01Z coheigea $
  */
 package org.jcp.xml.dsig.internal.dom;
 
+import javax.xml.crypto.MarshalException;
+import javax.xml.crypto.dom.DOMCryptoContext;
+import javax.xml.crypto.dsig.XMLSignature;
 import javax.xml.crypto.dsig.keyinfo.KeyName;
 
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 /**
  * DOM-based implementation of KeyName.
  *
  */
-public final class DOMKeyName extends BaseStructure implements KeyName {
+public final class DOMKeyName extends DOMStructure implements KeyName {
 
     private final String name;
 
@@ -59,12 +64,23 @@ public final class DOMKeyName extends BaseStructure implements KeyName {
      * @param knElem a KeyName element
      */
     public DOMKeyName(Element knElem) {
-        name = textOfNode(knElem);
+        name = knElem.getFirstChild().getNodeValue();
+    }
+
+    public String getName() {
+        return name;
     }
 
     @Override
-    public String getName() {
-        return name;
+    public void marshal(Node parent, String dsPrefix, DOMCryptoContext context)
+        throws MarshalException
+    {
+        Document ownerDoc = DOMUtils.getOwnerDocument(parent);
+        // prepend namespace prefix, if necessary
+        Element knElem = DOMUtils.createElement(ownerDoc, "KeyName",
+                                                XMLSignature.XMLNS, dsPrefix);
+        knElem.appendChild(ownerDoc.createTextNode(name));
+        parent.appendChild(knElem);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,11 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
+#include "code/nmethod.hpp"
+#include "gc/shared/oopStorage.hpp"
+#include "gc/shared/oopStorageSet.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/oopMapCache.hpp"
 #include "jvmtifiles/jvmtiEnv.hpp"
@@ -37,7 +41,6 @@
 #include "prims/jvmtiEventController.inline.hpp"
 #include "prims/jvmtiImpl.hpp"
 #include "prims/jvmtiRedefineClasses.hpp"
-#include "runtime/atomic.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -170,24 +173,6 @@ void GrowableCache::append(GrowableElement* e) {
   recache();
 }
 
-// insert a copy of the element using lessthan()
-void GrowableCache::insert(GrowableElement* e) {
-  GrowableElement *new_e = e->clone();
-  _elements->append(new_e);
-
-  int n = length()-2;
-  for (int i=n; i>=0; i--) {
-    GrowableElement *e1 = _elements->at(i);
-    GrowableElement *e2 = _elements->at(i+1);
-    if (e2->lessThan(e1)) {
-      _elements->at_put(i+1, e1);
-      _elements->at_put(i,   e2);
-    }
-  }
-
-  recache();
-}
-
 // remove the element at index
 void GrowableCache::remove (int index) {
   GrowableElement *e = _elements->at(index);
@@ -208,76 +193,45 @@ void GrowableCache::clear() {
   recache();
 }
 
-void GrowableCache::oops_do(OopClosure* f) {
-  int len = _elements->length();
-  for (int i=0; i<len; i++) {
-    GrowableElement *e = _elements->at(i);
-    e->oops_do(f);
-  }
-}
-
-void GrowableCache::metadata_do(void f(Metadata*)) {
-  int len = _elements->length();
-  for (int i=0; i<len; i++) {
-    GrowableElement *e = _elements->at(i);
-    e->metadata_do(f);
-  }
-}
-
-void GrowableCache::gc_epilogue() {
-  int len = _elements->length();
-  for (int i=0; i<len; i++) {
-    _cache[i] = _elements->at(i)->getCacheValue();
-  }
-}
-
 //
 // class JvmtiBreakpoint
 //
 
-JvmtiBreakpoint::JvmtiBreakpoint() {
-  _method = NULL;
-  _bci    = 0;
-  _class_holder = NULL;
+JvmtiBreakpoint::JvmtiBreakpoint(Method* m_method, jlocation location)
+    : _method(m_method), _bci((int)location), _class_holder(NULL) {
+  assert(_method != NULL, "No method for breakpoint.");
+  assert(_bci >= 0, "Negative bci for breakpoint.");
+  oop class_holder_oop  = _method->method_holder()->klass_holder();
+  _class_holder = OopStorageSet::vm_global()->allocate();
+  if (_class_holder == NULL) {
+    vm_exit_out_of_memory(sizeof(oop), OOM_MALLOC_ERROR,
+                          "Cannot create breakpoint oop handle");
+  }
+  NativeAccess<>::oop_store(_class_holder, class_holder_oop);
 }
 
-JvmtiBreakpoint::JvmtiBreakpoint(Method* m_method, jlocation location) {
-  _method        = m_method;
-  _class_holder  = _method->method_holder()->klass_holder();
-#ifdef CHECK_UNHANDLED_OOPS
-  // _class_holder can't be wrapped in a Handle, because JvmtiBreakpoints are
-  // sometimes allocated on the heap.
-  //
-  // The code handling JvmtiBreakpoints allocated on the stack can't be
-  // interrupted by a GC until _class_holder is reachable by the GC via the
-  // oops_do method.
-  Thread::current()->allow_unhandled_oop(&_class_holder);
-#endif // CHECK_UNHANDLED_OOPS
-  assert(_method != NULL, "_method != NULL");
-  _bci           = (int) location;
-  assert(_bci >= 0, "_bci >= 0");
+JvmtiBreakpoint::~JvmtiBreakpoint() {
+  if (_class_holder != NULL) {
+    NativeAccess<>::oop_store(_class_holder, (oop)NULL);
+    OopStorageSet::vm_global()->release(_class_holder);
+  }
 }
 
 void JvmtiBreakpoint::copy(JvmtiBreakpoint& bp) {
   _method   = bp._method;
   _bci      = bp._bci;
-  _class_holder = bp._class_holder;
-}
-
-bool JvmtiBreakpoint::lessThan(JvmtiBreakpoint& bp) {
-  Unimplemented();
-  return false;
+  _class_holder = OopStorageSet::vm_global()->allocate();
+  if (_class_holder == NULL) {
+    vm_exit_out_of_memory(sizeof(oop), OOM_MALLOC_ERROR,
+                          "Cannot create breakpoint oop handle");
+  }
+  oop resolved_ch = NativeAccess<>::oop_load(bp._class_holder);
+  NativeAccess<>::oop_store(_class_holder, resolved_ch);
 }
 
 bool JvmtiBreakpoint::equals(JvmtiBreakpoint& bp) {
   return _method   == bp._method
     &&   _bci      == bp._bci;
-}
-
-bool JvmtiBreakpoint::is_valid() {
-  // class loader can be NULL
-  return _method != NULL &&
-         _bci >= 0;
 }
 
 address JvmtiBreakpoint::getBcp() const {
@@ -353,21 +307,6 @@ void VM_ChangeBreakpoints::doit() {
   }
 }
 
-void VM_ChangeBreakpoints::oops_do(OopClosure* f) {
-  // The JvmtiBreakpoints in _breakpoints will be visited via
-  // JvmtiExport::oops_do.
-  if (_bp != NULL) {
-    _bp->oops_do(f);
-  }
-}
-
-void VM_ChangeBreakpoints::metadata_do(void f(Metadata*)) {
-  // Walk metadata in breakpoints to keep from being deallocated with RedefineClasses
-  if (_bp != NULL) {
-    _bp->metadata_do(f);
-  }
-}
-
 //
 // class JvmtiBreakpoints
 //
@@ -379,18 +318,6 @@ JvmtiBreakpoints::JvmtiBreakpoints(void listener_fun(void *,address *)) {
 }
 
 JvmtiBreakpoints:: ~JvmtiBreakpoints() {}
-
-void  JvmtiBreakpoints::oops_do(OopClosure* f) {
-  _bps.oops_do(f);
-}
-
-void  JvmtiBreakpoints::metadata_do(void f(Metadata*)) {
-  _bps.metadata_do(f);
-}
-
-void JvmtiBreakpoints::gc_epilogue() {
-  _bps.gc_epilogue();
-}
 
 void JvmtiBreakpoints::print() {
 #ifndef PRODUCT
@@ -500,25 +427,6 @@ void  JvmtiCurrentBreakpoints::listener_fun(void *this_obj, address *cache) {
   set_breakpoint_list(cache);
 }
 
-
-void JvmtiCurrentBreakpoints::oops_do(OopClosure* f) {
-  if (_jvmti_breakpoints != NULL) {
-    _jvmti_breakpoints->oops_do(f);
-  }
-}
-
-void JvmtiCurrentBreakpoints::metadata_do(void f(Metadata*)) {
-  if (_jvmti_breakpoints != NULL) {
-    _jvmti_breakpoints->metadata_do(f);
-  }
-}
-
-void JvmtiCurrentBreakpoints::gc_epilogue() {
-  if (_jvmti_breakpoints != NULL) {
-    _jvmti_breakpoints->gc_epilogue();
-  }
-}
-
 ///////////////////////////////////////////////////////////////
 //
 // class VM_GetOrSetLocal
@@ -604,11 +512,12 @@ bool VM_GetOrSetLocal::is_assignable(const char* ty_sign, Klass* klass, Thread* 
   assert(klass != NULL, "klass must not be NULL");
 
   int len = (int) strlen(ty_sign);
-  if (ty_sign[0] == 'L' && ty_sign[len-1] == ';') { // Need pure class/interface name
+  if (ty_sign[0] == JVM_SIGNATURE_CLASS &&
+      ty_sign[len-1] == JVM_SIGNATURE_ENDCLASS) { // Need pure class/interface name
     ty_sign++;
     len -= 2;
   }
-  TempNewSymbol ty_sym = SymbolTable::new_symbol(ty_sign, len, thread);
+  TempNewSymbol ty_sym = SymbolTable::new_symbol(ty_sign, len);
   if (klass->name() == ty_sym) {
     return true;
   }
@@ -661,8 +570,7 @@ bool VM_GetOrSetLocal::check_slot_type_lvt(javaVFrame* jvf) {
     return false;       // Incorrect slot index
   }
   Symbol*   sign_sym  = method_oop->constants()->symbol_at(signature_idx);
-  const char* signature = (const char *) sign_sym->as_utf8();
-  BasicType slot_type = char2type(signature[0]);
+  BasicType slot_type = Signature::basic_type(sign_sym);
 
   switch (slot_type) {
   case T_BYTE:
@@ -693,6 +601,7 @@ bool VM_GetOrSetLocal::check_slot_type_lvt(javaVFrame* jvf) {
     Klass* ob_k = obj->klass();
     NULL_CHECK(ob_k, (_result = JVMTI_ERROR_INVALID_OBJECT, false));
 
+    const char* signature = (const char *) sign_sym->as_utf8();
     if (!is_assignable(signature, ob_k, cur_thread)) {
       _result = JVMTI_ERROR_TYPE_MISMATCH;
       return false;
@@ -739,19 +648,24 @@ bool VM_GetOrSetLocal::doit_prologue() {
   NULL_CHECK(_jvf, false);
 
   Method* method_oop = _jvf->method();
-  if (method_oop->is_native()) {
-    if (getting_receiver() && !method_oop->is_static()) {
-      return true;
-    } else {
-      _result = JVMTI_ERROR_OPAQUE_FRAME;
+  if (getting_receiver()) {
+    if (method_oop->is_static()) {
+      _result = JVMTI_ERROR_INVALID_SLOT;
       return false;
     }
+    return true;
   }
 
+  if (method_oop->is_native()) {
+    _result = JVMTI_ERROR_OPAQUE_FRAME;
+    return false;
+  }
+
+  if (!check_slot_type_no_lvt(_jvf)) {
+    return false;
+  }
   if (method_oop->has_localvariable_table()) {
     return check_slot_type_lvt(_jvf);
-  } else {
-    return check_slot_type_no_lvt(_jvf);
   }
   return true;
 }
@@ -786,7 +700,7 @@ void VM_GetOrSetLocal::doit() {
       // happens. The oop stored in the deferred local will be
       // gc'd on its own.
       if (_type == T_OBJECT) {
-        _value.l = (jobject) (JNIHandles::resolve_external_guard(_value.l));
+        _value.l = cast_from_oop<jobject>(JNIHandles::resolve_external_guard(_value.l));
       }
       // Re-read the vframe so we can see that it is deoptimized
       // [ Only need because of assert in update_local() ]
@@ -896,6 +810,7 @@ bool JvmtiSuspendControl::resume(JavaThread *java_thread) {
 
 void JvmtiSuspendControl::print() {
 #ifndef PRODUCT
+  ResourceMark rm;
   LogStreamHandle(Trace, jvmti) log_stream;
   log_stream.print("Suspended Threads: [");
   for (JavaThreadIteratorWithHandle jtiwh; JavaThread *thread = jtiwh.next(); ) {
@@ -918,24 +833,14 @@ JvmtiDeferredEvent JvmtiDeferredEvent::compiled_method_load_event(
     nmethod* nm) {
   JvmtiDeferredEvent event = JvmtiDeferredEvent(TYPE_COMPILED_METHOD_LOAD);
   event._event_data.compiled_method_load = nm;
-  // Keep the nmethod alive until the ServiceThread can process
-  // this deferred event.
-  nmethodLocker::lock_nmethod(nm);
   return event;
 }
 
 JvmtiDeferredEvent JvmtiDeferredEvent::compiled_method_unload_event(
-    nmethod* nm, jmethodID id, const void* code) {
+    jmethodID id, const void* code) {
   JvmtiDeferredEvent event = JvmtiDeferredEvent(TYPE_COMPILED_METHOD_UNLOAD);
-  event._event_data.compiled_method_unload.nm = nm;
   event._event_data.compiled_method_unload.method_id = id;
   event._event_data.compiled_method_unload.code_begin = code;
-  // Keep the nmethod alive until the ServiceThread can process
-  // this deferred event. This will keep the memory for the
-  // generated code from being reused too early. We pass
-  // zombie_ok == true here so that our nmethod that was just
-  // made into a zombie can be locked.
-  nmethodLocker::lock_nmethod(nm, true /* zombie_ok */);
   return event;
 }
 
@@ -952,24 +857,29 @@ JvmtiDeferredEvent JvmtiDeferredEvent::dynamic_code_generated_event(
   return event;
 }
 
+JvmtiDeferredEvent JvmtiDeferredEvent::class_unload_event(const char* name) {
+  JvmtiDeferredEvent event = JvmtiDeferredEvent(TYPE_CLASS_UNLOAD);
+  // Need to make a copy of the name since we don't know how long
+  // the event poster will keep it around after we enqueue the
+  // deferred event and return. strdup() failure is handled in
+  // the post() routine below.
+  event._event_data.class_unload.name = os::strdup(name);
+  return event;
+}
+
 void JvmtiDeferredEvent::post() {
-  assert(ServiceThread::is_service_thread(Thread::current()),
+  assert(Thread::current()->is_service_thread(),
          "Service thread must post enqueued events");
   switch(_type) {
     case TYPE_COMPILED_METHOD_LOAD: {
       nmethod* nm = _event_data.compiled_method_load;
       JvmtiExport::post_compiled_method_load(nm);
-      // done with the deferred event so unlock the nmethod
-      nmethodLocker::unlock_nmethod(nm);
       break;
     }
     case TYPE_COMPILED_METHOD_UNLOAD: {
-      nmethod* nm = _event_data.compiled_method_unload.nm;
       JvmtiExport::post_compiled_method_unload(
         _event_data.compiled_method_unload.method_id,
         _event_data.compiled_method_unload.code_begin);
-      // done with the deferred event so unlock the nmethod
-      nmethodLocker::unlock_nmethod(nm);
       break;
     }
     case TYPE_DYNAMIC_CODE_GENERATED: {
@@ -985,22 +895,63 @@ void JvmtiDeferredEvent::post() {
       }
       break;
     }
+    case TYPE_CLASS_UNLOAD: {
+      JvmtiExport::post_class_unload_internal(
+        // if strdup failed give the event a default name
+        (_event_data.class_unload.name == NULL)
+          ? "unknown_class" : _event_data.class_unload.name);
+      if (_event_data.class_unload.name != NULL) {
+        // release our copy
+        os::free((void *)_event_data.class_unload.name);
+      }
+      break;
+    }
     default:
       ShouldNotReachHere();
   }
 }
 
-JvmtiDeferredEventQueue::QueueNode* JvmtiDeferredEventQueue::_queue_tail = NULL;
-JvmtiDeferredEventQueue::QueueNode* JvmtiDeferredEventQueue::_queue_head = NULL;
-
-bool JvmtiDeferredEventQueue::has_events() {
-  assert(Service_lock->owned_by_self(), "Must own Service_lock");
-  return _queue_head != NULL;
+void JvmtiDeferredEvent::post_compiled_method_load_event(JvmtiEnv* env) {
+  assert(_type == TYPE_COMPILED_METHOD_LOAD, "only user of this method");
+  nmethod* nm = _event_data.compiled_method_load;
+  JvmtiExport::post_compiled_method_load(env, nm);
 }
 
-void JvmtiDeferredEventQueue::enqueue(const JvmtiDeferredEvent& event) {
-  assert(Service_lock->owned_by_self(), "Must own Service_lock");
+void JvmtiDeferredEvent::run_nmethod_entry_barriers() {
+  if (_type == TYPE_COMPILED_METHOD_LOAD) {
+    _event_data.compiled_method_load->run_nmethod_entry_barrier();
+  }
+}
 
+
+// Keep the nmethod for compiled_method_load from being unloaded.
+void JvmtiDeferredEvent::oops_do(OopClosure* f, CodeBlobClosure* cf) {
+  if (cf != NULL && _type == TYPE_COMPILED_METHOD_LOAD) {
+    cf->do_code_blob(_event_data.compiled_method_load);
+  }
+}
+
+// The sweeper calls this and marks the nmethods here on the stack so that
+// they cannot be turned into zombies while in the queue.
+void JvmtiDeferredEvent::nmethods_do(CodeBlobClosure* cf) {
+  if (cf != NULL && _type == TYPE_COMPILED_METHOD_LOAD) {
+    cf->do_code_blob(_event_data.compiled_method_load);
+  }
+}
+
+
+bool JvmtiDeferredEventQueue::has_events() {
+  // We save the queued events before the live phase and post them when it starts.
+  // This code could skip saving the events on the queue before the live
+  // phase and ignore them, but this would change how we do things now.
+  // Starting the service thread earlier causes this to be called before the live phase begins.
+  // The events on the queue should all be posted after the live phase so this is an
+  // ok check.  Before the live phase, DynamicCodeGenerated events are posted directly.
+  // If we add other types of events to the deferred queue, this could get ugly.
+  return JvmtiEnvBase::get_phase() == JVMTI_PHASE_LIVE  && _queue_head != NULL;
+}
+
+void JvmtiDeferredEventQueue::enqueue(JvmtiDeferredEvent event) {
   // Events get added to the end of the queue (and are pulled off the front).
   QueueNode* node = new QueueNode(event);
   if (_queue_tail == NULL) {
@@ -1011,14 +962,11 @@ void JvmtiDeferredEventQueue::enqueue(const JvmtiDeferredEvent& event) {
     _queue_tail = node;
   }
 
-  Service_lock->notify_all();
   assert((_queue_head == NULL) == (_queue_tail == NULL),
          "Inconsistent queue markers");
 }
 
 JvmtiDeferredEvent JvmtiDeferredEventQueue::dequeue() {
-  assert(Service_lock->owned_by_self(), "Must own Service_lock");
-
   assert(_queue_head != NULL, "Nothing to dequeue");
 
   if (_queue_head == NULL) {
@@ -1038,4 +986,31 @@ JvmtiDeferredEvent JvmtiDeferredEventQueue::dequeue() {
   JvmtiDeferredEvent event = node->event();
   delete node;
   return event;
+}
+
+void JvmtiDeferredEventQueue::post(JvmtiEnv* env) {
+  // Post and destroy queue nodes
+  while (_queue_head != NULL) {
+     JvmtiDeferredEvent event = dequeue();
+     event.post_compiled_method_load_event(env);
+  }
+}
+
+void JvmtiDeferredEventQueue::run_nmethod_entry_barriers() {
+  for(QueueNode* node = _queue_head; node != NULL; node = node->next()) {
+     node->event().run_nmethod_entry_barriers();
+  }
+}
+
+
+void JvmtiDeferredEventQueue::oops_do(OopClosure* f, CodeBlobClosure* cf) {
+  for(QueueNode* node = _queue_head; node != NULL; node = node->next()) {
+     node->event().oops_do(f, cf);
+  }
+}
+
+void JvmtiDeferredEventQueue::nmethods_do(CodeBlobClosure* cf) {
+  for(QueueNode* node = _queue_head; node != NULL; node = node->next()) {
+     node->event().nmethods_do(cf);
+  }
 }

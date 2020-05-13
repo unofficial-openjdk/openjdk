@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,8 +90,8 @@
  * new RuntimeException();"}.  If a program refers to a missing type Xyz,
  * the returned model must contain no less information than if the
  * declaration of type Xyz were assumed to be {@code "class Xyz {}"},
- * {@code "interface Xyz {}"}, {@code "enum Xyz {}"}, or {@code
- * "@interface Xyz {}"}. If a program refers to a missing type {@code
+ * {@code "interface Xyz {}"}, {@code "enum Xyz {}"}, {@code
+ * "@interface Xyz {}"}, or {@code "record Xyz {}"}. If a program refers to a missing type {@code
  * Xyz<K1, ... ,Kn>}, the returned model must contain no less
  * information than if the declaration of Xyz were assumed to be
  * {@code "class Xyz<T1, ... ,Tn> {}"} or {@code "interface Xyz<T1,
@@ -107,6 +107,7 @@
  * @author Joseph D. Darcy
  * @author Scott Seligman
  * @author Peter von der Ah&eacute;
+ * @see javax.lang.model.util.Elements
  * @since 1.6
  */
 package javax.lang.model.element;

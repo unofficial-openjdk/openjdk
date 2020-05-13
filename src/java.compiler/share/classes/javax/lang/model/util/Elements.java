@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,12 @@
 
 package javax.lang.model.util;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 
 import javax.lang.model.AnnotatedConstruct;
 import javax.lang.model.element.*;
@@ -245,13 +245,13 @@ public interface Elements {
      * comment of an element.
      *
      * <p> A documentation comment of an element is a comment that
-     * begins with "{@code /**}" , ends with a separate
+     * begins with "{@code /**}", ends with a separate
      * "<code>*&#47;</code>", and immediately precedes the element,
      * ignoring white space.  Therefore, a documentation comment
-     * contains at least three"{@code *}" characters.  The text
+     * contains at least three "{@code *}" characters.  The text
      * returned for the documentation comment is a processed form of
-     * the comment as it appears in source code.  The leading "{@code
-     * /**}" and trailing "<code>*&#47;</code>" are removed.  For lines
+     * the comment as it appears in source code.  The leading "{@code /**}"
+     * and trailing "<code>*&#47;</code>" are removed.  For lines
      * of the comment starting after the initial "{@code /**}",
      * leading white space characters are discarded as are any
      * consecutive "{@code *}" characters appearing after the white
@@ -381,7 +381,7 @@ public interface Elements {
          */
         EXPLICIT,
 
-       /**
+        /**
          * A mandated construct is one that is not explicitly declared
          * in the source code, but whose presence is mandated by the
          * specification. Such a construct is said to be implicitly
@@ -402,7 +402,7 @@ public interface Elements {
          */
         MANDATED,
 
-       /**
+        /**
          * A synthetic construct is one that is neither implicitly nor
          * explicitly declared in the source code. Such a construct is
          * typically a translation artifact created by a compiler.
@@ -413,8 +413,8 @@ public interface Elements {
          * Returns {@code true} for values corresponding to constructs
          * that are implicitly or explicitly declared, {@code false}
          * otherwise.
-         * @return {@code true} for {@link EXPLICIT} and {@link
-         * MANDATED}, {@code false} otherwise.
+         * @return {@code true} for {@link #EXPLICIT} and {@link #MANDATED},
+         *         {@code false} otherwise.
          */
         public boolean isDeclared() {
             return this != SYNTHETIC;
@@ -453,30 +453,45 @@ public interface Elements {
      * itself.
      * The package of a module is {@code null}.
      *
-     * @param type the element being examined
+     * The package of a top-level type is its {@linkplain
+     * TypeElement#getEnclosingElement enclosing package}. Otherwise,
+     * the package of an element is equal to the package of the
+     * {@linkplain Element#getEnclosingElement enclosing element}.
+     *
+     * @param e the element being examined
      * @return the package of an element
      */
-    PackageElement getPackageOf(Element type);
+    PackageElement getPackageOf(Element e);
 
     /**
      * Returns the module of an element.  The module of a module is
      * itself.
-     * If there is no module for the element, null is returned. One situation where there is
-     * no module for an element is if the environment does not include modules, such as
-     * an annotation processing environment configured for
-     * a {@linkplain
+     *
+     * If a package has a module as its {@linkplain
+     * PackageElement#getEnclosingElement enclosing element}, that
+     * module is the module of the package. If the enclosing element
+     * of a package is {@code null}, {@code null} is returned for the
+     * package's module.
+     *
+     * (One situation where a package may have a {@code null} module
+     * is if the environment does not include modules, such as an
+     * annotation processing environment configured for a {@linkplain
      * javax.annotation.processing.ProcessingEnvironment#getSourceVersion
-     * source version} without modules.
+     * source version} without modules.)
+     *
+     * Otherwise, the module of an element is equal to the module
+     * {@linkplain #getPackageOf(Element) of the package} of the
+     * element.
      *
      * @implSpec The default implementation of this method returns
      * {@code null}.
      *
-     * @param type the element being examined
+     * @param e the element being examined
      * @return the module of an element
      * @since 9
      * @spec JPMS
      */
-    default ModuleElement getModuleOf(Element type) {
+    default ModuleElement getModuleOf(Element e) {
         return null;
     }
 
@@ -497,6 +512,9 @@ public interface Elements {
     /**
      * Returns all annotations <i>present</i> on an element, whether
      * directly present or present via inheritance.
+     *
+     * <p>Note that any annotations returned by this method are
+     * declaration annotations.
      *
      * @param e  the element being examined
      * @return all annotations of the element
@@ -614,4 +632,42 @@ public interface Elements {
      * @since 1.8
      */
     boolean isFunctionalInterface(TypeElement type);
+
+    /**
+     * {@preview Associated with records, a preview feature of the Java language.
+     *
+     *           This method is associated with <i>records</i>, a preview
+     *           feature of the Java language. Preview features
+     *           may be removed in a future release, or upgraded to permanent
+     *           features of the Java language.}
+     *
+     * Returns the record component for the given accessor. Returns null if the
+     * given method is not a record component accessor.
+     *
+     * @implSpec The default implementation of this method checks if the element
+     * enclosing the accessor has kind {@link ElementKind#RECORD RECORD} if that is
+     * the case, then all the record components on the accessor's enclosing element
+     * are retrieved by invoking {@link ElementFilter#recordComponentsIn(Iterable)}.
+     * If the accessor of at least one of the record components retrieved happen to
+     * be equal to the accessor passed as a parameter to this method, then that
+     * record component is returned, in any other case {@code null} is returned.
+     *
+     * @param accessor the method for which the record component should be found.
+     * @return the record component, or null if the given method is not an record
+     * component accessor
+     * @since 14
+     */
+    @jdk.internal.PreviewFeature(feature=jdk.internal.PreviewFeature.Feature.RECORDS,
+                                 essentialAPI=false)
+    @SuppressWarnings("preview")
+    default RecordComponentElement recordComponentFor(ExecutableElement accessor) {
+        if (accessor.getEnclosingElement().getKind() == ElementKind.RECORD) {
+            for (RecordComponentElement rec : ElementFilter.recordComponentsIn(accessor.getEnclosingElement().getEnclosedElements())) {
+                if (Objects.equals(rec.getAccessor(), accessor)) {
+                    return rec;
+                }
+            }
+        }
+        return null;
+    }
 }

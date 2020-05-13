@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -135,6 +135,14 @@ abstract class HttpConnection implements Closeable {
      * any host through proxy.
      */
     abstract boolean isProxied();
+
+    /**
+     * Returns the address of the proxy used by this connection.
+     * Returns the proxy address for tunnel connections, or
+     * clear connection to any host through proxy.
+     * Returns {@code null} otherwise.
+     */
+    abstract InetSocketAddress proxy();
 
     /** Tells whether, or not, this connection is open. */
     final boolean isOpen() {
@@ -285,6 +293,16 @@ abstract class HttpConnection implements Closeable {
         }
     }
 
+    BiPredicate<String,String> contextRestricted(HttpRequestImpl request, HttpClient client) {
+        if (!isTunnel() && request.isConnect()) {
+            // establishing a proxy tunnel
+            assert request.proxy() == null;
+            return Utils.PROXY_TUNNEL_RESTRICTED(client);
+        } else {
+            return Utils.CONTEXT_RESTRICTED(client);
+        }
+    }
+
     // Composes a new immutable HttpHeaders that combines the
     // user and system header but only keeps those headers that
     // start with "proxy-"
@@ -317,14 +335,13 @@ abstract class HttpConnection implements Closeable {
     void closeOrReturnToCache(HttpHeaders hdrs) {
         if (hdrs == null) {
             // the connection was closed by server, eof
+            Log.logTrace("Cannot return connection to pool: closing {0}", this);
             close();
-            return;
-        }
-        if (!isOpen()) {
             return;
         }
         HttpClientImpl client = client();
         if (client == null) {
+            Log.logTrace("Client released: closing {0}", this);
             close();
             return;
         }
@@ -333,10 +350,12 @@ abstract class HttpConnection implements Closeable {
                 .map((s) -> !s.equalsIgnoreCase("close"))
                 .orElse(true);
 
-        if (keepAlive) {
+        if (keepAlive && isOpen()) {
             Log.logTrace("Returning connection to the pool: {0}", this);
             pool.returnToPool(this);
         } else {
+            Log.logTrace("Closing connection (keepAlive={0}, isOpen={1}): {2}",
+                    keepAlive, isOpen(), this);
             close();
         }
     }

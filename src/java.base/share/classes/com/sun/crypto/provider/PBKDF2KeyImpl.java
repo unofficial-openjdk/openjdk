@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import java.io.ObjectStreamException;
 import java.lang.ref.Reference;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Locale;
 import java.security.MessageDigest;
@@ -40,6 +39,8 @@ import java.security.spec.InvalidKeySpecException;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.PBEKeySpec;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import jdk.internal.ref.CleanerFactory;
 
@@ -55,6 +56,7 @@ import jdk.internal.ref.CleanerFactory;
  */
 final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
 
+    @java.io.Serial
     static final long serialVersionUID = -2234868909660948157L;
 
     private char[] passwd;
@@ -65,9 +67,8 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
     private Mac prf;
 
     private static byte[] getPasswordBytes(char[] passwd) {
-        Charset utf8 = Charset.forName("UTF-8");
         CharBuffer cb = CharBuffer.wrap(passwd);
-        ByteBuffer bb = utf8.encode(cb);
+        ByteBuffer bb = UTF_8.encode(cb);
 
         int len = bb.limit();
         byte[] passwdBytes = new byte[len];
@@ -113,12 +114,7 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
             } else if (keyLength < 0) {
                 throw new InvalidKeySpecException("Key length is negative");
             }
-            this.prf = Mac.getInstance(prfAlgo);
-            // SunPKCS11 requires a non-empty PBE password
-            if (passwdBytes.length == 0 &&
-                    this.prf.getProvider().getName().startsWith("SunPKCS11")) {
-                this.prf = Mac.getInstance(prfAlgo, SunJCE.getInstance());
-            }
+            this.prf = Mac.getInstance(prfAlgo, SunJCE.getInstance());
             this.key = deriveKey(prf, passwdBytes, salt, iterCount, keyLength);
         } catch (NoSuchAlgorithmException nsae) {
             // not gonna happen; re-throw just in case
@@ -151,6 +147,7 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
             byte[] ti = new byte[hlen];
             // SecretKeySpec cannot be used, since password can be empty here.
             SecretKey macKey = new SecretKey() {
+                @java.io.Serial
                 private static final long serialVersionUID = 7874493593505141603L;
                 @Override
                 public String getAlgorithm() {
@@ -207,7 +204,7 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
                 }
             }
         } catch (GeneralSecurityException gse) {
-            throw new RuntimeException("Error deriving PBKDF2 keys");
+            throw new RuntimeException("Error deriving PBKDF2 keys", gse);
         }
         return key;
     }
@@ -283,6 +280,7 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
      * @throws ObjectStreamException if a new object representing
      * this PBE key could not be created
      */
+    @java.io.Serial
     private Object writeReplace() throws ObjectStreamException {
             return new KeyRep(KeyRep.Type.SECRET, getAlgorithm(),
                               getFormat(), getEncoded());

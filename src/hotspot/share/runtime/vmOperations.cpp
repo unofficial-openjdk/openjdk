@@ -27,11 +27,14 @@
 #include "classfile/vmSymbols.hpp"
 #include "code/codeCache.hpp"
 #include "compiler/compileBroker.hpp"
+#include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/isGCActiveMark.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
+#include "logging/logConfiguration.hpp"
 #include "memory/heapInspection.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/symbol.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/deoptimization.hpp"
@@ -48,12 +51,9 @@
 const char* VM_Operation::_names[VM_Operation::VMOp_Terminating] = \
   { VM_OPS_DO(VM_OP_NAME_INITIALIZE) };
 
-void VM_Operation::set_calling_thread(Thread* thread, ThreadPriority priority) {
+void VM_Operation::set_calling_thread(Thread* thread) {
   _calling_thread = thread;
-  assert(MinPriority <= priority && priority <= MaxPriority, "sanity check");
-  _priority = priority;
 }
-
 
 void VM_Operation::evaluate() {
   ResourceMark rm;
@@ -73,37 +73,15 @@ void VM_Operation::evaluate() {
   }
 }
 
-const char* VM_Operation::mode_to_string(Mode mode) {
-  switch(mode) {
-    case _safepoint      : return "safepoint";
-    case _no_safepoint   : return "no safepoint";
-    case _concurrent     : return "concurrent";
-    case _async_safepoint: return "async safepoint";
-    default              : return "unknown";
-  }
-}
 // Called by fatal error handler.
 void VM_Operation::print_on_error(outputStream* st) const {
   st->print("VM_Operation (" PTR_FORMAT "): ", p2i(this));
   st->print("%s", name());
 
-  const char* mode = mode_to_string(evaluation_mode());
-  st->print(", mode: %s", mode);
+  st->print(", mode: %s", evaluate_at_safepoint() ? "safepoint" : "no safepoint");
 
   if (calling_thread()) {
     st->print(", requested by thread " PTR_FORMAT, p2i(calling_thread()));
-  }
-}
-
-void VM_ThreadStop::doit() {
-  assert(SafepointSynchronize::is_at_safepoint(), "must be at a safepoint");
-  ThreadsListHandle tlh;
-  JavaThread* target = java_lang_Thread::thread(target_thread());
-  // Note that this now allows multiple ThreadDeath exceptions to be
-  // thrown at a thread.
-  if (target != NULL && (!EnableThreadSMRExtraValidityChecks || tlh.includes(target))) {
-    // The target thread has run and has not exited yet.
-    target->send_thread_stop(throwable());
   }
 }
 
@@ -113,18 +91,6 @@ void VM_ClearICs::doit() {
   } else {
     CodeCache::clear_inline_caches();
   }
-}
-
-void VM_Deoptimize::doit() {
-  // We do not want any GCs to happen while we are in the middle of this VM operation
-  ResourceMark rm;
-  DeoptimizationMarker dm;
-
-  // Deoptimize all activations depending on marked nmethods
-  Deoptimization::deoptimize_dependents();
-
-  // Make the dependent methods not entrant
-  CodeCache::make_marked_nmethods_not_entrant();
 }
 
 void VM_MarkActiveNMethods::doit() {
@@ -168,12 +134,11 @@ void VM_DeoptimizeAll::doit() {
         tcount = 0;
           int fcount = 0;
           // Deoptimize some selected frames.
-          // Biased llocking wants a updated register map
-          for(StackFrameStream fst(thread, UseBiasedLocking); !fst.is_done(); fst.next()) {
+          for(StackFrameStream fst(thread, false); !fst.is_done(); fst.next()) {
             if (fst.current()->can_be_deoptimized()) {
               if (fcount++ == fnum) {
                 fcount = 0;
-                Deoptimization::deoptimize(thread, *fst.current(), fst.register_map());
+                Deoptimization::deoptimize(thread, *fst.current());
               }
             }
           }
@@ -435,7 +400,20 @@ int VM_Exit::wait_for_threads_in_native_to_block() {
       if (thr!=thr_cur && thr->thread_state() == _thread_in_native) {
         num_active++;
         if (thr->is_Compiler_thread()) {
+#if INCLUDE_JVMCI
+          CompilerThread* ct = (CompilerThread*) thr;
+          if (ct->compiler() == NULL || !ct->compiler()->is_jvmci()) {
+            num_active_compiler_thread++;
+          } else {
+            // A JVMCI compiler thread never accesses VM data structures
+            // while in _thread_in_native state so there's no need to wait
+            // for it and potentially add a 300 millisecond delay to VM
+            // shutdown.
+            num_active--;
+          }
+#else
           num_active_compiler_thread++;
+#endif
         }
       }
     }
@@ -450,12 +428,22 @@ int VM_Exit::wait_for_threads_in_native_to_block() {
 
     attempts++;
 
-    MutexLockerEx ml(&timer, Mutex::_no_safepoint_check_flag);
-    timer.wait(Mutex::_no_safepoint_check_flag, 10);
+    MonitorLocker ml(&timer, Mutex::_no_safepoint_check_flag);
+    ml.wait(10);
   }
 }
 
 void VM_Exit::doit() {
+
+  if (VerifyBeforeExit) {
+    HandleMark hm(VMThread::vm_thread());
+    // Among other things, this ensures that Eden top is correct.
+    Universe::heap()->prepare_for_verify();
+    // Silent verification so as not to pollute normal output,
+    // unless we really asked for it.
+    Universe::verify();
+  }
+
   CompileBroker::set_should_block();
 
   // Wait for a short period for threads in native to block. Any thread
@@ -467,9 +455,16 @@ void VM_Exit::doit() {
 
   set_vm_exited();
 
+  // We'd like to call IdealGraphPrinter::clean_up() to finalize the
+  // XML logging, but we can't safely do that here. The logic to make
+  // XML termination logging safe is tied to the termination of the
+  // VMThread, and it doesn't terminate on this exit path. See 8222534.
+
   // cleanup globals resources before exiting. exit_globals() currently
   // cleans up outputStream resources and PerfMemory resources.
   exit_globals();
+
+  LogConfiguration::finalize();
 
   // Check for exit hook
   exit_hook_t exit_hook = Arguments::exit_hook();
@@ -489,7 +484,7 @@ void VM_Exit::wait_if_vm_exited() {
       Thread::current_or_null() != _shutdown_thread) {
     // _vm_exited is set at safepoint, and the Threads_lock is never released
     // we will block here until the process dies
-    Threads_lock->lock_without_safepoint_check();
+    Threads_lock->lock();
     ShouldNotReachHere();
   }
 }

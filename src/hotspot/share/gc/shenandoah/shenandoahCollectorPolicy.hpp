@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2013, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -24,12 +25,12 @@
 #ifndef SHARE_GC_SHENANDOAH_SHENANDOAHCOLLECTORPOLICY_HPP
 #define SHARE_GC_SHENANDOAH_SHENANDOAHCOLLECTORPOLICY_HPP
 
-#include "gc/shared/collectorPolicy.hpp"
 #include "gc/shenandoah/shenandoahHeap.hpp"
 #include "gc/shenandoah/shenandoahTracer.hpp"
+#include "memory/allocation.hpp"
 #include "utilities/ostream.hpp"
 
-class ShenandoahCollectorPolicy: public CollectorPolicy {
+class ShenandoahCollectorPolicy : public CHeapObj<mtGC> {
 private:
   size_t _success_concurrent_gcs;
   size_t _success_degenerated_gcs;
@@ -51,8 +52,6 @@ private:
 
 public:
   ShenandoahCollectorPolicy();
-
-  void initialize_alignments();
 
   // TODO: This is different from gc_end: that one encompasses one VM operation.
   // These two encompass the entire cycle.

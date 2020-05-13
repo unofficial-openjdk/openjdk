@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,12 +32,18 @@ package gc.arguments;
  * @library /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @run driver gc.arguments.TestParallelGCThreads
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI gc.arguments.TestParallelGCThreads
  */
 
+import java.util.ArrayList;
+import java.util.List;
 import jdk.test.lib.Asserts;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
+import jtreg.SkippedException;
+import sun.hotspot.gc.GC;
 
 public class TestParallelGCThreads {
 
@@ -52,7 +58,7 @@ public class TestParallelGCThreads {
   private static final String printFlagsFinalPattern = " *uint *" + flagName + " *:?= *(\\d+) *\\{product\\} *";
 
   public static void testDefaultValue()  throws Exception {
-    ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
+    ProcessBuilder pb = GCArguments.createJavaProcessBuilder(
       "-XX:+UnlockExperimentalVMOptions", "-XX:+PrintFlagsFinal", "-version");
 
     OutputAnalyzer output = new OutputAnalyzer(pb.start());
@@ -74,19 +80,37 @@ public class TestParallelGCThreads {
   }
 
   public static void testFlags() throws Exception {
-    // For each parallel collector (G1, Parallel, ParNew/CMS)
-    for (String gc : new String[] {"G1", "Parallel", "ConcMarkSweep"}) {
+    // For each parallel collector (G1, Parallel)
+    List<String> supportedGC = new ArrayList<String>();
 
+    if (GC.G1.isSupported()) {
+      supportedGC.add("G1");
+    }
+    if (GC.Parallel.isSupported()) {
+      supportedGC.add("Parallel");
+    }
+
+    if (supportedGC.isEmpty()) {
+      throw new SkippedException("Skipping test because none of G1/Parallel is supported.");
+    }
+
+    for (String gc : supportedGC) {
       // Make sure the VM does not allow ParallelGCThreads set to 0
-      String[] flags = new String[] {"-XX:+Use" + gc + "GC", "-XX:ParallelGCThreads=0", "-XX:+PrintFlagsFinal", "-version"};
-      ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(flags);
+      ProcessBuilder pb = GCArguments.createJavaProcessBuilder(
+          "-XX:+Use" + gc + "GC",
+          "-XX:ParallelGCThreads=0",
+          "-XX:+PrintFlagsFinal",
+          "-version");
       OutputAnalyzer output = new OutputAnalyzer(pb.start());
       output.shouldHaveExitValue(1);
 
       // Do some basic testing to ensure the flag updates the count
       for (long i = 1; i <= 3; i++) {
-        flags = new String[] {"-XX:+Use" + gc + "GC", "-XX:ParallelGCThreads=" + i, "-XX:+PrintFlagsFinal", "-version"};
-        long count = getParallelGCThreadCount(flags);
+        long count = getParallelGCThreadCount(
+            "-XX:+Use" + gc + "GC",
+            "-XX:ParallelGCThreads=" + i,
+            "-XX:+PrintFlagsFinal",
+            "-version");
         Asserts.assertEQ(count, i, "Specifying ParallelGCThreads=" + i + " for " + gc + "GC does not set the thread count properly!");
       }
     }
@@ -95,14 +119,17 @@ public class TestParallelGCThreads {
     // So setting ParallelGCThreads=4294967295 should give back 4294967295
     // and setting ParallelGCThreads=4294967296 should give back 0. (SerialGC is ok with ParallelGCThreads=0)
     for (long i = 4294967295L; i <= 4294967296L; i++) {
-      String[] flags = new String[] {"-XX:+UseSerialGC", "-XX:ParallelGCThreads=" + i, "-XX:+PrintFlagsFinal", "-version"};
-      long count = getParallelGCThreadCount(flags);
+      long count = getParallelGCThreadCount(
+          "-XX:+UseSerialGC",
+          "-XX:ParallelGCThreads=" + i,
+          "-XX:+PrintFlagsFinal",
+          "-version");
       Asserts.assertEQ(count, i % 4294967296L, "Specifying ParallelGCThreads=" + i + " does not set the thread count properly!");
     }
   }
 
-  public static long getParallelGCThreadCount(String flags[]) throws Exception {
-    ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(flags);
+  public static long getParallelGCThreadCount(String... flags) throws Exception {
+    ProcessBuilder pb = GCArguments.createJavaProcessBuilder(flags);
     OutputAnalyzer output = new OutputAnalyzer(pb.start());
     output.shouldHaveExitValue(0);
     String stdout = output.getStdout();

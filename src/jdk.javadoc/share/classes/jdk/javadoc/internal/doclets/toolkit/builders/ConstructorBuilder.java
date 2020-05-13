@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
-import jdk.javadoc.internal.doclets.toolkit.BaseConfiguration;
+import jdk.javadoc.internal.doclets.toolkit.BaseOptions;
 import jdk.javadoc.internal.doclets.toolkit.ConstructorWriter;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.DocletException;
@@ -45,9 +45,6 @@ import static jdk.javadoc.internal.doclets.toolkit.util.VisibleMemberTable.Kind.
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
- * @author Bhavesh Patel (Modified)
  */
 public class ConstructorBuilder extends AbstractMemberBuilder {
 
@@ -77,7 +74,7 @@ public class ConstructorBuilder extends AbstractMemberBuilder {
             TypeElement typeElement,
             ConstructorWriter writer) {
         super(context, typeElement);
-        this.writer = writer;
+        this.writer = Objects.requireNonNull(writer);
         constructors = getVisibleMembers(CONSTRUCTORS);
         for (Element ctor : constructors) {
             if (utils.isProtected(ctor) || utils.isPrivate(ctor)) {
@@ -99,9 +96,6 @@ public class ConstructorBuilder extends AbstractMemberBuilder {
         return new ConstructorBuilder(context, typeElement, writer);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean hasMembersToDocument() {
         return !constructors.isEmpty();
@@ -116,9 +110,6 @@ public class ConstructorBuilder extends AbstractMemberBuilder {
         return writer;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void build(Content contentTree) throws DocletException {
         buildConstructorDoc(contentTree);
@@ -127,32 +118,27 @@ public class ConstructorBuilder extends AbstractMemberBuilder {
     /**
      * Build the constructor documentation.
      *
-     * @param memberDetailsTree the content tree to which the documentation will be added
-     * @throws DocletException is there is a problem while building the documentation
+     * @param detailsList the content tree to which the documentation will be added
+     * @throws DocletException if there is a problem while building the documentation
      */
-    protected void buildConstructorDoc(Content memberDetailsTree) throws DocletException {
-        if (writer == null) {
-            return;
-        }
+    protected void buildConstructorDoc(Content detailsList) throws DocletException {
         if (hasMembersToDocument()) {
-            Content constructorDetailsTree = writer.getConstructorDetailsTreeHeader(typeElement,
-                    memberDetailsTree);
+            Content constructorDetailsTreeHeader = writer.getConstructorDetailsTreeHeader(detailsList);
+            Content memberList = writer.getMemberList();
 
-            Element lastElement = constructors.get(constructors.size() - 1);
-            for (Element contructor : constructors) {
-                currentConstructor = (ExecutableElement)contructor;
-                Content constructorDocTree = writer.getConstructorDocTreeHeader(currentConstructor, constructorDetailsTree);
+            for (Element constructor : constructors) {
+                currentConstructor = (ExecutableElement)constructor;
+                Content constructorDocTree = writer.getConstructorDocTreeHeader(currentConstructor);
 
                 buildSignature(constructorDocTree);
                 buildDeprecationInfo(constructorDocTree);
                 buildConstructorComments(constructorDocTree);
                 buildTagInfo(constructorDocTree);
 
-                constructorDetailsTree.addContent(writer.getConstructorDoc(constructorDocTree,
-                        currentConstructor == lastElement));
+                memberList.add(writer.getMemberListItem(constructorDocTree));
             }
-            memberDetailsTree.addContent(
-                    writer.getConstructorDetails(constructorDetailsTree));
+            Content constructorDetails = writer.getConstructorDetails(constructorDetailsTreeHeader, memberList);
+            detailsList.add(constructorDetails);
         }
     }
 
@@ -162,7 +148,7 @@ public class ConstructorBuilder extends AbstractMemberBuilder {
      * @param constructorDocTree the content tree to which the documentation will be added
      */
     protected void buildSignature(Content constructorDocTree) {
-        constructorDocTree.addContent(writer.getSignature(currentConstructor));
+        constructorDocTree.add(writer.getSignature(currentConstructor));
     }
 
     /**
@@ -176,12 +162,12 @@ public class ConstructorBuilder extends AbstractMemberBuilder {
 
     /**
      * Build the comments for the constructor.  Do nothing if
-     * {@link BaseConfiguration#nocomment} is set to true.
+     * {@link BaseOptions#noComment()} is set to true.
      *
      * @param constructorDocTree the content tree to which the documentation will be added
      */
     protected void buildConstructorComments(Content constructorDocTree) {
-        if (!configuration.nocomment) {
+        if (!options.noComment()) {
             writer.addComments(currentConstructor, constructorDocTree);
         }
     }

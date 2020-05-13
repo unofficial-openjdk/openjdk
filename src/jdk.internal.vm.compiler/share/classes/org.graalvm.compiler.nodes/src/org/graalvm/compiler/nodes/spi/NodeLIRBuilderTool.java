@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,13 +24,12 @@
 
 package org.graalvm.compiler.nodes.spi;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.graalvm.compiler.core.common.cfg.BlockMap;
+import org.graalvm.compiler.core.common.spi.ForeignCallLinkage;
 import org.graalvm.compiler.core.common.type.Stamp;
 import org.graalvm.compiler.graph.Node;
-import org.graalvm.compiler.graph.NodeSourcePosition;
 import org.graalvm.compiler.lir.LIRFrameState;
 import org.graalvm.compiler.lir.gen.LIRGeneratorTool;
 import org.graalvm.compiler.nodes.AbstractBeginNode;
@@ -49,9 +48,6 @@ import org.graalvm.compiler.nodes.calc.ConditionalNode;
 import org.graalvm.compiler.nodes.cfg.Block;
 import org.graalvm.compiler.nodes.extended.SwitchNode;
 import org.graalvm.compiler.options.OptionValues;
-
-import jdk.vm.ci.code.CallingConvention;
-import jdk.vm.ci.meta.Value;
 
 public interface NodeLIRBuilderTool extends NodeValueMap {
 
@@ -81,17 +77,20 @@ public interface NodeLIRBuilderTool extends NodeValueMap {
 
     void visitFullInfopointNode(FullInfopointNode i);
 
-    void setSourcePosition(NodeSourcePosition position);
-
     LIRGeneratorTool getLIRGeneratorTool();
 
     void emitOverflowCheckBranch(AbstractBeginNode overflowSuccessor, AbstractBeginNode next, Stamp compareStamp, double probability);
-
-    Value[] visitInvokeArguments(CallingConvention cc, Collection<ValueNode> arguments);
 
     void doBlock(Block block, StructuredGraph graph, BlockMap<List<Node>> blockMap);
 
     default OptionValues getOptions() {
         return getLIRGeneratorTool().getResult().getLIR().getOptions();
+    }
+
+    void emitReadExceptionObject(ValueNode node);
+
+    @SuppressWarnings("unused")
+    default ForeignCallLinkage lookupGraalStub(ValueNode valueNode) {
+        return null;
     }
 }

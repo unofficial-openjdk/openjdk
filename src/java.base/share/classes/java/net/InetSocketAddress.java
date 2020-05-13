@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,11 +101,20 @@ public class InetSocketAddress
 
         @Override
         public String toString() {
+
+            String formatted;
+
             if (isUnresolved()) {
-                return hostname + ":" + port;
+                formatted = hostname + "/<unresolved>";
             } else {
-                return addr.toString() + ":" + port;
+                formatted = addr.toString();
+                if (addr instanceof Inet6Address) {
+                    int i = formatted.lastIndexOf("/");
+                    formatted = formatted.substring(0, i + 1)
+                            + "[" + formatted.substring(i + 1) + "]";
+                }
             }
+            return formatted + ":" + port;
         }
 
         @Override
@@ -136,6 +145,7 @@ public class InetSocketAddress
 
     private final transient InetSocketAddressHolder holder;
 
+    @java.io.Serial
     private static final long serialVersionUID = 5076001401234631237L;
 
     private static int checkPort(int port) {
@@ -259,11 +269,13 @@ public class InetSocketAddress
      * @serialField addr InetAddress
      * @serialField port int
      */
+    @java.io.Serial
     private static final ObjectStreamField[] serialPersistentFields = {
          new ObjectStreamField("hostname", String.class),
          new ObjectStreamField("addr", InetAddress.class),
          new ObjectStreamField("port", int.class)};
 
+    @java.io.Serial
     private void writeObject(ObjectOutputStream out)
         throws IOException
     {
@@ -275,6 +287,7 @@ public class InetSocketAddress
          out.writeFields();
      }
 
+    @java.io.Serial
     private void readObject(ObjectInputStream in)
         throws IOException, ClassNotFoundException
     {
@@ -296,6 +309,7 @@ public class InetSocketAddress
         UNSAFE.putReference(this, FIELDS_OFFSET, h);
     }
 
+    @java.io.Serial
     private void readObjectNoData()
         throws ObjectStreamException
     {
@@ -362,7 +376,9 @@ public class InetSocketAddress
      * Constructs a string representation of this InetSocketAddress.
      * This String is constructed by calling toString() on the InetAddress
      * and concatenating the port number (with a colon). If the address
-     * is unresolved then the part before the colon will only contain the hostname.
+     * is an IPv6 address, the IPv6 literal is enclosed in square brackets.
+     * If the address is {@linkplain #isUnresolved() unresolved},
+     * {@code <unresolved>} is displayed in place of the address literal.
      *
      * @return  a string representation of this object.
      */

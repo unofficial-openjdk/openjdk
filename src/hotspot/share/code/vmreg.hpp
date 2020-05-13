@@ -26,6 +26,7 @@
 #define SHARE_CODE_VMREG_HPP
 
 #include "asm/register.hpp"
+#include "runtime/globals.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/ostream.hpp"
@@ -112,7 +113,7 @@ public:
   intptr_t value() const         {return (intptr_t) this; }
 
   void print_on(outputStream* st) const;
-  void print() const { print_on(tty); }
+  void print() const;
 
   // bias a stack slot.
   // Typically used to adjust a virtual frame slots by amounts that are offset by

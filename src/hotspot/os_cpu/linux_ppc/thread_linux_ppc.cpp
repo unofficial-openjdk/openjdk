@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2014 SAP SE. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,21 +65,22 @@ bool JavaThread::pd_get_top_frame_for_profiling(frame* fr_addr, void* ucontext, 
     }
 
     if (ret_frame.is_interpreted_frame()) {
-       frame::ijava_state* istate = ret_frame.get_ijava_state();
-       if (!((Method*)(istate->method))->is_metaspace_object()) {
-         return false;
-       }
-       uint64_t reg_bcp = uc->uc_mcontext.regs->gpr[14/*R14_bcp*/];
-       uint64_t istate_bcp = istate->bcp;
-       uint64_t code_start = (uint64_t)(((Method*)(istate->method))->code_base());
-       uint64_t code_end = (uint64_t)(((Method*)istate->method)->code_base() + ((Method*)istate->method)->code_size());
-       if (istate_bcp >= code_start && istate_bcp < code_end) {
-         // we have a valid bcp, don't touch it, do nothing
-       } else if (reg_bcp >= code_start && reg_bcp < code_end) {
-         istate->bcp = reg_bcp;
+      frame::ijava_state *istate = ret_frame.get_ijava_state();
+      const Method *m = (const Method*)(istate->method);
+      if (!Method::is_valid_method(m)) return false;
+      if (!Metaspace::contains(m->constMethod())) return false;
+
+      uint64_t reg_bcp = uc->uc_mcontext.regs->gpr[14/*R14_bcp*/];
+      uint64_t istate_bcp = istate->bcp;
+      uint64_t code_start = (uint64_t)(m->code_base());
+      uint64_t code_end = (uint64_t)(m->code_base() + m->code_size());
+      if (istate_bcp >= code_start && istate_bcp < code_end) {
+        // we have a valid bcp, don't touch it, do nothing
+      } else if (reg_bcp >= code_start && reg_bcp < code_end) {
+        istate->bcp = reg_bcp;
       } else {
-         return false;
-       }
+        return false;
+      }
     }
     if (!ret_frame.safe_for_sender(this)) {
       // nothing else to try if the frame isn't good
@@ -92,9 +93,8 @@ bool JavaThread::pd_get_top_frame_for_profiling(frame* fr_addr, void* ucontext, 
   return false;
 }
 
-// Forte Analyzer AsyncGetCallTrace profiling support is not implemented on Linux/PPC.
+// Forte Analyzer AsyncGetCallTrace profiling support.
 bool JavaThread::pd_get_top_frame_for_signal_handler(frame* fr_addr, void* ucontext, bool isInJava) {
-  assert(this->is_Java_thread(), "must be JavaThread");
   return pd_get_top_frame_for_profiling(fr_addr, ucontext, isInJava);
 }
 

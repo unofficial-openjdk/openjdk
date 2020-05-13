@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,19 @@ import java.io.IOException;
  * @requires vm.gc.Z
  * @requires vm.flavor == "server" & !vm.emulatedClient & !vm.graal.enabled
  * @summary Stress ZGC
- * @run main/othervm/timeout=200 -Xlog:gc*=info -Xmx384m -server -XX:+UnlockExperimentalVMOptions -XX:+UseZGC gc.stress.gcbasher.TestGCBasherWithZ 120000
+ * @run main/othervm/timeout=200 -Xlog:gc*=info -Xmx384m -server -XX:+UseZGC gc.stress.gcbasher.TestGCBasherWithZ 120000
+ */
+
+/*
+ * @test TestGCBasherDeoptWithZ
+ * @key gc stress
+ * @library /
+ * @requires vm.gc.Z
+ * @requires vm.flavor == "server" & !vm.emulatedClient & !vm.graal.enabled & vm.opt.ClassUnloading != false
+ * @summary Stress ZGC with nmethod barrier forced deoptimization enabled.
+ * @run main/othervm/timeout=200 -Xlog:gc*=info,nmethod+barrier=trace -Xmx384m -server -XX:+UseZGC
+ *  -XX:+UnlockDiagnosticVMOptions -XX:+DeoptimizeNMethodBarriersALot -XX:-Inline
+ *   gc.stress.gcbasher.TestGCBasherWithZ 120000
  */
 public class TestGCBasherWithZ {
     public static void main(String[] args) throws IOException {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,13 +24,13 @@
 /* @test
  * @bug 7100957
  * @modules jdk.httpserver
+ * @library /test/lib
  * @summary Java doesn't correctly handle the SOCKS protocol when used over IPv6.
  * @run testng SocksIPv6Test
  */
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Authenticator;
@@ -43,14 +43,16 @@ import java.net.Inet6Address;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.NetworkInterface;
-import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.List;
 import com.sun.net.httpserver.*;
 import java.io.BufferedWriter;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import jdk.test.lib.NetworkConfiguration;
 
 import static org.testng.Assert.*;
 
@@ -59,13 +61,15 @@ public class SocksIPv6Test {
     private HttpServer server;
     private SocksServer socks;
     private String response = "Hello.";
-    private static boolean shouldRun = false;
 
     @BeforeClass
     public void setUp() throws Exception {
-        shouldRun = ensureInet6AddressFamily() && ensureIPv6OnLoopback();
+        if (!ensureInet6AddressFamily() || !ensureIPv6OnLoopback()) {
+            NetworkConfiguration.printSystemConfiguration(System.out);
+            throw new SkipException("Host does not support IPv6");
+        }
 
-        server = HttpServer.create(new InetSocketAddress(0), 0);
+        server = HttpServer.create(new InetSocketAddress("::1", 0), 0);
         server.createContext("/", ex -> {
             ex.sendResponseHeaders(200, response.length());
             try (BufferedWriter writer = new BufferedWriter(
@@ -76,7 +80,7 @@ public class SocksIPv6Test {
         });
         server.start();
 
-        socks = new SocksServer(0, false);
+        socks = new SocksServer(InetAddress.getByName("::1"), 0, false);
         socks.addUser("user", "pass");
         socks.start();
 
@@ -122,8 +126,6 @@ public class SocksIPv6Test {
 
     @Test(groups = "unit")
     public void testSocksOverIPv6() throws Exception {
-        if (!shouldRun) return;
-
         Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("::1",
                 socks.getPort()));
         URL url = new URL("http://[::1]:" + server.getAddress().getPort());
@@ -138,20 +140,42 @@ public class SocksIPv6Test {
 
     @Test(groups = "unit")
     public void testSocksOverIPv6Hostname() throws Exception {
-        if (!shouldRun) return;
+        InetAddress ipv6Loopback = InetAddress.getByName("::1");
+        String ipv6Hostname = ipv6Loopback.getHostName();
+        String ipv6HostAddress = ipv6Loopback.getHostAddress();
+        InetAddress ipv4Loopback;
+        String ipv4Hostname;
+        String ipv4HostAddress;
+        try {
+            ipv4Loopback = InetAddress.getByName("127.0.0.1");
+            ipv4Hostname = ipv4Loopback == null ? null : ipv4Loopback.getHostName();
+            ipv4HostAddress = ipv4Loopback == null ? null : ipv4Loopback.getHostAddress();
+        } catch (IOException io) {
+            ipv4Hostname = null;
+            ipv4HostAddress = null;
+        }
 
-        String ipv6Hostname = InetAddress.getByName("::1").getHostName();
-        String ipv4Hostname = InetAddress.getByName("127.0.0.1").getHostName();
+        System.out.println("ipv6Hostname: " + ipv6Hostname + " / " + ipv6HostAddress);
+        System.out.println("ipv4Hostname: " + ipv4Hostname + " / " + ipv4HostAddress);
 
-        if (ipv6Hostname.equals(InetAddress.getByName("::1").getHostAddress())) {
+        if (ipv6Hostname.equals(ipv6HostAddress)) {
             System.out.println("Unable to get the hostname of the IPv6 loopback "
                     + "address. Skipping test case.");
             return;
         }
 
-        if (ipv6Hostname.equals(ipv4Hostname)) {
+        if (ipv4Hostname != null && ipv6Hostname.equals(ipv4Hostname)) {
             System.out.println("IPv6 and IPv4 loopback addresses map to the"
                     + " same hostname. Skipping test case.");
+            return;
+        }
+
+        if (!InetAddress.getByName(ipv6Hostname).getHostAddress()
+                .equals(ipv6HostAddress)) {
+            System.out.println(ipv6Hostname + " resolves to \""
+                    + InetAddress.getByName(ipv6Hostname).getHostAddress()
+                    + "\", not \"" + ipv6HostAddress +
+                    "\". Skipping test case.");
             return;
         }
 

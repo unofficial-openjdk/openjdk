@@ -559,9 +559,12 @@ class MacroAssembler: public Assembler {
                            Register temp2_reg,
                            Label& L_success);
 
-  // Method handle support (JSR 292).
-  void check_method_handle_type(Register mtype_reg, Register mh_reg, Register temp_reg, Label& wrong_method_type);
+  void clinit_barrier(Register klass,
+                      Register thread,
+                      Label* L_fast_path = NULL,
+                      Label* L_slow_path = NULL);
 
+  // Method handle support (JSR 292).
   RegisterOrConstant argument_offset(RegisterOrConstant arg_slot, Register temp_reg, int extra_slot_offset = 0);
 
   // Biased locking support
@@ -722,6 +725,7 @@ class MacroAssembler: public Assembler {
 
   void resolve_oop_handle(Register result);
   void load_mirror_from_const_method(Register mirror, Register const_method);
+  void load_method_holder(Register holder, Register method);
 
   static int instr_size_for_decode_klass_not_null();
   void decode_klass_not_null(Register dst, Register src = noreg);
@@ -756,39 +760,6 @@ class MacroAssembler: public Assembler {
   void clear_memory_unrolled(Register base_ptr, int cnt_dwords, Register tmp = R0, int offset = 0);
   void clear_memory_constlen(Register base_ptr, int cnt_dwords, Register tmp = R0);
   void clear_memory_doubleword(Register base_ptr, Register cnt_dwords, Register tmp = R0, long const_cnt = -1);
-
-#ifdef COMPILER2
-  // Intrinsics for CompactStrings
-  // Compress char[] to byte[] by compressing 16 bytes at once.
-  void string_compress_16(Register src, Register dst, Register cnt,
-                          Register tmp1, Register tmp2, Register tmp3, Register tmp4, Register tmp5,
-                          Label& Lfailure);
-
-  // Compress char[] to byte[]. cnt must be positive int.
-  void string_compress(Register src, Register dst, Register cnt, Register tmp, Label& Lfailure);
-
-  // Inflate byte[] to char[] by inflating 16 bytes at once.
-  void string_inflate_16(Register src, Register dst, Register cnt,
-                         Register tmp1, Register tmp2, Register tmp3, Register tmp4, Register tmp5);
-
-  // Inflate byte[] to char[]. cnt must be positive int.
-  void string_inflate(Register src, Register dst, Register cnt, Register tmp);
-
-  void string_compare(Register str1, Register str2, Register cnt1, Register cnt2,
-                      Register tmp1, Register result, int ae);
-
-  void array_equals(bool is_array_equ, Register ary1, Register ary2,
-                    Register limit, Register tmp1, Register result, bool is_byte);
-
-  void string_indexof(Register result, Register haystack, Register haycnt,
-                      Register needle, ciTypeArray* needle_values, Register needlecnt, int needlecntval,
-                      Register tmp1, Register tmp2, Register tmp3, Register tmp4, int ae);
-
-  void string_indexof_char(Register result, Register haystack, Register haycnt,
-                           Register needle, jchar needleChar, Register tmp1, Register tmp2, bool is_byte);
-
-  void has_negatives(Register src, Register cnt, Register result, Register tmp1, Register tmp2);
-#endif
 
   // Emitters for BigInteger.multiplyToLen intrinsic.
   inline void multiply64(Register dest_hi, Register dest_lo,
@@ -884,6 +855,8 @@ class MacroAssembler: public Assembler {
   void sha256(bool multi_block);
   void sha512(bool multi_block);
 
+  void cache_wb(Address line);
+  void cache_wbsync(bool is_presync);
 
   //
   // Debugging
@@ -910,6 +883,9 @@ class MacroAssembler: public Assembler {
   // Verify R16_thread contents.
   void verify_thread();
 
+  // Calls verify_oop. If UseCompressedOops is on, decodes the oop.
+  // Preserves reg.
+  void verify_coop(Register reg, const char*);
   // Emit code to verify that reg contains a valid oop if +VerifyOops is set.
   void verify_oop(Register reg, const char* s = "broken oop");
   void verify_oop_addr(RegisterOrConstant offs, Register base, const char* s = "contains broken oop");

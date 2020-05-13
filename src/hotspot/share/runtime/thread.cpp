@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "jvm.h"
+#include "aot/aotLoader.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/moduleEntry.hpp"
@@ -46,6 +47,7 @@
 #include "logging/logConfiguration.hpp"
 #include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
+#include "memory/iterator.hpp"
 #include "memory/metaspaceShared.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
@@ -66,7 +68,6 @@
 #include "runtime/fieldDescriptor.inline.hpp"
 #include "runtime/flags/jvmFlagConstraintList.hpp"
 #include "runtime/flags/jvmFlagRangeList.hpp"
-#include "runtime/flags/jvmFlagWriteableList.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -86,6 +87,7 @@
 #include "runtime/safepoint.hpp"
 #include "runtime/safepointMechanism.inline.hpp"
 #include "runtime/safepointVerifiers.hpp"
+#include "runtime/serviceThread.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/statSampler.hpp"
 #include "runtime/stubRoutines.hpp"
@@ -117,9 +119,8 @@
 #include "utilities/singleWriterSynchronizer.hpp"
 #include "utilities/vmError.hpp"
 #if INCLUDE_JVMCI
-#include "jvmci/jvmciCompiler.hpp"
-#include "jvmci/jvmciRuntime.hpp"
-#include "logging/logHandle.hpp"
+#include "jvmci/jvmci.hpp"
+#include "jvmci/jvmciEnv.hpp"
 #endif
 #ifdef COMPILER1
 #include "c1/c1_Compiler.hpp"
@@ -166,14 +167,14 @@ void universe_post_module_init();  // must happen after call_initPhase2
 
 #ifndef USE_LIBRARY_BASED_TLS_ONLY
 // Current thread is maintained as a thread-local variable
-THREAD_LOCAL_DECL Thread* Thread::_thr_current = NULL;
+THREAD_LOCAL Thread* Thread::_thr_current = NULL;
 #endif
 
 // ======= Thread ========
 // Support for forcing alignment of thread objects for biased locking
 void* Thread::allocate(size_t size, bool throw_excpt, MEMFLAGS flags) {
   if (UseBiasedLocking) {
-    const int alignment = markOopDesc::biased_lock_alignment;
+    const size_t alignment = markWord::biased_lock_alignment;
     size_t aligned_size = size + (alignment - sizeof(intptr_t));
     void* real_malloc_addr = throw_excpt? AllocateHeap(aligned_size, flags, CURRENT_PC)
                                           : AllocateHeap(aligned_size, flags, CURRENT_PC,
@@ -223,7 +224,6 @@ Thread::Thread() {
   // stack and get_thread
   set_stack_base(NULL);
   set_stack_size(0);
-  set_self_raw_id(0);
   set_lgrp_id(-1);
   DEBUG_ONLY(clear_suspendible_thread();)
 
@@ -238,8 +238,8 @@ Thread::Thread() {
   set_last_handle_mark(NULL);
   DEBUG_ONLY(_missed_ic_stub_refill_verifier = NULL);
 
-  // This initial value ==> never claimed.
-  _oops_do_parity = 0;
+  // Initial value of zero ==> never claimed.
+  _threads_do_token = 0;
   _threads_hazard_ptr = NULL;
   _threads_list_ptr = NULL;
   _nested_threads_hazard_ptr_cnt = 0;
@@ -250,8 +250,7 @@ Thread::Thread() {
 
   // plain initialization
   debug_only(_owned_locks = NULL;)
-  debug_only(_allow_allocation_count = 0;)
-  NOT_PRODUCT(_allow_safepoint_count = 0;)
+  NOT_PRODUCT(_no_safepoint_count = 0;)
   NOT_PRODUCT(_skip_gcalot = false;)
   _jvmti_env_iteration_count = 0;
   set_allocated_bytes(0);
@@ -260,12 +259,13 @@ Thread::Thread() {
   _current_pending_monitor = NULL;
   _current_pending_monitor_is_from_java = true;
   _current_waiting_monitor = NULL;
+  _current_pending_raw_monitor = NULL;
   _num_nested_signal = 0;
-  omFreeList = NULL;
-  omFreeCount = 0;
-  omFreeProvision = 32;
-  omInUseList = NULL;
-  omInUseCount = 0;
+  om_free_list = NULL;
+  om_free_count = 0;
+  om_free_provision = 32;
+  om_in_use_list = NULL;
+  om_in_use_count = 0;
 
 #ifdef ASSERT
   _visited_for_critical_count = false;
@@ -293,7 +293,6 @@ Thread::Thread() {
   // The stack would act as a cache to avoid calls to ParkEvent::Allocate()
   // and ::Release()
   _ParkEvent   = ParkEvent::Allocate(this);
-  _SleepEvent  = ParkEvent::Allocate(this);
   _MuxEvent    = ParkEvent::Allocate(this);
 
 #ifdef CHECK_UNHANDLED_OOPS
@@ -303,9 +302,9 @@ Thread::Thread() {
 #endif // CHECK_UNHANDLED_OOPS
 #ifdef ASSERT
   if (UseBiasedLocking) {
-    assert((((uintptr_t) this) & (markOopDesc::biased_lock_alignment - 1)) == 0, "forced alignment of thread object failed");
+    assert(is_aligned(this, markWord::biased_lock_alignment), "forced alignment of thread object failed");
     assert(this == _real_malloc_address ||
-           this == align_up(_real_malloc_address, (int)markOopDesc::biased_lock_alignment),
+           this == align_up(_real_malloc_address, markWord::biased_lock_alignment),
            "bug in forced alignment of thread objects");
   }
 #endif // ASSERT
@@ -388,7 +387,7 @@ void Thread::call_run() {
 
   log_debug(os, thread)("Thread " UINTX_FORMAT " stack dimensions: "
     PTR_FORMAT "-" PTR_FORMAT " (" SIZE_FORMAT "k).",
-    os::current_thread_id(), p2i(stack_base() - stack_size()),
+    os::current_thread_id(), p2i(stack_end()),
     p2i(stack_base()), stack_size()/1024);
 
   // Perform <ChildClass> initialization actions
@@ -458,7 +457,6 @@ Thread::~Thread() {
   // It's possible we can encounter a null _ParkEvent, etc., in stillborn threads.
   // We NULL out the fields for good hygiene.
   ParkEvent::Release(_ParkEvent); _ParkEvent   = NULL;
-  ParkEvent::Release(_SleepEvent); _SleepEvent  = NULL;
   ParkEvent::Release(_MuxEvent); _MuxEvent    = NULL;
 
   delete handle_area();
@@ -527,10 +525,25 @@ void Thread::start(Thread* thread) {
   }
 }
 
-// Enqueue a VM_Operation to do the job for us - sometime later
+class InstallAsyncExceptionClosure : public HandshakeClosure {
+  Handle _throwable; // The Throwable thrown at the target Thread
+public:
+  InstallAsyncExceptionClosure(Handle throwable) : HandshakeClosure("InstallAsyncException"), _throwable(throwable) {}
+
+  void do_thread(Thread* thr) {
+    JavaThread* target = (JavaThread*)thr;
+    // Note that this now allows multiple ThreadDeath exceptions to be
+    // thrown at a thread.
+    // The target thread has run and has not exited yet.
+    target->send_thread_stop(_throwable());
+  }
+};
+
 void Thread::send_async_exception(oop java_thread, oop java_throwable) {
-  VM_ThreadStop* vm_stop = new VM_ThreadStop(java_thread, java_throwable);
-  VMThread::execute(vm_stop);
+  Handle throwable(Thread::current(), java_throwable);
+  JavaThread* target = java_lang_Thread::thread(java_thread);
+  InstallAsyncExceptionClosure vm_stop(throwable);
+  Handshake::execute(&vm_stop, target);
 }
 
 
@@ -718,7 +731,11 @@ bool JavaThread::is_ext_suspend_completed(bool called_by_wait, int delay,
         // temporarily drops SR_lock while doing wait with safepoint check
         // (if we're a JavaThread - the WatcherThread can also call this)
         // and increase delay with each retry
-        SR_lock()->wait(!Thread::current()->is_Java_thread(), i * delay);
+        if (Thread::current()->is_Java_thread()) {
+          SR_lock()->wait(i * delay);
+        } else {
+          SR_lock()->wait_without_safepoint_check(i * delay);
+        }
 
         // check the actual thread state instead of what we saved above
         if (thread_state() != _thread_in_native_trans) {
@@ -759,7 +776,7 @@ bool JavaThread::wait_for_ext_suspend_completion(int retries, int delay,
   reset_bits = *bits;
 
   {
-    MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
+    MutexLocker ml(SR_lock(), Mutex::_no_safepoint_check_flag);
     is_suspended = is_ext_suspend_completed(true /* called_by_wait */,
                                             delay, bits);
     pending = is_external_suspend();
@@ -790,10 +807,12 @@ bool JavaThread::wait_for_ext_suspend_completion(int retries, int delay,
     // safepoint requests from the VMThread
 
     {
-      MutexLocker ml(SR_lock());
+      Thread* t = Thread::current();
+      MonitorLocker ml(SR_lock(),
+                       t->is_Java_thread() ? Mutex::_safepoint_check_flag : Mutex::_no_safepoint_check_flag);
       // wait with safepoint check (if we're a JavaThread - the WatcherThread
       // can also call this)  and increase delay with each retry
-      SR_lock()->wait(!Thread::current()->is_Java_thread(), i * delay);
+      ml.wait(i * delay);
 
       is_suspended = is_ext_suspend_completed(true /* called_by_wait */,
                                               delay, bits);
@@ -854,53 +873,23 @@ JavaThread::is_thread_fully_suspended(bool wait_for_suspend, uint32_t *bits) {
   return true;
 }
 
-#ifndef PRODUCT
-void JavaThread::record_jump(address target, address instr, const char* file,
-                             int line) {
-
-  // This should not need to be atomic as the only way for simultaneous
-  // updates is via interrupts. Even then this should be rare or non-existent
-  // and we don't care that much anyway.
-
-  int index = _jmp_ring_index;
-  _jmp_ring_index = (index + 1) & (jump_ring_buffer_size - 1);
-  _jmp_ring[index]._target = (intptr_t) target;
-  _jmp_ring[index]._instruction = (intptr_t) instr;
-  _jmp_ring[index]._file = file;
-  _jmp_ring[index]._line = line;
-}
-#endif // PRODUCT
-
-void Thread::interrupt(Thread* thread) {
-  debug_only(check_for_dangling_thread_pointer(thread);)
-  os::interrupt(thread);
-}
-
-bool Thread::is_interrupted(Thread* thread, bool clear_interrupted) {
-  debug_only(check_for_dangling_thread_pointer(thread);)
-  // Note:  If clear_interrupted==false, this simply fetches and
-  // returns the value of the field osthread()->interrupted().
-  return os::is_interrupted(thread, clear_interrupted);
-}
-
-
 // GC Support
-bool Thread::claim_oops_do_par_case(int strong_roots_parity) {
-  int thread_parity = _oops_do_parity;
-  if (thread_parity != strong_roots_parity) {
-    jint res = Atomic::cmpxchg(strong_roots_parity, &_oops_do_parity, thread_parity);
-    if (res == thread_parity) {
+bool Thread::claim_par_threads_do(uintx claim_token) {
+  uintx token = _threads_do_token;
+  if (token != claim_token) {
+    uintx res = Atomic::cmpxchg(&_threads_do_token, token, claim_token);
+    if (res == token) {
       return true;
-    } else {
-      guarantee(res == strong_roots_parity, "Or else what?");
-      return false;
     }
+    guarantee(res == claim_token, "invariant");
   }
   return false;
 }
 
 void Thread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
-  active_handles()->oops_do(f);
+  if (active_handles() != NULL) {
+    active_handles()->oops_do(f);
+  }
   // Do oop for ThreadShadow
   f->do_oop((oop*)&_pending_exception);
   handle_area()->oops_do(f);
@@ -950,6 +939,8 @@ void Thread::print_on(outputStream* st, bool print_extended_info) const {
   debug_only(if (WizardMode) print_owned_locks_on(st);)
 }
 
+void Thread::print() const { print_on(tty); }
+
 // Thread::print_on_error() is called by fatal error handler. Don't use
 // any lock or allocate memory.
 void Thread::print_on_error(outputStream* st, char* buf, int buflen) const {
@@ -984,7 +975,7 @@ void Thread::print_value_on(outputStream* st) const {
 
 #ifdef ASSERT
 void Thread::print_owned_locks_on(outputStream* st) const {
-  Monitor *cur = _owned_locks;
+  Mutex* cur = _owned_locks;
   if (cur == NULL) {
     st->print(" (no locks) ");
   } else {
@@ -996,78 +987,38 @@ void Thread::print_owned_locks_on(outputStream* st) const {
   }
 }
 
-static int ref_use_count  = 0;
+// Checks safepoint allowed and clears unhandled oops at potential safepoints.
+void Thread::check_possible_safepoint() {
+  if (!is_Java_thread()) return;
 
-bool Thread::owns_locks_but_compiled_lock() const {
-  for (Monitor *cur = _owned_locks; cur; cur = cur->next()) {
-    if (cur != Compile_lock) return true;
-  }
-  return false;
-}
-
-
-#endif
-
-#ifndef PRODUCT
-
-// The flag: potential_vm_operation notifies if this particular safepoint state could potentially
-// invoke the vm-thread (e.g., an oop allocation). In that case, we also have to make sure that
-// no locks which allow_vm_block's are held
-void Thread::check_for_valid_safepoint_state(bool potential_vm_operation) {
-  // Check if current thread is allowed to block at a safepoint
-  if (!(_allow_safepoint_count == 0)) {
+  if (_no_safepoint_count > 0) {
+    print_owned_locks();
     fatal("Possible safepoint reached by thread that does not allow it");
   }
-  if (is_Java_thread() && ((JavaThread*)this)->thread_state() != _thread_in_vm) {
-    fatal("LEAF method calling lock?");
-  }
+#ifdef CHECK_UNHANDLED_OOPS
+  // Clear unhandled oops in JavaThreads so we get a crash right away.
+  clear_unhandled_oops();
+#endif // CHECK_UNHANDLED_OOPS
+}
 
-#ifdef ASSERT
-  if (potential_vm_operation && is_Java_thread()
-      && !Universe::is_bootstrapping()) {
-    // Make sure we do not hold any locks that the VM thread also uses.
-    // This could potentially lead to deadlocks
-    for (Monitor *cur = _owned_locks; cur; cur = cur->next()) {
-      // Threads_lock is special, since the safepoint synchronization will not start before this is
-      // acquired. Hence, a JavaThread cannot be holding it at a safepoint. So is VMOperationRequest_lock,
-      // since it is used to transfer control between JavaThreads and the VMThread
-      // Do not *exclude* any locks unless you are absolutely sure it is correct. Ask someone else first!
-      if ((cur->allow_vm_block() &&
-           cur != Threads_lock &&
-           cur != Compile_lock &&               // Temporary: should not be necessary when we get separate compilation
-           cur != VMOperationRequest_lock &&
-           cur != VMOperationQueue_lock) ||
-           cur->rank() == Mutex::special) {
-        fatal("Thread holding lock at safepoint that vm can block on: %s", cur->name());
-      }
-    }
+void Thread::check_for_valid_safepoint_state() {
+  if (!is_Java_thread()) return;
+
+  // Check NoSafepointVerifier, which is implied by locks taken that can be
+  // shared with the VM thread.  This makes sure that no locks with allow_vm_block
+  // are held.
+  check_possible_safepoint();
+
+  if (((JavaThread*)this)->thread_state() != _thread_in_vm) {
+    fatal("LEAF method calling lock?");
   }
 
   if (GCALotAtAllSafepoints) {
     // We could enter a safepoint here and thus have a gc
     InterfaceSupport::check_gc_alot();
   }
-#endif
 }
-#endif
-
-bool Thread::is_in_stack(address adr) const {
-  assert(Thread::current() == this, "is_in_stack can only be called from current thread");
-  address end = os::current_stack_pointer();
-  // Allow non Java threads to call this without stack_base
-  if (_stack_base == NULL) return true;
-  if (stack_base() >= adr && adr >= end) return true;
-
-  return false;
-}
-
-bool Thread::is_in_usable_stack(address adr) const {
-  size_t stack_guard_size = os::uses_stack_guard_pages() ? JavaThread::stack_guard_zone_size() : 0;
-  size_t usable_stack_size = _stack_size - stack_guard_size;
-
-  return ((adr < stack_base()) && (adr >= stack_base() - usable_stack_size));
-}
-
+#endif // ASSERT
 
 // We had to move these methods here, because vm threads get into ObjectSynchronizer::enter
 // However, there is a note in JavaThread::is_lock_owned() about the VM threads not being
@@ -1075,7 +1026,7 @@ bool Thread::is_in_usable_stack(address adr) const {
 // should be revisited, and they should be removed if possible.
 
 bool Thread::is_lock_owned(address adr) const {
-  return on_local_stack(adr);
+  return is_in_full_stack(adr);
 }
 
 bool Thread::set_as_starting_thread() {
@@ -1139,6 +1090,8 @@ static oop create_initial_thread(Handle thread_group, JavaThread* thread,
 
 char java_runtime_name[128] = "";
 char java_runtime_version[128] = "";
+char java_runtime_vendor_version[128] = "";
+char java_runtime_vendor_vm_bug_url[128] = "";
 
 // extract the JRE name from java.lang.VersionProps.java_runtime_name
 static const char* get_java_runtime_name(TRAPS) {
@@ -1178,6 +1131,50 @@ static const char* get_java_runtime_version(TRAPS) {
     const char* name = java_lang_String::as_utf8_string(name_oop,
                                                         java_runtime_version,
                                                         sizeof(java_runtime_version));
+    return name;
+  } else {
+    return NULL;
+  }
+}
+
+// extract the JRE vendor version from java.lang.VersionProps.VENDOR_VERSION
+static const char* get_java_runtime_vendor_version(TRAPS) {
+  Klass* k = SystemDictionary::find(vmSymbols::java_lang_VersionProps(),
+                                    Handle(), Handle(), CHECK_AND_CLEAR_NULL);
+  fieldDescriptor fd;
+  bool found = k != NULL &&
+               InstanceKlass::cast(k)->find_local_field(vmSymbols::java_runtime_vendor_version_name(),
+                                                        vmSymbols::string_signature(), &fd);
+  if (found) {
+    oop name_oop = k->java_mirror()->obj_field(fd.offset());
+    if (name_oop == NULL) {
+      return NULL;
+    }
+    const char* name = java_lang_String::as_utf8_string(name_oop,
+                                                        java_runtime_vendor_version,
+                                                        sizeof(java_runtime_vendor_version));
+    return name;
+  } else {
+    return NULL;
+  }
+}
+
+// extract the JRE vendor VM bug URL from java.lang.VersionProps.VENDOR_URL_VM_BUG
+static const char* get_java_runtime_vendor_vm_bug_url(TRAPS) {
+  Klass* k = SystemDictionary::find(vmSymbols::java_lang_VersionProps(),
+                                    Handle(), Handle(), CHECK_AND_CLEAR_NULL);
+  fieldDescriptor fd;
+  bool found = k != NULL &&
+               InstanceKlass::cast(k)->find_local_field(vmSymbols::java_runtime_vendor_vm_bug_url_name(),
+                                                        vmSymbols::string_signature(), &fd);
+  if (found) {
+    oop name_oop = k->java_mirror()->obj_field(fd.offset());
+    if (name_oop == NULL) {
+      return NULL;
+    }
+    const char* name = java_lang_String::as_utf8_string(name_oop,
+                                                        java_runtime_vendor_vm_bug_url,
+                                                        sizeof(java_runtime_vendor_vm_bug_url));
     return name;
   } else {
     return NULL;
@@ -1246,7 +1243,7 @@ void JavaThread::allocate_threadObj(Handle thread_group, const char* thread_name
     return;
   }
 
-  Klass* group =  SystemDictionary::ThreadGroup_klass();
+  Klass* group = SystemDictionary::ThreadGroup_klass();
   Handle threadObj(THREAD, this->threadObj());
 
   JavaCalls::call_special(&result,
@@ -1272,7 +1269,7 @@ NonJavaThread::List NonJavaThread::_the_list;
 
 NonJavaThread::Iterator::Iterator() :
   _protect_enter(_the_list._protect.enter()),
-  _current(OrderAccess::load_acquire(&_the_list._head))
+  _current(Atomic::load_acquire(&_the_list._head))
 {}
 
 NonJavaThread::Iterator::~Iterator() {
@@ -1281,7 +1278,7 @@ NonJavaThread::Iterator::~Iterator() {
 
 void NonJavaThread::Iterator::step() {
   assert(!end(), "precondition");
-  _current = OrderAccess::load_acquire(&_current->_next);
+  _current = Atomic::load_acquire(&_current->_next);
 }
 
 NonJavaThread::NonJavaThread() : Thread(), _next(NULL) {
@@ -1291,27 +1288,35 @@ NonJavaThread::NonJavaThread() : Thread(), _next(NULL) {
 NonJavaThread::~NonJavaThread() { }
 
 void NonJavaThread::add_to_the_list() {
-  MutexLockerEx lock(NonJavaThreadsList_lock, Mutex::_no_safepoint_check_flag);
-  _next = _the_list._head;
-  OrderAccess::release_store(&_the_list._head, this);
+  MutexLocker ml(NonJavaThreadsList_lock, Mutex::_no_safepoint_check_flag);
+  // Initialize BarrierSet-related data before adding to list.
+  BarrierSet::barrier_set()->on_thread_attach(this);
+  Atomic::release_store(&_next, _the_list._head);
+  Atomic::release_store(&_the_list._head, this);
 }
 
 void NonJavaThread::remove_from_the_list() {
-  MutexLockerEx lock(NonJavaThreadsList_lock, Mutex::_no_safepoint_check_flag);
-  NonJavaThread* volatile* p = &_the_list._head;
-  for (NonJavaThread* t = *p; t != NULL; p = &t->_next, t = *p) {
-    if (t == this) {
-      *p = this->_next;
-      // Wait for any in-progress iterators.  Concurrent synchronize is
-      // not allowed, so do it while holding the list lock.
-      _the_list._protect.synchronize();
-      break;
+  {
+    MutexLocker ml(NonJavaThreadsList_lock, Mutex::_no_safepoint_check_flag);
+    // Cleanup BarrierSet-related data before removing from list.
+    BarrierSet::barrier_set()->on_thread_detach(this);
+    NonJavaThread* volatile* p = &_the_list._head;
+    for (NonJavaThread* t = *p; t != NULL; p = &t->_next, t = *p) {
+      if (t == this) {
+        *p = _next;
+        break;
+      }
     }
   }
+  // Wait for any in-progress iterators.  Concurrent synchronize is not
+  // allowed, so do it while holding a dedicated lock.  Outside and distinct
+  // from NJTList_lock in case an iteration attempts to lock it.
+  MutexLocker ml(NonJavaThreadsListSync_lock, Mutex::_no_safepoint_check_flag);
+  _the_list._protect.synchronize();
+  _next = NULL;                 // Safe to drop the link now.
 }
 
 void NonJavaThread::pre_run() {
-  assert(BarrierSet::barrier_set() != NULL, "invariant");
   add_to_the_list();
 
   // This is slightly odd in that NamedThread is a subclass, but
@@ -1337,16 +1342,12 @@ NamedThread::NamedThread() :
 {}
 
 NamedThread::~NamedThread() {
-  if (_name != NULL) {
-    FREE_C_HEAP_ARRAY(char, _name);
-    _name = NULL;
-  }
+  FREE_C_HEAP_ARRAY(char, _name);
 }
 
 void NamedThread::set_name(const char* format, ...) {
   guarantee(_name == NULL, "Only get to set name once.");
   _name = NEW_C_HEAP_ARRAY(char, max_name_len, mtThread);
-  guarantee(_name != NULL, "alloc failure");
   va_list ap;
   va_start(ap, format);
   jio_vsnprintf(_name, max_name_len, format, ap);
@@ -1391,7 +1392,7 @@ WatcherThread::WatcherThread() : NonJavaThread() {
 int WatcherThread::sleep() const {
   // The WatcherThread does not participate in the safepoint protocol
   // for the PeriodicTask_lock because it is not a JavaThread.
-  MutexLockerEx ml(PeriodicTask_lock, Mutex::_no_safepoint_check_flag);
+  MonitorLocker ml(PeriodicTask_lock, Mutex::_no_safepoint_check_flag);
 
   if (_should_terminate) {
     // check for termination before we do any housekeeping or wait
@@ -1411,8 +1412,7 @@ int WatcherThread::sleep() const {
   jlong time_before_loop = os::javaTimeNanos();
 
   while (true) {
-    bool timedout = PeriodicTask_lock->wait(Mutex::_no_safepoint_check_flag,
-                                            remaining);
+    bool timedout = ml.wait(remaining);
     jlong now = os::javaTimeNanos();
 
     if (remaining == 0) {
@@ -1500,9 +1500,9 @@ void WatcherThread::run() {
 
   // Signal that it is terminated
   {
-    MutexLockerEx mu(Terminator_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker mu(Terminator_lock, Mutex::_no_safepoint_check_flag);
     _watcher_thread = NULL;
-    Terminator_lock->notify();
+    Terminator_lock->notify_all();
   }
 }
 
@@ -1535,13 +1535,12 @@ void WatcherThread::stop() {
     }
   }
 
-  MutexLocker mu(Terminator_lock);
+  MonitorLocker mu(Terminator_lock);
 
   while (watcher_thread() != NULL) {
     // This wait should make safepoint checks, wait without a timeout,
     // and wait as a suspend-equivalent condition.
-    Terminator_lock->wait(!Mutex::_no_safepoint_check_flag, 0,
-                          Mutex::_as_suspend_equivalent_flag);
+    mu.wait(0, Mutex::_as_suspend_equivalent_flag);
   }
 }
 
@@ -1566,20 +1565,67 @@ bool jvmci_counters_include(JavaThread* thread) {
   return !JVMCICountersExcludeCompiler || !thread->is_Compiler_thread();
 }
 
-void JavaThread::collect_counters(typeArrayOop array) {
-  if (JVMCICounterSize > 0) {
-    JavaThreadIteratorWithHandle jtiwh;
-    for (int i = 0; i < array->length(); i++) {
-      array->long_at_put(i, _jvmci_old_thread_counters[i]);
-    }
-    for (; JavaThread *tp = jtiwh.next(); ) {
-      if (jvmci_counters_include(tp)) {
-        for (int i = 0; i < array->length(); i++) {
-          array->long_at_put(i, array->long_at(i) + tp->_jvmci_counters[i]);
-        }
+void JavaThread::collect_counters(jlong* array, int length) {
+  assert(length == JVMCICounterSize, "wrong value");
+  for (int i = 0; i < length; i++) {
+    array[i] = _jvmci_old_thread_counters[i];
+  }
+  for (JavaThreadIteratorWithHandle jtiwh; JavaThread *tp = jtiwh.next(); ) {
+    if (jvmci_counters_include(tp)) {
+      for (int i = 0; i < length; i++) {
+        array[i] += tp->_jvmci_counters[i];
       }
     }
   }
+}
+
+// Attempt to enlarge the array for per thread counters.
+jlong* resize_counters_array(jlong* old_counters, int current_size, int new_size) {
+  jlong* new_counters = NEW_C_HEAP_ARRAY(jlong, new_size, mtJVMCI);
+  if (old_counters == NULL) {
+    old_counters = new_counters;
+    memset(old_counters, 0, sizeof(jlong) * new_size);
+  } else {
+    for (int i = 0; i < MIN2((int) current_size, new_size); i++) {
+      new_counters[i] = old_counters[i];
+    }
+    if (new_size > current_size) {
+      memset(new_counters + current_size, 0, sizeof(jlong) * (new_size - current_size));
+    }
+    FREE_C_HEAP_ARRAY(jlong, old_counters);
+  }
+  return new_counters;
+}
+
+// Attempt to enlarge the array for per thread counters.
+void JavaThread::resize_counters(int current_size, int new_size) {
+  _jvmci_counters = resize_counters_array(_jvmci_counters, current_size, new_size);
+}
+
+class VM_JVMCIResizeCounters : public VM_Operation {
+ private:
+  int _new_size;
+
+ public:
+  VM_JVMCIResizeCounters(int new_size) : _new_size(new_size) { }
+  VMOp_Type type()                  const        { return VMOp_JVMCIResizeCounters; }
+  bool allow_nested_vm_operations() const        { return true; }
+  void doit() {
+    // Resize the old thread counters array
+    jlong* new_counters = resize_counters_array(JavaThread::_jvmci_old_thread_counters, JVMCICounterSize, _new_size);
+    JavaThread::_jvmci_old_thread_counters = new_counters;
+
+    // Now resize each threads array
+    for (JavaThreadIteratorWithHandle jtiwh; JavaThread *tp = jtiwh.next(); ) {
+      tp->resize_counters(JVMCICounterSize, _new_size);
+    }
+    JVMCICounterSize = _new_size;
+  }
+};
+
+void JavaThread::resize_all_jvmci_counters(int new_size) {
+  VM_JVMCIResizeCounters op(new_size);
+  VMThread::execute(&op);
 }
 
 #endif // INCLUDE_JVMCI
@@ -1602,11 +1648,9 @@ void JavaThread::initialize() {
   set_deferred_locals(NULL);
   set_deopt_mark(NULL);
   set_deopt_compiled_method(NULL);
-  clear_must_deopt_id();
   set_monitor_chunks(NULL);
-  set_next(NULL);
   _on_thread_list = false;
-  set_thread_state(_thread_new);
+  _thread_state = _thread_new;
   _terminated = _not_terminated;
   _array_for_gc = NULL;
   _suspend_equivalent = false;
@@ -1618,15 +1662,12 @@ void JavaThread::initialize() {
   _pending_deoptimization = -1;
   _pending_failed_speculation = 0;
   _pending_transfer_to_interpreter = false;
-  _adjusting_comp_level = false;
   _in_retryable_allocation = false;
   _jvmci._alternate_call_target = NULL;
   assert(_jvmci._implicit_exception_pc == NULL, "must be");
+  _jvmci_counters = NULL;
   if (JVMCICounterSize > 0) {
-    _jvmci_counters = NEW_C_HEAP_ARRAY(jlong, JVMCICounterSize, mtInternal);
-    memset(_jvmci_counters, 0, sizeof(jlong) * JVMCICounterSize);
-  } else {
-    _jvmci_counters = NULL;
+    resize_counters(0, (int) JVMCICounterSize);
   }
 #endif // INCLUDE_JVMCI
   _reserved_stack_activation = NULL;  // stack base not known yet
@@ -1641,22 +1682,15 @@ void JavaThread::initialize() {
   _pending_async_exception = NULL;
   _thread_stat = NULL;
   _thread_stat = new ThreadStatistics();
-  _blocked_on_compilation = false;
   _jni_active_critical = 0;
   _pending_jni_exception_check_fn = NULL;
   _do_not_unlock_if_synchronized = false;
   _cached_monitor_info = NULL;
   _parker = Parker::Allocate(this);
-
-#ifndef PRODUCT
-  _jmp_ring_index = 0;
-  for (int ji = 0; ji < jump_ring_buffer_size; ji++) {
-    record_jump(NULL, NULL, NULL, 0);
-  }
-#endif // PRODUCT
-
+  _SleepEvent = ParkEvent::Allocate(this);
   // Setup safepoint state info for this thread
   ThreadSafepointState::create(this);
+  _handshake.set_handshakee(this);
 
   debug_only(_java_call_counter = 0);
 
@@ -1666,9 +1700,7 @@ void JavaThread::initialize() {
   _popframe_preserved_args_size = 0;
   _frames_to_pop_failed_realloc = 0;
 
-  if (SafepointMechanism::uses_thread_local_poll()) {
-    SafepointMechanism::initialize_header(this);
-  }
+  SafepointMechanism::initialize_header(this);
 
   _class_to_be_initialized = NULL;
 
@@ -1684,6 +1716,64 @@ JavaThread::JavaThread(bool is_attaching_via_jni) :
     _jni_attach_state = _not_attaching_via_jni;
   }
   assert(deferred_card_mark().is_empty(), "Default MemRegion ctor");
+}
+
+
+// interrupt support
+
+void JavaThread::interrupt() {
+  debug_only(check_for_dangling_thread_pointer(this);)
+
+  // For Windows _interrupt_event
+  osthread()->set_interrupted(true);
+
+  // For Thread.sleep
+  _SleepEvent->unpark();
+
+  // For JSR166 LockSupport.park
+  parker()->unpark();
+
+  // For ObjectMonitor and JvmtiRawMonitor
+  _ParkEvent->unpark();
+}
+
+
+bool JavaThread::is_interrupted(bool clear_interrupted) {
+  debug_only(check_for_dangling_thread_pointer(this);)
+
+  if (threadObj() == NULL) {
+    // If there is no j.l.Thread then it is impossible to have
+    // been interrupted. We can find NULL during VM initialization
+    // or when a JNI thread is still in the process of attaching.
+    // In such cases this must be the current thread.
+    assert(this == Thread::current(), "invariant");
+    return false;
+  }
+
+  bool interrupted = java_lang_Thread::interrupted(threadObj());
+
+  // NOTE that since there is no "lock" around the interrupt and
+  // is_interrupted operations, there is the possibility that the
+  // interrupted flag will be "false" but that the
+  // low-level events will be in the signaled state. This is
+  // intentional. The effect of this is that Object.wait() and
+  // LockSupport.park() will appear to have a spurious wakeup, which
+  // is allowed and not harmful, and the possibility is so rare that
+  // it is not worth the added complexity to add yet another lock.
+  // For the sleep event an explicit reset is performed on entry
+  // to JavaThread::sleep, so there is no early return. It has also been
+  // recommended not to put the interrupted flag into the "event"
+  // structure because it hides the issue.
+  // Also, because there is no lock, we must only clear the interrupt
+  // state if we are going to report that we were interrupted; otherwise
+  // an interrupt that happens just after we read the field would be lost.
+  if (interrupted && clear_interrupted) {
+    assert(this == Thread::current(), "only the current thread can clear");
+    java_lang_Thread::set_interrupted(threadObj(), false);
+    osthread()->set_interrupted(false);
+  }
+
+  return interrupted;
 }
 
 bool JavaThread::reguard_stack(address cur_sp) {
@@ -1722,12 +1812,14 @@ bool JavaThread::reguard_stack(void) {
   return reguard_stack(os::current_stack_pointer());
 }
 
-
 void JavaThread::block_if_vm_exited() {
   if (_terminated == _vm_exited) {
     // _vm_exited is set at safepoint, and Threads_lock is never released
-    // we will block here forever
-    Threads_lock->lock_without_safepoint_check();
+    // we will block here forever.
+    // Here we can be doing a jump from a safe state to an unsafe state without
+    // proper transition, but it happens after the final safepoint has begun.
+    set_thread_state(_thread_in_vm);
+    Threads_lock->lock();
     ShouldNotReachHere();
   }
 }
@@ -1765,6 +1857,10 @@ JavaThread::~JavaThread() {
   // JSR166 -- return the parker to the free list
   Parker::Release(_parker);
   _parker = NULL;
+
+  // Return the sleep event to the free list
+  ParkEvent::Release(_SleepEvent);
+  _SleepEvent = NULL;
 
   // Free any remaining  previous UnrollBlock
   vframeArray* old_array = vframe_array_last();
@@ -1831,7 +1927,11 @@ void JavaThread::run() {
 
   // Thread is now sufficiently initialized to be handled by the safepoint code as being
   // in the VM. Change thread state from _thread_new to _thread_in_vm
-  ThreadStateTransition::transition_and_fence(this, _thread_new, _thread_in_vm);
+  ThreadStateTransition::transition(this, _thread_new, _thread_in_vm);
+  // Before a thread is on the threads list it is always safe, so after leaving the
+  // _thread_new we should emit a instruction barrier. The distance to modified code
+  // from here is probably far enough, but this is consistent and safe.
+  OrderAccess::cross_modify_fence();
 
   assert(JavaThread::current() == this, "sanity check");
   assert(!Thread::current()->owns_locks(), "sanity check");
@@ -1980,7 +2080,7 @@ void JavaThread::exit(bool destroy_vm, ExitType exit_type) {
     // in order to not surprise the thread that made the suspend request.
     while (true) {
       {
-        MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
+        MutexLocker ml(SR_lock(), Mutex::_no_safepoint_check_flag);
         if (!is_external_suspend()) {
           set_terminated(_thread_exiting);
           ThreadService::current_thread_exiting(this, is_daemon(threadObj()));
@@ -2011,6 +2111,10 @@ void JavaThread::exit(bool destroy_vm, ExitType exit_type) {
     _timer_exit_phase1.stop();
     _timer_exit_phase2.start();
   }
+
+  // Capture daemon status before the thread is marked as terminated.
+  bool daemon = is_daemon(threadObj());
+
   // Notify waiters on thread object. This has to be done after exit() is called
   // on the thread (if the thread is the last thread in a daemon ThreadGroup the
   // group should have the destroyed bit set before waiters are notified).
@@ -2079,7 +2183,7 @@ void JavaThread::exit(bool destroy_vm, ExitType exit_type) {
     _timer_exit_phase4.start();
   }
   // Remove from list of active threads list, and notify VM thread if we are the last non-daemon thread
-  Threads::remove(this);
+  Threads::remove(this, daemon);
 
   if (log_is_enabled(Debug, os, thread, timer)) {
     _timer_exit_phase4.stop();
@@ -2097,7 +2201,7 @@ void JavaThread::exit(bool destroy_vm, ExitType exit_type) {
   }
 }
 
-void JavaThread::cleanup_failed_attach_current_thread() {
+void JavaThread::cleanup_failed_attach_current_thread(bool is_daemon) {
   if (active_handles() != NULL) {
     JNIHandleBlock* block = active_handles();
     set_active_handles(NULL);
@@ -2119,7 +2223,7 @@ void JavaThread::cleanup_failed_attach_current_thread() {
 
   BarrierSet::barrier_set()->on_thread_detach(this);
 
-  Threads::remove(this);
+  Threads::remove(this, is_daemon);
   this->smr_delete();
 }
 
@@ -2259,49 +2363,15 @@ void JavaThread::check_and_handle_async_exceptions(bool check_unsafe_error) {
 }
 
 void JavaThread::handle_special_runtime_exit_condition(bool check_asyncs) {
-  //
-  // Check for pending external suspend. Internal suspend requests do
-  // not use handle_special_runtime_exit_condition().
-  // If JNIEnv proxies are allowed, don't self-suspend if the target
-  // thread is not the current thread. In older versions of jdbx, jdbx
-  // threads could call into the VM with another thread's JNIEnv so we
-  // can be here operating on behalf of a suspended thread (4432884).
-  bool do_self_suspend = is_external_suspend_with_lock();
-  if (do_self_suspend && (!AllowJNIEnvProxy || this == JavaThread::current())) {
-    //
-    // Because thread is external suspended the safepoint code will count
-    // thread as at a safepoint. This can be odd because we can be here
-    // as _thread_in_Java which would normally transition to _thread_blocked
-    // at a safepoint. We would like to mark the thread as _thread_blocked
-    // before calling java_suspend_self like all other callers of it but
-    // we must then observe proper safepoint protocol. (We can't leave
-    // _thread_blocked with a safepoint in progress). However we can be
-    // here as _thread_in_native_trans so we can't use a normal transition
-    // constructor/destructor pair because they assert on that type of
-    // transition. We could do something like:
-    //
-    // JavaThreadState state = thread_state();
-    // set_thread_state(_thread_in_vm);
-    // {
-    //   ThreadBlockInVM tbivm(this);
-    //   java_suspend_self()
-    // }
-    // set_thread_state(_thread_in_vm_trans);
-    // if (safepoint) block;
-    // set_thread_state(state);
-    //
-    // but that is pretty messy. Instead we just go with the way the
-    // code has worked before and note that this is the only path to
-    // java_suspend_self that doesn't put the thread in _thread_blocked
-    // mode.
 
+  // Check for pending external suspend.
+  if (is_external_suspend_with_lock()) {
     frame_anchor()->make_walkable(this);
-    java_suspend_self();
-
-    // We might be here for reasons in addition to the self-suspend request
-    // so check for other async requests.
+    java_suspend_self_with_safepoint_check();
   }
 
+  // We might be here for reasons in addition to the self-suspend request
+  // so check for other async requests.
   if (check_asyncs) {
     check_and_handle_async_exceptions();
   }
@@ -2310,9 +2380,8 @@ void JavaThread::handle_special_runtime_exit_condition(bool check_asyncs) {
 }
 
 void JavaThread::send_thread_stop(oop java_throwable)  {
-  assert(Thread::current()->is_VM_thread(), "should be in the vm thread");
-  assert(Threads_lock->is_locked(), "Threads_lock should be locked by safepoint code");
-  assert(SafepointSynchronize::is_at_safepoint(), "all threads are stopped");
+  ResourceMark rm;
+  assert(Thread::current()->is_VM_thread() || Thread::current() == this, "should be in the vm thread");
 
   // Do not throw asynchronous exceptions against the compiler thread
   // (the compiler thread should not be a Java thread -- fix in 1.4.2)
@@ -2329,11 +2398,10 @@ void JavaThread::send_thread_stop(oop java_throwable)  {
       if (has_last_Java_frame()) {
         frame f = last_frame();
         if (f.is_runtime_frame() || f.is_safepoint_blob_frame()) {
-          // BiasedLocking needs an updated RegisterMap for the revoke monitors pass
-          RegisterMap reg_map(this, UseBiasedLocking);
+          RegisterMap reg_map(this, false);
           frame compiled_frame = f.sender(&reg_map);
           if (!StressCompiledExceptionHandlers && compiled_frame.can_be_deoptimized()) {
-            Deoptimization::deoptimize(this, compiled_frame, &reg_map);
+            Deoptimization::deoptimize(this, compiled_frame);
           }
         }
       }
@@ -2352,8 +2420,9 @@ void JavaThread::send_thread_stop(oop java_throwable)  {
   }
 
 
-  // Interrupt thread so it will wake up from a potential wait()
-  Thread::interrupt(this);
+  // Interrupt thread so it will wake up from a potential wait()/sleep()/park()
+  java_lang_Thread::set_interrupted(threadObj(), true);
+  this->interrupt();
 }
 
 // External suspension mechanism.
@@ -2374,7 +2443,7 @@ void JavaThread::java_suspend() {
     return;
   }
 
-  { MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
+  { MutexLocker ml(SR_lock(), Mutex::_no_safepoint_check_flag);
     if (!is_external_suspend()) {
       // a racing resume has cancelled us; bail out now
       return;
@@ -2420,6 +2489,7 @@ void JavaThread::java_suspend() {
 //       to complete an external suspend request.
 //
 int JavaThread::java_suspend_self() {
+  assert(thread_state() == _thread_blocked, "wrong state for java_suspend_self()");
   int ret = 0;
 
   // we are in the process of exiting so don't suspend
@@ -2432,7 +2502,7 @@ int JavaThread::java_suspend_self() {
          (is_Java_thread() && !((JavaThread*)this)->has_last_Java_frame()),
          "must have walkable stack");
 
-  MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
+  MonitorLocker ml(SR_lock(), Mutex::_no_safepoint_check_flag);
 
   assert(!this->is_ext_suspended(),
          "a thread trying to self-suspend should not already be suspended");
@@ -2460,11 +2530,42 @@ int JavaThread::java_suspend_self() {
 
     // _ext_suspended flag is cleared by java_resume()
     while (is_ext_suspended()) {
-      this->SR_lock()->wait(Mutex::_no_safepoint_check_flag);
+      ml.wait();
     }
   }
-
   return ret;
+}
+
+// Helper routine to set up the correct thread state before calling java_suspend_self.
+// This is called when regular thread-state transition helpers can't be used because
+// we can be in various states, in particular _thread_in_native_trans.
+// Because this thread is external suspended the safepoint code will count it as at
+// a safepoint, regardless of what its actual current thread-state is. But
+// is_ext_suspend_completed() may be waiting to see a thread transition from
+// _thread_in_native_trans to _thread_blocked. So we set the thread state directly
+// to _thread_blocked. The problem with setting thread state directly is that a
+// safepoint could happen just after java_suspend_self() returns after being resumed,
+// and the VM thread will see the _thread_blocked state. So we must check for a safepoint
+// after restoring the state to make sure we won't leave while a safepoint is in progress.
+// However, not all initial-states are allowed when performing a safepoint check, as we
+// should never be blocking at a safepoint whilst in those states. Of these 'bad' states
+// only _thread_in_native is possible when executing this code (based on our two callers).
+// A thread that is _thread_in_native is already safepoint-safe and so it doesn't matter
+// whether the VMThread sees the _thread_blocked state, or the _thread_in_native state,
+// and so we don't need the explicit safepoint check.
+
+void JavaThread::java_suspend_self_with_safepoint_check() {
+  assert(this == Thread::current(), "invariant");
+  JavaThreadState state = thread_state();
+  set_thread_state(_thread_blocked);
+  java_suspend_self();
+  set_thread_state_fence(state);
+  // Since we are not using a regular thread-state transition helper here,
+  // we must manually emit the instruction barrier after leaving a safe state.
+  OrderAccess::cross_modify_fence();
+  if (state != _thread_in_native) {
+    SafepointMechanism::block_if_requested(this);
+  }
 }
 
 #ifdef ASSERT
@@ -2488,56 +2589,12 @@ void JavaThread::verify_not_published() {
 void JavaThread::check_safepoint_and_suspend_for_native_trans(JavaThread *thread) {
   assert(thread->thread_state() == _thread_in_native_trans, "wrong state");
 
-  JavaThread *curJT = JavaThread::current();
-  bool do_self_suspend = thread->is_external_suspend();
+  assert(!thread->has_last_Java_frame() || thread->frame_anchor()->walkable(), "Unwalkable stack in native->vm transition");
 
-  assert(!curJT->has_last_Java_frame() || curJT->frame_anchor()->walkable(), "Unwalkable stack in native->vm transition");
-
-  // If JNIEnv proxies are allowed, don't self-suspend if the target
-  // thread is not the current thread. In older versions of jdbx, jdbx
-  // threads could call into the VM with another thread's JNIEnv so we
-  // can be here operating on behalf of a suspended thread (4432884).
-  if (do_self_suspend && (!AllowJNIEnvProxy || curJT == thread)) {
-    JavaThreadState state = thread->thread_state();
-
-    // We mark this thread_blocked state as a suspend-equivalent so
-    // that a caller to is_ext_suspend_completed() won't be confused.
-    // The suspend-equivalent state is cleared by java_suspend_self().
-    thread->set_suspend_equivalent();
-
-    // If the safepoint code sees the _thread_in_native_trans state, it will
-    // wait until the thread changes to other thread state. There is no
-    // guarantee on how soon we can obtain the SR_lock and complete the
-    // self-suspend request. It would be a bad idea to let safepoint wait for
-    // too long. Temporarily change the state to _thread_blocked to
-    // let the VM thread know that this thread is ready for GC. The problem
-    // of changing thread state is that safepoint could happen just after
-    // java_suspend_self() returns after being resumed, and VM thread will
-    // see the _thread_blocked state. We must check for safepoint
-    // after restoring the state and make sure we won't leave while a safepoint
-    // is in progress.
-    thread->set_thread_state(_thread_blocked);
-    thread->java_suspend_self();
-    thread->set_thread_state(state);
-
-    InterfaceSupport::serialize_thread_state_with_handler(thread);
-  }
-
-  SafepointMechanism::block_if_requested(curJT);
-
-  if (thread->is_deopt_suspend()) {
-    thread->clear_deopt_suspend();
-    RegisterMap map(thread, false);
-    frame f = thread->last_frame();
-    while (f.id() != thread->must_deopt_id() && ! f.is_first_frame()) {
-      f = f.sender(&map);
-    }
-    if (f.id() == thread->must_deopt_id()) {
-      thread->clear_must_deopt_id();
-      f.deoptimize(thread);
-    } else {
-      fatal("missed deoptimization!");
-    }
+  if (thread->is_external_suspend()) {
+    thread->java_suspend_self_with_safepoint_check();
+  } else {
+    SafepointMechanism::block_if_requested(thread);
   }
 
   JFR_ONLY(SUSPEND_THREAD_CONDITIONAL(thread);)
@@ -2593,7 +2650,7 @@ void JavaThread::java_resume() {
     return;
   }
 
-  MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
+  MutexLocker ml(SR_lock(), Mutex::_no_safepoint_check_flag);
 
   clear_external_suspend();
 
@@ -2789,8 +2846,7 @@ void JavaThread::frames_do(void f(frame*, const RegisterMap* map)) {
 // Deoptimization
 // Function for testing deoptimization
 void JavaThread::deoptimize() {
-  // BiasedLocking needs an updated RegisterMap for the revoke monitors pass
-  StackFrameStream fst(this, UseBiasedLocking);
+  StackFrameStream fst(this, false);
   bool deopt = false;           // Dump stack only if a deopt actually happens.
   bool only_at = strlen(DeoptimizeOnlyAt) > 0;
   // Iterate over all frames in the thread and deoptimize
@@ -2827,7 +2883,7 @@ void JavaThread::deoptimize() {
         trace_frames();
         trace_stack();
       }
-      Deoptimization::deoptimize(this, *fst.current(), fst.register_map());
+      Deoptimization::deoptimize(this, *fst.current());
     }
   }
 
@@ -2851,17 +2907,15 @@ void JavaThread::make_zombies() {
 #endif // PRODUCT
 
 
-void JavaThread::deoptimized_wrt_marked_nmethods() {
+void JavaThread::deoptimize_marked_methods() {
   if (!has_last_Java_frame()) return;
-  // BiasedLocking needs an updated RegisterMap for the revoke monitors pass
-  StackFrameStream fst(this, UseBiasedLocking);
+  StackFrameStream fst(this, false);
   for (; !fst.is_done(); fst.next()) {
     if (fst.current()->should_be_deoptimized()) {
-      Deoptimization::deoptimize(this, *fst.current(), fst.register_map());
+      Deoptimization::deoptimize(this, *fst.current());
     }
   }
 }
-
 
 // If the caller is a NamedThread, then remember, in the current scope,
 // the given JavaThread in its _processed_thread field.
@@ -2917,11 +2971,6 @@ void JavaThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
     }
   }
 
-  // callee_target is never live across a gc point so NULL it here should
-  // it still contain a methdOop.
-
-  set_callee_target(NULL);
-
   assert(vframe_array_head() == NULL, "deopt in progress at a safepoint!");
   // If we have deferred set_locals there might be oops waiting to be
   // written
@@ -2940,13 +2989,25 @@ void JavaThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
   f->do_oop((oop*) &_pending_async_exception);
 
   if (jvmti_thread_state() != NULL) {
-    jvmti_thread_state()->oops_do(f);
+    jvmti_thread_state()->oops_do(f, cf);
   }
 }
 
+#ifdef ASSERT
+void JavaThread::verify_states_for_handshake() {
+  // This checks that the thread has a correct frame state during a handshake.
+  assert((!has_last_Java_frame() && java_call_counter() == 0) ||
+         (has_last_Java_frame() && java_call_counter() > 0),
+         "unexpected frame info: has_last_frame=%d, java_call_counter=%d",
+         has_last_Java_frame(), java_call_counter());
+}
+#endif
+
 void JavaThread::nmethods_do(CodeBlobClosure* cf) {
   assert((!has_last_Java_frame() && java_call_counter() == 0) ||
-         (has_last_Java_frame() && java_call_counter() > 0), "wrong java_sp info!");
+         (has_last_Java_frame() && java_call_counter() > 0),
+         "unexpected frame info: has_last_frame=%d, java_call_counter=%d",
+         has_last_Java_frame(), java_call_counter());
 
   if (has_last_Java_frame()) {
     // Traverse the execution stack
@@ -2954,9 +3015,13 @@ void JavaThread::nmethods_do(CodeBlobClosure* cf) {
       fst.current()->nmethods_do(cf);
     }
   }
+
+  if (jvmti_thread_state() != NULL) {
+    jvmti_thread_state()->nmethods_do(cf);
+  }
 }
 
-void JavaThread::metadata_do(void f(Metadata*)) {
+void JavaThread::metadata_do(MetadataClosure* f) {
   if (has_last_Java_frame()) {
     // Traverse the execution stack to call f() on the methods in the stack
     for (StackFrameStream fst(this); !fst.is_done(); fst.next()) {
@@ -2997,9 +3062,6 @@ const char* _get_thread_state_name(JavaThreadState _thread_state) {
 void JavaThread::print_thread_state_on(outputStream *st) const {
   st->print_cr("   JavaThread state: %s", _get_thread_state_name(_thread_state));
 };
-void JavaThread::print_thread_state() const {
-  print_thread_state_on(tty);
-}
 #endif // PRODUCT
 
 // Called by Threads::print() for VM_PrintThreads operation
@@ -3033,6 +3095,8 @@ void JavaThread::print_on(outputStream *st, bool print_extended_info) const {
     st->cr();
   }
 }
+
+void JavaThread::print() const { print_on(tty); }
 
 void JavaThread::print_name_on_error(outputStream* st, char *buf, int buflen) const {
   st->print("%s", get_thread_name_string(buf, buflen));
@@ -3086,7 +3150,7 @@ const char* JavaThread::get_thread_name() const {
     if (!(cur->is_Java_thread() && cur == this)) {
       // Current JavaThreads are allowed to get their own name without
       // the Threads_lock.
-      assert_locked_or_safepoint(Threads_lock);
+      assert_locked_or_safepoint_or_handshake(Threads_lock, this);
     }
   }
 #endif // ASSERT
@@ -3118,47 +3182,10 @@ const char* JavaThread::get_thread_name_string(char* buf, int buflen) const {
   return name_str;
 }
 
-
-const char* JavaThread::get_threadgroup_name() const {
-  debug_only(if (JavaThread::current() != this) assert_locked_or_safepoint(Threads_lock);)
-  oop thread_obj = threadObj();
-  if (thread_obj != NULL) {
-    oop thread_group = java_lang_Thread::threadGroup(thread_obj);
-    if (thread_group != NULL) {
-      // ThreadGroup.name can be null
-      return java_lang_ThreadGroup::name(thread_group);
-    }
-  }
-  return NULL;
-}
-
-const char* JavaThread::get_parent_name() const {
-  debug_only(if (JavaThread::current() != this) assert_locked_or_safepoint(Threads_lock);)
-  oop thread_obj = threadObj();
-  if (thread_obj != NULL) {
-    oop thread_group = java_lang_Thread::threadGroup(thread_obj);
-    if (thread_group != NULL) {
-      oop parent = java_lang_ThreadGroup::parent(thread_group);
-      if (parent != NULL) {
-        // ThreadGroup.name can be null
-        return java_lang_ThreadGroup::name(parent);
-      }
-    }
-  }
-  return NULL;
-}
-
-ThreadPriority JavaThread::java_priority() const {
-  oop thr_oop = threadObj();
-  if (thr_oop == NULL) return NormPriority; // Bootstrapping
-  ThreadPriority priority = java_lang_Thread::priority(thr_oop);
-  assert(MinPriority <= priority && priority <= MaxPriority, "sanity check");
-  return priority;
-}
-
 void JavaThread::prepare(jobject jni_thread, ThreadPriority prio) {
 
   assert(Threads_lock->owner() == Thread::current(), "must have threads lock");
+  assert(NoPriority <= prio && prio <= MaxPriority, "sanity check");
   // Link Java Thread object <-> C++ Thread
 
   // Get the C++ thread object (an oop) from the JNI handle (a jthread)
@@ -3198,8 +3225,7 @@ void JavaThread::prepare(jobject jni_thread, ThreadPriority prio) {
 oop JavaThread::current_park_blocker() {
   // Support for JSR-166 locks
   oop thread_oop = threadObj();
-  if (thread_oop != NULL &&
-      JDK_Version::current().supports_thread_park_blocker()) {
+  if (thread_oop != NULL) {
     return java_lang_Thread::park_blocker(thread_oop);
   }
   return NULL;
@@ -3260,7 +3286,7 @@ WordSize JavaThread::popframe_preserved_args_size_in_words() {
 
 void JavaThread::popframe_free_preserved_args() {
   assert(_popframe_preserved_args != NULL, "should not free PopFrame preserved arguments twice");
-  FREE_C_HEAP_ARRAY(char, (char*) _popframe_preserved_args);
+  FREE_C_HEAP_ARRAY(char, (char*)_popframe_preserved_args);
   _popframe_preserved_args = NULL;
   _popframe_preserved_args_size = 0;
 }
@@ -3298,23 +3324,6 @@ class PrintAndVerifyOopClosure: public OopClosure {
   virtual void do_oop(oop* p) { do_oop_work(p); }
   virtual void do_oop(narrowOop* p)  { do_oop_work(p); }
 };
-
-
-static void oops_print(frame* f, const RegisterMap *map) {
-  PrintAndVerifyOopClosure print;
-  f->print_value();
-  f->oops_do(&print, NULL, (RegisterMap*)map);
-}
-
-// Print our all the locations that contain oops and whether they are
-// valid or not.  This useful when trying to find the oldest frame
-// where an oop has gone bad since the frame walk is from youngest to
-// oldest.
-void JavaThread::trace_oops() {
-  tty->print_cr("[Trace oops]");
-  frames_do(oops_print);
-}
-
 
 #ifdef ASSERT
 // Print or validate the layout of stack frames
@@ -3382,6 +3391,62 @@ Klass* JavaThread::security_get_caller_class(int depth) {
     return vfst.method()->method_holder();
   }
   return NULL;
+}
+
+// java.lang.Thread.sleep support
+// Returns true if sleep time elapsed as expected, and false
+// if the thread was interrupted.
+bool JavaThread::sleep(jlong millis) {
+  assert(this == Thread::current(),  "thread consistency check");
+
+  ParkEvent * const slp = this->_SleepEvent;
+  // Because there can be races with thread interruption sending an unpark()
+  // to the event, we explicitly reset it here to avoid an immediate return.
+  // The actual interrupt state will be checked before we park().
+  slp->reset();
+  // Thread interruption establishes a happens-before ordering in the
+  // Java Memory Model, so we need to ensure we synchronize with the
+  // interrupt state.
+  OrderAccess::fence();
+
+  jlong prevtime = os::javaTimeNanos();
+
+  for (;;) {
+    // interruption has precedence over timing out
+    if (this->is_interrupted(true)) {
+      return false;
+    }
+
+    if (millis <= 0) {
+      return true;
+    }
+
+    {
+      ThreadBlockInVM tbivm(this);
+      OSThreadWaitState osts(this->osthread(), false /* not Object.wait() */);
+
+      this->set_suspend_equivalent();
+      // cleared by handle_special_suspend_equivalent_condition() or
+      // java_suspend_self() via check_and_wait_while_suspended()
+
+      slp->park(millis);
+
+      // were we externally suspended while we were waiting?
+      this->check_and_wait_while_suspended();
+    }
+
+    // Update elapsed time tracking
+    jlong newtime = os::javaTimeNanos();
+    if (newtime - prevtime < 0) {
+      // time moving backwards, should only happen if no monotonic clock
+      // not a guarantee() because JVM should not abort on kernel/glibc bugs
+      assert(!os::supports_monotonic_clock(),
+             "unexpected time moving backwards detected in JavaThread::sleep()");
+    } else {
+      millis -= (newtime - prevtime) / NANOSECS_PER_MILLISEC;
+    }
+    prevtime = newtime;
+  }
 }
 
 static void compiler_thread_entry(JavaThread* thread, TRAPS) {
@@ -3462,11 +3527,10 @@ void CodeCacheSweeperThread::nmethods_do(CodeBlobClosure* cf) {
 // would like. We are actively migrating Threads_lock uses to other
 // mechanisms in order to reduce Threads_lock contention.
 
-JavaThread* Threads::_thread_list = NULL;
 int         Threads::_number_of_threads = 0;
 int         Threads::_number_of_non_daemon_threads = 0;
 int         Threads::_return_code = 0;
-int         Threads::_thread_claim_parity = 0;
+uintx       Threads::_thread_claim_token = 1; // Never zero.
 size_t      JavaThread::_stack_size_at_create = 0;
 
 #ifdef ASSERT
@@ -3497,7 +3561,7 @@ static inline void *prefetch_and_load_ptr(void **addr, intx prefetch_interval) {
 
 // All NonJavaThreads (i.e., every non-JavaThread in the system).
 void Threads::non_java_threads_do(ThreadClosure* tc) {
-  NoSafepointVerifier nsv(!SafepointSynchronize::is_at_safepoint(), false);
+  NoSafepointVerifier nsv;
   for (NonJavaThread::Iterator njti; !njti.end(); njti.step()) {
     tc->do_thread(njti.current());
   }
@@ -3526,14 +3590,14 @@ void Threads::threads_do(ThreadClosure* tc) {
 }
 
 void Threads::possibly_parallel_threads_do(bool is_par, ThreadClosure* tc) {
-  int cp = Threads::thread_claim_parity();
+  uintx claim_token = Threads::thread_claim_token();
   ALL_JAVA_THREADS(p) {
-    if (p->claim_oops_do(is_par, cp)) {
+    if (p->claim_threads_do(is_par, claim_token)) {
       tc->do_thread(p);
     }
   }
   VMThread* vmt = VMThread::vm_thread();
-  if (vmt->claim_oops_do(is_par, cp)) {
+  if (vmt->claim_threads_do(is_par, claim_token)) {
     tc->do_thread(vmt);
   }
 }
@@ -3550,7 +3614,7 @@ void Threads::possibly_parallel_threads_do(bool is_par, ThreadClosure* tc) {
 //     fields in, out, and err. Set up java signal handlers, OS-specific
 //     system settings, and thread group of the main thread.
 static void call_initPhase1(TRAPS) {
-  Klass* klass =  SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(), true, CHECK);
+  Klass* klass = SystemDictionary::System_klass();
   JavaValue result(T_VOID);
   JavaCalls::call_static(&result, klass, vmSymbols::initPhase1_name(),
                                          vmSymbols::void_method_signature(), CHECK);
@@ -3570,7 +3634,7 @@ static void call_initPhase1(TRAPS) {
 static void call_initPhase2(TRAPS) {
   TraceTime timer("Initialize module system", TRACETIME_LOG(Info, startuptime));
 
-  Klass* klass = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(), true, CHECK);
+  Klass* klass = SystemDictionary::System_klass();
 
   JavaValue result(T_INT);
   JavaCallArguments args;
@@ -3592,7 +3656,7 @@ static void call_initPhase2(TRAPS) {
 //     and system class loader may be a custom class loaded from -Xbootclasspath/a,
 //     other modules or the application's classpath.
 static void call_initPhase3(TRAPS) {
-  Klass* klass = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(), true, CHECK);
+  Klass* klass = SystemDictionary::System_klass();
   JavaValue result(T_VOID);
   JavaCalls::call_static(&result, klass, vmSymbols::initPhase3_name(),
                                          vmSymbols::void_method_signature(), CHECK);
@@ -3620,6 +3684,7 @@ void Threads::initialize_java_lang_classes(JavaThread* main_thread, TRAPS) {
   initialize_class(vmSymbols::java_lang_Thread(), CHECK);
   oop thread_object = create_initial_thread(thread_group, main_thread, CHECK);
   main_thread->set_threadObj(thread_object);
+
   // Set thread status to running since main thread has
   // been started and running.
   java_lang_Thread::set_thread_status(thread_object,
@@ -3628,6 +3693,15 @@ void Threads::initialize_java_lang_classes(JavaThread* main_thread, TRAPS) {
   // The VM creates objects of this class.
   initialize_class(vmSymbols::java_lang_Module(), CHECK);
 
+#ifdef ASSERT
+  InstanceKlass *k = SystemDictionary::UnsafeConstants_klass();
+  assert(k->is_not_initialized(), "UnsafeConstants should not already be initialized");
+#endif
+
+  // initialize the hardware-specific constants needed by Unsafe
+  initialize_class(vmSymbols::jdk_internal_misc_UnsafeConstants(), CHECK);
+  jdk_internal_misc_UnsafeConstants::set_unsafe_constants();
+
   // The VM preresolves methods to these classes. Make sure that they get initialized
   initialize_class(vmSymbols::java_lang_reflect_Method(), CHECK);
   initialize_class(vmSymbols::java_lang_ref_Finalizer(), CHECK);
@@ -3635,9 +3709,11 @@ void Threads::initialize_java_lang_classes(JavaThread* main_thread, TRAPS) {
   // Phase 1 of the system initialization in the library, java.lang.System class initialization
   call_initPhase1(CHECK);
 
-  // get the Java runtime name after java.lang.System is initialized
+  // get the Java runtime name, version, and vendor info after java.lang.System is initialized
   JDK_Version::set_runtime_name(get_java_runtime_name(THREAD));
   JDK_Version::set_runtime_version(get_java_runtime_version(THREAD));
+  JDK_Version::set_runtime_vendor_version(get_java_runtime_vendor_version(THREAD));
+  JDK_Version::set_runtime_vendor_vm_bug_url(get_java_runtime_vendor_vm_bug_url(THREAD));
 
   // an instance of OutOfMemory exception has been allocated earlier
   initialize_class(vmSymbols::java_lang_OutOfMemoryError(), CHECK);
@@ -3648,6 +3724,9 @@ void Threads::initialize_java_lang_classes(JavaThread* main_thread, TRAPS) {
   initialize_class(vmSymbols::java_lang_StackOverflowError(), CHECK);
   initialize_class(vmSymbols::java_lang_IllegalMonitorStateException(), CHECK);
   initialize_class(vmSymbols::java_lang_IllegalArgumentException(), CHECK);
+
+  // Eager box cache initialization only if AOT is on and any library is loaded.
+  AOTLoader::initialize_box_caches(CHECK);
 }
 
 void Threads::initialize_jsr292_core_classes(TRAPS) {
@@ -3717,8 +3796,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     return JNI_EINVAL;
   }
 
-  JVMFlagWriteableList::mark_startup();
-
   if (PauseAtStartup) {
     os::pause();
   }
@@ -3759,7 +3836,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   }
 
   // Initialize Threads state
-  _thread_list = NULL;
   _number_of_threads = 0;
   _number_of_non_daemon_threads = 0;
 
@@ -3768,7 +3844,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
 
 #if INCLUDE_JVMCI
   if (JVMCICounterSize > 0) {
-    JavaThread::_jvmci_old_thread_counters = NEW_C_HEAP_ARRAY(jlong, JVMCICounterSize, mtInternal);
+    JavaThread::_jvmci_old_thread_counters = NEW_C_HEAP_ARRAY(jlong, JVMCICounterSize, mtJVMCI);
     memset(JavaThread::_jvmci_old_thread_counters, 0, sizeof(jlong) * JVMCICounterSize);
   } else {
     JavaThread::_jvmci_old_thread_counters = NULL;
@@ -3807,7 +3883,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     return status;
   }
 
-  JFR_ONLY(Jfr::on_vm_init();)
+  JFR_ONLY(Jfr::on_create_vm_1();)
 
   // Should be done after the heap is fully created
   main_thread->cache_global_variables();
@@ -3825,7 +3901,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // Create the VMThread
   { TraceTime timer("Start VMThread", TRACETIME_LOG(Info, startuptime));
 
-  VMThread::create();
+    VMThread::create();
     Thread* vmthread = VMThread::vm_thread();
 
     if (!os::create_thread(vmthread, os::vm_thread)) {
@@ -3836,10 +3912,10 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     // Wait for the VM thread to become ready, and VMThread::run to initialize
     // Monitors can have spurious returns, must always check another state flag
     {
-      MutexLocker ml(Notify_lock);
+      MonitorLocker ml(Notify_lock);
       os::start_thread(vmthread);
       while (vmthread->active_handles() == NULL) {
-        Notify_lock->wait();
+        ml.wait();
       }
     }
   }
@@ -3911,16 +3987,19 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     Chunk::start_chunk_pool_cleaner_task();
   }
 
+  // Start the service thread
+  // The service thread enqueues JVMTI deferred events and does various hashtable
+  // and other cleanups.  Needs to start before the compilers start posting events.
+  ServiceThread::initialize();
+
   // initialize compiler(s)
 #if defined(COMPILER1) || COMPILER2_OR_JVMCI
 #if INCLUDE_JVMCI
   bool force_JVMCI_intialization = false;
   if (EnableJVMCI) {
     // Initialize JVMCI eagerly when it is explicitly requested.
-    // Or when JVMCIPrintProperties is enabled.
-    // The JVMCI Java initialization code will read this flag and
-    // do the printing if it's set.
-    force_JVMCI_intialization = EagerJVMCI || JVMCIPrintProperties;
+    // Or when JVMCILibDumpJNIConfig or JVMCIPrintProperties is enabled.
+    force_JVMCI_intialization = EagerJVMCI || JVMCIPrintProperties || JVMCILibDumpJNIConfig;
 
     if (!force_JVMCI_intialization) {
       // 8145270: Force initialization of JVMCI runtime otherwise requests for blocking
@@ -3947,6 +4026,8 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // loaded until phase 2 completes
   call_initPhase2(CHECK_JNI_ERR);
 
+  JFR_ONLY(Jfr::on_create_vm_2();)
+
   // Always call even when there are not JVMTI environments yet, since environments
   // may be attached late and JVMTI must track phases of VM execution
   JvmtiExport::enter_start_phase();
@@ -3961,15 +4042,13 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   SystemDictionary::compute_java_loaders(CHECK_JNI_ERR);
 
 #if INCLUDE_CDS
-  if (DumpSharedSpaces) {
-    // capture the module path info from the ModuleEntryTable
-    ClassLoader::initialize_module_path(THREAD);
-  }
+  // capture the module path info from the ModuleEntryTable
+  ClassLoader::initialize_module_path(THREAD);
 #endif
 
 #if INCLUDE_JVMCI
   if (force_JVMCI_intialization) {
-    JVMCIRuntime::force_initialization(CHECK_JNI_ERR);
+    JVMCI::initialize_compiler(CHECK_JNI_ERR);
     CompileBroker::compilation_init_phase2();
   }
 #endif
@@ -3984,7 +4063,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // Notify JVMTI agents that VM initialization is complete - nop if no agents.
   JvmtiExport::post_vm_initialized();
 
-  JFR_ONLY(Jfr::on_vm_start();)
+  JFR_ONLY(Jfr::on_create_vm_3();)
 
 #if INCLUDE_MANAGEMENT
   Management::initialize(THREAD);
@@ -4007,13 +4086,11 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   RTMLockingCounters::init();
 #endif
 
-  if (JDK_Version::current().post_vm_init_hook_enabled()) {
-    call_postVMInitHook(THREAD);
-    // The Java side of PostVMInitHook.run must deal with all
-    // exceptions and provide means of diagnosis.
-    if (HAS_PENDING_EXCEPTION) {
-      CLEAR_PENDING_EXCEPTION;
-    }
+  call_postVMInitHook(THREAD);
+  // The Java side of PostVMInitHook.run must deal with all
+  // exceptions and provide means of diagnosis.
+  if (HAS_PENDING_EXCEPTION) {
+    CLEAR_PENDING_EXCEPTION;
   }
 
   {
@@ -4168,7 +4245,7 @@ void Threads::create_vm_init_agents() {
   for (agent = Arguments::agents(); agent != NULL; agent = agent->next()) {
     // CDS dumping does not support native JVMTI agent.
     // CDS dumping supports Java agent if the AllowArchivingWithJavaAgent diagnostic option is specified.
-    if (DumpSharedSpaces) {
+    if (Arguments::is_dumping_archive()) {
       if(!agent->is_instrument_lib()) {
         vm_exit_during_cds_dumping("CDS dumping does not support native JVMTI agent, name", agent->name());
       } else if (!AllowArchivingWithJavaAgent) {
@@ -4250,6 +4327,13 @@ void Threads::create_vm_init_libraries() {
 void JavaThread::invoke_shutdown_hooks() {
   HandleMark hm(this);
 
+  // Link all classes for dynamic CDS dumping before vm exit.
+  // Same operation is being done in JVM_BeforeHalt for handling the
+  // case where the application calls System.exit().
+  if (DynamicDumpSharedSpaces) {
+    MetaspaceShared::link_and_cleanup_shared_classes(this);
+  }
+
   // We could get here with a pending exception, if so clear it now.
   if (this->has_pending_exception()) {
     this->clear_pending_exception();
@@ -4269,7 +4353,7 @@ void JavaThread::invoke_shutdown_hooks() {
     JavaValue result(T_VOID);
     JavaCalls::call_static(&result,
                            shutdown_klass,
-                           vmSymbols::shutdown_method_name(),
+                           vmSymbols::shutdown_name(),
                            vmSymbols::void_method_signature(),
                            THREAD);
   }
@@ -4292,7 +4376,7 @@ void JavaThread::invoke_shutdown_hooks() {
 //   + Call before_exit(), prepare for VM exit
 //      > run VM level shutdown hooks (they are registered through JVM_OnExit(),
 //        currently the only user of this mechanism is File.deleteOnExit())
-//      > stop StatSampler, watcher thread, CMS threads,
+//      > stop StatSampler, watcher thread,
 //        post thread end and vm death events to JVMTI,
 //        stop signal thread
 //   + Call JavaThread::exit(), it will:
@@ -4317,12 +4401,11 @@ bool Threads::destroy_vm() {
   _vm_complete = false;
 #endif
   // Wait until we are the last non-daemon thread to execute
-  { MutexLocker nu(Threads_lock);
+  { MonitorLocker nu(Threads_lock);
     while (Threads::number_of_non_daemon_threads() > 1)
       // This wait should make safepoint checks, wait without a timeout,
       // and wait as a suspend-equivalent condition.
-      Threads_lock->wait(!Mutex::_no_safepoint_check_flag, 0,
-                         Mutex::_as_suspend_equivalent_flag);
+      nu.wait(0, Mutex::_as_suspend_equivalent_flag);
   }
 
   EventShutdown e;
@@ -4344,6 +4427,16 @@ bool Threads::destroy_vm() {
 
   thread->exit(true);
 
+  // We are no longer on the main thread list but could still be in a
+  // secondary list where another thread may try to interact with us.
+  // So wait until all such interactions are complete before we bring
+  // the VM to the termination safepoint. Normally this would be done
+  // using thread->smr_delete() below where we delete the thread, but
+  // we can't call that after the termination safepoint is active as
+  // we will deadlock on the Threads_lock. Once all interactions are
+  // complete it is safe to directly delete the thread at any time.
+  ThreadsSMRSupport::wait_until_not_protected(thread);
+
   // Stop VM thread.
   {
     // 4945125 The vm thread comes to a safepoint during exit.
@@ -4353,7 +4446,7 @@ bool Threads::destroy_vm() {
     // queue until after the vm thread is dead. After this point,
     // we'll never emerge out of the safepoint before the VM exits.
 
-    MutexLockerEx ml(Heap_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker ml(Heap_lock, Mutex::_no_safepoint_check_flag);
 
     VMThread::wait_for_vm_thread_exit();
     assert(SafepointSynchronize::is_at_safepoint(), "VM thread should exit at Safepoint");
@@ -4383,11 +4476,8 @@ bool Threads::destroy_vm() {
   // exit_globals() will delete tty
   exit_globals();
 
-  // We are after VM_Exit::set_vm_exited() so we can't call
-  // thread->smr_delete() or we will block on the Threads_lock.
-  // Deleting the shutdown thread here is safe because another
-  // JavaThread cannot have an active ThreadsListHandle for
-  // this JavaThread.
+  // Deleting the shutdown thread here is safe. See comment on
+  // wait_until_not_protected() above.
   delete thread;
 
 #if INCLUDE_JVMCI
@@ -4425,9 +4515,6 @@ void Threads::add(JavaThread* p, bool force_daemon) {
 
   BarrierSet::barrier_set()->on_thread_attach(p);
 
-  p->set_next(_thread_list);
-  _thread_list = p;
-
   // Once a JavaThread is added to the Threads list, smr_delete() has
   // to be used to delete it. Otherwise we can just delete it directly.
   p->set_on_thread_list();
@@ -4451,48 +4538,31 @@ void Threads::add(JavaThread* p, bool force_daemon) {
   Events::log(p, "Thread added: " INTPTR_FORMAT, p2i(p));
 }
 
-void Threads::remove(JavaThread* p) {
+void Threads::remove(JavaThread* p, bool is_daemon) {
 
-  // Reclaim the objectmonitors from the omInUseList and omFreeList of the moribund thread.
-  ObjectSynchronizer::omFlush(p);
+  // Reclaim the ObjectMonitors from the om_in_use_list and om_free_list of the moribund thread.
+  ObjectSynchronizer::om_flush(p);
 
   // Extra scope needed for Thread_lock, so we can check
   // that we do not remove thread without safepoint code notice
-  { MutexLocker ml(Threads_lock);
+  { MonitorLocker ml(Threads_lock);
 
     assert(ThreadsSMRSupport::get_java_thread_list()->includes(p), "p must be present");
 
     // Maintain fast thread list
     ThreadsSMRSupport::remove_thread(p);
 
-    JavaThread* current = _thread_list;
-    JavaThread* prev    = NULL;
-
-    while (current != p) {
-      prev    = current;
-      current = current->next();
-    }
-
-    if (prev) {
-      prev->set_next(current->next());
-    } else {
-      _thread_list = p->next();
-    }
-
     _number_of_threads--;
-    oop threadObj = p->threadObj();
-    bool daemon = true;
-    if (!is_daemon(threadObj)) {
+    if (!is_daemon) {
       _number_of_non_daemon_threads--;
-      daemon = false;
 
       // Only one thread left, do a notify on the Threads_lock so a thread waiting
       // on destroy_vm will wake up.
       if (number_of_non_daemon_threads() == 1) {
-        Threads_lock->notify_all();
+        ml.notify_all();
       }
     }
-    ThreadService::remove_thread(p, daemon);
+    ThreadService::remove_thread(p, is_daemon);
 
     // Make sure that safepoint code disregard this thread. This is needed since
     // the thread might mess around with locks after this point. This can cause it
@@ -4519,27 +4589,39 @@ void Threads::oops_do(OopClosure* f, CodeBlobClosure* cf) {
   VMThread::vm_thread()->oops_do(f, cf);
 }
 
-void Threads::change_thread_claim_parity() {
-  // Set the new claim parity.
-  assert(_thread_claim_parity >= 0 && _thread_claim_parity <= 2,
-         "Not in range.");
-  _thread_claim_parity++;
-  if (_thread_claim_parity == 3) _thread_claim_parity = 1;
-  assert(_thread_claim_parity >= 1 && _thread_claim_parity <= 2,
-         "Not in range.");
+void Threads::change_thread_claim_token() {
+  if (++_thread_claim_token == 0) {
+    // On overflow of the token counter, there is a risk of future
+    // collisions between a new global token value and a stale token
+    // for a thread, because not all iterations visit all threads.
+    // (Though it's pretty much a theoretical concern for non-trivial
+    // token counter sizes.)  To deal with the possibility, reset all
+    // the thread tokens to zero on global token overflow.
+    struct ResetClaims : public ThreadClosure {
+      virtual void do_thread(Thread* t) {
+        t->claim_threads_do(false, 0);
+      }
+    } reset_claims;
+    Threads::threads_do(&reset_claims);
+    // On overflow, update the global token to non-zero, to
+    // avoid the special "never claimed" initial thread value.
+    _thread_claim_token = 1;
+  }
 }
 
 #ifdef ASSERT
+void assert_thread_claimed(const char* kind, Thread* t, uintx expected) {
+  const uintx token = t->threads_do_token();
+  assert(token == expected,
+         "%s " PTR_FORMAT " has incorrect value " UINTX_FORMAT " != "
+         UINTX_FORMAT, kind, p2i(t), token, expected);
+}
+
 void Threads::assert_all_threads_claimed() {
   ALL_JAVA_THREADS(p) {
-    const int thread_parity = p->oops_do_parity();
-    assert((thread_parity == _thread_claim_parity),
-           "Thread " PTR_FORMAT " has incorrect parity %d != %d", p2i(p), thread_parity, _thread_claim_parity);
+    assert_thread_claimed("Thread", p, _thread_claim_token);
   }
-  VMThread* vmt = VMThread::vm_thread();
-  const int thread_parity = vmt->oops_do_parity();
-  assert((thread_parity == _thread_claim_parity),
-         "VMThread " PTR_FORMAT " has incorrect parity %d != %d", p2i(vmt), thread_parity, _thread_claim_parity);
+  assert_thread_claimed("VMThread", VMThread::vm_thread(), _thread_claim_token);
 }
 #endif // ASSERT
 
@@ -4570,7 +4652,7 @@ void Threads::nmethods_do(CodeBlobClosure* cf) {
   }
 }
 
-void Threads::metadata_do(void f(Metadata*)) {
+void Threads::metadata_do(MetadataClosure* f) {
   ALL_JAVA_THREADS(p) {
     p->metadata_do(f);
   }
@@ -4590,13 +4672,6 @@ void Threads::metadata_handles_do(void f(Metadata*)) {
   ThreadHandlesClosure handles_closure(f);
   threads_do(&handles_closure);
 }
-
-void Threads::deoptimized_wrt_marked_nmethods() {
-  ALL_JAVA_THREADS(p) {
-    p->deoptimized_wrt_marked_nmethods();
-  }
-}
-
 
 // Get count Java threads that are waiting to enter the specified monitor.
 GrowableArray<JavaThread*>* Threads::get_pending_threads(ThreadsList * t_list,
@@ -4769,7 +4844,7 @@ void Threads::print_on_error(outputStream* st, Thread* current, char* buf,
   print_threads_compiling(st, buf, buflen);
 }
 
-void Threads::print_threads_compiling(outputStream* st, char* buf, int buflen) {
+void Threads::print_threads_compiling(outputStream* st, char* buf, int buflen, bool short_form) {
   ALL_JAVA_THREADS(thread) {
     if (thread->is_Compiler_thread()) {
       CompilerThread* ct = (CompilerThread*) thread;
@@ -4782,7 +4857,7 @@ void Threads::print_threads_compiling(outputStream* st, char* buf, int buflen) {
       if (task != NULL) {
         thread->print_name_on_error(st, buf, buflen);
         st->print("  ");
-        task->print(st, NULL, true, true);
+        task->print(st, NULL, short_form, true);
       }
     }
   }
@@ -4816,7 +4891,7 @@ void Threads::print_threads_compiling(outputStream* st, char* buf, int buflen) {
 typedef volatile int SpinLockT;
 
 void Thread::SpinAcquire(volatile int * adr, const char * LockName) {
-  if (Atomic::cmpxchg (1, adr, 0) == 0) {
+  if (Atomic::cmpxchg(adr, 0, 1) == 0) {
     return;   // normal fast-path return
   }
 
@@ -4837,7 +4912,7 @@ void Thread::SpinAcquire(volatile int * adr, const char * LockName) {
         SpinPause();
       }
     }
-    if (Atomic::cmpxchg(1, adr, 0) == 0) return;
+    if (Atomic::cmpxchg(adr, 0, 1) == 0) return;
   }
 }
 
@@ -4909,9 +4984,9 @@ void Thread::SpinRelease(volatile int * adr) {
 const intptr_t LOCKBIT = 1;
 
 void Thread::muxAcquire(volatile intptr_t * Lock, const char * LockName) {
-  intptr_t w = Atomic::cmpxchg(LOCKBIT, Lock, (intptr_t)0);
+  intptr_t w = Atomic::cmpxchg(Lock, (intptr_t)0, LOCKBIT);
   if (w == 0) return;
-  if ((w & LOCKBIT) == 0 && Atomic::cmpxchg(w|LOCKBIT, Lock, w) == w) {
+  if ((w & LOCKBIT) == 0 && Atomic::cmpxchg(Lock, w, w|LOCKBIT) == w) {
     return;
   }
 
@@ -4923,7 +4998,7 @@ void Thread::muxAcquire(volatile intptr_t * Lock, const char * LockName) {
     // Optional spin phase: spin-then-park strategy
     while (--its >= 0) {
       w = *Lock;
-      if ((w & LOCKBIT) == 0 && Atomic::cmpxchg(w|LOCKBIT, Lock, w) == w) {
+      if ((w & LOCKBIT) == 0 && Atomic::cmpxchg(Lock, w, w|LOCKBIT) == w) {
         return;
       }
     }
@@ -4936,7 +5011,7 @@ void Thread::muxAcquire(volatile intptr_t * Lock, const char * LockName) {
     for (;;) {
       w = *Lock;
       if ((w & LOCKBIT) == 0) {
-        if (Atomic::cmpxchg(w|LOCKBIT, Lock, w) == w) {
+        if (Atomic::cmpxchg(Lock, w, w|LOCKBIT) == w) {
           Self->OnList = 0;   // hygiene - allows stronger asserts
           return;
         }
@@ -4944,70 +5019,11 @@ void Thread::muxAcquire(volatile intptr_t * Lock, const char * LockName) {
       }
       assert(w & LOCKBIT, "invariant");
       Self->ListNext = (ParkEvent *) (w & ~LOCKBIT);
-      if (Atomic::cmpxchg(intptr_t(Self)|LOCKBIT, Lock, w) == w) break;
+      if (Atomic::cmpxchg(Lock, w, intptr_t(Self)|LOCKBIT) == w) break;
     }
 
     while (Self->OnList != 0) {
       Self->park();
-    }
-  }
-}
-
-void Thread::muxAcquireW(volatile intptr_t * Lock, ParkEvent * ev) {
-  intptr_t w = Atomic::cmpxchg(LOCKBIT, Lock, (intptr_t)0);
-  if (w == 0) return;
-  if ((w & LOCKBIT) == 0 && Atomic::cmpxchg(w|LOCKBIT, Lock, w) == w) {
-    return;
-  }
-
-  ParkEvent * ReleaseAfter = NULL;
-  if (ev == NULL) {
-    ev = ReleaseAfter = ParkEvent::Allocate(NULL);
-  }
-  assert((intptr_t(ev) & LOCKBIT) == 0, "invariant");
-  for (;;) {
-    guarantee(ev->OnList == 0, "invariant");
-    int its = (os::is_MP() ? 100 : 0) + 1;
-
-    // Optional spin phase: spin-then-park strategy
-    while (--its >= 0) {
-      w = *Lock;
-      if ((w & LOCKBIT) == 0 && Atomic::cmpxchg(w|LOCKBIT, Lock, w) == w) {
-        if (ReleaseAfter != NULL) {
-          ParkEvent::Release(ReleaseAfter);
-        }
-        return;
-      }
-    }
-
-    ev->reset();
-    ev->OnList = intptr_t(Lock);
-    // The following fence() isn't _strictly necessary as the subsequent
-    // CAS() both serializes execution and ratifies the fetched *Lock value.
-    OrderAccess::fence();
-    for (;;) {
-      w = *Lock;
-      if ((w & LOCKBIT) == 0) {
-        if (Atomic::cmpxchg(w|LOCKBIT, Lock, w) == w) {
-          ev->OnList = 0;
-          // We call ::Release while holding the outer lock, thus
-          // artificially lengthening the critical section.
-          // Consider deferring the ::Release() until the subsequent unlock(),
-          // after we've dropped the outer lock.
-          if (ReleaseAfter != NULL) {
-            ParkEvent::Release(ReleaseAfter);
-          }
-          return;
-        }
-        continue;      // Interference -- *Lock changed -- Just retry
-      }
-      assert(w & LOCKBIT, "invariant");
-      ev->ListNext = (ParkEvent *) (w & ~LOCKBIT);
-      if (Atomic::cmpxchg(intptr_t(ev)|LOCKBIT, Lock, w) == w) break;
-    }
-
-    while (ev->OnList != 0) {
-      ev->park();
     }
   }
 }
@@ -5039,7 +5055,7 @@ void Thread::muxAcquireW(volatile intptr_t * Lock, ParkEvent * ev) {
 // store (CAS) to the lock-word that releases the lock becomes globally visible.
 void Thread::muxRelease(volatile intptr_t * Lock)  {
   for (;;) {
-    const intptr_t w = Atomic::cmpxchg((intptr_t)0, Lock, LOCKBIT);
+    const intptr_t w = Atomic::cmpxchg(Lock, LOCKBIT, (intptr_t)0);
     assert(w & LOCKBIT, "invariant");
     if (w == LOCKBIT) return;
     ParkEvent * const List = (ParkEvent *) (w & ~LOCKBIT);
@@ -5050,7 +5066,7 @@ void Thread::muxRelease(volatile intptr_t * Lock)  {
 
     // The following CAS() releases the lock and pops the head element.
     // The CAS() also ratifies the previously fetched lock-word value.
-    if (Atomic::cmpxchg(intptr_t(nxt), Lock, w) != w) {
+    if (Atomic::cmpxchg(Lock, w, intptr_t(nxt)) != w) {
       continue;
     }
     List->OnList = 0;

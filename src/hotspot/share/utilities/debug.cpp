@@ -323,7 +323,7 @@ void report_java_out_of_memory(const char* message) {
   // same time. To avoid dumping the heap or executing the data collection
   // commands multiple times we just do it once when the first threads reports
   // the error.
-  if (Atomic::cmpxchg(1, &out_of_memory_reported, 0) == 0) {
+  if (Atomic::cmpxchg(&out_of_memory_reported, 0, 1) == 0) {
     // create heap dump before OnOutOfMemoryError commands are executed
     if (HeapDumpOnOutOfMemoryError) {
       tty->print_cr("java.lang.OutOfMemoryError: %s", message);
@@ -642,7 +642,9 @@ void help() {
   tty->print_cr("  pns(void* sp, void* fp, void* pc)  - print native (i.e. mixed) stack trace. E.g.");
   tty->print_cr("                   pns($sp, $rbp, $pc) on Linux/amd64 and Solaris/amd64 or");
   tty->print_cr("                   pns($sp, $ebp, $pc) on Linux/x86 or");
+  tty->print_cr("                   pns($sp, $fp, $pc)  on Linux/AArch64 or");
   tty->print_cr("                   pns($sp, 0, $pc)    on Linux/ppc64 or");
+  tty->print_cr("                   pns($sp, $s8, $pc)  on Linux/mips or");
   tty->print_cr("                   pns($sp + 0x7ff, 0, $pc) on Solaris/SPARC");
   tty->print_cr("                 - in gdb do 'set overload-resolution off' before calling pns()");
   tty->print_cr("                 - in dbx do 'frame 1' before calling pns()");
@@ -733,6 +735,10 @@ void initialize_assert_poison() {
   }
 }
 
+void disarm_assert_poison() {
+  g_assert_poison = &g_dummy;
+}
+
 static void store_context(const void* context) {
   memcpy(&g_stored_assertion_context, context, sizeof(ucontext_t));
 #if defined(__linux) && defined(PPC64)
@@ -745,11 +751,18 @@ static void store_context(const void* context) {
 bool handle_assert_poison_fault(const void* ucVoid, const void* faulting_address) {
   if (faulting_address == g_assert_poison) {
     // Disarm poison page.
-    os::protect_memory((char*)g_assert_poison, os::vm_page_size(), os::MEM_PROT_RWX);
+    if (os::protect_memory((char*)g_assert_poison, os::vm_page_size(), os::MEM_PROT_RWX) == false) {
+#ifdef ASSERT
+      fprintf(stderr, "Assertion poison page cannot be unprotected - mprotect failed with %d (%s)",
+              errno, os::strerror(errno));
+      fflush(stderr);
+#endif
+      return false; // unprotecting memory may fail in OOM situations, as surprising as this sounds.
+    }
     // Store Context away.
     if (ucVoid) {
       const intx my_tid = os::current_thread_id();
-      if (Atomic::cmpxchg(my_tid, &g_asserting_thread, (intx)0) == 0) {
+      if (Atomic::cmpxchg(&g_asserting_thread, (intx)0, my_tid) == 0) {
         store_context(ucVoid);
         g_assertion_context = &g_stored_assertion_context;
       }
@@ -759,4 +772,3 @@ bool handle_assert_poison_fault(const void* ucVoid, const void* faulting_address
   return false;
 }
 #endif // CAN_SHOW_REGISTERS_ON_ASSERT
-

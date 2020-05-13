@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,9 +27,11 @@
 #include "classfile/classLoaderDataGraph.hpp"
 #include "classfile/classLoaderStats.hpp"
 #include "classfile/javaClasses.hpp"
+#include "classfile/stringTable.hpp"
+#include "classfile/symbolTable.hpp"
+#include "classfile/systemDictionary.hpp"
 #include "code/codeCache.hpp"
 #include "compiler/compileBroker.hpp"
-#include "gc/g1/g1HeapRegionEventSender.hpp"
 #include "gc/shared/gcConfiguration.hpp"
 #include "gc/shared/gcTrace.hpp"
 #include "gc/shared/gcVMOperations.hpp"
@@ -42,6 +44,7 @@
 #include "jfr/periodic/jfrNetworkUtilization.hpp"
 #include "jfr/recorder/jfrRecorder.hpp"
 #include "jfr/support/jfrThreadId.hpp"
+#include "jfr/utilities/jfrThreadIterator.hpp"
 #include "jfr/utilities/jfrTime.hpp"
 #include "jfrfiles/jfrPeriodic.hpp"
 #include "logging/log.hpp"
@@ -54,7 +57,6 @@
 #include "runtime/os.hpp"
 #include "runtime/os_perf.hpp"
 #include "runtime/thread.inline.hpp"
-#include "runtime/threadSMR.hpp"
 #include "runtime/sweeper.hpp"
 #include "runtime/vmThread.hpp"
 #include "services/classLoadingService.hpp"
@@ -62,7 +64,12 @@
 #include "services/threadService.hpp"
 #include "utilities/exceptions.hpp"
 #include "utilities/globalDefinitions.hpp"
-
+#if INCLUDE_G1GC
+#include "gc/g1/g1HeapRegionEventSender.hpp"
+#endif
+#if INCLUDE_SHENANDOAHGC
+#include "gc/shenandoah/shenandoahJfrSupport.hpp"
+#endif
 /**
  *  JfrPeriodic class
  *  Implementation of declarations in
@@ -89,6 +96,12 @@ TRACE_REQUEST_FUNC(OSInformation) {
   JfrOSInterface::os_version(&os_name);
   EventOSInformation event;
   event.set_osVersion(os_name);
+  event.commit();
+}
+
+TRACE_REQUEST_FUNC(VirtualizationInformation) {
+  EventVirtualizationInformation event;
+  event.set_name(JfrOSInterface::virtualization_name());
   event.commit();
 }
 
@@ -312,18 +325,8 @@ TRACE_REQUEST_FUNC(ObjectCount) {
   VMThread::execute(&op);
 }
 
-class VM_G1SendHeapRegionInfoEvents : public VM_Operation {
-  virtual void doit() {
-    G1HeapRegionEventSender::send_events();
-  }
-  virtual VMOp_Type type() const { return VMOp_HeapIterateOperation; }
-};
-
 TRACE_REQUEST_FUNC(G1HeapRegionInformation) {
-  if (UseG1GC) {
-    VM_G1SendHeapRegionInfoEvents op;
-    VMThread::execute(&op);
-  }
+  G1GC_ONLY(G1HeapRegionEventSender::send_events());
 }
 
 // Java Mission Control (JMC) uses (Java) Long.MIN_VALUE to describe that a
@@ -407,13 +410,12 @@ TRACE_REQUEST_FUNC(ThreadAllocationStatistics) {
   GrowableArray<jlong> allocated(initial_size);
   GrowableArray<traceid> thread_ids(initial_size);
   JfrTicks time_stamp = JfrTicks::now();
-  {
-    // Collect allocation statistics while holding threads lock
-    MutexLockerEx ml(Threads_lock);
-    for (JavaThreadIteratorWithHandle jtiwh; JavaThread *jt = jtiwh.next(); ) {
-      allocated.append(jt->cooked_allocated_bytes());
-      thread_ids.append(JFR_THREAD_ID(jt));
-    }
+  JfrJavaThreadIterator iter;
+  while (iter.has_next()) {
+    JavaThread* const jt = iter.next();
+    assert(jt != NULL, "invariant");
+    allocated.append(jt->cooked_allocated_bytes());
+    thread_ids.append(JFR_THREAD_ID(jt));
   }
 
   // Write allocation statistics to buffer.
@@ -478,9 +480,9 @@ public:
     event.set_classCount(cls->_classes_count);
     event.set_chunkSize(cls->_chunk_sz);
     event.set_blockSize(cls->_block_sz);
-    event.set_unsafeAnonymousClassCount(cls->_anon_classes_count);
-    event.set_unsafeAnonymousChunkSize(cls->_anon_chunk_sz);
-    event.set_unsafeAnonymousBlockSize(cls->_anon_block_sz);
+    event.set_hiddenClassCount(cls->_hidden_classes_count);
+    event.set_hiddenChunkSize(cls->_hidden_chunk_sz);
+    event.set_hiddenBlockSize(cls->_hidden_block_sz);
     event.commit();
     return true;
   }
@@ -506,6 +508,46 @@ TRACE_REQUEST_FUNC(ClassLoaderStatistics) {
   VMThread::execute(&op);
 }
 
+template<typename EVENT>
+static void emit_table_statistics(TableStatistics statistics) {
+  EVENT event;
+  event.set_bucketCount(statistics._number_of_buckets);
+  event.set_entryCount(statistics._number_of_entries);
+  event.set_totalFootprint(statistics._total_footprint);
+  event.set_bucketCountMaximum(statistics._maximum_bucket_size);
+  event.set_bucketCountAverage(statistics._average_bucket_size);
+  event.set_bucketCountVariance(statistics._variance_of_bucket_size);
+  event.set_bucketCountStandardDeviation(statistics._stddev_of_bucket_size);
+  event.set_insertionRate(statistics._add_rate);
+  event.set_removalRate(statistics._remove_rate);
+  event.commit();
+}
+
+TRACE_REQUEST_FUNC(SymbolTableStatistics) {
+  TableStatistics statistics = SymbolTable::get_table_statistics();
+  emit_table_statistics<EventSymbolTableStatistics>(statistics);
+}
+
+TRACE_REQUEST_FUNC(StringTableStatistics) {
+  TableStatistics statistics = StringTable::get_table_statistics();
+  emit_table_statistics<EventStringTableStatistics>(statistics);
+}
+
+TRACE_REQUEST_FUNC(PlaceholderTableStatistics) {
+  TableStatistics statistics = SystemDictionary::placeholders_statistics();
+  emit_table_statistics<EventPlaceholderTableStatistics>(statistics);
+}
+
+TRACE_REQUEST_FUNC(LoaderConstraintsTableStatistics) {
+  TableStatistics statistics = SystemDictionary::loader_constraints_statistics();
+  emit_table_statistics<EventLoaderConstraintsTableStatistics>(statistics);
+}
+
+TRACE_REQUEST_FUNC(ProtectionDomainCacheTableStatistics) {
+  TableStatistics statistics = SystemDictionary::protection_domain_cache_statistics();
+  emit_table_statistics<EventProtectionDomainCacheTableStatistics>(statistics);
+}
+
 TRACE_REQUEST_FUNC(CompilerStatistics) {
   EventCompilerStatistics event;
   event.set_compileCount(CompileBroker::get_total_compile_count());
@@ -515,8 +557,8 @@ TRACE_REQUEST_FUNC(CompilerStatistics) {
   event.set_standardCompileCount(CompileBroker::get_total_standard_compile_count());
   event.set_osrBytesCompiled(CompileBroker::get_sum_osr_bytes_compiled());
   event.set_standardBytesCompiled(CompileBroker::get_sum_standard_bytes_compiled());
-  event.set_nmetodsSize(CompileBroker::get_sum_nmethod_size());
-  event.set_nmetodCodeSize(CompileBroker::get_sum_nmethod_code_size());
+  event.set_nmethodsSize(CompileBroker::get_sum_nmethod_size());
+  event.set_nmethodCodeSize(CompileBroker::get_sum_nmethod_code_size());
   event.set_peakTimeSpent(CompileBroker::get_peak_compilation_time());
   event.set_totalTimeSpent(CompileBroker::get_total_compilation_time());
   event.commit();
@@ -577,3 +619,14 @@ TRACE_REQUEST_FUNC(CodeSweeperConfiguration) {
   event.set_flushingEnabled(UseCodeCacheFlushing);
   event.commit();
 }
+
+
+TRACE_REQUEST_FUNC(ShenandoahHeapRegionInformation) {
+#if INCLUDE_SHENANDOAHGC
+  if (UseShenandoahGC) {
+    VM_ShenandoahSendHeapRegionInfoEvents op;
+    VMThread::execute(&op);
+  }
+#endif
+}
+

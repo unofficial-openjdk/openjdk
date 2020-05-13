@@ -398,19 +398,17 @@ public final class Long extends Number
     }
 
     /**
-     * Format a long (treated as unsigned) into a character buffer. If
+     * Format a long (treated as unsigned) into a byte buffer (LATIN1 version). If
      * {@code len} exceeds the formatted ASCII representation of {@code val},
      * {@code buf} will be padded with leading zeroes.
      *
      * @param val the unsigned long to format
      * @param shift the log2 of the base to format in (4 for hex, 3 for octal, 1 for binary)
-     * @param buf the character buffer to write to
+     * @param buf the byte buffer to write to
      * @param offset the offset in the destination buffer to start at
      * @param len the number of characters to write
      */
-
-    /** byte[]/LATIN1 version    */
-    static void formatUnsignedLong0(long val, int shift, byte[] buf, int offset, int len) {
+    private static void formatUnsignedLong0(long val, int shift, byte[] buf, int offset, int len) {
         int charPos = offset + len;
         int radix = 1 << shift;
         int mask = radix - 1;
@@ -420,7 +418,17 @@ public final class Long extends Number
         } while (charPos > offset);
     }
 
-    /** byte[]/UTF16 version    */
+    /**
+     * Format a long (treated as unsigned) into a byte buffer (UTF16 version). If
+     * {@code len} exceeds the formatted ASCII representation of {@code val},
+     * {@code buf} will be padded with leading zeroes.
+     *
+     * @param val the unsigned long to format
+     * @param shift the log2 of the base to format in (4 for hex, 3 for octal, 1 for binary)
+     * @param buf the byte buffer to write to
+     * @param offset the offset in the destination buffer to start at
+     * @param len the number of characters to write
+     */
     private static void formatUnsignedLong0UTF16(long val, int shift, byte[] buf, int offset, int len) {
         int charPos = offset + len;
         int radix = 1 << shift;
@@ -739,7 +747,7 @@ public final class Long extends Number
      */
     public static long parseLong(CharSequence s, int beginIndex, int endIndex, int radix)
                 throws NumberFormatException {
-        s = Objects.requireNonNull(s);
+        Objects.requireNonNull(s);
 
         if (beginIndex < 0 || beginIndex > endIndex || endIndex > s.length()) {
             throw new IndexOutOfBoundsException();
@@ -985,7 +993,7 @@ public final class Long extends Number
      */
     public static long parseUnsignedLong(CharSequence s, int beginIndex, int endIndex, int radix)
                 throws NumberFormatException {
-        s = Objects.requireNonNull(s);
+        Objects.requireNonNull(s);
 
         if (beginIndex < 0 || beginIndex > endIndex || endIndex > s.length()) {
             throw new IndexOutOfBoundsException();
@@ -1339,7 +1347,7 @@ public final class Long extends Number
     /**
      * Returns the value of this {@code Long} as a {@code byte} after
      * a narrowing primitive conversion.
-     * @jls 5.1.3 Narrowing Primitive Conversions
+     * @jls 5.1.3 Narrowing Primitive Conversion
      */
     public byte byteValue() {
         return (byte)value;
@@ -1348,7 +1356,7 @@ public final class Long extends Number
     /**
      * Returns the value of this {@code Long} as a {@code short} after
      * a narrowing primitive conversion.
-     * @jls 5.1.3 Narrowing Primitive Conversions
+     * @jls 5.1.3 Narrowing Primitive Conversion
      */
     public short shortValue() {
         return (short)value;
@@ -1357,7 +1365,7 @@ public final class Long extends Number
     /**
      * Returns the value of this {@code Long} as an {@code int} after
      * a narrowing primitive conversion.
-     * @jls 5.1.3 Narrowing Primitive Conversions
+     * @jls 5.1.3 Narrowing Primitive Conversion
      */
     public int intValue() {
         return (int)value;
@@ -1375,7 +1383,7 @@ public final class Long extends Number
     /**
      * Returns the value of this {@code Long} as a {@code float} after
      * a widening primitive conversion.
-     * @jls 5.1.2 Widening Primitive Conversions
+     * @jls 5.1.2 Widening Primitive Conversion
      */
     public float floatValue() {
         return (float)value;
@@ -1384,7 +1392,7 @@ public final class Long extends Number
     /**
      * Returns the value of this {@code Long} as a {@code double}
      * after a widening primitive conversion.
-     * @jls 5.1.2 Widening Primitive Conversions
+     * @jls 5.1.2 Widening Primitive Conversion
      */
     public double doubleValue() {
         return (double)value;
@@ -1992,5 +2000,6 @@ public final class Long extends Number
     }
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
+    @java.io.Serial
     @Native private static final long serialVersionUID = 4290774380558885855L;
 }

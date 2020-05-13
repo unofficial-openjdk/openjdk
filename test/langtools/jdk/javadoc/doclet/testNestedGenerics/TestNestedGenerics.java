@@ -25,7 +25,6 @@
  * @test
  * @bug      6758050 8025633 8182765
  * @summary  Test HTML output for nested generic types.
- * @author   bpatel
  * @library  ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build    javadoc.tester.*
@@ -49,8 +48,8 @@ public class TestNestedGenerics extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOutput("pkg/NestedGenerics.html", true,
-            "<div class=\"block\">Contains <a " +
-            "href=\"#foo(java.util.Map)\"><code>foo" +
-            "(java.util.Map&lt;A, java.util.Map&lt;A, A&gt;&gt;)</code></a></div>");
+            """
+                <div class="block">Contains <a href="#foo(java.util.Map)"><code>foo(java.util.Ma\
+                p&lt;A, java.util.Map&lt;A, A&gt;&gt;)</code></a></div>""");
     }
 }

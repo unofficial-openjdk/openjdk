@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,12 +46,14 @@ import javax.tools.JavaFileObject;
 
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TaskEvent;
 import com.sun.source.util.TaskEvent.Kind;
 import com.sun.source.util.TaskListener;
 import com.sun.source.util.TreeScanner;
 import com.sun.tools.javac.code.Kinds;
+import com.sun.tools.javac.code.Preview;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
@@ -66,11 +68,14 @@ import com.sun.tools.javac.comp.Modules;
 import com.sun.tools.javac.main.Arguments;
 import com.sun.tools.javac.main.JavaCompiler;
 import com.sun.tools.javac.model.JavacElements;
+import com.sun.tools.javac.platform.PlatformDescription;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
+import com.sun.tools.javac.tree.JCTree.LetExpr;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.DefinedBy;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.Log;
+import com.sun.tools.javac.util.Options;
 
 /**
  * A pool of reusable JavacTasks. When a task is no valid anymore, it is returned to the pool,
@@ -126,7 +131,7 @@ public class JavacTaskPool {
      * @param out a Writer for additional output from the compiler;
      * use {@code System.err} if {@code null}
      * @param fileManager a file manager; if {@code null} use the
-     * compiler's standard filemanager
+     * compiler's standard file manager
      * @param diagnosticListener a diagnostic listener; if {@code
      * null} use the compiler's default method for reporting
      * diagnostics
@@ -249,6 +254,7 @@ public class JavacTaskPool {
             drop(JavacTask.class);
             drop(JavacTrees.class);
             drop(JavacElements.class);
+            drop(PlatformDescription.class);
 
             if (ht.get(Log.logKey) instanceof ReusableLog) {
                 //log already inited - not first round
@@ -257,10 +263,13 @@ public class JavacTaskPool {
                 ((ReusableJavaCompiler)ReusableJavaCompiler.instance(this)).clear();
                 Types.instance(this).newRound();
                 Check.instance(this).newRound();
+                Check.instance(this).clear(); //clear mandatory warning handlers
+                Preview.instance(this).clear(); //clear mandatory warning handlers
                 Modules.instance(this).newRound();
                 Annotate.instance(this).newRound();
                 CompileStates.instance(this).clear();
                 MultiTaskListener.instance(this).clear();
+                Options.instance(this).clear();
 
                 //find if any of the roots have redefined java.* classes
                 Symtab syms = Symtab.instance(this);
@@ -275,6 +284,18 @@ public class JavacTaskPool {
          * (typically because of cyclic inheritance) the symbol kind of a core class has been touched.
          */
         TreeScanner<Void, Symtab> pollutionScanner = new TreeScanner<Void, Symtab>() {
+            @Override @DefinedBy(Api.COMPILER_TREE)
+            public Void scan(Tree tree, Symtab syms) {
+                if (tree instanceof LetExpr) {
+                    LetExpr le = (LetExpr) tree;
+                    scan(le.defs, syms);
+                    scan(le.expr, syms);
+                    return null;
+                } else {
+                    return super.scan(tree, syms);
+                }
+            }
+
             @Override @DefinedBy(Api.COMPILER_TREE)
             public Void visitClass(ClassTree node, Symtab syms) {
                 Symbol sym = ((JCClassDecl)node).sym;

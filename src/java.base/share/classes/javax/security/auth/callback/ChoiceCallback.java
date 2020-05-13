@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,29 +36,30 @@ package javax.security.auth.callback;
  */
 public class ChoiceCallback implements Callback, java.io.Serializable {
 
+    @java.io.Serial
     private static final long serialVersionUID = -3975664071579892167L;
 
     /**
      * @serial
      * @since 1.4
      */
-    private String prompt;
+    private final String prompt;
     /**
      * @serial the list of choices
      * @since 1.4
      */
-    private String[] choices;
+    private final String[] choices;
     /**
      * @serial the choice to be used as the default choice
      * @since 1.4
      */
-    private int defaultChoice;
+    private final int defaultChoice;
     /**
      * @serial whether multiple selections are allowed from the list of
      * choices
      * @since 1.4
      */
-    private boolean multipleSelectionsAllowed;
+    private final boolean multipleSelectionsAllowed;
     /**
      * @serial the selected choices, represented as indexes into the
      *          {@code choices} list.
@@ -74,7 +75,8 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
      *
      * @param prompt the prompt used to describe the list of choices.
      *
-     * @param choices the list of choices.
+     * @param choices the list of choices. The array is cloned to protect
+     *                  against subsequent modification.
      *
      * @param defaultChoice the choice to be used as the default choice
      *                  when the list of choices are displayed.  This value
@@ -109,7 +111,7 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
         }
 
         this.prompt = prompt;
-        this.choices = choices;
+        this.choices = choices.clone();
         this.defaultChoice = defaultChoice;
         this.multipleSelectionsAllowed = multipleSelectionsAllowed;
     }
@@ -126,10 +128,10 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
     /**
      * Get the list of choices.
      *
-     * @return the list of choices.
+     * @return a copy of the list of choices.
      */
     public String[] getChoices() {
-        return choices;
+        return choices.clone();
     }
 
     /**
@@ -169,7 +171,8 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
      * Set the selected choices.
      *
      * @param selections the selections represented as indexes into the
-     *          {@code choices} list.
+     *          {@code choices} list. The array is cloned to protect
+     *          against subsequent modification.
      *
      * @exception UnsupportedOperationException if multiple selections are
      *          not allowed, as determined by
@@ -180,18 +183,18 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
     public void setSelectedIndexes(int[] selections) {
         if (!multipleSelectionsAllowed)
             throw new UnsupportedOperationException();
-        this.selections = selections;
+        this.selections = selections == null ? null : selections.clone();
     }
 
     /**
      * Get the selected choices.
      *
-     * @return the selected choices, represented as indexes into the
+     * @return a copy of the selected choices, represented as indexes into the
      *          {@code choices} list.
      *
      * @see #setSelectedIndexes
      */
     public int[] getSelectedIndexes() {
-        return selections;
+        return selections == null ? null : selections.clone();
     }
 }

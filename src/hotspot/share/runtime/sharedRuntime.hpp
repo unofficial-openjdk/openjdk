@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -204,9 +204,6 @@ class SharedRuntime: AllStatic {
   static address continuation_for_implicit_exception(JavaThread* thread,
                                                      address faulting_pc,
                                                      ImplicitExceptionKind exception_kind);
-#if INCLUDE_JVMCI
-  static address deoptimize_for_implicit_exception(JavaThread* thread, address pc, CompiledMethod* nm, int deopt_reason);
-#endif
 
   // Post-slow-path-allocation, pre-initializing-stores step for
   // implementing e.g. ReduceInitialCardMarks
@@ -344,6 +341,9 @@ class SharedRuntime: AllStatic {
   // Find the method that called us.
   static methodHandle find_callee_method(JavaThread* thread, TRAPS);
 
+  static void monitor_enter_helper(oopDesc* obj, BasicLock* lock, JavaThread* thread);
+
+  static void monitor_exit_helper(oopDesc* obj, BasicLock* lock, JavaThread* thread);
 
  private:
   static Handle find_callee_info(JavaThread* thread,
@@ -354,7 +354,7 @@ class SharedRuntime: AllStatic {
                                         Bytecodes::Code& bc,
                                         CallInfo& callinfo, TRAPS);
 
-  static methodHandle extract_attached_method(vframeStream& vfst);
+  static Method* extract_attached_method(vframeStream& vfst);
 
   static address clean_virtual_call_entry();
   static address clean_opt_virtual_call_entry();
@@ -488,7 +488,8 @@ class SharedRuntime: AllStatic {
                                           int compile_id,
                                           BasicType* sig_bt,
                                           VMRegPair* regs,
-                                          BasicType ret_type);
+                                          BasicType ret_type,
+                                          address critical_entry);
 
   // Block before entering a JNI critical method
   static void block_for_jni_critical(JavaThread* thread);
@@ -639,6 +640,7 @@ class AdapterHandlerEntry : public BasicHashtableEntry<mtCode> {
   address _i2c_entry;
   address _c2i_entry;
   address _c2i_unverified_entry;
+  address _c2i_no_clinit_check_entry;
 
 #ifdef ASSERT
   // Captures code and signature used to generate this adapter when
@@ -647,11 +649,12 @@ class AdapterHandlerEntry : public BasicHashtableEntry<mtCode> {
   int            _saved_code_length;
 #endif
 
-  void init(AdapterFingerPrint* fingerprint, address i2c_entry, address c2i_entry, address c2i_unverified_entry) {
+  void init(AdapterFingerPrint* fingerprint, address i2c_entry, address c2i_entry, address c2i_unverified_entry, address c2i_no_clinit_check_entry) {
     _fingerprint = fingerprint;
     _i2c_entry = i2c_entry;
     _c2i_entry = c2i_entry;
     _c2i_unverified_entry = c2i_unverified_entry;
+    _c2i_no_clinit_check_entry = c2i_no_clinit_check_entry;
 #ifdef ASSERT
     _saved_code = NULL;
     _saved_code_length = 0;
@@ -664,9 +667,11 @@ class AdapterHandlerEntry : public BasicHashtableEntry<mtCode> {
   AdapterHandlerEntry();
 
  public:
-  address get_i2c_entry()            const { return _i2c_entry; }
-  address get_c2i_entry()            const { return _c2i_entry; }
-  address get_c2i_unverified_entry() const { return _c2i_unverified_entry; }
+  address get_i2c_entry()                  const { return _i2c_entry; }
+  address get_c2i_entry()                  const { return _c2i_entry; }
+  address get_c2i_unverified_entry()       const { return _c2i_unverified_entry; }
+  address get_c2i_no_clinit_check_entry()  const { return _c2i_no_clinit_check_entry; }
+
   address base_address();
   void relocate(address new_base);
 
@@ -712,7 +717,10 @@ class AdapterHandlerLibrary: public AllStatic {
  public:
 
   static AdapterHandlerEntry* new_entry(AdapterFingerPrint* fingerprint,
-                                        address i2c_entry, address c2i_entry, address c2i_unverified_entry);
+                                        address i2c_entry,
+                                        address c2i_entry,
+                                        address c2i_unverified_entry,
+                                        address c2i_no_clinit_check_entry = NULL);
   static void create_native_wrapper(const methodHandle& method);
   static AdapterHandlerEntry* get_adapter(const methodHandle& method);
 

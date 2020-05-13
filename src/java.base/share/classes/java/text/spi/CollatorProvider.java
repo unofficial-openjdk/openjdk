@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,12 +46,12 @@ public abstract class CollatorProvider extends LocaleServiceProvider {
     }
 
     /**
-     * Returns a new <code>Collator</code> instance for the specified locale.
+     * Returns a new {@code Collator} instance for the specified locale.
      * @param locale the desired locale.
-     * @return the <code>Collator</code> for the desired locale.
-     * @exception NullPointerException if
-     * <code>locale</code> is null
-     * @exception IllegalArgumentException if <code>locale</code> isn't
+     * @return the {@code Collator} for the desired locale.
+     * @throws    NullPointerException if
+     * {@code locale} is null
+     * @throws    IllegalArgumentException if {@code locale} isn't
      *     one of the locales returned from
      *     {@link java.util.spi.LocaleServiceProvider#getAvailableLocales()
      *     getAvailableLocales()}.

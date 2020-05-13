@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -515,9 +515,25 @@ GetJREPath(char *path, jint pathsize, jboolean speculative)
     }
 
     size_t indexOfLastPathComponent = pathLen - sizeOfLastPathComponent;
-    if (0 == strncmp(realPathToSelf + indexOfLastPathComponent, lastPathComponent, sizeOfLastPathComponent - 1)) {
+    if (0 == strncmp(realPathToSelf + indexOfLastPathComponent, lastPathComponent, sizeOfLastPathComponent)) {
         realPathToSelf[indexOfLastPathComponent + 1] = '\0';
         return JNI_TRUE;
+    }
+
+    // If libjli.dylib is loaded from a macos bundle MacOS dir, find the JRE dir
+    // in ../Home.
+    const char altLastPathComponent[] = "/MacOS/libjli.dylib";
+    size_t sizeOfAltLastPathComponent = sizeof(altLastPathComponent) - 1;
+    if (pathLen < sizeOfLastPathComponent) {
+        return JNI_FALSE;
+    }
+
+    size_t indexOfAltLastPathComponent = pathLen - sizeOfAltLastPathComponent;
+    if (0 == strncmp(realPathToSelf + indexOfAltLastPathComponent, altLastPathComponent, sizeOfAltLastPathComponent)) {
+        JLI_Snprintf(realPathToSelf + indexOfAltLastPathComponent, sizeOfAltLastPathComponent, "%s", "/Home");
+        if (access(realPathToSelf, F_OK) == 0) {
+            return JNI_TRUE;
+        }
     }
 
     if (!speculative)
@@ -625,7 +641,7 @@ CounterGet()
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    return (tv.tv_sec * 1000) + tv.tv_usec;
+    return (tv.tv_sec * 1000000) + tv.tv_usec;
 }
 
 
@@ -709,18 +725,18 @@ void* SplashProcAddress(const char* name) {
     }
 }
 
-void SplashFreeLibrary() {
-    if (hSplashLib) {
-        dlclose(hSplashLib);
-        hSplashLib = NULL;
-    }
+/*
+ * Signature adapter for pthread_create().
+ */
+static void* ThreadJavaMain(void* args) {
+    return (void*)(intptr_t)JavaMain(args);
 }
 
 /*
- * Block current thread and continue execution in a new thread
+ * Block current thread and continue execution in a new thread.
  */
 int
-ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void * args) {
+CallJavaMainInNewThread(jlong stack_size, void* args) {
     int rslt;
     pthread_t tid;
     pthread_attr_t attr;
@@ -728,30 +744,26 @@ ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
     if (stack_size > 0) {
-      pthread_attr_setstacksize(&attr, stack_size);
+        pthread_attr_setstacksize(&attr, stack_size);
     }
     pthread_attr_setguardsize(&attr, 0); // no pthread guard page on java threads
 
-    if (pthread_create(&tid, &attr, (void *(*)(void*))continuation, (void*)args) == 0) {
-      void * tmp;
-      pthread_join(tid, &tmp);
-      rslt = (int)(intptr_t)tmp;
+    if (pthread_create(&tid, &attr, ThreadJavaMain, args) == 0) {
+        void* tmp;
+        pthread_join(tid, &tmp);
+        rslt = (int)(intptr_t)tmp;
     } else {
-     /*
-      * Continue execution in current thread if for some reason (e.g. out of
-      * memory/LWP)  a new thread can't be created. This will likely fail
-      * later in continuation as JNI_CreateJavaVM needs to create quite a
-      * few new threads, anyway, just give it a try..
-      */
-      rslt = continuation(args);
+       /*
+        * Continue execution in current thread if for some reason (e.g. out of
+        * memory/LWP)  a new thread can't be created. This will likely fail
+        * later in JavaMain as JNI_CreateJavaVM needs to create quite a
+        * few new threads, anyway, just give it a try..
+        */
+        rslt = JavaMain(args);
     }
 
     pthread_attr_destroy(&attr);
     return rslt;
-}
-
-void SetJavaLauncherPlatformProps() {
-   /* Linux only */
 }
 
 static JavaVM* jvmInstance = NULL;

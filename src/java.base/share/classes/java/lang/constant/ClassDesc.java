@@ -72,7 +72,7 @@ public interface ClassDesc
      *
      * @param name the fully qualified (dot-separated) binary class name
      * @return a {@linkplain ClassDesc} describing the desired class
-     * @throws NullPointerException if any argument is {@code null}
+     * @throws NullPointerException if the argument is {@code null}
      * @throws IllegalArgumentException if the name string is not in the
      * correct format
      */
@@ -123,7 +123,7 @@ public interface ClassDesc
      *
      * @param descriptor a field descriptor string
      * @return a {@linkplain ClassDesc} describing the desired class
-     * @throws NullPointerException if any argument is {@code null}
+     * @throws NullPointerException if the argument is {@code null}
      * @throws IllegalArgumentException if the name string is not in the
      * correct format
      * @jvms 4.3.2 Field Descriptors
@@ -193,7 +193,7 @@ public interface ClassDesc
      *
      * @param nestedName the unqualified name of the nested class
      * @return a {@linkplain ClassDesc} describing the nested class
-     * @throws NullPointerException if any argument is {@code null}
+     * @throws NullPointerException if the argument is {@code null}
      * @throws IllegalStateException if this {@linkplain ClassDesc} does not
      * describe a class or interface type
      * @throws IllegalArgumentException if the nested class name is invalid
@@ -213,7 +213,7 @@ public interface ClassDesc
      * @param moreNestedNames the unqualified name(s) of the remaining levels of
      *                       nested class
      * @return a {@linkplain ClassDesc} describing the nested class
-     * @throws NullPointerException if any argument is {@code null}
+     * @throws NullPointerException if any argument or its contents is {@code null}
      * @throws IllegalStateException if this {@linkplain ClassDesc} does not
      * describe a class or interface type
      * @throws IllegalArgumentException if the nested class name is invalid
@@ -221,6 +221,11 @@ public interface ClassDesc
     default ClassDesc nested(String firstNestedName, String... moreNestedNames) {
         if (!isClassOrInterface())
             throw new IllegalStateException("Outer class is not a class or interface type");
+        validateMemberName(firstNestedName, false);
+        requireNonNull(moreNestedNames);
+        for (String addNestedNames : moreNestedNames) {
+            validateMemberName(addNestedNames, false);
+        }
         return moreNestedNames.length == 0
                ? nested(firstNestedName)
                : nested(firstNestedName + Stream.of(moreNestedNames).collect(joining("$", "$", "")));

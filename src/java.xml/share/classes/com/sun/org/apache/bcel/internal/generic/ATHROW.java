@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  */
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -26,8 +26,7 @@ import com.sun.org.apache.bcel.internal.ExceptionConst;
  * ATHROW -  Throw exception
  * <PRE>Stack: ..., objectref -&gt; objectref</PRE>
  *
- * @version $Id: ATHROW.java 1747278 2016-06-07 17:28:43Z britter $
- * @LastModified: Oct 2017
+ * @LastModified: Jan 2020
  */
 public class ATHROW extends Instruction implements UnconditionalBranch, ExceptionThrower {
 

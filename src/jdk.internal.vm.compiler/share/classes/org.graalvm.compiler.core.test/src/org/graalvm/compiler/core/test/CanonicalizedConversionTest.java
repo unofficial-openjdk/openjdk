@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ import org.junit.Test;
 public class CanonicalizedConversionTest extends GraalCompilerTest {
 
     @Override
-    protected boolean checkLowTierGraph(StructuredGraph graph) {
+    protected void checkLowTierGraph(StructuredGraph graph) {
         int reinterpretCount = 0;
         int floatEqualsCount = 0;
         int addCount = 0;
@@ -59,7 +59,6 @@ public class CanonicalizedConversionTest extends GraalCompilerTest {
         Assert.assertEquals(1, reinterpretCount);
         Assert.assertEquals(1, floatEqualsCount);
         Assert.assertEquals(2, addCount);
-        return true;
     }
 
     @Test

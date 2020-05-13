@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,18 +25,18 @@
 #ifndef SHARE_JFR_LEAKPROFILER_CHAINS_EDGE_HPP
 #define SHARE_JFR_LEAKPROFILER_CHAINS_EDGE_HPP
 
+#include "jfr/leakprofiler/utilities/unifiedOopRef.hpp"
 #include "memory/allocation.hpp"
 #include "oops/oopsHierarchy.hpp"
 
 class Edge {
- private:
+ protected:
   const Edge* _parent;
-  const oop* _reference;
+  UnifiedOopRef _reference;
  public:
-  Edge();
-  Edge(const Edge* parent, const oop* reference);
+  Edge(const Edge* parent, UnifiedOopRef reference);
 
-  const oop* reference() const {
+  UnifiedOopRef reference() const {
     return _reference;
   }
   const Edge* parent() const {
@@ -46,9 +46,7 @@ class Edge {
     return _parent == NULL;
   }
   const oop pointee() const;
-  const Klass* pointee_klass() const;
   const oop reference_owner() const;
-  const Klass* reference_owner_klass() const;
   size_t distance_to_root() const;
 
   void* operator new (size_t sz, void* here) {

@@ -25,13 +25,14 @@
 #ifndef SHARE_JFR_LEAKPROFILER_CHECKPOINT_ROOTRESOLVER_HPP
 #define SHARE_JFR_LEAKPROFILER_CHECKPOINT_ROOTRESOLVER_HPP
 
-#include "memory/allocation.hpp"
 #include "jfr/leakprofiler/utilities/rootType.hpp"
+#include "jfr/leakprofiler/utilities/unifiedOopRef.hpp"
+#include "memory/allocation.hpp"
 #include "oops/oopsHierarchy.hpp"
 
 struct RootCallbackInfo {
-  const void* _high;
-  const void* _low;
+  address _high;
+  address _low;
   const void* _context;
   OldObjectRoot::System _system;
   OldObjectRoot::Type _type;
@@ -41,7 +42,7 @@ class RootCallback {
  public:
   virtual bool process(const RootCallbackInfo& info) = 0;
   virtual int entries() const = 0;
-  virtual const void* at(int idx) const = 0;
+  virtual UnifiedOopRef at(int idx) const = 0;
 };
 
 class RootResolver : public AllStatic {

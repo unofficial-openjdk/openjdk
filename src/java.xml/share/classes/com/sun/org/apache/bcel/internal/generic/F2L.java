@@ -25,7 +25,6 @@ package com.sun.org.apache.bcel.internal.generic;
  * F2L - Convert float to long
  * <PRE>Stack: ..., value -&gt; ..., result.word1, result.word2</PRE>
  *
- * @version $Id: F2L.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public class F2L extends ConversionInstruction {
 

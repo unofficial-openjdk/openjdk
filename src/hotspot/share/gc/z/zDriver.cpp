@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,14 @@
 #include "gc/shared/gcId.hpp"
 #include "gc/shared/gcLocker.hpp"
 #include "gc/shared/isGCActiveMark.hpp"
+#include "gc/z/zBreakpoint.hpp"
 #include "gc/z/zCollectedHeap.hpp"
 #include "gc/z/zDriver.hpp"
 #include "gc/z/zHeap.inline.hpp"
 #include "gc/z/zMessagePort.inline.hpp"
 #include "gc/z/zServiceability.hpp"
 #include "gc/z/zStat.hpp"
+#include "gc/z/zVerify.hpp"
 #include "logging/log.hpp"
 #include "memory/universe.hpp"
 #include "runtime/vmOperations.hpp"
@@ -43,9 +45,7 @@ static const ZStatPhaseConcurrent ZPhaseConcurrentMarkContinue("Concurrent Mark 
 static const ZStatPhasePause      ZPhasePauseMarkEnd("Pause Mark End");
 static const ZStatPhaseConcurrent ZPhaseConcurrentProcessNonStrongReferences("Concurrent Process Non-Strong References");
 static const ZStatPhaseConcurrent ZPhaseConcurrentResetRelocationSet("Concurrent Reset Relocation Set");
-static const ZStatPhaseConcurrent ZPhaseConcurrentDestroyDetachedPages("Concurrent Destroy Detached Pages");
 static const ZStatPhaseConcurrent ZPhaseConcurrentSelectRelocationSet("Concurrent Select Relocation Set");
-static const ZStatPhaseConcurrent ZPhaseConcurrentPrepareRelocationSet("Concurrent Prepare Relocation Set");
 static const ZStatPhasePause      ZPhasePauseRelocateStart("Pause Relocate Start");
 static const ZStatPhaseConcurrent ZPhaseConcurrentRelocated("Concurrent Relocate");
 static const ZStatCriticalPhase   ZCriticalPhaseGCLockerStall("GC Locker Stall", false /* verbose */);
@@ -87,6 +87,9 @@ public:
     // Setup GC id and active marker
     GCIdMark gc_id_mark(_gc_id);
     IsGCActiveMark gc_active_mark;
+
+    // Verify before operation
+    ZVerify::before_zoperation();
 
     // Execute operation
     _success = do_operation();
@@ -161,7 +164,7 @@ public:
 
   virtual bool do_operation() {
     ZStatTimer timer(ZPhasePauseMarkStart);
-    ZServiceabilityMarkStartTracer tracer;
+    ZServiceabilityPauseTracer tracer;
 
     // Set up soft reference policy
     const bool clear = should_clear_soft_references();
@@ -186,7 +189,7 @@ public:
 
   virtual bool do_operation() {
     ZStatTimer timer(ZPhasePauseMarkEnd);
-    ZServiceabilityMarkEndTracer tracer;
+    ZServiceabilityPauseTracer tracer;
     return ZHeap::heap()->mark_end();
   }
 };
@@ -203,9 +206,20 @@ public:
 
   virtual bool do_operation() {
     ZStatTimer timer(ZPhasePauseRelocateStart);
-    ZServiceabilityRelocateStartTracer tracer;
+    ZServiceabilityPauseTracer tracer;
     ZHeap::heap()->relocate_start();
     return true;
+  }
+};
+
+class VM_ZVerify : public VM_Operation {
+public:
+  virtual VMOp_Type type() const {
+    return VMOp_ZVerify;
+  }
+
+  virtual void doit() {
+    ZVerify::after_weak_processing();
   }
 };
 
@@ -236,6 +250,7 @@ void ZDriver::collect(GCCause::Cause cause) {
   case GCCause::_z_allocation_rate:
   case GCCause::_z_allocation_stall:
   case GCCause::_z_proactive:
+  case GCCause::_z_high_usage:
   case GCCause::_metadata_GC_threshold:
     // Start asynchronous GC
     _gc_cycle_port.send_async(cause);
@@ -244,6 +259,11 @@ void ZDriver::collect(GCCause::Cause cause) {
   case GCCause::_gc_locker:
     // Restart VM operation previously blocked by the GC locker
     _gc_locker_port.signal();
+    break;
+
+  case GCCause::_wb_breakpoint:
+    ZBreakpoint::start_gc();
+    _gc_cycle_port.send_async(cause);
     break;
 
   default:
@@ -278,7 +298,9 @@ void ZDriver::pause_mark_start() {
 
 void ZDriver::concurrent_mark() {
   ZStatTimer timer(ZPhaseConcurrentMark);
+  ZBreakpoint::at_after_marking_started();
   ZHeap::heap()->mark(true /* initial */);
+  ZBreakpoint::at_before_marking_completed();
 }
 
 bool ZDriver::pause_mark_end() {
@@ -300,14 +322,14 @@ void ZDriver::concurrent_reset_relocation_set() {
   ZHeap::heap()->reset_relocation_set();
 }
 
-void ZDriver::concurrent_destroy_detached_pages() {
-  ZStatTimer timer(ZPhaseConcurrentDestroyDetachedPages);
-  ZHeap::heap()->destroy_detached_pages();
-}
-
 void ZDriver::pause_verify() {
   if (VerifyBeforeGC || VerifyDuringGC || VerifyAfterGC) {
+    // Full verification
     VM_Verify op;
+    VMThread::execute(&op);
+  } else if (ZVerifyRoots || ZVerifyObjects) {
+    // Limited verification
+    VM_ZVerify op;
     VMThread::execute(&op);
   }
 }
@@ -315,11 +337,6 @@ void ZDriver::pause_verify() {
 void ZDriver::concurrent_select_relocation_set() {
   ZStatTimer timer(ZPhaseConcurrentSelectRelocationSet);
   ZHeap::heap()->select_relocation_set();
-}
-
-void ZDriver::concurrent_prepare_relocation_set() {
-  ZStatTimer timer(ZPhaseConcurrentPrepareRelocationSet);
-  ZHeap::heap()->prepare_relocation_set();
 }
 
 void ZDriver::pause_relocate_start() {
@@ -337,15 +354,19 @@ void ZDriver::check_out_of_memory() {
 
 class ZDriverGCScope : public StackObj {
 private:
-  GCIdMark      _gc_id;
-  GCCauseSetter _gc_cause_setter;
-  ZStatTimer    _timer;
+  GCIdMark                   _gc_id;
+  GCCause::Cause             _gc_cause;
+  GCCauseSetter              _gc_cause_setter;
+  ZStatTimer                 _timer;
+  ZServiceabilityCycleTracer _tracer;
 
 public:
   ZDriverGCScope(GCCause::Cause cause) :
       _gc_id(),
+      _gc_cause(cause),
       _gc_cause_setter(ZCollectedHeap::heap(), cause),
-      _timer(ZPhaseCycle) {
+      _timer(ZPhaseCycle),
+      _tracer() {
     // Update statistics
     ZStatCycle::at_start();
   }
@@ -356,7 +377,7 @@ public:
                                 (double)ZHeap::heap()->nconcurrent_no_boost_worker_threads();
 
     // Update statistics
-    ZStatCycle::at_end(boost_factor);
+    ZStatCycle::at_end(_gc_cause, boost_factor);
 
     // Update data used by soft reference policy
     Universe::update_heap_info_at_gc();
@@ -384,22 +405,16 @@ void ZDriver::gc(GCCause::Cause cause) {
   // Phase 5: Concurrent Reset Relocation Set
   concurrent_reset_relocation_set();
 
-  // Phase 6: Concurrent Destroy Detached Pages
-  concurrent_destroy_detached_pages();
-
-  // Phase 7: Pause Verify
+  // Phase 6: Pause Verify
   pause_verify();
 
-  // Phase 8: Concurrent Select Relocation Set
+  // Phase 7: Concurrent Select Relocation Set
   concurrent_select_relocation_set();
 
-  // Phase 9: Concurrent Prepare Relocation Set
-  concurrent_prepare_relocation_set();
-
-  // Phase 10: Pause Relocate Start
+  // Phase 8: Pause Relocate Start
   pause_relocate_start();
 
-  // Phase 11: Concurrent Relocate
+  // Phase 9: Concurrent Relocate
   concurrent_relocate();
 }
 
@@ -412,6 +427,8 @@ void ZDriver::run_service() {
       continue;
     }
 
+    ZBreakpoint::at_before_gc();
+
     // Run GC
     gc(cause);
 
@@ -420,6 +437,8 @@ void ZDriver::run_service() {
 
     // Check for out of memory condition
     check_out_of_memory();
+
+    ZBreakpoint::at_after_gc();
   }
 }
 

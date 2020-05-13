@@ -28,6 +28,7 @@
 #include "runtime/os.hpp"
 #include "runtime/os_perf.hpp"
 #include "os_solaris.inline.hpp"
+#include "utilities/globalDefinitions.hpp"
 #include "utilities/macros.hpp"
 
 #include CPU_HEADER(vm_version_ext)
@@ -74,7 +75,7 @@ static int get_info(const char* path, void* info, size_t s, off_t o) {
 
   int fd = -1;
 
-  if ((fd = open(path, O_RDONLY)) < 0) {
+  if ((fd = os::open(path, O_RDONLY, 0)) < 0) {
     return OS_ERR;
   }
   if (pread(fd, info, s, o) != s) {
@@ -300,12 +301,9 @@ bool CPUPerformanceInterface::CPUPerformance::initialize() {
   }
 
   // Data structure(s) for saving CPU load (one per CPU)
-  size_t tick_array_size = _counters.nProcs * sizeof(CPUPerfTicks);
-  _counters.jvmTicks = (CPUPerfTicks*)NEW_C_HEAP_ARRAY(char, tick_array_size, mtInternal);
-  if (NULL == _counters.jvmTicks) {
-    return false;
-  }
-  memset(_counters.jvmTicks, 0, tick_array_size);
+  size_t array_entry_count = _counters.nProcs;
+  _counters.jvmTicks = NEW_C_HEAP_ARRAY(CPUPerfTicks, array_entry_count, mtInternal);
+  memset(_counters.jvmTicks, 0, array_entry_count * sizeof(*_counters.jvmTicks));
 
   // Get kstat cpu_stat counters for every CPU
   // loop over kstat to find our cpu_stat(s)
@@ -326,9 +324,7 @@ bool CPUPerformanceInterface::CPUPerformance::initialize() {
 }
 
 CPUPerformanceInterface::CPUPerformance::~CPUPerformance() {
-  if (_counters.jvmTicks != NULL) {
-    FREE_C_HEAP_ARRAY(char, _counters.jvmTicks);
-  }
+  FREE_C_HEAP_ARRAY(char, _counters.jvmTicks);
   if (_counters.kstat_ctrl != NULL) {
     kstat_close(_counters.kstat_ctrl);
   }
@@ -434,7 +430,7 @@ CPUPerformanceInterface::CPUPerformanceInterface() {
 
 bool CPUPerformanceInterface::initialize() {
   _impl = new CPUPerformanceInterface::CPUPerformance();
-  return _impl != NULL && _impl->initialize();
+  return _impl->initialize();
 }
 
 CPUPerformanceInterface::~CPUPerformanceInterface(void) {
@@ -576,10 +572,8 @@ int SystemProcessInterface::SystemProcesses::ProcessIterator::current(SystemProc
     if (path_substring != NULL) {
       int len = path_substring - psinfo_data.pr_psargs;
       exe_path = NEW_C_HEAP_ARRAY(char, len+1, mtInternal);
-      if (exe_path != NULL) {
-        jio_snprintf(exe_path, len, "%s", psinfo_data.pr_psargs);
-        exe_path[len] = '\0';
-      }
+      jio_snprintf(exe_path, len, "%s", psinfo_data.pr_psargs);
+      exe_path[len] = '\0';
     }
   }
 
@@ -644,7 +638,7 @@ SystemProcessInterface::SystemProcesses::SystemProcesses() {
 
 bool SystemProcessInterface::SystemProcesses::initialize() {
   _iterator = new SystemProcessInterface::SystemProcesses::ProcessIterator();
-  return _iterator != NULL && _iterator->initialize();
+  return _iterator->initialize();
 }
 
 SystemProcessInterface::SystemProcesses::~SystemProcesses() {
@@ -691,7 +685,7 @@ SystemProcessInterface::SystemProcessInterface() {
 
 bool SystemProcessInterface::initialize() {
   _impl = new SystemProcessInterface::SystemProcesses();
-  return _impl != NULL && _impl->initialize();
+  return _impl->initialize();
 
 }
 
@@ -707,9 +701,6 @@ CPUInformationInterface::CPUInformationInterface() {
 
 bool CPUInformationInterface::initialize() {
   _cpu_info = new CPUInformation();
-  if (_cpu_info == NULL) {
-    return false;
-  }
   _cpu_info->set_number_of_hardware_threads(VM_Version_Ext::number_of_threads());
   _cpu_info->set_number_of_cores(VM_Version_Ext::number_of_cores());
   _cpu_info->set_number_of_sockets(VM_Version_Ext::number_of_sockets());
@@ -747,8 +738,7 @@ class NetworkPerformanceInterface::NetworkPerformance : public CHeapObj<mtIntern
   friend class NetworkPerformanceInterface;
  private:
   NetworkPerformance();
-  NetworkPerformance(const NetworkPerformance& rhs); // no impl
-  NetworkPerformance& operator=(const NetworkPerformance& rhs); // no impl
+  NONCOPYABLE(NetworkPerformance);
   bool initialize();
   ~NetworkPerformance();
   int network_utilization(NetworkInterface** network_interfaces) const;
@@ -822,7 +812,7 @@ NetworkPerformanceInterface::~NetworkPerformanceInterface() {
 
 bool NetworkPerformanceInterface::initialize() {
   _impl = new NetworkPerformanceInterface::NetworkPerformance();
-  return _impl != NULL && _impl->initialize();
+  return _impl->initialize();
 }
 
 int NetworkPerformanceInterface::network_utilization(NetworkInterface** network_interfaces) const {

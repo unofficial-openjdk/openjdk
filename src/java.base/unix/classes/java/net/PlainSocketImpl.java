@@ -25,7 +25,6 @@
 package java.net;
 
 import java.io.IOException;
-import java.io.FileDescriptor;
 import java.util.Set;
 import java.util.HashSet;
 import sun.net.ext.ExtendedSocketOptions;
@@ -45,57 +44,8 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
     /**
      * Constructs an empty instance.
      */
-    PlainSocketImpl() { }
-
-    /**
-     * Constructs an instance with the given file descriptor.
-     */
-    PlainSocketImpl(FileDescriptor fd) {
-        this.fd = fd;
-    }
-
-    static final ExtendedSocketOptions extendedOptions =
-            ExtendedSocketOptions.getInstance();
-
-    protected <T> void setOption(SocketOption<T> name, T value) throws IOException {
-        if (isClosedOrPending()) {
-            throw new SocketException("Socket closed");
-        }
-        if (supportedOptions().contains(name)) {
-            if (extendedOptions.isOptionSupported(name)) {
-                extendedOptions.setOption(fd, name, value);
-            } else {
-                super.setOption(name, value);
-            }
-        } else {
-            throw new UnsupportedOperationException("unsupported option");
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    protected <T> T getOption(SocketOption<T> name) throws IOException {
-        if (isClosedOrPending()) {
-            throw new SocketException("Socket closed");
-        }
-        if (supportedOptions().contains(name)) {
-            if (extendedOptions.isOptionSupported(name)) {
-                return (T) extendedOptions.getOption(fd, name);
-            } else {
-                return super.getOption(name);
-            }
-        } else {
-            throw new UnsupportedOperationException("unsupported option");
-        }
-    }
-
-    protected Set<SocketOption<?>> supportedOptions() {
-        HashSet<SocketOption<?>> options = new HashSet<>(super.supportedOptions());
-        if (getServerSocket() != null) {
-            options.addAll(ExtendedSocketOptions.serverSocketOptions());
-        } else {
-            options.addAll(ExtendedSocketOptions.clientSocketOptions());
-        }
-        return options;
+    PlainSocketImpl(boolean isServer) {
+        super(isServer);
     }
 
     protected void socketSetOption(int opt, boolean b, Object val) throws SocketException {
@@ -106,12 +56,16 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
         try {
             socketSetOption0(opt, b, val);
         } catch (SocketException se) {
-            if (socket == null || !socket.isConnected())
+            if (!isConnected)
                 throw se;
         }
     }
 
-    native void socketCreate(boolean isServer) throws IOException;
+    void socketCreate(boolean stream) throws IOException {
+        socketCreate(stream, isServer);
+    }
+
+    native void socketCreate(boolean stream, boolean isServer) throws IOException;
 
     native void socketConnect(InetAddress address, int port, int timeout)
         throws IOException;

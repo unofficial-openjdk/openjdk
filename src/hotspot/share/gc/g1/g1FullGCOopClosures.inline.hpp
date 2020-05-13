@@ -31,6 +31,7 @@
 #include "gc/g1/g1FullGCOopClosures.hpp"
 #include "gc/g1/heapRegionRemSet.hpp"
 #include "memory/iterator.inline.hpp"
+#include "memory/universe.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/compressedOops.inline.hpp"
 #include "oops/oop.inline.hpp"
@@ -76,16 +77,16 @@ template <class T> inline void G1AdjustClosure::adjust_pointer(T* p) {
   oop forwardee = obj->forwardee();
   if (forwardee == NULL) {
     // Not forwarded, return current reference.
-    assert(obj->mark_raw() == markOopDesc::prototype_for_object(obj) || // Correct mark
-           obj->mark_raw()->must_be_preserved(obj) || // Will be restored by PreservedMarksSet
+    assert(obj->mark_raw() == markWord::prototype_for_klass(obj->klass()) || // Correct mark
+           obj->mark_must_be_preserved() || // Will be restored by PreservedMarksSet
            (UseBiasedLocking && obj->has_bias_pattern_raw()), // Will be restored by BiasedLocking
            "Must have correct prototype or be preserved, obj: " PTR_FORMAT ", mark: " PTR_FORMAT ", prototype: " PTR_FORMAT,
-           p2i(obj), p2i(obj->mark_raw()), p2i(markOopDesc::prototype_for_object(obj)));
+           p2i(obj), obj->mark_raw().value(), markWord::prototype_for_klass(obj->klass()).value());
     return;
   }
 
   // Forwarded, just update.
-  assert(Universe::heap()->is_in_reserved(forwardee), "should be in object space");
+  assert(G1CollectedHeap::heap()->is_in_reserved(forwardee), "should be in object space");
   RawAccess<IS_NOT_NULL>::oop_store(p, forwardee);
 }
 

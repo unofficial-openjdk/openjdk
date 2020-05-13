@@ -29,7 +29,6 @@ import com.sun.org.apache.bcel.internal.util.ByteSequence;
 /**
  * IINC - Increment local variable by constant
  *
- * @version $Id: IINC.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public class IINC extends LocalVariableInstruction {
 
@@ -38,8 +37,8 @@ public class IINC extends LocalVariableInstruction {
 
 
     /**
-     * Empty constructor needed for the Class.newInstance() statement in
-     * Instruction.readInstruction(). Not to be used otherwise.
+     * Empty constructor needed for Instruction.readInstruction.
+     * Not to be used otherwise.
      */
     IINC() {
     }
@@ -50,7 +49,7 @@ public class IINC extends LocalVariableInstruction {
      * @param c increment factor
      */
     public IINC(final int n, final int c) {
-        super(); // Default behaviour of LocalVariableInstruction causes error
+        super(); // Default behavior of LocalVariableInstruction causes error
         super.setOpcode(com.sun.org.apache.bcel.internal.Const.IINC);
         super.setLength((short) 3);
         setIndex(n); // May set wide as side effect
@@ -79,7 +78,12 @@ public class IINC extends LocalVariableInstruction {
 
 
     private void setWide() {
-        wide = (super.getIndex() > com.sun.org.apache.bcel.internal.Const.MAX_BYTE) || (Math.abs(c) > Byte.MAX_VALUE);
+        wide = super.getIndex() > com.sun.org.apache.bcel.internal.Const.MAX_BYTE;
+        if (c > 0) {
+            wide = wide || (c > Byte.MAX_VALUE);
+        } else {
+            wide = wide || (c < Byte.MIN_VALUE);
+        }
         if (wide) {
             super.setLength(6); // wide byte included
         } else {

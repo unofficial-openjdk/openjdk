@@ -30,6 +30,7 @@
 #include "nativeInst_aarch64.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/handles.hpp"
+#include "runtime/orderAccess.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "utilities/ostream.hpp"
@@ -232,7 +233,11 @@ void NativeCall::insert(address code_pos, address entry) { Unimplemented(); }
 //-------------------------------------------------------------------
 
 void NativeMovConstReg::verify() {
-  // make sure code pattern is actually mov reg64, imm64 instructions
+  if (! (nativeInstruction_at(instruction_address())->is_movz() ||
+        is_adrp_at(instruction_address()) ||
+        is_ldr_literal_at(instruction_address())) ) {
+    fatal("should be MOVZ or ADRP or LDR (literal)");
+  }
 }
 
 
@@ -283,8 +288,6 @@ void NativeMovConstReg::print() {
 
 //-------------------------------------------------------------------
 
-address NativeMovRegMem::instruction_address() const      { return addr_at(instruction_offset); }
-
 int NativeMovRegMem::offset() const  {
   address pc = instruction_address();
   unsigned insn = *(unsigned*)pc;
@@ -328,9 +331,14 @@ address NativeJump::jump_destination() const          {
 
   // We use jump to self as the unresolved address which the inline
   // cache code (and relocs) know about
+  // As a special case we also use sequence movptr(r,0); br(r);
+  // i.e. jump to 0 when we need leave space for a wide immediate
+  // load
 
-  // return -1 if jump to self
-  dest = (dest == (address) this) ? (address) -1 : dest;
+  // return -1 if jump to self or to 0
+  if ((dest == (address)this) || dest == 0) {
+    dest = (address) -1;
+  }
   return dest;
 }
 
@@ -352,9 +360,13 @@ address NativeGeneralJump::jump_destination() const {
 
   // We use jump to self as the unresolved address which the inline
   // cache code (and relocs) know about
+  // As a special case we also use jump to 0 when first generating
+  // a general jump
 
-  // return -1 if jump to self
-  dest = (dest == (address) this) ? (address) -1 : dest;
+  // return -1 if jump to self or to 0
+  if ((dest == (address)this) || dest == 0) {
+    dest = (address) -1;
+  }
   return dest;
 }
 

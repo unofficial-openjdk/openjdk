@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2015, Red Hat Inc.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Red Hat Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,8 @@ import sun.jvm.hotspot.oops.*;
 import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.types.*;
 import sun.jvm.hotspot.utilities.*;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
 /** Specialization of and implementation of abstract methods of the
     Frame class for the aarch64 family of CPUs. */
@@ -136,7 +138,15 @@ public class AARCH64Frame extends Frame {
     this.raw_sp = raw_sp;
     this.raw_unextendedSP = raw_sp;
     this.raw_fp = raw_fp;
-    this.pc = raw_sp.getAddressAt(-1 * VM.getVM().getAddressSize());
+
+    // We cannot assume SP[-1] always contains a valid return PC (e.g. if
+    // the callee is a C/C++ compiled frame). If the PC is not known to
+    // Java then this.pc is null.
+    Address savedPC = raw_sp.getAddressAt(-1 * VM.getVM().getAddressSize());
+    if (VM.getVM().isJavaPCDbg(savedPC)) {
+      this.pc = savedPC;
+    }
+
     adjustUnextendedSP();
 
     // Frame must be fully constructed before this call

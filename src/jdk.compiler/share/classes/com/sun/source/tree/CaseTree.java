@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ import java.util.List;
  *       <em>statements</em>
  * </pre>
  *
- * @jls section 14.11
+ * @jls 14.11 The switch Statement
  *
  * @author Peter von der Ah&eacute;
  * @author Jonathan Gibbons
@@ -49,9 +49,11 @@ public interface CaseTree extends Tree {
     /**
      * Returns the expression for the case, or
      * {@code null} if this is the default case.
-     * If this case has multiple lables, returns the first label.
+     * If this case has multiple labels, returns the first label.
      * @return the expression for the case, or null
+     * @deprecated Please use {@link #getExpressions()}.
      */
+    @Deprecated
     ExpressionTree getExpression();
 
     /**
@@ -60,12 +62,7 @@ public interface CaseTree extends Tree {
      *
      * @return labels for this case
      * @since 12
-     *
-     * @deprecated This method is modeling a case with multiple labels,
-     * which is part of a preview feature and may be removed
-     * if the preview feature is removed.
      */
-    @Deprecated(forRemoval=true, since="12")
     List<? extends ExpressionTree> getExpressions();
 
     /**
@@ -85,12 +82,7 @@ public interface CaseTree extends Tree {
      *
      * @return case value or null
      * @since 12
-     *
-     * @deprecated This method is modeling a rule case,
-     * which is part of a preview feature and may be removed
-     * if the preview feature is removed.
      */
-    @Deprecated(forRemoval=true, since="12")
     public default Tree getBody() {
         return null;
     }
@@ -100,30 +92,20 @@ public interface CaseTree extends Tree {
      *
      * @return the kind of this case
      * @since 12
-     *
-     * @deprecated This method is used to model a rule case,
-     * which is part of a preview feature and may be removed
-     * if the preview feature is removed.
      */
-    @Deprecated(forRemoval=true, since="12")
     public default CaseKind getCaseKind() {
         return CaseKind.STATEMENT;
     }
 
     /**
-     * The syntatic form of this case:
+     * The syntactic form of this case:
      * <ul>
      *     <li>STATEMENT: {@code case <expression>: <statements>}</li>
      *     <li>RULE: {@code case <expression> -> <expression>/<statement>}</li>
      * </ul>
      *
      * @since 12
-     *
-     * @deprecated This enum is used to model a rule case,
-     * which is part of a preview feature and may be removed
-     * if the preview feature is removed.
      */
-    @Deprecated(forRemoval=true, since="12")
     public enum CaseKind {
         /**
          * Case is in the form: {@code case <expression>: <statements>}.

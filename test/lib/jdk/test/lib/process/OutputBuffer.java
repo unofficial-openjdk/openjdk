@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,17 @@
 
 package jdk.test.lib.process;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.StringReader;
+import java.nio.charset.Charset;
+import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public interface OutputBuffer {
   public static class OutputBufferException extends RuntimeException {
@@ -44,6 +50,17 @@ public interface OutputBuffer {
    * @return stdout result
    */
   public String getStdout();
+
+  /**
+   * Returns the stdout as a list.
+   * Empty List if application produced no output.
+   */
+  default public List<String> getStdoutAsList() {
+    return new BufferedReader(new StringReader(getStdout()))
+            .lines()
+            .collect(Collectors.toList());
+  }
+
   /**
    * Returns the stderr result
    *
@@ -52,8 +69,12 @@ public interface OutputBuffer {
   public String getStderr();
   public int getExitValue();
 
+  public static OutputBuffer of(Process p, Charset cs) {
+    return new LazyOutputBuffer(p, cs);
+  }
+
   public static OutputBuffer of(Process p) {
-    return new LazyOutputBuffer(p);
+    return new LazyOutputBuffer(p, null);
   }
 
   public static OutputBuffer of(String stdout, String stderr, int exitValue) {
@@ -68,16 +89,18 @@ public interface OutputBuffer {
     private static class StreamTask {
       private final ByteArrayOutputStream buffer;
       private final Future<Void> future;
+      private final Charset cs;
 
-      private StreamTask(InputStream stream) {
+      private StreamTask(InputStream stream, Charset cs) {
         this.buffer = new ByteArrayOutputStream();
+        this.cs = cs;
         this.future = new StreamPumper(stream, buffer).process();
       }
 
       public String get() {
         try {
           future.get();
-          return buffer.toString();
+          return cs == null ? buffer.toString() : buffer.toString(cs);
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           throw new OutputBufferException(e);
@@ -91,10 +114,17 @@ public interface OutputBuffer {
     private final StreamTask errTask;
     private final Process p;
 
-    private LazyOutputBuffer(Process p) {
+    private final void logProgress(String state) {
+        System.out.println("[" + Instant.now().toString() + "] " + state
+                           + " for process " + p.pid());
+        System.out.flush();
+    }
+
+    private LazyOutputBuffer(Process p, Charset cs) {
       this.p = p;
-      outTask = new StreamTask(p.getInputStream());
-      errTask = new StreamTask(p.getErrorStream());
+      logProgress("Gathering output");
+      outTask = new StreamTask(p.getInputStream(), cs);
+      errTask = new StreamTask(p.getErrorStream(), cs);
     }
 
     @Override
@@ -110,7 +140,18 @@ public interface OutputBuffer {
     @Override
     public int getExitValue() {
       try {
-        return p.waitFor();
+          logProgress("Waiting for completion");
+          boolean aborted = true;
+          try {
+              int result = p.waitFor();
+              logProgress("Waiting for completion finished");
+              aborted = false;
+              return result;
+          } finally {
+              if (aborted) {
+                  logProgress("Waiting for completion FAILED");
+              }
+          }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new OutputBufferException(e);

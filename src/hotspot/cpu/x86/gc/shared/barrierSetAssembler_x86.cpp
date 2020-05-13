@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,9 @@
 #include "gc/shared/barrierSetNMethod.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "interpreter/interp_masm.hpp"
+#include "memory/universe.hpp"
 #include "runtime/jniHandles.hpp"
+#include "runtime/sharedRuntime.hpp"
 #include "runtime/thread.hpp"
 
 #define __ masm->
@@ -325,21 +327,88 @@ void BarrierSetAssembler::incr_allocated_bytes(MacroAssembler* masm, Register th
 #endif
 }
 
+#ifdef _LP64
 void BarrierSetAssembler::nmethod_entry_barrier(MacroAssembler* masm) {
   BarrierSetNMethod* bs_nm = BarrierSet::barrier_set()->barrier_set_nmethod();
   if (bs_nm == NULL) {
     return;
   }
-#ifndef _LP64
-  ShouldNotReachHere();
-#else
   Label continuation;
-  Register thread = LP64_ONLY(r15_thread);
+  Register thread = r15_thread;
   Address disarmed_addr(thread, in_bytes(bs_nm->thread_disarmed_offset()));
   __ align(8);
   __ cmpl(disarmed_addr, 0);
   __ jcc(Assembler::equal, continuation);
   __ call(RuntimeAddress(StubRoutines::x86::method_entry_barrier()));
   __ bind(continuation);
+}
+#else
+void BarrierSetAssembler::nmethod_entry_barrier(MacroAssembler* masm) {
+  BarrierSetNMethod* bs_nm = BarrierSet::barrier_set()->barrier_set_nmethod();
+  if (bs_nm == NULL) {
+    return;
+  }
+
+  Label continuation;
+
+  Register tmp = rdi;
+  __ push(tmp);
+  __ movptr(tmp, (intptr_t)bs_nm->disarmed_value_address());
+  Address disarmed_addr(tmp, 0);
+  __ align(4);
+  __ cmpl(disarmed_addr, 0);
+  __ pop(tmp);
+  __ jcc(Assembler::equal, continuation);
+  __ call(RuntimeAddress(StubRoutines::x86::method_entry_barrier()));
+  __ bind(continuation);
+}
+#endif
+
+void BarrierSetAssembler::c2i_entry_barrier(MacroAssembler* masm) {
+  BarrierSetNMethod* bs = BarrierSet::barrier_set()->barrier_set_nmethod();
+  if (bs == NULL) {
+    return;
+  }
+
+  Label bad_call;
+  __ cmpptr(rbx, 0); // rbx contains the incoming method for c2i adapters.
+  __ jcc(Assembler::equal, bad_call);
+
+#ifdef _LP64
+  Register tmp1 = rscratch1;
+  Register tmp2 = rscratch2;
+#else
+  Register tmp1 = rax;
+  Register tmp2 = rcx;
+  __ push(tmp1);
+  __ push(tmp2);
+#endif // _LP64
+
+  // Pointer chase to the method holder to find out if the method is concurrently unloading.
+  Label method_live;
+  __ load_method_holder_cld(tmp1, rbx);
+
+   // Is it a strong CLD?
+  __ cmpl(Address(tmp1, ClassLoaderData::keep_alive_offset()), 0);
+  __ jcc(Assembler::greater, method_live);
+
+   // Is it a weak but alive CLD?
+  __ movptr(tmp1, Address(tmp1, ClassLoaderData::holder_offset()));
+  __ resolve_weak_handle(tmp1, tmp2);
+  __ cmpptr(tmp1, 0);
+  __ jcc(Assembler::notEqual, method_live);
+
+#ifndef _LP64
+  __ pop(tmp2);
+  __ pop(tmp1);
+#endif
+
+  __ bind(bad_call);
+  __ jump(RuntimeAddress(SharedRuntime::get_handle_wrong_method_stub()));
+  __ bind(method_live);
+
+#ifndef _LP64
+  __ pop(tmp2);
+  __ pop(tmp1);
 #endif
 }

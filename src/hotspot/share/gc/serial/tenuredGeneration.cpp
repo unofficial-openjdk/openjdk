@@ -39,12 +39,11 @@
 #include "oops/oop.inline.hpp"
 #include "runtime/java.hpp"
 #include "utilities/macros.hpp"
-#if INCLUDE_CMSGC
-#include "gc/cms/parOopClosures.hpp"
-#endif
 
 TenuredGeneration::TenuredGeneration(ReservedSpace rs,
                                      size_t initial_byte_size,
+                                     size_t min_byte_size,
+                                     size_t max_byte_size,
                                      CardTableRS* remset) :
   CardGeneration(rs, initial_byte_size, remset)
 {
@@ -60,10 +59,9 @@ TenuredGeneration::TenuredGeneration(ReservedSpace rs,
   // initialize performance counters
 
   const char* gen_name = "old";
-  GenCollectorPolicy* gcp = GenCollectedHeap::heap()->gen_policy();
   // Generation Counters -- generation 1, 1 subspace
   _gen_counters = new GenerationCounters(gen_name, 1, 1,
-      gcp->min_old_size(), gcp->max_old_size(), &_virtual_space);
+      min_byte_size, max_byte_size, &_virtual_space);
 
   _gc_counters = new CollectorCounters("Serial full collection pauses", 1);
 
@@ -201,7 +199,7 @@ TenuredGeneration::expand_and_allocate(size_t word_size,
     while (true) {
       expand(byte_size, _min_heap_delta_bytes);
       if (GCExpandToAllocateDelayMillis > 0) {
-        os::sleep(Thread::current(), GCExpandToAllocateDelayMillis, false);
+        os::naked_sleep(GCExpandToAllocateDelayMillis);
       }
       result = _the_space->par_allocate(word_size);
       if ( result != NULL) {

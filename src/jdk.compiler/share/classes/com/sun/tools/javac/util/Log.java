@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -419,6 +419,14 @@ public class Log extends AbstractLog {
      */
     public int nwarnings = 0;
 
+    /** The number of errors encountered after MaxErrors was reached.
+     */
+    public int nsuppressederrors = 0;
+
+    /** The number of warnings encountered after MaxWarnings was reached.
+     */
+    public int nsuppressedwarns = 0;
+
     /** A set of all errors generated so far. This is used to avoid printing an
      *  error message more than once. For each error, a pair consisting of the
      *  source file name and source code position of the error is added to the set.
@@ -545,6 +553,13 @@ public class Log extends AbstractLog {
                 }
             }
         }
+
+    /**Is an error reported at the given pos (inside the current source)?*/
+    public boolean hasErrorOn(DiagnosticPosition pos) {
+        JavaFileObject file = source != null ? source.fileObject : null;
+
+        return file != null && recorded.contains(new Pair<>(file, pos.getPreferredPosition()));
+    }
 
     /** Prompt user after an error.
      */
@@ -708,16 +723,21 @@ public class Log extends AbstractLog {
                     if (nwarnings < MaxWarnings) {
                         writeDiagnostic(diagnostic);
                         nwarnings++;
+                    } else {
+                        nsuppressedwarns++;
                     }
                 }
                 break;
 
             case ERROR:
-                if (nerrors < MaxErrors &&
-                    (diagnostic.isFlagSet(DiagnosticFlag.API) ||
-                     shouldReport(diagnostic))) {
-                    writeDiagnostic(diagnostic);
-                    nerrors++;
+                if (diagnostic.isFlagSet(DiagnosticFlag.API) ||
+                     shouldReport(diagnostic)) {
+                    if (nerrors < MaxErrors) {
+                        writeDiagnostic(diagnostic);
+                        nerrors++;
+                    } else {
+                        nsuppressederrors++;
+                    }
                 }
                 break;
             }
@@ -844,6 +864,8 @@ public class Log extends AbstractLog {
             printRawDiag(errWriter, "error: ", pos, msg);
             prompt();
             nerrors++;
+        } else {
+            nsuppressederrors++;
         }
         errWriter.flush();
     }
@@ -852,8 +874,12 @@ public class Log extends AbstractLog {
      */
     public void rawWarning(int pos, String msg) {
         PrintWriter warnWriter = writers.get(WriterKind.ERROR);
-        if (nwarnings < MaxWarnings && emitWarnings) {
-            printRawDiag(warnWriter, "warning: ", pos, msg);
+        if (emitWarnings) {
+            if (nwarnings < MaxWarnings) {
+                printRawDiag(warnWriter, "warning: ", pos, msg);
+            } else {
+                nsuppressedwarns++;
+            }
         }
         prompt();
         nwarnings++;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,11 +24,12 @@
 
 package org.graalvm.compiler.phases.tiers;
 
+import org.graalvm.compiler.nodes.spi.CoreProvidersDelegate;
 import org.graalvm.compiler.phases.util.Providers;
 
 import jdk.vm.ci.code.TargetDescription;
 
-public class LowTierContext extends PhaseContext {
+public class LowTierContext extends CoreProvidersDelegate {
 
     private final TargetProvider target;
 

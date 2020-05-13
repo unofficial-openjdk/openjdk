@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,17 +27,19 @@
 #include "classfile/classLoaderDataGraph.inline.hpp"
 #include "classfile/dictionary.hpp"
 #include "classfile/javaClasses.hpp"
+#include "classfile/moduleEntry.hpp"
 #include "classfile/systemDictionary.hpp"
+#include "classfile/systemDictionaryShared.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "logging/log.hpp"
-#include "memory/heapInspection.hpp"
 #include "memory/heapShared.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceClosure.hpp"
 #include "memory/metaspaceShared.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/compressedOops.inline.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/klass.inline.hpp"
@@ -45,18 +47,14 @@
 #include "oops/oopHandle.inline.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/handles.inline.hpp"
-#include "runtime/orderAccess.hpp"
 #include "utilities/macros.hpp"
+#include "utilities/powerOfTwo.hpp"
 #include "utilities/stack.inline.hpp"
 
 void Klass::set_java_mirror(Handle m) {
   assert(!m.is_null(), "New mirror should never be null.");
   assert(_java_mirror.resolve() == NULL, "should only be used to initialize mirror");
   _java_mirror = class_loader_data()->add_handle(m);
-}
-
-oop Klass::java_mirror() const {
-  return _java_mirror.resolve();
 }
 
 oop Klass::java_mirror_no_keepalive() const {
@@ -82,6 +80,10 @@ void Klass::set_is_cloneable() {
 void Klass::set_name(Symbol* n) {
   _name = n;
   if (_name != NULL) _name->increment_refcount();
+
+  if (Arguments::is_dumping_archive() && is_instance_klass()) {
+    SystemDictionaryShared::init_dumptime_info(InstanceKlass::cast(this));
+  }
 }
 
 bool Klass::is_subclass_of(const Klass* k) const {
@@ -95,6 +97,10 @@ bool Klass::is_subclass_of(const Klass* k) const {
     t = t->super();
   }
   return false;
+}
+
+void Klass::release_C_heap_structures() {
+  if (_name != NULL) _name->decrement_refcount();
 }
 
 bool Klass::search_secondary_supers(Klass* k) const {
@@ -193,7 +199,7 @@ void* Klass::operator new(size_t size, ClassLoaderData* loader_data, size_t word
 // should be NULL before setting it.
 Klass::Klass(KlassID id) : _id(id),
                            _java_mirror(NULL),
-                           _prototype_header(markOopDesc::prototype()),
+                           _prototype_header(markWord::prototype()),
                            _shared_class_path_index(-1) {
   CDS_ONLY(_shared_class_flags = 0;)
   CDS_JAVA_HEAP_ONLY(_archived_mirror = 0;)
@@ -364,7 +370,7 @@ InstanceKlass* Klass::superklass() const {
 Klass* Klass::subklass(bool log) const {
   // Need load_acquire on the _subklass, because it races with inserts that
   // publishes freshly initialized data.
-  for (Klass* chain = OrderAccess::load_acquire(&_subklass);
+  for (Klass* chain = Atomic::load_acquire(&_subklass);
        chain != NULL;
        // Do not need load_acquire on _next_sibling, because inserts never
        // create _next_sibling edges to dead data.
@@ -404,7 +410,7 @@ Klass* Klass::next_sibling(bool log) const {
 
 void Klass::set_subklass(Klass* s) {
   assert(s != this, "sanity check");
-  OrderAccess::release_store(&_subklass, s);
+  Atomic::release_store(&_subklass, s);
 }
 
 void Klass::set_next_sibling(Klass* s) {
@@ -412,11 +418,13 @@ void Klass::set_next_sibling(Klass* s) {
   // Does not need release semantics. If used by cleanup, it will link to
   // already safely published data, and if used by inserts, will be published
   // safely using cmpxchg.
-  Atomic::store(s, &_next_sibling);
+  Atomic::store(&_next_sibling, s);
 }
 
 void Klass::append_to_sibling_list() {
-  assert_locked_or_safepoint(Compile_lock);
+  if (Universe::is_fully_initialized()) {
+    assert_locked_or_safepoint(Compile_lock);
+  }
   debug_only(verify();)
   // add ourselves to superklass' subklass list
   InstanceKlass* super = superklass();
@@ -429,7 +437,7 @@ void Klass::append_to_sibling_list() {
   super->clean_subklass();
 
   for (;;) {
-    Klass* prev_first_subklass = OrderAccess::load_acquire(&_super->_subklass);
+    Klass* prev_first_subklass = Atomic::load_acquire(&_super->_subklass);
     if (prev_first_subklass != NULL) {
       // set our sibling to be the superklass' previous first subklass
       assert(prev_first_subklass->is_loader_alive(), "May not attach not alive klasses");
@@ -438,7 +446,7 @@ void Klass::append_to_sibling_list() {
     // Note that the prev_first_subklass is always alive, meaning no sibling_next links
     // are ever created to not alive klasses. This is an important invariant of the lock-free
     // cleaning protocol, that allows us to safely unlink dead klasses from the sibling list.
-    if (Atomic::cmpxchg(this, &super->_subklass, prev_first_subklass) == prev_first_subklass) {
+    if (Atomic::cmpxchg(&super->_subklass, prev_first_subklass, this) == prev_first_subklass) {
       return;
     }
   }
@@ -448,12 +456,12 @@ void Klass::append_to_sibling_list() {
 void Klass::clean_subklass() {
   for (;;) {
     // Need load_acquire, due to contending with concurrent inserts
-    Klass* subklass = OrderAccess::load_acquire(&_subklass);
+    Klass* subklass = Atomic::load_acquire(&_subklass);
     if (subklass == NULL || subklass->is_loader_alive()) {
       return;
     }
     // Try to fix _subklass until it points at something not dead.
-    Atomic::cmpxchg(subklass->next_sibling(), &_subklass, subklass);
+    Atomic::cmpxchg(&_subklass, subklass, subklass->next_sibling());
   }
 }
 
@@ -523,7 +531,8 @@ void Klass::metaspace_pointers_do(MetaspaceClosure* it) {
 }
 
 void Klass::remove_unshareable_info() {
-  assert (DumpSharedSpaces, "only called for DumpSharedSpaces");
+  assert (Arguments::is_dumping_archive(),
+          "only called during CDS dump time");
   JFR_ONLY(REMOVE_ID(this);)
   if (log_is_enabled(Trace, cds, unshareable)) {
     ResourceMark rm;
@@ -540,7 +549,7 @@ void Klass::remove_unshareable_info() {
 }
 
 void Klass::remove_java_mirror() {
-  assert (DumpSharedSpaces, "only called for DumpSharedSpaces");
+  Arguments::assert_is_dumping_archive();
   if (log_is_enabled(Trace, cds, unshareable)) {
     ResourceMark rm;
     log_trace(cds, unshareable)("remove java_mirror: %s", external_name());
@@ -554,7 +563,7 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
   assert(is_shared(), "must be set");
   JFR_ONLY(RESTORE_ID(this);)
   if (log_is_enabled(Trace, cds, unshareable)) {
-    ResourceMark rm;
+    ResourceMark rm(THREAD);
     log_trace(cds, unshareable)("restore: %s", external_name());
   }
 
@@ -587,7 +596,7 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
   Handle module_handle(THREAD, ((module_entry != NULL) ? module_entry->module() : (oop)NULL));
 
   if (this->has_raw_archived_mirror()) {
-    ResourceMark rm;
+    ResourceMark rm(THREAD);
     log_debug(cds, mirror)("%s has raw archived mirror", external_name());
     if (HeapShared::open_archive_heap_region_mapped()) {
       bool present = java_lang_Class::restore_archived_mirror(this, loader, module_handle,
@@ -608,7 +617,7 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
   // gotten an OOM later but keep the mirror if it was created.
   if (java_mirror() == NULL) {
     log_trace(cds, mirror)("Recreate mirror for %s", external_name());
-    java_lang_Class::create_mirror(this, loader, module_handle, protection_domain, CHECK);
+    java_lang_Class::create_mirror(this, loader, module_handle, protection_domain, Handle(), CHECK);
   }
 }
 
@@ -672,7 +681,19 @@ void Klass::check_array_allocation_length(int length, int max_length, TRAPS) {
   }
 }
 
-oop Klass::class_loader() const { return class_loader_data()->class_loader(); }
+// Replace the last '+' char with '/'.
+static char* convert_hidden_name_to_java(Symbol* name) {
+  size_t name_len = name->utf8_length();
+  char* result = NEW_RESOURCE_ARRAY(char, name_len + 1);
+  name->as_klass_external_name(result, (int)name_len + 1);
+  for (int index = (int)name_len; index > 0; index--) {
+    if (result[index] == '+') {
+      result[index] = JVM_SIGNATURE_SLASH;
+      break;
+    }
+  }
+  return result;
+}
 
 // In product mode, this function doesn't have virtual function calls so
 // there might be some performance advantage to handling InstanceKlass here.
@@ -690,7 +711,14 @@ const char* Klass::external_name() const {
       strcpy(result + name_len, addr_buf);
       assert(strlen(result) == name_len + addr_len, "");
       return result;
+
+    } else if (ik->is_hidden()) {
+      char* result = convert_hidden_name_to_java(name());
+      return result;
     }
+  } else if (is_objArray_klass() && ObjArrayKlass::cast(this)->bottom_klass()->is_hidden()) {
+    char* result = convert_hidden_name_to_java(name());
+    return result;
   }
   if (name() == NULL)  return "<unknown>";
   return name()->as_klass_external_name();
@@ -698,6 +726,18 @@ const char* Klass::external_name() const {
 
 const char* Klass::signature_name() const {
   if (name() == NULL)  return "<unknown>";
+  if (is_objArray_klass() && ObjArrayKlass::cast(this)->bottom_klass()->is_hidden()) {
+    size_t name_len = name()->utf8_length();
+    char* result = NEW_RESOURCE_ARRAY(char, name_len + 1);
+    name()->as_C_string(result, (int)name_len + 1);
+    for (int index = (int)name_len; index > 0; index--) {
+      if (result[index] == '+') {
+        result[index] = JVM_SIGNATURE_DOT;
+        break;
+      }
+    }
+    return result;
+  }
   return name()->as_C_string();
 }
 
@@ -713,7 +753,7 @@ jint Klass::compute_modifier_flags(TRAPS) const {
 }
 
 int Klass::atomic_incr_biased_lock_revocation_count() {
-  return (int) Atomic::add(1, &_biased_lock_revocation_count);
+  return (int) Atomic::add(&_biased_lock_revocation_count, 1);
 }
 
 // Unless overridden, jvmti_class_status has no flags set.
@@ -732,19 +772,23 @@ void Klass::print_on(outputStream* st) const {
   st->cr();
 }
 
+#define BULLET  " - "
+
 void Klass::oop_print_on(oop obj, outputStream* st) {
-  ResourceMark rm;
   // print title
   st->print_cr("%s ", internal_name());
   obj->print_address_on(st);
 
   if (WizardMode) {
      // print header
-     obj->mark()->print_on(st);
+     obj->mark().print_on(st);
+     st->cr();
+     st->print(BULLET"prototype_header: " INTPTR_FORMAT, _prototype_header.value());
+     st->cr();
   }
 
   // print class
-  st->print(" - klass: ");
+  st->print(BULLET"klass: ");
   obj->klass()->print_value_on(st);
   st->cr();
 }
@@ -755,18 +799,6 @@ void Klass::oop_print_value_on(oop obj, outputStream* st) {
   st->print("%s", internal_name());
   obj->print_address_on(st);
 }
-
-#if INCLUDE_SERVICES
-// Size Statistics
-void Klass::collect_statistics(KlassSizeStats *sz) const {
-  sz->_klass_bytes = sz->count(this);
-  sz->_mirror_bytes = sz->count(java_mirror());
-  sz->_secondary_supers_bytes = sz->count_array(secondary_supers());
-
-  sz->_ro_bytes += sz->_secondary_supers_bytes;
-  sz->_rw_bytes += sz->_klass_bytes + sz->_mirror_bytes;
-}
-#endif // INCLUDE_SERVICES
 
 // Verification
 
@@ -802,28 +834,15 @@ void Klass::oop_verify_on(oop obj, outputStream* st) {
   guarantee(obj->klass()->is_klass(), "klass field is not a klass");
 }
 
-Klass* Klass::decode_klass_raw(narrowKlass narrow_klass) {
-  return (Klass*)(void*)( (uintptr_t)Universe::narrow_klass_base() +
-                         ((uintptr_t)narrow_klass << Universe::narrow_klass_shift()));
-}
-
 bool Klass::is_valid(Klass* k) {
   if (!is_aligned(k, sizeof(MetaWord))) return false;
   if ((size_t)k < os::min_page_size()) return false;
 
   if (!os::is_readable_range(k, k + 1)) return false;
-  if (!MetaspaceUtils::is_range_in_committed(k, k + 1)) return false;
+  if (!Metaspace::contains(k)) return false;
 
   if (!Symbol::is_valid(k->name())) return false;
   return ClassLoaderDataGraph::is_valid(k->class_loader_data());
-}
-
-klassVtable Klass::vtable() const {
-  return klassVtable(const_cast<Klass*>(this), start_of_vtable(), vtable_length() / vtableEntry::size());
-}
-
-vtableEntry* Klass::start_of_vtable() const {
-  return (vtableEntry*) ((address)this + in_bytes(vtable_start_offset()));
 }
 
 Method* Klass::method_at_vtable(int index)  {
@@ -836,9 +855,6 @@ Method* Klass::method_at_vtable(int index)  {
   return start_of_vtable()[index].method();
 }
 
-ByteSize Klass::vtable_start_offset() {
-  return in_ByteSize(InstanceKlass::header_size() * wordSize);
-}
 
 #ifndef PRODUCT
 

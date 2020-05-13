@@ -26,13 +26,12 @@ import com.sun.org.apache.bcel.internal.classfile.ConstantPool;
 /**
  * Super class for the GET/PUTxxx family of instructions.
  *
- * @version $Id: FieldInstruction.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public abstract class FieldInstruction extends FieldOrMethod {
 
     /**
-     * Empty constructor needed for the Class.newInstance() statement in
-     * Instruction.readInstruction(). Not to be used otherwise.
+     * Empty constructor needed for Instruction.readInstruction.
+     * Not to be used otherwise.
      */
     FieldInstruction() {
     }

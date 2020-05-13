@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,9 @@
 package sun.security.util;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * A package private utility class to convert indefinite length DER
@@ -90,8 +92,6 @@ class DerIndefLenConverter {
      * add the current position to the <code>eocList</code> vector.
      */
     private void parseTag() throws IOException {
-        if (dataPos == dataSize)
-            return;
         if (isEOC(data[dataPos]) && (data[dataPos + 1] == 0)) {
             int numOfEncapsulatedLenBytes = 0;
             Object elem = null;
@@ -143,6 +143,10 @@ class DerIndefLenConverter {
     /**
      * Parse the length and if it is an indefinite length then add
      * the current position to the <code>ndefsList</code> vector.
+     *
+     * @return the length of definite length data next, or -1 if there is
+     *         not enough bytes to determine it
+     * @throws IOException if invalid data is read
      */
     private int parseLength() throws IOException {
         int curLen = 0;
@@ -160,7 +164,7 @@ class DerIndefLenConverter {
                 throw new IOException("Too much data");
             }
             if ((dataSize - dataPos) < (lenByte + 1)) {
-                throw new IOException("Too little data");
+                return -1;
             }
             for (int i = 0; i < lenByte; i++) {
                 curLen = (curLen << 8) + (data[dataPos++] & 0xff);
@@ -314,10 +318,10 @@ class DerIndefLenConverter {
      * @param indefData the byte array holding the indefinite
      *        length encoding.
      * @return the byte array containing the definite length
-     *         DER encoding.
+     *         DER encoding, or null if there is not enough data.
      * @exception IOException on parsing or re-writing errors.
      */
-    byte[] convert(byte[] indefData) throws IOException {
+    byte[] convertBytes(byte[] indefData) throws IOException {
         data = indefData;
         dataPos=0; index=0;
         dataSize = data.length;
@@ -326,8 +330,15 @@ class DerIndefLenConverter {
 
         // parse and set up the vectors of all the indefinite-lengths
         while (dataPos < dataSize) {
+            if (dataPos + 2 > dataSize) {
+                // There should be at least one tag and one length
+                return null;
+            }
             parseTag();
             len = parseLength();
+            if (len < 0) {
+                return null;
+            }
             parseValue(len);
             if (unresolved == 0) {
                 unused = dataSize - dataPos;
@@ -337,7 +348,7 @@ class DerIndefLenConverter {
         }
 
         if (unresolved != 0) {
-            throw new IOException("not all indef len BER resolved");
+            return null;
         }
 
         newData = new byte[dataSize + numOfTotalLenBytes + unused];
@@ -353,5 +364,49 @@ class DerIndefLenConverter {
                          newData, dataSize + numOfTotalLenBytes, unused);
 
         return newData;
+    }
+
+    /**
+     * Read the input stream into a DER byte array. If an indef len BER is
+     * not resolved this method will try to read more data until EOF is reached.
+     * This may block.
+     *
+     * @param in the input stream with tag and lenByte already read
+     * @param lenByte the length of the length field to remember
+     * @param tag the tag to remember
+     * @return a DER byte array
+     * @throws IOException if not all indef len BER
+     *         can be resolved or another I/O error happens
+     */
+    public static byte[] convertStream(InputStream in, byte lenByte, byte tag)
+            throws IOException {
+        int offset = 2;     // for tag and length bytes
+        int readLen = in.available();
+        byte[] indefData = new byte[readLen + offset];
+        indefData[0] = tag;
+        indefData[1] = lenByte;
+        while (true) {
+            int bytesRead = in.readNBytes(indefData, offset, readLen);
+            if (bytesRead != readLen) {
+                readLen = bytesRead;
+                indefData = Arrays.copyOf(indefData, offset + bytesRead);
+            }
+            DerIndefLenConverter derIn = new DerIndefLenConverter();
+            byte[] result = derIn.convertBytes(indefData);
+            if (result == null) {
+                int next = in.read(); // This could block, but we need more
+                if (next == -1) {
+                    throw new IOException("not all indef len BER resolved");
+                }
+                int more = in.available();
+                // expand array to include next and more
+                indefData = Arrays.copyOf(indefData, offset + readLen + 1 + more);
+                indefData[offset + readLen] = (byte)next;
+                offset = offset + readLen + 1;
+                readLen = more;
+            } else {
+                return result;
+            }
+        }
     }
 }

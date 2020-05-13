@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,12 +31,14 @@ import java.util.List;
 import jdk.jfr.Event;
 import jdk.jfr.events.ActiveRecordingEvent;
 import jdk.jfr.events.ActiveSettingEvent;
+import jdk.jfr.events.DirectBufferStatisticsEvent;
 import jdk.jfr.events.ErrorThrownEvent;
 import jdk.jfr.events.ExceptionStatisticsEvent;
 import jdk.jfr.events.ExceptionThrownEvent;
 import jdk.jfr.events.FileForceEvent;
 import jdk.jfr.events.FileReadEvent;
 import jdk.jfr.events.FileWriteEvent;
+import jdk.jfr.events.ProcessStartEvent;
 import jdk.jfr.events.SecurityPropertyModificationEvent;
 import jdk.jfr.events.SocketReadEvent;
 import jdk.jfr.events.SocketWriteEvent;
@@ -56,7 +58,8 @@ public final class JDKEvents {
         SecurityPropertyModificationEvent.class,
         TLSHandshakeEvent.class,
         X509CertificateEvent.class,
-        X509ValidationEvent.class
+        X509ValidationEvent.class,
+        ProcessStartEvent.class
     };
 
     private static final Class<?>[] eventClasses = {
@@ -73,7 +76,9 @@ public final class JDKEvents {
         jdk.internal.event.SecurityPropertyModificationEvent.class,
         jdk.internal.event.TLSHandshakeEvent.class,
         jdk.internal.event.X509CertificateEvent.class,
-        jdk.internal.event.X509ValidationEvent.class
+        jdk.internal.event.X509ValidationEvent.class,
+        jdk.internal.event.ProcessStartEvent.class,
+        DirectBufferStatisticsEvent.class
     };
 
     // This is a list of the classes with instrumentation code that should be applied.
@@ -90,6 +95,7 @@ public final class JDKEvents {
     private static final Class<?>[] targetClasses = new Class<?>[instrumentationClasses.length];
     private static final JVM jvm = JVM.getJVM();
     private static final Runnable emitExceptionStatistics = JDKEvents::emitExceptionStatistics;
+    private static final Runnable emitDirectBufferStatistics = JDKEvents::emitDirectBufferStatistics;
     private static boolean initializationTriggered;
 
     @SuppressWarnings("unchecked")
@@ -104,6 +110,7 @@ public final class JDKEvents {
                 }
                 initializationTriggered = true;
                 RequestEngine.addTrustedJDKHook(ExceptionStatisticsEvent.class, emitExceptionStatistics);
+                RequestEngine.addTrustedJDKHook(DirectBufferStatisticsEvent.class, emitDirectBufferStatistics);
             }
         } catch (Exception e) {
             Logger.log(LogTag.JFR_SYSTEM, LogLevel.WARN, "Could not initialize JDK events. " + e.getMessage());
@@ -123,6 +130,8 @@ public final class JDKEvents {
             list.add(java.lang.Error.class);
             Logger.log(LogTag.JFR_SYSTEM, LogLevel.INFO, "Retransformed JDK classes");
             jvm.retransformClasses(list.toArray(new Class<?>[list.size()]));
+        } catch (IllegalStateException ise) {
+            throw ise;
         } catch (Exception e) {
             Logger.log(LogTag.JFR_SYSTEM, LogLevel.WARN, "Could not add instrumentation for JDK events. " + e.getMessage());
         }
@@ -158,5 +167,11 @@ public final class JDKEvents {
 
     public static void remove() {
         RequestEngine.removeHook(JDKEvents::emitExceptionStatistics);
+        RequestEngine.removeHook(emitDirectBufferStatistics);
+    }
+
+    private static void emitDirectBufferStatistics() {
+        DirectBufferStatisticsEvent e = new DirectBufferStatisticsEvent();
+        e.commit();
     }
 }

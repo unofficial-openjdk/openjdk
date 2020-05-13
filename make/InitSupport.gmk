@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ ifeq ($(HAS_SPEC),)
       COMPARE_BUILD JTREG GTEST MICRO TEST_OPTS TEST_VM_OPTS
 
   # All known make control variables
-  MAKE_CONTROL_VARIABLES := $(INIT_CONTROL_VARIABLES) TEST JDK_FILTER
+  MAKE_CONTROL_VARIABLES := $(INIT_CONTROL_VARIABLES) TEST JDK_FILTER SPEC_FILTER
 
   # Define a simple reverse function.
   # Should maybe move to MakeBase.gmk, but we can't include that file now.
@@ -264,13 +264,9 @@ ifeq ($(HAS_SPEC),)
       endif
     endif
 
-    # The --no-print-directory is needed to make the call from
-    # FindTest.gmk to Test.gmk work with LOG=debug/trace. See
-    # JDK-8213736
     $$(main_targets_file):
 	@( cd $$(topdir) && \
-	$$(MAKE) $$(MAKE_LOG_FLAGS) -r -R --no-print-directory \
-	    -f $$(topdir)/make/Main.gmk \
+	$$(MAKE) $$(MAKE_LOG_FLAGS) -r -R -f $$(topdir)/make/Main.gmk \
 	    -I $$(topdir)/make/common SPEC=$(strip $2) NO_RECIPES=true \
 	    $$(MAKE_LOG_VARS) \
 	    create-main-targets-include )
@@ -300,12 +296,24 @@ else # $(HAS_SPEC)=true
   BUILD_PROFILE_LOG := $(OUTPUTDIR)/build-profile.log
 
   BUILD_LOG_PIPE := > >($(TEE) -a $(BUILD_LOG)) 2> >($(TEE) -a $(BUILD_LOG) >&2) && wait
+  # Use this for simple echo/printf commands that are never expected to print
+  # to stderr.
+  BUILD_LOG_PIPE_SIMPLE := | $(TEE) -a $(BUILD_LOG)
 
   ifneq ($(CUSTOM_ROOT), )
     topdir=$(CUSTOM_ROOT)
   else
     topdir=$(TOPDIR)
   endif
+
+  # Setup the build environment to match the requested specification on
+  # level of reproducible builds
+  define SetupReproducibleBuild
+    ifeq ($$(SOURCE_DATE), updated)
+      SOURCE_DATE := $$(shell $$(DATE) +"%s")
+    endif
+    export SOURCE_DATE_EPOCH := $$(SOURCE_DATE)
+  endef
 
   # Parse COMPARE_BUILD into COMPARE_BUILD_*
   # Syntax: COMPARE_BUILD=CONF=<configure options>:PATCH=<patch file>:
@@ -388,7 +396,7 @@ else # $(HAS_SPEC)=true
 	fi
         # Re-run configure with the same arguments (and possibly some additional),
         # must be done after patching.
-	( cd $(OUTPUTDIR) && PATH="$(ORIGINAL_PATH)" \
+	( cd $(CONFIGURE_START_DIR) && PATH="$(ORIGINAL_PATH)" \
 	    $(BASH) $(topdir)/configure $(CONFIGURE_COMMAND_LINE) $(COMPARE_BUILD_CONF))
   endef
 
@@ -425,8 +433,8 @@ else # $(HAS_SPEC)=true
 	        $(if $(filter all, $(LOG_REPORT)), \
 	          $(GREP) -v -e "^Note: including file:" <  $(logfile) || true $(NEWLINE) \
 	        , \
-	          ($(GREP) -v -e "^Note: including file:" <  $(logfile) || true) | $(HEAD) -n 12 $(NEWLINE) \
-	          if test `$(WC) -l < $(logfile)` -gt 12; then \
+	          ($(GREP) -v -e "^Note: including file:" <  $(logfile) || true) | $(HEAD) -n 15 $(NEWLINE) \
+	          if test `$(WC) -l < $(logfile)` -gt 15; then \
 	            $(ECHO) "   ... (rest of output omitted)" ; \
 	          fi $(NEWLINE) \
 	        ) \
@@ -472,15 +480,15 @@ else # $(HAS_SPEC)=true
   # Remove any javac server logs and port files. This
   # prevents a new make run to reuse the previous servers.
   define PrepareSmartJavac
-	$(if $(SJAVAC_SERVER_DIR), \
-	  $(RM) -r $(SJAVAC_SERVER_DIR) 2> /dev/null && \
-	  $(MKDIR) -p $(SJAVAC_SERVER_DIR) \
+	$(if $(JAVAC_SERVER_DIR), \
+	  $(RM) -r $(JAVAC_SERVER_DIR) 2> /dev/null && \
+	  $(MKDIR) -p $(JAVAC_SERVER_DIR) \
 	)
   endef
 
   define CleanupSmartJavac
-	[ -f $(SJAVAC_SERVER_DIR)/server.port ] && $(ECHO) Stopping sjavac server && \
-	    $(TOUCH) $(SJAVAC_SERVER_DIR)/server.port.stop; true
+	[ -f $(JAVAC_SERVER_DIR)/server.port ] && $(ECHO) Stopping sjavac server && \
+	    $(TOUCH) $(JAVAC_SERVER_DIR)/server.port.stop; true
   endef
 
   ifeq ($(call isBuildOs, windows), true)
@@ -489,7 +497,7 @@ else # $(HAS_SPEC)=true
     # synchronization process, wait for a while and hope it helps. This is only
     # used by build comparisons.
     define WaitForSmartJavacFinish
-	$(if $(SJAVAC_SERVER_DIR), \
+	$(if $(JAVAC_SERVER_DIR), \
 	  sleep 5\
 	)
     endef
@@ -518,7 +526,7 @@ else # $(HAS_SPEC)=true
 	    "`$(LS) $(BUILDTIMESDIR)/build_time_diff_* | $(GREP) -v _TOTAL | \
 	    $(XARGS) $(CAT) | $(SORT) -k 2`" \
 	    "`$(CAT) $(BUILDTIMESDIR)/build_time_diff_TOTAL`" \
-	    $(BUILD_LOG_PIPE)
+	    $(BUILD_LOG_PIPE_SIMPLE)
   endef
 
   define ReportProfileTimes
@@ -528,7 +536,7 @@ else # $(HAS_SPEC)=true
         $(CAT) $(BUILD_PROFILE_LOG) && \
         $(ECHO) End $(notdir $(BUILD_PROFILE_LOG)); \
       } \
-      $(BUILD_LOG_PIPE)
+      $(BUILD_LOG_PIPE_SIMPLE)
     )
   endef
 

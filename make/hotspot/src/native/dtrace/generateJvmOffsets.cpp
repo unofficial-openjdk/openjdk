@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@
 #include <proc_service.h>
 #include "gc/shared/collectedHeap.hpp"
 #include "memory/heap.hpp"
+#include "oops/compressedOops.hpp"
 #include "runtime/vmStructs.hpp"
 
 typedef enum GEN_variant {
@@ -62,7 +63,6 @@ typedef enum GEN_variant {
  */
 
 #pragma weak tty
-#pragma weak CMSExpAvgFactor
 
 #if defined(i386) || defined(__i386) || defined(__amd64)
 #pragma weak noreg
@@ -213,7 +213,7 @@ int generateJvmOffsets(GEN_variant gen_variant) {
   GEN_VALUE(AccessFlags_NATIVE, JVM_ACC_NATIVE);
   GEN_VALUE(ConstMethod_has_linenumber_table, ConstMethod::_has_linenumber_table);
   GEN_OFFS(AccessFlags, _flags);
-  GEN_OFFS(Symbol, _length_and_refcount);
+  GEN_OFFS(Symbol, _length);
   GEN_OFFS(Symbol, _body);
   printf("\n");
 

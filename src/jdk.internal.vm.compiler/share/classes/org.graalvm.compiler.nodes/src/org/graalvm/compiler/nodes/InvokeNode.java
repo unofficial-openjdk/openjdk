@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,13 +48,14 @@ import org.graalvm.compiler.nodeinfo.NodeSize;
 import org.graalvm.compiler.nodeinfo.Verbosity;
 import org.graalvm.compiler.nodes.java.MethodCallTargetNode;
 import org.graalvm.compiler.nodes.memory.AbstractMemoryCheckpoint;
-import org.graalvm.compiler.nodes.memory.MemoryCheckpoint;
+import org.graalvm.compiler.nodes.memory.SingleMemoryKill;
 import org.graalvm.compiler.nodes.spi.LIRLowerable;
 import org.graalvm.compiler.nodes.spi.LoweringTool;
 import org.graalvm.compiler.nodes.spi.NodeLIRBuilderTool;
 import org.graalvm.compiler.nodes.spi.UncheckedInterfaceProvider;
 import jdk.internal.vm.compiler.word.LocationIdentity;
 
+import jdk.vm.ci.code.BytecodeFrame;
 import jdk.vm.ci.meta.JavaKind;
 
 /**
@@ -70,13 +71,13 @@ import jdk.vm.ci.meta.JavaKind;
           sizeRationale = "We can only dynamically, based on the type of the call (special, static, virtual, interface) decide" +
                           "how much code is generated for the call.")
 // @formatter:on
-public final class InvokeNode extends AbstractMemoryCheckpoint implements Invoke, LIRLowerable, MemoryCheckpoint.Single, UncheckedInterfaceProvider {
+public final class InvokeNode extends AbstractMemoryCheckpoint implements Invoke, LIRLowerable, SingleMemoryKill, UncheckedInterfaceProvider {
     public static final NodeClass<InvokeNode> TYPE = NodeClass.create(InvokeNode.class);
 
     @OptionalInput ValueNode classInit;
     @Input(Extension) CallTargetNode callTarget;
     @OptionalInput(State) FrameState stateDuring;
-    protected final int bci;
+    protected int bci;
     protected boolean polymorphic;
     protected boolean useForInlining;
     protected final LocationIdentity identity;
@@ -102,15 +103,19 @@ public final class InvokeNode extends AbstractMemoryCheckpoint implements Invoke
         this.identity = identity;
     }
 
-    public InvokeNode replaceWithNewBci(int newBci) {
-        InvokeNode newInvoke = graph().add(new InvokeNode(callTarget, newBci, stamp, identity));
-        newInvoke.setUseForInlining(useForInlining);
-        newInvoke.setPolymorphic(polymorphic);
-        newInvoke.setStateAfter(stateAfter);
-        newInvoke.setStateDuring(stateDuring);
-        newInvoke.setClassInit(classInit);
-        graph().replaceFixedWithFixed(this, newInvoke);
-        return newInvoke;
+    public InvokeNode(InvokeWithExceptionNode invoke) {
+        super(TYPE, invoke.stamp);
+        this.callTarget = invoke.callTarget;
+        this.bci = invoke.bci;
+        this.polymorphic = invoke.polymorphic;
+        this.useForInlining = invoke.useForInlining;
+        this.identity = invoke.getKilledLocationIdentity();
+    }
+
+    @Override
+    public void replaceBci(int newBci) {
+        assert BytecodeFrame.isPlaceholderBci(bci) && !BytecodeFrame.isPlaceholderBci(newBci) : "can only replace placeholder with better bci";
+        bci = newBci;
     }
 
     @Override
@@ -176,7 +181,7 @@ public final class InvokeNode extends AbstractMemoryCheckpoint implements Invoke
     }
 
     @Override
-    public LocationIdentity getLocationIdentity() {
+    public LocationIdentity getKilledLocationIdentity() {
         return identity;
     }
 

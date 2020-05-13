@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,46 +35,57 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.FileObject;
 import java.lang.annotation.Annotation;
+import java.util.List;
 import java.util.Set;
 
 public interface DocletElement extends Element {
 
-    public default TypeMirror asType() {
+    @Override
+    default TypeMirror asType() {
         throw new UnsupportedOperationException("Unsupported method");
     }
 
+    @Override
     default ElementKind getKind() {
         return ElementKind.OTHER;
     }
 
+    @Override
     default Set<Modifier> getModifiers() {
         throw new UnsupportedOperationException("Unsupported method");
     }
 
+    @Override
     default Name getSimpleName() {
         throw new UnsupportedOperationException("Unsupported method");
     }
 
+    @Override
     default Element getEnclosingElement() {
         throw new UnsupportedOperationException("Unsupported method");
     }
 
-    default java.util.List<? extends Element> getEnclosedElements() {
+    @Override
+    default List<? extends Element> getEnclosedElements() {
         throw new UnsupportedOperationException("Unsupported method");
     }
 
-    default java.util.List<? extends AnnotationMirror> getAnnotationMirrors() {
+    @Override
+    default List<? extends AnnotationMirror> getAnnotationMirrors() {
         throw new UnsupportedOperationException("Unsupported method");
     }
 
+    @Override
     default <A extends Annotation> A getAnnotation(Class<A> annotationType) {
         throw new UnsupportedOperationException("Unsupported method");
     }
 
+    @Override
     default <R, P> R accept(ElementVisitor<R, P> v, P p) {
         return v.visitUnknown(this, p);
     }
 
+    @Override
     default <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationType) {
         throw new UnsupportedOperationException("Unsupported method");
     }
@@ -82,13 +93,14 @@ public interface DocletElement extends Element {
     /**
      * Returns the anchoring package element, in the case of a
      * module element, this is the module's unnamed package.
+     *
      * @return the anchor element.
      */
     PackageElement getPackageElement();
 
     /**
      * Returns the file object associated with this special
-     * element such as overview.html, doc-file/foo.html.
+     * element such as {@code overview.html}, {@code doc-files/foo.html}.
      * @return the file object
      */
     FileObject getFileObject();
@@ -102,7 +114,7 @@ public interface DocletElement extends Element {
     /**
      * Sub kind enums that this element supports.
      */
-    public static enum Kind {
+    enum Kind {
         OVERVIEW, DOCFILE;
     }
 }

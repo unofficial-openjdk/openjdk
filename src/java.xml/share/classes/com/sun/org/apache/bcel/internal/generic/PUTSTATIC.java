@@ -30,13 +30,12 @@ import com.sun.org.apache.bcel.internal.ExceptionConst;
  * OR
  * <PRE>Stack: ..., value.word1, value.word2 -&gt; ...</PRE>
  *
- * @version $Id: PUTSTATIC.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public class PUTSTATIC extends FieldInstruction implements ExceptionThrower, PopInstruction {
 
     /**
-     * Empty constructor needed for the Class.newInstance() statement in
-     * Instruction.readInstruction(). Not to be used otherwise.
+     * Empty constructor needed for Instruction.readInstruction.
+     * Not to be used otherwise.
      */
     PUTSTATIC() {
     }

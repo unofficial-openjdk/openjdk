@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,12 +54,11 @@ ConstantPool* BytecodeConstantPool::create_constant_pool(TRAPS) const {
       _orig->length() + _entries.length(), CHECK_NULL);
 
   cp->set_pool_holder(_orig->pool_holder());
-  _orig->copy_cp_to(1, _orig->length() - 1, cp, 1, CHECK_NULL);
+  constantPoolHandle cp_h(THREAD, cp);
+  _orig->copy_cp_to(1, _orig->length() - 1, cp_h, 1, CHECK_NULL);
 
   // Preserve dynamic constant information from the original pool
-  if (_orig->has_dynamic_constant()) {
-    cp->set_has_dynamic_constant();
-  }
+  cp->copy_fields(_orig);
 
   for (int i = 0; i < _entries.length(); ++i) {
     BytecodeCPEntry entry = _entries.at(i);
@@ -187,9 +186,11 @@ void BytecodeAssembler::load(BasicType bt, u4 index) {
     case T_FLOAT:   fload(index); break;
     case T_DOUBLE:  dload(index); break;
     case T_LONG:    lload(index); break;
-    case T_OBJECT:
-    case T_ARRAY:   aload(index); break;
     default:
+      if (is_reference_type(bt)) {
+                    aload(index);
+                    break;
+      }
       ShouldNotReachHere();
   }
 }
@@ -254,10 +255,12 @@ void BytecodeAssembler::_return(BasicType bt) {
     case T_FLOAT:   freturn(); break;
     case T_DOUBLE:  dreturn(); break;
     case T_LONG:    lreturn(); break;
-    case T_OBJECT:
-    case T_ARRAY:   areturn(); break;
     case T_VOID:    _return(); break;
     default:
+      if (is_reference_type(bt)) {
+                    areturn();
+                    break;
+      }
       ShouldNotReachHere();
   }
 }

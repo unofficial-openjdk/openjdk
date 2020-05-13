@@ -26,6 +26,8 @@
 
 gif_lib_private.h - internal giflib routines and structures
 
+SPDX-License-Identifier: MIT
+
 ****************************************************************************/
 
 #ifndef _GIF_LIB_PRIVATE_H
@@ -33,6 +35,10 @@ gif_lib_private.h - internal giflib routines and structures
 
 #include "gif_lib.h"
 #include "gif_hash.h"
+
+#ifndef SIZE_MAX
+    #define SIZE_MAX     UINTPTR_MAX
+#endif
 
 #define EXTENSION_INTRODUCER      0x21
 #define DESCRIPTOR_INTRODUCER     0x2c
@@ -77,6 +83,11 @@ typedef struct GifFilePrivateType {
     GifHashTableType *HashTable;
     bool gif89;
 } GifFilePrivateType;
+
+#ifndef HAVE_REALLOCARRAY
+extern void *openbsd_reallocarray(void *optr, size_t nmemb, size_t size);
+#define reallocarray openbsd_reallocarray
+#endif
 
 #endif /* _GIF_LIB_PRIVATE_H */
 

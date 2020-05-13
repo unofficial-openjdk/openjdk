@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@
 #define SHARE_JFR_LEAKPROFILER_CHAINS_OBJECTSAMPLEMARKER_HPP
 
 #include "memory/allocation.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
 #include "utilities/growableArray.hpp"
 //
 // This class will save the original mark oop of a object sample object.
@@ -36,45 +36,42 @@
 //
 class ObjectSampleMarker : public StackObj {
  private:
-  class ObjectSampleMarkOop : public ResourceObj {
+  class ObjectSampleMarkWord : public ResourceObj {
     friend class ObjectSampleMarker;
    private:
     oop _obj;
-    markOop _mark_oop;
-    ObjectSampleMarkOop(const oop obj,
-                        const markOop mark_oop) : _obj(obj),
-                                                  _mark_oop(mark_oop) {}
+    markWord _mark_word;
+    ObjectSampleMarkWord(const oop obj,
+                         const markWord mark_word) : _obj(obj),
+                                                     _mark_word(mark_word) {}
    public:
-    ObjectSampleMarkOop() : _obj(NULL), _mark_oop(NULL) {}
+    ObjectSampleMarkWord() : _obj(NULL), _mark_word(markWord::zero()) {}
   };
 
-  GrowableArray<ObjectSampleMarkOop>* _store;
+  GrowableArray<ObjectSampleMarkWord>* _store;
 
  public:
   ObjectSampleMarker() :
-       _store(new GrowableArray<ObjectSampleMarkOop>(16)) {}
+       _store(new GrowableArray<ObjectSampleMarkWord>(16)) {}
   ~ObjectSampleMarker() {
     assert(_store != NULL, "invariant");
-    // restore the saved, original, markOop for sample objects
+    // restore the saved, original, markWord for sample objects
     while (_store->is_nonempty()) {
-      ObjectSampleMarkOop sample_oop = _store->pop();
-      sample_oop._obj->set_mark(sample_oop._mark_oop);
-      assert(sample_oop._obj->mark() == sample_oop._mark_oop, "invariant");
+      ObjectSampleMarkWord sample_oop = _store->pop();
+      sample_oop._obj->set_mark(sample_oop._mark_word);
+      assert(sample_oop._obj->mark() == sample_oop._mark_word, "invariant");
     }
   }
 
   void mark(oop obj) {
     assert(obj != NULL, "invariant");
-    // save the original markOop
-    _store->push(ObjectSampleMarkOop(obj, obj->mark()));
-    // now we will "poison" the mark word of the sample object
-    // to the intermediate monitor INFLATING state.
-    // This is an "impossible" state during a safepoint,
-    // hence we will use it to quickly identify sample objects
-    // during the reachability search from gc roots.
-    assert(NULL == markOopDesc::INFLATING(), "invariant");
-    obj->set_mark(markOopDesc::INFLATING());
-    assert(NULL == obj->mark(), "invariant");
+    // save the original markWord
+    _store->push(ObjectSampleMarkWord(obj, obj->mark()));
+    // now we will set the mark word to "marked" in order to quickly
+    // identify sample objects during the reachability search from gc roots.
+    assert(!obj->mark().is_marked(), "should only mark an object once");
+    obj->set_mark(markWord::prototype().set_marked());
+    assert(obj->mark().is_marked(), "invariant");
   }
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,7 +75,7 @@ import jdk.internal.vm.annotation.Stable;
  * ModuleLayer.boot().configuration()}. The configuration for the boot layer
  * will often be the parent when creating new configurations. </p>
  *
- * <h3> Example </h3>
+ * <h2> Example </h2>
  *
  * <p> The following example uses the {@link
  * #resolve(ModuleFinder,ModuleFinder,Collection) resolve} method to resolve a
@@ -312,7 +312,7 @@ public final class Configuration {
     {
         List<Configuration> parents = List.of(empty());
         Resolver resolver = new Resolver(finder, parents, ModuleFinder.of(), traceOutput);
-        resolver.resolve(roots).bind();
+        resolver.resolve(roots).bind(/*bindIncubatorModules*/false);
         return new Configuration(parents, resolver);
     }
 
@@ -509,7 +509,7 @@ public final class Configuration {
 
     /**
      * Returns an unmodifiable list of this configuration's parents, in search
-     * order. If this is the {@linkplain #empty empty configuration} then an
+     * order. If this is the {@linkplain #empty() empty configuration} then an
      * empty list is returned.
      *
      * @return A possibly-empty unmodifiable list of this parent configurations
@@ -520,7 +520,7 @@ public final class Configuration {
 
 
     /**
-     * Returns an immutable set of the resolved modules in this configuration.
+     * Returns an unmodifiable set of the resolved modules in this configuration.
      *
      * @return A possibly-empty unmodifiable set of the resolved modules
      *         in this configuration
@@ -575,7 +575,8 @@ public final class Configuration {
     }
 
     Set<ResolvedModule> reads(ResolvedModule m) {
-        return Collections.unmodifiableSet(graph.get(m));
+        // The sets stored in the graph are already immutable sets
+        return Set.copyOf(graph.get(m));
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,8 +35,20 @@ import jtreg.SkippedException;
  * @summary Test the clhsdb 'findpc' command
  * @requires vm.hasSA
  * @requires vm.compiler1.enabled
+ * @requires vm.opt.DeoptimizeALot != true
  * @library /test/lib
- * @run main/othervm/timeout=480 ClhsdbFindPC
+ * @run main/othervm/timeout=480 ClhsdbFindPC true
+ */
+
+/**
+ * @test
+ * @bug 8193124
+ * @summary Test the clhsdb 'findpc' command
+ * @requires vm.compMode != "Xcomp"
+ * @requires vm.hasSA
+ * @requires vm.compiler1.enabled
+ * @library /test/lib
+ * @run main/othervm/timeout=480 ClhsdbFindPC false
  */
 
 public class ClhsdbFindPC {
@@ -45,8 +57,13 @@ public class ClhsdbFindPC {
         LingeredApp theApp = null;
         try {
             ClhsdbLauncher test = new ClhsdbLauncher();
-            theApp = withXcomp ? LingeredApp.startApp(List.of("-Xcomp"))
-                               : LingeredApp.startApp(List.of("-Xint"));
+
+            theApp = new LingeredAppWithTrivialMain();
+            if (withXcomp) {
+                LingeredApp.startApp(theApp, "-Xcomp");
+            } else {
+                LingeredApp.startApp(theApp, "-Xint");
+            }
             System.out.print("Started LingeredApp ");
             if (withXcomp) {
                 System.out.print("(-Xcomp) ");
@@ -63,36 +80,32 @@ public class ClhsdbFindPC {
             // the 'jstack -v' command
             cmds = new ArrayList<String>();
 
-            // Output could be null if the test was skipped due to
-            // attach permission issues.
-            if (output != null) {
-                String cmdStr = null;
-                String[] parts = output.split("LingeredApp.main");
-                String[] tokens = parts[1].split(" ");
-                for (String token : tokens) {
-                    if (token.contains("pc")) {
-                        String[] address = token.split("=");
-                        // address[1] represents the address of the Method
-                        cmdStr = "findpc " + address[1].replace(",","");
-                        cmds.add(cmdStr);
-                        break;
-                    }
+            String cmdStr = null;
+            String[] parts = output.split("LingeredAppWithTrivialMain.main");
+            String[] tokens = parts[1].split(" ");
+            for (String token : tokens) {
+                if (token.contains("pc")) {
+                    String[] address = token.split("=");
+                    // address[1] represents the address of the Method
+                    cmdStr = "findpc " + address[1].replace(",","");
+                    cmds.add(cmdStr);
+                    break;
                 }
+            }
 
-                Map<String, List<String>> expStrMap = new HashMap<>();
-                if (withXcomp) {
-                    expStrMap.put(cmdStr, List.of(
-                            "In code in NMethod for jdk/test/lib/apps/LingeredApp.main",
+            Map<String, List<String>> expStrMap = new HashMap<>();
+            if (withXcomp) {
+                expStrMap.put(cmdStr, List.of(
+                            "In code in NMethod for LingeredAppWithTrivialMain.main",
                             "content:",
                             "oops:",
                             "frame size:"));
-                } else {
-                    expStrMap.put(cmdStr, List.of(
+            } else {
+                expStrMap.put(cmdStr, List.of(
                             "In interpreter codelet"));
-                }
-
-                test.run(theApp.getPid(), cmds, expStrMap, null);
             }
+
+            test.run(theApp.getPid(), cmds, expStrMap, null);
         } catch (SkippedException se) {
             throw se;
         } catch (Exception ex) {
@@ -103,10 +116,9 @@ public class ClhsdbFindPC {
     }
 
     public static void main(String[] args) throws Exception {
+        boolean xComp = Boolean.parseBoolean(args[0]);
         System.out.println("Starting the ClhsdbFindPC test");
-        testFindPC(true);
-        testFindPC(false);
+        testFindPC(xComp);
         System.out.println("Test PASSED");
     }
 }
-

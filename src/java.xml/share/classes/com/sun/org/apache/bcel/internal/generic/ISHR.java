@@ -25,7 +25,6 @@ package com.sun.org.apache.bcel.internal.generic;
  * ISHR - Arithmetic shift right int
  * <PRE>Stack: ..., value1, value2 -&gt; ..., result</PRE>
  *
- * @version $Id: ISHR.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public class ISHR extends ArithmeticInstruction {
 

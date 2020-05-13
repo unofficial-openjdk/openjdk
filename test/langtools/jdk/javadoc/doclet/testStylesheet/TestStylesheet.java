@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,27 +24,37 @@
 /*
  * @test
  * @bug      4494033 7028815 7052425 8007338 8023608 8008164 8016549 8072461 8154261 8162363 8160196 8151743 8177417
- *           8175218 8176452 8181215 8182263 8183511 8169819 8183037 8185369 8182765 8196201 8184205
+ *           8175218 8176452 8181215 8182263 8183511 8169819 8183037 8185369 8182765 8196201 8184205 8223378 8241544
  * @summary  Run tests on doclet stylesheet.
- * @author   jamieh
- * @library  ../../lib
+ * @library  /tools/lib ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
- * @build    javadoc.tester.*
+ * @build    toolbox.ToolBox javadoc.tester.*
  * @run main TestStylesheet
  */
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Function;
+
+import javadoc.tester.HtmlChecker;
 import javadoc.tester.JavadocTester;
+import toolbox.ToolBox;
 
 public class TestStylesheet extends JavadocTester {
 
     public static void main(String... args) throws Exception {
         TestStylesheet tester = new TestStylesheet();
-        tester.runTests();
+        tester.runTests(m -> new Object[] { Path.of(m.getName())});
     }
 
     @Test
-    public void test() {
-        javadoc("-d", "out",
+    public void test(Path base) {
+        javadoc("-d", base.resolve("out").toString(),
                 "-sourcepath", testSrc,
                 "pkg");
         checkExit(Exit.ERROR);
@@ -55,191 +65,381 @@ public class TestStylesheet extends JavadocTester {
         // TODO: most of this test seems a bit silly, since javadoc is simply
         // copying in the stylesheet from the source directory
         checkOutput("stylesheet.css", true,
-                "body {\n"
-                + "    background-color:#ffffff;\n"
-                + "    color:#353833;\n"
-                + "    font-family:'DejaVu Sans', Arial, Helvetica, sans-serif;\n"
-                + "    font-size:14px;\n"
-                + "    margin:0;\n"
-                + "    padding:0;\n"
-                + "    height:100%;\n"
-                + "    width:100%;\n"
-                + "}",
-                "iframe {\n"
-                + "    margin:0;\n"
-                + "    padding:0;\n"
-                + "    height:100%;\n"
-                + "    width:100%;\n"
-                + "    overflow-y:scroll;\n"
-                + "    border:none;\n"
-                + "}",
+                """
+                    body {
+                        background-color:#ffffff;
+                        color:#353833;
+                        font-family:'DejaVu Sans', Arial, Helvetica, sans-serif;
+                        font-size:14px;
+                        margin:0;
+                        padding:0;
+                        height:100%;
+                        width:100%;
+                    }""",
+                """
+                    iframe {
+                        margin:0;
+                        padding:0;
+                        height:100%;
+                        width:100%;
+                        overflow-y:scroll;
+                        border:none;
+                    }""",
                 "ul {\n"
                 + "    list-style-type:disc;\n"
                 + "}",
-                ".overviewSummary caption, .memberSummary caption, .typeSummary caption,\n"
-                + ".useSummary caption, .constantsSummary caption, .deprecatedSummary caption,\n"
-                + ".requiresSummary caption, .packagesSummary caption, .providesSummary caption, .usesSummary caption {\n"
-                + "    position:relative;\n"
-                + "    text-align:left;\n"
-                + "    background-repeat:no-repeat;\n"
-                + "    color:#253441;\n"
-                + "    font-weight:bold;\n"
-                + "    clear:none;\n"
-                + "    overflow:hidden;\n"
-                + "    padding:0px;\n"
-                + "    padding-top:10px;\n"
-                + "    padding-left:1px;\n"
-                + "    margin:0px;\n"
-                + "    white-space:pre;\n"
-                + "}",
-                ".overviewSummary caption span, .memberSummary caption span, .typeSummary caption span,\n"
-                + ".useSummary caption span, .constantsSummary caption span, .deprecatedSummary caption span,\n"
-                + ".requiresSummary caption span, .packagesSummary caption span, .providesSummary caption span,\n"
-                + ".usesSummary caption span {\n"
-                + "    white-space:nowrap;\n"
-                + "    padding-top:5px;\n"
-                + "    padding-left:12px;\n"
-                + "    padding-right:12px;\n"
-                + "    padding-bottom:7px;\n"
-                + "    display:inline-block;\n"
-                + "    float:left;\n"
-                + "    background-color:#F8981D;\n"
-                + "    border: none;\n"
-                + "    height:16px;\n"
-                + "}",
-                ".overviewSummary [role=tablist] button, .memberSummary [role=tablist] button,\n"
-                + ".typeSummary [role=tablist] button, .packagesSummary [role=tablist] button {\n"
-                + "   border: none;\n"
-                + "   cursor: pointer;\n"
-                + "   padding: 5px 12px 7px 12px;\n"
-                + "   font-weight: bold;\n"
-                + "   margin-right: 3px;\n"
-                + "}",
-                ".overviewSummary [role=tablist] .activeTableTab, .memberSummary [role=tablist] .activeTableTab,\n"
-                + ".typeSummary [role=tablist] .activeTableTab, .packagesSummary [role=tablist] .activeTableTab {\n"
-                + "   background: #F8981D;\n"
-                + "   color: #253441;\n"
-                + "}",
-                ".overviewSummary [role=tablist] .tableTab, .memberSummary [role=tablist] .tableTab,\n"
-                + ".typeSummary [role=tablist] .tableTab, .packagesSummary [role=tablist] .tableTab {\n"
-                + "   background: #4D7A97;\n"
-                + "   color: #FFFFFF;\n"
-                + "}",
+                """
+                    .overview-summary caption, .member-summary caption, .type-summary caption,
+                    .use-summary caption, .constants-summary caption, .deprecated-summary caption,
+                    .requires-summary caption, .packages-summary caption, .provides-summary caption,
+                    .uses-summary caption, .system-properties-summary caption {
+                        position:relative;
+                        text-align:left;
+                        background-repeat:no-repeat;
+                        color:#253441;
+                        font-weight:bold;
+                        clear:none;
+                        overflow:hidden;
+                        padding:0px;
+                        padding-top:10px;
+                        padding-left:1px;
+                        margin:0px;
+                        white-space:pre;
+                    }""",
+                """
+                    .overview-summary caption span, .member-summary caption span, .type-summary caption span,
+                    .use-summary caption span, .constants-summary caption span, .deprecated-summary caption span,
+                    .requires-summary caption span, .packages-summary caption span, .provides-summary caption span,
+                    .uses-summary caption span, .system-properties-summary caption span {
+                        white-space:nowrap;
+                        padding-top:5px;
+                        padding-left:12px;
+                        padding-right:12px;
+                        padding-bottom:7px;
+                        display:inline-block;
+                        float:left;
+                        background-color:#F8981D;
+                        border: none;
+                        height:16px;
+                    }""",
+                """
+                    div.table-tabs > button {
+                       border: none;
+                       cursor: pointer;
+                       padding: 5px 12px 7px 12px;
+                       font-weight: bold;
+                       margin-right: 3px;
+                    }
+                    div.table-tabs > button.active-table-tab {
+                       background: #F8981D;
+                       color: #253441;
+                    }
+                    div.table-tabs > button.table-tab {
+                       background: #4D7A97;
+                       color: #FFFFFF;
+                    }""",
                 // Test the formatting styles for proper content display in use and constant values pages.
-                ".overviewSummary td.colFirst, .overviewSummary th.colFirst,\n"
-                + ".requiresSummary td.colFirst, .requiresSummary th.colFirst,\n"
-                + ".packagesSummary td.colFirst, .packagesSummary td.colSecond, .packagesSummary th.colFirst, .packagesSummary th,\n"
-                + ".usesSummary td.colFirst, .usesSummary th.colFirst,\n"
-                + ".providesSummary td.colFirst, .providesSummary th.colFirst,\n"
-                + ".memberSummary td.colFirst, .memberSummary th.colFirst,\n"
-                + ".memberSummary td.colSecond, .memberSummary th.colSecond, .memberSummary th.colConstructorName,\n"
-                + ".typeSummary td.colFirst, .typeSummary th.colFirst {\n"
-                + "    vertical-align:top;\n"
-                + "}",
-                ".overviewSummary td, .memberSummary td, .typeSummary td,\n"
-                + ".useSummary td, .constantsSummary td, .deprecatedSummary td,\n"
-                + ".requiresSummary td, .packagesSummary td, .providesSummary td, .usesSummary td {\n"
-                + "    text-align:left;\n"
-                + "    padding:0px 0px 12px 10px;\n"
-                + "}",
+                """
+                    .overview-summary td.col-first, .overview-summary th.col-first,
+                    .requires-summary td.col-first, .requires-summary th.col-first,
+                    .packages-summary td.col-first, .packages-summary td.col-second, .packages-summary th.col-first, .packages-summary th,
+                    .uses-summary td.col-first, .uses-summary th.col-first,
+                    .provides-summary td.col-first, .provides-summary th.col-first,
+                    .member-summary td.col-first, .member-summary th.col-first,
+                    .member-summary td.col-second, .member-summary th.col-second, .member-summary th.col-constructor-name,
+                    .type-summary td.col-first, .type-summary th.col-first {
+                        vertical-align:top;
+                    }""",
+                """
+                    .overview-summary td, .member-summary td, .type-summary td,
+                    .use-summary td, .constants-summary td, .deprecated-summary td,
+                    .requires-summary td, .packages-summary td, .provides-summary td,
+                    .uses-summary td, .system-properties-summary td {
+                        text-align:left;
+                        padding:0px 0px 12px 10px;
+                    }""",
                 "@import url('resources/fonts/dejavu.css');",
-                ".navPadding {\n"
-                + "    padding-top: 107px;\n"
-                + "}",
-                "a[name]:before, a[name]:target, a[id]:before, a[id]:target {\n"
-                + "    content:\"\";\n"
-                + "    display:inline-block;\n"
-                + "    position:relative;\n"
-                + "    padding-top:129px;\n"
-                + "    margin-top:-129px;\n"
-                + "}",
-                ".searchTagResult:before, .searchTagResult:target {\n"
-                + "    color:red;\n"
-                + "}",
-                "a[href]:hover, a[href]:focus {\n"
-                + "    text-decoration:none;\n"
-                + "    color:#bb7a2a;\n"
-                + "}",
-                "td.colFirst a:link, td.colFirst a:visited,\n"
-                + "td.colSecond a:link, td.colSecond a:visited,\n"
-                + "th.colFirst a:link, th.colFirst a:visited,\n"
-                + "th.colSecond a:link, th.colSecond a:visited,\n"
-                + "th.colConstructorName a:link, th.colConstructorName a:visited,\n"
-                + "th.colDeprecatedItemName a:link, th.colDeprecatedItemName a:visited, \n"
-                + ".constantValuesContainer td a:link, .constantValuesContainer td a:visited, \n"
-                + ".allClassesContainer td a:link, .allClassesContainer td a:visited, \n"
-                + ".allPackagesContainer td a:link, .allPackagesContainer td a:visited {\n"
-                + "    font-weight:bold;\n"
-                + "}",
-                ".deprecationBlock {\n"
-                + "    font-size:14px;\n"
-                + "    font-family:'DejaVu Serif', Georgia, \"Times New Roman\", Times, serif;\n"
-                + "    border-style:solid;\n"
-                + "    border-width:thin;\n"
-                + "    border-radius:10px;\n"
-                + "    padding:10px;\n"
-                + "    margin-bottom:10px;\n"
-                + "    margin-right:10px;\n"
-                + "    display:inline-block;\n"
-                + "}",
-                "#reset {\n"
-                + "    background-color: rgb(255,255,255);\n"
-                + "    background-image:url('resources/x.png');\n"
-                + "    background-position:center;\n"
-                + "    background-repeat:no-repeat;\n"
-                + "    background-size:12px;\n"
-                + "    border:0 none;\n"
-                + "    width:16px;\n"
-                + "    height:17px;\n"
-                + "    position:relative;\n"
-                + "    left:-4px;\n"
-                + "    top:-4px;\n"
-                + "    font-size:0px;\n"
-                + "}",
-                ".watermark {\n"
-                + "    color:#545454;\n"
-                + "}");
+                """
+                    .search-tag-result:target {
+                        background-color:yellow;
+                    }""",
+                """
+                    a[href]:hover, a[href]:focus {
+                        text-decoration:none;
+                        color:#bb7a2a;
+                    }""",
+                """
+                    td.col-first a:link, td.col-first a:visited,
+                    td.col-second a:link, td.col-second a:visited,
+                    th.col-first a:link, th.col-first a:visited,
+                    th.col-second a:link, th.col-second a:visited,
+                    th.col-constructor-name a:link, th.col-constructor-name a:visited,
+                    th.col-deprecated-item-name a:link, th.col-deprecated-item-name a:visited,
+                    .constant-values-container td a:link, .constant-values-container td a:visited,
+                    .all-classes-container td a:link, .all-classes-container td a:visited,
+                    .all-packages-container td a:link, .all-packages-container td a:visited {
+                        font-weight:bold;
+                    }""",
+                """
+                    .deprecation-block {
+                        font-size:14px;
+                        font-family:'DejaVu Serif', Georgia, "Times New Roman", Times, serif;
+                        border-style:solid;
+                        border-width:thin;
+                        border-radius:10px;
+                        padding:10px;
+                        margin-bottom:10px;
+                        margin-right:10px;
+                        display:inline-block;
+                    }""",
+                """
+                    #reset {
+                        background-color: rgb(255,255,255);
+                        background-image:url('resources/x.png');
+                        background-position:center;
+                        background-repeat:no-repeat;
+                        background-size:12px;
+                        border:0 none;
+                        width:16px;
+                        height:16px;
+                        position:relative;
+                        left:-4px;
+                        top:-4px;
+                        font-size:0px;
+                    }""",
+                """
+                    .watermark {
+                        color:#545454;
+                    }""");
 
         checkOutput("pkg/A.html", true,
                 // Test whether a link to the stylesheet file is inserted properly
                 // in the class documentation.
-                "<link rel=\"stylesheet\" type=\"text/css\" "
-                + "href=\"../stylesheet.css\" title=\"Style\">",
-                "<div class=\"block\">Test comment for a class which has an <a name=\"named_anchor\">"
-                + "anchor_with_name</a> and\n"
-                + " an <a id=\"named_anchor1\">anchor_with_id</a>.</div>");
+                """
+                    <link rel="stylesheet" type="text/css" href="../stylesheet.css" title="Style">""",
+                """
+                    <div class="block">Test comment for a class which has an <a name="named_anchor">anchor_with_name</a> and
+                     an <a id="named_anchor1">anchor_with_id</a>.</div>""");
 
         checkOutput("pkg/package-summary.html", true,
-                "<td class=\"colLast\">\n"
-                + "<div class=\"block\">Test comment for a class which has an <a name=\"named_anchor\">"
-                + "anchor_with_name</a> and\n"
-                + " an <a id=\"named_anchor1\">anchor_with_id</a>.</div>\n"
-                + "</td>");
+                """
+                    <td class="col-last">
+                    <div class="block">Test comment for a class which has an <a name="named_anchor">anchor_with_name</a> and
+                     an <a id="named_anchor1">anchor_with_id</a>.</div>
+                    </td>""");
 
         checkOutput("index.html", true,
-                "<link rel=\"stylesheet\" type=\"text/css\" href=\"stylesheet.css\" title=\"Style\">");
+                """
+                    <link rel="stylesheet" type="text/css" href="stylesheet.css" title="Style">""");
 
         checkOutput("stylesheet.css", false,
-                "* {\n"
-                + "    margin:0;\n"
-                + "    padding:0;\n"
-                + "}",
-                "a:active {\n"
-                + "    text-decoration:none;\n"
-                + "    color:#4A6782;\n"
-                + "}",
-                "a[name]:hover {\n"
-                + "    text-decoration:none;\n"
-                + "    color:#353833;\n"
-                + "}",
-                "td.colFirst a:link, td.colFirst a:visited,\n"
-                + "td.colSecond a:link, td.colSecond a:visited,\n"
-                + "th.colFirst a:link, th.colFirst a:visited,\n"
-                + "th.colSecond a:link, th.colSecond a:visited,\n"
-                + "th.colConstructorName a:link, th.colConstructorName a:visited,\n"
-                + "td.colLast a:link, td.colLast a:visited,\n"
-                + ".constantValuesContainer td a:link, .constantValuesContainer td a:visited {\n"
-                + "    font-weight:bold;\n"
-                + "}");
+                """
+                    * {
+                        margin:0;
+                        padding:0;
+                    }""",
+                """
+                    a:active {
+                        text-decoration:none;
+                        color:#4A6782;
+                    }""",
+                """
+                    a[name]:hover {
+                        text-decoration:none;
+                        color:#353833;
+                    }""",
+                """
+                    td.col-first a:link, td.col-first a:visited,
+                    td.col-second a:link, td.col-second a:visited,
+                    th.col-first a:link, th.col-first a:visited,
+                    th.col-second a:link, th.col-second a:visited,
+                    th.col-constructor-name a:link, th.col-constructor-name a:visited,
+                    td.col-last a:link, td.col-last a:visited,
+                    .constant-values-container td a:link, .constant-values-container td a:visited {
+                        font-weight:bold;
+                    }""");
+    }
+
+    ToolBox tb = new ToolBox();
+
+    @Test
+    public void testStyles(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module mA { exports p; }",
+                """
+                    package p; public class C {
+                    public C() { }
+                    public C(int i) { }
+                    public int f1;
+                    public int f2;
+                    public int m1() { }
+                    public int m2(int i) { }
+                    }
+                    """,
+                """
+                    package p; public @interface Anno {
+                    public int value();
+                    }
+                    """
+        );
+
+        javadoc("-d", base.resolve("out").toString(),
+                "-sourcepath", src.toString(),
+                "--module", "mA");
+        checkExit(Exit.OK);
+        checkStyles(addExtraCSSClassNamesTo(readStylesheet()));
+    }
+
+    Set<String> readStylesheet() {
+        // scan for class selectors, skipping '{' ... '}'
+        Set<String> styles = new TreeSet<>();
+        String stylesheet = readFile("stylesheet.css");
+        for (int i = 0; i < stylesheet.length(); i++) {
+            char ch = stylesheet.charAt(i);
+            switch (ch) {
+                case '.':
+                    i++;
+                    int start = i;
+                    while (i < stylesheet.length()) {
+                        ch = stylesheet.charAt(i);
+                        if (!(Character.isLetterOrDigit(ch) || ch == '-')) {
+                            break;
+                        }
+                        i++;
+                    }
+                    styles.add(stylesheet.substring(start, i));
+                    break;
+
+                case '{':
+                    i++;
+                    while (i < stylesheet.length()) {
+                        ch = stylesheet.charAt(i);
+                        if (ch == '}') {
+                            break;
+                        }
+                        i++;
+                    }
+                    break;
+
+                case '@':
+                    i++;
+                    while (i < stylesheet.length()) {
+                        ch = stylesheet.charAt(i);
+                        if (ch == '{') {
+                            break;
+                        }
+                        i++;
+                    }
+                    break;
+            }
+        }
+        out.println("found styles: " + styles);
+        return styles;
+    }
+
+    Set<String> addExtraCSSClassNamesTo(Set<String> styles) throws Exception {
+        // The following names are used in the generated HTML,
+        // but have no corresponding definitions in the stylesheet file.
+        // They are mostly optional, in the "use if you want to" category.
+        // They are included here so that we do not get errors when these
+        // names are used in the generated HTML.
+        List<String> extra = List.of(
+                // entries for <body> elements
+                "all-classes-index-page",
+                "all-packages-index-page",
+                "constants-summary-page",
+                "deprecated-list-page",
+                "help-page",
+                "index-redirect-page",
+                "package-declaration-page",
+                "package-tree-page",
+                "single-index-page",
+                "tree-page",
+                // the following names are matched by [class$='...'] in the stylesheet
+                "constructor-details",
+                "constructor-summary",
+                "field-details",
+                "field-summary",
+                "member-details",
+                "method-details",
+                "method-summary",
+                // the following provide the ability to optionally override components of the
+                // memberSignature structure
+                "member-name",
+                "modifiers",
+                "packages",
+                "return-type",
+                // and others...
+                "help-section",     // part of the help page
+                "hierarchy",        // for the hierarchy on a tree page
+                "index"             // on the index page
+        );
+        Set<String> all = new TreeSet<>(styles);
+        for (String e : extra) {
+            if (styles.contains(e)) {
+                throw new Exception("extra CSS class name found in style sheet: " + e);
+            }
+            all.add(e);
+        }
+        return all;
+    }
+
+    /**
+     * Checks that all the CSS names found in {@code class} attributes in HTML files in the
+     * output directory are present in a given set of styles.
+     *
+     * @param styles the styles
+     */
+    void checkStyles(Set<String> styles) {
+        checking("Check CSS class names");
+        CSSClassChecker c = new CSSClassChecker(out, this::readFile, styles);
+        try {
+            c.checkDirectory(outputDir.toPath());
+            c.report();
+            int errors = c.getErrorCount();
+            if (errors == 0) {
+                passed("No CSS class name errors found");
+            } else {
+                failed(errors + " errors found when checking CSS class names");
+            }
+        } catch (IOException e) {
+            failed("exception thrown when reading files: " + e);
+        }
+
+    }
+
+    class CSSClassChecker extends HtmlChecker {
+        Set<String> styles;
+        int errors;
+
+        protected CSSClassChecker(PrintStream out,
+                                  Function<Path, String> fileReader,
+                                  Set<String> styles) {
+            super(out, fileReader);
+            this.styles = styles;
+        }
+
+        protected int getErrorCount() {
+            return errors;
+        }
+
+        @Override
+        protected void report() {
+            if (getErrorCount() == 0) {
+                out.println("All CSS class names found");
+            } else {
+                out.println(getErrorCount() + " CSS class names not found");
+            }
+
+        }
+
+        @Override
+        public void startElement(String name, Map<String,String> attrs, boolean selfClosing) {
+            String style = attrs.get("class");
+            if (style != null && !styles.contains(style)) {
+                error(currFile, getLineNumber(), "CSS class name not found: " + style);
+            }
+        }
     }
 }

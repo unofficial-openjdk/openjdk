@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@
  * @modules java.base/jdk.internal.misc
  *          java.management
  *          jdk.jartool/sun.tools.jar
- * @run main LongBCP
+ * @run driver LongBCP
  */
 
 import java.io.File;
@@ -39,7 +39,6 @@ import java.nio.file.FileStore;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import jdk.test.lib.Platform;
 import jdk.test.lib.compiler.CompilerUtils;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
@@ -103,8 +102,6 @@ public class LongBCP {
               .shouldHaveExitValue(0);
 
         // relative path tests
-        // We currently cannot handle relative path specified in the
-        // -Xbootclasspath/a on windows.
         //
         // relative path length within the file system limit
         int fn_max_length = 255;
@@ -126,13 +123,24 @@ public class LongBCP {
             bootCP, "Hello");
 
         output = new OutputAnalyzer(pb.start());
-        if (!Platform.isWindows()) {
-            output.shouldContain("Hello World")
-                  .shouldHaveExitValue(0);
-        } else {
-            output.shouldContain("Could not find or load main class Hello")
-                  .shouldHaveExitValue(1);
+        output.shouldContain("Hello World")
+              .shouldHaveExitValue(0);
+
+        // Test a relative path for a jar file < MAX_PATH, but where the
+        // absolute path is > MAX_PATH.
+        Path jarDir = Paths.get(".");
+        for (int i = 0; i < 21; ++i) {
+            jarDir = jarDir.resolve("0123456789");
         }
+        Files.createDirectories(jarDir);
+        Path jarPath = jarDir.resolve("hello.jar");
+        Files.copy(Paths.get(helloJar), jarPath);
+        bootCP = "-Xbootclasspath/a:" + jarPath.toString();
+        pb = ProcessTools.createJavaProcessBuilder(bootCP, "Hello");
+
+        output = new OutputAnalyzer(pb.start());
+        output.shouldContain("Hello World")
+              .shouldHaveExitValue(0);
 
         // total relative path length exceeds MAX_PATH
         destDir = Paths.get(destDir.toString(), "yyyyyyyy");
@@ -144,12 +152,7 @@ public class LongBCP {
             bootCP, "Hello");
 
         output = new OutputAnalyzer(pb.start());
-        if (!Platform.isWindows()) {
-            output.shouldContain("Hello World")
-                  .shouldHaveExitValue(0);
-        } else {
-            output.shouldContain("Could not find or load main class Hello")
-                  .shouldHaveExitValue(1);
-        }
+        output.shouldContain("Hello World")
+              .shouldHaveExitValue(0);
     }
 }

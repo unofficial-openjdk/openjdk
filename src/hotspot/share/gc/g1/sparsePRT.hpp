@@ -33,15 +33,61 @@
 #include "utilities/align.hpp"
 #include "utilities/globalDefinitions.hpp"
 
+class RSHashTable;
+class SparsePRTEntry;
+
 // Sparse remembered set for a heap region (the "owning" region).  Maps
 // indices of other regions to short sequences of cards in the other region
 // that might contain pointers into the owner region.
+// Concurrent access to a SparsePRT must be serialized by some external mutex.
+class SparsePRT {
+  friend class SparsePRTBucketIter;
+
+  RSHashTable* _table;
+
+  static const size_t InitialCapacity = 8;
+
+  void expand();
+
+public:
+  SparsePRT();
+  ~SparsePRT();
+
+  size_t mem_size() const;
+
+  enum AddCardResult {
+    overflow, // The table is full, could not add the card to the table.
+    found,    // The card is already in the PRT.
+    added     // The card has been added.
+  };
+
+  // Attempts to ensure that the given card_index in the given region is in
+  // the sparse table.  If successful (because the card was already
+  // present, or because it was successfully added) returns "true".
+  // Otherwise, returns "false" to indicate that the addition would
+  // overflow the entry for the region.  The caller must transfer these
+  // entries to a larger-capacity representation.
+  AddCardResult add_card(RegionIdx_t region_id, CardIdx_t card_index);
+
+  // Return the pointer to the entry associated with the given region.
+  SparsePRTEntry* get_entry(RegionIdx_t region_ind);
+
+  // If there is an entry for "region_ind", removes it and return "true";
+  // otherwise returns "false."
+  bool delete_entry(RegionIdx_t region_ind);
+
+  // Clear the table, and reinitialize to initial capacity.
+  void clear();
+
+  bool contains_card(RegionIdx_t region_id, CardIdx_t card_index) const;
+};
 
 class SparsePRTEntry: public CHeapObj<mtGC> {
-private:
+public:
   // The type of a card entry.
   typedef uint16_t card_elem_t;
 
+private:
   // We need to make sizeof(SparsePRTEntry) an even multiple of maximum member size,
   // in order to force correct alignment that could otherwise cause SIGBUS errors
   // when reading the member variables. This calculates the minimum number of card
@@ -71,7 +117,6 @@ public:
 
   RegionIdx_t r_ind() const { return _region_ind; }
   bool valid_entry() const { return r_ind() >= 0; }
-  void set_r_ind(RegionIdx_t rind) { _region_ind = rind; }
 
   int next_index() const { return _next_index; }
   int* next_index_addr() { return &_next_index; }
@@ -83,18 +128,12 @@ public:
   // Returns the number of non-NULL card entries.
   inline int num_valid_cards() const { return _next_null; }
 
-  // Requires that the entry not contain the given card index.  If there is
-  // space available, add the given card index to the entry and return
-  // "true"; otherwise, return "false" to indicate that the entry is full.
-  enum AddCardResult {
-    overflow,
-    found,
-    added
-  };
-  inline AddCardResult add_card(CardIdx_t card_index);
+  inline SparsePRT::AddCardResult add_card(CardIdx_t card_index);
 
   // Copy the current entry's cards into the "_card" array of "e."
   inline void copy_cards(SparsePRTEntry* e) const;
+
+  card_elem_t* cards() { return _cards; }
 
   inline CardIdx_t card(int i) const {
     assert(i >= 0, "must be nonnegative");
@@ -105,8 +144,7 @@ public:
 
 class RSHashTable : public CHeapObj<mtGC> {
 
-  friend class RSHashTableIter;
-
+  friend class RSHashTableBucketIter;
 
   // Inverse maximum hash table occupancy used.
   static float TableOccupancyFactor;
@@ -116,7 +154,6 @@ class RSHashTable : public CHeapObj<mtGC> {
   size_t _capacity;
   size_t _capacity_mask;
   size_t _occupied_entries;
-  size_t _occupied_cards;
 
   SparsePRTEntry* _entries;
   int* _buckets;
@@ -136,11 +173,15 @@ class RSHashTable : public CHeapObj<mtGC> {
   // deleted from any bucket lists.
   void free_entry(int fi);
 
+  // For the empty sentinel created at static initialization time
+  RSHashTable();
+
 public:
   RSHashTable(size_t capacity);
   ~RSHashTable();
 
   static const int NullEntry = -1;
+  static RSHashTable empty_table;
 
   bool should_expand() const { return _occupied_entries == _num_entries; }
 
@@ -150,7 +191,7 @@ public:
   // Otherwise, returns "false" to indicate that the addition would
   // overflow the entry for the region.  The caller must transfer these
   // entries to a larger-capacity representation.
-  bool add_card(RegionIdx_t region_id, CardIdx_t card_index);
+  SparsePRT::AddCardResult add_card(RegionIdx_t region_id, CardIdx_t card_index);
 
   bool delete_entry(RegionIdx_t region_id);
 
@@ -164,8 +205,6 @@ public:
 
   size_t capacity() const      { return _capacity; }
   size_t capacity_mask() const { return _capacity_mask;  }
-  size_t occupied_entries() const { return _occupied_entries; }
-  size_t occupied_cards() const   { return _occupied_cards; }
   size_t mem_size() const;
   // The number of SparsePRTEntry instances available.
   size_t num_entries() const { return _num_entries; }
@@ -179,88 +218,28 @@ public:
 };
 
 // This is embedded in HRRS iterator.
-class RSHashTableIter {
-  // Return value indicating "invalid/no card".
-  static const int NoCardFound = -1;
+class RSHashTableBucketIter {
+  uint _tbl_ind;        // [0.._rsht->_capacity)
+  int  _bl_ind;         // [-1, 0.._rsht->_capacity)
 
-  int _tbl_ind;         // [-1, 0.._rsht->_capacity)
-  int _bl_ind;          // [-1, 0.._rsht->_capacity)
-  short _card_ind;      // [0..SparsePRTEntry::cards_num())
   RSHashTable* _rsht;
 
-  // If the bucket list pointed to by _bl_ind contains a card, sets
-  // _bl_ind to the index of that entry,
-  // Returns the card found if there is, otherwise returns InvalidCard.
-  CardIdx_t find_first_card_in_list();
-
-  // Computes the proper card index for the card whose offset in the
-  // current region (as indicated by _bl_ind) is "ci".
-  // This is subject to errors when there is iteration concurrent with
-  // modification, but these errors should be benign.
-  size_t compute_card_ind(CardIdx_t ci);
-
 public:
-  RSHashTableIter(RSHashTable* rsht) :
-    _tbl_ind(RSHashTable::NullEntry), // So that first increment gets to 0.
-    _bl_ind(RSHashTable::NullEntry),
-    _card_ind((SparsePRTEntry::cards_num() - 1)),
-    _rsht(rsht) {}
+  RSHashTableBucketIter(RSHashTable* rsht) :
+    _tbl_ind(0),
+    _bl_ind(rsht->_buckets[_tbl_ind]),
+    _rsht(rsht) { }
 
-  bool has_next(size_t& card_index);
+  bool has_next(SparsePRTEntry*& entry);
 };
 
-// Concurrent access to a SparsePRT must be serialized by some external mutex.
-
-class SparsePRTIter;
-
-class SparsePRT {
-  friend class SparsePRTIter;
-
-  RSHashTable* _table;
-
-  enum SomeAdditionalPrivateConstants {
-    InitialCapacity = 16
-  };
-
-  void expand();
-
+class SparsePRTBucketIter: public RSHashTableBucketIter {
 public:
-  SparsePRT();
-  ~SparsePRT();
+  SparsePRTBucketIter(const SparsePRT* sprt) :
+    RSHashTableBucketIter(sprt->_table) {}
 
-  size_t occupied() const { return _table->occupied_cards(); }
-  size_t mem_size() const;
-
-  // Attempts to ensure that the given card_index in the given region is in
-  // the sparse table.  If successful (because the card was already
-  // present, or because it was successfully added) returns "true".
-  // Otherwise, returns "false" to indicate that the addition would
-  // overflow the entry for the region.  The caller must transfer these
-  // entries to a larger-capacity representation.
-  bool add_card(RegionIdx_t region_id, CardIdx_t card_index);
-
-  // Return the pointer to the entry associated with the given region.
-  SparsePRTEntry* get_entry(RegionIdx_t region_ind);
-
-  // If there is an entry for "region_ind", removes it and return "true";
-  // otherwise returns "false."
-  bool delete_entry(RegionIdx_t region_ind);
-
-  // Clear the table, and reinitialize to initial capacity.
-  void clear();
-
-  bool contains_card(RegionIdx_t region_id, CardIdx_t card_index) const {
-    return _table->contains_card(region_id, card_index);
-  }
-};
-
-class SparsePRTIter: public RSHashTableIter {
-public:
-  SparsePRTIter(const SparsePRT* sprt) :
-    RSHashTableIter(sprt->_table) { }
-
-  bool has_next(size_t& card_index) {
-    return RSHashTableIter::has_next(card_index);
+  bool has_next(SparsePRTEntry*& entry) {
+    return RSHashTableBucketIter::has_next(entry);
   }
 };
 

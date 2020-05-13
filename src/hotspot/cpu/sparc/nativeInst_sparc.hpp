@@ -315,7 +315,7 @@ class NativeCall;
 
 inline NativeCall* nativeCall_at(address instr);
 inline NativeCall* nativeCall_overwriting_at(address instr,
-                                             address destination);
+                                             address destination = NULL);
 inline NativeCall* nativeCall_before(address return_address);
 class NativeCall: public NativeInstruction {
  public:
@@ -344,7 +344,7 @@ class NativeCall: public NativeInstruction {
 
   // Creation
   friend inline NativeCall* nativeCall_at(address instr);
-  friend NativeCall* nativeCall_overwriting_at(address instr, address destination = NULL) {
+  friend NativeCall* nativeCall_overwriting_at(address instr, address destination) {
     // insert a "blank" call:
     NativeCall* call = (NativeCall*)instr;
     call->set_long_at(0 * BytesPerInstWord, call_instruction(destination, instr));
@@ -413,7 +413,7 @@ class NativeCallReg: public NativeInstruction {
 //      == sethi %hi54(addr), O7 ;  jumpl O7, %lo10(addr), O7 ;  <delay>
 // That is, it is essentially the same as a NativeJump.
 class NativeFarCall;
-inline NativeFarCall* nativeFarCall_overwriting_at(address instr, address destination);
+inline NativeFarCall* nativeFarCall_overwriting_at(address instr, address destination = NULL);
 inline NativeFarCall* nativeFarCall_at(address instr);
 class NativeFarCall: public NativeInstruction {
  public:
@@ -452,7 +452,7 @@ class NativeFarCall: public NativeInstruction {
     return call;
   }
 
-  friend inline NativeFarCall* nativeFarCall_overwriting_at(address instr, address destination = NULL) {
+  friend inline NativeFarCall* nativeFarCall_overwriting_at(address instr, address destination) {
     Unimplemented();
     NativeFarCall* call = (NativeFarCall*)instr;
     return call;
@@ -576,7 +576,8 @@ class NativeMovConstReg: public NativeInstruction {
 // sethi and the add.  The nop is required to be in the delay slot of the call instruction
 // which overwrites the sethi during patching.
 class NativeMovConstRegPatching;
-inline NativeMovConstRegPatching* nativeMovConstRegPatching_at(address address);class NativeMovConstRegPatching: public NativeInstruction {
+inline NativeMovConstRegPatching* nativeMovConstRegPatching_at(address address);
+class NativeMovConstRegPatching: public NativeInstruction {
  public:
   enum Sparc_specific_constants {
     sethi_offset           = 0,
@@ -664,10 +665,13 @@ class NativeMovRegMem: public NativeInstruction {
     return (is_op(i0, Assembler::ldst_op));
   }
 
-  address instruction_address() const           { return addr_at(0); }
-  address next_instruction_address() const      {
-    return addr_at(is_immediate() ? 4 : (7 * BytesPerInstWord));
+  address instruction_address() const { return addr_at(0); }
+
+  int num_bytes_to_end_of_patch() const {
+    return is_immediate()? BytesPerInstWord :
+                           NativeMovConstReg::instruction_size;
   }
+
   intptr_t   offset() const                             {
      return is_immediate()? inv_simm(long_at(0), offset_width) :
                             nativeMovConstReg_at(addr_at(0))->data();
@@ -683,8 +687,6 @@ class NativeMovRegMem: public NativeInstruction {
   void  add_offset_in_bytes(intptr_t radd_offset)     {
       set_offset (offset() + radd_offset);
   }
-
-  void  copy_instruction_to(address new_instruction_address);
 
   void verify();
   void print ();

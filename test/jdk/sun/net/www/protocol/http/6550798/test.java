@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 /**
  * @test
  * @bug 6550798
+ * @library /test/lib
  * @summary Using InputStream.skip with ResponseCache will cause partial data to be cached
  * @modules jdk.httpserver
  * @run main/othervm test
@@ -33,6 +34,8 @@ import java.net.*;
 import com.sun.net.httpserver.*;
 import java.io.*;
 
+import jdk.test.lib.net.URIBuilder;
+
 public class test {
 
     final static int LEN = 16 * 1024;
@@ -40,14 +43,15 @@ public class test {
     public static void main(String[] args)  throws Exception {
 
         TestCache.reset();
-        HttpServer s = HttpServer.create (new InetSocketAddress(0), 10);
-        s.createContext ("/", new HttpHandler () {
-            public void handle (HttpExchange e) {
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        HttpServer s = HttpServer.create(new InetSocketAddress(loopback, 0), 10);
+        s.createContext("/", new HttpHandler() {
+            public void handle(HttpExchange e) {
                 try {
                     byte[] buf = new byte [LEN];
                     OutputStream o = e.getResponseBody();
                     e.sendResponseHeaders(200, LEN);
-                    o.write (buf);
+                    o.write(buf);
                     e.close();
                 } catch (IOException ex) {
                     ex.printStackTrace();
@@ -58,7 +62,13 @@ public class test {
         s.start();
 
         System.out.println("http request with cache hander");
-        URL u = new URL("http://127.0.0.1:"+s.getAddress().getPort()+"/f");
+        URL u = URIBuilder.newBuilder()
+            .scheme("http")
+            .loopback()
+            .port(s.getAddress().getPort())
+            .path("/f")
+            .toURL();
+        System.out.println("URL: " + u);
         URLConnection conn = u.openConnection();
 
         InputStream is = null;
@@ -82,10 +92,10 @@ public class test {
         }
 
         if (TestCache.fail) {
-            System.out.println ("TEST FAILED");
-            throw new RuntimeException ();
+            System.out.println("TEST FAILED");
+            throw new RuntimeException();
         } else {
-            System.out.println ("TEST OK");
+            System.out.println("TEST OK");
         }
     }
 }

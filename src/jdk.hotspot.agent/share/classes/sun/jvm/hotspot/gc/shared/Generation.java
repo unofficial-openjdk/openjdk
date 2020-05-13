@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,8 @@ import sun.jvm.hotspot.debugger.*;
 import sun.jvm.hotspot.memory.*;
 import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.types.*;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
 /** <P> The (supported) Generation hierarchy currently looks like this: </P>
 
@@ -81,9 +83,7 @@ public abstract class Generation extends VMObject {
 
     // constants from Generation::Name
     NAME_DEF_NEW = db.lookupIntConstant("Generation::DefNew").intValue();
-    NAME_PAR_NEW = db.lookupIntConstant("Generation::ParNew").intValue();
     NAME_MARK_SWEEP_COMPACT = db.lookupIntConstant("Generation::MarkSweepCompact").intValue();
-    NAME_CONCURRENT_MARK_SWEEP = db.lookupIntConstant("Generation::ConcurrentMarkSweep").intValue();
     NAME_OTHER = db.lookupIntConstant("Generation::Other").intValue();
   }
 
@@ -93,9 +93,7 @@ public abstract class Generation extends VMObject {
 
   public static class Name {
     public static final Name DEF_NEW = new Name("DefNew");
-    public static final Name PAR_NEW = new Name("ParNew");
     public static final Name MARK_SWEEP_COMPACT = new Name("MarkSweepCompact");
-    public static final Name CONCURRENT_MARK_SWEEP = new Name("ConcurrentMarkSweep");
     public static final Name OTHER = new Name("Other");
 
     private Name(String value) {
@@ -115,12 +113,8 @@ public abstract class Generation extends VMObject {
   static Generation.Name nameForEnum(int value) {
      if (value == NAME_DEF_NEW) {
         return Name.DEF_NEW;
-     } else if (value == NAME_PAR_NEW) {
-        return Name.PAR_NEW;
      } else if (value == NAME_MARK_SWEEP_COMPACT) {
         return Name.MARK_SWEEP_COMPACT;
-     } else if (value == NAME_CONCURRENT_MARK_SWEEP) {
-        return Name.CONCURRENT_MARK_SWEEP;
      } else if (value == NAME_OTHER) {
         return Name.OTHER;
      } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,11 +30,11 @@
 class CollectedHeap;
 
 class ShenandoahArguments : public GCArguments {
-public:
+private:
+  virtual void initialize_alignments();
+
   virtual void initialize();
-
   virtual size_t conservative_max_heap_alignment();
-
   virtual CollectedHeap* create_heap();
 };
 

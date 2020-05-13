@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 
 package nsk.jdi.EventQueue.remove;
 
+import jdk.test.lib.Utils;
 import nsk.share.*;
 import nsk.share.jpda.*;
 import nsk.share.jdi.*;
@@ -67,26 +68,13 @@ import java.io.*;
  * <BR>
  * The check includes two steps.                                        <BR>
  * In first one, second thread waits for any incoming event from the    <BR>
- * debugger which is sleeping for "WAITTIME*90 seconds"; hence, <BR>
+ * debugger which is sleeping for some time; hence,                     <BR>
  * no events are expected to be received at the debugger end.           <BR>
  * In second, second thread is interrupted, and the debugger waits for  <BR>
  * a breakpoint event after the debuggee finishes sleeping.             <BR>
  */
 
-public class remove004 {
-
-    //----------------------------------------------------- templete section
-    static final int PASSED = 0;
-    static final int FAILED = 2;
-    static final int PASS_BASE = 95;
-
-    //----------------------------------------------------- templete parameters
-    static final String
-    sHeader1 = "\n==> nsk/jdi/EventQueue/remove/remove004 ",
-    sHeader2 = "--> debugger: ",
-    sHeader3 = "##> debugger: ";
-
-    //----------------------------------------------------- main method
+public class remove004 extends JDIBase {
 
     public static void main (String argv[]) {
 
@@ -105,50 +93,14 @@ public class remove004 {
         return testExitCode;
     }
 
-    //--------------------------------------------------   log procedures
-
-    private static Log  logHandler;
-
-    private static void log1(String message) {
-        logHandler.display(sHeader1 + message);
-    }
-    private static void log2(String message) {
-        logHandler.display(sHeader2 + message);
-    }
-    private static void log3(String message) {
-        logHandler.complain(sHeader3 + message);
-    }
-
     //  ************************************************    test parameters
 
     private String debuggeeName =
         "nsk.jdi.EventQueue.remove.remove004a";
 
     //====================================================== test program
-    //------------------------------------------------------ common section
 
-    static Debugee          debuggee;
-    static ArgumentHandler  argsHandler;
-
-    static int waitTime;
-
-    static VirtualMachine      vm            = null;
-    static EventRequestManager eventRManager = null;
-    static EventQueue          eventQueue    = null;
-    static EventSet            eventSet      = null;
-    static EventIterator       eventIterator = null;
-
-    static ReferenceType       debuggeeClass = null;
-
-    static int  testExitCode = PASSED;
-
-    class JDITestRuntimeException extends RuntimeException {
-        JDITestRuntimeException(String str) {
-            super("JDITestRuntimeException : " + str);
-        }
-    }
-
-    //------------------------------------------------------ methods
+    static Value trueValue;
 
     private int runThis (String argv[], PrintStream out) {
 
@@ -156,7 +108,7 @@ public class remove004 {
         logHandler      = new Log(out, argsHandler);
         Binder binder   = new Binder(argsHandler, logHandler);
 
-        waitTime        = argsHandler.getWaitTime() * 60000;
+        waitTime        = Utils.adjustTimeout(argsHandler.getWaitTime() * 1000);
 
         try {
             log2("launching a debuggee :");
@@ -285,6 +237,8 @@ public class remove004 {
         if (!debuggeeClass.name().equals(debuggeeName))
            throw new JDITestRuntimeException("** Unexpected ClassName for ClassPrepareEvent **");
 
+        trueValue = debuggeeClass.getValue(debuggeeClass.fieldByName("BOOLEAN_TRUE_VALUE"));
+
         log2("      received: ClassPrepareEvent for debuggeeClass");
 
         String bPointMethod = "methodForCommunication";
@@ -292,7 +246,7 @@ public class remove004 {
         BreakpointRequest bpRequest;
 
         try {
-            bpRequest = settingBreakpoint(threadByName("main"),
+            bpRequest = settingBreakpoint(debuggee.threadByNameOrThrow("main"),
                                           debuggeeClass,
                                           bPointMethod, lineForComm, "zero");
         } catch ( Exception e ) {
@@ -303,10 +257,10 @@ public class remove004 {
     //------------------------------------------------------  testing section
 
         log1("     TESTING BEGINS");
+        vm.resume();
 
         for (int i = 0; ; i++) {
 
-            vm.resume();
             breakpointForCommunication();
 
             int instruction = ((IntegerValue)
@@ -356,11 +310,11 @@ public class remove004 {
                 thread2.interrupt();
 
                 for (int i2 = 0; i2 < waitTime; ) {
-                    waitObj.wait(10000);
+                    waitObj.wait(1000);
                     if (!thread2.isAlive()) {
                         break;
                     }
-                    i2 += 10000;
+                    i2 += 1000;
                 }
                 if (thread2.isAlive()) {
                     log3("ERROR: thread2 is still alive");
@@ -373,111 +327,6 @@ public class remove004 {
         }
         log1("    TESTING ENDS");
         return;
-    }
-
-    private ThreadReference threadByName(String name)
-                 throws JDITestRuntimeException {
-
-        List         all = vm.allThreads();
-        ListIterator li  = all.listIterator();
-
-        for (; li.hasNext(); ) {
-            ThreadReference thread = (ThreadReference) li.next();
-            if (thread.name().equals(name))
-                return thread;
-        }
-        throw new JDITestRuntimeException("** Thread IS NOT found ** : " + name);
-    }
-
-   /*
-    * private BreakpointRequest settingBreakpoint(ThreadReference, ReferenceType,
-    *                                             String, String, String)
-    *
-    * It sets up a breakpoint at given line number within a given method in a given class
-    * for a given thread.
-    *
-    * Return value: BreakpointRequest object  in case of success
-    *
-    * JDITestRuntimeException   in case of an Exception thrown within the method
-    */
-
-    private BreakpointRequest settingBreakpoint ( ThreadReference thread,
-                                                  ReferenceType testedClass,
-                                                  String methodName,
-                                                  String bpLine,
-                                                  String property)
-            throws JDITestRuntimeException {
-
-        log2("......setting up a breakpoint:");
-        log2("       thread: " + thread + "; class: " + testedClass +
-                        "; method: " + methodName + "; line: " + bpLine);
-
-        List              alllineLocations = null;
-        Location          lineLocation     = null;
-        BreakpointRequest breakpRequest    = null;
-
-        try {
-            Method  method  = (Method) testedClass.methodsByName(methodName).get(0);
-
-            alllineLocations = method.allLineLocations();
-
-            int n =
-                ( (IntegerValue) testedClass.getValue(testedClass.fieldByName(bpLine) ) ).value();
-            if (n > alllineLocations.size()) {
-                log3("ERROR:  TEST_ERROR_IN_settingBreakpoint(): number is out of bound of method's lines");
-            } else {
-                lineLocation = (Location) alllineLocations.get(n);
-                try {
-                    breakpRequest = eventRManager.createBreakpointRequest(lineLocation);
-                    breakpRequest.putProperty("number", property);
-                    breakpRequest.addThreadFilter(thread);
-                    breakpRequest.setSuspendPolicy( EventRequest.SUSPEND_EVENT_THREAD);
-                } catch ( Exception e1 ) {
-                    log3("ERROR: inner Exception within settingBreakpoint() : " + e1);
-                    breakpRequest    = null;
-                }
-            }
-        } catch ( Exception e2 ) {
-            log3("ERROR: ATTENTION:  outer Exception within settingBreakpoint() : " + e2);
-            breakpRequest    = null;
-        }
-
-        if (breakpRequest == null) {
-            log2("      A BREAKPOINT HAS NOT BEEN SET UP");
-            throw new JDITestRuntimeException("**FAILURE to set up a breakpoint**");
-        }
-
-        log2("      a breakpoint has been set up");
-        return breakpRequest;
-    }
-
-
-    private void getEventSet()
-                 throws JDITestRuntimeException {
-        try {
-//            log2("       eventSet = eventQueue.remove(waitTime);");
-            eventSet = eventQueue.remove(waitTime);
-            if (eventSet == null) {
-                throw new JDITestRuntimeException("** TIMEOUT while waiting for event **");
-            }
-//            log2("       eventIterator = eventSet.eventIterator;");
-            eventIterator = eventSet.eventIterator();
-        } catch ( Exception e ) {
-            throw new JDITestRuntimeException("** EXCEPTION while waiting for event ** : " + e);
-        }
-    }
-
-
-    private void breakpointForCommunication()
-                 throws JDITestRuntimeException {
-
-        log2("breakpointForCommunication");
-        getEventSet();
-
-        if (eventIterator.nextEvent() instanceof BreakpointEvent)
-            return;
-
-        throw new JDITestRuntimeException("** event IS NOT a breakpoint **");
     }
 
     // ============================== test's additional methods
@@ -508,9 +357,17 @@ public class remove004 {
                 log2("-----t2:  eventSet = eventQueue.remove(); expects: InterruptedException");
                 eventSet = eventQueue.remove();
                 throw new JDITestRuntimeException("** return from eventQueue.remove(); **");
-            } catch ( InterruptedException e1) {
+            } catch (InterruptedException e1) {
                 log2("-----t2:            InterruptedException");
-            } catch ( Exception e ) {
+                // Signal to debuggee to stop sleeping
+                try {
+                    ((ClassType) debuggeeClass).setValue(debuggeeClass.fieldByName("stopSleeping"),
+                            trueValue);
+                } catch (InvalidTypeException | ClassNotLoadedException e) {
+                    log3("ERROR: -----t2: Exception : " + e);
+                    testExitCode = FAILED;
+                }
+            } catch (Exception e) {
                 log3("ERROR: -----t2: Exception : " + e);
                 testExitCode = FAILED;
             }

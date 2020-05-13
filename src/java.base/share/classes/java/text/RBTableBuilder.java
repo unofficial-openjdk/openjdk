@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,8 +42,7 @@ import java.util.Vector;
 import sun.text.UCompactIntArray;
 import sun.text.IntHashtable;
 import sun.text.ComposedCharIter;
-import sun.text.CollatorUtilities;
-import sun.text.normalizer.NormalizerImpl;
+import jdk.internal.icu.impl.NormalizerImpl;
 
 /**
  * This class contains all the code to parse a RuleBasedCollator pattern
@@ -72,7 +71,7 @@ final class RBTableBuilder {
      * stores them back in the RBCollationTables object.  It is called
      * ONLY by the RBCollationTables constructor.
      * @see RuleBasedCollator#RuleBasedCollator
-     * @exception ParseException If the rules format is incorrect.
+     * @throws    ParseException If the rules format is incorrect.
      */
 
     public void build(String pattern, int decmp) throws ParseException {

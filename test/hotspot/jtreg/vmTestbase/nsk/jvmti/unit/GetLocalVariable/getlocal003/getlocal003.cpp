@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,11 +67,12 @@ test_locals(jvmtiEnv *jvmti, jthread thr, jlocation location) {
         }
         print_LocalVariableEntry(&table[i]);
         char sig = table[i].signature[0];
+        int slot = table[i].slot;
 
         if (sig == 'Z' || sig == 'B' || sig == 'C' || sig == 'S') {
             sig = 'I'; // covered by GetLocalInt
         }
-        err = jvmti->GetLocalInt(thr, 0, table[i].slot, &intVal);
+        err = jvmti->GetLocalInt(thr, 0, slot, &intVal);
         printf(" GetLocalInt:     %s (%d)\n", TranslateError(err), err);
         if (err != JVMTI_ERROR_NONE && sig == 'I') {
             printf("FAIL: GetLocalInt failed to get value of int\n");
@@ -81,42 +82,48 @@ test_locals(jvmtiEnv *jvmti, jthread thr, jlocation location) {
             result = STATUS_FAILED;
         }
 
-        err = jvmti->GetLocalLong(thr, 0, table[i].slot, &longVal);
+        err = jvmti->GetLocalLong(thr, 0, slot, &longVal);
         printf(" GetLocalLong:    %s (%d)\n", TranslateError(err), err);
         if (err != JVMTI_ERROR_NONE && sig == 'J') {
             printf("FAIL: GetLocalLong failed to get value of long\n");
             result = STATUS_FAILED;
-        } else if (err != JVMTI_ERROR_TYPE_MISMATCH && sig != 'J') {
-            printf("FAIL: GetLocalLong did not return JVMTI_ERROR_TYPE_MISMATCH for non-long\n");
+        } else if (err != JVMTI_ERROR_INVALID_SLOT &&
+                   err != JVMTI_ERROR_TYPE_MISMATCH &&
+                   sig != 'J') {
+            printf("FAIL: GetLocalLong did not return JVMTI_ERROR_INVALID_SLOT"
+                   " nor JVMTI_ERROR_TYPE_MISMATCH for non-long\n");
             result = STATUS_FAILED;
         }
 
-        err = jvmti->GetLocalFloat(thr, 0, table[i].slot, &floatVal);
+        err = jvmti->GetLocalFloat(thr, 0, slot, &floatVal);
         printf(" GetLocalFloat:   %s (%d)\n", TranslateError(err), err);
-        if (err != JVMTI_ERROR_NONE && table[i].signature[0] == 'F') {
+        if (err != JVMTI_ERROR_NONE && sig == 'F') {
             printf("FAIL: GetLocalFloat failed to get value of float\n");
             result = STATUS_FAILED;
-        } else if (err != JVMTI_ERROR_TYPE_MISMATCH && table[i].signature[0] != 'F') {
+        } else if (err != JVMTI_ERROR_TYPE_MISMATCH && sig != 'F') {
             printf("FAIL: GetLocalFloat did not return JVMTI_ERROR_TYPE_MISMATCH for non-float\n");
             result = STATUS_FAILED;
         }
 
-        err = jvmti->GetLocalDouble(thr, 0, table[i].slot, &doubleVal);
+        err = jvmti->GetLocalDouble(thr, 0, slot, &doubleVal);
         printf(" GetLocalDouble:  %s (%d)\n", TranslateError(err), err);
-        if (err != JVMTI_ERROR_NONE && table[i].signature[0] == 'D') {
+        if (err != JVMTI_ERROR_NONE && sig == 'D') {
             printf("FAIL: GetLocalDouble failed to get value of double\n");
             result = STATUS_FAILED;
-        } else if (err != JVMTI_ERROR_TYPE_MISMATCH && table[i].signature[0] != 'D') {
-            printf("FAIL: GetLocalDouble did not return JVMTI_ERROR_TYPE_MISMATCH for non-double\n");
+        } else if (err != JVMTI_ERROR_INVALID_SLOT &&
+                   err != JVMTI_ERROR_TYPE_MISMATCH &&
+                   sig != 'D') {
+            printf("FAIL: GetLocalDouble did not return JVMTI_ERROR_INVALID_SLOT"
+                   " nor JVMTI_ERROR_TYPE_MISMATCH for non-double\n");
             result = STATUS_FAILED;
         }
 
-        err = jvmti->GetLocalObject(thr, 0, table[i].slot, &obj);
+        err = jvmti->GetLocalObject(thr, 0, slot, &obj);
         printf(" GetLocalObject:  %s (%d)\n", TranslateError(err), err);
-        if (err != JVMTI_ERROR_NONE && table[i].signature[0] == 'L') {
+        if (err != JVMTI_ERROR_NONE && sig == 'L') {
             printf("FAIL: GetLocalObject failed to get value of object\n");
             result = STATUS_FAILED;
-        } else if (err != JVMTI_ERROR_TYPE_MISMATCH && table[i].signature[0] != 'L') {
+        } else if (err != JVMTI_ERROR_TYPE_MISMATCH && sig != 'L') {
             printf("FAIL: GetLocalObject did not return JVMTI_ERROR_TYPE_MISMATCH for non-object\n");
             result = STATUS_FAILED;
         }
@@ -224,8 +231,44 @@ jint Agent_Initialize(JavaVM *jvm, char *options, void *reserved) {
 }
 
 JNIEXPORT void JNICALL
+Java_nsk_jvmti_unit_GetLocalVariable_getlocal003_instMeth(JNIEnv *env, jobject inst) {
+    jvmtiError err;
+    jobject obj = NULL;
+
+    printf("\n Native instMeth: started\n");
+
+    // Test GetLocalInstance with native instance method instMeth() frame
+    err = jvmti->GetLocalInstance(NULL, 0, &obj);
+    printf(" Native instMeth: GetLocalInstance: %s (%d)\n", TranslateError(err), err);
+    if (err != JVMTI_ERROR_NONE) {
+        printf("FAIL: GetLocalInstance failed to get instance for native instance method frame\n");
+        result = STATUS_FAILED;
+    }
+    if (env->IsSameObject(inst, obj) == JNI_FALSE) {
+        printf("FAIL: GetLocalInstance returned unexpected instance for native instance method frame\n");
+        result = STATUS_FAILED;
+    }
+
+    // Test GetLocalInstance with java instance method meth01() frame
+    err = jvmti->GetLocalInstance(NULL, 1, &obj);
+    printf(" Native instMeth: GetLocalInstance: %s (%d)\n", TranslateError(err), err);
+    if (err != JVMTI_ERROR_NONE) {
+        printf("FAIL: GetLocalInstance failed to get instance for java instance method frame\n");
+        result = STATUS_FAILED;
+    }
+    if (env->IsSameObject(inst, obj) == JNI_FALSE) {
+        printf("FAIL: GetLocalInstance returned unexpected instance for java instance method frame\n");
+        result = STATUS_FAILED;
+    }
+    printf(" Native instMeth: finished\n\n");
+}
+
+JNIEXPORT void JNICALL
 Java_nsk_jvmti_unit_GetLocalVariable_getlocal003_getMeth(JNIEnv *env, jclass cls) {
     jvmtiError err;
+    jobject obj = NULL;
+
+    printf("\n Native getMeth: started\n");
 
     if (jvmti == NULL) {
         printf("JVMTI client was not properly loaded!\n");
@@ -254,6 +297,24 @@ Java_nsk_jvmti_unit_GetLocalVariable_getlocal003_getMeth(JNIEnv *env, jclass cls
                TranslateError(err), err);
         result = STATUS_FAILED;
     }
+
+    // Test GetLocalInstance with native static method getMeth() frame
+    err = jvmti->GetLocalInstance(NULL, 0, &obj);
+    printf(" Native getMeth: GetLocalInstance: %s (%d)\n", TranslateError(err), err);
+    if (err != JVMTI_ERROR_INVALID_SLOT) {
+        printf("FAIL: GetLocalInstance failed to return JVMTI_ERROR_INVALID_SLOT for native static method frame\n");
+        result = STATUS_FAILED;
+    }
+
+    // Test GetLocalInstance with java static method run() frame
+    err = jvmti->GetLocalInstance(NULL, 1, &obj);
+    printf(" Native getMeth: GetLocalInstance: %s (%d)\n", TranslateError(err), err);
+    if (err != JVMTI_ERROR_INVALID_SLOT) {
+        printf("FAIL: GetLocalInstance failed to return JVMTI_ERROR_INVALID_SLOT for java static method frame\n");
+        result = STATUS_FAILED;
+    }
+
+    printf(" Native getMeth: finished\n\n");
     fflush(stdout);
 }
 

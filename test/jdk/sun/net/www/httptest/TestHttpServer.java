@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,6 +69,22 @@ public class TestHttpServer {
     }
 
     /**
+     * Create a <code>TestHttpServer<code> instance with the specified callback object
+     * for handling requests. One thread is created to handle requests,
+     * and up to ten TCP connections will be handled simultaneously.
+     * @param cb the callback object which is invoked to handle each
+     *  incoming request
+     * @param address the address to bind the server to. <code>Null</code>
+     *  means bind to the wildcard address.
+     * @param port the port number to bind the server to. <code>Zero</code>
+     *  means choose any free port.
+     */
+
+    public TestHttpServer (HttpCallback cb, InetAddress address, int port) throws IOException {
+        this (cb, 1, 10, address, 0);
+    }
+
+    /**
      * Create a <code>TestHttpServer<code> instance with the specified number of
      * threads and maximum number of connections per thread. This functions
      * the same as the 4 arg constructor, where the port argument is set to zero.
@@ -102,9 +118,33 @@ public class TestHttpServer {
      */
 
     public TestHttpServer (HttpCallback cb, int threads, int cperthread, int port)
+            throws IOException {
+        this(cb, threads, cperthread, null, port);
+    }
+
+    /**
+     * Create a <code>TestHttpServer<code> instance with the specified number
+     * of threads and maximum number of connections per thread and running on
+     * the specified port. The specified number of threads are created to
+     * handle incoming requests, and each thread is allowed
+     * to handle a number of simultaneous TCP connections.
+     * @param cb the callback object which is invoked to handle
+     *  each incoming request
+     * @param threads the number of threads to create to handle
+     *  requests in parallel
+     * @param cperthread the number of simultaneous TCP connections
+     *  to handle per thread
+     * @param address the address to bind the server to. <code>Null</code>
+     *  means bind to the wildcard address.
+     * @param port the port number to bind the server to. <code>Zero</code>
+     *  means choose any free port.
+     */
+
+    public TestHttpServer (HttpCallback cb, int threads, int cperthread,
+                           InetAddress address, int port)
         throws IOException {
         schan = ServerSocketChannel.open ();
-        InetSocketAddress addr = new InetSocketAddress (port);
+        InetSocketAddress addr = new InetSocketAddress (address, port);
         schan.socket().bind (addr);
         this.threads = threads;
         this.cb = cb;
@@ -147,6 +187,14 @@ public class TestHttpServer {
         return schan.socket().getLocalPort ();
     }
 
+    public String getAuthority() {
+        InetAddress address = schan.socket().getInetAddress();
+        String hostaddr = address.getHostAddress();
+        if (address.isAnyLocalAddress()) hostaddr = "localhost";
+        if (hostaddr.indexOf(':') > -1) hostaddr = "[" + hostaddr + "]";
+        return hostaddr + ":" + getLocalPort();
+    }
+
     static class Server extends Thread {
 
         ServerSocketChannel schan;
@@ -173,6 +221,7 @@ public class TestHttpServer {
                 listenerKey = schan.register (selector, SelectionKey.OP_ACCEPT);
             } catch (IOException e) {
                 System.err.println ("Server could not start: " + e);
+                throw new RuntimeException("Server could not start: " + e, e);
             }
         }
 
@@ -746,4 +795,3 @@ public class TestHttpServer {
         }
     }
 }
-

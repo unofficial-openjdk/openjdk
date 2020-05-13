@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 /**
  * @test
  * @bug 4796166
+ * @library /test/lib
  * @summary Linger interval delays usage of released file descriptor
  * @run main LingerTest
  * @run main/othervm -Djava.net.preferIPv4Stack=true LingerTest
@@ -31,6 +32,7 @@
 
 import java.net.*;
 import java.io.*;
+import jdk.test.lib.net.IPSupport;
 
 public class LingerTest {
 
@@ -71,11 +73,13 @@ public class LingerTest {
     }
 
     static class Other implements Runnable {
-        int port;
-        long delay;
+        final InetAddress address;
+        final int port;
+        final long delay;
         boolean connected = false;
 
-        public Other(int port, long delay) {
+        public Other(InetAddress address, int port, long delay) {
+            this.address = address;
             this.port = port;
             this.delay = delay;
         }
@@ -85,7 +89,7 @@ public class LingerTest {
             try {
                 Thread.sleep(delay);
                 System.out.println ("Other opening socket");
-                Socket s = new Socket("localhost", port);
+                Socket s = new Socket(address, port);
                 synchronized (this) {
                     connected = true;
                 }
@@ -103,9 +107,12 @@ public class LingerTest {
     }
 
     public static void main(String args[]) throws Exception {
-        ServerSocket ss = new ServerSocket(0);
+        IPSupport.throwSkippedExceptionIfNonOperational();
 
-        Socket s1 = new Socket("localhost", ss.getLocalPort());
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        ServerSocket ss = new ServerSocket(0, 50, loopback);
+
+        Socket s1 = new Socket(loopback, ss.getLocalPort());
         Socket s2 = ss.accept();
 
         // setup conditions for untransmitted data and lengthy
@@ -119,7 +126,7 @@ public class LingerTest {
         senderThread.start();
 
         // other thread that will connect after 5 seconds.
-        Other other = new Other(ss.getLocalPort(), 5000);
+        Other other = new Other(loopback, ss.getLocalPort(), 5000);
         Thread otherThread = new Thread(other);
         otherThread.start();
 

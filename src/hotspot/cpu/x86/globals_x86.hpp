@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +30,6 @@
 
 // Sets the default values for platform dependent flags used by the runtime system.
 // (see globals.hpp)
-
-define_pd_global(bool, ShareVtableStubs,         true);
-define_pd_global(bool, NeedsDeoptSuspend,        false); // only register window machines need this
 
 define_pd_global(bool, ImplicitNullChecks,       true);  // Generate code for implicit null checks
 define_pd_global(bool, TrapBasedNullChecks,      false); // Not needed on x86.
@@ -84,9 +81,6 @@ define_pd_global(intx, StackReservedPages, DEFAULT_STACK_RESERVED_PAGES);
 define_pd_global(bool, RewriteBytecodes,     true);
 define_pd_global(bool, RewriteFrequentPairs, true);
 
-// GC Ergo Flags
-define_pd_global(size_t, CMSYoungGenPerWorker, 64*M);  // default max size of CMS young gen, per GC worker thread
-
 define_pd_global(uintx, TypeProfileLevel, 111);
 
 define_pd_global(bool, CompactStrings, true);
@@ -95,27 +89,23 @@ define_pd_global(bool, PreserveFramePointer, false);
 
 define_pd_global(intx, InitArrayShortSize, 8*BytesPerLong);
 
-#if defined(_LP64) || defined(_WINDOWS)
-define_pd_global(bool, ThreadLocalHandshakes, true);
-#else
-// get_thread() is slow on linux 32 bit, therefore off by default
-define_pd_global(bool, ThreadLocalHandshakes, false);
-#endif
-
 #define ARCH_FLAGS(develop, \
                    product, \
                    diagnostic, \
                    experimental, \
                    notproduct, \
                    range, \
-                   constraint, \
-                   writeable) \
+                   constraint) \
                                                                             \
   develop(bool, IEEEPrecision, true,                                        \
           "Enables IEEE precision (for INTEL only)")                        \
                                                                             \
   product(bool, UseStoreImmI16, true,                                       \
           "Use store immediate 16-bits value instruction on x86")           \
+                                                                            \
+  product(intx, UseSSE, 99,                                                 \
+          "Highest supported SSE instructions set on x86/x64")              \
+          range(0, 99)                                                      \
                                                                             \
   product(intx, UseAVX, 3,                                                  \
           "Highest supported AVX instructions set on x86/x64")              \
@@ -214,5 +204,20 @@ define_pd_global(bool, ThreadLocalHandshakes, false);
           "Use BMI2 instructions")                                          \
                                                                             \
   diagnostic(bool, UseLibmIntrinsic, true,                                  \
-          "Use Libm Intrinsics")
+          "Use Libm Intrinsics")                                            \
+                                                                            \
+  /* Minimum array size in bytes to use AVX512 intrinsics */                \
+  /* for copy, inflate and fill which don't bail out early based on any */  \
+  /* condition. When this value is set to zero compare operations like */   \
+  /* compare, vectorizedMismatch, compress can also use AVX512 intrinsics.*/\
+  diagnostic(int, AVX3Threshold, 4096,                                      \
+             "Minimum array size in bytes to use AVX512 intrinsics"         \
+             "for copy, inflate and fill. When this value is set as zero"   \
+             "compare operations can also use AVX512 intrinsics.")          \
+             range(0, max_jint)                                             \
+                                                                            \
+  diagnostic(bool, IntelJccErratumMitigation, true,                         \
+             "Turn off JVM mitigations related to Intel micro code "        \
+             "mitigations for the Intel JCC erratum")
+
 #endif // CPU_X86_GLOBALS_X86_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,8 @@
  * @summary Check for exception instead of assert.
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @run main ClassFileParserBug
+ * @compile LambdaMath.jcod
+ * @run driver ClassFileParserBug
  */
 
 import java.io.File;
@@ -39,9 +40,7 @@ public class ClassFileParserBug {
     public static void main(String args[]) throws Throwable {
 
         System.out.println("Regression test for bug 8040018");
-        String testsrc = System.getProperty("test.src") + "/";
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-            "-jar", testsrc + File.separator + "test.jar");
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("LambdaMath");
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
         output.shouldContain("java.lang.ClassFormatError: Bad length on BootstrapMethods");
         output.shouldHaveExitValue(1);

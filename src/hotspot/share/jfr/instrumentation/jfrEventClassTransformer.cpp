@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
 #include "classfile/moduleEntry.hpp"
 #include "classfile/modules.hpp"
 #include "classfile/stackMapTable.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/verificationType.hpp"
 #include "interpreter/bytecodes.hpp"
 #include "jfr/instrumentation/jfrEventClassTransformer.hpp"
@@ -43,7 +44,6 @@
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/array.hpp"
-#include "oops/constantPool.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/method.hpp"
 #include "prims/jvmtiRedefineClasses.hpp"
@@ -356,7 +356,6 @@ class AnnotationIterator : public StackObj {
   }
 };
 
-static unsigned int unused_hash = 0;
 static const char value_name[] = "value";
 static bool has_annotation(const InstanceKlass* ik, const Symbol* annotation_type, bool& value) {
   assert(annotation_type != NULL, "invariant");
@@ -371,7 +370,7 @@ static bool has_annotation(const InstanceKlass* ik, const Symbol* annotation_typ
     if (annotation_iterator.type() == annotation_type) {
       // target annotation found
       static const Symbol* value_symbol =
-        SymbolTable::lookup_only(value_name, sizeof value_name - 1, unused_hash);
+        SymbolTable::probe(value_name, sizeof value_name - 1);
       assert(value_symbol != NULL, "invariant");
       const AnnotationElementIterator element_iterator = annotation_iterator.elements();
       while (element_iterator.has_next()) {
@@ -411,7 +410,7 @@ static bool java_base_can_read_jdk_jfr() {
   }
   static Symbol* jdk_jfr_module_symbol = NULL;
   if (jdk_jfr_module_symbol == NULL) {
-    jdk_jfr_module_symbol = SymbolTable::lookup_only(jdk_jfr_module_name, sizeof jdk_jfr_module_name - 1, unused_hash);
+    jdk_jfr_module_symbol = SymbolTable::probe(jdk_jfr_module_name, sizeof jdk_jfr_module_name - 1);
     if (jdk_jfr_module_symbol == NULL) {
       return false;
     }
@@ -446,7 +445,7 @@ static bool should_register_klass(const InstanceKlass* ik, bool& untypedEventHan
   assert(!untypedEventHandler, "invariant");
   static const Symbol* registered_symbol = NULL;
   if (registered_symbol == NULL) {
-    registered_symbol = SymbolTable::lookup_only(registered_constant, sizeof registered_constant - 1, unused_hash);
+    registered_symbol = SymbolTable::probe(registered_constant, sizeof registered_constant - 1);
     if (registered_symbol == NULL) {
       untypedEventHandler = true;
       return false;
@@ -1166,7 +1165,7 @@ static u2 find_or_add_utf8_info(JfrBigEndianWriter& writer,
                                 u2& added_cp_entries,
                                 TRAPS) {
   assert(utf8_constant != NULL, "invariant");
-  TempNewSymbol utf8_sym = SymbolTable::new_symbol(utf8_constant, THREAD);
+  TempNewSymbol utf8_sym = SymbolTable::new_symbol(utf8_constant);
   // lookup existing
   const int utf8_orig_idx = utf8_info_index(ik, utf8_sym, THREAD);
   if (utf8_orig_idx != invalid_cp_index) {
@@ -1461,12 +1460,11 @@ static InstanceKlass* create_new_instance_klass(InstanceKlass* ik, ClassFileStre
   Handle pd(THREAD, ik->protection_domain());
   Symbol* const class_name = ik->name();
   const char* const klass_name = class_name != NULL ? class_name->as_C_string() : "";
+  ClassLoadInfo cl_info(pd);
   ClassFileParser new_parser(stream,
                              class_name,
                              cld,
-                             pd,
-                             NULL, // host klass
-                             NULL, // cp_patches
+                             &cl_info,
                              ClassFileParser::INTERNAL, // internal visibility
                              THREAD);
   if (HAS_PENDING_EXCEPTION) {
@@ -1474,7 +1472,8 @@ static InstanceKlass* create_new_instance_klass(InstanceKlass* ik, ClassFileStre
     CLEAR_PENDING_EXCEPTION;
     return NULL;
   }
-  InstanceKlass* const new_ik = new_parser.create_instance_klass(false, THREAD);
+  const ClassInstanceInfo* cl_inst_info = cl_info.class_hidden_info_ptr();
+  InstanceKlass* const new_ik = new_parser.create_instance_klass(false, *cl_inst_info, THREAD);
   if (HAS_PENDING_EXCEPTION) {
     log_pending_exception(PENDING_EXCEPTION);
     CLEAR_PENDING_EXCEPTION;
@@ -1498,35 +1497,6 @@ static void rewrite_klass_pointer(InstanceKlass*& ik, InstanceKlass* new_ik, Cla
   ik = new_ik;
 }
 
-// During retransform/redefine, copy the Method specific trace flags
-// from the previous ik ("the original klass") to the new ik ("the scratch_klass").
-// The open code for retransform/redefine does not know about these.
-// In doing this migration here, we ensure the new Methods (defined in scratch klass)
-// will carry over trace tags from the old Methods being replaced,
-// ensuring flag/tag continuity while being transparent to open code.
-static void copy_method_trace_flags(const InstanceKlass* the_original_klass, const InstanceKlass* the_scratch_klass) {
-  assert(the_original_klass != NULL, "invariant");
-  assert(the_scratch_klass != NULL, "invariant");
-  assert(the_original_klass->name() == the_scratch_klass->name(), "invariant");
-  const Array<Method*>* old_methods = the_original_klass->methods();
-  const Array<Method*>* new_methods = the_scratch_klass->methods();
-  const bool equal_array_length = old_methods->length() == new_methods->length();
-  // The Method array has the property of being sorted.
-  // If they are the same length, there is a one-to-one mapping.
-  // If they are unequal, there was a method added (currently only
-  // private static methods allowed to be added), use lookup.
-  for (int i = 0; i < old_methods->length(); ++i) {
-    const Method* const old_method = old_methods->at(i);
-    Method* const new_method = equal_array_length ? new_methods->at(i) :
-      the_scratch_klass->find_method(old_method->name(), old_method->signature());
-    assert(new_method != NULL, "invariant");
-    assert(new_method->name() == old_method->name(), "invariant");
-    assert(new_method->signature() == old_method->signature(), "invariant");
-    *new_method->trace_flags_addr() = old_method->trace_flags();
-    assert(new_method->trace_flags() == old_method->trace_flags(), "invariant");
-  }
-}
-
 static bool is_retransforming(const InstanceKlass* ik, TRAPS) {
   assert(ik != NULL, "invariant");
   assert(JdkJfrEvent::is_a(ik), "invariant");
@@ -1534,16 +1504,7 @@ static bool is_retransforming(const InstanceKlass* ik, TRAPS) {
   assert(name != NULL, "invariant");
   Handle class_loader(THREAD, ik->class_loader());
   Handle protection_domain(THREAD, ik->protection_domain());
-  // nota bene: use lock-free dictionary lookup
-  const InstanceKlass* prev_ik = (const InstanceKlass*)SystemDictionary::find(name, class_loader, protection_domain, THREAD);
-  if (prev_ik == NULL) {
-    return false;
-  }
-  // an existing ik implies a retransform/redefine
-  assert(prev_ik != NULL, "invariant");
-  assert(JdkJfrEvent::is_a(prev_ik), "invariant");
-  copy_method_trace_flags(prev_ik, ik);
-  return true;
+  return SystemDictionary::find(name, class_loader, protection_domain, THREAD) != NULL;
 }
 
 // target for JFR_ON_KLASS_CREATION hook
@@ -1572,12 +1533,8 @@ void JfrEventClassTransformer::on_klass_creation(InstanceKlass*& ik, ClassFilePa
     return;
   }
   assert(JdkJfrEvent::is_subklass(ik), "invariant");
-  if (is_retransforming(ik, THREAD)) {
-    // not the initial klass load
-    return;
-  }
-  if (ik->is_abstract()) {
-    // abstract classes are not instrumented
+  if (ik->is_abstract() || is_retransforming(ik, THREAD)) {
+    // abstract and scratch classes are not instrumented
     return;
   }
   ResourceMark rm(THREAD);

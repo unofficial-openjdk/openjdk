@@ -26,6 +26,7 @@
 #include "code/debugInfo.hpp"
 #include "code/debugInfoRec.hpp"
 #include "code/nmethod.hpp"
+#include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
@@ -50,12 +51,20 @@ void DebugInfoWriteStream::write_metadata(Metadata* h) {
 }
 
 oop DebugInfoReadStream::read_oop() {
-  oop o = code()->oop_at(read_int());
+  nmethod* nm = const_cast<CompiledMethod*>(code())->as_nmethod_or_null();
+  oop o;
+  if (nm != NULL) {
+    // Despite these oops being found inside nmethods that are on-stack,
+    // they are not kept alive by all GCs (e.g. G1 and Shenandoah).
+    o = nm->oop_at_phantom(read_int());
+  } else {
+    o = code()->oop_at(read_int());
+  }
   assert(oopDesc::is_oop_or_null(o), "oop only");
   return o;
 }
 
-ScopeValue* DebugInfoReadStream::read_object_value() {
+ScopeValue* DebugInfoReadStream::read_object_value(bool is_auto_box) {
   int id = read_int();
 #ifdef ASSERT
   assert(_obj_pool != NULL, "object pool does not exist");
@@ -63,7 +72,7 @@ ScopeValue* DebugInfoReadStream::read_object_value() {
     assert(_obj_pool->at(i)->as_ObjectValue()->id() != id, "should not be read twice");
   }
 #endif
-  ObjectValue* result = new ObjectValue(id);
+  ObjectValue* result = is_auto_box ? new AutoBoxObjectValue(id) : new ObjectValue(id);
   // Cache the object since an object field could reference it.
   _obj_pool->push(result);
   result->read_object(this);
@@ -87,18 +96,21 @@ ScopeValue* DebugInfoReadStream::get_cached_object() {
 
 enum { LOCATION_CODE = 0, CONSTANT_INT_CODE = 1,  CONSTANT_OOP_CODE = 2,
                           CONSTANT_LONG_CODE = 3, CONSTANT_DOUBLE_CODE = 4,
-                          OBJECT_CODE = 5,        OBJECT_ID_CODE = 6 };
+                          OBJECT_CODE = 5,        OBJECT_ID_CODE = 6,
+                          AUTO_BOX_OBJECT_CODE = 7, MARKER_CODE = 8 };
 
 ScopeValue* ScopeValue::read_from(DebugInfoReadStream* stream) {
   ScopeValue* result = NULL;
   switch(stream->read_int()) {
-   case LOCATION_CODE:        result = new LocationValue(stream);        break;
-   case CONSTANT_INT_CODE:    result = new ConstantIntValue(stream);     break;
-   case CONSTANT_OOP_CODE:    result = new ConstantOopReadValue(stream); break;
-   case CONSTANT_LONG_CODE:   result = new ConstantLongValue(stream);    break;
-   case CONSTANT_DOUBLE_CODE: result = new ConstantDoubleValue(stream);  break;
-   case OBJECT_CODE:          result = stream->read_object_value();      break;
-   case OBJECT_ID_CODE:       result = stream->get_cached_object();      break;
+   case LOCATION_CODE:        result = new LocationValue(stream);                        break;
+   case CONSTANT_INT_CODE:    result = new ConstantIntValue(stream);                     break;
+   case CONSTANT_OOP_CODE:    result = new ConstantOopReadValue(stream);                 break;
+   case CONSTANT_LONG_CODE:   result = new ConstantLongValue(stream);                    break;
+   case CONSTANT_DOUBLE_CODE: result = new ConstantDoubleValue(stream);                  break;
+   case OBJECT_CODE:          result = stream->read_object_value(false /*is_auto_box*/); break;
+   case AUTO_BOX_OBJECT_CODE: result = stream->read_object_value(true /*is_auto_box*/);  break;
+   case OBJECT_ID_CODE:       result = stream->get_cached_object();                      break;
+   case MARKER_CODE:          result = new MarkerValue();                                break;
    default: ShouldNotReachHere();
   }
   return result;
@@ -117,6 +129,16 @@ void LocationValue::write_on(DebugInfoWriteStream* stream) {
 
 void LocationValue::print_on(outputStream* st) const {
   location().print_on(st);
+}
+
+// MarkerValue
+
+void MarkerValue::write_on(DebugInfoWriteStream* stream) {
+  stream->write_int(MARKER_CODE);
+}
+
+void MarkerValue::print_on(outputStream* st) const {
+    st->print("marker");
 }
 
 // ObjectValue
@@ -141,7 +163,7 @@ void ObjectValue::write_on(DebugInfoWriteStream* stream) {
     stream->write_int(_id);
   } else {
     _visited = true;
-    stream->write_int(OBJECT_CODE);
+    stream->write_int(is_auto_box() ? AUTO_BOX_OBJECT_CODE : OBJECT_CODE);
     stream->write_int(_id);
     _klass->write_on(stream);
     int length = _field_values.length();
@@ -153,7 +175,7 @@ void ObjectValue::write_on(DebugInfoWriteStream* stream) {
 }
 
 void ObjectValue::print_on(outputStream* st) const {
-  st->print("obj[%d]", _id);
+  st->print("%s[%d]", is_auto_box() ? "box_obj" : "obj", _id);
 }
 
 void ObjectValue::print_fields_on(outputStream* st) const {
@@ -222,7 +244,7 @@ void ConstantOopWriteValue::write_on(DebugInfoWriteStream* stream) {
     // thread is already in VM state.
     ThreadInVMfromUnknown tiv;
     assert(JNIHandles::resolve(value()) == NULL ||
-           Universe::heap()->is_in_reserved(JNIHandles::resolve(value())),
+           Universe::heap()->is_in(JNIHandles::resolve(value())),
            "Should be in heap");
  }
 #endif
@@ -243,7 +265,7 @@ void ConstantOopWriteValue::print_on(outputStream* st) const {
 ConstantOopReadValue::ConstantOopReadValue(DebugInfoReadStream* stream) {
   _value = Handle(Thread::current(), stream->read_oop());
   assert(_value() == NULL ||
-         Universe::heap()->is_in_reserved(_value()), "Should be in heap");
+         Universe::heap()->is_in(_value()), "Should be in heap");
 }
 
 void ConstantOopReadValue::write_on(DebugInfoWriteStream* stream) {

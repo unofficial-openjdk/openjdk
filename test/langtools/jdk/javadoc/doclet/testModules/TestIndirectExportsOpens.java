@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -160,15 +160,19 @@ public class TestIndirectExportsOpens extends JavadocTester {
         // check for minimal expected strings.
         checkOutput("a/module-summary.html", true,
                 "Indirect Exports",
-                "<th class=\"colFirst\" scope=\"row\"><a href=\"../m/module-summary.html\">m</a></th>\n"
-                + "<td class=\"colLast\"><a href=\"../m/exportsto/package-summary.html\">exportsto</a></td>\n"
-                + "</tr>\n");
+                """
+                    <th class="col-first" scope="row"><a href="../m/module-summary.html">m</a></th>
+                    <td class="col-last"><a href="../m/exportsto/package-summary.html">exportsto</a></td>
+                    </tr>
+                    """);
 
         checkOutput("a/module-summary.html", true,
                 "Indirect Opens",
-                "<th class=\"colFirst\" scope=\"row\"><a href=\"../m/module-summary.html\">m</a></th>\n"
-                + "<td class=\"colLast\">opensto</td>\n"
-                + "</tr>\n");
+                """
+                    <th class="col-first" scope="row"><a href="../m/module-summary.html">m</a></th>
+                    <td class="col-last">opensto</td>
+                    </tr>
+                    """);
     }
 
     void verifyIndirectExports(boolean present) {
@@ -190,20 +194,24 @@ public class TestIndirectExportsOpens extends JavadocTester {
         }
 
         checkOutput("a/module-summary.html", present,
-                "<div class=\"packagesSummary\">\n"
-                + "<table>\n"
-                + "<caption><span>" + typeString + "</span><span class=\"tabEnd\">&nbsp;</span></caption>\n"
-                + "<tr>\n"
-                + "<th class=\"colFirst\" scope=\"col\">From</th>\n"
-                + "<th class=\"colLast\" scope=\"col\">Packages</th>\n"
-                + "</tr>\n"
-                + "<tbody>\n"
-                + "<tr class=\"altColor\">\n"
-                + "<th class=\"colFirst\" scope=\"row\"><a href=\"../m/module-summary.html\">m</a></th>\n"
-                + "<td class=\"colLast\"><a href=\"../m/pm/package-summary.html\">pm</a></td>\n"
-                + "</tr>\n"
-                + "</tbody>\n"
-                + "</table>\n"
-                + "</div>");
+                """
+                    <div class="packages-summary">
+                    <table class="details-table">
+                    <caption><span>""" + typeString + """
+                    </span></caption>
+                    <thead>
+                    <tr>
+                    <th class="col-first" scope="col">From</th>
+                    <th class="col-last" scope="col">Packages</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr class="alt-color">
+                    <th class="col-first" scope="row"><a href="../m/module-summary.html">m</a></th>
+                    <td class="col-last"><a href="../m/pm/package-summary.html">pm</a></td>
+                    </tr>
+                    </tbody>
+                    </table>
+                    </div>""");
     }
 }

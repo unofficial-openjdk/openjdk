@@ -37,8 +37,6 @@ class Bsd {
   static bool libjsig_is_loaded;        // libjsig that interposes sigaction(),
                                         // __sigaction(), signal() is loaded
   static struct sigaction *(*get_signal_action)(int);
-  static struct sigaction *get_preinstalled_handler(int);
-  static void save_preinstalled_handler(int, struct sigaction&);
 
   static void check_signal_handler(int sig);
 
@@ -157,6 +155,8 @@ class Bsd {
     }
   }
   static int get_node_by_cpu(int cpu_id);
+
+  static void print_uptime_info(outputStream* st);
 };
 
 #endif // OS_BSD_OS_BSD_HPP

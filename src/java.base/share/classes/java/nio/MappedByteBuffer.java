@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,9 @@ package java.nio;
 
 import java.io.FileDescriptor;
 import java.lang.ref.Reference;
+import java.util.Objects;
+
+import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.Unsafe;
 
 
@@ -77,34 +80,104 @@ public abstract class MappedByteBuffer
     // operations if valid; null if the buffer is not mapped.
     private final FileDescriptor fd;
 
+    // A flag true if this buffer is mapped against non-volatile
+    // memory using one of the extended FileChannel.MapMode modes,
+    // MapMode.READ_ONLY_SYNC or MapMode.READ_WRITE_SYNC and false if
+    // it is mapped using any of the other modes. This flag only
+    // determines the behavior of force operations.
+    private final boolean isSync;
+
     // This should only be invoked by the DirectByteBuffer constructors
     //
     MappedByteBuffer(int mark, int pos, int lim, int cap, // package-private
-                     FileDescriptor fd)
-    {
-        super(mark, pos, lim, cap);
+                     FileDescriptor fd, boolean isSync, MemorySegmentProxy segment) {
+        super(mark, pos, lim, cap, segment);
         this.fd = fd;
+        this.isSync = isSync;
     }
 
-    MappedByteBuffer(int mark, int pos, int lim, int cap) { // package-private
-        super(mark, pos, lim, cap);
+    MappedByteBuffer(int mark, int pos, int lim, int cap, // package-private
+                     boolean isSync, MemorySegmentProxy segment) {
+        super(mark, pos, lim, cap, segment);
         this.fd = null;
+        this.isSync = isSync;
     }
 
-    // Returns the distance (in bytes) of the buffer from the page aligned address
-    // of the mapping. Computed each time to avoid storing in every direct buffer.
+    MappedByteBuffer(int mark, int pos, int lim, int cap, MemorySegmentProxy segment) { // package-private
+        super(mark, pos, lim, cap, segment);
+        this.fd = null;
+        this.isSync = false;
+    }
+
+    // Returns the distance (in bytes) of the buffer start from the
+    // largest page aligned address of the mapping less than or equal
+    // to the start address.
     private long mappingOffset() {
+        return mappingOffset(0);
+    }
+
+    // Returns the distance (in bytes) of the buffer element
+    // identified by index from the largest page aligned address of
+    // the mapping less than or equal to the element address. Computed
+    // each time to avoid storing in every direct buffer.
+    private long mappingOffset(int index) {
         int ps = Bits.pageSize();
-        long offset = address % ps;
-        return (offset >= 0) ? offset : (ps + offset);
+        long indexAddress = address + index;
+        long baseAddress = alignDown(indexAddress, ps);
+        return indexAddress - baseAddress;
     }
 
+    // Given an offset previously obtained from calling
+    // mappingOffset() returns the largest page aligned address of the
+    // mapping less than or equal to the buffer start address.
     private long mappingAddress(long mappingOffset) {
-        return address - mappingOffset;
+        return mappingAddress(mappingOffset, 0);
     }
 
+    // Given an offset previously otained from calling
+    // mappingOffset(index) returns the largest page aligned address
+    // of the mapping less than or equal to the address of the buffer
+    // element identified by index.
+    private long mappingAddress(long mappingOffset, long index) {
+        long indexAddress = address + index;
+        return indexAddress - mappingOffset;
+    }
+
+    // given a mappingOffset previously otained from calling
+    // mappingOffset() return that offset added to the buffer
+    // capacity.
     private long mappingLength(long mappingOffset) {
-        return (long)capacity() + mappingOffset;
+        return mappingLength(mappingOffset, (long)capacity());
+    }
+
+    // given a mappingOffset previously otained from calling
+    // mappingOffset(index) return that offset added to the supplied
+    // length.
+    private long mappingLength(long mappingOffset, long length) {
+        return length + mappingOffset;
+    }
+
+    // align address down to page size
+    private static long alignDown(long address, int pageSize) {
+        // pageSize must be a power of 2
+        return address & ~(pageSize - 1);
+    }
+
+    /**
+     * Tells whether this buffer was mapped against a non-volatile
+     * memory device by passing one of the sync map modes {@link
+     * jdk.nio.mapmode.ExtendedMapMode#READ_ONLY_SYNC
+     * ExtendedMapModeMapMode#READ_ONLY_SYNC} or {@link
+     * jdk.nio.mapmode.ExtendedMapMode#READ_ONLY_SYNC
+     * ExtendedMapMode#READ_WRITE_SYNC} in the call to {@link
+     * java.nio.channels.FileChannel#map FileChannel.map} or was
+     * mapped by passing one of the other map modes.
+     *
+     * @return true if the file was mapped using one of the sync map
+     * modes, otherwise false.
+     */
+    private boolean isSync() {
+        return isSync;
     }
 
     /**
@@ -129,6 +202,10 @@ public abstract class MappedByteBuffer
         if (fd == null) {
             return true;
         }
+        // a sync mapped buffer is always loaded
+        if (isSync()) {
+            return true;
+        }
         if ((address == 0) || (capacity() == 0))
             return true;
         long offset = mappingOffset();
@@ -151,6 +228,10 @@ public abstract class MappedByteBuffer
      */
     public final MappedByteBuffer load() {
         if (fd == null) {
+            return this;
+        }
+        // no need to load a sync mapped buffer
+        if (isSync()) {
             return this;
         }
         if ((address == 0) || (capacity() == 0))
@@ -196,8 +277,11 @@ public abstract class MappedByteBuffer
      * is made.
      *
      * <p> If this buffer was not mapped in read/write mode ({@link
-     * java.nio.channels.FileChannel.MapMode#READ_WRITE}) then invoking this
-     * method has no effect. </p>
+     * java.nio.channels.FileChannel.MapMode#READ_WRITE}) then
+     * invoking this method may have no effect. In particular, the
+     * method has no effect for buffers mapped in read-only or private
+     * mapping modes. This method may or may not have an effect for
+     * implementation-specific mapping modes. </p>
      *
      * @return  This buffer
      */
@@ -205,9 +289,73 @@ public abstract class MappedByteBuffer
         if (fd == null) {
             return this;
         }
+        if (isSync) {
+            return force(0, limit());
+        }
         if ((address != 0) && (capacity() != 0)) {
             long offset = mappingOffset();
             force0(fd, mappingAddress(offset), mappingLength(offset));
+        }
+        return this;
+    }
+
+    /**
+     * Forces any changes made to a region of this buffer's content to
+     * be written to the storage device containing the mapped
+     * file. The region starts at the given {@code index} in this
+     * buffer and is {@code length} bytes.
+     *
+     * <p> If the file mapped into this buffer resides on a local
+     * storage device then when this method returns it is guaranteed
+     * that all changes made to the selected region buffer since it
+     * was created, or since this method was last invoked, will have
+     * been written to that device. The force operation is free to
+     * write bytes that lie outside the specified region, for example
+     * to ensure that data blocks of some device-specific granularity
+     * are transferred in their entirety.
+     *
+     * <p> If the file does not reside on a local device then no such
+     * guarantee is made.
+     *
+     * <p> If this buffer was not mapped in read/write mode ({@link
+     * java.nio.channels.FileChannel.MapMode#READ_WRITE}) then
+     * invoking this method may have no effect. In particular, the
+     * method has no effect for buffers mapped in read-only or private
+     * mapping modes. This method may or may not have an effect for
+     * implementation-specific mapping modes. </p>
+     *
+     * @param  index
+     *         The index of the first byte in the buffer region that is
+     *         to be written back to storage; must be non-negative
+     *         and less than limit()
+     *
+     * @param  length
+     *         The length of the region in bytes; must be non-negative
+     *         and no larger than limit() - index
+     *
+     * @throws IndexOutOfBoundsException
+     *         if the preconditions on the index and length do not
+     *         hold.
+     *
+     * @return  This buffer
+     *
+     * @since 13
+     */
+    public final MappedByteBuffer force(int index, int length) {
+        if (fd == null) {
+            return this;
+        }
+        if ((address != 0) && (limit() != 0)) {
+            // check inputs
+            Objects.checkFromIndexSize(index, length, limit());
+            if (isSync) {
+                // simply force writeback of associated cache lines
+                Unsafe.getUnsafe().writebackMemory(address + index, length);
+            } else {
+                // force writeback via file descriptor
+                long offset = mappingOffset(index);
+                force0(fd, mappingAddress(offset, index), mappingLength(offset, length));
+            }
         }
         return this;
     }

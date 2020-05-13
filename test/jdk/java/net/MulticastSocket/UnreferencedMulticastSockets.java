@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 
 /**
  * @test
+ * @library /test/lib
  * @modules java.management java.base/java.io:+open java.base/java.net:+open
  * @run main/othervm -Djava.net.preferIPv4Stack=true UnreferencedMulticastSockets
  * @run main/othervm UnreferencedMulticastSockets
@@ -40,6 +41,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.DatagramSocketImpl;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
@@ -48,7 +50,10 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
+
+import jdk.test.lib.net.IPSupport;
 
 import com.sun.management.UnixOperatingSystemMXBean;
 
@@ -68,9 +73,14 @@ public class UnreferencedMulticastSockets {
     static class Server implements Runnable {
 
         MulticastSocket ss;
-
+        final int port;
+        final Phaser phaser = new Phaser(2);
         Server() throws IOException {
-            ss = new MulticastSocket(0);
+            InetAddress loopback = InetAddress.getLoopbackAddress();
+            InetSocketAddress serverAddress =
+                new InetSocketAddress(loopback, 0);
+            ss = new MulticastSocket(serverAddress);
+            port = ss.getLocalPort();
             System.out.printf("  DatagramServer addr: %s: %d%n",
                     this.getHost(), this.getPort());
             pendingSockets.add(new NamedWeak(ss, pendingQueue, "serverMulticastSocket"));
@@ -78,12 +88,12 @@ public class UnreferencedMulticastSockets {
         }
 
         InetAddress getHost() throws UnknownHostException {
-            InetAddress localhost = InetAddress.getByName("localhost"); //.getLocalHost();
+            InetAddress localhost = InetAddress.getLoopbackAddress();
             return localhost;
         }
 
         int getPort() {
-            return ss.getLocalPort();
+            return port;
         }
 
         // Receive a byte and send back a byte
@@ -92,21 +102,31 @@ public class UnreferencedMulticastSockets {
                 byte[] buffer = new byte[50];
                 DatagramPacket p = new DatagramPacket(buffer, buffer.length);
                 ss.receive(p);
+                System.out.printf("Server: ping received from: %s%n", p.getSocketAddress());
+                phaser.arriveAndAwaitAdvance(); // await the client...
                 buffer[0] += 1;
+                System.out.printf("Server: sending echo to: %s%n", p.getSocketAddress());
                 ss.send(p);         // send back +1
 
+                System.out.printf("Server: awaiting client%n");
+                phaser.arriveAndAwaitAdvance(); // await the client...
                 // do NOT close but 'forget' the socket reference
+                System.out.printf("Server: forgetting socket...%n");
                 ss = null;
-            } catch (Exception ioe) {
+            } catch (Throwable ioe) {
                 ioe.printStackTrace();
             }
         }
     }
 
     public static void main(String args[]) throws Exception {
+        IPSupport.throwSkippedExceptionIfNonOperational();
+
+        InetSocketAddress clientAddress =
+                new InetSocketAddress(InetAddress.getLoopbackAddress(), 0);
 
         // Create and close a MulticastSocket to warm up the FD count for side effects.
-        try (MulticastSocket s = new MulticastSocket(0)) {
+        try (MulticastSocket s = new MulticastSocket(clientAddress)) {
             // no-op; close immediately
             s.getLocalPort();   // no-op
         }
@@ -119,8 +139,33 @@ public class UnreferencedMulticastSockets {
         Thread thr = new Thread(svr);
         thr.start();
 
-        MulticastSocket client = new MulticastSocket(0);
-        System.out.printf("  client bound port: %d%n", client.getLocalPort());
+        // It is possible under some circumstances that the client
+        // might get bound to the same port than the server: this
+        // would make the test fail - so if this happen we try to
+        // bind to a specific port by incrementing the server port.
+        MulticastSocket client = null;
+        int serverPort = svr.getPort();
+        int maxtries = 20;
+        for (int i = 0; i < maxtries; i++) {
+            try {
+                System.out.printf("Trying to bind client to: %s%n", clientAddress);
+                client = new MulticastSocket(clientAddress);
+                if (client.getLocalPort() != svr.getPort()) break;
+                client.close();
+            } catch (IOException x) {
+                System.out.printf("Couldn't create client after %d attempts: %s%n", i, x);
+                if (i == maxtries) throw x;
+            }
+            if (i == maxtries) {
+                String msg = String.format("Couldn't create client after %d attempts", i);
+                System.out.println(msg);
+                throw new AssertionError(msg);
+            }
+            clientAddress = new InetSocketAddress(clientAddress.getAddress(), serverPort + i);
+        }
+
+        System.out.printf("  client bound port: %s:%d%n",
+                client.getLocalAddress(), client.getLocalPort());
         client.connect(svr.getHost(), svr.getPort());
         pendingSockets.add(new NamedWeak(client, pendingQueue, "clientMulticastSocket"));
         extractRefs(client, "clientMulticastSocket");
@@ -129,14 +174,17 @@ public class UnreferencedMulticastSockets {
         msg[0] = 1;
         DatagramPacket p = new DatagramPacket(msg, msg.length, svr.getHost(), svr.getPort());
         client.send(p);
+        System.out.printf("  ping sent to: %s:%d%n", svr.getHost(), svr.getPort());
+        svr.phaser.arriveAndAwaitAdvance(); // wait until the server has received its packet
 
         p = new DatagramPacket(msg, msg.length);
         client.receive(p);
 
-        System.out.printf("echo received from: %s%n", p.getSocketAddress());
+        System.out.printf("  echo received from: %s%n", p.getSocketAddress());
         if (msg[0] != 2) {
             throw new AssertionError("incorrect data received: expected: 2, actual: " + msg[0]);
         }
+        svr.phaser.arriveAndAwaitAdvance(); // let the server null out its socket
 
         // Do NOT close the MulticastSocket; forget it
 

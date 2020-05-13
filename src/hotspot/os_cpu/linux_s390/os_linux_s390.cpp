@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2016, 2018 SAP SE. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,7 @@
 #include "runtime/javaCalls.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/osThread.hpp"
+#include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.inline.hpp"
@@ -270,8 +271,9 @@ JVM_handle_linux_signal(int sig,
 
 #ifdef CAN_SHOW_REGISTERS_ON_ASSERT
   if ((sig == SIGSEGV || sig == SIGBUS) && info != NULL && info->si_addr == g_assert_poison) {
-    handle_assert_poison_fault(ucVoid, info->si_addr);
-    return 1;
+    if (handle_assert_poison_fault(ucVoid, info->si_addr)) {
+      return 1;
+    }
   }
 #endif
 
@@ -320,7 +322,7 @@ JVM_handle_linux_signal(int sig,
       address addr = (address)info->si_addr; // Address causing SIGSEGV, usually mem ref target.
 
       // Check if fault address is within thread stack.
-      if (thread->on_local_stack(addr)) {
+      if (thread->is_in_full_stack(addr)) {
         // stack overflow
         if (thread->in_stack_yellow_reserved_zone(addr)) {
           if (thread->thread_state() == _thread_in_Java) {
@@ -392,7 +394,7 @@ JVM_handle_linux_signal(int sig,
       }
 
       else if (sig == SIGSEGV &&
-               os::is_poll_address((address)info->si_addr)) {
+               SafepointMechanism::is_poll_address((address)info->si_addr)) {
         if (TraceTraps) {
           tty->print_cr("trap: safepoint_poll at " INTPTR_FORMAT " (SIGSEGV)", p2i(pc));
         }
@@ -425,6 +427,7 @@ JVM_handle_linux_signal(int sig,
         stub = SharedRuntime::continuation_for_implicit_exception(thread, pc, SharedRuntime::IMPLICIT_NULL);
       }
 
+#ifdef COMPILER2
       // SIGTRAP-based implicit range check in compiled code.
       else if (sig == SIGFPE && TrapBasedRangeChecks &&
                (trap_pc != NULL) &&
@@ -434,6 +437,7 @@ JVM_handle_linux_signal(int sig,
         }
         stub = SharedRuntime::continuation_for_implicit_exception(thread, trap_pc, SharedRuntime::IMPLICIT_NULL);
       }
+#endif
 
       else if (sig == SIGFPE && info->si_code == FPE_INTDIV) {
         stub = SharedRuntime::continuation_for_implicit_exception(thread, trap_pc, SharedRuntime::IMPLICIT_DIVIDE_BY_ZERO);
@@ -467,7 +471,8 @@ JVM_handle_linux_signal(int sig,
         // when the vector facility is installed, but operating system support is missing.
         VM_Version::reset_has_VectorFacility();
         stub = pc; // Continue with next instruction.
-      } else if (thread->thread_state() == _thread_in_vm &&
+      } else if ((thread->thread_state() == _thread_in_vm ||
+                  thread->thread_state() == _thread_in_native) &&
                  sig == SIGBUS && thread->doing_unsafe_access()) {
         // We don't really need a stub here! Just set the pending exeption and
         // continue at the next instruction after the faulting read. Returning
@@ -475,6 +480,15 @@ JVM_handle_linux_signal(int sig,
         thread->set_pending_unsafe_access_error();
         os::Linux::ucontext_set_pc(uc, pc + Assembler::instr_len(pc));
         return true;
+      }
+    }
+
+    // jni_fast_Get<Primitive>Field can trap at certain pc's if a GC kicks in
+    // and the heap gets shrunk before the field access.
+    if ((sig == SIGSEGV) || (sig == SIGBUS)) {
+      address addr = JNI_FastGetField::find_slowcase_pc(pc);
+      if (addr != (address)-1) {
+        stub = addr;
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -318,26 +318,17 @@ public interface Line extends AutoCloseable {
         }
 
         /**
-         * Obtains a textual description of the line info.
+         * Returns a string representation of the info object.
          *
-         * @return a string description
+         * @return a string representation of the info object
          */
         @Override
         public String toString() {
-
-            String fullPackagePath = "javax.sound.sampled.";
-            String initialString = new String(getLineClass().toString());
-            String finalString;
-
-            int index = initialString.indexOf(fullPackagePath);
-
-            if (index != -1) {
-                finalString = initialString.substring(0, index) + initialString.substring( (index + fullPackagePath.length()), initialString.length() );
-            } else {
-                finalString = initialString;
+            final String str = getLineClass().toString();
+            if (getLineClass().getPackage() == Line.class.getPackage()) {
+                return str.replace("javax.sound.sampled.", "");
             }
-
-            return finalString;
+            return str;
         }
     }
 }

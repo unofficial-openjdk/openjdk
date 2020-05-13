@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ package sun.jvm.hotspot.oops;
 import java.util.*;
 
 import sun.jvm.hotspot.debugger.*;
-import sun.jvm.hotspot.gc.cms.*;
 import sun.jvm.hotspot.gc.shared.*;
 import sun.jvm.hotspot.gc.epsilon.*;
 import sun.jvm.hotspot.gc.g1.*;
@@ -134,7 +133,7 @@ public class ObjectHeap {
       extremely low level (stepping word-by-word) to provide the
       ability to do very low-level debugging */
   public void iterateRaw(RawHeapVisitor visitor) {
-    List liveRegions = collectLiveRegions();
+    List<Address> liveRegions = collectLiveRegions();
 
     // Summarize size
     long totalSize = 0;
@@ -224,7 +223,7 @@ public class ObjectHeap {
         });
   }
 
-  private void iterateLiveRegions(List liveRegions, HeapVisitor visitor, ObjectFilter of) {
+  private void iterateLiveRegions(List<Address> liveRegions, HeapVisitor visitor, ObjectFilter of) {
     // Summarize size
     long totalSize = 0;
     for (int i = 0; i < liveRegions.size(); i += 2) {
@@ -233,18 +232,6 @@ public class ObjectHeap {
       totalSize += top.minus(bottom);
     }
     visitor.prologue(totalSize);
-
-    CompactibleFreeListSpace cmsSpaceOld = null;
-    CollectedHeap heap = VM.getVM().getUniverse().heap();
-
-    if (heap instanceof GenCollectedHeap) {
-      GenCollectedHeap genHeap = (GenCollectedHeap) heap;
-      Generation genOld = genHeap.getGen(1);
-      if (genOld instanceof ConcurrentMarkSweepGeneration) {
-          ConcurrentMarkSweepGeneration concGen = (ConcurrentMarkSweepGeneration)genOld;
-          cmsSpaceOld = concGen.cmsSpace();
-      }
-    }
 
     for (int i = 0; i < liveRegions.size(); i += 2) {
       Address bottom = (Address) liveRegions.get(i);
@@ -255,30 +242,11 @@ public class ObjectHeap {
         OopHandle handle = bottom.addOffsetToAsOopHandle(0);
 
         while (handle.lessThan(top)) {
-        Oop obj = null;
+          Oop obj = null;
 
-          try {
-            obj = newOop(handle);
-          } catch (UnknownOopException exp) {
-            if (DEBUG) {
-              throw new RuntimeException(" UnknownOopException  " + exp);
-            }
-          }
+          obj = newOop(handle);
           if (obj == null) {
-             //Find the object size using Printezis bits and skip over
-             long size = 0;
-
-             if ( (cmsSpaceOld != null) && cmsSpaceOld.contains(handle) ){
-                 size = cmsSpaceOld.collector().blockSizeUsingPrintezisBits(handle);
-             }
-
-             if (size <= 0) {
-                //Either Printezis bits not set or handle is not in cms space.
-                throw new UnknownOopException();
-             }
-
-             handle = handle.addOffsetToAsOopHandle(CompactibleFreeListSpace.adjustObjectSizeInBytes(size));
-             continue;
+              throw new UnknownOopException();
           }
           if (of == null || of.canInclude(obj)) {
                   if (visitor.doObj(obj)) {
@@ -286,17 +254,10 @@ public class ObjectHeap {
                           break;
                   }
           }
-          if ( (cmsSpaceOld != null) && cmsSpaceOld.contains(handle)) {
-              handle = handle.addOffsetToAsOopHandle(CompactibleFreeListSpace.adjustObjectSizeInBytes(obj.getObjectSize()) );
-          } else {
-              handle = handle.addOffsetToAsOopHandle(obj.getObjectSize());
-          }
+
+          handle = handle.addOffsetToAsOopHandle(obj.getObjectSize());
         }
-      }
-      catch (AddressException e) {
-        // This is okay at the top of these regions
-          }
-      catch (UnknownOopException e) {
+      } catch (AddressException | UnknownOopException | WrongTypeException e) {
         // This is okay at the top of these regions
       }
     }
@@ -355,7 +316,9 @@ public class ObjectHeap {
     // end.
 
     if (VM.getVM().getUseTLAB()) {
-      for (JavaThread thread = VM.getVM().getThreads().first(); thread != null; thread = thread.next()) {
+      Threads threads = VM.getVM().getThreads();
+      for (int i = 0; i < threads.getNumberOfThreads(); i++) {
+        JavaThread thread = threads.getJavaThreadAt(i);
         ThreadLocalAllocBuffer tlab = thread.tlab();
         if (tlab.start() != null) {
           if ((tlab.top() == null) || (tlab.end() == null)) {

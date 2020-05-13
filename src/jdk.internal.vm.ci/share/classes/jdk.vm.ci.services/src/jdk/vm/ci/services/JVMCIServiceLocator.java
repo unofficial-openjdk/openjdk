@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,8 @@
  * questions.
  */
 package jdk.vm.ci.services;
+
+import static jdk.vm.ci.services.Services.IS_BUILDING_NATIVE_IMAGE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +70,26 @@ public abstract class JVMCIServiceLocator {
      */
     protected abstract <S> S getProvider(Class<S> service);
 
+    private static volatile List<JVMCIServiceLocator> cachedLocators;
+
+    private static Iterable<JVMCIServiceLocator> getJVMCIServiceLocators() {
+        Iterable<JVMCIServiceLocator> result = cachedLocators;
+        if (result != null) {
+            return result;
+        }
+        result = ServiceLoader.load(JVMCIServiceLocator.class, ClassLoader.getSystemClassLoader());
+        if (IS_BUILDING_NATIVE_IMAGE) {
+            ArrayList<JVMCIServiceLocator> l = new ArrayList<>();
+            for (JVMCIServiceLocator locator : result) {
+                l.add(locator);
+            }
+            l.trimToSize();
+            cachedLocators = l;
+            return l;
+        }
+        return result;
+    }
+
     /**
      * Gets the providers of the service defined by {@code service} by querying the available
      * {@link JVMCIServiceLocator} providers.
@@ -82,7 +104,7 @@ public abstract class JVMCIServiceLocator {
             sm.checkPermission(new JVMCIPermission());
         }
         List<S> providers = new ArrayList<>();
-        for (JVMCIServiceLocator access : ServiceLoader.load(JVMCIServiceLocator.class, ClassLoader.getSystemClassLoader())) {
+        for (JVMCIServiceLocator access : getJVMCIServiceLocators()) {
             S provider = access.getProvider(service);
             if (provider != null) {
                 providers.add(provider);

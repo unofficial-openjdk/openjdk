@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import java.security.MessageDigest;
 import java.security.Key;
 import java.security.PublicKey;
 import java.security.PrivateKey;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.Timestamp;
 import java.security.UnrecoverableEntryException;
@@ -57,6 +58,7 @@ import java.security.spec.ECParameterSpec;
 import java.text.Collator;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.math.BigInteger;
@@ -83,6 +85,7 @@ import sun.security.provider.certpath.ssl.SSLServerCertStore;
 import sun.security.util.Password;
 import sun.security.util.SecurityProperties;
 import sun.security.util.SecurityProviderConstants;
+import sun.security.util.SignatureUtil;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -174,6 +177,8 @@ public final class Main {
     private Set<char[]> passwords = new HashSet<>();
     private String startDate = null;
 
+    private boolean tlsInfo = false;
+
     private List<String> ids = new ArrayList<>();   // used in GENCRL
     private List<String> v3ext = new ArrayList<>();
 
@@ -188,6 +193,10 @@ public final class Main {
     private static final DisabledAlgorithmConstraints DISABLED_CHECK =
             new DisabledAlgorithmConstraints(
                     DisabledAlgorithmConstraints.PROPERTY_CERTPATH_DISABLED_ALGS);
+
+    private static final DisabledAlgorithmConstraints LEGACY_CHECK =
+            new DisabledAlgorithmConstraints(
+                    DisabledAlgorithmConstraints.PROPERTY_SECURITY_LEGACY_ALGS);
 
     private static final Set<CryptoPrimitive> SIG_PRIMITIVE_SET = Collections
             .unmodifiableSet(EnumSet.of(CryptoPrimitive.SIGNATURE));
@@ -259,6 +268,8 @@ public final class Main {
         STOREPASSWD("Changes.the.store.password.of.a.keystore",
             NEW, KEYSTORE, CACERTS, STOREPASS, STORETYPE, PROVIDERNAME,
             ADDPROVIDER, PROVIDERCLASS, PROVIDERPATH, V),
+        SHOWINFO("showinfo.command.help",
+            TLS, V),
 
         // Undocumented start here, KEYCLONE is used a marker in -help;
 
@@ -364,6 +375,7 @@ public final class Main {
         STARTDATE("startdate", "<date>", "certificate.validity.start.date.time"),
         STOREPASS("storepass", "<arg>", "keystore.password"),
         STORETYPE("storetype", "<type>", "keystore.type"),
+        TLS("tls", null, "tls.option.help"),
         TRUSTCACERTS("trustcacerts", null, "trust.certificates.from.cacerts"),
         V("v", null, "verbose.output"),
         VALIDITY("validity", "<days>", "validity.number.of.days");
@@ -677,6 +689,8 @@ public final class Main {
                 protectedPath = true;
             } else if (collator.compare(flags, "-srcprotected") == 0) {
                 srcprotectedPath = true;
+            } else if (collator.compare(flags, "-tls") == 0) {
+                tlsInfo = true;
             } else  {
                 System.err.println(rb.getString("Illegal.option.") + flags);
                 tinyHelp();
@@ -704,7 +718,7 @@ public final class Main {
     }
 
     boolean isKeyStoreRelated(Command cmd) {
-        return cmd != PRINTCERT && cmd != PRINTCERTREQ;
+        return cmd != PRINTCERT && cmd != PRINTCERTREQ && cmd != SHOWINFO;
     }
 
     /**
@@ -873,8 +887,7 @@ public final class Main {
         // Check if keystore exists.
         // If no keystore has been specified at the command line, try to use
         // the default, which is located in $HOME/.keystore.
-        // If the command is "genkey", "identitydb", "import", or "printcert",
-        // it is OK not to have a keystore.
+        // No need to check if isKeyStoreRelated(command) is false.
 
         // DO NOT open the existing keystore if this is an in-place import.
         // The keystore should be created as brand new.
@@ -888,6 +901,9 @@ public final class Main {
                 }
                 ksStream = new FileInputStream(ksfile);
             } catch (FileNotFoundException e) {
+                // These commands do not need the keystore to be existing.
+                // Either it will create a new one or the keystore is
+                // optional (i.e. PRINTCRL).
                 if (command != GENKEYPAIR &&
                         command != GENSECKEY &&
                         command != IDENTITYDB &&
@@ -1139,17 +1155,15 @@ public final class Main {
             }
         } else if (command == GENKEYPAIR) {
             if (keyAlgName == null) {
-                keyAlgName = "DSA";
-                weakWarnings.add(String.format(rb.getString(
-                        "keyalg.option.1.missing.warning"), keyAlgName));
+                throw new Exception(rb.getString(
+                        "keyalg.option.missing.error"));
             }
             doGenKeyPair(alias, dname, keyAlgName, keysize, groupName, sigAlgName);
             kssave = true;
         } else if (command == GENSECKEY) {
             if (keyAlgName == null) {
-                keyAlgName = "DES";
-                weakWarnings.add(String.format(rb.getString(
-                        "keyalg.option.1.missing.warning"), keyAlgName));
+                throw new Exception(rb.getString(
+                        "keyalg.option.missing.error"));
             }
             doGenSecretKey(alias, keyAlgName, keysize);
             kssave = true;
@@ -1310,6 +1324,8 @@ public final class Main {
             }
         } else if (command == PRINTCRL) {
             doPrintCRL(filename, out);
+        } else if (command == SHOWINFO) {
+            doShowInfo();
         }
 
         // If we need to save the keystore, do so.
@@ -1429,15 +1445,16 @@ public final class Main {
             sigAlgName = getCompatibleSigAlgName(privateKey);
         }
         Signature signature = Signature.getInstance(sigAlgName);
-        signature.initSign(privateKey);
-
-        X509CertInfo info = new X509CertInfo();
         AlgorithmParameterSpec params = AlgorithmId
                 .getDefaultAlgorithmParameterSpec(sigAlgName, privateKey);
+
+        SignatureUtil.initSignWithParam(signature, privateKey, params, null);
+
+        X509CertInfo info = new X509CertInfo();
         AlgorithmId algID = AlgorithmId.getWithParameterSpec(sigAlgName, params);
         info.set(X509CertInfo.VALIDITY, interval);
-        info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(
-                    new java.util.Random().nextInt() & 0x7fffffff));
+        info.set(X509CertInfo.SERIAL_NUMBER,
+                CertificateSerialNumber.newRandom64bit(new SecureRandom()));
         info.set(X509CertInfo.VERSION,
                     new CertificateVersion(CertificateVersion.V3));
         info.set(X509CertInfo.ALGORITHM_ID,
@@ -1587,12 +1604,9 @@ public final class Main {
         }
 
         Signature signature = Signature.getInstance(sigAlgName);
-        signature.initSign(privKey);
         AlgorithmParameterSpec params = AlgorithmId
                 .getDefaultAlgorithmParameterSpec(sigAlgName, privKey);
-        if (params != null) {
-            signature.setParameter(params);
-        }
+        SignatureUtil.initSignWithParam(signature, privKey, params, null);
 
         X500Name subject = dname == null?
                 new X500Name(((X509Certificate)cert).getSubjectDN().toString()):
@@ -2407,9 +2421,9 @@ public final class Main {
         out.println(form.format(source));
         out.println();
 
-        for (Enumeration<String> e = keyStore.aliases();
-                                        e.hasMoreElements(); ) {
-            String alias = e.nextElement();
+        List<String> aliases = Collections.list(keyStore.aliases());
+        aliases.sort(String::compareTo);
+        for (String alias : aliases) {
             doPrintEntry("<" + alias + ">", alias, out);
             if (verbose || rfc) {
                 out.println(rb.getString("NEWLINE"));
@@ -2706,6 +2720,14 @@ public final class Main {
         }
     }
 
+    private void doShowInfo() throws Exception {
+        if (tlsInfo) {
+            ShowInfo.tls(verbose);
+        } else {
+            System.out.println(rb.getString("showinfo.no.option"));
+        }
+    }
+
     private Collection<? extends Certificate> generateCertificates(InputStream in)
             throws CertificateException, IOException {
         byte[] data = in.readAllBytes();
@@ -2947,8 +2969,8 @@ public final class Main {
         certInfo.set(X509CertInfo.VALIDITY, interval);
 
         // Make new serial number
-        certInfo.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(
-                    new java.util.Random().nextInt() & 0x7fffffff));
+        certInfo.set(X509CertInfo.SERIAL_NUMBER,
+                CertificateSerialNumber.newRandom64bit(new SecureRandom()));
 
         // Set owner and issuer fields
         X500Name owner;
@@ -3302,9 +3324,13 @@ public final class Main {
 
     private String withWeak(String alg) {
         if (DISABLED_CHECK.permits(SIG_PRIMITIVE_SET, alg, null)) {
-            return alg;
+            if (LEGACY_CHECK.permits(SIG_PRIMITIVE_SET, alg, null)) {
+                return alg;
+            } else {
+                return String.format(rb.getString("with.weak"), alg);
+            }
         } else {
-            return String.format(rb.getString("with.weak"), alg);
+            return String.format(rb.getString("with.disabled"), alg);
         }
     }
 
@@ -3323,13 +3349,17 @@ public final class Main {
         int kLen = KeyUtil.getKeySize(key);
         String displayAlg = fullDisplayAlgName(key);
         if (DISABLED_CHECK.permits(SIG_PRIMITIVE_SET, key)) {
-            if (kLen >= 0) {
-                return String.format(rb.getString("key.bit"), kLen, displayAlg);
+            if (LEGACY_CHECK.permits(SIG_PRIMITIVE_SET, key)) {
+                if (kLen >= 0) {
+                    return String.format(rb.getString("key.bit"), kLen, displayAlg);
+                } else {
+                    return String.format(rb.getString("unknown.size.1"), displayAlg);
+                }
             } else {
-                return String.format(rb.getString("unknown.size.1"), displayAlg);
+                return String.format(rb.getString("key.bit.weak"), kLen, displayAlg);
             }
         } else {
-            return String.format(rb.getString("key.bit.weak"), kLen, displayAlg);
+            return String.format(rb.getString("key.bit.disabled"), kLen, displayAlg);
         }
     }
 
@@ -3558,6 +3588,11 @@ public final class Main {
         throws Exception
     {
         Key key = null;
+
+        if (KeyStoreUtil.isWindowsKeyStore(storetype)) {
+            key = keyStore.getKey(alias, null);
+            return Pair.of(key, null);
+        }
 
         if (keyStore.containsAlias(alias) == false) {
             MessageFormat form = new MessageFormat
@@ -4085,15 +4120,51 @@ public final class Main {
     }
 
     /**
-     * Match a command (may be abbreviated) with a command set.
-     * @param s the command provided
+     * Match a command with a command set. The match can be exact, or
+     * partial, or case-insensitive.
+     *
+     * @param s the command provided by user
      * @param list the legal command set. If there is a null, commands after it
-     * are regarded experimental, which means they are supported but their
-     * existence should not be revealed to user.
+     *      are regarded experimental, which means they are supported but their
+     *      existence should not be revealed to user.
      * @return the position of a single match, or -1 if none matched
      * @throws Exception if s is ambiguous
      */
     private static int oneOf(String s, String... list) throws Exception {
+
+        // First, if there is an exact match, returns it.
+        int res = oneOfMatch((a,b) -> a.equals(b), s, list);
+        if (res >= 0) {
+            return res;
+        }
+
+        // Second, if there is one single camelCase or prefix match, returns it.
+        // This regex substitution removes all lowercase letters not at the
+        // beginning, so "keyCertSign" becomes "kCS".
+        res = oneOfMatch((a,b) -> a.equals(b.replaceAll("(?<!^)[a-z]", ""))
+                || b.startsWith(a), s, list);
+        if (res >= 0) {
+            return res;
+        }
+
+        // Finally, retry the 2nd step ignoring case
+        return oneOfMatch((a,b) -> a.equalsIgnoreCase(b.replaceAll("(?<!^)[a-z]", ""))
+                || b.toUpperCase(Locale.ROOT).startsWith(a.toUpperCase(Locale.ROOT)),
+                s, list);
+    }
+
+    /**
+     * Match a command with a command set.
+     *
+     * @param matcher a BiFunction which returns {@code true} if the 1st
+     *               argument (user input) matches the 2nd one (full command)
+     * @param s the command provided by user
+     * @param list the legal command set
+     * @return the position of a single match, or -1 if none matched
+     * @throws Exception if s is ambiguous
+     */
+    private static int oneOfMatch(BiFunction<String,String,Boolean> matcher,
+            String s, String... list) throws Exception {
         int[] match = new int[list.length];
         int nmatch = 0;
         int experiment = Integer.MAX_VALUE;
@@ -4103,25 +4174,8 @@ public final class Main {
                 experiment = i;
                 continue;
             }
-            if (one.toLowerCase(Locale.ENGLISH)
-                    .startsWith(s.toLowerCase(Locale.ENGLISH))) {
+            if (matcher.apply(s, one)) {
                 match[nmatch++] = i;
-            } else {
-                StringBuilder sb = new StringBuilder();
-                boolean first = true;
-                for (char c: one.toCharArray()) {
-                    if (first) {
-                        sb.append(c);
-                        first = false;
-                    } else {
-                        if (!Character.isLowerCase(c)) {
-                            sb.append(c);
-                        }
-                    }
-                }
-                if (sb.toString().equalsIgnoreCase(s)) {
-                    match[nmatch++] = i;
-                }
             }
         }
         if (nmatch == 0) {
@@ -4135,7 +4189,7 @@ public final class Main {
             }
             StringBuilder sb = new StringBuilder();
             MessageFormat form = new MessageFormat(rb.getString
-                ("command.{0}.is.ambiguous."));
+                    ("command.{0}.is.ambiguous."));
             Object[] source = {s};
             sb.append(form.format(source));
             sb.append("\n    ");
@@ -4151,9 +4205,10 @@ public final class Main {
      * Create a GeneralName object from known types
      * @param t one of 5 known types
      * @param v value
+     * @param exttype X.509 extension type
      * @return which one
      */
-    private GeneralName createGeneralName(String t, String v)
+    private GeneralName createGeneralName(String t, String v, int exttype)
             throws Exception {
         GeneralNameInterface gn;
         int p = oneOf(t, "EMAIL", "URI", "DNS", "IP", "OID");
@@ -4164,7 +4219,14 @@ public final class Main {
         switch (p) {
             case 0: gn = new RFC822Name(v); break;
             case 1: gn = new URIName(v); break;
-            case 2: gn = new DNSName(v); break;
+            case 2:
+                if (exttype == 3) {
+                    // Allow wildcard only for SAN extension
+                    gn = new DNSName(v, true);
+                } else {
+                    gn = new DNSName(v);
+                }
+                break;
             case 3: gn = new IPAddressName(v); break;
             default: gn = new OIDName(v); break; //4
         }
@@ -4450,7 +4512,7 @@ public final class Main {
                                 }
                                 String t = item.substring(0, colonpos);
                                 String v = item.substring(colonpos+1);
-                                gnames.add(createGeneralName(t, v));
+                                gnames.add(createGeneralName(t, v, exttype));
                             }
                             if (exttype == 3) {
                                 setExt(result, new SubjectAlternativeNameExtension(
@@ -4504,7 +4566,7 @@ public final class Main {
                                     oid = new ObjectIdentifier("1.3.6.1.5.5.7.48." + p);
                                 }
                                 accessDescriptions.add(new AccessDescription(
-                                        oid, createGeneralName(t, v)));
+                                        oid, createGeneralName(t, v, exttype)));
                             }
                             if (exttype == 5) {
                                 setExt(result, new SubjectInfoAccessExtension(accessDescriptions));
@@ -4527,7 +4589,7 @@ public final class Main {
                                 }
                                 String t = item.substring(0, colonpos);
                                 String v = item.substring(colonpos+1);
-                                gnames.add(createGeneralName(t, v));
+                                gnames.add(createGeneralName(t, v, exttype));
                             }
                             setExt(result, new CRLDistributionPointsExtension(
                                     isCritical, Collections.singletonList(
@@ -4601,18 +4663,28 @@ public final class Main {
     }
 
     private void checkWeak(String label, String sigAlg, Key key) {
-
-        if (sigAlg != null && !DISABLED_CHECK.permits(
-                SIG_PRIMITIVE_SET, sigAlg, null)) {
-            weakWarnings.add(String.format(
-                    rb.getString("whose.sigalg.risk"), label, sigAlg));
+        if (sigAlg != null) {
+            if (!DISABLED_CHECK.permits(SIG_PRIMITIVE_SET, sigAlg, null)) {
+                weakWarnings.add(String.format(
+                    rb.getString("whose.sigalg.disabled"), label, sigAlg));
+            } else if (!LEGACY_CHECK.permits(SIG_PRIMITIVE_SET, sigAlg, null)) {
+                weakWarnings.add(String.format(
+                    rb.getString("whose.sigalg.weak"), label, sigAlg));
+            }
         }
-        if (key != null && !DISABLED_CHECK.permits(SIG_PRIMITIVE_SET, key)) {
-            weakWarnings.add(String.format(
-                    rb.getString("whose.key.risk"),
-                    label,
+
+        if (key != null) {
+            if (!DISABLED_CHECK.permits(SIG_PRIMITIVE_SET, key)) {
+                weakWarnings.add(String.format(
+                    rb.getString("whose.key.disabled"), label,
                     String.format(rb.getString("key.bit"),
-                            KeyUtil.getKeySize(key), key.getAlgorithm())));
+                    KeyUtil.getKeySize(key), fullDisplayAlgName(key))));
+            } else if (!LEGACY_CHECK.permits(SIG_PRIMITIVE_SET, key)) {
+                weakWarnings.add(String.format(
+                    rb.getString("whose.key.weak"), label,
+                    String.format(rb.getString("key.bit"),
+                    KeyUtil.getKeySize(key), fullDisplayAlgName(key))));
+            }
         }
     }
 
@@ -4752,7 +4824,8 @@ public final class Main {
     }
 
     private char[] getPass(String modifier, String arg) {
-        char[] output = KeyStoreUtil.getPassWithModifier(modifier, arg, rb);
+        char[] output =
+            KeyStoreUtil.getPassWithModifier(modifier, arg, rb, collator);
         if (output != null) return output;
         tinyHelp();
         return null;    // Useless, tinyHelp() already exits.

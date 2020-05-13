@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,19 +35,48 @@
 #include "logging/log.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/mutexLocker.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/safepoint.hpp"
 #include "runtime/thread.inline.hpp"
 
 typedef JfrStringPool::Buffer* BufferPtr;
 
 static JfrStringPool* _instance = NULL;
+static uint64_t store_generation = 0;
+static uint64_t serialized_generation = 0;
+
+inline void set_generation(uint64_t value, uint64_t* const dest) {
+  assert(dest != NULL, "invariant");
+  Atomic::release_store(dest, value);
+}
+static void increment_store_generation() {
+  const uint64_t current_serialized = Atomic::load_acquire(&serialized_generation);
+  const uint64_t current_stored = Atomic::load_acquire(&store_generation);
+  if (current_serialized == current_stored) {
+    set_generation(current_serialized + 1, &store_generation);
+  }
+}
+
+static bool increment_serialized_generation() {
+  const uint64_t current_stored = Atomic::load_acquire(&store_generation);
+  const uint64_t current_serialized = Atomic::load_acquire(&serialized_generation);
+  if (current_stored != current_serialized) {
+    set_generation(current_stored, &serialized_generation);
+    return true;
+  }
+  return false;
+}
+
+bool JfrStringPool::is_modified() {
+  return increment_serialized_generation();
+}
 
 JfrStringPool& JfrStringPool::instance() {
   return *_instance;
 }
 
 JfrStringPool* JfrStringPool::create(JfrChunkWriter& cw) {
+  store_generation = 0;
+  serialized_generation = 0;
   assert(_instance == NULL, "invariant");
   _instance = new JfrStringPool(cw);
   return _instance;
@@ -131,102 +160,91 @@ BufferPtr JfrStringPool::lease_buffer(Thread* thread, size_t size /* 0 */) {
 bool JfrStringPool::add(bool epoch, jlong id, jstring string, JavaThread* jt) {
   assert(jt != NULL, "invariant");
   const bool current_epoch = JfrTraceIdEpoch::epoch();
-  if (current_epoch == epoch) {
+  if (current_epoch != epoch) {
+    return current_epoch;
+  }
+  {
     JfrStringPoolWriter writer(jt);
     writer.write(id);
     writer.write(string);
     writer.inc_nof_strings();
   }
+  increment_store_generation();
   return current_epoch;
 }
 
-class StringPoolWriteOp  {
+template <template <typename> class Operation>
+class StringPoolOp {
  public:
   typedef JfrStringPoolBuffer Type;
  private:
-  UnBufferedWriteToChunk<Type> _writer;
+  Operation<Type> _op;
   Thread* _thread;
   size_t _strings_processed;
  public:
-  StringPoolWriteOp(JfrChunkWriter& writer, Thread* thread) : _writer(writer), _thread(thread), _strings_processed(0) {}
+  StringPoolOp() : _op(), _thread(Thread::current()), _strings_processed(0) {}
+  StringPoolOp(JfrChunkWriter& writer, Thread* thread) : _op(writer), _thread(thread), _strings_processed(0) {}
   bool write(Type* buffer, const u1* data, size_t size) {
-    buffer->acquire(_thread); // blocking
+    assert(buffer->acquired_by(_thread) || buffer->retired(), "invariant");
     const uint64_t nof_strings_used = buffer->string_count();
     assert(nof_strings_used > 0, "invariant");
     buffer->set_string_top(buffer->string_top() + nof_strings_used);
     // "size processed" for string pool buffers is the number of processed string elements
     _strings_processed += nof_strings_used;
-    const bool ret = _writer.write(buffer, data, size);
-    buffer->release();
-    return ret;
+    return _op.write(buffer, data, size);
   }
   size_t processed() { return _strings_processed; }
 };
 
-typedef StringPoolWriteOp WriteOperation;
-typedef ConcurrentWriteOp<WriteOperation> ConcurrentWriteOperation;
+template <typename T>
+class StringPoolDiscarderStub {
+ public:
+  typedef T Type;
+  bool write(Type* buffer, const u1* data, size_t size) {
+    // stub only, discard happens at higher level
+    return true;
+  }
+};
+
+typedef StringPoolOp<UnBufferedWriteToChunk> WriteOperation;
+typedef StringPoolOp<StringPoolDiscarderStub> DiscardOperation;
+typedef ExclusiveOp<WriteOperation> ExclusiveWriteOperation;
+typedef ExclusiveOp<DiscardOperation> ExclusiveDiscardOperation;
+typedef ReleaseOp<JfrStringPoolMspace> StringPoolReleaseOperation;
+typedef CompositeOperation<ExclusiveWriteOperation, StringPoolReleaseOperation> StringPoolWriteOperation;
+typedef CompositeOperation<ExclusiveDiscardOperation, StringPoolReleaseOperation> StringPoolDiscardOperation;
 
 size_t JfrStringPool::write() {
   Thread* const thread = Thread::current();
   WriteOperation wo(_chunkwriter, thread);
-  ConcurrentWriteOperation cwo(wo);
-  assert(_free_list_mspace->is_full_empty(), "invariant");
-  process_free_list(cwo, _free_list_mspace);
-  return wo.processed();
-}
-
-typedef MutexedWriteOp<WriteOperation> MutexedWriteOperation;
-typedef ReleaseOp<JfrStringPoolMspace> StringPoolReleaseOperation;
-typedef CompositeOperation<MutexedWriteOperation, StringPoolReleaseOperation> StringPoolWriteOperation;
-
-size_t JfrStringPool::write_at_safepoint() {
-  assert(SafepointSynchronize::is_at_safepoint(), "invariant");
-  Thread* const thread = Thread::current();
-  WriteOperation wo(_chunkwriter, thread);
-  MutexedWriteOperation mwo(wo);
+  ExclusiveWriteOperation ewo(wo);
   StringPoolReleaseOperation spro(_free_list_mspace, thread, false);
-  StringPoolWriteOperation spwo(&mwo, &spro);
+  StringPoolWriteOperation spwo(&ewo, &spro);
   assert(_free_list_mspace->is_full_empty(), "invariant");
   process_free_list(spwo, _free_list_mspace);
   return wo.processed();
 }
 
-class StringPoolBufferDiscarder {
- private:
-  Thread* _thread;
-  size_t _processed;
- public:
-  typedef JfrStringPoolBuffer Type;
-  StringPoolBufferDiscarder() : _thread(Thread::current()), _processed(0) {}
-  bool process(Type* buffer) {
-    buffer->acquire(_thread); // serialized access
-    const u1* const current_top = buffer->top();
-    const size_t unflushed_size = buffer->pos() - current_top;
-    if (unflushed_size == 0) {
-      assert(buffer->string_count() == 0, "invariant");
-      buffer->release();
-      return true;
-    }
-    buffer->set_top(current_top + unflushed_size);
-    const uint64_t nof_strings_used = buffer->string_count();
-    buffer->set_string_top(buffer->string_top() + nof_strings_used);
-    // "size processed" for string pool buffers is the number of string elements
-    _processed += (size_t)nof_strings_used;
-    buffer->release();
-    return true;
-  }
-  size_t processed() const { return _processed; }
-};
+size_t JfrStringPool::write_at_safepoint() {
+  assert(SafepointSynchronize::is_at_safepoint(), "invariant");
+  return write();
+}
 
 size_t JfrStringPool::clear() {
-  StringPoolBufferDiscarder discard_operation;
+  increment_serialized_generation();
+  DiscardOperation discard_operation;
+  ExclusiveDiscardOperation edo(discard_operation);
+  StringPoolReleaseOperation spro(_free_list_mspace, Thread::current(), false);
+  StringPoolDiscardOperation spdo(&edo, &spro);
   assert(_free_list_mspace->is_full_empty(), "invariant");
-  process_free_list(discard_operation, _free_list_mspace);
+  process_free_list(spdo, _free_list_mspace);
   return discard_operation.processed();
 }
 
 void JfrStringPool::register_full(BufferPtr t, Thread* thread) {
   // nothing here at the moment
+  assert(t != NULL, "invariant");
+  assert(t->acquired_by(thread), "invariant");
   assert(t->retired(), "invariant");
 }
 

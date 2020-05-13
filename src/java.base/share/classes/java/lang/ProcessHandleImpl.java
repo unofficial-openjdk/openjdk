@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -223,9 +223,9 @@ final class ProcessHandleImpl implements ProcessHandle {
     /**
      * Returns a ProcessHandle for an existing native process.
      *
-     * @param pid the native process identifier
+     * @param  pid the native process identifier
      * @return The ProcessHandle for the pid if the process is alive;
-     *      or {@code null} if the process ID does not exist in the native system.
+     *         or {@code null} if the process ID does not exist in the native system.
      * @throws SecurityException if RuntimePermission("manageProcess") is not granted
      */
     static Optional<ProcessHandle> get(long pid) {
@@ -319,7 +319,7 @@ final class ProcessHandleImpl implements ProcessHandle {
      * @param pids an allocated long array to receive the pids
      * @param ppids an allocated long array to receive the parent pids; may be null
      * @param starttimes an allocated long array to receive the child start times; may be null
-     * @return if greater than or equals to zero is the number of pids in the array;
+     * @return if greater than or equal to zero is the number of pids in the array;
      *      if greater than the length of the arrays, the arrays are too small
      */
     private static native int getProcessPids0(long pid, long[] pids,
@@ -340,14 +340,14 @@ final class ProcessHandleImpl implements ProcessHandle {
     }
 
     /**
-      * Signal the process to terminate.
-      * The process is signaled only if its start time matches the known start time.
-      *
-      * @param pid  process id to kill
-      * @param startTime the start time of the process
-      * @param forcibly true to forcibly terminate (SIGKILL vs SIGTERM)
-      * @return true if the process was signaled without error; false otherwise
-      */
+     * Signal the process to terminate.
+     * The process is signaled only if its start time matches the known start time.
+     *
+     * @param pid  process id to kill
+     * @param startTime the start time of the process
+     * @param forcibly true to forcibly terminate (SIGKILL vs SIGTERM)
+     * @return true if the process was signaled without error; false otherwise
+     */
     private static native boolean destroy0(long pid, long startTime, boolean forcibly);
 
     @Override

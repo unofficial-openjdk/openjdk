@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,27 +28,27 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
-import org.junit.Test;
 import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.loop.LoopEx;
 import org.graalvm.compiler.loop.LoopsData;
 import org.graalvm.compiler.nodes.FieldLocationIdentity;
 import org.graalvm.compiler.nodes.StructuredGraph;
-import org.graalvm.compiler.nodes.memory.Access;
+import org.graalvm.compiler.nodes.memory.MemoryAccess;
 import jdk.internal.vm.compiler.word.LocationIdentity;
+import org.junit.Test;
 
 import jdk.vm.ci.meta.ResolvedJavaField;
 
 public class ReferenceGetLoopTest extends GraalCompilerTest {
 
     @Override
-    protected boolean checkMidTierGraph(StructuredGraph graph) {
+    protected void checkMidTierGraph(StructuredGraph graph) {
         final LoopsData loops = new LoopsData(graph);
         boolean found = false;
         for (LoopEx loop : loops.loops()) {
             for (Node node : loop.inside().nodes()) {
-                if (node instanceof Access) {
-                    Access access = (Access) node;
+                if (node instanceof MemoryAccess) {
+                    MemoryAccess access = (MemoryAccess) node;
                     LocationIdentity location = access.getLocationIdentity();
                     if (location instanceof FieldLocationIdentity) {
                         ResolvedJavaField field = ((FieldLocationIdentity) location).getField();
@@ -62,7 +62,6 @@ public class ReferenceGetLoopTest extends GraalCompilerTest {
         if (!found) {
             assertTrue(false, "Reference.referent not found in loop: " + getCanonicalGraphString(graph, true, false));
         }
-        return true;
     }
 
     public volatile Object referent;

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -47,9 +47,16 @@ endif
 ifeq ($(call check-jvm-feature, zero), true)
   JVM_CFLAGS_FEATURES += -DZERO -DCC_INTERP -DZERO_LIBARCH='"$(OPENJDK_TARGET_CPU_LEGACY_LIB)"' $(LIBFFI_CFLAGS)
   JVM_LIBS_FEATURES += $(LIBFFI_LIBS)
+  ifeq ($(ENABLE_LIBFFI_BUNDLING), true)
+    JVM_LDFLAGS_FEATURES += $(call SET_EXECUTABLE_ORIGIN,/..)
+  endif
   ifeq ($(call isTargetCpu, sparcv9), true)
     BUILD_LIBJVM_EXTRA_FILES := $(TOPDIR)/src/hotspot/cpu/sparc/memset_with_concurrent_readers_sparc.cpp
   endif
+endif
+
+ifeq ($(JVM_VARIANT), custom)
+  JVM_CFLAGS_FEATURES += -DVMTYPE=\"Custom\"
 endif
 
 ifeq ($(call check-jvm-feature, minimal), true)
@@ -108,6 +115,7 @@ ifneq ($(call check-jvm-feature, cds), true)
   JVM_EXCLUDE_FILES += \
       classListParser.cpp \
       classLoaderExt.cpp \
+      dynamicArchive.cpp \
       filemap.cpp \
       heapShared.cpp \
       metaspaceShared.cpp \
@@ -123,7 +131,7 @@ ifneq ($(call check-jvm-feature, nmt), true)
   JVM_CFLAGS_FEATURES += -DINCLUDE_NMT=0
   JVM_EXCLUDE_FILES += \
       memBaseline.cpp memReporter.cpp mallocTracker.cpp virtualMemoryTracker.cpp nmtCommon.cpp \
-      memTracker.cpp nmtDCmd.cpp mallocSiteTable.cpp
+      memTracker.cpp nmtDCmd.cpp mallocSiteTable.cpp threadStackTracker.cpp
 endif
 
 ifneq ($(call check-jvm-feature, aot), true)
@@ -132,11 +140,6 @@ ifneq ($(call check-jvm-feature, aot), true)
       compiledIC_aot_x86_64.cpp compiledIC_aot_aarch64.cpp      \
       compilerRuntime.cpp aotCodeHeap.cpp aotCompiledMethod.cpp \
       aotLoader.cpp compiledIC_aot.cpp
-endif
-
-ifneq ($(call check-jvm-feature, cmsgc), true)
-  JVM_CFLAGS_FEATURES += -DINCLUDE_CMSGC=0
-  JVM_EXCLUDE_PATTERNS += gc/cms
 endif
 
 ifneq ($(call check-jvm-feature, g1gc), true)
@@ -152,8 +155,6 @@ endif
 ifneq ($(call check-jvm-feature, serialgc), true)
   JVM_CFLAGS_FEATURES += -DINCLUDE_SERIALGC=0
   JVM_EXCLUDE_PATTERNS += gc/serial
-  # If serial is disabled, we cannot use serial as OldGC in parallel
-  JVM_EXCLUDE_FILES += psMarkSweep.cpp psMarkSweepDecorator.cpp
 endif
 
 ifneq ($(call check-jvm-feature, epsilongc), true)
@@ -169,13 +170,12 @@ endif
 ifneq ($(call check-jvm-feature, shenandoahgc), true)
   JVM_CFLAGS_FEATURES += -DINCLUDE_SHENANDOAHGC=0
   JVM_EXCLUDE_PATTERNS += gc/shenandoah
-else
-  JVM_CFLAGS_FEATURES += -DSUPPORT_BARRIER_ON_PRIMITIVES -DSUPPORT_NOT_TO_SPACE_INVARIANT
 endif
 
 ifneq ($(call check-jvm-feature, jfr), true)
   JVM_CFLAGS_FEATURES += -DINCLUDE_JFR=0
   JVM_EXCLUDE_PATTERNS += jfr
+  JVM_EXCLUDE_FILES += compilerEvent.cpp
 endif
 
 ################################################################################
@@ -189,97 +189,95 @@ ifeq ($(call check-jvm-feature, link-time-opt), true)
   JVM_LDFLAGS_FEATURES += -O3 -flto -fuse-linker-plugin -fno-strict-aliasing
 endif
 
-ifeq ($(call check-jvm-feature, minimal), true)
-  ifeq ($(call check-jvm-feature, link-time-opt), false)
-    JVM_OPTIMIZATION := SIZE
-    OPT_SPEED_SRC := \
-        allocation.cpp \
-        assembler.cpp \
-        assembler_linux_arm.cpp \
-        barrierSet.cpp \
-        basicLock.cpp \
-        biasedLocking.cpp \
-        bytecode.cpp \
-        bytecodeInterpreter.cpp \
-        bytecodeInterpreter_x86.cpp \
-        c1_Compilation.cpp \
-        c1_Compiler.cpp \
-        c1_GraphBuilder.cpp \
-        c1_LinearScan.cpp \
-        c1_LIR.cpp \
-        ciEnv.cpp \
-        ciObjectFactory.cpp \
-        codeBlob.cpp \
-        constantPool.cpp \
-        constMethod.cpp \
-        classLoader.cpp \
-        classLoaderData.cpp \
-        classFileParser.cpp \
-        classFileStream.cpp \
-        cpCache.cpp \
-        defNewGeneration.cpp \
-        frame_arm.cpp \
-        genCollectedHeap.cpp \
-        generation.cpp \
-        genMarkSweep.cpp \
-        growableArray.cpp \
-        handles.cpp \
-        hashtable.cpp \
-        heap.cpp \
-        icache.cpp \
-        icache_arm.cpp \
-        instanceKlass.cpp \
-        invocationCounter.cpp \
-        iterator.cpp \
-        javaCalls.cpp \
-        javaClasses.cpp \
-        jniFastGetField_arm.cpp \
-        jvm.cpp \
-        jvm_linux.cpp \
-        linkResolver.cpp \
-        klass.cpp \
-        klassVtable.cpp \
-        markSweep.cpp \
-        memRegion.cpp \
-        memoryPool.cpp \
-        method.cpp \
-        methodHandles.cpp \
-        methodHandles_arm.cpp \
-        methodLiveness.cpp \
-        metablock.cpp \
-        metaspace.cpp \
-        mutex.cpp \
-        mutex_linux.cpp \
-        mutexLocker.cpp \
-        nativeLookup.cpp \
-        objArrayKlass.cpp \
-        os_linux.cpp \
-        os_linux_arm.cpp \
-        placeHolders.cpp \
-        quickSort.cpp \
-        resourceArea.cpp \
-        rewriter.cpp \
-        sharedRuntime.cpp \
-        signature.cpp \
-        space.cpp \
-        stackMapTable.cpp \
-        symbolTable.cpp \
-        systemDictionary.cpp \
-        symbol.cpp \
-        synchronizer.cpp \
-        threadLS_bsd_x86.cpp \
-        threadLS_linux_arm.cpp \
-        threadLS_linux_x86.cpp \
-        timer.cpp \
-        typeArrayKlass.cpp \
-        unsafe.cpp \
-        utf8.cpp \
-        vmSymbols.cpp \
-        #
+ifeq ($(call check-jvm-feature, opt-size), true)
+  JVM_OPTIMIZATION := SIZE
+  OPT_SPEED_SRC := \
+      allocation.cpp \
+      assembler.cpp \
+      barrierSet.cpp \
+      basicLock.cpp \
+      biasedLocking.cpp \
+      bytecode.cpp \
+      bytecodeInterpreter.cpp \
+      c1_Compilation.cpp \
+      c1_Compiler.cpp \
+      c1_GraphBuilder.cpp \
+      c1_LinearScan.cpp \
+      c1_LIR.cpp \
+      ciEnv.cpp \
+      ciObjectFactory.cpp \
+      codeBlob.cpp \
+      constantPool.cpp \
+      constMethod.cpp \
+      classLoader.cpp \
+      classLoaderData.cpp \
+      classFileParser.cpp \
+      classFileStream.cpp \
+      cpCache.cpp \
+      defNewGeneration.cpp \
+      frame_arm.cpp \
+      frame_aarch64.cpp \
+      frame_ppc.cpp \
+      frame_s390.cpp \
+      frame_x86.cpp \
+      genCollectedHeap.cpp \
+      generation.cpp \
+      genMarkSweep.cpp \
+      growableArray.cpp \
+      handles.cpp \
+      hashtable.cpp \
+      heap.cpp \
+      icache.cpp \
+      icache_arm.cpp \
+      icache_aarch64.cpp \
+      icache_ppc.cpp \
+      icache_s390.cpp \
+      icache_x86.cpp \
+      instanceKlass.cpp \
+      invocationCounter.cpp \
+      iterator.cpp \
+      javaCalls.cpp \
+      javaClasses.cpp \
+      jniFastGetField_arm.cpp \
+      jvm.cpp \
+      linkResolver.cpp \
+      klass.cpp \
+      klassVtable.cpp \
+      markSweep.cpp \
+      memRegion.cpp \
+      memoryPool.cpp \
+      method.cpp \
+      methodHandles.cpp \
+      methodHandles_arm.cpp \
+      methodLiveness.cpp \
+      metaspace.cpp \
+      mutex.cpp \
+      mutexLocker.cpp \
+      nativeLookup.cpp \
+      objArrayKlass.cpp \
+      os_linux.cpp \
+      os_linux_arm.cpp \
+      resourceArea.cpp \
+      rewriter.cpp \
+      sharedRuntime.cpp \
+      signature.cpp \
+      space.cpp \
+      stackMapTable.cpp \
+      symbolTable.cpp \
+      systemDictionary.cpp \
+      symbol.cpp \
+      synchronizer.cpp \
+      timer.cpp \
+      typeArrayKlass.cpp \
+      unsafe.cpp \
+      utf8.cpp \
+      vmSymbols.cpp \
+      #
 
-    $(foreach s, $(OPT_SPEED_SRC), \
-        $(eval BUILD_LIBJVM_$s_OPTIMIZATION := HIGHEST_JVM))
+  $(foreach s, $(OPT_SPEED_SRC), \
+      $(eval BUILD_LIBJVM_$s_OPTIMIZATION := HIGHEST_JVM))
 
+  ifneq ($(filter $(TOOLCHAIN_TYPE), gcc clang), )
     BUILD_LIBJVM_systemDictionary.cpp_CXXFLAGS := -fno-optimize-sibling-calls
   endif
 endif

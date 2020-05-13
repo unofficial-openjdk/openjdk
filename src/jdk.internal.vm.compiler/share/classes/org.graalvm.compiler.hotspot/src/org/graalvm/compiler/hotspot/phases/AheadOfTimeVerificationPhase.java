@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,9 +28,9 @@ import static org.graalvm.compiler.nodes.ConstantNode.getConstantNodes;
 
 import org.graalvm.compiler.nodes.ConstantNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.nodes.type.StampTool;
 import org.graalvm.compiler.phases.VerifyPhase;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 
 import jdk.vm.ci.hotspot.HotSpotObjectConstant;
 import jdk.vm.ci.meta.JavaKind;
@@ -41,20 +41,24 @@ import jdk.vm.ci.meta.JavaKind;
  *
  * @see LoadJavaMirrorWithKlassPhase
  */
-public class AheadOfTimeVerificationPhase extends VerifyPhase<PhaseContext> {
+public class AheadOfTimeVerificationPhase extends VerifyPhase<CoreProviders> {
 
     @Override
-    protected boolean verify(StructuredGraph graph, PhaseContext context) {
+    protected void verify(StructuredGraph graph, CoreProviders context) {
         for (ConstantNode node : getConstantNodes(graph)) {
             if (isIllegalObjectConstant(node)) {
                 throw new VerificationError("illegal object constant: " + node);
             }
         }
-        return true;
     }
 
     public static boolean isIllegalObjectConstant(ConstantNode node) {
-        return isObject(node) && !isNullReference(node) && !isInternedString(node) && !isDirectMethodHandle(node) && !isBoundMethodHandle(node);
+        return isObject(node) &&
+                        !isNullReference(node) &&
+                        !isInternedString(node) &&
+                        !isDirectMethodHandle(node) &&
+                        !isBoundMethodHandle(node) &&
+                        !isVarHandle(node);
     }
 
     private static boolean isObject(ConstantNode node) {
@@ -66,10 +70,22 @@ public class AheadOfTimeVerificationPhase extends VerifyPhase<PhaseContext> {
     }
 
     private static boolean isDirectMethodHandle(ConstantNode node) {
+        String typeName = StampTool.typeOrNull(node).getName();
         if (!isObject(node)) {
             return false;
         }
-        return "Ljava/lang/invoke/DirectMethodHandle;".equals(StampTool.typeOrNull(node).getName());
+
+        switch (typeName) {
+            case "Ljava/lang/invoke/DirectMethodHandle;":
+            case "Ljava/lang/invoke/DirectMethodHandle$StaticAccessor;":
+            case "Ljava/lang/invoke/DirectMethodHandle$Accessor;":
+            case "Ljava/lang/invoke/DirectMethodHandle$Constructor;":
+            case "Ljava/lang/invoke/DirectMethodHandle$Special;":
+            case "Ljava/lang/invoke/DirectMethodHandle$Interface;":
+                return true;
+            default:
+                return false;
+        }
     }
 
     private static boolean isBoundMethodHandle(ConstantNode node) {
@@ -77,6 +93,14 @@ public class AheadOfTimeVerificationPhase extends VerifyPhase<PhaseContext> {
             return false;
         }
         return StampTool.typeOrNull(node).getName().startsWith("Ljava/lang/invoke/BoundMethodHandle");
+    }
+
+    private static boolean isVarHandle(ConstantNode node) {
+        if (!isObject(node)) {
+            return false;
+        }
+        String name = StampTool.typeOrNull(node).getName();
+        return name.equals("Ljava/lang/invoke/VarHandle$AccessDescriptor;");
     }
 
     private static boolean isInternedString(ConstantNode node) {

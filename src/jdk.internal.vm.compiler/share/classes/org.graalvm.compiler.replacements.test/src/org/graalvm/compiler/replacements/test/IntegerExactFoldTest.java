@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,23 +40,21 @@ import org.graalvm.compiler.nodes.PiNode;
 import org.graalvm.compiler.nodes.ReturnNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
-import org.graalvm.compiler.nodes.StructuredGraph.GuardsStage;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.spi.LoweringTool;
 import org.graalvm.compiler.phases.common.CanonicalizerPhase;
+import org.graalvm.compiler.phases.common.GuardLoweringPhase;
 import org.graalvm.compiler.phases.common.LoweringPhase;
 import org.graalvm.compiler.phases.tiers.HighTierContext;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
+import org.graalvm.compiler.phases.tiers.MidTierContext;
 import org.graalvm.compiler.replacements.nodes.arithmetic.IntegerExactArithmeticNode;
 import org.graalvm.compiler.replacements.nodes.arithmetic.IntegerExactArithmeticSplitNode;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-@Ignore
 @RunWith(Parameterized.class)
 public class IntegerExactFoldTest extends GraalCompilerTest {
     private final long lowerBoundA;
@@ -96,7 +94,8 @@ public class IntegerExactFoldTest extends GraalCompilerTest {
         Node originalNode = graph.getNodes().filter(x -> x instanceof IntegerExactArithmeticNode).first();
         assertNotNull("original node must be in the graph", originalNode);
 
-        new CanonicalizerPhase().apply(graph, getDefaultHighTierContext());
+        createCanonicalizerPhase().apply(graph, getDefaultHighTierContext());
+
         ValueNode node = findNode(graph);
         boolean overflowExpected = node instanceof IntegerExactArithmeticNode;
 
@@ -110,17 +109,19 @@ public class IntegerExactFoldTest extends GraalCompilerTest {
 
         Node originalNode = graph.getNodes().filter(x -> x instanceof IntegerExactArithmeticNode).first();
         assertNotNull("original node must be in the graph", originalNode);
+        CanonicalizerPhase canonicalizer = createCanonicalizerPhase();
+        HighTierContext highTierContext = getDefaultHighTierContext();
+        new LoweringPhase(canonicalizer, LoweringTool.StandardLoweringStage.HIGH_TIER).apply(graph, highTierContext);
+        MidTierContext midTierContext = getDefaultMidTierContext();
+        new GuardLoweringPhase().apply(graph, midTierContext);
+        createCanonicalizerPhase().apply(graph, midTierContext);
 
-        graph.setGuardsStage(GuardsStage.FIXED_DEOPTS);
-        CanonicalizerPhase canonicalizer = new CanonicalizerPhase();
-        PhaseContext context = new PhaseContext(getProviders());
-        new LoweringPhase(canonicalizer, LoweringTool.StandardLoweringStage.HIGH_TIER).apply(graph, context);
         IntegerExactArithmeticSplitNode loweredNode = graph.getNodes().filter(IntegerExactArithmeticSplitNode.class).first();
         assertNotNull("the lowered node must be in the graph", loweredNode);
 
         loweredNode.getX().setStamp(StampFactory.forInteger(bits, lowerBoundA, upperBoundA));
         loweredNode.getY().setStamp(StampFactory.forInteger(bits, lowerBoundB, upperBoundB));
-        new CanonicalizerPhase().apply(graph, context);
+        createCanonicalizerPhase().apply(graph, midTierContext);
 
         ValueNode node = findNode(graph);
         boolean overflowExpected = node instanceof IntegerExactArithmeticSplitNode;
@@ -143,7 +144,7 @@ public class IntegerExactFoldTest extends GraalCompilerTest {
         String snippet = "snippetInt" + bits;
         StructuredGraph graph = parseEager(getResolvedJavaMethod(operation.getClass(), snippet), AllowAssumptions.NO);
         HighTierContext context = getDefaultHighTierContext();
-        new CanonicalizerPhase().apply(graph, context);
+        createCanonicalizerPhase().apply(graph, context);
         return graph;
     }
 

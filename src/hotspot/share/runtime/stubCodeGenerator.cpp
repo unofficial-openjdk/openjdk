@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,8 +60,10 @@ void StubCodeDesc::print_on(outputStream* st) const {
   st->print("%s", group());
   st->print("::");
   st->print("%s", name());
-  st->print(" [" INTPTR_FORMAT ", " INTPTR_FORMAT "[ (%d bytes)", p2i(begin()), p2i(end()), size_in_bytes());
+  st->print(" [" INTPTR_FORMAT ", " INTPTR_FORMAT "] (%d bytes)", p2i(begin()), p2i(end()), size_in_bytes());
 }
+
+void StubCodeDesc::print() const { print_on(tty); }
 
 // Implementation of StubCodeGenerator
 
@@ -96,9 +98,12 @@ void StubCodeGenerator::stub_epilog(StubCodeDesc* cdesc) {
     // of this stub.
     offset = cdesc->begin() - outer_cbuf->insts()->start();
 #endif
-    cdesc->print();
+    ttyLocker ttyl;
+    tty->print_cr("- - - [BEGIN] - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
+    cdesc->print_on(tty);
     tty->cr();
-    Disassembler::decode(cdesc->begin(), cdesc->end(), NULL, cs, offset);
+    Disassembler::decode(cdesc->begin(), cdesc->end(), tty, cs /*, offset */);
+    tty->print_cr("- - - [END] - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
     tty->cr();
   }
 }

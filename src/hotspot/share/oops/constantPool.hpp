@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,8 +93,6 @@ public:
   }
 };
 
-class KlassSizeStats;
-
 class ConstantPool : public Metadata {
   friend class VMStructs;
   friend class JVMCIVMStructs;
@@ -112,6 +110,16 @@ class ConstantPool : public Metadata {
   // save space on 64-bit platforms.
   Array<Klass*>*       _resolved_klasses;
 
+  u2              _major_version;        // major version number of class file
+  u2              _minor_version;        // minor version number of class file
+
+  // Constant pool index to the utf8 entry of the Generic signature,
+  // or 0 if none.
+  u2              _generic_signature_index;
+  // Constant pool index to the utf8 entry for the name of source file
+  // containing this klass, 0 if not specified.
+  u2              _source_file_name_index;
+
   enum {
     _has_preresolution    = 1,       // Flags
     _on_stack             = 2,
@@ -119,8 +127,9 @@ class ConstantPool : public Metadata {
     _has_dynamic_constant = 8
   };
 
-  int                  _flags;  // old fashioned bit twiddling
-  int                  _length; // number of elements in the array
+  u2              _flags;  // old fashioned bit twiddling
+
+  int             _length; // number of elements in the array
 
   union {
     // set for CDS to restore resolved references
@@ -137,8 +146,8 @@ class ConstantPool : public Metadata {
 
   void set_operands(Array<u2>* operands)       { _operands = operands; }
 
-  int flags() const                            { return _flags; }
-  void set_flags(int f)                        { _flags = f; }
+  u2 flags() const                             { return _flags; }
+  void set_flags(u2 f)                         { _flags = f; }
 
  private:
   intptr_t* base() const { return (intptr_t*) (((char*) this) + sizeof(ConstantPool)); }
@@ -190,6 +199,30 @@ class ConstantPool : public Metadata {
     assert(!is_shared(), "should never be called on shared ConstantPools");
     _flags |= _has_preresolution;
   }
+
+  // minor and major version numbers of class file
+  u2 major_version() const                 { return _major_version; }
+  void set_major_version(u2 major_version) { _major_version = major_version; }
+  u2 minor_version() const                 { return _minor_version; }
+  void set_minor_version(u2 minor_version) { _minor_version = minor_version; }
+
+  // generics support
+  Symbol* generic_signature() const {
+    return (_generic_signature_index == 0) ?
+      (Symbol*)NULL : symbol_at(_generic_signature_index);
+  }
+  u2 generic_signature_index() const                   { return _generic_signature_index; }
+  void set_generic_signature_index(u2 sig_index)       { _generic_signature_index = sig_index; }
+
+  // source file name
+  Symbol* source_file_name() const {
+    return (_source_file_name_index == 0) ?
+      (Symbol*)NULL : symbol_at(_source_file_name_index);
+  }
+  u2 source_file_name_index() const                    { return _source_file_name_index; }
+  void set_source_file_name_index(u2 sourcefile_index) { _source_file_name_index = sourcefile_index; }
+
+  void copy_fields(const ConstantPool* orig);
 
   // Redefine classes support.  If a method refering to this constant pool
   // is on the executing stack, or as a handle in vm code, this constant pool
@@ -746,11 +779,6 @@ class ConstantPool : public Metadata {
     return resolve_constant_at_impl(h_this, pool_index, _possible_index_sentinel, &found_it, THREAD);
   }
 
-  oop resolve_bootstrap_specifier_at(int index, TRAPS) {
-    constantPoolHandle h_this(THREAD, this);
-    return resolve_bootstrap_specifier_at_impl(h_this, index, THREAD);
-  }
-
   void copy_bootstrap_arguments_at(int index,
                                    int start_arg, int end_arg,
                                    objArrayHandle info, int pos,
@@ -778,9 +806,6 @@ class ConstantPool : public Metadata {
   }
   static int size(int length)          { return align_metadata_size(header_size() + length); }
   int size() const                     { return size(length()); }
-#if INCLUDE_SERVICES
-  void collect_statistics(KlassSizeStats *sz) const;
-#endif
 
   // ConstantPools should be stored in the read-only region of CDS archive.
   static bool is_read_only_by_default() { return true; }
@@ -871,7 +896,6 @@ class ConstantPool : public Metadata {
 
   static oop resolve_constant_at_impl(const constantPoolHandle& this_cp, int index, int cache_index,
                                       bool* status_return, TRAPS);
-  static oop resolve_bootstrap_specifier_at_impl(const constantPoolHandle& this_cp, int index, TRAPS);
   static void copy_bootstrap_arguments_at_impl(const constantPoolHandle& this_cp, int index,
                                                int start_arg, int end_arg,
                                                objArrayHandle info, int pos,

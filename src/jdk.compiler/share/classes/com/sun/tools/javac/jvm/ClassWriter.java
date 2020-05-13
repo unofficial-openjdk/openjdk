@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,9 +29,8 @@ import java.io.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.stream.Collectors;
+import java.util.function.ToIntFunction;
 
 import javax.tools.JavaFileManager;
 import javax.tools.FileObject;
@@ -44,16 +43,14 @@ import com.sun.tools.javac.code.Directive.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Types.SignatureGenerator.InvalidSignatureException;
-import com.sun.tools.javac.code.Types.UniqueType;
 import com.sun.tools.javac.comp.Check;
 import com.sun.tools.javac.file.PathFileObject;
-import com.sun.tools.javac.jvm.Pool.DynamicMethod;
-import com.sun.tools.javac.jvm.Pool.Method;
-import com.sun.tools.javac.jvm.Pool.MethodHandle;
-import com.sun.tools.javac.jvm.Pool.Variable;
+import com.sun.tools.javac.jvm.PoolConstant.LoadableConstant;
+import com.sun.tools.javac.jvm.PoolConstant.Dynamic.BsmKey;
 import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.resources.CompilerProperties.Fragments;
 import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.util.List;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
@@ -117,37 +114,25 @@ public class ClassWriter extends ClassFile {
      */
     public boolean multiModuleMode;
 
+    private List<ToIntFunction<Symbol>> extraAttributeHooks = List.nil();
+
     /** The initial sizes of the data and constant pool buffers.
      *  Sizes are increased when buffers get full.
      */
     static final int DATA_BUF_SIZE = 0x0fff0;
-    static final int POOL_BUF_SIZE = 0x1fff0;
+    static final int CLASS_BUF_SIZE = 0x1fff0;
 
     /** An output buffer for member info.
      */
-    ByteBuffer databuf = new ByteBuffer(DATA_BUF_SIZE);
+    public ByteBuffer databuf = new ByteBuffer(DATA_BUF_SIZE);
 
     /** An output buffer for the constant pool.
      */
-    ByteBuffer poolbuf = new ByteBuffer(POOL_BUF_SIZE);
+    ByteBuffer poolbuf = new ByteBuffer(CLASS_BUF_SIZE);
 
-    /** The constant pool.
+    /** The constant pool writer.
      */
-    Pool pool;
-
-    /** The inner classes to be written, as a set.
-     */
-    Set<ClassSymbol> innerClasses;
-
-    /** The inner classes to be written, as a queue where
-     *  enclosing classes come first.
-     */
-    ListBuffer<ClassSymbol> innerClassesQueue;
-
-    /** The bootstrap methods to be written in the corresponding class attribute
-     *  (one for each invokedynamic)
-     */
-    Map<DynamicMethod.BootstrapMethodsKey, DynamicMethod.BootstrapMethodsValue> bootstrapMethods;
+    final PoolWriter poolWriter;
 
     /** The log to use for verbose output.
      */
@@ -158,9 +143,6 @@ public class ClassWriter extends ClassFile {
 
     /** Access to files. */
     private final JavaFileManager fileManager;
-
-    /** Sole signature generator */
-    private final CWSignatureGenerator signatureGen;
 
     /** The tags and constants used in compressed stackmap. */
     static final int SAME_FRAME_SIZE = 64;
@@ -191,7 +173,7 @@ public class ClassWriter extends ClassFile {
         types = Types.instance(context);
         check = Check.instance(context);
         fileManager = context.get(JavaFileManager.class);
-        signatureGen = new CWSignatureGenerator(types);
+        poolWriter = Gen.instance(context).poolWriter;
 
         verbose        = options.isSet(VERBOSE);
         genCrt         = options.isSet(XJCOV);
@@ -207,6 +189,10 @@ public class ClassWriter extends ClassFile {
             dumpInnerClassModifiers = modifierFlags.indexOf('i') != -1;
             dumpMethodModifiers = modifierFlags.indexOf('m') != -1;
         }
+    }
+
+    public void addExtraAttributes(ToIntFunction<Symbol> addExtraAttributes) {
+        extraAttributeHooks = extraAttributeHooks.prepend(addExtraAttributes);
     }
 
 /******************************************************************
@@ -272,244 +258,22 @@ public class ClassWriter extends ClassFile {
         buf.elems[adr+3] = (byte)((x      ) & 0xFF);
     }
 
-    /**
-     * Signature Generation
-     */
-    private class CWSignatureGenerator extends Types.SignatureGenerator {
-
-        /**
-         * An output buffer for type signatures.
-         */
-        ByteBuffer sigbuf = new ByteBuffer();
-
-        CWSignatureGenerator(Types types) {
-            super(types);
-        }
-
-        /**
-         * Assemble signature of given type in string buffer.
-         * Check for uninitialized types before calling the general case.
-         */
-        @Override
-        public void assembleSig(Type type) {
-            switch (type.getTag()) {
-                case UNINITIALIZED_THIS:
-                case UNINITIALIZED_OBJECT:
-                    // we don't yet have a spec for uninitialized types in the
-                    // local variable table
-                    assembleSig(types.erasure(((UninitializedType)type).qtype));
-                    break;
-                default:
-                    super.assembleSig(type);
-            }
-        }
-
-        @Override
-        protected void append(char ch) {
-            sigbuf.appendByte(ch);
-        }
-
-        @Override
-        protected void append(byte[] ba) {
-            sigbuf.appendBytes(ba);
-        }
-
-        @Override
-        protected void append(Name name) {
-            sigbuf.appendName(name);
-        }
-
-        @Override
-        protected void classReference(ClassSymbol c) {
-            enterInner(c);
-        }
-
-        private void reset() {
-            sigbuf.reset();
-        }
-
-        private Name toName() {
-            return sigbuf.toName(names);
-        }
-
-        private boolean isEmpty() {
-            return sigbuf.length == 0;
-        }
-    }
-
-    /**
-     * Return signature of given type
-     */
-    Name typeSig(Type type) {
-        Assert.check(signatureGen.isEmpty());
-        //- System.out.println(" ? " + type);
-        signatureGen.assembleSig(type);
-        Name n = signatureGen.toName();
-        signatureGen.reset();
-        //- System.out.println("   " + n);
-        return n;
-    }
-
-    /** Given a type t, return the extended class name of its erasure in
-     *  external representation.
-     */
-    public Name xClassName(Type t) {
-        if (t.hasTag(CLASS)) {
-            return names.fromUtf(externalize(t.tsym.flatName()));
-        } else if (t.hasTag(ARRAY)) {
-            return typeSig(types.erasure(t));
-        } else {
-            throw new AssertionError("xClassName expects class or array type, got " + t);
-        }
-    }
-
 /******************************************************************
  * Writing the Constant Pool
  ******************************************************************/
 
     /** Thrown when the constant pool is over full.
      */
-    public static class PoolOverflow extends Exception {
+    public static class PoolOverflow extends RuntimeException {
         private static final long serialVersionUID = 0;
         public PoolOverflow() {}
     }
-    public static class StringOverflow extends Exception {
+    public static class StringOverflow extends RuntimeException {
         private static final long serialVersionUID = 0;
         public final String value;
         public StringOverflow(String s) {
             value = s;
         }
-    }
-
-    /** Write constant pool to pool buffer.
-     *  Note: during writing, constant pool
-     *  might grow since some parts of constants still need to be entered.
-     */
-    void writePool(Pool pool) throws PoolOverflow, StringOverflow {
-        int poolCountIdx = poolbuf.length;
-        poolbuf.appendChar(0);
-        int i = 1;
-        while (i < pool.pp) {
-            Object value = pool.pool[i];
-            Assert.checkNonNull(value);
-            if (value instanceof Method || value instanceof Variable)
-                value = ((DelegatedSymbol)value).getUnderlyingSymbol();
-
-            if (value instanceof MethodSymbol) {
-                MethodSymbol m = (MethodSymbol)value;
-                if (!m.isDynamic()) {
-                    poolbuf.appendByte((m.owner.flags() & INTERFACE) != 0
-                              ? CONSTANT_InterfaceMethodref
-                              : CONSTANT_Methodref);
-                    poolbuf.appendChar(pool.put(m.owner));
-                    poolbuf.appendChar(pool.put(nameType(m)));
-                } else {
-                    //invokedynamic
-                    DynamicMethodSymbol dynSym = (DynamicMethodSymbol)m;
-                    MethodHandle handle = new MethodHandle(dynSym.bsmKind, dynSym.bsm, types);
-                    DynamicMethod.BootstrapMethodsKey key = new DynamicMethod.BootstrapMethodsKey(dynSym, types);
-
-                    // Figure out the index for existing BSM; create a new BSM if no key
-                    DynamicMethod.BootstrapMethodsValue val = bootstrapMethods.get(key);
-                    if (val == null) {
-                        int index = bootstrapMethods.size();
-                        val = new DynamicMethod.BootstrapMethodsValue(handle, index);
-                        bootstrapMethods.put(key, val);
-                    }
-
-                    //init cp entries
-                    pool.put(names.BootstrapMethods);
-                    pool.put(handle);
-                    for (Object staticArg : dynSym.staticArgs) {
-                        pool.put(staticArg);
-                    }
-                    poolbuf.appendByte(CONSTANT_InvokeDynamic);
-                    poolbuf.appendChar(val.index);
-                    poolbuf.appendChar(pool.put(nameType(dynSym)));
-                }
-            } else if (value instanceof VarSymbol) {
-                VarSymbol v = (VarSymbol)value;
-                poolbuf.appendByte(CONSTANT_Fieldref);
-                poolbuf.appendChar(pool.put(v.owner));
-                poolbuf.appendChar(pool.put(nameType(v)));
-            } else if (value instanceof Name) {
-                poolbuf.appendByte(CONSTANT_Utf8);
-                byte[] bs = ((Name)value).toUtf();
-                poolbuf.appendChar(bs.length);
-                poolbuf.appendBytes(bs, 0, bs.length);
-                if (bs.length > Pool.MAX_STRING_LENGTH)
-                    throw new StringOverflow(value.toString());
-            } else if (value instanceof ClassSymbol) {
-                ClassSymbol c = (ClassSymbol)value;
-                if (c.owner.kind == TYP) pool.put(c.owner);
-                poolbuf.appendByte(CONSTANT_Class);
-                if (c.type.hasTag(ARRAY)) {
-                    poolbuf.appendChar(pool.put(typeSig(c.type)));
-                } else {
-                    poolbuf.appendChar(pool.put(names.fromUtf(externalize(c.flatname))));
-                    enterInner(c);
-                }
-            } else if (value instanceof NameAndType) {
-                NameAndType nt = (NameAndType)value;
-                poolbuf.appendByte(CONSTANT_NameandType);
-                poolbuf.appendChar(pool.put(nt.name));
-                poolbuf.appendChar(pool.put(typeSig(nt.uniqueType.type)));
-            } else if (value instanceof Integer) {
-                poolbuf.appendByte(CONSTANT_Integer);
-                poolbuf.appendInt(((Integer)value).intValue());
-            } else if (value instanceof Long) {
-                poolbuf.appendByte(CONSTANT_Long);
-                poolbuf.appendLong(((Long)value).longValue());
-                i++;
-            } else if (value instanceof Float) {
-                poolbuf.appendByte(CONSTANT_Float);
-                poolbuf.appendFloat(((Float)value).floatValue());
-            } else if (value instanceof Double) {
-                poolbuf.appendByte(CONSTANT_Double);
-                poolbuf.appendDouble(((Double)value).doubleValue());
-                i++;
-            } else if (value instanceof String) {
-                poolbuf.appendByte(CONSTANT_String);
-                poolbuf.appendChar(pool.put(names.fromString((String)value)));
-            } else if (value instanceof UniqueType) {
-                Type type = ((UniqueType)value).type;
-                if (type.hasTag(METHOD)) {
-                    poolbuf.appendByte(CONSTANT_MethodType);
-                    poolbuf.appendChar(pool.put(typeSig((MethodType)type)));
-                } else {
-                    Assert.check(type.hasTag(ARRAY));
-                    poolbuf.appendByte(CONSTANT_Class);
-                    poolbuf.appendChar(pool.put(xClassName(type)));
-                }
-            } else if (value instanceof MethodHandle) {
-                MethodHandle ref = (MethodHandle)value;
-                poolbuf.appendByte(CONSTANT_MethodHandle);
-                poolbuf.appendByte(ref.refKind);
-                poolbuf.appendChar(pool.put(ref.refSym));
-            } else if (value instanceof ModuleSymbol) {
-                ModuleSymbol m = (ModuleSymbol)value;
-                poolbuf.appendByte(CONSTANT_Module);
-                poolbuf.appendChar(pool.put(m.name));
-            } else if (value instanceof PackageSymbol) {
-                PackageSymbol m = (PackageSymbol)value;
-                poolbuf.appendByte(CONSTANT_Package);
-                poolbuf.appendChar(pool.put(names.fromUtf(externalize(m.fullname))));
-            } else {
-                Assert.error("writePool " + value);
-            }
-            i++;
-        }
-        if (pool.pp > Pool.MAX_ENTRIES)
-            throw new PoolOverflow();
-        putChar(poolbuf, poolCountIdx, pool.pp);
-    }
-
-    /** Given a symbol, return its name-and-type.
-     */
-    NameAndType nameType(Symbol sym) {
-        return new NameAndType(sym.name, sym.externalType(types), types);
-        // the NameAndType is generated from a symbol reference, and the
-        // adjustment of adding an additional this$n parameter needs to be made.
     }
 
 /******************************************************************
@@ -519,15 +283,16 @@ public class ClassWriter extends ClassFile {
     /** Write header for an attribute to data buffer and return
      *  position past attribute length index.
      */
-    int writeAttr(Name attrName) {
-        databuf.appendChar(pool.put(attrName));
+    public int writeAttr(Name attrName) {
+        int index = poolWriter.putName(attrName);
+        databuf.appendChar(index);
         databuf.appendInt(0);
         return databuf.length;
     }
 
     /** Fill in attribute length.
      */
-    void endAttr(int index) {
+    public void endAttr(int index) {
         putInt(databuf, index - 4, databuf.length - index);
     }
 
@@ -566,9 +331,9 @@ public class ClassWriter extends ClassFile {
             (c.owner.type == null // local to init block
              || c.owner.kind != MTH) // or member init
             ? null
-            : (MethodSymbol)c.owner;
-        databuf.appendChar(pool.put(enclClass));
-        databuf.appendChar(enclMethod == null ? 0 : pool.put(nameType(c.owner)));
+            : ((MethodSymbol)c.owner).originalEnclosingMethod();
+        databuf.appendChar(poolWriter.putClass(enclClass));
+        databuf.appendChar(enclMethod == null ? 0 : poolWriter.putNameAndType(enclMethod));
         endAttr(alenIdx);
         return 1;
     }
@@ -588,17 +353,20 @@ public class ClassWriter extends ClassFile {
     /** Write member (field or method) attributes;
      *  return number of attributes written.
      */
-    int writeMemberAttrs(Symbol sym) {
-        int acount = writeFlagAttrs(sym.flags());
+    int writeMemberAttrs(Symbol sym, boolean isRecordComponent) {
+        int acount = 0;
+        if (!isRecordComponent) {
+            acount = writeFlagAttrs(sym.flags());
+        }
         long flags = sym.flags();
         if ((flags & (SYNTHETIC | BRIDGE)) != SYNTHETIC &&
             (flags & ANONCONSTR) == 0 &&
             (!types.isSameType(sym.type, sym.erasure(types)) ||
-             signatureGen.hasTypeVar(sym.type.getThrownTypes()))) {
+             poolWriter.signatureGen.hasTypeVar(sym.type.getThrownTypes()))) {
             // note that a local class with captured variables
             // will get a signature attribute
             int alenIdx = writeAttr(names.Signature);
-            databuf.appendChar(pool.put(typeSig(sym.type)));
+            databuf.appendChar(poolWriter.putSignature(sym));
             endAttr(alenIdx);
             acount++;
         }
@@ -621,7 +389,7 @@ public class ClassWriter extends ClassFile {
                 final int flags =
                     ((int) s.flags() & (FINAL | SYNTHETIC | MANDATED)) |
                     ((int) m.flags() & SYNTHETIC);
-                databuf.appendChar(pool.put(s.name));
+                databuf.appendChar(poolWriter.putName(s.name));
                 databuf.appendChar(flags);
             }
             // Now write the real parameters
@@ -629,7 +397,7 @@ public class ClassWriter extends ClassFile {
                 final int flags =
                     ((int) s.flags() & (FINAL | SYNTHETIC | MANDATED)) |
                     ((int) m.flags() & SYNTHETIC);
-                databuf.appendChar(pool.put(s.name));
+                databuf.appendChar(poolWriter.putName(s.name));
                 databuf.appendChar(flags);
             }
             // Now write the captured locals
@@ -637,7 +405,7 @@ public class ClassWriter extends ClassFile {
                 final int flags =
                     ((int) s.flags() & (FINAL | SYNTHETIC | MANDATED)) |
                     ((int) m.flags() & SYNTHETIC);
-                databuf.appendChar(pool.put(s.name));
+                databuf.appendChar(poolWriter.putName(s.name));
                 databuf.appendChar(flags);
             }
             endAttr(attrIndex);
@@ -646,9 +414,9 @@ public class ClassWriter extends ClassFile {
             return 0;
     }
 
-
     private void writeParamAnnotations(List<VarSymbol> params,
                                        RetentionPolicy retention) {
+        databuf.appendByte(params.length());
         for (VarSymbol s : params) {
             ListBuffer<Attribute.Compound> buf = new ListBuffer<>();
             for (Attribute.Compound a : s.getRawAttributes())
@@ -670,11 +438,11 @@ public class ClassWriter extends ClassFile {
     /** Write method parameter annotations;
      *  return number of attributes written.
      */
-    int writeParameterAttrs(MethodSymbol m) {
+    int writeParameterAttrs(List<VarSymbol> vars) {
         boolean hasVisible = false;
         boolean hasInvisible = false;
-        if (m.params != null) {
-            for (VarSymbol s : m.params) {
+        if (vars != null) {
+            for (VarSymbol s : vars) {
                 for (Attribute.Compound a : s.getRawAttributes()) {
                     switch (types.getRetention(a)) {
                     case SOURCE: break;
@@ -689,13 +457,13 @@ public class ClassWriter extends ClassFile {
         int attrCount = 0;
         if (hasVisible) {
             int attrIndex = writeAttr(names.RuntimeVisibleParameterAnnotations);
-            writeParamAnnotations(m, RetentionPolicy.RUNTIME);
+            writeParamAnnotations(vars, RetentionPolicy.RUNTIME);
             endAttr(attrIndex);
             attrCount++;
         }
         if (hasInvisible) {
             int attrIndex = writeAttr(names.RuntimeInvisibleParameterAnnotations);
-            writeParamAnnotations(m, RetentionPolicy.CLASS);
+            writeParamAnnotations(vars, RetentionPolicy.CLASS);
             endAttr(attrIndex);
             attrCount++;
         }
@@ -803,50 +571,51 @@ public class ClassWriter extends ClassFile {
      */
     class AttributeWriter implements Attribute.Visitor {
         public void visitConstant(Attribute.Constant _value) {
-            Object value = _value.value;
-            switch (_value.type.getTag()) {
-            case BYTE:
-                databuf.appendByte('B');
-                break;
-            case CHAR:
-                databuf.appendByte('C');
-                break;
-            case SHORT:
-                databuf.appendByte('S');
-                break;
-            case INT:
-                databuf.appendByte('I');
-                break;
-            case LONG:
-                databuf.appendByte('J');
-                break;
-            case FLOAT:
-                databuf.appendByte('F');
-                break;
-            case DOUBLE:
-                databuf.appendByte('D');
-                break;
-            case BOOLEAN:
-                databuf.appendByte('Z');
-                break;
-            case CLASS:
-                Assert.check(value instanceof String);
+            if (_value.type.getTag() == CLASS) {
+                Assert.check(_value.value instanceof String);
+                String s = (String)_value.value;
                 databuf.appendByte('s');
-                value = names.fromString(value.toString()); // CONSTANT_Utf8
-                break;
-            default:
-                throw new AssertionError(_value.type);
+                databuf.appendChar(poolWriter.putName(names.fromString(s)));
+            } else {
+                switch (_value.type.getTag()) {
+                    case BYTE:
+                        databuf.appendByte('B');
+                        break;
+                    case CHAR:
+                        databuf.appendByte('C');
+                        break;
+                    case SHORT:
+                        databuf.appendByte('S');
+                        break;
+                    case INT:
+                        databuf.appendByte('I');
+                        break;
+                    case LONG:
+                        databuf.appendByte('J');
+                        break;
+                    case FLOAT:
+                        databuf.appendByte('F');
+                        break;
+                    case DOUBLE:
+                        databuf.appendByte('D');
+                        break;
+                    case BOOLEAN:
+                        databuf.appendByte('Z');
+                        break;
+                    default:
+                        throw new AssertionError(_value.type);
+                }
+                databuf.appendChar(poolWriter.putConstant(_value.value));
             }
-            databuf.appendChar(pool.put(value));
         }
         public void visitEnum(Attribute.Enum e) {
             databuf.appendByte('e');
-            databuf.appendChar(pool.put(typeSig(e.value.type)));
-            databuf.appendChar(pool.put(e.value.name));
+            databuf.appendChar(poolWriter.putDescriptor(e.value.type));
+            databuf.appendChar(poolWriter.putName(e.value.name));
         }
         public void visitClass(Attribute.Class clazz) {
             databuf.appendByte('c');
-            databuf.appendChar(pool.put(typeSig(types.erasure(clazz.classType))));
+            databuf.appendChar(poolWriter.putDescriptor(clazz.classType));
         }
         public void visitCompound(Attribute.Compound compound) {
             databuf.appendByte('@');
@@ -867,10 +636,10 @@ public class ClassWriter extends ClassFile {
 
     /** Write a compound attribute excluding the '@' marker. */
     void writeCompoundAttribute(Attribute.Compound c) {
-        databuf.appendChar(pool.put(typeSig(c.type)));
+        databuf.appendChar(poolWriter.putDescriptor(c.type));
         databuf.appendChar(c.values.length());
         for (Pair<Symbol.MethodSymbol,Attribute> p : c.values) {
-            databuf.appendChar(pool.put(p.fst.name));
+            databuf.appendChar(poolWriter.putName(p.fst.name));
             p.snd.accept(awriter);
         }
     }
@@ -974,9 +743,9 @@ public class ClassWriter extends ClassFile {
 
         int alenIdx = writeAttr(names.Module);
 
-        databuf.appendChar(pool.put(m));
+        databuf.appendChar(poolWriter.putModule(m));
         databuf.appendChar(ModuleFlags.value(m.flags)); // module_flags
-        databuf.appendChar(m.version != null ? pool.put(m.version) : 0);
+        databuf.appendChar(m.version != null ? poolWriter.putName(m.version) : 0);
 
         ListBuffer<RequiresDirective> requires = new ListBuffer<>();
         for (RequiresDirective r: m.requires) {
@@ -985,22 +754,22 @@ public class ClassWriter extends ClassFile {
         }
         databuf.appendChar(requires.size());
         for (RequiresDirective r: requires) {
-            databuf.appendChar(pool.put(r.module));
+            databuf.appendChar(poolWriter.putModule(r.module));
             databuf.appendChar(RequiresFlag.value(r.flags));
-            databuf.appendChar(r.module.version != null ? pool.put(r.module.version) : 0);
+            databuf.appendChar(r.module.version != null ? poolWriter.putName(r.module.version) : 0);
         }
 
         List<ExportsDirective> exports = m.exports;
         databuf.appendChar(exports.size());
         for (ExportsDirective e: exports) {
-            databuf.appendChar(pool.put(e.packge));
+            databuf.appendChar(poolWriter.putPackage(e.packge));
             databuf.appendChar(ExportsFlag.value(e.flags));
             if (e.modules == null) {
                 databuf.appendChar(0);
             } else {
                 databuf.appendChar(e.modules.size());
                 for (ModuleSymbol msym: e.modules) {
-                    databuf.appendChar(pool.put(msym));
+                    databuf.appendChar(poolWriter.putModule(msym));
                 }
             }
         }
@@ -1008,14 +777,14 @@ public class ClassWriter extends ClassFile {
         List<OpensDirective> opens = m.opens;
         databuf.appendChar(opens.size());
         for (OpensDirective o: opens) {
-            databuf.appendChar(pool.put(o.packge));
+            databuf.appendChar(poolWriter.putPackage(o.packge));
             databuf.appendChar(OpensFlag.value(o.flags));
             if (o.modules == null) {
                 databuf.appendChar(0);
             } else {
                 databuf.appendChar(o.modules.size());
                 for (ModuleSymbol msym: o.modules) {
-                    databuf.appendChar(pool.put(msym));
+                    databuf.appendChar(poolWriter.putModule(msym));
                 }
             }
         }
@@ -1023,7 +792,7 @@ public class ClassWriter extends ClassFile {
         List<UsesDirective> uses = m.uses;
         databuf.appendChar(uses.size());
         for (UsesDirective s: uses) {
-            databuf.appendChar(pool.put(s.service));
+            databuf.appendChar(poolWriter.putClass(s.service));
         }
 
         // temporary fix to merge repeated provides clause for same service;
@@ -1035,9 +804,9 @@ public class ClassWriter extends ClassFile {
         }
         databuf.appendChar(mergedProvides.size());
         mergedProvides.forEach((srvc, impls) -> {
-            databuf.appendChar(pool.put(srvc));
+            databuf.appendChar(poolWriter.putClass(srvc));
             databuf.appendChar(impls.size());
-            impls.forEach(impl -> databuf.appendChar(pool.put(impl)));
+            impls.forEach(impl -> databuf.appendChar(poolWriter.putClass(impl)));
         });
 
         endAttr(alenIdx);
@@ -1048,46 +817,12 @@ public class ClassWriter extends ClassFile {
  * Writing Objects
  **********************************************************************/
 
-    /** Enter an inner class into the `innerClasses' set/queue.
-     */
-    void enterInner(ClassSymbol c) {
-        if (c.type.isCompound()) {
-            throw new AssertionError("Unexpected intersection type: " + c.type);
-        }
-        try {
-            c.complete();
-        } catch (CompletionFailure ex) {
-            System.err.println("error: " + c + ": " + ex.getMessage());
-            throw ex;
-        }
-        if (!c.type.hasTag(CLASS)) return; // arrays
-        if (pool != null && // pool might be null if called from xClassName
-            c.owner.enclClass() != null &&
-            (innerClasses == null || !innerClasses.contains(c))) {
-//          log.errWriter.println("enter inner " + c);//DEBUG
-            enterInner(c.owner.enclClass());
-            pool.put(c);
-            if (c.name != names.empty)
-                pool.put(c.name);
-            if (innerClasses == null) {
-                innerClasses = new HashSet<>();
-                innerClassesQueue = new ListBuffer<>();
-                pool.put(names.InnerClasses);
-            }
-            innerClasses.add(c);
-            innerClassesQueue.append(c);
-        }
-    }
-
     /** Write "inner classes" attribute.
      */
     void writeInnerClasses() {
         int alenIdx = writeAttr(names.InnerClasses);
-        databuf.appendChar(innerClassesQueue.length());
-        for (List<ClassSymbol> l = innerClassesQueue.toList();
-             l.nonEmpty();
-             l = l.tail) {
-            ClassSymbol inner = l.head;
+        databuf.appendChar(poolWriter.innerClasses.size());
+        for (ClassSymbol inner : poolWriter.innerClasses) {
             inner.markAbstractIfNeeded(types);
             char flags = (char) adjustFlags(inner.flags_field);
             if ((flags & INTERFACE) != 0) flags |= ABSTRACT; // Interfaces are always ABSTRACT
@@ -1097,28 +832,45 @@ public class ClassWriter extends ClassFile {
                 pw.println("INNERCLASS  " + inner.name);
                 pw.println("---" + flagNames(flags));
             }
-            databuf.appendChar(pool.get(inner));
+            databuf.appendChar(poolWriter.putClass(inner));
             databuf.appendChar(
-                inner.owner.kind == TYP && !inner.name.isEmpty() ? pool.get(inner.owner) : 0);
+                inner.owner.kind == TYP && !inner.name.isEmpty() ? poolWriter.putClass((ClassSymbol)inner.owner) : 0);
             databuf.appendChar(
-                !inner.name.isEmpty() ? pool.get(inner.name) : 0);
+                !inner.name.isEmpty() ? poolWriter.putName(inner.name) : 0);
             databuf.appendChar(flags);
         }
         endAttr(alenIdx);
+    }
+
+    int writeRecordAttribute(ClassSymbol csym) {
+        int alenIdx = writeAttr(names.Record);
+        Scope s = csym.members();
+        databuf.appendChar(csym.getRecordComponents().size());
+        for (VarSymbol v: csym.getRecordComponents()) {
+            //databuf.appendChar(poolWriter.putMember(v.accessor.head.snd));
+            databuf.appendChar(poolWriter.putName(v.name));
+            databuf.appendChar(poolWriter.putDescriptor(v));
+            int acountIdx = beginAttrs();
+            int acount = 0;
+            acount += writeMemberAttrs(v, true);
+            endAttrs(acountIdx, acount);
+        }
+        endAttr(alenIdx);
+        return 1;
     }
 
     /**
      * Write NestMembers attribute (if needed)
      */
     int writeNestMembersIfNeeded(ClassSymbol csym) {
-        ListBuffer<Symbol> nested = new ListBuffer<>();
+        ListBuffer<ClassSymbol> nested = new ListBuffer<>();
         listNested(csym, nested);
-        Set<Symbol> nestedUnique = new LinkedHashSet<>(nested);
+        Set<ClassSymbol> nestedUnique = new LinkedHashSet<>(nested);
         if (csym.owner.kind == PCK && !nestedUnique.isEmpty()) {
             int alenIdx = writeAttr(names.NestMembers);
             databuf.appendChar(nestedUnique.size());
-            for (Symbol s : nestedUnique) {
-                databuf.appendChar(pool.put(s));
+            for (ClassSymbol s : nestedUnique) {
+                databuf.appendChar(poolWriter.putClass(s));
             }
             endAttr(alenIdx);
             return 1;
@@ -1132,14 +884,14 @@ public class ClassWriter extends ClassFile {
     int writeNestHostIfNeeded(ClassSymbol csym) {
         if (csym.owner.kind != PCK) {
             int alenIdx = writeAttr(names.NestHost);
-            databuf.appendChar(pool.put(csym.outermostClass()));
+            databuf.appendChar(poolWriter.putClass(csym.outermostClass()));
             endAttr(alenIdx);
             return 1;
         }
         return 0;
     }
 
-    private void listNested(Symbol sym, ListBuffer<Symbol> seen) {
+    private void listNested(Symbol sym, ListBuffer<ClassSymbol> seen) {
         if (sym.kind != TYP) return;
         ClassSymbol csym = (ClassSymbol)sym;
         if (csym.owner.kind != PCK) {
@@ -1161,17 +913,16 @@ public class ClassWriter extends ClassFile {
      */
     void writeBootstrapMethods() {
         int alenIdx = writeAttr(names.BootstrapMethods);
-        databuf.appendChar(bootstrapMethods.size());
-        for (Map.Entry<DynamicMethod.BootstrapMethodsKey, DynamicMethod.BootstrapMethodsValue> entry : bootstrapMethods.entrySet()) {
-            DynamicMethod.BootstrapMethodsKey bsmKey = entry.getKey();
+        databuf.appendChar(poolWriter.bootstrapMethods.size());
+        for (BsmKey bsmKey : poolWriter.bootstrapMethods.keySet()) {
             //write BSM handle
-            databuf.appendChar(pool.get(entry.getValue().mh));
-            Object[] uniqueArgs = bsmKey.getUniqueArgs();
+            databuf.appendChar(poolWriter.putConstant(bsmKey.bsm));
+            LoadableConstant[] uniqueArgs = bsmKey.staticArgs;
             //write static args length
             databuf.appendChar(uniqueArgs.length);
             //write static args array
-            for (Object o : uniqueArgs) {
-                databuf.appendChar(pool.get(o));
+            for (LoadableConstant arg : uniqueArgs) {
+                databuf.appendChar(poolWriter.putConstant(arg));
             }
         }
         endAttr(alenIdx);
@@ -1187,17 +938,18 @@ public class ClassWriter extends ClassFile {
             pw.println("FIELD  " + v.name);
             pw.println("---" + flagNames(v.flags()));
         }
-        databuf.appendChar(pool.put(v.name));
-        databuf.appendChar(pool.put(typeSig(v.erasure(types))));
+        databuf.appendChar(poolWriter.putName(v.name));
+        databuf.appendChar(poolWriter.putDescriptor(v));
         int acountIdx = beginAttrs();
         int acount = 0;
         if (v.getConstValue() != null) {
             int alenIdx = writeAttr(names.ConstantValue);
-            databuf.appendChar(pool.put(v.getConstValue()));
+            databuf.appendChar(poolWriter.putConstant(v.getConstValue()));
             endAttr(alenIdx);
             acount++;
         }
-        acount += writeMemberAttrs(v);
+        acount += writeMemberAttrs(v, false);
+        acount += writeExtraAttributes(v);
         endAttrs(acountIdx, acount);
     }
 
@@ -1211,8 +963,8 @@ public class ClassWriter extends ClassFile {
             pw.println("METHOD  " + m.name);
             pw.println("---" + flagNames(m.flags()));
         }
-        databuf.appendChar(pool.put(m.name));
-        databuf.appendChar(pool.put(typeSig(m.externalType(types))));
+        databuf.appendChar(poolWriter.putName(m.name));
+        databuf.appendChar(poolWriter.putDescriptor(m));
         int acountIdx = beginAttrs();
         int acount = 0;
         if (m.code != null) {
@@ -1227,7 +979,7 @@ public class ClassWriter extends ClassFile {
             int alenIdx = writeAttr(names.Exceptions);
             databuf.appendChar(thrown.length());
             for (List<Type> l = thrown; l.nonEmpty(); l = l.tail)
-                databuf.appendChar(pool.put(l.head.tsym));
+                databuf.appendChar(poolWriter.putClass(l.head));
             endAttr(alenIdx);
             acount++;
         }
@@ -1237,13 +989,14 @@ public class ClassWriter extends ClassFile {
             endAttr(alenIdx);
             acount++;
         }
-        if (options.isSet(PARAMETERS) && target.hasMethodParameters()) {
+        if (target.hasMethodParameters() && (options.isSet(PARAMETERS) || m.isConstructor() && (m.flags_field & RECORD) != 0)) {
             if (!m.isLambdaMethod()) // Per JDK-8138729, do not emit parameters table for lambda bodies.
                 acount += writeMethodParametersAttr(m);
         }
-        acount += writeMemberAttrs(m);
+        acount += writeMemberAttrs(m, false);
         if (!m.isLambdaMethod())
-            acount += writeParameterAttrs(m);
+            acount += writeParameterAttrs(m.params);
+        acount += writeExtraAttributes(m);
         endAttrs(acountIdx, acount);
     }
 
@@ -1303,9 +1056,8 @@ public class ClassWriter extends ClassFile {
                             && (r.start_pc + r.length) <= code.cp);
                     databuf.appendChar(r.length);
                     VarSymbol sym = var.sym;
-                    databuf.appendChar(pool.put(sym.name));
-                    Type vartype = sym.erasure(types);
-                    databuf.appendChar(pool.put(typeSig(vartype)));
+                    databuf.appendChar(poolWriter.putName(sym.name));
+                    databuf.appendChar(poolWriter.putDescriptor(sym));
                     databuf.appendChar(var.reg);
                     if (needsLocalVariableTypeEntry(var.sym.type)) {
                         nGenericVars++;
@@ -1329,8 +1081,8 @@ public class ClassWriter extends ClassFile {
                         // write variable info
                         databuf.appendChar(r.start_pc);
                         databuf.appendChar(r.length);
-                        databuf.appendChar(pool.put(sym.name));
-                        databuf.appendChar(pool.put(typeSig(sym.type)));
+                        databuf.appendChar(poolWriter.putName(sym.name));
+                        databuf.appendChar(poolWriter.putSignature(sym));
                         databuf.appendChar(var.reg);
                         count++;
                     }
@@ -1457,14 +1209,10 @@ public class ClassWriter extends ClassFile {
                 break;
             case CLASS:
             case ARRAY:
-                if (debugstackmap) System.out.print("object(" + t + ")");
-                databuf.appendByte(7);
-                databuf.appendChar(pool.put(t));
-                break;
             case TYPEVAR:
                 if (debugstackmap) System.out.print("object(" + types.erasure(t).tsym + ")");
                 databuf.appendByte(7);
-                databuf.appendChar(pool.put(types.erasure(t).tsym));
+                databuf.appendChar(poolWriter.putClass(types.erasure(t)));
                 break;
             case UNINITIALIZED_THIS:
                 if (debugstackmap) System.out.print("uninit_this");
@@ -1763,11 +1511,6 @@ public class ClassWriter extends ClassFile {
         Assert.check((c.flags() & COMPOUND) == 0);
         databuf.reset();
         poolbuf.reset();
-        signatureGen.reset();
-        pool = c.pool;
-        innerClasses = null;
-        innerClassesQueue = null;
-        bootstrapMethods = new LinkedHashMap<>();
 
         Type supertype = types.supertype(c.type);
         List<Type> interfaces = types.interfaces(c.type);
@@ -1793,14 +1536,14 @@ public class ClassWriter extends ClassFile {
 
         if (c.owner.kind == MDL) {
             PackageSymbol unnamed = ((ModuleSymbol) c.owner).unnamedPackage;
-            databuf.appendChar(pool.put(new ClassSymbol(0, names.module_info, unnamed)));
+            databuf.appendChar(poolWriter.putClass(new ClassSymbol(0, names.module_info, unnamed)));
         } else {
-            databuf.appendChar(pool.put(c));
+            databuf.appendChar(poolWriter.putClass(c));
         }
-        databuf.appendChar(supertype.hasTag(CLASS) ? pool.put(supertype.tsym) : 0);
+        databuf.appendChar(supertype.hasTag(CLASS) ? poolWriter.putClass((ClassSymbol)supertype.tsym) : 0);
         databuf.appendChar(interfaces.length());
         for (List<Type> l = interfaces; l.nonEmpty(); l = l.tail)
-            databuf.appendChar(pool.put(l.head.tsym));
+            databuf.appendChar(poolWriter.putClass((ClassSymbol)l.head.tsym));
         int fieldsCount = 0;
         int methodsCount = 0;
         for (Symbol sym : c.members().getSymbols(NON_RECURSIVE)) {
@@ -1808,14 +1551,14 @@ public class ClassWriter extends ClassFile {
             case VAR: fieldsCount++; break;
             case MTH: if ((sym.flags() & HYPOTHETICAL) == 0) methodsCount++;
                       break;
-            case TYP: enterInner((ClassSymbol)sym); break;
+            case TYP: poolWriter.enterInner((ClassSymbol)sym); break;
             default : Assert.error();
             }
         }
 
         if (c.trans_local != null) {
             for (ClassSymbol local : c.trans_local) {
-                enterInner(local);
+                poolWriter.enterInner(local);
             }
         }
 
@@ -1833,12 +1576,7 @@ public class ClassWriter extends ClassFile {
             sigReq = l.head.allparams().length() != 0;
         if (sigReq) {
             int alenIdx = writeAttr(names.Signature);
-            if (typarams.length() != 0) signatureGen.assembleParamsSig(typarams);
-            signatureGen.assembleSig(supertype);
-            for (List<Type> l = interfaces; l.nonEmpty(); l = l.tail)
-                signatureGen.assembleSig(l.head);
-            databuf.appendChar(pool.put(signatureGen.toName()));
-            signatureGen.reset();
+            databuf.appendChar(poolWriter.putSignature(c));
             endAttr(alenIdx);
             acount++;
         }
@@ -1848,9 +1586,8 @@ public class ClassWriter extends ClassFile {
             // WHM 6/29/1999: Strip file path prefix.  We do it here at
             // the last possible moment because the sourcefile may be used
             // elsewhere in error diagnostics. Fixes 4241573.
-            //databuf.appendChar(c.pool.put(c.sourcefile));
             String simpleName = PathFileObject.getSimpleName(c.sourcefile);
-            databuf.appendChar(c.pool.put(names.fromString(simpleName)));
+            databuf.appendChar(poolWriter.putName(names.fromString(simpleName)));
             endAttr(alenIdx);
             acount++;
         }
@@ -1858,12 +1595,12 @@ public class ClassWriter extends ClassFile {
         if (genCrt) {
             // Append SourceID attribute
             int alenIdx = writeAttr(names.SourceID);
-            databuf.appendChar(c.pool.put(names.fromString(Long.toString(getLastModified(c.sourcefile)))));
+            databuf.appendChar(poolWriter.putName(names.fromString(Long.toString(getLastModified(c.sourcefile)))));
             endAttr(alenIdx);
             acount++;
             // Append CompilationID attribute
             alenIdx = writeAttr(names.CompilationID);
-            databuf.appendChar(c.pool.put(names.fromString(Long.toString(System.currentTimeMillis()))));
+            databuf.appendChar(poolWriter.putName(names.fromString(Long.toString(System.currentTimeMillis()))));
             endAttr(alenIdx);
             acount++;
         }
@@ -1877,6 +1614,7 @@ public class ClassWriter extends ClassFile {
             acount += writeFlagAttrs(c.owner.flags() & ~DEPRECATED);
         }
         acount += writeExtraClassAttributes(c);
+        acount += writeExtraAttributes(c);
 
         poolbuf.appendInt(JAVA_MAGIC);
         if (preview.isEnabled()) {
@@ -1893,32 +1631,48 @@ public class ClassWriter extends ClassFile {
             }
         }
 
-        writePool(c.pool);
+        if (c.isRecord()) {
+            acount += writeRecordAttribute(c);
+        }
 
-        if (innerClasses != null) {
-            writeInnerClasses();
+        if (!poolWriter.bootstrapMethods.isEmpty()) {
+            writeBootstrapMethods();
             acount++;
         }
 
-        if (!bootstrapMethods.isEmpty()) {
-            writeBootstrapMethods();
+        if (!poolWriter.innerClasses.isEmpty()) {
+            writeInnerClasses();
             acount++;
         }
 
         endAttrs(acountIdx, acount);
 
-        poolbuf.appendBytes(databuf.elems, 0, databuf.length);
         out.write(poolbuf.elems, 0, poolbuf.length);
 
-        pool = c.pool = null; // to conserve space
-     }
+        poolWriter.writePool(out);
+        poolWriter.reset(); // to save space
 
-    /**Allows subclasses to write additional class attributes
+        out.write(databuf.elems, 0, databuf.length);
+    }
+
+     /**Allows subclasses to write additional class attributes
+      *
+      * @return the number of attributes written
+      */
+    protected int writeExtraClassAttributes(ClassSymbol c) {
+        return 0;
+    }
+
+    /**Allows friends to write additional attributes
      *
      * @return the number of attributes written
      */
-    protected int writeExtraClassAttributes(ClassSymbol c) {
-        return 0;
+    protected int writeExtraAttributes(Symbol sym) {
+        int i = 0;
+        for (ToIntFunction<Symbol> hook : extraAttributeHooks) {
+            i += hook.applyAsInt(sym);
+        }
+        return i;
     }
 
     int adjustFlags(final long flags) {

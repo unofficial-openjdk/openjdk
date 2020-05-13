@@ -21,10 +21,10 @@
  * under the License.
  */
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * $Id: DOMXSLTTransform.java 1788465 2017-03-24 15:10:51Z coheigea $
+ * $Id: DOMXSLTTransform.java 1854026 2019-02-21 09:30:01Z coheigea $
  */
 package org.jcp.xml.dsig.internal.dom;
 
@@ -55,7 +55,6 @@ public final class DOMXSLTTransform extends ApacheTransform {
         this.params = params;
     }
 
-    @Override
     public void init(XMLStructure parent, XMLCryptoContext context)
         throws InvalidAlgorithmParameterException {
 
@@ -68,7 +67,6 @@ public final class DOMXSLTTransform extends ApacheTransform {
             (new javax.xml.crypto.dom.DOMStructure(sheet));
     }
 
-    @Override
     public void marshalParams(XMLStructure parent, XMLCryptoContext context)
         throws MarshalException {
         super.marshalParams(parent, context);

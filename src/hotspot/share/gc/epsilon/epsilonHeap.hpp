@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -27,16 +28,13 @@
 #include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/softRefPolicy.hpp"
 #include "gc/shared/space.hpp"
-#include "services/memoryManager.hpp"
-#include "gc/epsilon/epsilonCollectorPolicy.hpp"
 #include "gc/epsilon/epsilonMonitoringSupport.hpp"
 #include "gc/epsilon/epsilonBarrierSet.hpp"
-#include "gc/epsilon/epsilon_globals.hpp"
+#include "services/memoryManager.hpp"
 
 class EpsilonHeap : public CollectedHeap {
   friend class VMStructs;
 private:
-  EpsilonCollectorPolicy* _policy;
   SoftRefPolicy _soft_ref_policy;
   EpsilonMonitoringSupport* _monitoring_support;
   MemoryPool* _pool;
@@ -53,8 +51,7 @@ private:
 public:
   static EpsilonHeap* heap();
 
-  EpsilonHeap(EpsilonCollectorPolicy* p) :
-          _policy(p),
+  EpsilonHeap() :
           _memory_manager("Epsilon Heap", "") {};
 
   virtual Name kind() const {
@@ -63,10 +60,6 @@ public:
 
   virtual const char* name() const {
     return "Epsilon";
-  }
-
-  virtual CollectorPolicy* collector_policy() const {
-    return _policy;
   }
 
   virtual SoftRefPolicy* soft_ref_policy() {
@@ -86,11 +79,6 @@ public:
 
   virtual bool is_in(const void* p) const {
     return _space->is_in(p);
-  }
-
-  virtual bool is_scavengable(oop obj) {
-    // No GC is going to happen, therefore no objects ever move.
-    return false;
   }
 
   virtual bool is_maximal_no_gc() const {
@@ -116,10 +104,7 @@ public:
   virtual void do_full_collection(bool clear_all_soft_refs);
 
   // Heap walking support
-  virtual void safe_object_iterate(ObjectClosure* cl);
-  virtual void object_iterate(ObjectClosure* cl) {
-    safe_object_iterate(cl);
-  }
+  virtual void object_iterate(ObjectClosure* cl);
 
   // Object pinning support: every object is implicitly pinned
   virtual bool supports_object_pinning() const           { return true; }
@@ -127,13 +112,18 @@ public:
   virtual void unpin_object(JavaThread* thread, oop obj) { }
 
   // No support for block parsing.
-  virtual HeapWord* block_start(const void* addr) const { return NULL;  }
-  virtual size_t block_size(const HeapWord* addr) const { return 0;     }
-  virtual bool block_is_obj(const HeapWord* addr) const { return false; }
+  HeapWord* block_start(const void* addr) const { return NULL;  }
+  bool block_is_obj(const HeapWord* addr) const { return false; }
 
   // No GC threads
   virtual void print_gc_threads_on(outputStream* st) const {}
   virtual void gc_threads_do(ThreadClosure* tc) const {}
+
+  // No nmethod handling
+  virtual void register_nmethod(nmethod* nm) {}
+  virtual void unregister_nmethod(nmethod* nm) {}
+  virtual void flush_nmethod(nmethod* nm) {}
+  virtual void verify_nmethod(nmethod* nm) {}
 
   // No heap verification
   virtual void prepare_for_verify() {}
@@ -144,8 +134,12 @@ public:
     return os::elapsed_counter() / NANOSECS_PER_MILLISEC;
   }
 
+  MemRegion reserved_region() const { return _reserved; }
+  bool is_in_reserved(const void* addr) const { return _reserved.contains(addr); }
+
   virtual void print_on(outputStream* st) const;
   virtual void print_tracing_info() const;
+  virtual bool print_location(outputStream* st, void* addr) const;
 
 private:
   void print_heap_info(size_t used) const;

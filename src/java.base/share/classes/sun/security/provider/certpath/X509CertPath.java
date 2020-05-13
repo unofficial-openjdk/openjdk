@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,11 +63,13 @@ import sun.security.util.DerInputStream;
  */
 public class X509CertPath extends CertPath {
 
+    @java.io.Serial
     private static final long serialVersionUID = 4989800333263052980L;
 
     /**
      * List of certificates in this chain
      */
+    @SuppressWarnings("serial") // Not statically typed as Serializable
     private List<X509Certificate> certs;
 
     /**

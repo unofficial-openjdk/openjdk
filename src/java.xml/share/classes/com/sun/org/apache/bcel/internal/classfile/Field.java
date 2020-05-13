@@ -23,6 +23,7 @@ package com.sun.org.apache.bcel.internal.classfile;
 
 import java.io.DataInput;
 import java.io.IOException;
+import java.util.Objects;
 
 import com.sun.org.apache.bcel.internal.Const;
 import com.sun.org.apache.bcel.internal.generic.Type;
@@ -32,7 +33,6 @@ import com.sun.org.apache.bcel.internal.util.BCELComparator;
  * This class represents the field info structure, i.e., the representation
  * for a variable in the class. See JVM specification for details.
  *
- * @version $Id: Field.java 1749603 2016-06-21 20:50:19Z ggregory $
  */
 public final class Field extends FieldOrMethod {
 
@@ -42,8 +42,8 @@ public final class Field extends FieldOrMethod {
         public boolean equals( final Object o1, final Object o2 ) {
             final Field THIS = (Field) o1;
             final Field THAT = (Field) o2;
-            return THIS.getName().equals(THAT.getName())
-                    && THIS.getSignature().equals(THAT.getSignature());
+            return Objects.equals(THIS.getName(), THAT.getName())
+                    && Objects.equals(THIS.getSignature(), THAT.getSignature());
         }
 
 
@@ -103,7 +103,7 @@ public final class Field extends FieldOrMethod {
     /**
      * @return constant value associated with this field (may be null)
      */
-    public final ConstantValue getConstantValue() {
+    public ConstantValue getConstantValue() {
         for (final Attribute attribute : super.getAttributes()) {
             if (attribute.getTag() == Const.ATTR_CONSTANT_VALUE) {
                 return (ConstantValue) attribute;
@@ -120,7 +120,7 @@ public final class Field extends FieldOrMethod {
      * @return String representation of field, including the signature.
      */
     @Override
-    public final String toString() {
+    public String toString() {
         String name;
         String signature;
         String access; // Short cuts to constant pool
@@ -148,7 +148,7 @@ public final class Field extends FieldOrMethod {
     /**
      * @return deep copy of this field
      */
-    public final Field copy( final ConstantPool _constant_pool ) {
+    public Field copy( final ConstantPool _constant_pool ) {
         return (Field) copy_(_constant_pool);
     }
 

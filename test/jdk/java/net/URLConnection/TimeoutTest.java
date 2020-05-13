@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,12 +24,14 @@
 /*
  * @test
  * @bug 4389976
+ * @library /test/lib
  * @summary    can't unblock read() of InputStream from URL connection
  * @run main/timeout=40/othervm -Dsun.net.client.defaultReadTimeout=2000 TimeoutTest
  */
 
 import java.io.*;
 import java.net.*;
+import jdk.test.lib.net.URIBuilder;
 
 public class TimeoutTest {
 
@@ -65,10 +67,16 @@ public class TimeoutTest {
     }
 
     public void test() throws Exception {
-        ServerSocket ss = new ServerSocket(0);
+        ServerSocket ss = new ServerSocket();
+        ss.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0));
         Server s = new Server (ss);
         try{
-            URL url = new URL ("http://127.0.0.1:"+ss.getLocalPort());
+            URL url = URIBuilder.newBuilder()
+                .scheme("http")
+                .loopback()
+                .port(ss.getLocalPort())
+                .toURL();
+            System.out.println("URL: " + url);
             URLConnection urlc = url.openConnection ();
             InputStream is = urlc.getInputStream ();
             throw new RuntimeException("Should have received timeout");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,8 +33,9 @@
 #include "gc/shared/genOopClosures.hpp"
 #include "gc/shared/genOopClosures.inline.hpp"
 #include "gc/shared/generation.hpp"
+#include "gc/shared/generationSpec.hpp"
 #include "gc/shared/space.inline.hpp"
-#include "gc/shared/spaceDecorator.hpp"
+#include "gc/shared/spaceDecorator.inline.hpp"
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "oops/oop.inline.hpp"
@@ -78,9 +79,6 @@ void Generation::ref_processor_init() {
   assert(!_reserved.is_empty(), "empty generation?");
   _span_based_discoverer.set_span(_reserved);
   _ref_processor = new ReferenceProcessor(&_span_based_discoverer);    // a vanilla reference processor
-  if (_ref_processor == NULL) {
-    vm_exit_during_initialization("Could not allocate ReferenceProcessor object");
-  }
 }
 
 void Generation::print() const { print_on(tty); }
@@ -168,7 +166,7 @@ oop Generation::promote(oop obj, size_t obj_size) {
 
   HeapWord* result = allocate(obj_size, false);
   if (result != NULL) {
-    Copy::aligned_disjoint_words((HeapWord*)obj, result, obj_size);
+    Copy::aligned_disjoint_words(cast_from_oop<HeapWord*>(obj), result, obj_size);
     return oop(result);
   } else {
     GenCollectedHeap* gch = GenCollectedHeap::heap();
@@ -177,7 +175,7 @@ oop Generation::promote(oop obj, size_t obj_size) {
 }
 
 oop Generation::par_promote(int thread_num,
-                            oop obj, markOop m, size_t word_sz) {
+                            oop obj, markWord m, size_t word_sz) {
   // Could do a bad general impl here that gets a lock.  But no.
   ShouldNotCallThis();
   return NULL;
@@ -285,21 +283,6 @@ class GenerationObjIterateClosure : public SpaceClosure {
 
 void Generation::object_iterate(ObjectClosure* cl) {
   GenerationObjIterateClosure blk(cl);
-  space_iterate(&blk);
-}
-
-class GenerationSafeObjIterateClosure : public SpaceClosure {
- private:
-  ObjectClosure* _cl;
- public:
-  virtual void do_space(Space* s) {
-    s->safe_object_iterate(_cl);
-  }
-  GenerationSafeObjIterateClosure(ObjectClosure* cl) : _cl(cl) {}
-};
-
-void Generation::safe_object_iterate(ObjectClosure* cl) {
-  GenerationSafeObjIterateClosure blk(cl);
   space_iterate(&blk);
 }
 

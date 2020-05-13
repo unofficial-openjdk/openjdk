@@ -31,6 +31,7 @@
 #include "gc/shared/cardTable.hpp"
 #include "gc/shared/cardTableBarrierSet.hpp"
 #include "interpreter/interpreter.hpp"
+#include "memory/universe.hpp"
 #include "nativeInst_x86.hpp"
 #include "oops/compiledICHolder.hpp"
 #include "oops/oop.inline.hpp"
@@ -366,6 +367,7 @@ static OopMap* generate_oop_map(StubAssembler* sasm, int num_rt_args,
 #endif
 
   if (save_fpu_registers) {
+#ifndef _LP64
     if (UseSSE < 2) {
       int fpu_off = float_regs_as_doubles_off;
       for (int n = 0; n < FrameMap::nof_fpu_regs; n++) {
@@ -378,7 +380,18 @@ static OopMap* generate_oop_map(StubAssembler* sasm, int num_rt_args,
         fpu_off += 2;
       }
       assert(fpu_off == fpu_state_off, "incorrect number of fpu stack slots");
+
+      if (UseSSE == 1) {
+        int xmm_off = xmm_regs_as_doubles_off;
+        for (int n = 0; n < FrameMap::nof_fpu_regs; n++) {
+          VMReg xmm_name_0 = as_XMMRegister(n)->as_VMReg();
+          map->set_callee_saved(VMRegImpl::stack2reg(xmm_off + num_rt_args), xmm_name_0);
+          xmm_off += 2;
+        }
+        assert(xmm_off == float_regs_as_doubles_off, "incorrect number of xmm registers");
+      }
     }
+#endif // !LP64
 
     if (UseSSE >= 2) {
       int xmm_off = xmm_regs_as_doubles_off;
@@ -391,15 +404,6 @@ static OopMap* generate_oop_map(StubAssembler* sasm, int num_rt_args,
             map->set_callee_saved(VMRegImpl::stack2reg(xmm_off + 1 + num_rt_args), xmm_name_0->next());
           }
         }
-        xmm_off += 2;
-      }
-      assert(xmm_off == float_regs_as_doubles_off, "incorrect number of xmm registers");
-
-    } else if (UseSSE == 1) {
-      int xmm_off = xmm_regs_as_doubles_off;
-      for (int n = 0; n < FrameMap::nof_fpu_regs; n++) {
-        VMReg xmm_name_0 = as_XMMRegister(n)->as_VMReg();
-        map->set_callee_saved(VMRegImpl::stack2reg(xmm_off + num_rt_args), xmm_name_0);
         xmm_off += 2;
       }
       assert(xmm_off == float_regs_as_doubles_off, "incorrect number of xmm registers");
@@ -426,6 +430,7 @@ void C1_MacroAssembler::save_live_registers_no_oop_map(bool save_fpu_registers) 
 #endif
 
   if (save_fpu_registers) {
+#ifndef _LP64
     if (UseSSE < 2) {
       // save FPU stack
       __ fnsave(Address(rsp, fpu_state_off * VMRegImpl::stack_slot_size));
@@ -452,7 +457,18 @@ void C1_MacroAssembler::save_live_registers_no_oop_map(bool save_fpu_registers) 
         __ fstp_d(Address(rsp, float_regs_as_doubles_off * VMRegImpl::stack_slot_size + offset));
         offset += 8;
       }
+
+      if (UseSSE == 1) {
+        // save XMM registers as float because double not supported without SSE2(num MMX == num fpu)
+        int offset = 0;
+        for (int n = 0; n < FrameMap::nof_fpu_regs; n++) {
+          XMMRegister xmm_name = as_XMMRegister(n);
+          __ movflt(Address(rsp, xmm_regs_as_doubles_off * VMRegImpl::stack_slot_size + offset), xmm_name);
+          offset += 8;
+        }
+      }
     }
+#endif // !_LP64
 
     if (UseSSE >= 2) {
       // save XMM registers
@@ -472,34 +488,36 @@ void C1_MacroAssembler::save_live_registers_no_oop_map(bool save_fpu_registers) 
         __ movdbl(Address(rsp, xmm_regs_as_doubles_off * VMRegImpl::stack_slot_size + offset), xmm_name);
         offset += 8;
       }
-    } else if (UseSSE == 1) {
-      // save XMM registers as float because double not supported without SSE2(num MMX == num fpu)
-      int offset = 0;
-      for (int n = 0; n < FrameMap::nof_fpu_regs; n++) {
-        XMMRegister xmm_name = as_XMMRegister(n);
-        __ movflt(Address(rsp, xmm_regs_as_doubles_off * VMRegImpl::stack_slot_size + offset), xmm_name);
-        offset += 8;
-      }
     }
   }
 
   // FPU stack must be empty now
-  __ verify_FPU(0, "save_live_registers");
+  NOT_LP64( __ verify_FPU(0, "save_live_registers"); )
 }
 
 #undef __
 #define __ sasm->
 
 static void restore_fpu(C1_MacroAssembler* sasm, bool restore_fpu_registers) {
+#ifdef _LP64
+  if (restore_fpu_registers) {
+    // restore XMM registers
+    int xmm_bypass_limit = FrameMap::nof_xmm_regs;
+    if (UseAVX < 3) {
+      xmm_bypass_limit = xmm_bypass_limit / 2;
+    }
+    int offset = 0;
+    for (int n = 0; n < xmm_bypass_limit; n++) {
+      XMMRegister xmm_name = as_XMMRegister(n);
+      __ movdbl(xmm_name, Address(rsp, xmm_regs_as_doubles_off * VMRegImpl::stack_slot_size + offset));
+      offset += 8;
+    }
+  }
+#else
   if (restore_fpu_registers) {
     if (UseSSE >= 2) {
       // restore XMM registers
       int xmm_bypass_limit = FrameMap::nof_xmm_regs;
-#ifdef _LP64
-      if (UseAVX < 3) {
-        xmm_bypass_limit = xmm_bypass_limit / 2;
-      }
-#endif
       int offset = 0;
       for (int n = 0; n < xmm_bypass_limit; n++) {
         XMMRegister xmm_name = as_XMMRegister(n);
@@ -522,11 +540,11 @@ static void restore_fpu(C1_MacroAssembler* sasm, bool restore_fpu_registers) {
       // check that FPU stack is really empty
       __ verify_FPU(0, "restore_live_registers");
     }
-
   } else {
     // check that FPU stack is really empty
     __ verify_FPU(0, "restore_live_registers");
   }
+#endif // _LP64
 
 #ifdef ASSERT
   {
@@ -698,12 +716,12 @@ OopMapSet* Runtime1::generate_handle_exception(StubID id, StubAssembler *sasm) {
   default:  ShouldNotReachHere();
   }
 
-#ifdef TIERED
-  // C2 can leave the fpu stack dirty
+#if !defined(_LP64) && defined(TIERED)
   if (UseSSE < 2) {
+    // C2 can leave the fpu stack dirty
     __ empty_FPU_stack();
   }
-#endif // TIERED
+#endif // !_LP64 && TIERED
 
   // verify that only rax, and rdx is valid at this time
   __ invalidate_registers(false, true, true, false, true, true);
@@ -805,7 +823,7 @@ void Runtime1::generate_unwind_exception(StubAssembler *sasm) {
 #endif
 
   // clear the FPU stack in case any FPU results are left behind
-  __ empty_FPU_stack();
+  NOT_LP64( __ empty_FPU_stack(); )
 
   // save exception_oop in callee-saved register to preserve it during runtime calls
   __ verify_not_null_oop(exception_oop);
@@ -1476,11 +1494,23 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
 
     case fpu2long_stub_id:
       {
+#ifdef _LP64
+        Label done;
+        __ cvttsd2siq(rax, Address(rsp, wordSize));
+        __ cmp64(rax, ExternalAddress((address) StubRoutines::x86::double_sign_flip()));
+        __ jccb(Assembler::notEqual, done);
+        __ movq(rax, Address(rsp, wordSize));
+        __ subptr(rsp, 8);
+        __ movq(Address(rsp, 0), rax);
+        __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::x86::d2l_fixup())));
+        __ pop(rax);
+        __ bind(done);
+        __ ret(0);
+#else
         // rax, and rdx are destroyed, but should be free since the result is returned there
         // preserve rsi,ecx
         __ push(rsi);
         __ push(rcx);
-        LP64_ONLY(__ push(rdx);)
 
         // check for NaN
         Label return0, do_return, return_min_jlong, do_convert;
@@ -1525,46 +1555,29 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         __ fldz();
         __ fcomp_d(value_low_word);
         __ fnstsw_ax();
-#ifdef _LP64
-        __ testl(rax, 0x4100);  // ZF & CF == 0
-        __ jcc(Assembler::equal, return_min_jlong);
-#else
         __ sahf();
         __ jcc(Assembler::above, return_min_jlong);
-#endif // _LP64
         // return max_jlong
-#ifndef _LP64
         __ movl(rdx, 0x7fffffff);
         __ movl(rax, 0xffffffff);
-#else
-        __ mov64(rax, CONST64(0x7fffffffffffffff));
-#endif // _LP64
         __ jmp(do_return);
 
         __ bind(return_min_jlong);
-#ifndef _LP64
         __ movl(rdx, 0x80000000);
         __ xorl(rax, rax);
-#else
-        __ mov64(rax, UCONST64(0x8000000000000000));
-#endif // _LP64
         __ jmp(do_return);
 
         __ bind(return0);
         __ fpop();
-#ifndef _LP64
         __ xorptr(rdx,rdx);
         __ xorptr(rax,rax);
-#else
-        __ xorptr(rax, rax);
-#endif // _LP64
 
         __ bind(do_return);
         __ addptr(rsp, 32);
-        LP64_ONLY(__ pop(rdx);)
         __ pop(rcx);
         __ pop(rsi);
         __ ret(0);
+#endif // _LP64
       }
       break;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,12 +24,14 @@
 
 #include "precompiled.hpp"
 #include "jmm.h"
+#include "classfile/classLoader.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "compiler/compileBroker.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/iterator.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/klass.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "oops/objArrayOop.inline.hpp"
@@ -42,8 +44,8 @@
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jniHandles.inline.hpp"
+#include "runtime/notificationThread.hpp"
 #include "runtime/os.hpp"
-#include "runtime/serviceThread.hpp"
 #include "runtime/thread.inline.hpp"
 #include "runtime/threadSMR.hpp"
 #include "services/classLoadingService.hpp"
@@ -144,9 +146,9 @@ void Management::init() {
 }
 
 void Management::initialize(TRAPS) {
-  // Start the service thread
-  ServiceThread::initialize();
-
+  if (UseNotificationThread) {
+    NotificationThread::initialize();
+  }
   if (ManagementServer) {
     ResourceMark rm(THREAD);
     HandleMark hm(THREAD);
@@ -843,7 +845,7 @@ void VmThreadCountClosure::do_thread(Thread* thread) {
 static jint get_vm_thread_count() {
   VmThreadCountClosure vmtcc;
   {
-    MutexLockerEx ml(Threads_lock);
+    MutexLocker ml(Threads_lock);
     Threads::threads_do(&vmtcc);
   }
 
@@ -1354,7 +1356,7 @@ JVM_ENTRY(jboolean, jmm_ResetStatistic(JNIEnv *env, jvalue obj, jmmStatisticType
         THROW_(vmSymbols::java_lang_NullPointerException(), JNI_FALSE);
       }
 
-      GCMemoryManager* mgr = get_gc_memory_manager_from_jobject(o, CHECK_0);
+      GCMemoryManager* mgr = get_gc_memory_manager_from_jobject(o, CHECK_false);
       if (mgr != NULL) {
         mgr->reset_gc_stat();
         return true;
@@ -1400,7 +1402,7 @@ JVM_ENTRY(jobjectArray, jmm_GetVMGlobalNames(JNIEnv *env))
   int nFlags = (int) JVMFlag::numFlags - 1;
   // allocate a temp array
   objArrayOop r = oopFactory::new_objArray(SystemDictionary::String_klass(),
-                                           nFlags, CHECK_0);
+                                           nFlags, CHECK_NULL);
   objArrayHandle flags_ah(THREAD, r);
   int num_entries = 0;
   for (int i = 0; i < nFlags; i++) {
@@ -1411,7 +1413,7 @@ JVM_ENTRY(jobjectArray, jmm_GetVMGlobalNames(JNIEnv *env))
     }
     // Exclude the locked (experimental, diagnostic) flags
     if (flag->is_unlocked() || flag->is_unlocker()) {
-      Handle s = java_lang_String::create_from_str(flag->_name, CHECK_0);
+      Handle s = java_lang_String::create_from_str(flag->_name, CHECK_NULL);
       flags_ah->obj_at_put(num_entries, s());
       num_entries++;
     }
@@ -1419,7 +1421,7 @@ JVM_ENTRY(jobjectArray, jmm_GetVMGlobalNames(JNIEnv *env))
 
   if (num_entries < nFlags) {
     // Return array of right length
-    objArrayOop res = oopFactory::new_objArray(SystemDictionary::String_klass(), num_entries, CHECK_0);
+    objArrayOop res = oopFactory::new_objArray(SystemDictionary::String_klass(), num_entries, CHECK_NULL);
     for(int i = 0; i < num_entries; i++) {
       res->obj_at_put(i, flags_ah->obj_at(i));
     }
@@ -1544,7 +1546,7 @@ JVM_ENTRY(jint, jmm_GetVMGlobals(JNIEnv *env,
 
       Handle sh(THREAD, s);
       char* str = java_lang_String::as_utf8_string(s);
-      JVMFlag* flag = JVMFlag::find_flag(str, strlen(str));
+      JVMFlag* flag = JVMFlag::find_flag(str);
       if (flag != NULL &&
           add_global_entry(env, sh, &globals[i], flag, THREAD)) {
         num_entries++;
@@ -1703,7 +1705,7 @@ JVM_ENTRY(jint, jmm_GetInternalThreadTimes(JNIEnv *env,
 
   ThreadTimesClosure ttc(names_ah, times_ah);
   {
-    MutexLockerEx ml(Threads_lock);
+    MutexLocker ml(THREAD, Threads_lock);
     Threads::threads_do(&ttc);
   }
   ttc.do_unlocked();
@@ -1752,7 +1754,7 @@ static Handle find_deadlocks(bool object_monitors_only, TRAPS) {
 //    object_monitors_only - if true, only check object monitors
 //
 JVM_ENTRY(jobjectArray, jmm_FindDeadlockedThreads(JNIEnv *env, jboolean object_monitors_only))
-  Handle result = find_deadlocks(object_monitors_only != 0, CHECK_0);
+  Handle result = find_deadlocks(object_monitors_only != 0, CHECK_NULL);
   return (jobjectArray) JNIHandles::make_local(env, result());
 JVM_END
 
@@ -1760,7 +1762,7 @@ JVM_END
 // Returns an array of Thread objects which are in deadlock, if any.
 // Otherwise, returns NULL.
 JVM_ENTRY(jobjectArray, jmm_FindMonitorDeadlockedThreads(JNIEnv *env))
-  Handle result = find_deadlocks(true, CHECK_0);
+  Handle result = find_deadlocks(true, CHECK_NULL);
   return (jobjectArray) JNIHandles::make_local(env, result());
 JVM_END
 
@@ -1808,7 +1810,7 @@ static objArrayOop get_memory_usage_objArray(jobjectArray array, int length, TRA
   }
 
   // check if the element of array is of type MemoryUsage class
-  Klass* usage_klass = Management::java_lang_management_MemoryUsage_klass(CHECK_0);
+  Klass* usage_klass = Management::java_lang_management_MemoryUsage_klass(CHECK_NULL);
   Klass* element_klass = ObjArrayKlass::cast(array_h->klass())->element_klass();
   if (element_klass != usage_klass) {
     THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
@@ -2066,6 +2068,31 @@ jlong Management::ticks_to_ms(jlong ticks) {
 }
 #endif // INCLUDE_MANAGEMENT
 
+// Gets the amount of memory allocated on the Java heap for a single thread.
+// Returns -1 if the thread does not exist or has terminated.
+JVM_ENTRY(jlong, jmm_GetOneThreadAllocatedMemory(JNIEnv *env, jlong thread_id))
+  if (thread_id < 0) {
+    THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
+               "Invalid thread ID", -1);
+  }
+
+  if (thread_id == 0) {
+    // current thread
+    if (THREAD->is_Java_thread()) {
+      return ((JavaThread*)THREAD)->cooked_allocated_bytes();
+    }
+    return -1;
+  }
+
+  ThreadsListHandle tlh;
+  JavaThread* java_thread = tlh.list()->find_JavaThread_from_java_tid(thread_id);
+
+  if (java_thread != NULL) {
+    return java_thread->cooked_allocated_bytes();
+  }
+  return -1;
+JVM_END
+
 // Gets an array containing the amount of memory allocated on the Java
 // heap for a set of threads (in bytes).  Each element of the array is
 // the amount of memory allocated for the thread ID specified in the
@@ -2190,6 +2217,7 @@ const struct jmmInterface_1_ jmm_interface = {
   jmm_GetMemoryManagers,
   jmm_GetMemoryPoolUsage,
   jmm_GetPeakMemoryPoolUsage,
+  jmm_GetOneThreadAllocatedMemory,
   jmm_GetThreadAllocatedMemory,
   jmm_GetMemoryUsage,
   jmm_GetLongAttribute,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,17 +31,19 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
-  * Implements the CRAM-MD5 SASL client-side mechanism.
-  * (<A HREF="http://www.ietf.org/rfc/rfc2195.txt">RFC 2195</A>).
-  * CRAM-MD5 has no initial response. It receives bytes from
-  * the server as a challenge, which it hashes by using MD5 and the password.
-  * It concatenates the authentication ID with this result and returns it
-  * as the response to the challenge. At that point, the exchange is complete.
-  *
-  * @author Vincent Ryan
-  * @author Rosanna Lee
-  */
+ * Implements the CRAM-MD5 SASL client-side mechanism.
+ * (<A HREF="http://www.ietf.org/rfc/rfc2195.txt">RFC 2195</A>).
+ * CRAM-MD5 has no initial response. It receives bytes from
+ * the server as a challenge, which it hashes by using MD5 and the password.
+ * It concatenates the authentication ID with this result and returns it
+ * as the response to the challenge. At that point, the exchange is complete.
+ *
+ * @author Vincent Ryan
+ * @author Rosanna Lee
+ */
 final class CramMD5Client extends CramMD5Base implements SaslClient {
     private String username;
 
@@ -82,8 +84,8 @@ final class CramMD5Client extends CramMD5Base implements SaslClient {
      *        data from the server.
      * @return A non-null byte array containing the response to be sent to
      *        the server.
-     * @throws SaslException If platform does not have MD5 support
-     * @throw IllegalStateException if this method is invoked more than once.
+     * @throws SaslException if platform does not have MD5 support
+     * @throws IllegalStateException if this method is invoked more than once.
      */
     public byte[] evaluateChallenge(byte[] challengeData)
         throws SaslException {
@@ -103,7 +105,7 @@ final class CramMD5Client extends CramMD5Base implements SaslClient {
         try {
             if (logger.isLoggable(Level.FINE)) {
                 logger.log(Level.FINE, "CRAMCLNT01:Received challenge: {0}",
-                    new String(challengeData, "UTF8"));
+                    new String(challengeData, UTF_8));
             }
 
             String digest = HMAC_MD5(pw, challengeData);
@@ -118,13 +120,10 @@ final class CramMD5Client extends CramMD5Base implements SaslClient {
 
             completed = true;
 
-            return resp.getBytes("UTF8");
+            return resp.getBytes(UTF_8);
         } catch (java.security.NoSuchAlgorithmException e) {
             aborted = true;
             throw new SaslException("MD5 algorithm not available on platform", e);
-        } catch (java.io.UnsupportedEncodingException e) {
-            aborted = true;
-            throw new SaslException("UTF8 not available on platform", e);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,47 +23,60 @@
  * questions.
  */
 
-
 package sun.lwawt;
 
-import java.awt.*;
-
+import java.awt.AWTEvent;
+import java.awt.AWTException;
+import java.awt.BufferCapabilities;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.peer.DropTargetPeer;
-import java.awt.event.*;
-
+import java.awt.event.AWTEventListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.PaintEvent;
 import java.awt.image.ColorModel;
-import java.awt.image.ImageObserver;
-import java.awt.image.ImageProducer;
 import java.awt.image.VolatileImage;
-
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.ContainerPeer;
-
 import java.awt.peer.KeyboardFocusManagerPeer;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import sun.awt.*;
+import javax.swing.JComponent;
+import javax.swing.RepaintManager;
+import javax.swing.SwingUtilities;
 
+import com.sun.java.swing.SwingUtilities3;
+import sun.awt.AWTAccessor;
+import sun.awt.PaintEventDispatcher;
+import sun.awt.RepaintArea;
+import sun.awt.SunToolkit;
 import sun.awt.event.IgnorePaintEvent;
-
 import sun.awt.image.SunVolatileImage;
-import sun.awt.image.ToolkitImage;
-
 import sun.java2d.SunGraphics2D;
 import sun.java2d.opengl.OGLRenderQueue;
 import sun.java2d.pipe.Region;
-
 import sun.util.logging.PlatformLogger;
-
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
-import javax.swing.RepaintManager;
-
-import com.sun.java.swing.SwingUtilities3;
 
 public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     implements ComponentPeer, DropTargetPeer
@@ -978,11 +991,6 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public final Image createImage(final ImageProducer producer) {
-        return new ToolkitImage(producer);
-    }
-
-    @Override
     public final Image createImage(final int width, final int height) {
         return getLWGC().createAcceleratedImage(getTarget(), width, height);
     }
@@ -990,18 +998,6 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     @Override
     public final VolatileImage createVolatileImage(final int w, final int h) {
         return new SunVolatileImage(getTarget(), w, h);
-    }
-
-    @Override
-    public boolean prepareImage(Image img, int w, int h, ImageObserver o) {
-        // TODO: is it a right/complete implementation?
-        return Toolkit.getDefaultToolkit().prepareImage(img, w, h, o);
-    }
-
-    @Override
-    public int checkImage(Image img, int w, int h, ImageObserver o) {
-        // TODO: is it a right/complete implementation?
-        return Toolkit.getDefaultToolkit().checkImage(img, w, h, o);
     }
 
     @Override
@@ -1105,9 +1101,9 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
                                     final boolean updateTarget) {
         if (updateTarget) {
             AWTAccessor.getComponentAccessor().setLocation(getTarget(), x, y);
+            postEvent(new ComponentEvent(getTarget(),
+                                         ComponentEvent.COMPONENT_MOVED));
         }
-        postEvent(new ComponentEvent(getTarget(),
-                                     ComponentEvent.COMPONENT_MOVED));
     }
 
     /**
@@ -1129,9 +1125,9 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
 
         if (updateTarget) {
             AWTAccessor.getComponentAccessor().setSize(getTarget(), w, h);
+            postEvent(new ComponentEvent(getTarget(),
+                                         ComponentEvent.COMPONENT_RESIZED));
         }
-        postEvent(new ComponentEvent(getTarget(),
-                                     ComponentEvent.COMPONENT_RESIZED));
     }
 
     protected final void repaintOldNewBounds(final Rectangle oldB) {

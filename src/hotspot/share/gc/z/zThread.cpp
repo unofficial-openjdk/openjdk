@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,17 +22,17 @@
  */
 
 #include "precompiled.hpp"
-#include "gc/z/zThread.hpp"
+#include "gc/z/zThread.inline.hpp"
 #include "runtime/thread.hpp"
 #include "utilities/debug.hpp"
 
-__thread bool      ZThread::_initialized;
-__thread uintptr_t ZThread::_id;
-__thread bool      ZThread::_is_vm;
-__thread bool      ZThread::_is_java;
-__thread bool      ZThread::_is_worker;
-__thread bool      ZThread::_is_runtime_worker;
-__thread uint      ZThread::_worker_id;
+THREAD_LOCAL bool      ZThread::_initialized;
+THREAD_LOCAL uintptr_t ZThread::_id;
+THREAD_LOCAL bool      ZThread::_is_vm;
+THREAD_LOCAL bool      ZThread::_is_java;
+THREAD_LOCAL bool      ZThread::_is_worker;
+THREAD_LOCAL bool      ZThread::_is_runtime_worker;
+THREAD_LOCAL uint      ZThread::_worker_id;
 
 void ZThread::initialize() {
   assert(!_initialized, "Already initialized");

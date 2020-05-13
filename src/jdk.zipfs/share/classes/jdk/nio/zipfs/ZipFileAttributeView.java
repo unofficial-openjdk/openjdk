@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,16 +27,18 @@ package jdk.nio.zipfs;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
-import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Xueming Shen, Rajendra Gutupalli, Jaya Hangal
  */
 class ZipFileAttributeView implements BasicFileAttributeView {
-    private static enum AttrID {
+    static enum AttrID {
         size,
         creationTime,
         lastAccessTime,
@@ -48,36 +50,18 @@ class ZipFileAttributeView implements BasicFileAttributeView {
         fileKey,
         compressedSize,
         crc,
-        method
-    };
+        method,
+        owner,
+        group,
+        permissions
+    }
 
-    private final ZipPath path;
+    final ZipPath path;
     private final boolean isZipView;
 
-    private ZipFileAttributeView(ZipPath path, boolean isZipView) {
+    ZipFileAttributeView(ZipPath path, boolean isZipView) {
         this.path = path;
         this.isZipView = isZipView;
-    }
-
-    @SuppressWarnings("unchecked") // Cast to V
-    static <V extends FileAttributeView> V get(ZipPath path, Class<V> type) {
-        if (type == null)
-            throw new NullPointerException();
-        if (type == BasicFileAttributeView.class)
-            return (V)new ZipFileAttributeView(path, false);
-        if (type == ZipFileAttributeView.class)
-            return (V)new ZipFileAttributeView(path, true);
-        return null;
-    }
-
-    static ZipFileAttributeView get(ZipPath path, String type) {
-        if (type == null)
-            throw new NullPointerException();
-        if (type.equals("basic"))
-            return new ZipFileAttributeView(path, false);
-        if (type.equals("zip"))
-            return new ZipFileAttributeView(path, true);
-        return null;
     }
 
     @Override
@@ -85,8 +69,9 @@ class ZipFileAttributeView implements BasicFileAttributeView {
         return isZipView ? "zip" : "basic";
     }
 
-    public ZipFileAttributes readAttributes() throws IOException {
-        return path.getAttributes();
+    @Override
+    public BasicFileAttributes readAttributes() throws IOException {
+        return path.readAttributes();
     }
 
     @Override
@@ -98,6 +83,11 @@ class ZipFileAttributeView implements BasicFileAttributeView {
         path.setTimes(lastModifiedTime, lastAccessTime, createTime);
     }
 
+    public void setPermissions(Set<PosixFilePermission> perms) throws IOException {
+        path.setPermissions(perms);
+    }
+
+    @SuppressWarnings("unchecked")
     void setAttribute(String attribute, Object value)
         throws IOException
     {
@@ -108,16 +98,18 @@ class ZipFileAttributeView implements BasicFileAttributeView {
                 setTimes(null, (FileTime)value, null);
             if (AttrID.valueOf(attribute) == AttrID.creationTime)
                 setTimes(null, null, (FileTime)value);
-            return;
-        } catch (IllegalArgumentException x) {}
-        throw new UnsupportedOperationException("'" + attribute +
-            "' is unknown or read-only attribute");
+            if (AttrID.valueOf(attribute) == AttrID.permissions)
+                setPermissions((Set<PosixFilePermission>)value);
+        } catch (IllegalArgumentException x) {
+            throw new UnsupportedOperationException("'" + attribute +
+                "' is unknown or read-only attribute");
+        }
     }
 
     Map<String, Object> readAttributes(String attributes)
         throws IOException
     {
-        ZipFileAttributes zfas = readAttributes();
+        ZipFileAttributes zfas = (ZipFileAttributes)readAttributes();
         LinkedHashMap<String, Object> map = new LinkedHashMap<>();
         if ("*".equals(attributes)) {
             for (AttrID id : AttrID.values()) {
@@ -167,6 +159,13 @@ class ZipFileAttributeView implements BasicFileAttributeView {
         case method:
             if (isZipView)
                 return zfas.method();
+            break;
+        case permissions:
+            if (isZipView) {
+                return zfas.storedPermissions().orElse(null);
+            }
+            break;
+        default:
             break;
         }
         return null;

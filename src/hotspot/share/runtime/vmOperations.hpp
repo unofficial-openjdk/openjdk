@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,14 +42,12 @@
 #define VM_OPS_DO(template)                       \
   template(None)                                  \
   template(Cleanup)                               \
-  template(ThreadStop)                            \
   template(ThreadDump)                            \
   template(PrintThreads)                          \
   template(FindDeadlocks)                         \
   template(ClearICs)                              \
   template(ForceSafepoint)                        \
   template(ForceAsyncSafepoint)                   \
-  template(Deoptimize)                            \
   template(DeoptimizeFrame)                       \
   template(DeoptimizeAll)                         \
   template(ZombieAll)                             \
@@ -64,28 +62,25 @@
   template(GenCollectForAllocation)               \
   template(ParallelGCFailedAllocation)            \
   template(ParallelGCSystemGC)                    \
-  template(CMS_Initial_Mark)                      \
-  template(CMS_Final_Remark)                      \
   template(G1CollectForAllocation)                \
   template(G1CollectFull)                         \
   template(G1Concurrent)                          \
+  template(G1TryInitiateConcMark)                 \
   template(ZMarkStart)                            \
   template(ZMarkEnd)                              \
   template(ZRelocateStart)                        \
+  template(ZVerify)                               \
   template(HandshakeOneThread)                    \
   template(HandshakeAllThreads)                   \
   template(HandshakeFallback)                     \
   template(EnableBiasedLocking)                   \
-  template(RevokeBias)                            \
   template(BulkRevokeBias)                        \
   template(PopulateDumpSharedSpace)               \
   template(JNIFunctionTableCopier)                \
   template(RedefineClasses)                       \
   template(UpdateForPopTopFrame)                  \
   template(SetFramePop)                           \
-  template(GetOwnedMonitorInfo)                   \
   template(GetObjectMonitorUsage)                 \
-  template(GetCurrentContendedMonitor)            \
   template(GetStackTrace)                         \
   template(GetMultipleStackTraces)                \
   template(GetAllStackTraces)                     \
@@ -104,9 +99,6 @@
   template(ShenandoahFullGC)                      \
   template(ShenandoahInitMark)                    \
   template(ShenandoahFinalMarkStartEvac)          \
-  template(ShenandoahFinalEvac)                   \
-  template(ShenandoahInitTraversalGC)             \
-  template(ShenandoahFinalTraversalGC)            \
   template(ShenandoahInitUpdateRefs)              \
   template(ShenandoahFinalUpdateRefs)             \
   template(ShenandoahDegeneratedGC)               \
@@ -114,6 +106,7 @@
   template(LinuxDllLoad)                          \
   template(RotateGCLog)                           \
   template(WhiteBoxOperation)                     \
+  template(JVMCIResizeCounters)                   \
   template(ClassLoaderStatsOperation)             \
   template(ClassLoaderHierarchyOperation)         \
   template(DumpHashtable)                         \
@@ -127,16 +120,10 @@
   template(ScavengeMonitors)                      \
   template(PrintMetadata)                         \
   template(GTestExecuteAtSafepoint)               \
+  template(JFROldObject)                          \
 
-class VM_Operation: public CHeapObj<mtInternal> {
+class VM_Operation : public StackObj {
  public:
-  enum Mode {
-    _safepoint,       // blocking,        safepoint, vm_op C-heap allocated
-    _no_safepoint,    // blocking,     no safepoint, vm_op C-Heap allocated
-    _concurrent,      // non-blocking, no safepoint, vm_op C-Heap allocated
-    _async_safepoint  // non-blocking,    safepoint, vm_op C-Heap allocated
-  };
-
   enum VMOp_Type {
     VM_OPS_DO(VM_OP_ENUM)
     VMOp_Terminating
@@ -144,8 +131,7 @@ class VM_Operation: public CHeapObj<mtInternal> {
 
  private:
   Thread*         _calling_thread;
-  ThreadPriority  _priority;
-  long            _timestamp;
+  uint64_t        _timestamp;
   VM_Operation*   _next;
   VM_Operation*   _prev;
 
@@ -153,16 +139,14 @@ class VM_Operation: public CHeapObj<mtInternal> {
   static const char* _names[];
 
  public:
-  VM_Operation()  { _calling_thread = NULL; _next = NULL; _prev = NULL; }
-  virtual ~VM_Operation() {}
+  VM_Operation() : _calling_thread(NULL), _timestamp(0),  _next(NULL), _prev(NULL) {}
 
   // VM operation support (used by VM thread)
   Thread* calling_thread() const                 { return _calling_thread; }
-  ThreadPriority priority()                      { return _priority; }
-  void set_calling_thread(Thread* thread, ThreadPriority priority);
+  void set_calling_thread(Thread* thread);
 
-  long timestamp() const              { return _timestamp; }
-  void set_timestamp(long timestamp)  { _timestamp = timestamp; }
+  uint64_t timestamp() const              { return _timestamp; }
+  void set_timestamp(uint64_t timestamp)  { _timestamp = timestamp; }
 
   // Called by VM thread - does in turn invoke doit(). Do not override this
   void evaluate();
@@ -176,10 +160,7 @@ class VM_Operation: public CHeapObj<mtInternal> {
   // completes. If doit_prologue() returns false the VM operation is cancelled.
   virtual void doit()                            = 0;
   virtual bool doit_prologue()                   { return true; };
-  virtual void doit_epilogue()                   {}; // Note: Not called if mode is: _concurrent
-
-  // Type test
-  virtual bool is_methodCompiler() const         { return false; }
+  virtual void doit_epilogue()                   {};
 
   // Linking
   VM_Operation *next() const                     { return _next; }
@@ -189,28 +170,11 @@ class VM_Operation: public CHeapObj<mtInternal> {
 
   // Configuration. Override these appropriately in subclasses.
   virtual VMOp_Type type() const = 0;
-  virtual Mode evaluation_mode() const            { return _safepoint; }
   virtual bool allow_nested_vm_operations() const { return false; }
-  virtual bool is_cheap_allocated() const         { return false; }
-  virtual void oops_do(OopClosure* f)              { /* do nothing */ };
 
-  // CAUTION: <don't hang yourself with following rope>
-  // If you override these methods, make sure that the evaluation
-  // of these methods is race-free and non-blocking, since these
-  // methods may be evaluated either by the mutators or by the
-  // vm thread, either concurrently with mutators or with the mutators
-  // stopped. In other words, taking locks is verboten, and if there
-  // are any races in evaluating the conditions, they'd better be benign.
-  virtual bool evaluate_at_safepoint() const {
-    return evaluation_mode() == _safepoint  ||
-           evaluation_mode() == _async_safepoint;
-  }
-  virtual bool evaluate_concurrently() const {
-    return evaluation_mode() == _concurrent ||
-           evaluation_mode() == _async_safepoint;
-  }
-
-  static const char* mode_to_string(Mode mode);
+  // An operation can either be done inside a safepoint
+  // or concurrently with Java threads running.
+  virtual bool evaluate_at_safepoint() const { return true; }
 
   // Debugging
   virtual void print_on_error(outputStream* st) const;
@@ -237,32 +201,6 @@ class VM_Cleanup: public VM_Operation {
  public:
   VMOp_Type type() const { return VMOp_Cleanup; }
   void doit() {};
-};
-
-class VM_ThreadStop: public VM_Operation {
- private:
-  oop     _thread;        // The Thread that the Throwable is thrown against
-  oop     _throwable;     // The Throwable thrown at the target Thread
- public:
-  // All oops are passed as JNI handles, since there is no guarantee that a GC might happen before the
-  // VM operation is executed.
-  VM_ThreadStop(oop thread, oop throwable) {
-    _thread    = thread;
-    _throwable = throwable;
-  }
-  VMOp_Type type() const                         { return VMOp_ThreadStop; }
-  oop target_thread() const                      { return _thread; }
-  oop throwable() const                          { return _throwable;}
-  void doit();
-  // We deoptimize if top-most frame is compiled - this might require a C2I adapter to be generated
-  bool allow_nested_vm_operations() const        { return true; }
-  Mode evaluation_mode() const                   { return _async_safepoint; }
-  bool is_cheap_allocated() const                { return true; }
-
-  // GC support
-  void oops_do(OopClosure* f) {
-    f->do_oop(&_thread); f->do_oop(&_throwable);
-  }
 };
 
 class VM_ClearICs: public VM_Operation {
@@ -299,14 +237,6 @@ class VM_ICBufferFull: public VM_ForceSafepoint {
   VMOp_Type type() const { return VMOp_ICBufferFull; }
 };
 
-// empty asynchronous vm op, when forcing a safepoint to scavenge monitors
-class VM_ScavengeMonitors: public VM_ForceSafepoint {
- public:
-  VMOp_Type type() const                         { return VMOp_ScavengeMonitors; }
-  Mode evaluation_mode() const                   { return _async_safepoint; }
-  bool is_cheap_allocated() const                { return true; }
-};
-
 // Base class for invoking parts of a gtest in a safepoint.
 // Derived classes provide the doit method.
 // Typically also need to transition the gtest thread from native to VM.
@@ -316,14 +246,6 @@ class VM_GTestExecuteAtSafepoint: public VM_Operation {
 
  protected:
   VM_GTestExecuteAtSafepoint() {}
-};
-
-class VM_Deoptimize: public VM_Operation {
- public:
-  VM_Deoptimize() {}
-  VMOp_Type type() const                        { return VMOp_Deoptimize; }
-  void doit();
-  bool allow_nested_vm_operations() const        { return true; }
 };
 
 class VM_MarkActiveNMethods: public VM_Operation {
@@ -508,7 +430,6 @@ class VM_PrintCompileQueue: public VM_Operation {
  public:
   VM_PrintCompileQueue(outputStream* st) : _out(st) {}
   VMOp_Type type() const { return VMOp_PrintCompileQueue; }
-  Mode evaluation_mode() const { return _safepoint; }
   void doit();
 };
 

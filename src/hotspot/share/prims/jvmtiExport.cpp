@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "classfile/javaClasses.inline.hpp"
+#include "classfile/moduleEntry.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "code/nmethod.hpp"
 #include "code/pcDesc.hpp"
@@ -34,6 +35,7 @@
 #include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "oops/objArrayOop.hpp"
 #include "oops/oop.inline.hpp"
@@ -57,6 +59,7 @@
 #include "runtime/objectMonitor.inline.hpp"
 #include "runtime/os.inline.hpp"
 #include "runtime/safepointVerifiers.hpp"
+#include "runtime/serviceThread.hpp"
 #include "runtime/thread.inline.hpp"
 #include "runtime/threadSMR.hpp"
 #include "runtime/vframe.inline.hpp"
@@ -302,7 +305,7 @@ bool              JvmtiExport::_can_hotswap_or_post_breakpoint            = fals
 bool              JvmtiExport::_can_modify_any_class                      = false;
 bool              JvmtiExport::_can_walk_any_space                        = false;
 
-bool              JvmtiExport::_has_redefined_a_class                     = false;
+uint64_t          JvmtiExport::_redefinition_count                        = 0;
 bool              JvmtiExport::_all_dependencies_are_recorded             = false;
 
 //
@@ -381,7 +384,10 @@ JvmtiExport::get_jvmti_interface(JavaVM *jvm, void **penv, jint version) {
       }
       break;
     default:
-      return JNI_EVERSION;  // unsupported major version number
+      // Starting from 13 we do not care about minor version anymore
+      if (major < 13 || major > Abstract_VM_Version::vm_major_version()) {
+        return JNI_EVERSION;  // unsupported major version number
+      }
   }
 
   if (JvmtiEnv::get_phase() == JVMTI_PHASE_LIVE) {
@@ -1197,6 +1203,7 @@ bool              JvmtiExport::_can_post_method_entry                     = fals
 bool              JvmtiExport::_can_post_method_exit                      = false;
 bool              JvmtiExport::_can_pop_frame                             = false;
 bool              JvmtiExport::_can_force_early_return                    = false;
+bool              JvmtiExport::_can_get_owned_monitor_info                = false;
 
 bool              JvmtiExport::_early_vmstart_recorded                    = false;
 
@@ -1343,20 +1350,26 @@ void JvmtiExport::post_class_unload(Klass* klass) {
   if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
     return;
   }
-  Thread *thread = Thread::current();
+
+  // postings to the service thread so that it can perform them in a safe
+  // context and in-order.
+  ResourceMark rm;
+  // JvmtiDeferredEvent copies the string.
+  JvmtiDeferredEvent event = JvmtiDeferredEvent::class_unload_event(klass->name()->as_C_string());
+  ServiceThread::enqueue_deferred_event(&event);
+}
+
+
+void JvmtiExport::post_class_unload_internal(const char* name) {
+  if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
+  assert(Thread::current()->is_service_thread(), "must be called from ServiceThread");
+  JavaThread *thread = JavaThread::current();
   HandleMark hm(thread);
 
   EVT_TRIG_TRACE(EXT_EVENT_CLASS_UNLOAD, ("[?] Trg Class Unload triggered" ));
   if (JvmtiEventController::is_enabled((jvmtiEvent)EXT_EVENT_CLASS_UNLOAD)) {
-    assert(thread->is_VM_thread(), "wrong thread");
-
-    // get JavaThread for whom we are proxy
-    Thread *calling_thread = ((VMThread *)thread)->vm_operation()->calling_thread();
-    if (!calling_thread->is_Java_thread()) {
-      // cannot post an event to a non-JavaThread
-      return;
-    }
-    JavaThread *real_thread = (JavaThread *)calling_thread;
 
     JvmtiEnvIterator it;
     for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
@@ -1364,33 +1377,14 @@ void JvmtiExport::post_class_unload(Klass* klass) {
         continue;
       }
       if (env->is_enabled((jvmtiEvent)EXT_EVENT_CLASS_UNLOAD)) {
-        EVT_TRACE(EXT_EVENT_CLASS_UNLOAD, ("[?] Evt Class Unload sent %s",
-                  klass==NULL? "NULL" : klass->external_name() ));
+        EVT_TRACE(EXT_EVENT_CLASS_UNLOAD, ("[?] Evt Class Unload sent %s", name));
 
-        // do everything manually, since this is a proxy - needs special care
-        JNIEnv* jni_env = real_thread->jni_environment();
-        jthread jt = (jthread)JNIHandles::make_local(real_thread, real_thread->threadObj());
-        jclass jk = (jclass)JNIHandles::make_local(real_thread, klass->java_mirror());
-
-        // Before we call the JVMTI agent, we have to set the state in the
-        // thread for which we are proxying.
-        JavaThreadState prev_state = real_thread->thread_state();
-        assert(((Thread *)real_thread)->is_ConcurrentGC_thread() ||
-               (real_thread->is_Java_thread() && prev_state == _thread_blocked),
-               "should be ConcurrentGCThread or JavaThread at safepoint");
-        real_thread->set_thread_state(_thread_in_native);
-
+        JvmtiEventMark jem(thread);
+        JvmtiJavaThreadEventTransition jet(thread);
         jvmtiExtensionEvent callback = env->ext_callbacks()->ClassUnload;
         if (callback != NULL) {
-          (*callback)(env->jvmti_external(), jni_env, jt, jk);
+          (*callback)(env->jvmti_external(), jem.jni_env(), name);
         }
-
-        assert(real_thread->thread_state() == _thread_in_native,
-               "JavaThread should be in native");
-        real_thread->set_thread_state(prev_state);
-
-        JNIHandles::destroy_local(jk);
-        JNIHandles::destroy_local(jt);
       }
     }
   }
@@ -1584,7 +1578,7 @@ void JvmtiExport::post_method_exit(JavaThread *thread, Method* method, frame cur
     if (!exception_exit) {
       oop oop_result;
       BasicType type = current_frame.interpreter_frame_result(&oop_result, &value);
-      if (type == T_OBJECT || type == T_ARRAY) {
+      if (is_reference_type(type)) {
         result = Handle(thread, oop_result);
       }
     }
@@ -1988,7 +1982,9 @@ void JvmtiExport::post_raw_field_modification(JavaThread *thread, Method* method
   address location, Klass* field_klass, Handle object, jfieldID field,
   char sig_type, jvalue *value) {
 
-  if (sig_type == 'I' || sig_type == 'Z' || sig_type == 'B' || sig_type == 'C' || sig_type == 'S') {
+  if (sig_type == JVM_SIGNATURE_INT || sig_type == JVM_SIGNATURE_BOOLEAN ||
+      sig_type == JVM_SIGNATURE_BYTE || sig_type == JVM_SIGNATURE_CHAR ||
+      sig_type == JVM_SIGNATURE_SHORT) {
     // 'I' instructions are used for byte, char, short and int.
     // determine which it really is, and convert
     fieldDescriptor fd;
@@ -1999,22 +1995,22 @@ void JvmtiExport::post_raw_field_modification(JavaThread *thread, Method* method
       // convert value from int to appropriate type
       switch (fd.field_type()) {
       case T_BOOLEAN:
-        sig_type = 'Z';
+        sig_type = JVM_SIGNATURE_BOOLEAN;
         value->i = 0; // clear it
         value->z = (jboolean)ival;
         break;
       case T_BYTE:
-        sig_type = 'B';
+        sig_type = JVM_SIGNATURE_BYTE;
         value->i = 0; // clear it
         value->b = (jbyte)ival;
         break;
       case T_CHAR:
-        sig_type = 'C';
+        sig_type = JVM_SIGNATURE_CHAR;
         value->i = 0; // clear it
         value->c = (jchar)ival;
         break;
       case T_SHORT:
-        sig_type = 'S';
+        sig_type = JVM_SIGNATURE_SHORT;
         value->i = 0; // clear it
         value->s = (jshort)ival;
         break;
@@ -2029,11 +2025,11 @@ void JvmtiExport::post_raw_field_modification(JavaThread *thread, Method* method
     }
   }
 
-  assert(sig_type != '[', "array should have sig_type == 'L'");
+  assert(sig_type != JVM_SIGNATURE_ARRAY, "array should have sig_type == 'L'");
   bool handle_created = false;
 
   // convert oop to JNI handle.
-  if (sig_type == 'L') {
+  if (sig_type == JVM_SIGNATURE_CLASS) {
     handle_created = true;
     value->l = (jobject)JNIHandles::make_local(thread, (oop)value->l);
   }
@@ -2147,7 +2143,7 @@ jvmtiCompiledMethodLoadInlineRecord* create_inline_record(nmethod* nm) {
     int stackframe = 0;
     for(ScopeDesc* sd = nm->scope_desc_at(p->real_pc(nm));sd != NULL;sd = sd->sender()) {
       // sd->method() can be NULL for stubs but not for nmethods. To be completely robust, include an assert that we should never see a null sd->method()
-      assert(sd->method() != NULL, "sd->method() cannot be null.");
+      guarantee(sd->method() != NULL, "sd->method() cannot be null.");
       record->pcinfo[scope].methods[stackframe] = sd->method()->jmethod_id();
       record->pcinfo[scope].bcis[stackframe] = sd->bci();
       stackframe++;
@@ -2158,6 +2154,7 @@ jvmtiCompiledMethodLoadInlineRecord* create_inline_record(nmethod* nm) {
 }
 
 void JvmtiExport::post_compiled_method_load(nmethod *nm) {
+  guarantee(!nm->is_unloading(), "nmethod isn't unloaded or unloading");
   if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
     return;
   }
@@ -2169,61 +2166,37 @@ void JvmtiExport::post_compiled_method_load(nmethod *nm) {
 
   JvmtiEnvIterator it;
   for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
-    if (env->is_enabled(JVMTI_EVENT_COMPILED_METHOD_LOAD)) {
-      if (env->phase() == JVMTI_PHASE_PRIMORDIAL) {
-        continue;
-      }
-      EVT_TRACE(JVMTI_EVENT_COMPILED_METHOD_LOAD,
-                ("[%s] class compile method load event sent %s.%s  ",
-                JvmtiTrace::safe_get_thread_name(thread),
-                (nm->method() == NULL) ? "NULL" : nm->method()->klass_name()->as_C_string(),
-                (nm->method() == NULL) ? "NULL" : nm->method()->name()->as_C_string()));
-      ResourceMark rm(thread);
-      HandleMark hm(thread);
-
-      // Add inlining information
-      jvmtiCompiledMethodLoadInlineRecord* inlinerecord = create_inline_record(nm);
-      // Pass inlining information through the void pointer
-      JvmtiCompiledMethodLoadEventMark jem(thread, nm, inlinerecord);
-      JvmtiJavaThreadEventTransition jet(thread);
-      jvmtiEventCompiledMethodLoad callback = env->callbacks()->CompiledMethodLoad;
-      if (callback != NULL) {
-        (*callback)(env->jvmti_external(), jem.jni_methodID(),
-                    jem.code_size(), jem.code_data(), jem.map_length(),
-                    jem.map(), jem.compile_info());
-      }
-    }
+    post_compiled_method_load(env, nm);
   }
 }
 
-
 // post a COMPILED_METHOD_LOAD event for a given environment
-void JvmtiExport::post_compiled_method_load(JvmtiEnv* env, const jmethodID method, const jint length,
-                                            const void *code_begin, const jint map_length,
-                                            const jvmtiAddrLocationMap* map)
-{
-  if (env->phase() <= JVMTI_PHASE_PRIMORDIAL) {
+void JvmtiExport::post_compiled_method_load(JvmtiEnv* env, nmethod *nm) {
+  if (env->phase() == JVMTI_PHASE_PRIMORDIAL || !env->is_enabled(JVMTI_EVENT_COMPILED_METHOD_LOAD)) {
+    return;
+  }
+  jvmtiEventCompiledMethodLoad callback = env->callbacks()->CompiledMethodLoad;
+  if (callback == NULL) {
     return;
   }
   JavaThread* thread = JavaThread::current();
-  EVT_TRIG_TRACE(JVMTI_EVENT_COMPILED_METHOD_LOAD,
-                 ("[%s] method compile load event triggered (by GenerateEvents)",
-                 JvmtiTrace::safe_get_thread_name(thread)));
-  if (env->is_enabled(JVMTI_EVENT_COMPILED_METHOD_LOAD)) {
 
-    EVT_TRACE(JVMTI_EVENT_COMPILED_METHOD_LOAD,
-              ("[%s] class compile method load event sent (by GenerateEvents), jmethodID=" PTR_FORMAT,
-               JvmtiTrace::safe_get_thread_name(thread), p2i(method)));
+  EVT_TRACE(JVMTI_EVENT_COMPILED_METHOD_LOAD,
+           ("[%s] method compile load event sent %s.%s  ",
+            JvmtiTrace::safe_get_thread_name(thread),
+            (nm->method() == NULL) ? "NULL" : nm->method()->klass_name()->as_C_string(),
+            (nm->method() == NULL) ? "NULL" : nm->method()->name()->as_C_string()));
+  ResourceMark rm(thread);
+  HandleMark hm(thread);
 
-    JvmtiEventMark jem(thread);
-    JvmtiJavaThreadEventTransition jet(thread);
-    jvmtiEventCompiledMethodLoad callback = env->callbacks()->CompiledMethodLoad;
-    if (callback != NULL) {
-      (*callback)(env->jvmti_external(), method,
-                  length, code_begin, map_length,
-                  map, NULL);
-    }
-  }
+  // Add inlining information
+  jvmtiCompiledMethodLoadInlineRecord* inlinerecord = create_inline_record(nm);
+  // Pass inlining information through the void pointer
+  JvmtiCompiledMethodLoadEventMark jem(thread, nm, inlinerecord);
+  JvmtiJavaThreadEventTransition jet(thread);
+  (*callback)(env->jvmti_external(), jem.jni_methodID(),
+              jem.code_size(), jem.code_data(), jem.map_length(),
+              jem.map(), jem.compile_info());
 }
 
 void JvmtiExport::post_dynamic_code_generated_internal(const char *name, const void *code_begin, const void *code_end) {
@@ -2262,10 +2235,9 @@ void JvmtiExport::post_dynamic_code_generated(const char *name, const void *code
     // It may not be safe to post the event from this thread.  Defer all
     // postings to the service thread so that it can perform them in a safe
     // context and in-order.
-    MutexLockerEx ml(Service_lock, Mutex::_no_safepoint_check_flag);
     JvmtiDeferredEvent event = JvmtiDeferredEvent::dynamic_code_generated_event(
         name, code_begin, code_end);
-    JvmtiDeferredEventQueue::enqueue(event);
+    ServiceThread::enqueue_deferred_event(&event);
   }
 }
 
@@ -2298,7 +2270,9 @@ void JvmtiExport::post_dynamic_code_generated_while_holding_locks(const char* na
                                                                   address code_begin, address code_end)
 {
   // register the stub with the current dynamic code event collector
-  JvmtiThreadState* state = JvmtiThreadState::state_for(JavaThread::current());
+  // Cannot take safepoint here so do not use state_for to get
+  // jvmti thread state.
+  JvmtiThreadState* state = JavaThread::current()->jvmti_thread_state();
   // state can only be NULL if the current thread is exiting which
   // should not happen since we're trying to post an event
   guarantee(state != NULL, "attempt to register stub via an exiting thread");
@@ -2313,7 +2287,7 @@ void JvmtiExport::record_vm_internal_object_allocation(oop obj) {
   if (thread != NULL && thread->is_Java_thread())  {
     // Can not take safepoint here.
     NoSafepointVerifier no_sfpt;
-    // Can not take safepoint here so can not use state_for to get
+    // Cannot take safepoint here so do not use state_for to get
     // jvmti thread state.
     JvmtiThreadState *state = ((JavaThread*)thread)->jvmti_thread_state();
     if (state != NULL) {
@@ -2337,7 +2311,7 @@ void JvmtiExport::record_sampled_internal_object_allocation(oop obj) {
   if (thread != NULL && thread->is_Java_thread())  {
     // Can not take safepoint here.
     NoSafepointVerifier no_sfpt;
-    // Can not take safepoint here so can not use state_for to get
+    // Cannot take safepoint here so do not use state_for to get
     // jvmti thread state.
     JvmtiThreadState *state = ((JavaThread*)thread)->jvmti_thread_state();
     if (state != NULL) {
@@ -2606,7 +2580,7 @@ void JvmtiExport::post_sampled_object_alloc(JavaThread *thread, oop object) {
 
 void JvmtiExport::cleanup_thread(JavaThread* thread) {
   assert(JavaThread::current() == thread, "thread is not current");
-  MutexLocker mu(JvmtiThreadState_lock);
+  MutexLocker mu(thread, JvmtiThreadState_lock);
 
   if (thread->jvmti_thread_state() != NULL) {
     // This has to happen after the thread state is removed, which is
@@ -2626,16 +2600,11 @@ void JvmtiExport::clear_detected_exception(JavaThread* thread) {
 }
 
 void JvmtiExport::oops_do(OopClosure* f) {
-  JvmtiCurrentBreakpoints::oops_do(f);
   JvmtiObjectAllocEventCollector::oops_do_for_all_threads(f);
 }
 
 void JvmtiExport::weak_oops_do(BoolObjectClosure* is_alive, OopClosure* f) {
   JvmtiTagMap::weak_oops_do(is_alive, f);
-}
-
-void JvmtiExport::gc_epilogue() {
-  JvmtiCurrentBreakpoints::gc_epilogue();
 }
 
 // Onload raw monitor transition.

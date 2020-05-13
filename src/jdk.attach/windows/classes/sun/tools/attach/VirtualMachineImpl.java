@@ -77,7 +77,7 @@ public class VirtualMachineImpl extends HotSpotVirtualMachine {
     InputStream execute(String cmd, Object ... args)
         throws AgentLoadException, IOException
     {
-        assert args.length <= 4;        // includes null
+        assert args.length <= 3;        // includes null
 
         // create a pipe using a random name
         Random rnd = new Random();
@@ -169,10 +169,11 @@ public class VirtualMachineImpl extends HotSpotVirtualMachine {
             return VirtualMachineImpl.readPipe(hPipe, bs, off, len);
         }
 
-        public void close() throws IOException {
+        public synchronized void close() throws IOException {
             if (hPipe != -1) {
-                VirtualMachineImpl.closePipe(hPipe);
+                long toClose = hPipe;
                 hPipe = -1;
+                VirtualMachineImpl.closePipe(toClose);
            }
         }
     }

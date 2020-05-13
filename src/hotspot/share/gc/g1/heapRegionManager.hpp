@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,10 +26,9 @@
 #define SHARE_GC_G1_HEAPREGIONMANAGER_HPP
 
 #include "gc/g1/g1BiasedArray.hpp"
-#include "gc/g1/g1CollectorPolicy.hpp"
 #include "gc/g1/g1RegionToSpaceMapper.hpp"
 #include "gc/g1/heapRegionSet.hpp"
-#include "gc/shared/collectorPolicy.hpp"
+#include "memory/allocation.hpp"
 #include "services/memoryUsage.hpp"
 
 class HeapRegion;
@@ -41,6 +40,20 @@ class WorkGang;
 class G1HeapRegionTable : public G1BiasedMappedArray<HeapRegion*> {
  protected:
   virtual HeapRegion* default_value() const { return NULL; }
+};
+
+// Helper class to define a range [start, end) of regions.
+class HeapRegionRange : public StackObj {
+  // Inclusive start of the range.
+  uint _start;
+  // Exclusive end of the range.
+  uint _end;
+ public:
+  HeapRegionRange(uint start, uint end);
+
+  uint start() const { return _start; }
+  uint end() const { return _end; }
+  uint length() const { return _end - _start; }
 };
 
 // This class keeps track of the actual heap memory, auxiliary data
@@ -96,19 +109,30 @@ class HeapRegionManager: public CHeapObj<mtGC> {
   // Notify other data structures about change in the heap layout.
   void update_committed_space(HeapWord* old_end, HeapWord* new_end);
 
-  // Find a contiguous set of empty or uncommitted regions of length num and return
+  // Find a contiguous set of empty or uncommitted regions of length num_regions and return
   // the index of the first region or G1_NO_HRM_INDEX if the search was unsuccessful.
-  // If only_empty is true, only empty regions are considered.
-  // Searches from bottom to top of the heap, doing a first-fit.
-  uint find_contiguous(size_t num, bool only_empty);
-  // Finds the next sequence of unavailable regions starting from start_idx. Returns the
-  // length of the sequence found. If this result is zero, no such sequence could be found,
-  // otherwise res_idx indicates the start index of these regions.
-  uint find_unavailable_from_idx(uint start_idx, uint* res_idx) const;
+  // Start and end defines the range to seek in, policy is first-fit.
+  uint find_contiguous_in_range(uint start, uint end, uint num_regions);
+  // Find a contiguous set of empty regions of length num_regions. Returns the start index
+  // of that set, or G1_NO_HRM_INDEX.
+  uint find_contiguous_in_free_list(uint num_regions);
+  // Find a contiguous set of empty or unavailable regions of length num_regions. Returns the
+  // start index of that set, or G1_NO_HRM_INDEX.
+  uint find_contiguous_allow_expand(uint num_regions);
+
+  void assert_contiguous_range(uint start, uint num_regions) NOT_DEBUG_RETURN;
+
+  // Finds the next sequence of unavailable regions starting at the given index. Returns the
+  // sequence found as a HeapRegionRange. If no regions can be found, both start and end of
+  // the returned range is equal to max_regions().
+  HeapRegionRange find_unavailable_from_idx(uint index) const;
   // Finds the next sequence of empty regions starting from start_idx, going backwards in
   // the heap. Returns the length of the sequence found. If this value is zero, no
   // sequence could be found, otherwise res_idx contains the start index of this range.
   uint find_empty_from_idx_reverse(uint start_idx, uint* res_idx) const;
+
+  // Checks the G1MemoryNodeManager to see if this region is on the preferred node.
+  bool is_on_preferred_index(uint region_index, uint preferred_node_index);
 
 protected:
   G1HeapRegionTable _regions;
@@ -121,6 +145,14 @@ protected:
   void uncommit_regions(uint index, size_t num_regions = 1);
   // Allocate a new HeapRegion for the given index.
   HeapRegion* new_heap_region(uint hrm_index);
+
+  // Humongous allocation helpers
+  virtual HeapRegion* allocate_humongous_from_free_list(uint num_regions);
+  virtual HeapRegion* allocate_humongous_allow_expand(uint num_regions);
+
+  // Expand helper for cases when the regions to expand are well defined.
+  void expand_exact(uint start, uint num_regions, WorkGang* pretouch_workers);
+
 #ifdef ASSERT
 public:
   bool is_free(HeapRegion* hr) const;
@@ -129,7 +161,7 @@ public:
   // Empty constructor, we'll initialize it with the initialize() method.
   HeapRegionManager();
 
-  static HeapRegionManager* create_manager(G1CollectedHeap* heap, G1CollectorPolicy* policy);
+  static HeapRegionManager* create_manager(G1CollectedHeap* heap);
 
   virtual void initialize(G1RegionToSpaceMapper* heap_storage,
                           G1RegionToSpaceMapper* prev_bitmap,
@@ -171,22 +203,24 @@ public:
   // Insert the given region into the free region list.
   inline void insert_into_free_list(HeapRegion* hr);
 
+  // Rebuild the free region list from scratch.
+  void rebuild_free_list(WorkGang* workers);
+
   // Insert the given region list into the global free region list.
   void insert_list_into_free_list(FreeRegionList* list) {
     _free_list.add_ordered(list);
   }
 
-  virtual HeapRegion* allocate_free_region(HeapRegionType type) {
-    HeapRegion* hr = _free_list.remove_region(!type.is_young());
+  // Allocate a free region with specific node index. If fails allocate with next node index.
+  virtual HeapRegion* allocate_free_region(HeapRegionType type, uint requested_node_index);
 
-    if (hr != NULL) {
-      assert(hr->next() == NULL, "Single region should not have next");
-      assert(is_available(hr->hrm_index()), "Must be committed");
-    }
-    return hr;
-  }
+  // Allocate a humongous object from the free list
+  HeapRegion* allocate_humongous(uint num_regions);
 
-  inline void allocate_free_regions_starting_at(uint first, uint num_regions);
+  // Allocate a humongous object by expanding the heap
+  HeapRegion* expand_and_allocate_humongous(uint num_regions);
+
+  inline HeapRegion* allocate_free_regions_starting_at(uint first, uint num_regions);
 
   // Remove all regions from the free list.
   void remove_all_free_regions() {
@@ -196,6 +230,10 @@ public:
   // Return the number of committed free regions in the heap.
   uint num_free_regions() const {
     return _free_list.length();
+  }
+
+  uint num_free_regions(uint node_index) const {
+    return _free_list.length(node_index);
   }
 
   size_t total_free_bytes() const {
@@ -229,12 +267,8 @@ public:
   // this.
   virtual uint expand_at(uint start, uint num_regions, WorkGang* pretouch_workers);
 
-  // Find a contiguous set of empty regions of length num. Returns the start index of
-  // that set, or G1_NO_HRM_INDEX.
-  virtual uint find_contiguous_only_empty(size_t num) { return find_contiguous(num, true); }
-  // Find a contiguous set of empty or unavailable regions of length num. Returns the
-  // start index of that set, or G1_NO_HRM_INDEX.
-  virtual uint find_contiguous_empty_or_unavailable(size_t num) { return find_contiguous(num, false); }
+  // Try to expand on the given node index.
+  virtual uint expand_on_preferred_node(uint node_index);
 
   HeapRegion* next_region_in_heap(const HeapRegion* r) const;
 

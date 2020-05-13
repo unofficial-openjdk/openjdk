@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,13 @@
 package java.net;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.JavaIOFileDescriptorAccess;
+
+import sun.net.ext.ExtendedSocketOptions;
 
 /**
  * This class defines the plain DatagramSocketImpl that is used on
@@ -62,6 +67,7 @@ class DualStackPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
     private boolean isReuseAddress;
 
     DualStackPlainDatagramSocketImpl(boolean exclBind) {
+        super(false);
         exclusiveBind = exclBind;
     }
 
@@ -124,7 +130,7 @@ class DualStackPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
         socketReceiveOrPeekData(nativefd, p, timeout, connected, false /*receive*/);
     }
 
-    protected void send(DatagramPacket p) throws IOException {
+    protected void send0(DatagramPacket p) throws IOException {
         int nativefd = checkAndReturnNativeFD();
 
         if (p == null)
@@ -227,6 +233,19 @@ class DualStackPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
         }
 
         return returnValue;
+    }
+
+    @Override
+    protected Set<SocketOption<?>> supportedOptions() {
+        HashSet<SocketOption<?>> options = new HashSet<>();
+        options.add(StandardSocketOptions.SO_SNDBUF);
+        options.add(StandardSocketOptions.SO_RCVBUF);
+        options.add(StandardSocketOptions.SO_REUSEADDR);
+        options.add(StandardSocketOptions.SO_BROADCAST);
+        options.add(StandardSocketOptions.IP_TOS);
+
+        options.addAll(ExtendedSocketOptions.datagramSocketOptions());
+        return Collections.unmodifiableSet(options);
     }
 
     /* Multicast specific methods.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,10 +33,12 @@ import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * This tool reads the IANA Language Subtag Registry data file downloaded from
@@ -75,32 +77,49 @@ public class EquivMapsGenerator {
         String type = null;
         String tag = null;
         String preferred = null;
+        String prefix = null;
 
         for (String line : Files.readAllLines(Paths.get(filename),
                                               Charset.forName("UTF-8"))) {
             line = line.toLowerCase(Locale.ROOT);
-            int index = line.indexOf(' ')+1;
+            int index = line.indexOf(' ') + 1;
             if (line.startsWith("file-date:")) {
                 LSRrevisionDate = line.substring(index);
             } else if (line.startsWith("type:")) {
                 type = line.substring(index);
             } else if (line.startsWith("tag:") || line.startsWith("subtag:")) {
                 tag = line.substring(index);
-            } else if (line.startsWith("preferred-value:")
-                       && !type.equals("extlang")) {
+            } else if (line.startsWith("preferred-value:")) {
                 preferred = line.substring(index);
-                processDeprecatedData(type, tag, preferred);
+            } else if (line.startsWith("prefix:")) {
+                prefix = line.substring(index);
             } else if (line.equals("%%")) {
+                processDeprecatedData(type, tag, preferred, prefix);
                 type = null;
                 tag = null;
+                preferred = null;
+                prefix = null;
             }
         }
+
+        // Last entry
+        processDeprecatedData(type, tag, preferred, prefix);
     }
 
     private static void processDeprecatedData(String type,
                                               String tag,
-                                              String preferred) {
+                                              String preferred,
+                                              String prefix) {
         StringBuilder sb;
+
+        if (type == null || tag == null || preferred == null) {
+            return;
+        }
+
+        if (type.equals("extlang") && prefix != null) {
+            tag = prefix + "-" + tag;
+        }
+
         if (type.equals("region") || type.equals("variant")) {
             if (!initialRegionVariantMap.containsKey(preferred)) {
                 sb = new StringBuilder("-");
@@ -113,7 +132,7 @@ public class EquivMapsGenerator {
                     + " A region/variant subtag \"" + preferred
                     + "\" is registered for more than one subtags.");
             }
-        } else { // language, grandfahered, and redundant
+        } else { // language, extlang, grandfathered, and redundant
             if (!initialLanguageMap.containsKey(preferred)) {
                 sb = new StringBuilder(preferred);
                 sb.append(',');
@@ -131,7 +150,12 @@ public class EquivMapsGenerator {
     private static void generateEquivalentMap() {
         String[] subtags;
         for (String preferred : initialLanguageMap.keySet()) {
-            subtags = initialLanguageMap.get(preferred).toString().split(",");
+            // There are cases where the same tag may appear in two entries, e.g.,
+            // "yue" is defined both as extlang and redundant. Remove the dup.
+            subtags = Arrays.stream(initialLanguageMap.get(preferred).toString().split(","))
+                    .distinct()
+                    .collect(Collectors.toList())
+                    .toArray(new String[0]);
 
             if (subtags.length == 2) {
                 sortedLanguageMap1.put(subtags[0], subtags[1]);
@@ -215,10 +239,7 @@ public class EquivMapsGenerator {
         + "    static final Map<String, String[]> multiEquivsMap;\n"
         + "    static final Map<String, String> regionVariantEquivMap;\n\n"
         + "    static {\n"
-        + "        singleEquivMap = new HashMap<>();\n"
-        + "        multiEquivsMap = new HashMap<>();\n"
-        + "        regionVariantEquivMap = new HashMap<>();\n\n"
-        + "        // This is an auto-generated file and should not be manually edited.\n";
+        + "        singleEquivMap = new HashMap<>(";
 
     private static final String footerText =
         "    }\n\n"
@@ -242,6 +263,12 @@ public class EquivMapsGenerator {
                 Paths.get(fileName))) {
             writer.write(getOpenJDKCopyright());
             writer.write(headerText
+                + (int)(sortedLanguageMap1.size() / 0.75f + 1) + ");\n"
+                + "        multiEquivsMap = new HashMap<>("
+                + (int)(sortedLanguageMap2.size() / 0.75f + 1) + ");\n"
+                + "        regionVariantEquivMap = new HashMap<>("
+                + (int)(sortedRegionVariantMap.size() / 0.75f + 1) + ");\n\n"
+                + "        // This is an auto-generated file and should not be manually edited.\n"
                 + "        //   LSR Revision: " + LSRrevisionDate);
             writer.newLine();
 

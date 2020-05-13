@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@
  * This module includes a simple command-line debugger,
  * <em>{@index jdb jdb tool}</em>.
  *
- * <h3>Global Exceptions</h3>
+ * <h2>Global Exceptions</h2>
  * <p>
  * This section documents exceptions which apply to the entire API and are thus
  * not documented on individual methods.
@@ -104,10 +104,7 @@
  * </blockquote>
  *
  *
- * <dl style="font-family:'DejaVu Sans', Arial, Helvetica, sans serif">
- * <dt class="simpleTagLabel">Tool Guides:
- * <dd>{@extLink jdb_tool_reference jdb}
- * </dl>
+ * @toolGuide jdb
  *
  * @provides com.sun.jdi.connect.Connector
  *

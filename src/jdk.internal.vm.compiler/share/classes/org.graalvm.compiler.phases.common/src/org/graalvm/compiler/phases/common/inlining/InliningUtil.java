@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,6 +56,7 @@ import org.graalvm.compiler.graph.NodeInputList;
 import org.graalvm.compiler.graph.NodeMap;
 import org.graalvm.compiler.graph.NodeSourcePosition;
 import org.graalvm.compiler.graph.NodeWorkList;
+import org.graalvm.compiler.nodeinfo.InputType;
 import org.graalvm.compiler.nodeinfo.Verbosity;
 import org.graalvm.compiler.nodes.AbstractBeginNode;
 import org.graalvm.compiler.nodes.AbstractEndNode;
@@ -72,7 +73,6 @@ import org.graalvm.compiler.nodes.InliningLog;
 import org.graalvm.compiler.nodes.Invoke;
 import org.graalvm.compiler.nodes.InvokeNode;
 import org.graalvm.compiler.nodes.InvokeWithExceptionNode;
-import org.graalvm.compiler.nodes.KillingBeginNode;
 import org.graalvm.compiler.nodes.LogicNode;
 import org.graalvm.compiler.nodes.MergeNode;
 import org.graalvm.compiler.nodes.NodeView;
@@ -88,12 +88,12 @@ import org.graalvm.compiler.nodes.UnwindNode;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.calc.IsNullNode;
 import org.graalvm.compiler.nodes.extended.ForeignCallNode;
+import org.graalvm.compiler.nodes.extended.GuardedNode;
 import org.graalvm.compiler.nodes.extended.GuardingNode;
 import org.graalvm.compiler.nodes.java.ExceptionObjectNode;
 import org.graalvm.compiler.nodes.java.MethodCallTargetNode;
 import org.graalvm.compiler.nodes.java.MonitorExitNode;
 import org.graalvm.compiler.nodes.java.MonitorIdNode;
-import org.graalvm.compiler.nodes.spi.Replacements;
 import org.graalvm.compiler.nodes.type.StampTool;
 import org.graalvm.compiler.nodes.util.GraphUtil;
 import org.graalvm.compiler.phases.common.inlining.info.InlineInfo;
@@ -383,7 +383,7 @@ public class InliningUtil extends ValueMergeUtil {
             throw new IllegalStateException("Inlined graph is in invalid state: " + inlineGraph);
         }
         for (Node node : inlineGraph.getNodes()) {
-            if (node == entryPointNode || (node == entryPointNode.stateAfter() && node.usages().count() == 1) || node instanceof ParameterNode) {
+            if (node == entryPointNode || (node == entryPointNode.stateAfter() && node.hasExactlyOneUsage()) || node instanceof ParameterNode) {
                 // Do nothing.
             } else {
                 nodes.add(node);
@@ -466,11 +466,7 @@ public class InliningUtil extends ValueMergeUtil {
             // A partial intrinsic exit must be replaced with a call to
             // the intrinsified method.
             Invoke dup = (Invoke) duplicates.get(exit.asNode());
-            if (dup instanceof InvokeNode) {
-                ((InvokeNode) dup).replaceWithNewBci(invoke.bci());
-            } else {
-                ((InvokeWithExceptionNode) dup).replaceWithNewBci(invoke.bci());
-            }
+            dup.replaceBci(invoke.bci());
         }
         if (unwindNode != null) {
             unwindNode = (UnwindNode) duplicates.get(unwindNode);
@@ -532,7 +528,17 @@ public class InliningUtil extends ValueMergeUtil {
                 assert unwindNode.predecessor() != null;
                 assert invokeWithException.exceptionEdge().successors().count() == 1;
                 ExceptionObjectNode obj = (ExceptionObjectNode) invokeWithException.exceptionEdge();
-                obj.replaceAtUsages(unwindNode.exception());
+                /*
+                 * The exception object node is a begin node, i.e., it can be used as an anchor for
+                 * other nodes, thus we need to re-route them to a valid anchor, i.e. the begin node
+                 * of the unwind block.
+                 */
+                assert obj.usages().filter(x -> x instanceof GuardedNode && ((GuardedNode) x).getGuard() == obj).count() == 0 : "Must not have guards attached to an exception object node";
+                AbstractBeginNode replacementAnchor = AbstractBeginNode.prevBegin(unwindNode);
+                assert replacementAnchor != null;
+                obj.replaceAtUsages(InputType.Anchor, replacementAnchor);
+                obj.replaceAtUsages(InputType.Value, unwindNode.exception());
+
                 Node n = obj.next();
                 obj.setNext(null);
                 unwindNode.replaceAndDelete(n);
@@ -544,15 +550,7 @@ public class InliningUtil extends ValueMergeUtil {
             }
 
             // get rid of memory kill
-            AbstractBeginNode begin = invokeWithException.next();
-            if (begin instanceof KillingBeginNode) {
-                try (DebugCloseable position = begin.withNodeSourcePosition()) {
-                    AbstractBeginNode newBegin = new BeginNode();
-                    graph.addAfterFixed(begin, graph.add(newBegin));
-                    begin.replaceAtUsages(newBegin);
-                    graph.removeFixed(begin);
-                }
-            }
+            invokeWithException.killKillingBegin();
         } else {
             if (unwindNode != null && unwindNode.isAlive()) {
                 try (DebugCloseable position = unwindNode.withNodeSourcePosition()) {
@@ -742,7 +740,7 @@ public class InliningUtil extends ValueMergeUtil {
         FrameState stateAtReturn = invoke.stateAfter();
         FrameState outerFrameState = null;
         JavaKind invokeReturnKind = invoke.asNode().getStackKind();
-        EconomicMap<Node, Node> replacements = EconomicMap.create();
+        EconomicMap<Node, Node> replacements = EconomicMap.create(Equivalence.IDENTITY);
         for (FrameState original : inlineGraph.getNodes(FrameState.TYPE)) {
             FrameState frameState = (FrameState) duplicates.get(original);
             if (frameState != null && frameState.isAlive()) {
@@ -836,7 +834,7 @@ public class InliningUtil extends ValueMergeUtil {
 
         // Return value does no longer need to be limited by the monitor exit.
         for (MonitorExitNode n : frameState.usages().filter(MonitorExitNode.class)) {
-            n.clearEscapedReturnValue();
+            n.clearEscapedValue();
         }
 
         frameState.replaceAndDelete(stateAfterReturn);
@@ -1003,14 +1001,6 @@ public class InliningUtil extends ValueMergeUtil {
             }
             return newReceiver;
         }
-    }
-
-    public static boolean canIntrinsify(Replacements replacements, ResolvedJavaMethod target, int invokeBci) {
-        return replacements.hasSubstitution(target, invokeBci);
-    }
-
-    public static StructuredGraph getIntrinsicGraph(Replacements replacements, ResolvedJavaMethod target, int invokeBci, boolean trackNodeSourcePosition, NodeSourcePosition replaceePosition) {
-        return replacements.getSubstitution(target, invokeBci, trackNodeSourcePosition, replaceePosition);
     }
 
     /**

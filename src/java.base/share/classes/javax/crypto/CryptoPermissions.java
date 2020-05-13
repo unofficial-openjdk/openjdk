@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * This class contains CryptoPermission objects, organized into
  * PermissionCollections according to algorithm names.
@@ -63,11 +65,13 @@ import java.io.IOException;
 final class CryptoPermissions extends PermissionCollection
 implements Serializable {
 
+    @java.io.Serial
     private static final long serialVersionUID = 4946547168093391015L;
 
     /**
      * @serialField perms java.util.Hashtable
      */
+    @java.io.Serial
     private static final ObjectStreamField[] serialPersistentFields = {
         new ObjectStreamField("perms", Hashtable.class),
     };
@@ -97,7 +101,7 @@ implements Serializable {
     void load(InputStream in)
         throws IOException, CryptoPolicyParser.ParsingException {
         CryptoPolicyParser parser = new CryptoPolicyParser();
-        parser.read(new BufferedReader(new InputStreamReader(in, "UTF-8")));
+        parser.read(new BufferedReader(new InputStreamReader(in, UTF_8)));
 
         CryptoPermission[] parsingResult = parser.getPermissions();
         for (int i = 0; i < parsingResult.length; i++) {
@@ -436,6 +440,7 @@ implements Serializable {
         return pc;
     }
 
+    @java.io.Serial
     private void readObject(ObjectInputStream s)
         throws IOException, ClassNotFoundException {
         ObjectInputStream.GetField fields = s.readFields();
@@ -450,6 +455,7 @@ implements Serializable {
         }
     }
 
+    @java.io.Serial
     private void writeObject(ObjectOutputStream s) throws IOException {
         Hashtable<String,PermissionCollection> permTable =
                 new Hashtable<>(perms);

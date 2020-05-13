@@ -25,7 +25,6 @@ package com.sun.org.apache.bcel.internal.generic;
  * FCMPG - Compare floats: value1 &gt; value2
  * <PRE>Stack: ..., value1, value2 -&gt; ..., result</PRE>
  *
- * @version $Id: FCMPG.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public class FCMPG extends Instruction implements TypedInstruction, StackProducer, StackConsumer {
 

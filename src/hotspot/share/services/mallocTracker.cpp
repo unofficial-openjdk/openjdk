@@ -23,7 +23,6 @@
  */
 #include "precompiled.hpp"
 
-#include "runtime/atomic.hpp"
 #include "services/mallocSiteTable.hpp"
 #include "services/mallocTracker.hpp"
 #include "services/mallocTracker.inline.hpp"
@@ -119,6 +118,7 @@ bool MallocTracker::transition(NMT_TrackingLevel from, NMT_TrackingLevel to) {
 // Record a malloc memory allocation
 void* MallocTracker::record_malloc(void* malloc_base, size_t size, MEMFLAGS flags,
   const NativeCallStack& stack, NMT_TrackingLevel level) {
+  assert(level != NMT_off, "precondition");
   void*         memblock;      // the address for user data
   MallocHeader* header = NULL;
 
@@ -127,10 +127,6 @@ void* MallocTracker::record_malloc(void* malloc_base, size_t size, MEMFLAGS flag
   }
 
   // Uses placement global new operator to initialize malloc header
-
-  if (level == NMT_off) {
-    return malloc_base;
-  }
 
   header = ::new (malloc_base)MallocHeader(size, flags, stack, level);
   memblock = (void*)((char*)malloc_base + sizeof(MallocHeader));
@@ -151,15 +147,8 @@ void* MallocTracker::record_malloc(void* malloc_base, size_t size, MEMFLAGS flag
 }
 
 void* MallocTracker::record_free(void* memblock) {
-  // Never turned on
-  if (MemTracker::tracking_level() == NMT_off ||
-      memblock == NULL) {
-    return memblock;
-  }
+  assert(MemTracker::tracking_level() != NMT_off && memblock != NULL, "precondition");
   MallocHeader* header = malloc_header(memblock);
   header->release();
-
   return (void*)header;
 }
-
-

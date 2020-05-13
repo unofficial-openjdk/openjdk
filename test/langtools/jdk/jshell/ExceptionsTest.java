@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,13 @@
 /*
  * @test
  * @summary Tests for exceptions
- * @bug 8198801
- * @build KullaTesting TestingInputStream
+ * @bug 8198801 8212167 8210527
+ * @modules jdk.compiler/com.sun.tools.javac.api
+ *          jdk.compiler/com.sun.tools.javac.main
+ *          jdk.jdeps/com.sun.tools.javap
+ * @library /tools/lib
+ * @build toolbox.ToolBox toolbox.JarTask toolbox.JavacTask
+ * @build KullaTesting TestingInputStream Compiler
  * @run testng ExceptionsTest
  */
 
@@ -38,12 +43,18 @@ import jdk.jshell.Snippet;
 import jdk.jshell.SnippetEvent;
 import jdk.jshell.UnresolvedReferenceException;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
 @Test
 public class ExceptionsTest extends KullaTesting {
+
+    private final Compiler compiler = new Compiler();
+    private final Path outDir = Paths.get("test_class_path");
 
     public void throwUncheckedException() {
         String message = "error_message";
@@ -207,6 +218,79 @@ public class ExceptionsTest extends KullaTesting {
                         newStackTraceElement("", "", cr2.snippet(), 1)));
     }
 
+    // test 8210527
+    public void throwFromWithoutSource() {
+        String message = "show this";
+        SnippetEvent se = assertEvalException("java.lang.reflect.Proxy.newProxyInstance(" +
+                "Thread.currentThread().getContextClassLoader(), new Class[] {}," +
+                "(p, m, a) -> { throw new IllegalStateException(\"" + message + "\"); }).hashCode()");
+        assertExceptionMatch(se,
+                new ExceptionInfo(IllegalStateException.class, message,
+                        newStackTraceElement("", "lambda$do_it$$0", se.snippet(), 1),
+                        new StackTraceElement("com.sun.proxy.$Proxy0", "hashCode", null, -1),
+                        newStackTraceElement("", "", se.snippet(), 1)));
+    }
+
+    // test 8210527
+    public void throwFromNoSource() {
+        Path path = outDir.resolve("fail");
+        compiler.compile(path,
+                "package fail;\n" +
+                        "public class Fail {\n" +
+                        "  static { int x = 1 / 0; }\n" +
+                        "}\n");
+        addToClasspath(compiler.getPath(path));
+        SnippetEvent se = assertEvalException("Class.forName(\"fail.Fail\")");
+        assertExceptionMatch(se,
+                new ExceptionInfo(ExceptionInInitializerError.class, null,
+                        new StackTraceElement("java.lang.Class", "forName0",  "Class.java", -2),
+                        new StackTraceElement("java.lang.Class", "forName", "Class.java", -2),
+                        newStackTraceElement("", "", se.snippet(), 1)));
+    }
+
+    // test 8212167
+    public void throwLineFormat1() {
+        SnippetEvent se = assertEvalException(
+                "if (true) { \n" +
+                        "   int x = 10; \n" +
+                        "   int y = 10 / 0;}"
+        );
+        assertExceptionMatch(se,
+                new ExceptionInfo(ArithmeticException.class, "/ by zero",
+                        newStackTraceElement("", "", se.snippet(), 3)));
+    }
+
+    public void throwLineFormat3() {
+        Snippet sp = methodKey(assertEval(
+                "int p() \n" +
+                        "  { return 4/0; }"));
+        Snippet sm = methodKey(assertEval(
+                "int m(int x)\n" +
+                        "       \n" +
+                        "       {\n" +
+                        "          return p() + x; \n" +
+                        "       }"));
+        Snippet sn = methodKey(assertEval(
+                "int n(int x) {\n" +
+                        "         try {\n" +
+                        "           return m(x);\n" +
+                        "         }\n" +
+                        "         catch (Throwable ex) {\n" +
+                        "           throw new IllegalArgumentException( \"GOT:\", ex);\n" +
+                        "         }\n" +
+                        "       }"));
+        SnippetEvent se = assertEvalException("n(33);");
+        assertExceptionMatch(se,
+                new ExceptionInfo(IllegalArgumentException.class, null,
+                        new ExceptionInfo(ArithmeticException.class, "/ by zero",
+                                newStackTraceElement("", "p", sp, 2),
+                                newStackTraceElement("", "m", sm, 4),
+                                newStackTraceElement("", "n", sn, 3),
+                                newStackTraceElement("", "", se.snippet(), 1)),
+                        newStackTraceElement("", "n", sn, 6),
+                        newStackTraceElement("", "", se.snippet(), 1)));
+    }
+
     @Test(enabled = false) // TODO 8129427
     public void outOfMemory() {
         assertEval("import java.util.*;");
@@ -324,15 +408,19 @@ public class ExceptionsTest extends KullaTesting {
                 for (int i = 0; i < actual.length; ++i) {
                     StackTraceElement actualElement = actual[i];
                     StackTraceElement expectedElement = expected[i];
-                    assertEquals(actualElement.getClassName(), expectedElement.getClassName(), message + " : class names");
+                    assertEquals(actualElement.getClassName(), expectedElement.getClassName(), message + " : class names [" + i + "]");
                     String expectedMethodName = expectedElement.getMethodName();
                     if (expectedMethodName.startsWith("lambda$")) {
                         assertTrue(actualElement.getMethodName().startsWith("lambda$"), message + " : method names");
                     } else {
-                        assertEquals(actualElement.getMethodName(), expectedElement.getMethodName(), message + " : method names");
+                        assertEquals(actualElement.getMethodName(), expectedElement.getMethodName(), message + " : method names [" + i + "]");
                     }
-                    assertEquals(actualElement.getFileName(), expectedElement.getFileName(), message + " : file names");
-                    assertEquals(actualElement.getLineNumber(), expectedElement.getLineNumber(), message + " : line numbers");
+                    assertEquals(actualElement.getFileName(), expectedElement.getFileName(), message + " : file names [" + i + "]");
+                    if (expectedElement.getLineNumber() >= 0) {
+                        assertEquals(actualElement.getLineNumber(), expectedElement.getLineNumber(), message + " : line numbers [" + i + "]"
+                                + " -- actual: " + actualElement.getLineNumber() + ", expected: " + expectedElement.getLineNumber() +
+                                " -- in: " + actualElement.getClassName());
+                    }
                 }
             }
         }

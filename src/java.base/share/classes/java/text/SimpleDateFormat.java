@@ -58,40 +58,40 @@ import sun.util.locale.provider.LocaleProviderAdapter;
 import sun.util.locale.provider.TimeZoneNameUtility;
 
 /**
- * <code>SimpleDateFormat</code> is a concrete class for formatting and
+ * {@code SimpleDateFormat} is a concrete class for formatting and
  * parsing dates in a locale-sensitive manner. It allows for formatting
  * (date &rarr; text), parsing (text &rarr; date), and normalization.
  *
  * <p>
- * <code>SimpleDateFormat</code> allows you to start by choosing
+ * {@code SimpleDateFormat} allows you to start by choosing
  * any user-defined patterns for date-time formatting. However, you
  * are encouraged to create a date-time formatter with either
- * <code>getTimeInstance</code>, <code>getDateInstance</code>, or
- * <code>getDateTimeInstance</code> in <code>DateFormat</code>. Each
+ * {@code getTimeInstance}, {@code getDateInstance}, or
+ * {@code getDateTimeInstance} in {@code DateFormat}. Each
  * of these class methods can return a date/time formatter initialized
  * with a default format pattern. You may modify the format pattern
- * using the <code>applyPattern</code> methods as desired.
+ * using the {@code applyPattern} methods as desired.
  * For more information on using these methods, see
  * {@link DateFormat}.
  *
- * <h3>Date and Time Patterns</h3>
+ * <h2>Date and Time Patterns</h2>
  * <p>
  * Date and time formats are specified by <em>date and time pattern</em>
  * strings.
  * Within date and time pattern strings, unquoted letters from
- * <code>'A'</code> to <code>'Z'</code> and from <code>'a'</code> to
- * <code>'z'</code> are interpreted as pattern letters representing the
+ * {@code 'A'} to {@code 'Z'} and from {@code 'a'} to
+ * {@code 'z'} are interpreted as pattern letters representing the
  * components of a date or time string.
- * Text can be quoted using single quotes (<code>'</code>) to avoid
+ * Text can be quoted using single quotes ({@code '}) to avoid
  * interpretation.
- * <code>"''"</code> represents a single quote.
+ * {@code "''"} represents a single quote.
  * All other characters are not interpreted; they're simply copied into the
  * output string during formatting or matched against the input string
  * during parsing.
  * <p>
  * The following pattern letters are defined (all other characters from
- * <code>'A'</code> to <code>'Z'</code> and from <code>'a'</code> to
- * <code>'z'</code> are reserved):
+ * {@code 'A'} to {@code 'Z'} and from {@code 'a'} to
+ * {@code 'z'} are reserved):
  * <blockquote>
  * <table class="striped">
  * <caption style="display:none">Chart shows pattern letters, date/time component, presentation, and examples.</caption>
@@ -104,120 +104,120 @@ import sun.util.locale.provider.TimeZoneNameUtility;
  * </thead>
  * <tbody>
  *     <tr>
- *         <th scope="row"><code>G</code>
+ *         <th scope="row">{@code G}
  *         <td>Era designator
  *         <td><a href="#text">Text</a>
- *         <td><code>AD</code>
+ *         <td>{@code AD}
  *     <tr>
- *         <th scope="row"><code>y</code>
+ *         <th scope="row">{@code y}
  *         <td>Year
  *         <td><a href="#year">Year</a>
- *         <td><code>1996</code>; <code>96</code>
+ *         <td>{@code 1996}; {@code 96}
  *     <tr>
- *         <th scope="row"><code>Y</code>
+ *         <th scope="row">{@code Y}
  *         <td>Week year
  *         <td><a href="#year">Year</a>
- *         <td><code>2009</code>; <code>09</code>
+ *         <td>{@code 2009}; {@code 09}
  *     <tr>
- *         <th scope="row"><code>M</code>
+ *         <th scope="row">{@code M}
  *         <td>Month in year (context sensitive)
  *         <td><a href="#month">Month</a>
- *         <td><code>July</code>; <code>Jul</code>; <code>07</code>
+ *         <td>{@code July}; {@code Jul}; {@code 07}
  *     <tr>
- *         <th scope="row"><code>L</code>
+ *         <th scope="row">{@code L}
  *         <td>Month in year (standalone form)
  *         <td><a href="#month">Month</a>
- *         <td><code>July</code>; <code>Jul</code>; <code>07</code>
+ *         <td>{@code July}; {@code Jul}; {@code 07}
  *     <tr>
- *         <th scope="row"><code>w</code>
+ *         <th scope="row">{@code w}
  *         <td>Week in year
  *         <td><a href="#number">Number</a>
- *         <td><code>27</code>
+ *         <td>{@code 27}
  *     <tr>
- *         <th scope="row"><code>W</code>
+ *         <th scope="row">{@code W}
  *         <td>Week in month
  *         <td><a href="#number">Number</a>
- *         <td><code>2</code>
+ *         <td>{@code 2}
  *     <tr>
- *         <th scope="row"><code>D</code>
+ *         <th scope="row">{@code D}
  *         <td>Day in year
  *         <td><a href="#number">Number</a>
- *         <td><code>189</code>
+ *         <td>{@code 189}
  *     <tr>
- *         <th scope="row"><code>d</code>
+ *         <th scope="row">{@code d}
  *         <td>Day in month
  *         <td><a href="#number">Number</a>
- *         <td><code>10</code>
+ *         <td>{@code 10}
  *     <tr>
- *         <th scope="row"><code>F</code>
+ *         <th scope="row">{@code F}
  *         <td>Day of week in month
  *         <td><a href="#number">Number</a>
- *         <td><code>2</code>
+ *         <td>{@code 2}
  *     <tr>
- *         <th scope="row"><code>E</code>
+ *         <th scope="row">{@code E}
  *         <td>Day name in week
  *         <td><a href="#text">Text</a>
- *         <td><code>Tuesday</code>; <code>Tue</code>
+ *         <td>{@code Tuesday}; {@code Tue}
  *     <tr>
- *         <th scope="row"><code>u</code>
+ *         <th scope="row">{@code u}
  *         <td>Day number of week (1 = Monday, ..., 7 = Sunday)
  *         <td><a href="#number">Number</a>
- *         <td><code>1</code>
+ *         <td>{@code 1}
  *     <tr>
- *         <th scope="row"><code>a</code>
+ *         <th scope="row">{@code a}
  *         <td>Am/pm marker
  *         <td><a href="#text">Text</a>
- *         <td><code>PM</code>
+ *         <td>{@code PM}
  *     <tr>
- *         <th scope="row"><code>H</code>
+ *         <th scope="row">{@code H}
  *         <td>Hour in day (0-23)
  *         <td><a href="#number">Number</a>
- *         <td><code>0</code>
+ *         <td>{@code 0}
  *     <tr>
- *         <th scope="row"><code>k</code>
+ *         <th scope="row">{@code k}
  *         <td>Hour in day (1-24)
  *         <td><a href="#number">Number</a>
- *         <td><code>24</code>
+ *         <td>{@code 24}
  *     <tr>
- *         <th scope="row"><code>K</code>
+ *         <th scope="row">{@code K}
  *         <td>Hour in am/pm (0-11)
  *         <td><a href="#number">Number</a>
- *         <td><code>0</code>
+ *         <td>{@code 0}
  *     <tr>
- *         <th scope="row"><code>h</code>
+ *         <th scope="row">{@code h}
  *         <td>Hour in am/pm (1-12)
  *         <td><a href="#number">Number</a>
- *         <td><code>12</code>
+ *         <td>{@code 12}
  *     <tr>
- *         <th scope="row"><code>m</code>
+ *         <th scope="row">{@code m}
  *         <td>Minute in hour
  *         <td><a href="#number">Number</a>
- *         <td><code>30</code>
+ *         <td>{@code 30}
  *     <tr>
- *         <th scope="row"><code>s</code>
+ *         <th scope="row">{@code s}
  *         <td>Second in minute
  *         <td><a href="#number">Number</a>
- *         <td><code>55</code>
+ *         <td>{@code 55}
  *     <tr>
- *         <th scope="row"><code>S</code>
+ *         <th scope="row">{@code S}
  *         <td>Millisecond
  *         <td><a href="#number">Number</a>
- *         <td><code>978</code>
+ *         <td>{@code 978}
  *     <tr>
- *         <th scope="row"><code>z</code>
+ *         <th scope="row">{@code z}
  *         <td>Time zone
  *         <td><a href="#timezone">General time zone</a>
- *         <td><code>Pacific Standard Time</code>; <code>PST</code>; <code>GMT-08:00</code>
+ *         <td>{@code Pacific Standard Time}; {@code PST}; {@code GMT-08:00}
  *     <tr>
- *         <th scope="row"><code>Z</code>
+ *         <th scope="row">{@code Z}
  *         <td>Time zone
  *         <td><a href="#rfc822timezone">RFC 822 time zone</a>
- *         <td><code>-0800</code>
+ *         <td>{@code -0800}
  *     <tr>
- *         <th scope="row"><code>X</code>
+ *         <th scope="row">{@code X}
  *         <td>Time zone
  *         <td><a href="#iso8601timezone">ISO 8601 time zone</a>
- *         <td><code>-08</code>; <code>-0800</code>;  <code>-08:00</code>
+ *         <td>{@code -08}; {@code -0800};  {@code -08:00}
  * </tbody>
  * </table>
  * </blockquote>
@@ -247,11 +247,11 @@ import sun.util.locale.provider.TimeZoneNameUtility;
  *         digits. So using the pattern "MM/dd/yyyy", "01/11/12" parses to
  *         Jan 11, 12 A.D.
  *     <li>For parsing with the abbreviated year pattern ("y" or "yy"),
- *         <code>SimpleDateFormat</code> must interpret the abbreviated year
+ *         {@code SimpleDateFormat} must interpret the abbreviated year
  *         relative to some century.  It does this by adjusting dates to be
- *         within 80 years before and 20 years after the time the <code>SimpleDateFormat</code>
+ *         within 80 years before and 20 years after the time the {@code SimpleDateFormat}
  *         instance is created. For example, using a pattern of "MM/dd/yy" and a
- *         <code>SimpleDateFormat</code> instance created on Jan 1, 1997,  the string
+ *         {@code SimpleDateFormat} instance created on Jan 1, 1997,  the string
  *         "01/11/12" would be interpreted as Jan 11, 2012 while the string "05/04/64"
  *         would be interpreted as May 4, 1964.
  *         During parsing, only strings consisting of exactly two digits, as defined by
@@ -303,16 +303,16 @@ import sun.util.locale.provider.TimeZoneNameUtility;
  *     following syntax is used:
  *     <pre>
  *     <a id="GMTOffsetTimeZone"><i>GMTOffsetTimeZone:</i></a>
- *             <code>GMT</code> <i>Sign</i> <i>Hours</i> <code>:</code> <i>Minutes</i>
+ *             {@code GMT} <i>Sign</i> <i>Hours</i> {@code :} <i>Minutes</i>
  *     <i>Sign:</i> one of
- *             <code>+ -</code>
+ *             {@code + -}
  *     <i>Hours:</i>
  *             <i>Digit</i>
  *             <i>Digit</i> <i>Digit</i>
  *     <i>Minutes:</i>
  *             <i>Digit</i> <i>Digit</i>
  *     <i>Digit:</i> one of
- *             <code>0 1 2 3 4 5 6 7 8 9</code></pre>
+ *             {@code 0 1 2 3 4 5 6 7 8 9}</pre>
  *     <i>Hours</i> must be between 0 and 23, and <i>Minutes</i> must be between
  *     00 and 59. The format is locale independent and digits must be taken
  *     from the Basic Latin block of the Unicode standard.
@@ -364,13 +364,13 @@ import sun.util.locale.provider.TimeZoneNameUtility;
  *     SimpleDateFormat} or {@linkplain #applyPattern(String) applying a
  *     pattern}.
  * </ul>
- * <code>SimpleDateFormat</code> also supports <em>localized date and time
+ * {@code SimpleDateFormat} also supports <em>localized date and time
  * pattern</em> strings. In these strings, the pattern letters described above
  * may be replaced with other, locale dependent, pattern letters.
- * <code>SimpleDateFormat</code> does not deal with the localization of text
+ * {@code SimpleDateFormat} does not deal with the localization of text
  * other than the pattern letters; that's up to the client of the class.
  *
- * <h4>Examples</h4>
+ * <h3>Examples</h3>
  *
  * The following examples show how date and time patterns are interpreted in
  * the U.S. locale. The given date and time are 2001-07-04 12:08:56 local time
@@ -385,43 +385,43 @@ import sun.util.locale.provider.TimeZoneNameUtility;
  * </thead>
  * <tbody>
  *     <tr>
- *         <th scope="row"><code>"yyyy.MM.dd G 'at' HH:mm:ss z"</code>
- *         <td><code>2001.07.04 AD at 12:08:56 PDT</code>
+ *         <th scope="row">{@code "yyyy.MM.dd G 'at' HH:mm:ss z"}
+ *         <td>{@code 2001.07.04 AD at 12:08:56 PDT}
  *     <tr>
- *         <th scope="row"><code>"EEE, MMM d, ''yy"</code>
- *         <td><code>Wed, Jul 4, '01</code>
+ *         <th scope="row">{@code "EEE, MMM d, ''yy"}
+ *         <td>{@code Wed, Jul 4, '01}
  *     <tr>
- *         <th scope="row"><code>"h:mm a"</code>
- *         <td><code>12:08 PM</code>
+ *         <th scope="row">{@code "h:mm a"}
+ *         <td>{@code 12:08 PM}
  *     <tr>
- *         <th scope="row"><code>"hh 'o''clock' a, zzzz"</code>
- *         <td><code>12 o'clock PM, Pacific Daylight Time</code>
+ *         <th scope="row">{@code "hh 'o''clock' a, zzzz"}
+ *         <td>{@code 12 o'clock PM, Pacific Daylight Time}
  *     <tr>
- *         <th scope="row"><code>"K:mm a, z"</code>
- *         <td><code>0:08 PM, PDT</code>
+ *         <th scope="row">{@code "K:mm a, z"}
+ *         <td>{@code 0:08 PM, PDT}
  *     <tr>
- *         <th scope="row"><code>"yyyyy.MMMMM.dd GGG hh:mm aaa"</code>
- *         <td><code>02001.July.04 AD 12:08 PM</code>
+ *         <th scope="row">{@code "yyyyy.MMMMM.dd GGG hh:mm aaa"}
+ *         <td>{@code 02001.July.04 AD 12:08 PM}
  *     <tr>
- *         <th scope="row"><code>"EEE, d MMM yyyy HH:mm:ss Z"</code>
- *         <td><code>Wed, 4 Jul 2001 12:08:56 -0700</code>
+ *         <th scope="row">{@code "EEE, d MMM yyyy HH:mm:ss Z"}
+ *         <td>{@code Wed, 4 Jul 2001 12:08:56 -0700}
  *     <tr>
- *         <th scope="row"><code>"yyMMddHHmmssZ"</code>
- *         <td><code>010704120856-0700</code>
+ *         <th scope="row">{@code "yyMMddHHmmssZ"}
+ *         <td>{@code 010704120856-0700}
  *     <tr>
- *         <th scope="row"><code>"yyyy-MM-dd'T'HH:mm:ss.SSSZ"</code>
- *         <td><code>2001-07-04T12:08:56.235-0700</code>
+ *         <th scope="row">{@code "yyyy-MM-dd'T'HH:mm:ss.SSSZ"}
+ *         <td>{@code 2001-07-04T12:08:56.235-0700}
  *     <tr>
- *         <th scope="row"><code>"yyyy-MM-dd'T'HH:mm:ss.SSSXXX"</code>
- *         <td><code>2001-07-04T12:08:56.235-07:00</code>
+ *         <th scope="row">{@code "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"}
+ *         <td>{@code 2001-07-04T12:08:56.235-07:00}
  *     <tr>
- *         <th scope="row"><code>"YYYY-'W'ww-u"</code>
- *         <td><code>2001-W27-3</code>
+ *         <th scope="row">{@code "YYYY-'W'ww-u"}
+ *         <td>{@code 2001-W27-3}
  * </tbody>
  * </table>
  * </blockquote>
  *
- * <h4><a id="synchronization">Synchronization</a></h4>
+ * <h3><a id="synchronization">Synchronization</a></h3>
  *
  * <p>
  * Date formats are not synchronized.
@@ -441,6 +441,7 @@ public class SimpleDateFormat extends DateFormat {
 
     // the official serial version ID which says cryptically
     // which version we're compatible with
+    @java.io.Serial
     static final long serialVersionUID = 4774881970558875024L;
 
     // the internal serial version which says which version was written
@@ -452,12 +453,12 @@ public class SimpleDateFormat extends DateFormat {
      * The version of the serialized data on the stream.  Possible values:
      * <ul>
      * <li><b>0</b> or not present on stream: JDK 1.1.3.  This version
-     * has no <code>defaultCenturyStart</code> on stream.
+     * has no {@code defaultCenturyStart} on stream.
      * <li><b>1</b> JDK 1.1.4 or later.  This version adds
-     * <code>defaultCenturyStart</code>.
+     * {@code defaultCenturyStart}.
      * </ul>
      * When streaming out this class, the most recent format
-     * and the highest allowable <code>serialVersionOnStream</code>
+     * and the highest allowable {@code serialVersionOnStream}
      * is written.
      * @serial
      * @since 1.1.4
@@ -522,7 +523,7 @@ public class SimpleDateFormat extends DateFormat {
 
     /**
      * We map dates with two-digit years into the century starting at
-     * <code>defaultCenturyStart</code>, which may be any date.  May
+     * {@code defaultCenturyStart}, which may be any date.  May
      * not be null.
      * @serial
      * @since 1.1.4
@@ -545,8 +546,8 @@ public class SimpleDateFormat extends DateFormat {
 
     /**
      * The Locale used to instantiate this
-     * <code>SimpleDateFormat</code>. The value may be null if this object
-     * has been created by an older <code>SimpleDateFormat</code> and
+     * {@code SimpleDateFormat}. The value may be null if this object
+     * has been created by an older {@code SimpleDateFormat} and
      * deserialized.
      *
      * @serial
@@ -555,7 +556,7 @@ public class SimpleDateFormat extends DateFormat {
     private Locale locale;
 
     /**
-     * Indicates whether this <code>SimpleDateFormat</code> should use
+     * Indicates whether this {@code SimpleDateFormat} should use
      * the DateFormatSymbols. If true, the format and parse methods
      * use the DateFormatSymbols values. If false, the format and
      * parse methods call Calendar.getDisplayName or
@@ -564,7 +565,7 @@ public class SimpleDateFormat extends DateFormat {
     transient boolean useDateFormatSymbols;
 
     /**
-     * Constructs a <code>SimpleDateFormat</code> using the default pattern and
+     * Constructs a {@code SimpleDateFormat} using the default pattern and
      * date format symbols for the default
      * {@link java.util.Locale.Category#FORMAT FORMAT} locale.
      * <b>Note:</b> This constructor may not support all locales.
@@ -578,7 +579,7 @@ public class SimpleDateFormat extends DateFormat {
     }
 
     /**
-     * Constructs a <code>SimpleDateFormat</code> using the given pattern and
+     * Constructs a {@code SimpleDateFormat} using the given pattern and
      * the default date format symbols for the default
      * {@link java.util.Locale.Category#FORMAT FORMAT} locale.
      * <b>Note:</b> This constructor may not support all locales.
@@ -591,8 +592,8 @@ public class SimpleDateFormat extends DateFormat {
      * @see java.util.Locale#getDefault(java.util.Locale.Category)
      * @see java.util.Locale.Category#FORMAT
      * @param pattern the pattern describing the date and time format
-     * @exception NullPointerException if the given pattern is null
-     * @exception IllegalArgumentException if the given pattern is invalid
+     * @throws    NullPointerException if the given pattern is null
+     * @throws    IllegalArgumentException if the given pattern is invalid
      */
     public SimpleDateFormat(String pattern)
     {
@@ -600,7 +601,7 @@ public class SimpleDateFormat extends DateFormat {
     }
 
     /**
-     * Constructs a <code>SimpleDateFormat</code> using the given pattern and
+     * Constructs a {@code SimpleDateFormat} using the given pattern and
      * the default date format symbols for the given locale.
      * <b>Note:</b> This constructor may not support all locales.
      * For full coverage, use the factory methods in the {@link DateFormat}
@@ -608,8 +609,8 @@ public class SimpleDateFormat extends DateFormat {
      *
      * @param pattern the pattern describing the date and time format
      * @param locale the locale whose date format symbols should be used
-     * @exception NullPointerException if the given pattern or locale is null
-     * @exception IllegalArgumentException if the given pattern is invalid
+     * @throws    NullPointerException if the given pattern or locale is null
+     * @throws    IllegalArgumentException if the given pattern is invalid
      */
     public SimpleDateFormat(String pattern, Locale locale)
     {
@@ -625,13 +626,13 @@ public class SimpleDateFormat extends DateFormat {
     }
 
     /**
-     * Constructs a <code>SimpleDateFormat</code> using the given pattern and
+     * Constructs a {@code SimpleDateFormat} using the given pattern and
      * date format symbols.
      *
      * @param pattern the pattern describing the date and time format
      * @param formatSymbols the date format symbols to be used for formatting
-     * @exception NullPointerException if the given pattern or formatSymbols is null
-     * @exception IllegalArgumentException if the given pattern is invalid
+     * @throws    NullPointerException if the given pattern or formatSymbols is null
+     * @throws    IllegalArgumentException if the given pattern is invalid
      */
     public SimpleDateFormat(String pattern, DateFormatSymbols formatSymbols)
     {
@@ -738,8 +739,8 @@ public class SimpleDateFormat extends DateFormat {
      * is "'o'", the TaggedData entry is
      * <code>((TAG_QUOTE_ASCII_CHAR&nbs;<<&nbs;8)&nbs;|&nbs;'o')</code>.
      *
-     * @exception NullPointerException if the given pattern is null
-     * @exception IllegalArgumentException if the given pattern is invalid
+     * @throws    NullPointerException if the given pattern is null
+     * @throws    IllegalArgumentException if the given pattern is invalid
      */
     private char[] compile(String pattern) {
         int length = pattern.length();
@@ -915,7 +916,7 @@ public class SimpleDateFormat extends DateFormat {
      * to begin on the date the user specifies.
      *
      * @param startDate During parsing, two digit years will be placed in the range
-     * <code>startDate</code> to <code>startDate + 100 years</code>.
+     * {@code startDate} to {@code startDate + 100 years}.
      * @see #get2DigitYearStart
      * @throws NullPointerException if {@code startDate} is {@code null}.
      * @since 1.2
@@ -938,8 +939,8 @@ public class SimpleDateFormat extends DateFormat {
     }
 
     /**
-     * Formats the given <code>Date</code> into a date/time string and appends
-     * the result to the given <code>StringBuffer</code>.
+     * Formats the given {@code Date} into a date/time string and appends
+     * the result to the given {@code StringBuffer}.
      *
      * @param date the date-time value to be formatted into a date-time string.
      * @param toAppendTo where the new date-time text is to be appended.
@@ -957,7 +958,7 @@ public class SimpleDateFormat extends DateFormat {
      * {@code fieldPosition} will be set to 5 and 8, respectively, for the
      * first occurrence of the timezone pattern character {@code 'z'}.
      * @return the formatted date-time string.
-     * @exception NullPointerException if any of the parameters is {@code null}.
+     * @throws    NullPointerException if any of the parameters is {@code null}.
      */
     @Override
     public StringBuffer format(Date date, StringBuffer toAppendTo,
@@ -1002,17 +1003,17 @@ public class SimpleDateFormat extends DateFormat {
     }
 
     /**
-     * Formats an Object producing an <code>AttributedCharacterIterator</code>.
-     * You can use the returned <code>AttributedCharacterIterator</code>
+     * Formats an Object producing an {@code AttributedCharacterIterator}.
+     * You can use the returned {@code AttributedCharacterIterator}
      * to build the resulting String, as well as to determine information
      * about the resulting String.
      * <p>
      * Each attribute key of the AttributedCharacterIterator will be of type
-     * <code>DateFormat.Field</code>, with the corresponding attribute value
+     * {@code DateFormat.Field}, with the corresponding attribute value
      * being the same as the attribute key.
      *
-     * @exception NullPointerException if obj is null.
-     * @exception IllegalArgumentException if the Format cannot format the
+     * @throws    NullPointerException if obj is null.
+     * @throws    IllegalArgumentException if the Format cannot format the
      *            given object, or if the Format's pattern string is invalid.
      * @param obj The object to format
      * @return AttributedCharacterIterator describing the formatted value.
@@ -1426,17 +1427,17 @@ public class SimpleDateFormat extends DateFormat {
 
 
     /**
-     * Parses text from a string to produce a <code>Date</code>.
+     * Parses text from a string to produce a {@code Date}.
      * <p>
      * The method attempts to parse text starting at the index given by
-     * <code>pos</code>.
-     * If parsing succeeds, then the index of <code>pos</code> is updated
+     * {@code pos}.
+     * If parsing succeeds, then the index of {@code pos} is updated
      * to the index after the last character used (parsing does not necessarily
      * use all characters up to the end of the string), and the parsed
-     * date is returned. The updated <code>pos</code> can be used to
+     * date is returned. The updated {@code pos} can be used to
      * indicate the starting point for the next call to this method.
-     * If an error occurs, then the index of <code>pos</code> is not
-     * changed, the error index of <code>pos</code> is set to the index of
+     * If an error occurs, then the index of {@code pos} is not
+     * changed, the error index of {@code pos} is set to the index of
      * the character where the error occurred, and null is returned.
      *
      * <p>This parsing operation uses the {@link DateFormat#calendar
@@ -1453,12 +1454,12 @@ public class SimpleDateFormat extends DateFormat {
      * {@link #setTimeZone(java.util.TimeZone) setTimeZone} may need
      * to be restored for further operations.
      *
-     * @param text  A <code>String</code>, part of which should be parsed.
-     * @param pos   A <code>ParsePosition</code> object with index and error
+     * @param text  A {@code String}, part of which should be parsed.
+     * @param pos   A {@code ParsePosition} object with index and error
      *              index information as described above.
-     * @return A <code>Date</code> parsed from the string. In case of
+     * @return A {@code Date} parsed from the string. In case of
      *         error, returns null.
-     * @exception NullPointerException if <code>text</code> or <code>pos</code> is null.
+     * @throws    NullPointerException if {@code text} or {@code pos} is null.
      */
     @Override
     public Date parse(String text, ParsePosition pos)
@@ -2275,7 +2276,7 @@ public class SimpleDateFormat extends DateFormat {
      * Translates a pattern, mapping each character in the from string to the
      * corresponding character in the to string.
      *
-     * @exception IllegalArgumentException if the given pattern is invalid
+     * @throws    IllegalArgumentException if the given pattern is invalid
      */
     private String translatePattern(String pattern, String from, String to) {
         StringBuilder result = new StringBuilder();
@@ -2338,8 +2339,8 @@ public class SimpleDateFormat extends DateFormat {
      * Applies the given pattern string to this date format.
      *
      * @param pattern the new date and time pattern for this date format
-     * @exception NullPointerException if the given pattern is null
-     * @exception IllegalArgumentException if the given pattern is invalid
+     * @throws    NullPointerException if the given pattern is null
+     * @throws    IllegalArgumentException if the given pattern is invalid
      */
     public void applyPattern(String pattern)
     {
@@ -2356,8 +2357,8 @@ public class SimpleDateFormat extends DateFormat {
      *
      * @param pattern a String to be mapped to the new date and time format
      *        pattern for this format
-     * @exception NullPointerException if the given pattern is null
-     * @exception IllegalArgumentException if the given pattern is invalid
+     * @throws    NullPointerException if the given pattern is null
+     * @throws    IllegalArgumentException if the given pattern is invalid
      */
     public void applyLocalizedPattern(String pattern) {
          String p = translatePattern(pattern,
@@ -2382,7 +2383,7 @@ public class SimpleDateFormat extends DateFormat {
      * Sets the date and time format symbols of this date format.
      *
      * @param newFormatSymbols the new date and time format symbols
-     * @exception NullPointerException if the given newFormatSymbols is null
+     * @throws    NullPointerException if the given newFormatSymbols is null
      * @see #getDateFormatSymbols
      */
     public void setDateFormatSymbols(DateFormatSymbols newFormatSymbols)
@@ -2392,10 +2393,10 @@ public class SimpleDateFormat extends DateFormat {
     }
 
     /**
-     * Creates a copy of this <code>SimpleDateFormat</code>. This also
+     * Creates a copy of this {@code SimpleDateFormat}. This also
      * clones the format's date format symbols.
      *
-     * @return a clone of this <code>SimpleDateFormat</code>
+     * @return a clone of this {@code SimpleDateFormat}
      */
     @Override
     public Object clone() {
@@ -2405,9 +2406,9 @@ public class SimpleDateFormat extends DateFormat {
     }
 
     /**
-     * Returns the hash code value for this <code>SimpleDateFormat</code> object.
+     * Returns the hash code value for this {@code SimpleDateFormat} object.
      *
-     * @return the hash code value for this <code>SimpleDateFormat</code> object.
+     * @return the hash code value for this {@code SimpleDateFormat} object.
      */
     @Override
     public int hashCode()
@@ -2417,11 +2418,11 @@ public class SimpleDateFormat extends DateFormat {
     }
 
     /**
-     * Compares the given object with this <code>SimpleDateFormat</code> for
+     * Compares the given object with this {@code SimpleDateFormat} for
      * equality.
      *
      * @return true if the given object is equal to this
-     * <code>SimpleDateFormat</code>
+     * {@code SimpleDateFormat}
      */
     @Override
     public boolean equals(Object obj)
@@ -2469,8 +2470,9 @@ public class SimpleDateFormat extends DateFormat {
      * After reading an object from the input stream, the format
      * pattern in the object is verified.
      *
-     * @exception InvalidObjectException if the pattern is invalid
+     * @throws    InvalidObjectException if the pattern is invalid
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream stream)
                          throws IOException, ClassNotFoundException {
         stream.defaultReadObject();

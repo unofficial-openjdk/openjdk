@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -24,16 +25,11 @@
 #ifndef SHARE_GC_SHENANDOAH_HEURISTICS_SHENANDOAHADAPTIVEHEURISTICS_HPP
 #define SHARE_GC_SHENANDOAH_HEURISTICS_SHENANDOAHADAPTIVEHEURISTICS_HPP
 
-#include "gc/shenandoah/shenandoahHeuristics.hpp"
+#include "gc/shenandoah/heuristics/shenandoahHeuristics.hpp"
 #include "gc/shenandoah/shenandoahPhaseTimings.hpp"
 #include "utilities/numberSeq.hpp"
 
 class ShenandoahAdaptiveHeuristics : public ShenandoahHeuristics {
-private:
-  TruncatedSeq* _cycle_gap_history;
-  TruncatedSeq* _conc_mark_duration_history;
-  TruncatedSeq* _conc_uprefs_duration_history;
-
 public:
   ShenandoahAdaptiveHeuristics();
 
@@ -45,11 +41,7 @@ public:
 
   void record_cycle_start();
 
-  virtual void record_phase_time(ShenandoahPhaseTimings::Phase phase, double secs);
-
-  virtual bool should_start_normal_gc() const;
-
-  virtual bool should_start_update_refs();
+  virtual bool should_start_gc() const;
 
   virtual const char* name();
 

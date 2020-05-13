@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -143,6 +143,8 @@ typedef int fstatat64_func(int, const char *, struct stat64 *, int);
 typedef int unlinkat_func(int, const char*, int);
 typedef int renameat_func(int, const char*, int, const char*);
 typedef int futimesat_func(int, const char *, const struct timeval *);
+typedef int futimens_func(int, const struct timespec *);
+typedef int lutimes_func(const char *, const struct timeval *);
 typedef DIR* fdopendir_func(int);
 
 static openat64_func* my_openat64_func = NULL;
@@ -150,6 +152,8 @@ static fstatat64_func* my_fstatat64_func = NULL;
 static unlinkat_func* my_unlinkat_func = NULL;
 static renameat_func* my_renameat_func = NULL;
 static futimesat_func* my_futimesat_func = NULL;
+static futimens_func* my_futimens_func = NULL;
+static lutimes_func* my_lutimes_func = NULL;
 static fdopendir_func* my_fdopendir_func = NULL;
 
 /**
@@ -269,7 +273,11 @@ Java_sun_nio_fs_UnixNativeDispatcher_init(JNIEnv* env, jclass this)
 #endif
     my_unlinkat_func = (unlinkat_func*) dlsym(RTLD_DEFAULT, "unlinkat");
     my_renameat_func = (renameat_func*) dlsym(RTLD_DEFAULT, "renameat");
+#ifndef _ALLBSD_SOURCE
     my_futimesat_func = (futimesat_func*) dlsym(RTLD_DEFAULT, "futimesat");
+    my_lutimes_func = (lutimes_func*) dlsym(RTLD_DEFAULT, "lutimes");
+#endif
+    my_futimens_func = (futimens_func*) dlsym(RTLD_DEFAULT, "futimens");
 #if defined(_AIX)
     my_fdopendir_func = (fdopendir_func*) dlsym(RTLD_DEFAULT, "fdopendir64");
 #else
@@ -282,14 +290,19 @@ Java_sun_nio_fs_UnixNativeDispatcher_init(JNIEnv* env, jclass this)
         my_fstatat64_func = (fstatat64_func*)&fstatat64_wrapper;
 #endif
 
-    /* supports futimes or futimesat */
+    /* supports futimes or futimesat, futimens, and/or lutimes */
 
 #ifdef _ALLBSD_SOURCE
     capabilities |= sun_nio_fs_UnixNativeDispatcher_SUPPORTS_FUTIMES;
+    capabilities |= sun_nio_fs_UnixNativeDispatcher_SUPPORTS_LUTIMES;
 #else
     if (my_futimesat_func != NULL)
         capabilities |= sun_nio_fs_UnixNativeDispatcher_SUPPORTS_FUTIMES;
+    if (my_lutimes_func != NULL)
+        capabilities |= sun_nio_fs_UnixNativeDispatcher_SUPPORTS_LUTIMES;
 #endif
+    if (my_futimens_func != NULL)
+        capabilities |= sun_nio_fs_UnixNativeDispatcher_SUPPORTS_FUTIMENS;
 
     /* supports openat, etc. */
 
@@ -388,6 +401,51 @@ Java_sun_nio_fs_UnixNativeDispatcher_fclose(JNIEnv* env, jclass this, jlong stre
     if (fclose(fp) == EOF && errno != EINTR) {
         throwUnixException(env, errno);
     }
+}
+
+JNIEXPORT void JNICALL
+Java_sun_nio_fs_UnixNativeDispatcher_rewind(JNIEnv* env, jclass this, jlong stream)
+{
+    FILE* fp = jlong_to_ptr(stream);
+    int saved_errno;
+
+    errno = 0;
+    rewind(fp);
+    saved_errno = errno;
+    if (ferror(fp)) {
+        throwUnixException(env, saved_errno);
+    }
+}
+
+/**
+ * This function returns line length without NUL terminator or -1 on EOF.
+ */
+JNIEXPORT jint JNICALL
+Java_sun_nio_fs_UnixNativeDispatcher_getlinelen(JNIEnv* env, jclass this, jlong stream)
+{
+    FILE* fp = jlong_to_ptr(stream);
+    size_t lineSize = 0;
+    char * lineBuffer = NULL;
+    int saved_errno;
+
+    ssize_t res = getline(&lineBuffer, &lineSize, fp);
+    saved_errno = errno;
+
+    /* Should free lineBuffer no matter result, according to man page */
+    if (lineBuffer != NULL)
+        free(lineBuffer);
+
+    if (feof(fp))
+        return -1;
+
+    /* On successfull return res >= 0, otherwise res is -1 */
+    if (res == -1)
+        throwUnixException(env, saved_errno);
+
+    if (res > INT_MAX)
+        throwUnixException(env, EOVERFLOW);
+
+    return (jint)res;
 }
 
 JNIEXPORT jint JNICALL
@@ -675,10 +733,61 @@ Java_sun_nio_fs_UnixNativeDispatcher_futimes(JNIEnv* env, jclass this, jint file
     RESTARTABLE(futimes(filedes, &times[0]), err);
 #else
     if (my_futimesat_func == NULL) {
-        JNU_ThrowInternalError(env, "my_ftimesat_func is NULL");
+        JNU_ThrowInternalError(env, "my_futimesat_func is NULL");
         return;
     }
     RESTARTABLE((*my_futimesat_func)(filedes, NULL, &times[0]), err);
+#endif
+    if (err == -1) {
+        throwUnixException(env, errno);
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_sun_nio_fs_UnixNativeDispatcher_futimens(JNIEnv* env, jclass this, jint filedes,
+    jlong accessTime, jlong modificationTime)
+{
+    struct timespec times[2];
+    int err = 0;
+
+    times[0].tv_sec = accessTime / 1000000000;
+    times[0].tv_nsec = accessTime % 1000000000;
+
+    times[1].tv_sec = modificationTime / 1000000000;
+    times[1].tv_nsec = modificationTime % 1000000000;
+
+    if (my_futimens_func == NULL) {
+        JNU_ThrowInternalError(env, "my_futimens_func is NULL");
+        return;
+    }
+    RESTARTABLE((*my_futimens_func)(filedes, &times[0]), err);
+    if (err == -1) {
+        throwUnixException(env, errno);
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_sun_nio_fs_UnixNativeDispatcher_lutimes0(JNIEnv* env, jclass this,
+    jlong pathAddress, jlong accessTime, jlong modificationTime)
+{
+    int err;
+    struct timeval times[2];
+    const char* path = (const char*)jlong_to_ptr(pathAddress);
+
+    times[0].tv_sec = accessTime / 1000000;
+    times[0].tv_usec = accessTime % 1000000;
+
+    times[1].tv_sec = modificationTime / 1000000;
+    times[1].tv_usec = modificationTime % 1000000;
+
+#ifdef _ALLBSD_SOURCE
+    RESTARTABLE(lutimes(path, &times[0]), err);
+#else
+    if (my_lutimes_func == NULL) {
+        JNU_ThrowInternalError(env, "my_lutimes_func is NULL");
+        return;
+    }
+    RESTARTABLE((*my_lutimes_func)(path, &times[0]), err);
 #endif
     if (err == -1) {
         throwUnixException(env, errno);
@@ -1135,8 +1244,11 @@ Java_sun_nio_fs_UnixNativeDispatcher_getpwnam0(JNIEnv* env, jclass this,
 
         if (res != 0 || p == NULL || p->pw_name == NULL || *(p->pw_name) == '\0') {
             /* not found or error */
-            if (errno != 0 && errno != ENOENT && errno != ESRCH)
+            if (errno != 0 && errno != ENOENT && errno != ESRCH &&
+                errno != EBADF && errno != EPERM)
+            {
                 throwUnixException(env, errno);
+            }
         } else {
             uid = p->pw_uid;
         }
@@ -1177,7 +1289,9 @@ Java_sun_nio_fs_UnixNativeDispatcher_getgrnam0(JNIEnv* env, jclass this,
         retry = 0;
         if (res != 0 || g == NULL || g->gr_name == NULL || *(g->gr_name) == '\0') {
             /* not found or error */
-            if (errno != 0 && errno != ENOENT && errno != ESRCH) {
+            if (errno != 0 && errno != ENOENT && errno != ESRCH &&
+                errno != EBADF && errno != EPERM)
+            {
                 if (errno == ERANGE) {
                     /* insufficient buffer size so need larger buffer */
                     buflen += ENT_BUF_SIZE;

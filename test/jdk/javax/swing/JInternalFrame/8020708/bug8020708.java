@@ -73,20 +73,23 @@ public class bug8020708 {
                 if (!installLookAndFeel(laf)) {
                     continue;
                 }
-                testInternalFrameMnemonic();
+                testInternalFrameMnemonic(locale);
             }
         }
     }
 
-    static void testInternalFrameMnemonic() throws Exception {
+    static void testInternalFrameMnemonic(Locale locale) throws Exception {
         Robot robot = new Robot();
-        robot.setAutoDelay(50);
+        robot.setAutoDelay(250);
+        robot.setAutoWaitForIdle(true);
 
         SwingUtilities.invokeAndWait(new Runnable() {
             @Override
             public void run() {
                 frame = new JFrame("Test");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                frame.setUndecorated(true);
+                frame.setLocationRelativeTo(null);
                 frame.setSize(300, 200);
 
                 JDesktopPane desktop = new JDesktopPane();
@@ -108,10 +111,11 @@ public class bug8020708 {
         robot.mouseMove(clickPoint.x, clickPoint.y);
         robot.mousePress(InputEvent.BUTTON1_MASK);
         robot.mouseRelease(InputEvent.BUTTON1_MASK);
-        robot.waitForIdle();
+        robot.delay(500);
 
         Util.hitKeys(robot, KeyEvent.VK_SHIFT, KeyEvent.VK_ESCAPE);
-        robot.waitForIdle();
+        robot.delay(500);
+
         int keyCode = KeyEvent.VK_C;
         String mnemonic = UIManager
                 .getString("InternalFrameTitlePane.closeButton.mnemonic");
@@ -119,19 +123,19 @@ public class bug8020708 {
             keyCode = Integer.parseInt(mnemonic);
         } catch (NumberFormatException e) {
         }
+        System.out.println("keyCode " + keyCode);
         Util.hitKeys(robot, keyCode);
-        robot.waitForIdle();
-        robot.delay(500);
 
         SwingUtilities.invokeAndWait(new Runnable() {
             @Override
             public void run() {
                 if (internalFrame.isVisible()) {
-                    throw new RuntimeException("Close mnemonic does not work in "+UIManager.getLookAndFeel());
+                    throw new RuntimeException("Close mnemonic does not work in "+UIManager.getLookAndFeel() + " for locale " + locale);
                 }
                 frame.dispose();
             }
         });
+        robot.delay(500);
     }
 
     static final boolean installLookAndFeel(String lafName) throws Exception {

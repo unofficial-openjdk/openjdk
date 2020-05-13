@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,13 +33,14 @@ import sun.nio.ch.DirectBuffer;
 import java.lang.reflect.Field;
 import java.security.ProtectionDomain;
 
+import static jdk.internal.misc.UnsafeConstants.*;
 
 /**
  * A collection of methods for performing low-level, unsafe operations.
  * Although the class and all methods are public, use of this class is
  * limited because only trusted code can obtain instances of it.
  *
- * <em>Note:</em> It is the resposibility of the caller to make sure
+ * <em>Note:</em> It is the responsibility of the caller to make sure
  * arguments are checked before methods of this class are
  * called. While some rudimentary checks are performed on the input,
  * the checks are best effort and when performance is an overriding
@@ -424,7 +425,7 @@ public final class Unsafe {
     /**
      * Create an exception reflecting that some of the input was invalid
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -583,13 +584,24 @@ public final class Unsafe {
     /// wrappers for malloc, realloc, free:
 
     /**
+     * Round up allocation size to a multiple of HeapWordSize.
+     */
+    private long alignToHeapWordSize(long bytes) {
+        if (bytes >= 0) {
+            return (bytes + ADDRESS_SIZE - 1) & ~(ADDRESS_SIZE - 1);
+        } else {
+            throw invalidInput();
+        }
+    }
+
+    /**
      * Allocates a new block of native memory, of the given size in bytes.  The
      * contents of the memory are uninitialized; they will generally be
      * garbage.  The resulting native pointer will never be zero, and will be
      * aligned for all value types.  Dispose of this memory by calling {@link
      * #freeMemory}, or resize it with {@link #reallocateMemory}.
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -607,6 +619,8 @@ public final class Unsafe {
      * @see #putByte(long, byte)
      */
     public long allocateMemory(long bytes) {
+        bytes = alignToHeapWordSize(bytes);
+
         allocateMemoryChecks(bytes);
 
         if (bytes == 0) {
@@ -643,7 +657,7 @@ public final class Unsafe {
      * #reallocateMemory}.  The address passed to this method may be null, in
      * which case an allocation will be performed.
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -660,6 +674,8 @@ public final class Unsafe {
      * @see #allocateMemory
      */
     public long reallocateMemory(long address, long bytes) {
+        bytes = alignToHeapWordSize(bytes);
+
         reallocateMemoryChecks(address, bytes);
 
         if (bytes == 0) {
@@ -703,7 +719,7 @@ public final class Unsafe {
      * If the effective address and length are (resp.) even modulo 4 or 2,
      * the stores take place in units of 'int' or 'short'.
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -765,7 +781,7 @@ public final class Unsafe {
      * If the effective addresses and length are (resp.) even modulo 4 or 2,
      * the transfer takes place in units of 'int' or 'short'.
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -826,7 +842,7 @@ public final class Unsafe {
      * as discussed in {@link #getInt(Object,long)}.  When the object reference is null,
      * the offset supplies an absolute base address.
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -867,7 +883,7 @@ public final class Unsafe {
         checkPrimitivePointer(destBase, destOffset);
     }
 
-   /**
+    /**
      * Copies all elements from one block of memory to another block, byte swapping the
      * elements on the fly.
      *
@@ -885,7 +901,7 @@ public final class Unsafe {
      * #allocateMemory} or {@link #reallocateMemory}.  The address passed to
      * this method may be null, in which case no action is taken.
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -919,6 +935,101 @@ public final class Unsafe {
     private void freeMemoryChecks(long address) {
         checkPointer(null, address);
     }
+
+    /**
+     * Ensure writeback of a specified virtual memory address range
+     * from cache to physical memory. All bytes in the address range
+     * are guaranteed to have been written back to physical memory on
+     * return from this call i.e. subsequently executed store
+     * instructions are guaranteed not to be visible before the
+     * writeback is completed.
+     *
+     * @param address
+     *        the lowest byte address that must be guaranteed written
+     *        back to memory. bytes at lower addresses may also be
+     *        written back.
+     *
+     * @param length
+     *        the length in bytes of the region starting at address
+     *        that must be guaranteed written back to memory.
+     *
+     * @throws RuntimeException if memory writeback is not supported
+     *         on the current hardware of if the arguments are invalid.
+     *         (<em>Note:</em> after optimization, invalid inputs may
+     *         go undetected, which will lead to unpredictable
+     *         behavior)
+     *
+     * @since 14
+     */
+
+    public void writebackMemory(long address, long length) {
+        checkWritebackEnabled();
+        checkWritebackMemory(address, length);
+
+        // perform any required pre-writeback barrier
+        writebackPreSync0();
+
+        // write back one cache line at a time
+        long line = dataCacheLineAlignDown(address);
+        long end = address + length;
+        while (line < end) {
+            writeback0(line);
+            line += dataCacheLineFlushSize();
+        }
+
+        // perform any required post-writeback barrier
+        writebackPostSync0();
+    }
+
+    /**
+     * Validate the arguments to writebackMemory
+     *
+     * @throws RuntimeException if the arguments are invalid
+     *         (<em>Note:</em> after optimization, invalid inputs may
+     *         go undetected, which will lead to unpredictable
+     *         behavior)
+     */
+    private void checkWritebackMemory(long address, long length) {
+        checkNativeAddress(address);
+        checkSize(length);
+    }
+
+    /**
+     * Validate that the current hardware supports memory writeback.
+     * (<em>Note:</em> this is a belt and braces check.  Clients are
+     * expected to test whether writeback is enabled by calling
+     * ({@link isWritebackEnabled #isWritebackEnabled} and avoid
+     * calling method {@link writeback #writeback} if it is disabled).
+     *
+     *
+     * @throws RuntimeException if memory writeback is not supported
+     */
+    private void checkWritebackEnabled() {
+        if (!isWritebackEnabled()) {
+            throw new RuntimeException("writebackMemory not enabled!");
+        }
+    }
+
+    /**
+     * force writeback of an individual cache line.
+     *
+     * @param address
+     *        the start address of the cache line to be written back
+     */
+    @HotSpotIntrinsicCandidate
+    private native void writeback0(long address);
+
+     /**
+      * Serialize writeback operations relative to preceding memory writes.
+      */
+    @HotSpotIntrinsicCandidate
+    private native void writebackPreSync0();
+
+     /**
+      * Serialize writeback operations relative to following memory writes.
+      */
+    @HotSpotIntrinsicCandidate
+    private native void writebackPostSync0();
 
     /// random queries
 
@@ -1166,14 +1277,34 @@ public final class Unsafe {
     }
 
     /** The value of {@code addressSize()} */
-    public static final int ADDRESS_SIZE = theUnsafe.addressSize0();
+    public static final int ADDRESS_SIZE = ADDRESS_SIZE0;
 
     /**
      * Reports the size in bytes of a native memory page (whatever that is).
      * This value will always be a power of two.
      */
-    public native int pageSize();
+    public int pageSize() { return PAGE_SIZE; }
 
+    /**
+     * Reports the size in bytes of a data cache line written back by
+     * the hardware cache line flush operation available to the JVM or
+     * 0 if data cache line flushing is not enabled.
+     */
+    public int dataCacheLineFlushSize() { return DATA_CACHE_LINE_FLUSH_SIZE; }
+
+    /**
+     * Rounds down address to a data cache line boundary as
+     * determined by {@link #dataCacheLineFlushSize}
+     * @return the rounded down address
+     */
+    public long dataCacheLineAlignDown(long address) {
+        return (address & ~(DATA_CACHE_LINE_FLUSH_SIZE - 1));
+    }
+
+    /**
+     * Returns true if data cache line writeback
+     */
+    public static boolean isWritebackEnabled() { return DATA_CACHE_LINE_FLUSH_SIZE != 0; }
 
     /// random trusted operations from JNI:
 
@@ -1417,7 +1548,7 @@ public final class Unsafe {
                                              byte x) {
         long wordOffset = offset & ~3;
         int shift = (int) (offset & 3) << 3;
-        if (BE) {
+        if (BIG_ENDIAN) {
             shift = 24 - shift;
         }
         int mask           = 0xFF << shift;
@@ -1491,7 +1622,7 @@ public final class Unsafe {
         }
         long wordOffset = offset & ~3;
         int shift = (int) (offset & 3) << 3;
-        if (BE) {
+        if (BIG_ENDIAN) {
             shift = 16 - shift;
         }
         int mask           = 0xFFFF << shift;
@@ -2093,14 +2224,14 @@ public final class Unsafe {
     }
 
     /*
-      * Versions of {@link #putReferenceVolatile(Object, long, Object)}
-      * that do not guarantee immediate visibility of the store to
-      * other threads. This method is generally only useful if the
-      * underlying field is a Java volatile (or if an array cell, one
-      * that is otherwise only accessed using volatile accesses).
-      *
-      * Corresponds to C11 atomic_store_explicit(..., memory_order_release).
-      */
+     * Versions of {@link #putReferenceVolatile(Object, long, Object)}
+     * that do not guarantee immediate visibility of the store to
+     * other threads. This method is generally only useful if the
+     * underlying field is a Java volatile (or if an array cell, one
+     * that is otherwise only accessed using volatile accesses).
+     *
+     * Corresponds to C11 atomic_store_explicit(..., memory_order_release).
+     */
 
     /** Release version of {@link #putReferenceVolatile(Object, long, Object)} */
     @HotSpotIntrinsicCandidate
@@ -3114,7 +3245,7 @@ public final class Unsafe {
      * @param offset field/element offset
      * @param mask the mask value
      * @return the previous value
-     * @since 1.9
+     * @since 9
      */
     @ForceInline
     public final int getAndBitwiseAndInt(Object o, long offset, int mask) {
@@ -3343,17 +3474,25 @@ public final class Unsafe {
     }
 
     /**
+     * Throws NoSuchMethodError; for use by the VM for redefinition support.
+     * @since 13
+     */
+    private static void throwNoSuchMethodError() {
+        throw new NoSuchMethodError();
+    }
+
+    /**
      * @return Returns true if the native byte ordering of this
      * platform is big-endian, false if it is little-endian.
      */
-    public final boolean isBigEndian() { return BE; }
+    public final boolean isBigEndian() { return BIG_ENDIAN; }
 
     /**
      * @return Returns true if this platform is capable of performing
      * accesses at addresses which are not aligned for the type of the
      * primitive type being accessed, false otherwise.
      */
-    public final boolean unalignedAccess() { return unalignedAccess; }
+    public final boolean unalignedAccess() { return UNALIGNED_ACCESS; }
 
     /**
      * Fetches a value at some byte offset into a given Java object.
@@ -3595,14 +3734,7 @@ public final class Unsafe {
         putCharUnaligned(o, offset, convEndian(bigEndian, x));
     }
 
-    // JVM interface methods
-    // BE is true iff the native endianness of this platform is big.
-    private static final boolean BE = theUnsafe.isBigEndian0();
-
-    // unalignedAccess is true iff this platform can perform unaligned accesses.
-    private static final boolean unalignedAccess = theUnsafe.unalignedAccess0();
-
-    private static int pickPos(int top, int pos) { return BE ? top - pos : pos; }
+    private static int pickPos(int top, int pos) { return BIG_ENDIAN ? top - pos : pos; }
 
     // These methods construct integers from bytes.  The byte ordering
     // is the native endianness of this platform.
@@ -3641,9 +3773,9 @@ public final class Unsafe {
                      | (toUnsignedInt(i1) << pickPos(8, 8)));
     }
 
-    private static byte  pick(byte  le, byte  be) { return BE ? be : le; }
-    private static short pick(short le, short be) { return BE ? be : le; }
-    private static int   pick(int   le, int   be) { return BE ? be : le; }
+    private static byte  pick(byte  le, byte  be) { return BIG_ENDIAN ? be : le; }
+    private static short pick(short le, short be) { return BIG_ENDIAN ? be : le; }
+    private static int   pick(int   le, int   be) { return BIG_ENDIAN ? be : le; }
 
     // These methods write integers to memory from smaller parts
     // provided by their caller.  The ordering in which these parts
@@ -3691,10 +3823,10 @@ public final class Unsafe {
     private static long toUnsignedLong(int n)   { return n & 0xffffffffl; }
 
     // Maybe byte-reverse an integer
-    private static char convEndian(boolean big, char n)   { return big == BE ? n : Character.reverseBytes(n); }
-    private static short convEndian(boolean big, short n) { return big == BE ? n : Short.reverseBytes(n)    ; }
-    private static int convEndian(boolean big, int n)     { return big == BE ? n : Integer.reverseBytes(n)  ; }
-    private static long convEndian(boolean big, long n)   { return big == BE ? n : Long.reverseBytes(n)     ; }
+    private static char convEndian(boolean big, char n)   { return big == BIG_ENDIAN ? n : Character.reverseBytes(n); }
+    private static short convEndian(boolean big, short n) { return big == BIG_ENDIAN ? n : Short.reverseBytes(n)    ; }
+    private static int convEndian(boolean big, int n)     { return big == BIG_ENDIAN ? n : Integer.reverseBytes(n)  ; }
+    private static long convEndian(boolean big, long n)   { return big == BIG_ENDIAN ? n : Long.reverseBytes(n)     ; }
 
 
 
@@ -3713,11 +3845,8 @@ public final class Unsafe {
     private native void ensureClassInitialized0(Class<?> c);
     private native int arrayBaseOffset0(Class<?> arrayClass);
     private native int arrayIndexScale0(Class<?> arrayClass);
-    private native int addressSize0();
     private native Class<?> defineAnonymousClass0(Class<?> hostClass, byte[] data, Object[] cpPatches);
     private native int getLoadAverage0(double[] loadavg, int nelems);
-    private native boolean unalignedAccess0();
-    private native boolean isBigEndian0();
 
 
     /**

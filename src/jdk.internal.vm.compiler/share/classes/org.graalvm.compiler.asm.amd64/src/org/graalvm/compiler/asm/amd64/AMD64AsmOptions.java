@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ package org.graalvm.compiler.asm.amd64;
 public class AMD64AsmOptions {
     public static final boolean UseNormalNop = false;
     public static final boolean UseAddressNop = true;
+    public static final boolean UseIntelNops = true;
     public static final boolean UseIncDec = true;
     public static final boolean UseXmmLoadAndClearUpper = true;
     public static final boolean UseXmmRegToRegMoveAll = true;

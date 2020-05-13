@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -448,8 +448,9 @@ public interface Set<E> extends Collection<E> {
      *
      * @since 9
      */
+    @SuppressWarnings("unchecked")
     static <E> Set<E> of() {
-        return ImmutableCollections.emptySet();
+        return (Set<E>) ImmutableCollections.EMPTY_SET;
     }
 
     /**
@@ -692,7 +693,9 @@ public interface Set<E> extends Collection<E> {
     static <E> Set<E> of(E... elements) {
         switch (elements.length) { // implicit null check of elements
             case 0:
-                return ImmutableCollections.emptySet();
+                @SuppressWarnings("unchecked")
+                var set = (Set<E>) ImmutableCollections.EMPTY_SET;
+                return set;
             case 1:
                 return new ImmutableCollections.Set12<>(elements[0]);
             case 2:

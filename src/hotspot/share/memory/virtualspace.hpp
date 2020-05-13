@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 #ifndef SHARE_MEMORY_VIRTUALSPACE_HPP
 #define SHARE_MEMORY_VIRTUALSPACE_HPP
 
+#include "memory/memRegion.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 class outputStream;
@@ -61,7 +62,6 @@ class ReservedSpace {
   ReservedSpace(size_t size, size_t preferred_page_size = 0);
   ReservedSpace(size_t size, size_t alignment, bool large,
                 char* requested_address = NULL);
-  ReservedSpace(size_t size, size_t alignment, bool large, bool executable);
 
   // Accessors
   char*  base()            const { return _base;      }
@@ -122,7 +122,8 @@ class ReservedHeapSpace : public ReservedSpace {
   ReservedHeapSpace(size_t size, size_t forced_base_alignment, bool large, const char* heap_allocation_directory = NULL);
   // Returns the base to be used for compression, i.e. so that null can be
   // encoded safely and implicit null checks can work.
-  char *compressed_oop_base() { return _base - _noaccess_prefix; }
+  char *compressed_oop_base() const { return _base - _noaccess_prefix; }
+  MemRegion region() const;
 };
 
 // Class encapsulating behavior specific memory space for Code

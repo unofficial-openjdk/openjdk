@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,12 +46,13 @@ import jdk.jfr.StackTrace;
 import jdk.jfr.Threshold;
 import jdk.jfr.ValueDescriptor;
 import jdk.jfr.internal.RequestEngine.RequestHook;
+import jdk.jfr.internal.consumer.RepositoryFiles;
 import jdk.jfr.internal.handlers.EventHandler;
 
 public final class MetadataRepository {
 
     private static final JVM jvm = JVM.getJVM();
-    private static final MetadataRepository instace = new MetadataRepository();
+    private static final MetadataRepository instance = new MetadataRepository();
 
     private final List<EventType> nativeEventTypes = new ArrayList<>(100);
     private final List<EventControl> nativeControls = new ArrayList<EventControl>(100);
@@ -92,7 +93,7 @@ public final class MetadataRepository {
     }
 
     public static MetadataRepository getInstance() {
-        return instace;
+        return instance;
     }
 
     public synchronized List<EventType> getRegisteredEventTypes() {
@@ -207,10 +208,14 @@ public final class MetadataRepository {
     }
 
     public synchronized List<EventControl> getEventControls() {
-        List<EventControl> controls = new ArrayList<>();
+        List<Class<? extends jdk.internal.event.Event>> eventClasses = jvm.getAllEventClasses();
+        ArrayList<EventControl> controls = new ArrayList<>(eventClasses.size() + nativeControls.size());
         controls.addAll(nativeControls);
-        for (EventHandler eh : getEventHandlers()) {
-            controls.add(eh.getEventControl());
+        for (Class<? extends jdk.internal.event.Event> clazz : eventClasses) {
+            EventHandler eh = Utils.getHandler(clazz);
+            if (eh != null) {
+                controls.add(eh.getEventControl());
+            }
         }
         return controls;
     }
@@ -255,19 +260,23 @@ public final class MetadataRepository {
         staleMetadata = true;
     }
 
-    // Lock around setOutput ensures that other threads dosn't
-    // emit event after setOutput and unregister the event class, before a call
+    // Lock around setOutput ensures that other threads don't
+    // emit events after setOutput and unregister the event class, before a call
     // to storeDescriptorInJVM
     synchronized void setOutput(String filename) {
-        jvm.setOutput(filename);
-
-        unregisterUnloaded();
-        if (unregistered) {
-            staleMetadata = typeLibrary.clearUnregistered();
-            unregistered = false;
-        }
         if (staleMetadata) {
             storeDescriptorInJVM();
+        }
+        jvm.setOutput(filename);
+        if (filename != null) {
+            RepositoryFiles.notifyNewFile();
+        }
+        unregisterUnloaded();
+        if (unregistered) {
+            if (typeLibrary.clearUnregistered()) {
+                storeDescriptorInJVM();
+            }
+            unregistered = false;
         }
     }
 
@@ -305,6 +314,13 @@ public final class MetadataRepository {
             return;
         }
         throw new InternalError("Mirror class must have annotation " + MirrorEvent.class.getName());
+    }
+
+    public synchronized void flush() {
+        if (staleMetadata) {
+            storeDescriptorInJVM();
+        }
+        jvm.flush();
     }
 
 }

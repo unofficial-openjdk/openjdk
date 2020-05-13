@@ -60,8 +60,7 @@ class SourceChannelImpl
     // Channel state
     private static final int ST_INUSE = 0;
     private static final int ST_CLOSING = 1;
-    private static final int ST_KILLPENDING = 2;
-    private static final int ST_KILLED = 3;
+    private static final int ST_CLOSED = 2;
     private int state;
 
     // ID of native thread doing read, for signalling
@@ -85,69 +84,91 @@ class SourceChannelImpl
     }
 
     /**
+     * Closes the read end of the pipe if there are no read operation in
+     * progress and the channel is not registered with a Selector.
+     */
+    private boolean tryClose() throws IOException {
+        assert Thread.holdsLock(stateLock) && state == ST_CLOSING;
+        if (thread == 0 && !isRegistered()) {
+            state = ST_CLOSED;
+            nd.close(fd);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Invokes tryClose to attempt to close the read end of the pipe.
+     *
+     * This method is used for deferred closing by I/O and Selector operations.
+     */
+    private void tryFinishClose() {
+        try {
+            tryClose();
+        } catch (IOException ignore) { }
+    }
+
+    /**
+     * Closes this channel when configured in blocking mode.
+     *
+     * If there is a read operation in progress then the read-end of the pipe
+     * is pre-closed and the reader is signalled, in which case the final close
+     * is deferred until the reader aborts.
+     */
+    private void implCloseBlockingMode() throws IOException {
+        synchronized (stateLock) {
+            assert state < ST_CLOSING;
+            state = ST_CLOSING;
+            if (!tryClose()) {
+                long th = thread;
+                if (th != 0) {
+                    nd.preClose(fd);
+                    NativeThread.signal(th);
+                }
+            }
+        }
+    }
+
+    /**
+     * Closes this channel when configured in non-blocking mode.
+     *
+     * If the channel is registered with a Selector then the close is deferred
+     * until the channel is flushed from all Selectors.
+     */
+    private void implCloseNonBlockingMode() throws IOException {
+        synchronized (stateLock) {
+            assert state < ST_CLOSING;
+            state = ST_CLOSING;
+        }
+        // wait for any read operation to complete before trying to close
+        readLock.lock();
+        readLock.unlock();
+        synchronized (stateLock) {
+            if (state == ST_CLOSING) {
+                tryClose();
+            }
+        }
+    }
+
+    /**
      * Invoked by implCloseChannel to close the channel.
      */
     @Override
     protected void implCloseSelectableChannel() throws IOException {
         assert !isOpen();
-
-        boolean interrupted = false;
-        boolean blocking;
-
-        // set state to ST_CLOSING
-        synchronized (stateLock) {
-            assert state < ST_CLOSING;
-            state = ST_CLOSING;
-            blocking = isBlocking();
-        }
-
-        // wait for any outstanding read to complete
-        if (blocking) {
-            synchronized (stateLock) {
-                assert state == ST_CLOSING;
-                long th = thread;
-                if (th != 0) {
-                    nd.preClose(fd);
-                    NativeThread.signal(th);
-
-                    // wait for read operation to end
-                    while (thread != 0) {
-                        try {
-                            stateLock.wait();
-                        } catch (InterruptedException e) {
-                            interrupted = true;
-                        }
-                    }
-                }
-            }
+        if (isBlocking()) {
+            implCloseBlockingMode();
         } else {
-            // non-blocking mode: wait for read to complete
-            readLock.lock();
-            readLock.unlock();
+            implCloseNonBlockingMode();
         }
-
-        // set state to ST_KILLPENDING
-        synchronized (stateLock) {
-            assert state == ST_CLOSING;
-            state = ST_KILLPENDING;
-        }
-
-        // close socket if not registered with Selector
-        if (!isRegistered())
-            kill();
-
-        // restore interrupt status
-        if (interrupted)
-            Thread.currentThread().interrupt();
     }
-
     @Override
-    public void kill() throws IOException {
+    public void kill() {
         synchronized (stateLock) {
-            assert thread == 0;
-            if (state == ST_KILLPENDING) {
-                state = ST_KILLED;
-                nd.close(fd);
+            assert !isOpen();
+            if (state == ST_CLOSING) {
+                tryFinishClose();
             }
         }
     }
@@ -157,6 +178,8 @@ class SourceChannelImpl
         readLock.lock();
         try {
             synchronized (stateLock) {
+                if (!isOpen())
+                    throw new ClosedChannelException();
                 IOUtil.configureBlocking(fd, block);
             }
         } finally {
@@ -232,9 +255,8 @@ class SourceChannelImpl
         if (blocking) {
             synchronized (stateLock) {
                 thread = 0;
-                // notify any thread waiting in implCloseSelectableChannel
                 if (state == ST_CLOSING) {
-                    stateLock.notifyAll();
+                    tryFinishClose();
                 }
             }
             // remove hook for Thread.interrupt
@@ -252,9 +274,13 @@ class SourceChannelImpl
             int n = 0;
             try {
                 beginRead(blocking);
-                do {
-                    n = IOUtil.read(fd, dst, -1, nd);
-                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                n = IOUtil.read(fd, dst, -1, nd);
+                if (blocking) {
+                    while (IOStatus.okayToRetry(n) && isOpen()) {
+                        park(Net.POLLIN);
+                        n = IOUtil.read(fd, dst, -1, nd);
+                    }
+                }
             } finally {
                 endRead(blocking, n > 0);
                 assert IOStatus.check(n);
@@ -275,9 +301,13 @@ class SourceChannelImpl
             long n = 0;
             try {
                 beginRead(blocking);
-                do {
-                    n = IOUtil.read(fd, dsts, offset, length, nd);
-                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                n = IOUtil.read(fd, dsts, offset, length, nd);
+                if (blocking) {
+                    while (IOStatus.okayToRetry(n) && isOpen()) {
+                        park(Net.POLLIN);
+                        n = IOUtil.read(fd, dsts, offset, length, nd);
+                    }
+                }
             } finally {
                 endRead(blocking, n > 0);
                 assert IOStatus.check(n);

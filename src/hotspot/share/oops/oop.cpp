@@ -27,14 +27,15 @@
 #include "classfile/javaClasses.inline.hpp"
 #include "memory/heapShared.inline.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/access.inline.hpp"
+#include "oops/compressedOops.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/verifyOopClosure.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/thread.inline.hpp"
 #include "utilities/copy.hpp"
-
-bool always_do_update_barrier = false;
+#include "utilities/macros.hpp"
 
 void oopDesc::print_on(outputStream* st) const {
   klass()->oop_print_on(oop(this), st);
@@ -103,14 +104,14 @@ bool oopDesc::is_oop(oop obj, bool ignore_mark_word) {
     return false;
   }
 
-  // Header verification: the mark is typically non-NULL. If we're
-  // at a safepoint, it must not be null.
+  // Header verification: the mark is typically non-zero. If we're
+  // at a safepoint, it must not be zero.
   // Outside of a safepoint, the header could be changing (for example,
   // another thread could be inflating a lock on this object).
   if (ignore_mark_word) {
     return true;
   }
-  if (obj->mark_raw() != NULL) {
+  if (obj->mark_raw().value() != 0) {
     return true;
   }
   return !SafepointSynchronize::is_at_safepoint();
@@ -120,20 +121,6 @@ bool oopDesc::is_oop(oop obj, bool ignore_mark_word) {
 bool oopDesc::is_oop_or_null(oop obj, bool ignore_mark_word) {
   return obj == NULL ? true : is_oop(obj, ignore_mark_word);
 }
-
-#ifndef PRODUCT
-// used only for asserts
-bool oopDesc::is_unlocked_oop() const {
-  if (!Universe::heap()->is_in_reserved(this)) return false;
-  return mark()->is_unlocked();
-}
-
-#if INCLUDE_CDS_JAVA_HEAP
-bool oopDesc::is_archived_object(oop p) {
-  return HeapShared::is_archived_object(p);
-}
-#endif
-#endif // PRODUCT
 
 VerifyOopClosure VerifyOopClosure::verify_oop;
 
@@ -156,16 +143,11 @@ bool oopDesc::has_klass_gap() {
   return UseCompressedClassPointers;
 }
 
-oop oopDesc::decode_oop_raw(narrowOop narrow_oop) {
-  return (oop)(void*)( (uintptr_t)Universe::narrow_oop_base() +
-                      ((uintptr_t)narrow_oop << Universe::narrow_oop_shift()));
-}
-
 void* oopDesc::load_klass_raw(oop obj) {
   if (UseCompressedClassPointers) {
     narrowKlass narrow_klass = *(obj->compressed_klass_addr());
     if (narrow_klass == 0) return NULL;
-    return (void*)Klass::decode_klass_raw(narrow_klass);
+    return (void*)CompressedKlassPointers::decode_raw(narrow_klass);
   } else {
     return *(void**)(obj->klass_addr());
   }
@@ -176,41 +158,10 @@ void* oopDesc::load_oop_raw(oop obj, int offset) {
   if (UseCompressedOops) {
     narrowOop narrow_oop = *(narrowOop*)addr;
     if (narrow_oop == 0) return NULL;
-    return (void*)decode_oop_raw(narrow_oop);
+    return (void*)CompressedOops::decode_raw(narrow_oop);
   } else {
     return *(void**)addr;
   }
-}
-
-bool oopDesc::is_valid(oop obj) {
-  if (!is_object_aligned(obj)) return false;
-  if ((size_t)(oopDesc*)obj < os::min_page_size()) return false;
-
-  // We need at least the mark and the klass word in the committed region.
-  if (!os::is_readable_range(obj, (oopDesc*)obj + 1)) return false;
-  if (!Universe::heap()->is_in(obj)) return false;
-
-  Klass* k = (Klass*)load_klass_raw(obj);
-
-  if (!os::is_readable_range(k, k + 1)) return false;
-  return MetaspaceUtils::is_range_in_committed(k, k + 1);
-}
-
-oop oopDesc::oop_or_null(address addr) {
-  if (is_valid(oop(addr))) {
-    // We were just given an oop directly.
-    return oop(addr);
-  }
-
-  // Try to find addr using block_start.
-  HeapWord* p = Universe::heap()->block_start(addr);
-  if (p != NULL && Universe::heap()->block_is_obj(p)) {
-    if (!is_valid(oop(p))) return NULL;
-    return oop(p);
-  }
-
-  // If we can't find it it just may mean that heap wasn't parsable.
-  return NULL;
 }
 
 oop oopDesc::obj_field_acquire(int offset) const                      { return HeapAccess<MO_ACQUIRE>::oop_load_at(as_oop(), offset); }
@@ -255,3 +206,12 @@ void oopDesc::release_float_field_put(int offset, jfloat value)       { HeapAcce
 
 jdouble oopDesc::double_field_acquire(int offset) const               { return HeapAccess<MO_ACQUIRE>::load_at(as_oop(), offset); }
 void oopDesc::release_double_field_put(int offset, jdouble value)     { HeapAccess<MO_RELEASE>::store_at(as_oop(), offset, value); }
+
+#ifdef ASSERT
+void oopDesc::verify_forwardee(oop forwardee) {
+#if INCLUDE_CDS_JAVA_HEAP
+  assert(!HeapShared::is_archived_object(forwardee) && !HeapShared::is_archived_object(this),
+         "forwarding archive object");
+#endif
+}
+#endif

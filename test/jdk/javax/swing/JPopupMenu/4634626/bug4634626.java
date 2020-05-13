@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,22 +26,21 @@
  * @key headful
  * @bug 4634626
  * @summary Implement context popup menus for components
- * @author Alexander Zuev
  * @library /lib/client
  * @build ExtendedRobot
- * @run applet bug4634626.html
+ * @run main bug4634626
  */
 
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
 
-public class bug4634626 extends JApplet {
+public class bug4634626 {
 
     public boolean passed = true;
     public boolean done = false;
 
-    public JFrame mainFrame = new JFrame("Bug4634626");
+    public static JFrame mainFrame = new JFrame("Bug4634626");
     public JRootPane rootPane = mainFrame.getRootPane();
     public JPanel contentPane = new JPanel();
     public JButton nopButton = new JButton("No popup button");
@@ -84,6 +83,16 @@ public class bug4634626 extends JApplet {
 
     public static MouseWatcher mouser = new MouseWatcher();
 
+    public static void main(final String[] args) throws Exception {
+        try {
+            bug4634626 app = new bug4634626();
+            app.init();
+            app.destroy();
+        } finally {
+            if (mainFrame != null) SwingUtilities.invokeAndWait(() -> mainFrame.dispose());
+        }
+    }
+
     public void init() {
 
         try {
@@ -118,6 +127,7 @@ public class bug4634626 extends JApplet {
         mainFrame.setLocation(50, 50);
 
         mainFrame.addWindowListener(new TestStateListener());
+        mainFrame.setLocationRelativeTo(null);
         mainFrame.setVisible(true);
 
         while(!done) Thread.yield();

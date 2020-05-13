@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,12 +29,12 @@ import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderContext;
 import org.graalvm.compiler.nodes.graphbuilderconf.InlineInvokePlugin;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.phases.OptimisticOptimizations;
 import org.graalvm.compiler.phases.common.CanonicalizerPhase;
 import org.graalvm.compiler.phases.common.FrameStateAssignmentPhase;
 import org.graalvm.compiler.phases.common.GuardLoweringPhase;
 import org.graalvm.compiler.phases.tiers.MidTierContext;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -238,8 +238,8 @@ public class CompareCanonicalizerTest3 extends GraalCompilerTest {
 
     protected void assertCanonicallyEqual(String snippet, String reference) {
         StructuredGraph graph = parseEager(snippet, AllowAssumptions.YES);
-        PhaseContext context = new PhaseContext(getProviders());
-        CanonicalizerPhase canonicalizer = new CanonicalizerPhase();
+        CoreProviders context = getProviders();
+        CanonicalizerPhase canonicalizer = this.createCanonicalizerPhase();
 
         canonicalizer.apply(graph, context);
         new GuardLoweringPhase().apply(graph, new MidTierContext(getProviders(), getTargetProvider(), OptimisticOptimizations.ALL, graph.getProfilingInfo()));

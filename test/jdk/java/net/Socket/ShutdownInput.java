@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 /*
  * @test
  * @bug 7014860
+ * @library /test/lib
  * @summary Socket.getInputStream().available() not clear for
  *          case that connection is shutdown for reading
  * @run main ShutdownInput
@@ -38,14 +39,17 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import jdk.test.lib.net.IPSupport;
 
 public class ShutdownInput {
     static boolean failed = false;
 
     public static void main(String args[]) throws Exception {
-        InetAddress iaddr = InetAddress.getLocalHost();
+        IPSupport.throwSkippedExceptionIfNonOperational();
 
-        try ( ServerSocket ss = new ServerSocket(0);
+        InetAddress iaddr = InetAddress.getLoopbackAddress();
+
+        try (ServerSocket ss = new ServerSocket(0, 0, iaddr);
               Socket s1 = new Socket(iaddr, ss.getLocalPort());
               Socket s2 = ss.accept() ) {
 
@@ -53,7 +57,8 @@ public class ShutdownInput {
         }
 
         // check the NIO socket adapter
-        try (ServerSocketChannel sc = ServerSocketChannel.open().bind(null);
+        InetSocketAddress socketAddress = new InetSocketAddress(iaddr, 0);
+        try (ServerSocketChannel sc = ServerSocketChannel.open().bind(socketAddress);
              SocketChannel s1 = SocketChannel.open(
                      new InetSocketAddress(iaddr, sc.socket().getLocalPort()));
              SocketChannel s2 = sc.accept() ) {

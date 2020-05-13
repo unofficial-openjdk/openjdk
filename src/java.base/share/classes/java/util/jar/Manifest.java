@@ -33,9 +33,8 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import sun.nio.cs.UTF_8;
 import sun.security.util.SecurityProperties;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * The Manifest class is used to maintain Manifest entry names and their
@@ -195,7 +194,7 @@ public class Manifest implements Cloneable {
      * MainAttributes prior to invoking this method.
      *
      * @param out the output stream
-     * @exception IOException if an I/O error has occurred
+     * @throws    IOException if an I/O error has occurred
      * @see #getMainAttributes
      */
     public void write(OutputStream out) throws IOException {
@@ -237,7 +236,7 @@ public class Manifest implements Cloneable {
      */
     static void println72(OutputStream out, String line) throws IOException {
         if (!line.isEmpty()) {
-            byte[] lineBytes = line.getBytes(UTF_8);
+            byte[] lineBytes = line.getBytes(UTF_8.INSTANCE);
             int length = lineBytes.length;
             // first line can hold one byte more than subsequent lines which
             // start with a continuation line break space
@@ -276,7 +275,7 @@ public class Manifest implements Cloneable {
      * manifest entries.
      *
      * @param is the input stream
-     * @exception IOException if an I/O error has occurred
+     * @throws    IOException if an I/O error has occurred
      */
     public void read(InputStream is) throws IOException {
         read(is, null);
@@ -337,7 +336,7 @@ public class Manifest implements Cloneable {
                     lastline = buf;
                     continue;
                 }
-                name = new String(buf, 0, buf.length, UTF_8);
+                name = new String(buf, 0, buf.length, UTF_8.INSTANCE);
                 lastline = null;
             }
             Attributes attr = getAttributes(name);
@@ -362,11 +361,7 @@ public class Manifest implements Cloneable {
         if (toLower(lbuf[0]) == 'n' && toLower(lbuf[1]) == 'a' &&
             toLower(lbuf[2]) == 'm' && toLower(lbuf[3]) == 'e' &&
             lbuf[4] == ':' && lbuf[5] == ' ') {
-            try {
-                return new String(lbuf, 6, len - 6, UTF_8);
-            }
-            catch (Exception e) {
-            }
+            return new String(lbuf, 6, len - 6, UTF_8.INSTANCE);
         }
         return null;
     }

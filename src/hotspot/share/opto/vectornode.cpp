@@ -25,6 +25,7 @@
 #include "memory/allocation.inline.hpp"
 #include "opto/connode.hpp"
 #include "opto/vectornode.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 //------------------------------VectorNode--------------------------------------
 
@@ -70,8 +71,8 @@ int VectorNode::opcode(int sopc, BasicType bt) {
     return Op_SubVD;
   case Op_MulI:
     switch (bt) {
-    case T_BOOLEAN:
-    case T_BYTE:   return 0;   // Unimplemented
+    case T_BOOLEAN:return 0;
+    case T_BYTE:   return Op_MulVB;
     case T_CHAR:
     case T_SHORT:  return Op_MulVS;
     case T_INT:    return Op_MulVI;
@@ -104,6 +105,18 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_DivD:
     assert(bt == T_DOUBLE, "must be");
     return Op_DivVD;
+  case Op_AbsI:
+    switch (bt) {
+    case T_BOOLEAN:
+    case T_CHAR:  return 0; // abs does not make sense for unsigned
+    case T_BYTE:  return Op_AbsVB;
+    case T_SHORT: return Op_AbsVS;
+    case T_INT:   return Op_AbsVI;
+    default: ShouldNotReachHere(); return 0;
+    }
+  case Op_AbsL:
+    assert(bt == T_LONG, "must be");
+    return Op_AbsVL;
   case Op_AbsF:
     assert(bt == T_FLOAT, "must be");
     return Op_AbsVF;
@@ -116,6 +129,9 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_NegD:
     assert(bt == T_DOUBLE, "must be");
     return Op_NegVD;
+  case Op_RoundDoubleMode:
+    assert(bt == T_DOUBLE, "must be");
+    return Op_RoundDoubleModeV;
   case Op_SqrtF:
     assert(bt == T_FLOAT, "must be");
     return Op_SqrtVF;
@@ -178,6 +194,18 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_XorI:
   case Op_XorL:
     return Op_XorV;
+  case Op_MinF:
+    assert(bt == T_FLOAT, "must be");
+    return Op_MinV;
+  case Op_MinD:
+    assert(bt == T_DOUBLE, "must be");
+    return Op_MinV;
+  case Op_MaxF:
+    assert(bt == T_FLOAT, "must be");
+    return Op_MaxV;
+  case Op_MaxD:
+    assert(bt == T_DOUBLE, "must be");
+    return Op_MaxV;
 
   case Op_LoadB:
   case Op_LoadUB:
@@ -211,7 +239,7 @@ bool VectorNode::implemented(int opc, uint vlen, BasicType bt) {
       (vlen > 1) && is_power_of_2(vlen) &&
       Matcher::vector_size_supported(bt, vlen)) {
     int vopc = VectorNode::opcode(opc, bt);
-    return vopc > 0 && Matcher::match_rule_supported_vector(vopc, vlen);
+    return vopc > 0 && Matcher::match_rule_supported_vector(vopc, vlen, bt);
   }
   return false;
 }
@@ -230,6 +258,13 @@ bool VectorNode::is_type_transition_to_int(Node* n) {
 
 bool VectorNode::is_muladds2i(Node* n) {
   if (n->Opcode() == Op_MulAddS2I) {
+    return true;
+  }
+  return false;
+}
+
+bool VectorNode::is_roundopD(Node *n) {
+  if (n->Opcode() == Op_RoundDoubleMode) {
     return true;
   }
   return false;
@@ -273,8 +308,6 @@ void VectorNode::vector_operands(Node* n, uint* start, uint* end) {
   case Op_LoadI:   case Op_LoadL:
   case Op_LoadF:   case Op_LoadD:
   case Op_LoadP:   case Op_LoadN:
-  case Op_LoadBarrierSlowReg:
-  case Op_LoadBarrierWeakSlowReg:
     *start = 0;
     *end   = 0; // no vector operands
     break;
@@ -338,6 +371,7 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_SubVF: return new SubVFNode(n1, n2, vt);
   case Op_SubVD: return new SubVDNode(n1, n2, vt);
 
+  case Op_MulVB: return new MulVBNode(n1, n2, vt);
   case Op_MulVS: return new MulVSNode(n1, n2, vt);
   case Op_MulVI: return new MulVINode(n1, n2, vt);
   case Op_MulVL: return new MulVLNode(n1, n2, vt);
@@ -347,6 +381,10 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_DivVF: return new DivVFNode(n1, n2, vt);
   case Op_DivVD: return new DivVDNode(n1, n2, vt);
 
+  case Op_AbsVB: return new AbsVBNode(n1, vt);
+  case Op_AbsVS: return new AbsVSNode(n1, vt);
+  case Op_AbsVI: return new AbsVINode(n1, vt);
+  case Op_AbsVL: return new AbsVLNode(n1, vt);
   case Op_AbsVF: return new AbsVFNode(n1, vt);
   case Op_AbsVD: return new AbsVDNode(n1, vt);
 
@@ -376,6 +414,11 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_AndV: return new AndVNode(n1, n2, vt);
   case Op_OrV:  return new OrVNode (n1, n2, vt);
   case Op_XorV: return new XorVNode(n1, n2, vt);
+
+  case Op_MinV: return new MinVNode(n1, n2, vt);
+  case Op_MaxV: return new MaxVNode(n1, n2, vt);
+
+  case Op_RoundDoubleModeV: return new RoundDoubleModeVNode(n1, n2, vt);
 
   case Op_MulAddVS2VI: return new MulAddVS2VINode(n1, n2, vt);
   default:
@@ -425,7 +468,7 @@ VectorNode* VectorNode::scalar2vector(Node* s, uint vlen, const Type* opd_t) {
 }
 
 VectorNode* VectorNode::shift_count(Node* shift, Node* cnt, uint vlen, BasicType bt) {
-  assert(VectorNode::is_shift(shift) && !cnt->is_Con(), "only variable shift count");
+  assert(VectorNode::is_shift(shift), "sanity");
   // Match shift count type with shift vector type.
   const TypeVect* vt = TypeVect::make(bt, vlen);
   switch (shift->Opcode()) {
@@ -441,6 +484,71 @@ VectorNode* VectorNode::shift_count(Node* shift, Node* cnt, uint vlen, BasicType
     fatal("Missed vector creation for '%s'", NodeClassNames[shift->Opcode()]);
     return NULL;
   }
+}
+
+bool VectorNode::is_vector_shift(int opc) {
+  assert(opc > _last_machine_leaf && opc < _last_opcode, "invalid opcode");
+  switch (opc) {
+  case Op_LShiftVB:
+  case Op_LShiftVS:
+  case Op_LShiftVI:
+  case Op_LShiftVL:
+  case Op_RShiftVB:
+  case Op_RShiftVS:
+  case Op_RShiftVI:
+  case Op_RShiftVL:
+  case Op_URShiftVB:
+  case Op_URShiftVS:
+  case Op_URShiftVI:
+  case Op_URShiftVL:
+    return true;
+  default:
+    return false;
+  }
+}
+
+bool VectorNode::is_vector_shift_count(int opc) {
+  assert(opc > _last_machine_leaf && opc < _last_opcode, "invalid opcode");
+  switch (opc) {
+  case Op_RShiftCntV:
+  case Op_LShiftCntV:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_con_M1(Node* n) {
+  if (n->is_Con()) {
+    const Type* t = n->bottom_type();
+    if (t->isa_int() && t->is_int()->get_con() == -1) {
+      return true;
+    }
+    if (t->isa_long() && t->is_long()->get_con() == -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool VectorNode::is_all_ones_vector(Node* n) {
+  switch (n->Opcode()) {
+  case Op_ReplicateB:
+  case Op_ReplicateS:
+  case Op_ReplicateI:
+  case Op_ReplicateL:
+    return is_con_M1(n->in(1));
+  default:
+    return false;
+  }
+}
+
+bool VectorNode::is_vector_bitwise_not_pattern(Node* n) {
+  if (n->Opcode() == Op_XorV) {
+    return is_all_ones_vector(n->in(1)) ||
+           is_all_ones_vector(n->in(2));
+  }
+  return false;
 }
 
 // Return initial Pack node. Additional operands added with add_opd() calls.
@@ -582,7 +690,46 @@ int ReductionNode::opcode(int opc, BasicType bt) {
       assert(bt == T_DOUBLE, "must be");
       vopc = Op_MulReductionVD;
       break;
-    // TODO: add MulL for targets that support it
+    case Op_MinF:
+      assert(bt == T_FLOAT, "must be");
+      vopc = Op_MinReductionV;
+      break;
+    case Op_MinD:
+      assert(bt == T_DOUBLE, "must be");
+      vopc = Op_MinReductionV;
+      break;
+    case Op_MaxF:
+      assert(bt == T_FLOAT, "must be");
+      vopc = Op_MaxReductionV;
+      break;
+    case Op_MaxD:
+      assert(bt == T_DOUBLE, "must be");
+      vopc = Op_MaxReductionV;
+      break;
+    case Op_AndI:
+      assert(bt == T_INT, "must be");
+      vopc = Op_AndReductionV;
+      break;
+    case Op_AndL:
+      assert(bt == T_LONG, "must be");
+      vopc = Op_AndReductionV;
+      break;
+    case Op_OrI:
+      assert(bt == T_INT, "must be");
+      vopc = Op_OrReductionV;
+      break;
+    case Op_OrL:
+      assert(bt == T_LONG, "must be");
+      vopc = Op_OrReductionV;
+      break;
+    case Op_XorI:
+      assert(bt == T_INT, "must be");
+      vopc = Op_XorReductionV;
+      break;
+    case Op_XorL:
+      assert(bt == T_LONG, "must be");
+      vopc = Op_XorReductionV;
+      break;
     default:
       break;
   }
@@ -606,6 +753,11 @@ ReductionNode* ReductionNode::make(int opc, Node *ctrl, Node* n1, Node* n2, Basi
   case Op_MulReductionVL: return new MulReductionVLNode(ctrl, n1, n2);
   case Op_MulReductionVF: return new MulReductionVFNode(ctrl, n1, n2);
   case Op_MulReductionVD: return new MulReductionVDNode(ctrl, n1, n2);
+  case Op_MinReductionV:  return new MinReductionVNode(ctrl, n1, n2);
+  case Op_MaxReductionV:  return new MaxReductionVNode(ctrl, n1, n2);
+  case Op_AndReductionV:  return new AndReductionVNode(ctrl, n1, n2);
+  case Op_OrReductionV:   return new OrReductionVNode(ctrl, n1, n2);
+  case Op_XorReductionV:  return new XorReductionVNode(ctrl, n1, n2);
   default:
     fatal("Missed vector creation for '%s'", NodeClassNames[vopc]);
     return NULL;
@@ -621,3 +773,14 @@ bool ReductionNode::implemented(int opc, uint vlen, BasicType bt) {
   }
   return false;
 }
+
+MacroLogicVNode* MacroLogicVNode::make(PhaseGVN& gvn, Node* in1, Node* in2, Node* in3,
+                                      uint truth_table, const TypeVect* vt) {
+  assert(truth_table <= 0xFF, "invalid");
+  assert(in1->bottom_type()->is_vect()->length_in_bytes() == vt->length_in_bytes(), "mismatch");
+  assert(in2->bottom_type()->is_vect()->length_in_bytes() == vt->length_in_bytes(), "mismatch");
+  assert(in3->bottom_type()->is_vect()->length_in_bytes() == vt->length_in_bytes(), "mismatch");
+  Node* fn = gvn.intcon(truth_table);
+  return new MacroLogicVNode(in1, in2, in3, fn, vt);
+}
+

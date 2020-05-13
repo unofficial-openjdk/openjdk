@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@
  * @build sun.hotspot.WhiteBox
  * @compile/module=java.base java/lang/ModuleHelper.java
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI JVMAddModuleExports
  */
 
@@ -127,13 +126,8 @@ public class JVMAddModuleExports {
         ModuleHelper.AddModuleExports(from_module, "x/apackage", to_module);
         ModuleHelper.AddModuleExports(from_module, "x/apackage", to_module);
 
-        // Export a package, using '.' instead of '/'
-        try {
-            ModuleHelper.AddModuleExports(from_module, "x.apackage", to_module);
-            throw new RuntimeException("Failed to get the expected IAE");
-        } catch(IllegalArgumentException e) {
-            // Expected
-        }
+        // Export the same package, using '.' instead of '/'
+        ModuleHelper.AddModuleExports(from_module, "x.apackage", to_module);
 
         // Export a package to the unnamed module and then to a specific module.
         // The qualified export should be ignored.

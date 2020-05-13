@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,11 +28,10 @@ import org.graalvm.compiler.api.directives.GraalDirectives;
 import org.graalvm.compiler.nodes.GuardNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.nodes.spi.LoweringTool;
-import org.graalvm.compiler.phases.common.CanonicalizerPhase;
-import org.graalvm.compiler.phases.common.LoweringPhase;
 import org.graalvm.compiler.phases.common.ConditionalEliminationPhase;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
+import org.graalvm.compiler.phases.common.LoweringPhase;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -94,8 +93,8 @@ public class ConditionalEliminationTest10 extends ConditionalEliminationTestBase
 
     private void test(String snippet, int guardCount) {
         StructuredGraph graph = parseEager(snippet, AllowAssumptions.YES);
-        PhaseContext context = new PhaseContext(getProviders());
-        new LoweringPhase(new CanonicalizerPhase(), LoweringTool.StandardLoweringStage.HIGH_TIER).apply(graph, context);
+        CoreProviders context = getProviders();
+        new LoweringPhase(createCanonicalizerPhase(), LoweringTool.StandardLoweringStage.HIGH_TIER).apply(graph, context);
         new ConditionalEliminationPhase(true).apply(graph, context);
         Assert.assertEquals(guardCount, graph.getNodes().filter(GuardNode.class).count());
     }

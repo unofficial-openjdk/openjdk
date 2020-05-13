@@ -25,13 +25,14 @@
 #ifndef CPU_ARM_VM_VERSION_ARM_HPP
 #define CPU_ARM_VM_VERSION_ARM_HPP
 
+#include "runtime/abstract_vm_version.hpp"
 #include "runtime/globals_extension.hpp"
-#include "runtime/vm_version.hpp"
 
 class VM_Version: public Abstract_VM_Version {
   friend class JVMCIVMStructs;
 
   static bool _has_simd;
+  static bool _has_mp_ext;
 
  protected:
   // Are we done with vm version initialization
@@ -47,6 +48,7 @@ class VM_Version: public Abstract_VM_Version {
     vfp = 0,
     vfp3_32 = 1,
     simd = 2,
+    mp_ext = 3
   };
 
   enum Feature_Flag_Set {
@@ -56,6 +58,7 @@ class VM_Version: public Abstract_VM_Version {
     vfp_m     = 1 << vfp,
     vfp3_32_m = 1 << vfp3_32,
     simd_m    = 1 << simd,
+    mp_ext_m  = 1 << mp_ext
   };
 
   // The value stored by "STR PC, [addr]" instruction can be either
@@ -97,6 +100,7 @@ class VM_Version: public Abstract_VM_Version {
   static bool has_vfp()             { return (_features & vfp_m) != 0; }
   static bool has_vfp3_32()         { return (_features & vfp3_32_m) != 0; }
   static bool has_simd()            { return (_features & simd_m) != 0; }
+  static bool has_multiprocessing_extensions() { return (_features & mp_ext_m) != 0; }
 
   static bool simd_math_is_compliant() { return false; }
 

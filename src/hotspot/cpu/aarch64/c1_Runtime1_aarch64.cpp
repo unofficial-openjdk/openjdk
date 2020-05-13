@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,6 +33,7 @@
 #include "gc/shared/cardTable.hpp"
 #include "gc/shared/cardTableBarrierSet.hpp"
 #include "interpreter/interpreter.hpp"
+#include "memory/universe.hpp"
 #include "nativeInst_aarch64.hpp"
 #include "oops/compiledICHolder.hpp"
 #include "oops/oop.inline.hpp"
@@ -42,6 +43,7 @@
 #include "runtime/signature.hpp"
 #include "runtime/vframe.hpp"
 #include "runtime/vframeArray.hpp"
+#include "utilities/powerOfTwo.hpp"
 #include "vmreg_aarch64.inline.hpp"
 
 
@@ -62,7 +64,7 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
 
   // do the call
   lea(rscratch1, RuntimeAddress(entry));
-  blrt(rscratch1, args_size + 1, 8, 1);
+  blr(rscratch1);
   bind(retaddr);
   int call_offset = offset();
   // verify callee-saved register
@@ -537,7 +539,7 @@ OopMapSet* Runtime1::generate_patching(StubAssembler* sasm, address target) {
   __ set_last_Java_frame(sp, rfp, retaddr, rscratch1);
   // do the call
   __ lea(rscratch1, RuntimeAddress(target));
-  __ blrt(rscratch1, 1, 0, 1);
+  __ blr(rscratch1);
   __ bind(retaddr);
   OopMapSet* oop_maps = new OopMapSet();
   oop_maps->add_gc_map(__ offset(), oop_map);
@@ -839,6 +841,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           __ sub(arr_size, arr_size, t1);  // body length
           __ add(t1, t1, obj);       // body start
           __ initialize_body(t1, arr_size, 0, t2);
+          __ membar(Assembler::StoreStore);
           __ verify_oop(obj);
 
           __ ret(lr);
@@ -1122,6 +1125,16 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
       }
       break;
 
+    case dtrace_object_alloc_id:
+      { // c_rarg0: object
+        StubFrame f(sasm, "dtrace_object_alloc", dont_gc_arguments);
+        save_live_registers(sasm);
+
+        __ call_VM_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_object_alloc), c_rarg0);
+
+        restore_live_registers(sasm);
+      }
+      break;
 
     default:
       { StubFrame f(sasm, "unimplemented entry", dont_gc_arguments);

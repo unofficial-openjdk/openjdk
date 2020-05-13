@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,7 @@ import java.security.cert.X509Certificate;
  */
 public class HandshakeCompletedEvent extends EventObject
 {
+    @java.io.Serial
     private static final long serialVersionUID = 7914963744257769778L;
 
     private transient SSLSession session;
@@ -156,16 +157,19 @@ public class HandshakeCompletedEvent extends EventObject
      *          certificate authorities.  (The certificates are in
      *          the original JSSE
      *          {@link javax.security.cert.X509Certificate} format).
-     * @exception SSLPeerUnverifiedException if the peer is not verified.
+     * @throws SSLPeerUnverifiedException if the peer is not verified.
+     * @throws UnsupportedOperationException if the underlying provider
+     *         does not implement the
+     *         {@link SSLSession#getPeerCertificateChain} operation.
      * @see #getPeerPrincipal()
      * @deprecated The {@link #getPeerCertificates()} method that returns an
      *               array of {@code java.security.cert.Certificate} should
      *               be used instead.
      */
-    @Deprecated(since="9")
+    @SuppressWarnings("removal")
+    @Deprecated(since="9", forRemoval=true)
     public javax.security.cert.X509Certificate [] getPeerCertificateChain()
-            throws SSLPeerUnverifiedException
-    {
+            throws SSLPeerUnverifiedException {
         return session.getPeerCertificateChain();
     }
 
@@ -174,7 +178,7 @@ public class HandshakeCompletedEvent extends EventObject
      * defining the session.
      *
      * @return the peer's principal. Returns an X500Principal of the
-     * end-entity certiticate for X509-based cipher suites, and
+     * end-entity certificate for X509-based cipher suites, and
      * KerberosPrincipal for Kerberos cipher suites.
      *
      * @throws SSLPeerUnverifiedException if the peer's identity has not

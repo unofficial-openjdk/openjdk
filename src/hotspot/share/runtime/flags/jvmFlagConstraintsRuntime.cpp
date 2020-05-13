@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 #include "runtime/globals.hpp"
 #include "runtime/safepointMechanism.hpp"
 #include "runtime/task.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 JVMFlag::Error ObjectAlignmentInBytesConstraintFunc(intx value, bool verbose) {
   if (!is_power_of_2(value)) {
@@ -129,14 +130,4 @@ JVMFlag::Error PerfDataSamplingIntervalFunc(intx value, bool verbose) {
   } else {
     return JVMFlag::SUCCESS;
   }
-}
-
-JVMFlag::Error ThreadLocalHandshakesConstraintFunc(bool value, bool verbose) {
-  if (value) {
-    if (!SafepointMechanism::supports_thread_local_poll()) {
-      JVMFlag::printError(verbose, "ThreadLocalHandshakes not yet supported on this platform\n");
-      return JVMFlag::VIOLATES_CONSTRAINT;
-    }
-  }
-  return JVMFlag::SUCCESS;
 }

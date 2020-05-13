@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -125,6 +125,10 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
         public boolean areDeoptsFixed() {
             return this.ordinal() >= FIXED_DEOPTS.ordinal();
         }
+
+        public boolean requiresValueProxies() {
+            return this != AFTER_FSA;
+        }
     }
 
     /**
@@ -133,6 +137,7 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
     public enum AllowAssumptions {
         YES,
         NO;
+
         public static AllowAssumptions ifTrue(boolean flag) {
             return flag ? YES : NO;
         }
@@ -548,6 +553,8 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
     /**
      * Creates a copy of this graph.
      *
+     * If a node contains an array of objects, only shallow copy of the field is applied.
+     *
      * @param newName the name of the copy, used for debugging purposes (can be null)
      * @param duplicationMapCallback consumer of the duplication map created during the copying
      * @param debugForCopy the debug context for the graph copy. This must not be the debug for this
@@ -678,7 +685,7 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
         if (node instanceof AbstractBeginNode) {
             ((AbstractBeginNode) node).prepareDelete();
         }
-        assert node.hasNoUsages() : node + " " + node.usages().count() + ", " + node.usages().first();
+        assert node.hasNoUsages() : node + " " + node.getUsageCount() + ", " + node.usages().first();
         GraphUtil.unlinkFixedNode(node);
         node.safeDelete();
     }
@@ -966,7 +973,7 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
      */
     public List<ResolvedJavaMethod> getMethods() {
         if (methods != null) {
-            assert checkFrameStatesAgainstInlinedMethods();
+            assert isSubstitution || checkFrameStatesAgainstInlinedMethods();
             return Collections.unmodifiableList(methods);
         }
         return Collections.emptyList();

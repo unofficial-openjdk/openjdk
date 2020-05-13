@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,9 @@ import static optionsvalidation.JVMOptionsUtils.printOutputContent;
 import static optionsvalidation.JVMOptionsUtils.VMType;
 
 public abstract class JVMOption {
+
+    private static final String UNLOCK_FLAG1 = "-XX:+UnlockDiagnosticVMOptions";
+    private static final String UNLOCK_FLAG2 = "-XX:+UnlockExperimentalVMOptions";
 
     /**
      * Executor for JCMD
@@ -146,7 +149,7 @@ public abstract class JVMOption {
      *
      * @return name of the option
      */
-    final String getName() {
+    public final String getName() {
         return name;
     }
 
@@ -397,8 +400,7 @@ public abstract class JVMOption {
         }
 
         if (GCType != null &&
-            !(prepend.contains("-XX:+UseConcMarkSweepGC") ||
-              prepend.contains("-XX:+UseSerialGC") ||
+            !(prepend.contains("-XX:+UseSerialGC") ||
               prepend.contains("-XX:+UseParallelGC") ||
               prepend.contains("-XX:+UseG1GC"))) {
             explicitGC = GCType;
@@ -408,11 +410,14 @@ public abstract class JVMOption {
             runJava.add(explicitGC);
         }
 
+        runJava.add(UNLOCK_FLAG1);
+        runJava.add(UNLOCK_FLAG2);
+
         runJava.addAll(prepend);
         runJava.add(optionValue);
         runJava.add(JVMStartup.class.getName());
 
-        out = new OutputAnalyzer(ProcessTools.createJavaProcessBuilder(runJava.toArray(new String[0])).start());
+        out = new OutputAnalyzer(ProcessTools.createJavaProcessBuilder(runJava).start());
 
         exitCode = out.getExitValue();
         String exitCodeString = null;

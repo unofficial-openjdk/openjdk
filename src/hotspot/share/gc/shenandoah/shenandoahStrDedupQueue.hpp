@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2017, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -31,8 +32,8 @@
 template <uint buffer_size>
 class ShenandoahOopBuffer : public CHeapObj<mtGC> {
 private:
-  oop   _buf[buffer_size];
-  uint  _index;
+  oop           _buf[buffer_size];
+  volatile uint _index;
   ShenandoahOopBuffer<buffer_size>* _next;
 
 public:
@@ -52,6 +53,10 @@ public:
 
   void unlink_or_oops_do(StringDedupUnlinkOrOopsDoClosure* cl);
   void oops_do(OopClosure* cl);
+
+private:
+  uint index_acquire() const;
+  void set_index_release(uint index);
 };
 
 typedef ShenandoahOopBuffer<64> ShenandoahQueueBuffer;

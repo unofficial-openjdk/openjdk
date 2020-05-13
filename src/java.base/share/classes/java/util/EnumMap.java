@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,7 @@ import jdk.internal.access.SharedSecrets;
  * throw {@link NullPointerException}.  Attempts to test for the
  * presence of a null key or to remove one will, however, function properly.
  * Null values are permitted.
-
+ *
  * <P>Like most collection implementations {@code EnumMap} is not
  * synchronized. If multiple threads access an enum map concurrently, and at
  * least one of the threads modifies the map, it should be synchronized
@@ -754,6 +754,7 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
                                         .getEnumConstantsShared(keyType);
     }
 
+    @java.io.Serial
     private static final long serialVersionUID = 458661240069192865L;
 
     /**
@@ -765,6 +766,7 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
      *             and value (Object) for each key-value mapping represented
      *             by the enum map.
      */
+    @java.io.Serial
     private void writeObject(java.io.ObjectOutputStream s)
         throws java.io.IOException
     {
@@ -790,6 +792,7 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
      * deserialize it).
      */
     @SuppressWarnings("unchecked")
+    @java.io.Serial
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.IOException, ClassNotFoundException
     {

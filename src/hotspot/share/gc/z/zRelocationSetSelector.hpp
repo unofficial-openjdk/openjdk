@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,55 +30,98 @@
 class ZPage;
 class ZRelocationSet;
 
+class ZRelocationSetSelectorGroupStats {
+  friend class ZRelocationSetSelectorGroup;
+
+private:
+  size_t _npages;
+  size_t _total;
+  size_t _live;
+  size_t _garbage;
+  size_t _empty;
+  size_t _compacting_from;
+  size_t _compacting_to;
+
+public:
+  ZRelocationSetSelectorGroupStats();
+
+  size_t npages() const;
+  size_t total() const;
+  size_t live() const;
+  size_t garbage() const;
+  size_t empty() const;
+  size_t compacting_from() const;
+  size_t compacting_to() const;
+};
+
+class ZRelocationSetSelectorStats {
+  friend class ZRelocationSetSelector;
+
+private:
+  ZRelocationSetSelectorGroupStats _small;
+  ZRelocationSetSelectorGroupStats _medium;
+  ZRelocationSetSelectorGroupStats _large;
+
+public:
+  const ZRelocationSetSelectorGroupStats& small() const;
+  const ZRelocationSetSelectorGroupStats& medium() const;
+  const ZRelocationSetSelectorGroupStats& large() const;
+};
+
 class ZRelocationSetSelectorGroup {
 private:
-  const char* const    _name;
-  const size_t         _page_size;
-  const size_t         _object_size_limit;
-  const size_t         _fragmentation_limit;
+  const char* const                _name;
+  const uint8_t                    _page_type;
+  const size_t                     _page_size;
+  const size_t                     _object_size_limit;
+  const size_t                     _fragmentation_limit;
 
-  ZArray<const ZPage*> _registered_pages;
-  const ZPage**        _sorted_pages;
-  size_t               _nselected;
-  size_t               _relocating;
-  size_t               _fragmentation;
+  ZArray<ZPage*>                   _registered_pages;
+  ZPage**                          _sorted_pages;
+  size_t                           _nselected;
+  ZRelocationSetSelectorGroupStats _stats;
 
+  bool is_disabled();
+  bool is_selectable();
   void semi_sort();
+  void select_inner();
 
 public:
   ZRelocationSetSelectorGroup(const char* name,
+                              uint8_t page_type,
                               size_t page_size,
                               size_t object_size_limit);
   ~ZRelocationSetSelectorGroup();
 
-  void register_live_page(const ZPage* page, size_t garbage);
+  void register_live_page(ZPage* page);
+  void register_garbage_page(ZPage* page);
   void select();
 
-  const ZPage* const* selected() const;
+  ZPage* const* selected() const;
   size_t nselected() const;
-  size_t relocating() const;
-  size_t fragmentation() const;
+
+  const ZRelocationSetSelectorGroupStats& stats() const;
 };
 
 class ZRelocationSetSelector : public StackObj {
 private:
   ZRelocationSetSelectorGroup _small;
   ZRelocationSetSelectorGroup _medium;
-  size_t                      _live;
-  size_t                      _garbage;
-  size_t                      _fragmentation;
+  ZRelocationSetSelectorGroup _large;
+
+  size_t total() const;
+  size_t empty() const;
+  size_t compacting_from() const;
+  size_t compacting_to() const;
 
 public:
   ZRelocationSetSelector();
 
-  void register_live_page(const ZPage* page);
-  void register_garbage_page(const ZPage* page);
+  void register_live_page(ZPage* page);
+  void register_garbage_page(ZPage* page);
   void select(ZRelocationSet* relocation_set);
 
-  size_t live() const;
-  size_t garbage() const;
-  size_t relocating() const;
-  size_t fragmentation() const;
+  ZRelocationSetSelectorStats stats() const;
 };
 
 #endif // SHARE_GC_Z_ZRELOCATIONSETSELECTOR_HPP

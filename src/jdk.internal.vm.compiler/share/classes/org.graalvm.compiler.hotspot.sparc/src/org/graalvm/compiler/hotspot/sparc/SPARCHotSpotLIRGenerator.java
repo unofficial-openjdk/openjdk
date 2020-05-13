@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import static jdk.vm.ci.sparc.SPARCKind.WORD;
 import static jdk.vm.ci.sparc.SPARCKind.XWORD;
 import static org.graalvm.compiler.lir.LIRValueUtil.asConstant;
 import static org.graalvm.compiler.lir.LIRValueUtil.isConstantValue;
+import static org.graalvm.compiler.lir.StandardOp.ZapRegistersOp;
 
 import org.graalvm.compiler.asm.sparc.SPARCAssembler;
 import org.graalvm.compiler.core.common.CompressEncoding;
@@ -53,7 +54,6 @@ import org.graalvm.compiler.hotspot.stubs.Stub;
 import org.graalvm.compiler.lir.LIRFrameState;
 import org.graalvm.compiler.lir.LIRInstruction;
 import org.graalvm.compiler.lir.LabelRef;
-import org.graalvm.compiler.lir.StandardOp.SaveRegistersOp;
 import org.graalvm.compiler.lir.SwitchStrategy;
 import org.graalvm.compiler.lir.Variable;
 import org.graalvm.compiler.lir.VirtualStackSlot;
@@ -239,6 +239,12 @@ public class SPARCHotSpotLIRGenerator extends SPARCLIRGenerator implements HotSp
     }
 
     @Override
+    public void emitDeoptimizeWithExceptionInCaller(Value exception) {
+        Register thread = getProviders().getRegisters().getThreadRegister();
+        append(new SPARCHotSpotDeoptimizeWithExceptionCallerOp(config, exception, thread));
+    }
+
+    @Override
     public Variable emitLogicCompareAndSwap(LIRKind accessKind, Value address, Value expectedValue, Value newValue, Value trueValue, Value falseValue) {
         ValueKind<?> kind = newValue.getValueKind();
         assert kind.equals(expectedValue.getValueKind());
@@ -349,10 +355,9 @@ public class SPARCHotSpotLIRGenerator extends SPARCLIRGenerator implements HotSp
     /**
      * @param savedRegisters the registers saved by this operation which may be subject to pruning
      * @param savedRegisterLocations the slots to which the registers are saved
-     * @param supportsRemove determines if registers can be pruned
      */
-    protected SPARCSaveRegistersOp emitSaveRegisters(Register[] savedRegisters, AllocatableValue[] savedRegisterLocations, boolean supportsRemove) {
-        SPARCSaveRegistersOp save = new SPARCSaveRegistersOp(savedRegisters, savedRegisterLocations, supportsRemove);
+    protected SPARCSaveRegistersOp emitSaveRegisters(Register[] savedRegisters, AllocatableValue[] savedRegisterLocations) {
+        SPARCSaveRegistersOp save = new SPARCSaveRegistersOp(savedRegisters, savedRegisterLocations);
         append(save);
         return save;
     }
@@ -402,7 +407,7 @@ public class SPARCHotSpotLIRGenerator extends SPARCLIRGenerator implements HotSp
     }
 
     @Override
-    public SaveRegistersOp createZapRegisters(Register[] zappedRegisters, JavaConstant[] zapValues) {
+    public ZapRegistersOp createZapRegisters(Register[] zappedRegisters, JavaConstant[] zapValues) {
         throw GraalError.unimplemented();
     }
 

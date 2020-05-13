@@ -25,7 +25,7 @@
 #ifndef SHARE_JFR_SUPPORT_JFRTHREADLOCAL_HPP
 #define SHARE_JFR_SUPPORT_JFRTHREADLOCAL_HPP
 
-#include "jfr/recorder/checkpoint/jfrCheckpointBlob.hpp"
+#include "jfr/utilities/jfrBlob.hpp"
 #include "jfr/utilities/jfrTypes.hpp"
 
 class JavaThread;
@@ -41,7 +41,7 @@ class JfrThreadLocal {
   JfrBuffer* _shelved_buffer;
   mutable JfrStackFrame* _stackframes;
   mutable traceid _trace_id;
-  JfrCheckpointBlobHandle _thread_cp;
+  JfrBlobHandle _thread;
   u8 _data_lost;
   traceid _stack_trace_id;
   jlong _user_time;
@@ -50,12 +50,14 @@ class JfrThreadLocal {
   unsigned int _stack_trace_hash;
   mutable u4 _stackdepth;
   volatile jint _entering_suspend_flag;
+  bool _excluded;
   bool _dead;
+  traceid _parent_trace_id;
 
   JfrBuffer* install_native_buffer() const;
   JfrBuffer* install_java_buffer() const;
   JfrStackFrame* install_stackframes() const;
-
+  void release(Thread* t);
   static void release(JfrThreadLocal* tl, Thread* t);
 
  public:
@@ -113,9 +115,7 @@ class JfrThreadLocal {
     _stackframes = frames;
   }
 
-  u4 stackdepth() const {
-    return _stackdepth;
-  }
+  u4 stackdepth() const;
 
   void set_stackdepth(u4 depth) {
     _stackdepth = depth;
@@ -127,6 +127,10 @@ class JfrThreadLocal {
 
   void set_thread_id(traceid thread_id) {
     _trace_id = thread_id;
+  }
+
+  traceid parent_thread_id() const {
+    return _parent_trace_id;
   }
 
   void set_cached_stack_trace_id(traceid id, unsigned int hash = 0) {
@@ -205,13 +209,20 @@ class JfrThreadLocal {
     _trace_id = id;
   }
 
+  bool is_excluded() const {
+    return _excluded;
+  }
+
   bool is_dead() const {
     return _dead;
   }
 
-  bool has_thread_checkpoint() const;
-  void set_thread_checkpoint(const JfrCheckpointBlobHandle& handle);
-  const JfrCheckpointBlobHandle& thread_checkpoint() const;
+  bool has_thread_blob() const;
+  void set_thread_blob(const JfrBlobHandle& handle);
+  const JfrBlobHandle& thread_blob() const;
+
+  static void exclude(Thread* t);
+  static void include(Thread* t);
 
   static void on_start(Thread* t);
   static void on_exit(Thread* t);

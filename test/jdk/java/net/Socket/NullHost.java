@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,15 +36,20 @@ public class NullHost {
 
         public Server() throws IOException {
             svr = new ServerSocket();
-            svr.bind(new InetSocketAddress(0));
+            // The client side calls Socket((String) null, ...) which
+            // resolves to InetAddress.getByName((String)null) which in
+            // turns will resolve to the loopback address
+            svr.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0));
         }
 
         public int getPort() {
             return svr.getLocalPort();
         }
 
+        volatile boolean done;
         public void shutdown() {
             try {
+                done = true;
                 svr.close();
             } catch (IOException e) {
             }
@@ -53,11 +58,12 @@ public class NullHost {
         public void run() {
             Socket s;
             try {
-                while (true) {
+                while (!done) {
                     s = svr.accept();
                     s.close();
                 }
             } catch (IOException e) {
+                if (!done) e.printStackTrace();
             }
         }
     }
@@ -71,13 +77,9 @@ public class NullHost {
         int port = s.getPort();
         s.start();
         try {
-            Socket sock = new Socket((String)null, port);
-            sock.close();
-            sock = new Socket((String)null, port, true);
-            sock.close();
-            sock = new Socket((String)null, port, null, 0);
-            sock.close();
-
+            try (var sock = new Socket((String)null, port)) {}
+            try (var sock = new Socket((String)null, port, true)) {}
+            try (var sock = new Socket((String)null, port, null, 0)) {}
         } catch (NullPointerException e) {
             throw new RuntimeException("Got a NPE");
         } finally {

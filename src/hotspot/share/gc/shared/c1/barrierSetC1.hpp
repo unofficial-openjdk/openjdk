@@ -100,7 +100,7 @@ public:
   BasicType type() const                 { return _type; }
   LIR_Opr resolved_addr() const          { return _resolved_addr; }
   void set_resolved_addr(LIR_Opr addr)   { _resolved_addr = addr; }
-  bool is_oop() const                    { return _type == T_ARRAY || _type == T_OBJECT; }
+  bool is_oop() const                    { return is_reference_type(_type); }
   DecoratorSet decorators() const        { return _decorators; }
   void clear_decorators(DecoratorSet ds) { _decorators &= ~ds; }
   bool is_raw() const                    { return (_decorators & AS_RAW) != 0; }
@@ -136,6 +136,8 @@ public:
   virtual LIR_Opr atomic_add_at(LIRAccess& access, LIRItem& value);
 
   virtual LIR_Opr resolve(LIRGenerator* gen, DecoratorSet decorators, LIR_Opr obj);
+
+  virtual const char* rtcall_name_for_address(address entry) { return NULL; }
 
   virtual void generate_c1_runtime_stubs(BufferBlob* buffer_blob) {}
 };

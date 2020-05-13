@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 
 AC_DEFUN_ONCE([HELP_SETUP_DEPENDENCY_HELP],
 [
-  AC_CHECK_PROGS(PKGHANDLER, apt-get yum brew port pkgutil pkgadd)
+  AC_CHECK_PROGS(PKGHANDLER, zypper apt-get yum brew port pkgutil pkgadd)
 ])
 
 AC_DEFUN([HELP_MSG_MISSING_DEPENDENCY],
@@ -34,7 +34,9 @@ AC_DEFUN([HELP_MSG_MISSING_DEPENDENCY],
   # $1 is the help tag: cups, alsa etc
   MISSING_DEPENDENCY=$1
 
-  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+  if test "x$MISSING_DEPENDENCY" = "xopenjdk"; then
+    HELP_MSG="OpenJDK distributions are available at http://jdk.java.net/."
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
     cygwin_help $MISSING_DEPENDENCY
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     msys_help $MISSING_DEPENDENCY
@@ -54,6 +56,8 @@ AC_DEFUN([HELP_MSG_MISSING_DEPENDENCY],
         pkgutil_help $MISSING_DEPENDENCY ;;
       pkgadd)
         pkgadd_help  $MISSING_DEPENDENCY ;;
+      zypper)
+        zypper_help  $MISSING_DEPENDENCY ;;
     esac
 
     if test "x$PKGHANDLER_COMMAND" != x; then
@@ -89,8 +93,6 @@ apt_help() {
       PKGHANDLER_COMMAND="sudo apt-get install gcc-multilib g++-multilib" ;;
     devkit)
       PKGHANDLER_COMMAND="sudo apt-get install build-essential" ;;
-    openjdk)
-      PKGHANDLER_COMMAND="sudo apt-get install openjdk-8-jdk" ;;
     alsa)
       PKGHANDLER_COMMAND="sudo apt-get install libasound2-dev" ;;
     cups)
@@ -110,12 +112,29 @@ apt_help() {
   esac
 }
 
+zypper_help() {
+  case $1 in
+    devkit)
+      PKGHANDLER_COMMAND="sudo zypper install gcc gcc-c++" ;;
+    alsa)
+      PKGHANDLER_COMMAND="sudo zypper install alsa-devel" ;;
+    cups)
+      PKGHANDLER_COMMAND="sudo zypper install cups-devel" ;;
+    fontconfig)
+      PKGHANDLER_COMMAND="sudo zypper install fontconfig-devel" ;;
+    freetype)
+      PKGHANDLER_COMMAND="sudo zypper install freetype-devel" ;;
+    x11)
+      PKGHANDLER_COMMAND="sudo zypper install libX11-devel libXext-devel libXrender-devel libXrandr-devel libXtst-devel libXt-devel libXi-devel" ;;
+    ccache)
+      PKGHANDLER_COMMAND="sudo zypper install ccache" ;;
+  esac
+}
+
 yum_help() {
   case $1 in
     devkit)
       PKGHANDLER_COMMAND="sudo yum groupinstall \"Development Tools\"" ;;
-    openjdk)
-      PKGHANDLER_COMMAND="sudo yum install java-1.8.0-openjdk-devel" ;;
     alsa)
       PKGHANDLER_COMMAND="sudo yum install alsa-lib-devel" ;;
     cups)
@@ -133,8 +152,6 @@ yum_help() {
 
 brew_help() {
   case $1 in
-    openjdk)
-      PKGHANDLER_COMMAND="brew cask install java" ;;
     freetype)
       PKGHANDLER_COMMAND="brew install freetype" ;;
     ccache)
@@ -163,21 +180,25 @@ AC_DEFUN_ONCE([HELP_PRINT_ADDITIONAL_HELP_AND_EXIT],
   if test "x$CONFIGURE_PRINT_ADDITIONAL_HELP" != x; then
 
     # Print available toolchains
-    $PRINTF "The following toolchains are available as arguments to --with-toolchain-type.\n"
-    $PRINTF "Which are valid to use depends on the build platform.\n"
+    $PRINTF "The following toolchains are valid as arguments to --with-toolchain-type.\n"
+    $PRINTF "Which are available to use depends on the build platform.\n"
     for toolchain in $VALID_TOOLCHAINS_all; do
       # Use indirect variable referencing
       toolchain_var_name=TOOLCHAIN_DESCRIPTION_$toolchain
       TOOLCHAIN_DESCRIPTION=${!toolchain_var_name}
-      $PRINTF "  %-10s  %s\n" $toolchain "$TOOLCHAIN_DESCRIPTION"
+      $PRINTF "  %-22s  %s\n" $toolchain "$TOOLCHAIN_DESCRIPTION"
     done
     $PRINTF "\n"
 
-    # Print available jvm features
-    $PRINTF "The following JVM features are available as arguments to --with-jvm-features.\n"
-    $PRINTF "Which are valid to use depends on the target platform.\n  "
-    $PRINTF "%s " $VALID_JVM_FEATURES
-    $PRINTF "\n"
+    # Print available JVM features
+    $PRINTF "The following JVM features are valid as arguments to --with-jvm-features.\n"
+    $PRINTF "Which are available to use depends on the environment and JVM variant.\n"
+    m4_foreach(FEATURE, m4_split(jvm_features_valid), [
+      # Create an m4 variable containing the description for FEATURE.
+      m4_define(FEATURE_DESCRIPTION, [jvm_feature_desc_]m4_translit(FEATURE, -, _))
+      $PRINTF "  %-22s  %s\n" FEATURE "FEATURE_DESCRIPTION"
+      m4_undefine([FEATURE_DESCRIPTION])
+    ])
 
     # And now exit directly
     exit 0

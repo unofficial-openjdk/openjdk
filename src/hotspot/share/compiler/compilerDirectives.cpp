@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,9 @@
 
 CompilerDirectives::CompilerDirectives() : _next(NULL), _match(NULL), _ref_count(0) {
   _c1_store = new DirectiveSet(this);
+  _c1_store->init_disableintrinsic();
   _c2_store = new DirectiveSet(this);
+  _c2_store->init_disableintrinsic();
 };
 
 CompilerDirectives::~CompilerDirectives() {
@@ -200,15 +202,17 @@ ccstrlist DirectiveSet::canonicalize_disableintrinsic(ccstrlist option_value) {
   return canonicalized_list;
 }
 
+void DirectiveSet::init_disableintrinsic() {
+  // Canonicalize DisableIntrinsic to contain only ',' as a separator.
+  this->DisableIntrinsicOption = canonicalize_disableintrinsic(DisableIntrinsic);
+}
+
 DirectiveSet::DirectiveSet(CompilerDirectives* d) :_inlinematchers(NULL), _directive(d) {
 #define init_defaults_definition(name, type, dvalue, compiler) this->name##Option = dvalue;
   compilerdirectives_common_flags(init_defaults_definition)
   compilerdirectives_c2_flags(init_defaults_definition)
   compilerdirectives_c1_flags(init_defaults_definition)
   memset(_modified, 0, sizeof(_modified));
-
-  // Canonicalize DisableIntrinsic to contain only ',' as a separator.
-  this->DisableIntrinsicOption = canonicalize_disableintrinsic(DisableIntrinsic);
 }
 
 DirectiveSet::~DirectiveSet() {
@@ -276,6 +280,10 @@ DirectiveSet* DirectiveSet::compilecommand_compatibility_init(const methodHandle
       }
     }
 
+    // Read old value of DisableIntrinsicOption, in case we need to free it
+    // and overwrite it with a new value.
+    ccstrlist old_disable_intrinsic_value = set->DisableIntrinsicOption;
+
     // inline and dontinline (including exclude) are implemented in the directiveset accessors
 #define init_default_cc(name, type, dvalue, cc_flag) { type v; if (!_modified[name##Index] && CompilerOracle::has_option_value(method, #cc_flag, v) && v != this->name##Option) { set->name##Option = v; changed = true;} }
     compilerdirectives_common_flags(init_default_cc)
@@ -287,6 +295,8 @@ DirectiveSet* DirectiveSet::compilecommand_compatibility_init(const methodHandle
     if (!_modified[DisableIntrinsicIndex] &&
         CompilerOracle::has_option_value(method, "DisableIntrinsic", option_value)) {
       set->DisableIntrinsicOption = canonicalize_disableintrinsic(option_value);
+      assert(old_disable_intrinsic_value != NULL, "");
+      FREE_C_HEAP_ARRAY(char, (void *)old_disable_intrinsic_value);
     }
 
 
@@ -414,6 +424,12 @@ bool DirectiveSet::is_intrinsic_disabled(const methodHandle& method) {
 
 DirectiveSet* DirectiveSet::clone(DirectiveSet const* src) {
   DirectiveSet* set = new DirectiveSet(NULL);
+  // Ordinary allocations of DirectiveSet would call init_disableintrinsic()
+  // immediately to create a new copy for set->DisableIntrinsicOption.
+  // However, here it does not need to because the code below creates
+  // a copy of src->DisableIntrinsicOption that initializes
+  // set->DisableIntrinsicOption.
+
   memcpy(set->_modified, src->_modified, sizeof(src->_modified));
 
   InlineMatcher* tmp = src->_inlinematchers;
@@ -456,7 +472,7 @@ void DirectivesStack::init() {
 }
 
 DirectiveSet* DirectivesStack::getDefaultDirective(AbstractCompiler* comp) {
-  MutexLockerEx locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
 
   assert(_bottom != NULL, "Must never be empty");
   _bottom->inc_refcount();
@@ -464,7 +480,7 @@ DirectiveSet* DirectivesStack::getDefaultDirective(AbstractCompiler* comp) {
 }
 
 void DirectivesStack::push(CompilerDirectives* directive) {
-  MutexLockerEx locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
 
   directive->inc_refcount();
   if (_top == NULL) {
@@ -478,7 +494,7 @@ void DirectivesStack::push(CompilerDirectives* directive) {
 }
 
 void DirectivesStack::pop(int count) {
-  MutexLockerEx locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
   assert(count > -1, "No negative values");
   for (int i = 0; i < count; i++) {
     pop_inner();
@@ -508,14 +524,14 @@ bool DirectivesStack::check_capacity(int request_size, outputStream* st) {
 
 void DirectivesStack::clear() {
   // holding the lock during the whole operation ensuring consistent result
-  MutexLockerEx locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
   while (_top->next() != NULL) {
     pop_inner();
   }
 }
 
 void DirectivesStack::print(outputStream* st) {
-  MutexLockerEx locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
   CompilerDirectives* tmp = _top;
   while (tmp != NULL) {
     tmp->print(st);
@@ -526,7 +542,7 @@ void DirectivesStack::print(outputStream* st) {
 
 void DirectivesStack::release(DirectiveSet* set) {
   assert(set != NULL, "Never NULL");
-  MutexLockerEx locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
   if (set->is_exclusive_copy()) {
     // Old CompilecCmmands forced us to create an exclusive copy
     delete set;
@@ -550,7 +566,7 @@ DirectiveSet* DirectivesStack::getMatchingDirective(const methodHandle& method, 
 
   DirectiveSet* match = NULL;
   {
-    MutexLockerEx locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker locker(DirectivesStack_lock, Mutex::_no_safepoint_check_flag);
 
     CompilerDirectives* dir = _top;
     assert(dir != NULL, "Must be initialized");

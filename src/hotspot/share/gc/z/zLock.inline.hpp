@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,27 +26,20 @@
 
 #include "gc/z/zLock.hpp"
 #include "runtime/atomic.hpp"
+#include "runtime/os.inline.hpp"
 #include "runtime/thread.hpp"
 #include "utilities/debug.hpp"
 
-inline ZLock::ZLock() {
-  pthread_mutex_init(&_lock, NULL);
-}
-
-inline ZLock::~ZLock() {
-  pthread_mutex_destroy(&_lock);
-}
-
 inline void ZLock::lock() {
-  pthread_mutex_lock(&_lock);
+  _lock.lock();
 }
 
 inline bool ZLock::try_lock() {
-  return pthread_mutex_trylock(&_lock) == 0;
+  return _lock.try_lock();
 }
 
 inline void ZLock::unlock() {
-  pthread_mutex_unlock(&_lock);
+  _lock.unlock();
 }
 
 inline ZReentrantLock::ZReentrantLock() :
@@ -60,7 +53,7 @@ inline void ZReentrantLock::lock() {
 
   if (owner != thread) {
     _lock.lock();
-    Atomic::store(thread, &_owner);
+    Atomic::store(&_owner, thread);
   }
 
   _count++;
@@ -73,7 +66,7 @@ inline void ZReentrantLock::unlock() {
   _count--;
 
   if (_count == 0) {
-    Atomic::store((Thread*)NULL, &_owner);
+    Atomic::store(&_owner, (Thread*)NULL);
     _lock.unlock();
   }
 }
@@ -87,12 +80,16 @@ inline bool ZReentrantLock::is_owned() const {
 template <typename T>
 inline ZLocker<T>::ZLocker(T* lock) :
     _lock(lock) {
-  _lock->lock();
+  if (_lock != NULL) {
+    _lock->lock();
+  }
 }
 
 template <typename T>
 inline ZLocker<T>::~ZLocker() {
-  _lock->unlock();
+  if (_lock != NULL) {
+    _lock->unlock();
+  }
 }
 
 #endif // SHARE_GC_Z_ZLOCK_INLINE_HPP

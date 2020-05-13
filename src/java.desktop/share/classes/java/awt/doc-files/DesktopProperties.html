@@ -5,7 +5,7 @@
   <title>AWT Desktop Properties</title>
 </head>
 <!--
- Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@
 
 <body>
 <main role="main">
+<div class="contentContainer">
 <h1>AWT Desktop Properties</h1>
 
 The following refers to standard AWT desktop properties that
@@ -57,22 +58,26 @@ unavailable for any reason, the implementation will return
 The following table summarizes the desktop properties documented
 here, and their value types.
 <br><br>
-<table>
-<tr bgcolor="#ccccff">
-<th>Property Name</th>
-<th>Value Type</th>
-<th>Summary Description</th>
-</tr>
+<table border=1>
+<thead>
 <tr>
-<td><A href="#awt.font.desktophints">awt.font.desktophints</A></td>
-<td><a href="../../util/Map.html">java.util.Map</a></td>
+<th scope="col">Property Name</th>
+<th scope="col">Value Type</th>
+<th scope="col">Summary Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row"><A href="#awt.font.desktophints">awt.font.desktophints</A></th>
+<td>{@link java.util.Map java.util.Map}</td>
 <td>Font smoothing (text antialiasing) settings.</td>
 </tr>
 <tr>
-<td><A href="#sun.awt.enableExtraMouseButtons">sun.awt.enableExtraMouseButtons</A></td>
-<td><a href="../../lang/Boolean.html">java.lang.Boolean</a></td>
+<th scope="row"><A href="#sun.awt.enableExtraMouseButtons">sun.awt.enableExtraMouseButtons</A></th>
+<td>{@link java.lang.Boolean java.lang.Boolean}</td>
 <td>Controls if mouse events from extra buttons are to be generated or not</td>
 </tr>
+</tbody>
 </table>
 
 <h2>Desktop Font Rendering Hints</h2>
@@ -273,6 +278,7 @@ only: {@code NOBUTTON}, {@code BUTTON1}, {@code BUTTON2} and
 This property should be used when there is no need in listening mouse events fired as a result of
 activity with extra mouse button.
 By default this property is set to {@code true}.
+</div>
 </main>
 </body>
 </html>

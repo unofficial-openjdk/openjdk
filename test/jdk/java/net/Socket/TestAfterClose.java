@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 /*
  * @test
  * @bug 6505016
+ * @library /test/lib
  * @summary Socket spec should clarify what getInetAddress/getPort/etc return
  *          after the Socket is closed
  * @run main TestAfterClose
@@ -32,15 +33,19 @@
 
 import java.net.*;
 import java.io.*;
+import jdk.test.lib.net.IPSupport;
 
 public class TestAfterClose
 {
     static int failCount;
 
     public static void main(String[] args) {
+        IPSupport.throwSkippedExceptionIfNonOperational();
+
         try {
-            ServerSocket ss = new ServerSocket(0, 0, null);
-            Socket socket = new Socket("localhost", ss.getLocalPort());
+            InetAddress loopback = InetAddress.getLoopbackAddress();
+            ServerSocket ss = new ServerSocket(0, 0, loopback);
+            Socket socket = new Socket(loopback, ss.getLocalPort());
             ss.accept();
             ss.close();
             test(socket);

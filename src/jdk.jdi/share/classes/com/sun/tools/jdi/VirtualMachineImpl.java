@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,10 +33,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import com.sun.jdi.BooleanType;
 import com.sun.jdi.BooleanValue;
@@ -56,6 +58,7 @@ import com.sun.jdi.InternalException;
 import com.sun.jdi.LongType;
 import com.sun.jdi.LongValue;
 import com.sun.jdi.ModuleReference;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.PathSearchingVirtualMachine;
 import com.sun.jdi.PrimitiveType;
 import com.sun.jdi.ReferenceType;
@@ -110,7 +113,7 @@ class VirtualMachineImpl extends MirrorImpl
     // tested unsynchronized (since once true, it stays true), but must
     // be set synchronously
     private Map<Long, ReferenceType> typesByID;
-    private TreeSet<ReferenceType> typesBySignature;
+    private Set<ReferenceType> typesBySignature;
     private boolean retrievedAllTypes = false;
 
     private Map<Long, ModuleReference> modulesByID;
@@ -314,12 +317,16 @@ class VirtualMachineImpl extends MirrorImpl
 
     public List<ReferenceType> classesByName(String className) {
         validateVM();
-        String signature = JNITypeParser.typeNameToSignature(className);
+        return classesBySignature(JNITypeParser.typeNameToSignature(className));
+    }
+
+    List<ReferenceType> classesBySignature(String signature) {
+        validateVM();
         List<ReferenceType> list;
         if (retrievedAllTypes) {
-           list = findReferenceTypes(signature);
+            list = findReferenceTypes(signature);
         } else {
-           list = retrieveClassesBySignature(signature);
+            list = retrieveClassesBySignature(signature);
         }
         return Collections.unmodifiableList(list);
     }
@@ -335,6 +342,27 @@ class VirtualMachineImpl extends MirrorImpl
             a = new ArrayList<>(typesBySignature);
         }
         return Collections.unmodifiableList(a);
+    }
+
+    /**
+     * Performs an action for each loaded type.
+     */
+    public void forEachClass(Consumer<ReferenceType> action) {
+        for (ReferenceType type : allClasses()) {
+            try {
+                action.accept(type);
+            } catch (ObjectCollectedException ex) {
+                // Some classes might be unloaded and garbage collected since
+                // we retrieved the copy of all loaded classes and started
+                // iterating over them. In this case calling methods on such types
+                // might result in com.sun.jdi.ObjectCollectedException
+                // being thrown. We ignore such classes and keep iterating.
+                if ((vm.traceFlags & VirtualMachine.TRACE_OBJREFS) != 0) {
+                    vm.printTrace("ObjectCollectedException was thrown while " +
+                            "accessing unloaded class " + type.name());
+                }
+            }
+        }
     }
 
     public void
@@ -843,14 +871,9 @@ class VirtualMachineImpl extends MirrorImpl
                 throw new InternalException("Invalid reference type tag");
         }
 
-        /*
-         * If a signature was specified, make sure to set it ASAP, to
-         * prevent any needless JDWP command to retrieve it. (for example,
-         * typesBySignature.add needs the signature, to maintain proper
-         * ordering.
-         */
-        if (signature != null) {
-            type.setSignature(signature);
+        if (signature == null && retrievedAllTypes) {
+            // do not cache if signature is not provided
+            return type;
         }
 
         typesByID.put(id, type);
@@ -920,7 +943,7 @@ class VirtualMachineImpl extends MirrorImpl
 
     private void initReferenceTypes() {
         typesByID = new HashMap<>(300);
-        typesBySignature = new TreeSet<>();
+        typesBySignature = new HashSet<>();
     }
 
     ReferenceTypeImpl referenceType(long ref, byte tag) {
@@ -968,6 +991,9 @@ class VirtualMachineImpl extends MirrorImpl
                 }
                 if (retType == null) {
                     retType = addReferenceType(id, tag, signature);
+                }
+                if (signature != null) {
+                    retType.setSignature(signature);
                 }
             }
             return retType;

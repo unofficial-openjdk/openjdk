@@ -32,6 +32,9 @@
 #if INCLUDE_ZGC
 #include "gc/z/zBarrier.inline.hpp"
 #endif
+#if INCLUDE_SHENANDOAHGC
+#include "gc/shenandoah/shenandoahBarrierSet.hpp"
+#endif
 
 StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* reg_map, ScopeValue* sv) {
   if (sv->is_location()) {
@@ -106,15 +109,22 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
       } else {
         value.noop = *(narrowOop*) value_addr;
       }
-      // Decode narrowoop and wrap a handle around the oop
-      Handle h(Thread::current(), CompressedOops::decode(value.noop));
+      // Decode narrowoop
+      oop val = CompressedOops::decode(value.noop);
+      // Deoptimization must make sure all oops have passed load barriers
+#if INCLUDE_SHENANDOAHGC
+      if (UseShenandoahGC) {
+        val = ShenandoahBarrierSet::barrier_set()->load_reference_barrier(val);
+      }
+#endif
+      Handle h(Thread::current(), val); // Wrap a handle around the oop
       return new StackValue(h);
     }
 #endif
     case Location::oop: {
       oop val = *(oop *)value_addr;
 #ifdef _LP64
-      if (Universe::is_narrow_oop_base(val)) {
+      if (CompressedOops::is_base(val)) {
          // Compiled code may produce decoded oop = narrow_oop_base
          // when a narrow oop implicit null check is used.
          // The narrow_oop_base could be NULL or be the address
@@ -122,13 +132,13 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
          val = (oop)NULL;
       }
 #endif
-#if INCLUDE_ZGC
-      // Deoptimization must make sure all oop have passed load barrier
-      if (UseZGC) {
-        val = ZBarrier::load_barrier_on_oop_field_preloaded((oop*)value_addr, val);
+      // Deoptimization must make sure all oops have passed load barriers
+#if INCLUDE_SHENANDOAHGC
+      if (UseShenandoahGC) {
+        val = ShenandoahBarrierSet::barrier_set()->load_reference_barrier(val);
       }
 #endif
-
+      assert(oopDesc::is_oop_or_null(val, false), "bad oop found");
       Handle h(Thread::current(), val); // Wrap a handle around the oop
       return new StackValue(h);
     }
@@ -174,8 +184,10 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
   } else if (sv->is_object()) { // Scalar replaced object in compiled frame
     Handle ov = ((ObjectValue *)sv)->value();
     return new StackValue(ov, (ov.is_null()) ? 1 : 0);
+  } else if (sv->is_marker()) {
+    // Should never need to directly construct a marker.
+    ShouldNotReachHere();
   }
-
   // Unknown ScopeValue type
   ShouldNotReachHere();
   return new StackValue((intptr_t) 0);   // dummy
@@ -211,7 +223,7 @@ void StackValue::print_on(outputStream* st) const {
       } else {
         st->print("NULL");
       }
-      st->print(" <" INTPTR_FORMAT ">", p2i((address)_handle_value()));
+      st->print(" <" INTPTR_FORMAT ">", p2i(_handle_value()));
      break;
 
     case T_CONFLICT:

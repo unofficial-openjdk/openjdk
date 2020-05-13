@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,10 @@
 
 /*
  * @test
- * @bug      4802275 4967243 8026567
+ * @bug      4802275 4967243 8026567 8239804
  * @summary  Make sure param tags are still printed even though they do not
  *           match up with a real parameters.
  *           Make sure inheritDoc cannot be used in an invalid param tag.
- * @author   jamieh
  * @library  ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build    javadoc.tester.*
@@ -52,13 +51,15 @@ public class TestParamTaglet extends JavadocTester {
 
         checkOutput("pkg/C.html", true,
                 //Regular param tags.
-                "<span class=\"paramLabel\">Parameters:</span></dt>\n"
-                + "<dd><code>param1</code> - testing 1 2 3.</dd>\n"
-                + "<dd><code>param2</code> - testing 1 2 3.",
+                """
+                    <dt>Parameters:</dt>
+                    <dd><code>param1</code> - testing 1 2 3.</dd>
+                    <dd><code>param2</code> - testing 1 2 3.""",
                 //Param tags that don't match with any real parameters.
-                "<span class=\"paramLabel\">Parameters:</span></dt>\n"
-                + "<dd><code>p1</code> - testing 1 2 3.</dd>\n"
-                + "<dd><code>p2</code> - testing 1 2 3.",
+                """
+                    <dt>Parameters:</dt>
+                    <dd><code>p1</code> - testing 1 2 3.</dd>
+                    <dd><code>p2</code> - testing 1 2 3.""",
                 //{@inherit} doc misuse does not cause doclet to throw exception.
                 // Param is printed with nothing inherited.
                 //XXX: in the future when Configuration is available during doc inheritence,

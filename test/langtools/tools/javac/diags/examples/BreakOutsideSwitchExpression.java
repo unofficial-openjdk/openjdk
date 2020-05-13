@@ -22,15 +22,13 @@
  */
 
 // key: compiler.err.break.outside.switch.expression
-// key: compiler.note.preview.filename
-// key: compiler.note.preview.recompile
-// options: --enable-preview -source ${jdk.version}
 
 class BreakOutsideSwitchExpression {
     int t(int i) {
         OUT: while (true) {
             return switch (i) {
-                default: break OUT;
+                case 0: break OUT;
+                default: yield 0;
             };
         }
         return -1;

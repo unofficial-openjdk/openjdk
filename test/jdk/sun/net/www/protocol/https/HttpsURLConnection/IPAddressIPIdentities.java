@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
 
 /* @test
  * @summary X509 certificate hostname checking is broken in JDK1.6.0_10
+ * @library /test/lib
  * @bug 6766775
  * @run main/othervm IPAddressIPIdentities
  * @author Xuelei Fan
@@ -45,6 +46,7 @@ import java.security.cert.CertificateFactory;
 import java.security.spec.*;
 import java.security.interfaces.*;
 import java.math.BigInteger;
+import jdk.test.lib.net.URIBuilder;
 
 /*
  * Certificates and key used in the test.
@@ -652,8 +654,13 @@ public class IPAddressIPIdentities {
             serverModulus, serverPrivateExponent, passphrase);
         SSLServerSocketFactory sslssf = context.getServerSocketFactory();
 
+        // doClientSide() connects to the loopback address
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        InetSocketAddress address = new InetSocketAddress(loopback, serverPort);
+
         sslServerSocket =
-            (SSLServerSocket) sslssf.createServerSocket(serverPort);
+            (SSLServerSocket) sslssf.createServerSocket();
+        sslServerSocket.bind(address);
         serverPort = sslServerSocket.getLocalPort();
 
         /*
@@ -714,11 +721,16 @@ public class IPAddressIPIdentities {
             HttpsURLConnection http = null;
 
             /* establish http connection to server */
-            URL url = new URL("https://127.0.0.1:" + serverPort+"/");
+            URL url = URIBuilder.newBuilder()
+                .scheme("https")
+                .loopback()
+                .port(serverPort)
+                .path("/")
+                .toURL();
             System.out.println("url is "+url.toString());
 
             try {
-                http = (HttpsURLConnection)url.openConnection();
+                http = (HttpsURLConnection)url.openConnection(Proxy.NO_PROXY);
 
                 int respCode = http.getResponseCode();
                 System.out.println("respCode = "+respCode);

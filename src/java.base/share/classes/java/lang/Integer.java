@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -347,59 +347,53 @@ public final class Integer extends Number
         int chars = Math.max(((mag + (shift - 1)) / shift), 1);
         if (COMPACT_STRINGS) {
             byte[] buf = new byte[chars];
-            formatUnsignedInt(val, shift, buf, 0, chars);
+            formatUnsignedInt(val, shift, buf, chars);
             return new String(buf, LATIN1);
         } else {
             byte[] buf = new byte[chars * 2];
-            formatUnsignedIntUTF16(val, shift, buf, 0, chars);
+            formatUnsignedIntUTF16(val, shift, buf, chars);
             return new String(buf, UTF16);
         }
     }
 
     /**
-     * Format an {@code int} (treated as unsigned) into a character buffer. If
+     * Format an {@code int} (treated as unsigned) into a byte buffer (LATIN1 version). If
      * {@code len} exceeds the formatted ASCII representation of {@code val},
      * {@code buf} will be padded with leading zeroes.
      *
      * @param val the unsigned int to format
      * @param shift the log2 of the base to format in (4 for hex, 3 for octal, 1 for binary)
-     * @param buf the character buffer to write to
-     * @param offset the offset in the destination buffer to start at
+     * @param buf the byte buffer to write to
      * @param len the number of characters to write
      */
-    static void formatUnsignedInt(int val, int shift, char[] buf, int offset, int len) {
-        // assert shift > 0 && shift <=5 : "Illegal shift value";
-        // assert offset >= 0 && offset < buf.length : "illegal offset";
-        // assert len > 0 && (offset + len) <= buf.length : "illegal length";
-        int charPos = offset + len;
-        int radix = 1 << shift;
-        int mask = radix - 1;
-        do {
-            buf[--charPos] = Integer.digits[val & mask];
-            val >>>= shift;
-        } while (charPos > offset);
-    }
-
-    /** byte[]/LATIN1 version    */
-    static void formatUnsignedInt(int val, int shift, byte[] buf, int offset, int len) {
-        int charPos = offset + len;
+    private static void formatUnsignedInt(int val, int shift, byte[] buf, int len) {
+        int charPos = len;
         int radix = 1 << shift;
         int mask = radix - 1;
         do {
             buf[--charPos] = (byte)Integer.digits[val & mask];
             val >>>= shift;
-        } while (charPos > offset);
+        } while (charPos > 0);
     }
 
-    /** byte[]/UTF16 version    */
-    private static void formatUnsignedIntUTF16(int val, int shift, byte[] buf, int offset, int len) {
-        int charPos = offset + len;
+    /**
+     * Format an {@code int} (treated as unsigned) into a byte buffer (UTF16 version). If
+     * {@code len} exceeds the formatted ASCII representation of {@code val},
+     * {@code buf} will be padded with leading zeroes.
+     *
+     * @param val the unsigned int to format
+     * @param shift the log2 of the base to format in (4 for hex, 3 for octal, 1 for binary)
+     * @param buf the byte buffer to write to
+     * @param len the number of characters to write
+     */
+    private static void formatUnsignedIntUTF16(int val, int shift, byte[] buf, int len) {
+        int charPos = len;
         int radix = 1 << shift;
         int mask = radix - 1;
         do {
             StringUTF16.putChar(buf, --charPos, Integer.digits[val & mask]);
             val >>>= shift;
-        } while (charPos > offset);
+        } while (charPos > 0);
     }
 
     static final byte[] DigitTens = {
@@ -604,7 +598,7 @@ public final class Integer extends Number
      * @param      radix   the radix to be used while parsing {@code s}.
      * @return     the integer represented by the string argument in the
      *             specified radix.
-     * @exception  NumberFormatException if the {@code String}
+     * @throws     NumberFormatException if the {@code String}
      *             does not contain a parsable {@code int}.
      */
     public static int parseInt(String s, int radix)
@@ -698,7 +692,7 @@ public final class Integer extends Number
      */
     public static int parseInt(CharSequence s, int beginIndex, int endIndex, int radix)
                 throws NumberFormatException {
-        s = Objects.requireNonNull(s);
+        Objects.requireNonNull(s);
 
         if (beginIndex < 0 || beginIndex > endIndex || endIndex > s.length()) {
             throw new IndexOutOfBoundsException();
@@ -769,7 +763,7 @@ public final class Integer extends Number
      * @param s    a {@code String} containing the {@code int}
      *             representation to be parsed
      * @return     the integer value represented by the argument in decimal.
-     * @exception  NumberFormatException  if the string does not contain a
+     * @throws     NumberFormatException  if the string does not contain a
      *               parsable integer.
      */
     public static int parseInt(String s) throws NumberFormatException {
@@ -881,7 +875,7 @@ public final class Integer extends Number
      */
     public static int parseUnsignedInt(CharSequence s, int beginIndex, int endIndex, int radix)
                 throws NumberFormatException {
-        s = Objects.requireNonNull(s);
+        Objects.requireNonNull(s);
 
         if (beginIndex < 0 || beginIndex > endIndex || endIndex > s.length()) {
             throw new IndexOutOfBoundsException();
@@ -956,7 +950,7 @@ public final class Integer extends Number
      * @return     an {@code Integer} object holding the value
      *             represented by the string argument in the specified
      *             radix.
-     * @exception NumberFormatException if the {@code String}
+     * @throws    NumberFormatException if the {@code String}
      *            does not contain a parsable {@code int}.
      */
     public static Integer valueOf(String s, int radix) throws NumberFormatException {
@@ -982,7 +976,7 @@ public final class Integer extends Number
      * @param      s   the string to be parsed.
      * @return     an {@code Integer} object holding the value
      *             represented by the string argument.
-     * @exception  NumberFormatException  if the string cannot be parsed
+     * @throws     NumberFormatException  if the string cannot be parsed
      *             as an integer.
      */
     public static Integer valueOf(String s) throws NumberFormatException {
@@ -1120,7 +1114,7 @@ public final class Integer extends Number
     /**
      * Returns the value of this {@code Integer} as a {@code byte}
      * after a narrowing primitive conversion.
-     * @jls 5.1.3 Narrowing Primitive Conversions
+     * @jls 5.1.3 Narrowing Primitive Conversion
      */
     public byte byteValue() {
         return (byte)value;
@@ -1129,7 +1123,7 @@ public final class Integer extends Number
     /**
      * Returns the value of this {@code Integer} as a {@code short}
      * after a narrowing primitive conversion.
-     * @jls 5.1.3 Narrowing Primitive Conversions
+     * @jls 5.1.3 Narrowing Primitive Conversion
      */
     public short shortValue() {
         return (short)value;
@@ -1147,7 +1141,7 @@ public final class Integer extends Number
     /**
      * Returns the value of this {@code Integer} as a {@code long}
      * after a widening primitive conversion.
-     * @jls 5.1.2 Widening Primitive Conversions
+     * @jls 5.1.2 Widening Primitive Conversion
      * @see Integer#toUnsignedLong(int)
      */
     public long longValue() {
@@ -1157,7 +1151,7 @@ public final class Integer extends Number
     /**
      * Returns the value of this {@code Integer} as a {@code float}
      * after a widening primitive conversion.
-     * @jls 5.1.2 Widening Primitive Conversions
+     * @jls 5.1.2 Widening Primitive Conversion
      */
     public float floatValue() {
         return (float)value;
@@ -1166,7 +1160,7 @@ public final class Integer extends Number
     /**
      * Returns the value of this {@code Integer} as a {@code double}
      * after a widening primitive conversion.
-     * @jls 5.1.2 Widening Primitive Conversions
+     * @jls 5.1.2 Widening Primitive Conversion
      */
     public double doubleValue() {
         return (double)value;
@@ -1399,7 +1393,7 @@ public final class Integer extends Number
      * @param     nm the {@code String} to decode.
      * @return    an {@code Integer} object holding the {@code int}
      *             value represented by {@code nm}
-     * @exception NumberFormatException  if the {@code String} does not
+     * @throws    NumberFormatException  if the {@code String} does not
      *            contain a parsable integer.
      * @see java.lang.Integer#parseInt(java.lang.String, int)
      */
@@ -1863,5 +1857,6 @@ public final class Integer extends Number
     }
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
+    @java.io.Serial
     @Native private static final long serialVersionUID = 1360826667806852920L;
 }

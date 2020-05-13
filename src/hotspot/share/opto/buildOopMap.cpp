@@ -31,6 +31,7 @@
 #include "opto/compile.hpp"
 #include "opto/machnode.hpp"
 #include "opto/matcher.hpp"
+#include "opto/output.hpp"
 #include "opto/phase.hpp"
 #include "opto/regalloc.hpp"
 #include "opto/rootnode.hpp"
@@ -352,7 +353,6 @@ OopMap *OopFlow::build_oop_map( Node *n, int max_reg, PhaseRegAlloc *regalloc, i
 
     } else {
       // Other - some reaching non-oop value
-      omap->set_value( r);
 #ifdef ASSERT
       if( t->isa_rawptr() && C->cfg()->_raw_oops.member(def) ) {
         def->dump();
@@ -377,11 +377,18 @@ OopMap *OopFlow::build_oop_map( Node *n, int max_reg, PhaseRegAlloc *regalloc, i
 #endif
 
 #ifdef ASSERT
-  for( OopMapStream oms1(omap, OopMapValue::derived_oop_value); !oms1.is_done(); oms1.next()) {
+  for( OopMapStream oms1(omap); !oms1.is_done(); oms1.next()) {
     OopMapValue omv1 = oms1.current();
+    if (omv1.type() != OopMapValue::derived_oop_value) {
+      continue;
+    }
     bool found = false;
-    for( OopMapStream oms2(omap,OopMapValue::oop_value); !oms2.is_done(); oms2.next()) {
-      if( omv1.content_reg() == oms2.current().reg() ) {
+    for( OopMapStream oms2(omap); !oms2.is_done(); oms2.next()) {
+      OopMapValue omv2 = oms2.current();
+      if (omv2.type() != OopMapValue::oop_value) {
+        continue;
+      }
+      if( omv1.content_reg() == omv2.reg() ) {
         found = true;
         break;
       }
@@ -557,12 +564,12 @@ static void do_liveness(PhaseRegAlloc* regalloc, PhaseCFG* cfg, Block_List* work
 }
 
 // Collect GC mask info - where are all the OOPs?
-void Compile::BuildOopMaps() {
-  TracePhase tp("bldOopMaps", &timers[_t_buildOopMaps]);
+void PhaseOutput::BuildOopMaps() {
+  Compile::TracePhase tp("bldOopMaps", &timers[_t_buildOopMaps]);
   // Can't resource-mark because I need to leave all those OopMaps around,
   // or else I need to resource-mark some arena other than the default.
   // ResourceMark rm;              // Reclaim all OopFlows when done
-  int max_reg = _regalloc->_max_reg; // Current array extent
+  int max_reg = C->regalloc()->_max_reg; // Current array extent
 
   Arena *A = Thread::current()->resource_area();
   Block_List worklist;          // Worklist of pending blocks
@@ -572,17 +579,17 @@ void Compile::BuildOopMaps() {
   // Compute a backwards liveness per register.  Needs a bitarray of
   // #blocks x (#registers, rounded up to ints)
   safehash = new Dict(cmpkey,hashkey,A);
-  do_liveness( _regalloc, _cfg, &worklist, max_reg_ints, A, safehash );
+  do_liveness( C->regalloc(), C->cfg(), &worklist, max_reg_ints, A, safehash );
   OopFlow *free_list = NULL;    // Free, unused
 
   // Array mapping blocks to completed oopflows
-  OopFlow **flows = NEW_ARENA_ARRAY(A, OopFlow*, _cfg->number_of_blocks());
-  memset( flows, 0, _cfg->number_of_blocks() * sizeof(OopFlow*) );
+  OopFlow **flows = NEW_ARENA_ARRAY(A, OopFlow*, C->cfg()->number_of_blocks());
+  memset( flows, 0, C->cfg()->number_of_blocks() * sizeof(OopFlow*) );
 
 
   // Do the first block 'by hand' to prime the worklist
-  Block *entry = _cfg->get_block(1);
-  OopFlow *rootflow = OopFlow::make(A,max_reg,this);
+  Block *entry = C->cfg()->get_block(1);
+  OopFlow *rootflow = OopFlow::make(A,max_reg,C);
   // Initialize to 'bottom' (not 'top')
   memset( rootflow->_callees, OptoReg::Bad, max_reg*sizeof(short) );
   memset( rootflow->_defs   ,            0, max_reg*sizeof(Node*) );
@@ -590,7 +597,7 @@ void Compile::BuildOopMaps() {
 
   // Do the first block 'by hand' to prime the worklist
   rootflow->_b = entry;
-  rootflow->compute_reach( _regalloc, max_reg, safehash );
+  rootflow->compute_reach( C->regalloc(), max_reg, safehash );
   for( uint i=0; i<entry->_num_succs; i++ )
     worklist.push(entry->_succs[i]);
 
@@ -607,7 +614,7 @@ void Compile::BuildOopMaps() {
 
     Block *b = worklist.pop();
     // Ignore root block
-    if (b == _cfg->get_root_block()) {
+    if (b == C->cfg()->get_root_block()) {
       continue;
     }
     // Block is already done?  Happens if block has several predecessors,
@@ -621,7 +628,7 @@ void Compile::BuildOopMaps() {
     Block *pred = (Block*)((intptr_t)0xdeadbeef);
     // Scan this block's preds to find a done predecessor
     for (uint j = 1; j < b->num_preds(); j++) {
-      Block* p = _cfg->get_block_for_node(b->pred(j));
+      Block* p = C->cfg()->get_block_for_node(b->pred(j));
       OopFlow *p_flow = flows[p->_pre_order];
       if( p_flow ) {            // Predecessor is done
         assert( p_flow->_b == p, "cross check" );
@@ -668,7 +675,7 @@ void Compile::BuildOopMaps() {
     // Now push flow forward
     flows[b->_pre_order] = flow;// Mark flow for this block
     flow->_b = b;
-    flow->compute_reach( _regalloc, max_reg, safehash );
+    flow->compute_reach( C->regalloc(), max_reg, safehash );
 
     // Now push children onto worklist
     for( i=0; i<b->_num_succs; i++ )

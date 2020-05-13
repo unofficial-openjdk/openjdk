@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,11 +27,15 @@
 #include "classfile/symbolTable.hpp"
 #include "code/icBuffer.hpp"
 #include "gc/shared/collectedHeap.hpp"
+#if INCLUDE_JVMCI
+#include "jvmci/jvmci.hpp"
+#endif
 #include "interpreter/bytecodes.hpp"
 #include "logging/log.hpp"
 #include "logging/logTag.hpp"
 #include "memory/universe.hpp"
 #include "prims/methodHandles.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/flags/jvmFlag.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/icache.hpp"
@@ -46,6 +50,7 @@
 void check_ThreadShadow();
 void eventlog_init();
 void mutex_init();
+void oopstorage_init();
 void chunkpool_init();
 void perfMemory_init();
 void SuspendibleThreadSet_init();
@@ -57,7 +62,6 @@ void classLoader_init1();
 void compilationPolicy_init();
 void codeCache_init();
 void VM_Version_init();
-void os_init_globals();        // depends on VM_Version_init, before universe_init
 void stubRoutines_init1();
 jint universe_init();          // depends on codeCache_init and stubRoutines_init
 // depends on universe_init, must be before interpreter_init (currently only on SPARC)
@@ -65,12 +69,11 @@ void gc_barrier_stubs_init();
 void interpreter_init();       // before any methods loaded
 void invocationCounter_init(); // before any methods loaded
 void accessFlags_init();
-void templateTable_init();
 void InterfaceSupport_init();
 void universe2_init();  // dependent on codeCache_init and stubRoutines_init, loads primordial classes
 void referenceProcessor_init();
 void jni_handles_init();
-void vmStructs_init();
+void vmStructs_init() NOT_DEBUG_RETURN;
 
 void vtableStubs_init();
 void InlineCacheBuffer_init();
@@ -94,6 +97,7 @@ void vm_init_globals() {
   basic_types_init();
   eventlog_init();
   mutex_init();
+  oopstorage_init();
   chunkpool_init();
   perfMemory_init();
   SuspendibleThreadSet_init();
@@ -108,7 +112,6 @@ jint init_globals() {
   compilationPolicy_init();
   codeCache_init();
   VM_Version_init();
-  os_init_globals();
   stubRoutines_init1();
   jint status = universe_init();  // dependent on codeCache_init and
                                   // stubRoutines_init1 and metaspace_init.
@@ -119,8 +122,8 @@ jint init_globals() {
   interpreter_init();        // before any methods loaded
   invocationCounter_init();  // before any methods loaded
   accessFlags_init();
-  templateTable_init();
   InterfaceSupport_init();
+  VMRegImpl::set_regName();  // need this before generate_stubs (for printing oop maps).
   SharedRuntime::generate_stubs();
   universe2_init();  // dependent on codeCache_init and stubRoutines_init1
   javaClasses_init();// must happen after vtable initialization, before referenceProcessor_init
@@ -138,7 +141,11 @@ jint init_globals() {
   if (!compileBroker_init()) {
     return JNI_EINVAL;
   }
-  VMRegImpl::set_regName();
+#if INCLUDE_JVMCI
+  if (EnableJVMCI) {
+    JVMCI::initialize_globals();
+  }
+#endif
 
   if (!universe_post_init()) {
     return JNI_ERR;
@@ -186,11 +193,19 @@ void exit_globals() {
 static volatile bool _init_completed = false;
 
 bool is_init_completed() {
-  return _init_completed;
+  return Atomic::load_acquire(&_init_completed);
 }
 
+void wait_init_completed() {
+  MonitorLocker ml(InitCompleted_lock, Monitor::_no_safepoint_check_flag);
+  while (!_init_completed) {
+    ml.wait();
+  }
+}
 
 void set_init_completed() {
   assert(Universe::is_fully_initialized(), "Should have completed initialization");
-  _init_completed = true;
+  MonitorLocker ml(InitCompleted_lock, Monitor::_no_safepoint_check_flag);
+  Atomic::release_store(&_init_completed, true);
+  ml.notify_all();
 }

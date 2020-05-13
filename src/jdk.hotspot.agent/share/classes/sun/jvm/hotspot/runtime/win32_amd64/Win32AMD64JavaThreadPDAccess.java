@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,8 @@ import sun.jvm.hotspot.runtime.amd64.*;
 import sun.jvm.hotspot.runtime.x86.*;
 import sun.jvm.hotspot.types.*;
 import sun.jvm.hotspot.utilities.*;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
 /** This class is only public to allow using the VMObjectFactory to
     instantiate these.
@@ -105,6 +107,10 @@ public class Win32AMD64JavaThreadPDAccess implements JavaThreadPDAccess {
     }
     if (guesser.getPC() == null) {
       return new X86Frame(guesser.getSP(), guesser.getFP());
+    } else if (VM.getVM().getInterpreter().contains(guesser.getPC())) {
+      // pass the value of R13 which contains the bcp for the top level frame
+      Address bcp = context.getRegisterAsAddress(AMD64ThreadContext.R13);
+      return new X86Frame(guesser.getSP(), guesser.getFP(), guesser.getPC(), null, bcp);
     } else {
       return new X86Frame(guesser.getSP(), guesser.getFP(), guesser.getPC());
     }

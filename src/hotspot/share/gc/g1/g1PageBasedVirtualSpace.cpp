@@ -25,7 +25,7 @@
 #include "precompiled.hpp"
 #include "gc/g1/g1PageBasedVirtualSpace.hpp"
 #include "gc/shared/workgroup.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/os.inline.hpp"
@@ -124,6 +124,11 @@ char* G1PageBasedVirtualSpace::page_start(size_t index) const {
   return _low_boundary + index * _page_size;
 }
 
+size_t G1PageBasedVirtualSpace::page_size() const {
+  assert(_page_size > 0, "Page size is not yet initialized.");
+  return _page_size;
+}
+
 bool G1PageBasedVirtualSpace::is_after_last_page(size_t index) const {
   guarantee(index <= _committed.size(),
             "Given boundary page " SIZE_FORMAT " is beyond managed page count " SIZE_FORMAT, index, _committed.size());
@@ -140,18 +145,14 @@ void G1PageBasedVirtualSpace::commit_preferred_pages(size_t start, size_t num_pa
   char* start_addr = page_start(start);
   size_t size = num_pages * _page_size;
 
-  os::commit_memory_or_exit(start_addr, size, _page_size, _executable,
-                            err_msg("Failed to commit area from " PTR_FORMAT " to " PTR_FORMAT " of length " SIZE_FORMAT ".",
-                            p2i(start_addr), p2i(start_addr + size), size));
+  os::commit_memory_or_exit(start_addr, size, _page_size, _executable, "G1 virtual space");
 }
 
 void G1PageBasedVirtualSpace::commit_tail() {
   vmassert(_tail_size > 0, "The size of the tail area must be > 0 when reaching here");
 
   char* const aligned_end_address = align_down(_high_boundary, _page_size);
-  os::commit_memory_or_exit(aligned_end_address, _tail_size, os::vm_page_size(), _executable,
-                            err_msg("Failed to commit tail area from " PTR_FORMAT " to " PTR_FORMAT " of length " SIZE_FORMAT ".",
-                            p2i(aligned_end_address), p2i(_high_boundary), _tail_size));
+  os::commit_memory_or_exit(aligned_end_address, _tail_size, os::vm_page_size(), _executable, "G1 virtual space");
 }
 
 void G1PageBasedVirtualSpace::commit_internal(size_t start_page, size_t end_page) {
@@ -256,7 +257,7 @@ public:
   virtual void work(uint worker_id) {
     size_t const actual_chunk_size = MAX2(chunk_size(), _page_size);
     while (true) {
-      char* touch_addr = Atomic::add(actual_chunk_size, &_cur_addr) - actual_chunk_size;
+      char* touch_addr = Atomic::fetch_and_add(&_cur_addr, actual_chunk_size);
       if (touch_addr < _start_addr || touch_addr >= _end_addr) {
         break;
       }
@@ -274,7 +275,7 @@ void G1PageBasedVirtualSpace::pretouch(size_t start_page, size_t size_in_pages, 
   if (pretouch_gang != NULL) {
     size_t num_chunks = MAX2((size_t)1, size_in_pages * _page_size / MAX2(G1PretouchTask::chunk_size(), _page_size));
 
-    uint num_workers = MIN2((uint)num_chunks, pretouch_gang->active_workers());
+    uint num_workers = MIN2((uint)num_chunks, pretouch_gang->total_workers());
     log_debug(gc, heap)("Running %s with %u workers for " SIZE_FORMAT " work units pre-touching " SIZE_FORMAT "B.",
                         cl.name(), num_workers, num_chunks, size_in_pages * _page_size);
     pretouch_gang->run_task(&cl, num_workers);

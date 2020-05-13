@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1995, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Azul Systems, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +36,7 @@ import java.util.Optional;
 import java.util.StringTokenizer;
 
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.loader.NativeLibrary;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
@@ -639,15 +641,20 @@ public class Runtime {
     public native long maxMemory();
 
     /**
-     * Runs the garbage collector.
-     * Calling this method suggests that the Java virtual machine expend
-     * effort toward recycling unused objects in order to make the memory
-     * they currently occupy available for quick reuse. When control
-     * returns from the method call, the virtual machine has made
-     * its best effort to recycle all discarded objects.
+     * Runs the garbage collector in the Java Virtual Machine.
+     * <p>
+     * Calling this method suggests that the Java Virtual Machine
+     * expend effort toward recycling unused objects in order to
+     * make the memory they currently occupy available for reuse
+     * by the Java Virtual Machine.
+     * When control returns from the method call, the Java Virtual Machine
+     * has made a best effort to reclaim space from all unused objects.
+     * There is no guarantee that this effort will recycle any particular
+     * number of unused objects, reclaim any particular amount of space, or
+     * complete at any particular time, if at all, before the method returns or ever.
      * <p>
      * The name {@code gc} stands for "garbage
-     * collector". The virtual machine performs this recycling
+     * collector". The Java Virtual Machine performs this recycling
      * process automatically as needed, in a separate thread, even if the
      * {@code gc} method is not invoked explicitly.
      * <p>
@@ -677,32 +684,6 @@ public class Runtime {
     public void runFinalization() {
         SharedSecrets.getJavaLangRefAccess().runFinalization();
     }
-
-    /**
-     * Not implemented, does nothing.
-     *
-     * @deprecated
-     * This method was intended to control instruction tracing.
-     * It has been superseded by JVM-specific tracing mechanisms.
-     * This method is subject to removal in a future version of Java SE.
-     *
-     * @param on ignored
-     */
-    @Deprecated(since="9", forRemoval=true)
-    public void traceInstructions(boolean on) { }
-
-    /**
-     * Not implemented, does nothing.
-     *
-     * @deprecated
-     * This method was intended to control method call tracing.
-     * It has been superseded by JVM-specific tracing mechanisms.
-     * This method is subject to removal in a future version of Java SE.
-     *
-     * @param on ignored
-     */
-    @Deprecated(since="9", forRemoval=true)
-    public void traceMethodCalls(boolean on) { }
 
     /**
      * Loads the native library specified by the filename argument.  The filename
@@ -753,16 +734,17 @@ public class Runtime {
         load0(Reflection.getCallerClass(), filename);
     }
 
-    synchronized void load0(Class<?> fromClass, String filename) {
+    void load0(Class<?> fromClass, String filename) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(filename);
         }
-        if (!(new File(filename).isAbsolute())) {
+        File file = new File(filename);
+        if (!file.isAbsolute()) {
             throw new UnsatisfiedLinkError(
                 "Expecting an absolute path of the library: " + filename);
         }
-        ClassLoader.loadLibrary(fromClass, filename, true);
+        ClassLoader.loadLibrary(fromClass, file);
     }
 
     /**
@@ -775,8 +757,8 @@ public class Runtime {
      * for more details.
      *
      * Otherwise, the libname argument is loaded from a system library
-     * location and mapped to a native library image in an implementation-
-     * dependent manner.
+     * location and mapped to a native library image in an
+     * implementation-dependent manner.
      * <p>
      * First, if there is a security manager, its {@code checkLink}
      * method is called with the {@code libname} as its argument.
@@ -815,16 +797,16 @@ public class Runtime {
         loadLibrary0(Reflection.getCallerClass(), libname);
     }
 
-    synchronized void loadLibrary0(Class<?> fromClass, String libname) {
+    void loadLibrary0(Class<?> fromClass, String libname) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(libname);
         }
         if (libname.indexOf((int)File.separatorChar) != -1) {
             throw new UnsatisfiedLinkError(
-    "Directory separator should not appear in library name: " + libname);
+                "Directory separator should not appear in library name: " + libname);
         }
-        ClassLoader.loadLibrary(fromClass, libname, false);
+        ClassLoader.loadLibrary(fromClass, libname);
     }
 
     /**
@@ -916,7 +898,7 @@ public class Runtime {
      * <blockquote><pre>
      *     $VNUM(-$PRE)?\+$BUILD(-$OPT)?
      *     $VNUM-$PRE(-$OPT)?
-     *     $VNUM(+-$OPT)?
+     *     $VNUM(\+-$OPT)?
      * </pre></blockquote>
      *
      * <p> where: </p>
@@ -978,7 +960,7 @@ public class Runtime {
 
         /*
          * List of version number components passed to this constructor MUST
-         * be at least unmodifiable (ideally immutable). In the case on an
+         * be at least unmodifiable (ideally immutable). In the case of an
          * unmodifiable list, the caller MUST hand the list over to this
          * constructor and never change the underlying list.
          */

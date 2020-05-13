@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,16 +24,16 @@
 /*
  * @test
  * @summary Test launches unit tests inside vm concurrently
+ * @requires vm.debug
+ * @requires vm.bits == 64
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI RunUnitTestsConcurrently 30 15000
  */
 
-import jdk.test.lib.Platform;
 import sun.hotspot.WhiteBox;
 
 public class RunUnitTestsConcurrently {
@@ -46,15 +46,12 @@ public class RunUnitTestsConcurrently {
     @Override
     public void run() {
       while (System.currentTimeMillis() - timeStamp < timeout) {
-        WhiteBox.getWhiteBox().runMemoryUnitTests();
+        wb.runMemoryUnitTests();
       }
     }
   }
 
   public static void main(String[] args) throws InterruptedException {
-    if (!Platform.isDebugBuild() || !Platform.is64bit()) {
-      return;
-    }
     wb = WhiteBox.getWhiteBox();
     System.out.println("Starting threads");
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
  */
 import java.net.*;
 import java.io.*;
+import static java.net.Proxy.NO_PROXY;
 
 public class Responses {
 
@@ -56,11 +57,14 @@ public class Responses {
      * "HTTP/1.1 404 "
      */
     static class HttpServer implements Runnable {
-        ServerSocket ss;
+        final ServerSocket ss;
+        volatile boolean shutdown;
 
         public HttpServer() {
             try {
-                ss = new ServerSocket(0);
+                InetAddress loopback = InetAddress.getLoopbackAddress();
+                ss = new ServerSocket();
+                ss.bind(new InetSocketAddress(loopback, 0));
             } catch (IOException ioe) {
                 throw new Error("Unable to create ServerSocket: " + ioe);
             }
@@ -70,7 +74,18 @@ public class Responses {
             return ss.getLocalPort();
         }
 
+        public String authority() {
+            InetAddress address = ss.getInetAddress();
+            String hostaddr = address.isAnyLocalAddress()
+                ? "localhost" : address.getHostAddress();
+            if (hostaddr.indexOf(':') > -1) {
+                hostaddr = "[" + hostaddr + "]";
+            }
+            return hostaddr + ":" + port();
+        }
+
         public void shutdown() throws IOException {
+            shutdown = true;
             ss.close();
         }
 
@@ -78,7 +93,7 @@ public class Responses {
             Object[][] tests = getTests();
 
             try {
-                for (;;) {
+                while(!shutdown) {
                     Socket s = ss.accept();
 
                     BufferedReader in = new BufferedReader(
@@ -89,6 +104,7 @@ public class Responses {
                     int pos2 = req.indexOf(' ', pos1+1);
 
                     int i = Integer.parseInt(req.substring(pos1+2, pos2));
+                    System.out.println("Server replying to >" + tests[i][0] + "<");
 
                     PrintStream out = new PrintStream(
                                         new BufferedOutputStream(
@@ -105,6 +121,9 @@ public class Responses {
                     s.close();
                 }
             } catch (Exception e) {
+                if (!shutdown) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -116,7 +135,8 @@ public class Responses {
         HttpServer svr = new HttpServer();
         (new Thread(svr)).start();
 
-        int port = svr.port();
+        String authority = svr.authority();
+        System.out.println("Server listening on: " + authority);
 
         /*
          * Iterate through each test case and check that getResponseCode
@@ -129,8 +149,8 @@ public class Responses {
             System.out.println("******************");
             System.out.println("Test with response: >" + tests[i][0] + "<");
 
-            URL url = new URL("http://localhost:" + port + "/" + i);
-            HttpURLConnection http = (HttpURLConnection)url.openConnection();
+            URL url = new URL("http://" + authority + "/" + i);
+            HttpURLConnection http = (HttpURLConnection)url.openConnection(NO_PROXY);
 
             try {
 
@@ -157,6 +177,7 @@ public class Responses {
                         actualPhrase + ", expected: " + expectedPhrase);
                 }
             } catch (IOException e) {
+                System.err.println("Test failed for >" + tests[i][0] + "<: " + e);
                 e.printStackTrace();
                 failures++;
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -170,7 +170,7 @@ class Exceptions {
 
   static void throw_stack_overflow_exception(Thread* thread, const char* file, int line, const methodHandle& method);
 
-  static void wrap_dynamic_exception(Thread* thread);
+  static void wrap_dynamic_exception(bool is_indy, Thread* thread);
 
   // Exception counting for error files of interesting exceptions that may have
   // caused a problem for the jvm
@@ -186,7 +186,7 @@ class Exceptions {
   static void debug_check_abort(const char *value_string, const char* message = NULL);
 
   // for logging exceptions
-  static void log_exception(Handle exception, stringStream tempst);
+  static void log_exception(Handle exception, const char* message);
 };
 
 
@@ -237,11 +237,7 @@ class Exceptions {
 // visible within the scope containing the THROW. Usually this is achieved by declaring the function
 // with a TRAPS argument.
 
-#ifdef THIS_FILE
-#define THREAD_AND_LOCATION                      THREAD, THIS_FILE, __LINE__
-#else
 #define THREAD_AND_LOCATION                      THREAD, __FILE__, __LINE__
-#endif
 
 #define THROW_OOP(e)                                \
   { Exceptions::_throw_oop(THREAD_AND_LOCATION, e);                             return;  }

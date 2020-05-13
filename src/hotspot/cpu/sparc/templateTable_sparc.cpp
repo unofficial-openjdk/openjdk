@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2025,7 +2025,7 @@ void TemplateTable::_return(TosState state) {
     __ bind(skip_register_finalizer);
   }
 
-  if (SafepointMechanism::uses_thread_local_poll() && _desc->bytecode() != Bytecodes::_return_register_finalizer) {
+  if (_desc->bytecode() != Bytecodes::_return_register_finalizer) {
     Label no_safepoint;
     __ ldx(Address(G2_thread, Thread::polling_page_offset()), G3_scratch, 0);
     __ btst(SafepointMechanism::poll_bit(), G3_scratch);
@@ -3028,7 +3028,6 @@ void TemplateTable::generate_vtable_call(Register Rrecv, Register Rindex, Regist
   // get target Method* & entry point
   __ lookup_virtual_method(Rrecv, Rindex, G5_method);
   __ profile_arguments_type(G5_method, Rcall, Gargs, true);
-  __ profile_called_method(G5_method, Rtemp);
   __ call_from_interpreter(Rcall, Gargs, Rret);
 }
 
@@ -3299,7 +3298,6 @@ void TemplateTable::invokeinterface(int byte_no) {
   assert_different_registers(Rcall, G5_method, Gargs, Rret);
 
   __ profile_arguments_type(G5_method, Rcall, Gargs, true);
-  __ profile_called_method(G5_method, Rscratch);
   __ call_from_interpreter(Rcall, Gargs, Rret);
 
   __ bind(L_no_such_interface);
@@ -3517,7 +3515,7 @@ void TemplateTable::_new() {
   if (UseBiasedLocking) {
     __ ld_ptr(RinstanceKlass, in_bytes(Klass::prototype_header_offset()), G4_scratch);
   } else {
-    __ set((intptr_t)markOopDesc::prototype(), G4_scratch);
+    __ set((intptr_t)markWord::prototype().value(), G4_scratch);
   }
   __ st_ptr(G4_scratch, RallocatedObject, oopDesc::mark_offset_in_bytes());       // mark
   __ store_klass_gap(G0, RallocatedObject);         // klass gap if compressed

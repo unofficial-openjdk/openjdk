@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,10 +32,9 @@ package java.lang;
  * @author  unascribed
  * @since   1.0
  */
-public
-class IllegalArgumentException extends RuntimeException {
+public class IllegalArgumentException extends RuntimeException {
     /**
-     * Constructs an <code>IllegalArgumentException</code> with no
+     * Constructs an {@code IllegalArgumentException} with no
      * detail message.
      */
     public IllegalArgumentException() {
@@ -43,7 +42,7 @@ class IllegalArgumentException extends RuntimeException {
     }
 
     /**
-     * Constructs an <code>IllegalArgumentException</code> with the
+     * Constructs an {@code IllegalArgumentException} with the
      * specified detail message.
      *
      * @param   s   the detail message.
@@ -56,7 +55,7 @@ class IllegalArgumentException extends RuntimeException {
      * Constructs a new exception with the specified detail message and
      * cause.
      *
-     * <p>Note that the detail message associated with <code>cause</code> is
+     * <p>Note that the detail message associated with {@code cause} is
      * <i>not</i> automatically incorporated in this exception's detail
      * message.
      *
@@ -90,5 +89,6 @@ class IllegalArgumentException extends RuntimeException {
         super(cause);
     }
 
+    @java.io.Serial
     private static final long serialVersionUID = -5365630128856068164L;
 }

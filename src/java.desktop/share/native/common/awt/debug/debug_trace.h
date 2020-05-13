@@ -34,21 +34,16 @@ extern "C" {
 
 #include "debug_util.h"
 
-/* Use THIS_FILE when it is available. */
-#ifndef THIS_FILE
-    #define THIS_FILE __FILE__
-#endif
-
 typedef int     dtrace_id;
 enum {
     UNDEFINED_TRACE_ID = -1 /* indicates trace point has not been registered yet */
 };
 
 /* prototype for client provided output callback function */
-typedef void (*DTRACE_OUTPUT_CALLBACK)(const char * msg);
+typedef void (JNICALL *DTRACE_OUTPUT_CALLBACK)(const char * msg);
 
 /* prototype for client provided print callback function */
-typedef void (*DTRACE_PRINT_CALLBACK)(const char * file, int line, int argc, const char * fmt, va_list arglist);
+typedef void (JNICALL *DTRACE_PRINT_CALLBACK)(const char * file, int line, int argc, const char * fmt, va_list arglist);
 
 extern void DTrace_EnableAll(dbool_t enabled);
 extern void DTrace_EnableFile(const char * file, dbool_t enabled);
@@ -75,7 +70,7 @@ static dtrace_id        _Dt_FileTraceId = UNDEFINED_TRACE_ID;
 #define _DTrace_Template(_func, _ac, _f, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8) \
 { \
     static dtrace_id _dt_lineid_ = UNDEFINED_TRACE_ID; \
-    DTrace_PrintFunction((_func), &_Dt_FileTraceId, &_dt_lineid_, THIS_FILE, __LINE__, (_ac), (_f), (_a1), (_a2), (_a3), (_a4), (_a5), (_a6), (_a7), (_a8) ); \
+    DTrace_PrintFunction((_func), &_Dt_FileTraceId, &_dt_lineid_, __FILE__, __LINE__, (_ac), (_f), (_a1), (_a2), (_a3), (_a4), (_a5), (_a6), (_a7), (_a8) ); \
 }
 
 /* printf style trace macros */

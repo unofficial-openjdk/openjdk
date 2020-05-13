@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,18 +24,18 @@
 package gc.survivorAlignment;
 
 /**
- * @test
+ * @test gc.survivorAlignment.TestPromotionFromSurvivorToTenuredAfterMinorGC
  * @bug 8031323
  * @summary Verify that objects promoted from survivor space to tenured space
  *          when their age exceeded tenuring threshold are not aligned to
  *          SurvivorAlignmentInBytes value.
  * @requires vm.gc != "Z" & vm.gc != "Shenandoah"
  * @library /test/lib
+ * @library /
  * @modules java.base/jdk.internal.misc
  *          java.management
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=128m -XX:MaxNewSize=128m
  *                   -XX:OldSize=32M -XX:MaxHeapSize=160m -XX:SurvivorRatio=1 -XX:-ResizePLAB

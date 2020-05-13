@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,21 +24,19 @@
 
 package org.graalvm.compiler.hotspot.test;
 
+import static org.junit.Assume.assumeFalse;
+
 import java.io.DataInputStream;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.util.zip.Checksum;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.nio.ByteBuffer;
+import java.util.zip.Checksum;
 
-import org.graalvm.compiler.test.GraalTest;
 import org.graalvm.compiler.core.test.GraalCompilerTest;
-
+import org.graalvm.compiler.serviceprovider.JavaVersionUtil;
 import org.junit.Test;
-
-import static org.junit.Assume.assumeFalse;
 
 /**
  * Tests compiled calls to {@link java.util.zip.CRC32C}.
@@ -56,7 +54,7 @@ public class CRC32CSubstitutionsTest extends GraalCompilerTest {
 
     @Test
     public void test1() throws Throwable {
-        assumeFalse(GraalTest.Java8OrEarlier);
+        assumeFalse(JavaVersionUtil.JAVA_SPEC <= 8);
         String classfileName = CRC32CSubstitutionsTest.class.getSimpleName().replace('.', '/') + ".class";
         InputStream s = CRC32CSubstitutionsTest.class.getResourceAsStream(classfileName);
         byte[] buf = new byte[s.available()];
@@ -79,7 +77,7 @@ public class CRC32CSubstitutionsTest extends GraalCompilerTest {
 
     @Test
     public void test2() throws Throwable {
-        assumeFalse(GraalTest.Java8OrEarlier);
+        assumeFalse(JavaVersionUtil.JAVA_SPEC <= 8);
         String classfileName = CRC32CSubstitutionsTest.class.getSimpleName().replace('.', '/') + ".class";
         InputStream s = CRC32CSubstitutionsTest.class.getResourceAsStream(classfileName);
         byte[] buf = new byte[s.available()];

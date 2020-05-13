@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -269,15 +269,8 @@ public class SimpleTreeVisitor <R,P> implements TreeVisitor<R,P> {
      * @param node {@inheritDoc}
      * @param p {@inheritDoc}
      * @return  the result of {@code defaultAction}
-     *
-     * @deprecated
-     * This method is modeling switch expressions,
-     * which are part of a preview feature and may be removed
-     * if the preview feature is removed.
      */
     @Override
-    @Deprecated(forRemoval=true, since="12")
-    @SuppressWarnings("removal")
     public R visitSwitchExpression(SwitchExpressionTree node, P p) {
         return defaultAction(node, p);
     }
@@ -564,6 +557,19 @@ public class SimpleTreeVisitor <R,P> implements TreeVisitor<R,P> {
      * @param node {@inheritDoc}
      * @param p {@inheritDoc}
      * @return  the result of {@code defaultAction}
+     * @since 14
+     */
+    @Override
+    public R visitBindingPattern(BindingPatternTree node, P p) {
+        return defaultAction(node, p);
+    }
+
+    /**
+     * {@inheritDoc} This implementation calls {@code defaultAction}.
+     *
+     * @param node {@inheritDoc}
+     * @param p {@inheritDoc}
+     * @return  the result of {@code defaultAction}
      */
     @Override
     public R visitArrayAccess(ArrayAccessTree node, P p) {
@@ -780,6 +786,18 @@ public class SimpleTreeVisitor <R,P> implements TreeVisitor<R,P> {
      */
     @Override
     public R visitOther(Tree node, P p) {
+        return defaultAction(node, p);
+    }
+
+    /**
+     * {@inheritDoc} This implementation calls {@code defaultAction}.
+     *
+     * @param node {@inheritDoc}
+     * @param p {@inheritDoc}
+     * @return  the result of {@code defaultAction}
+     */
+    @Override
+    public R visitYield(YieldTree node, P p) {
         return defaultAction(node, p);
     }
 }

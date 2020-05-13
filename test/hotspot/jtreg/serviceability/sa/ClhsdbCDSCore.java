@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,29 +31,33 @@
  * @requires vm.flavor == "server"
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
- * @run main/othervm/timeout=2400 -Xmx1g ClhsdbCDSCore
+ * @run driver/timeout=2400 ClhsdbCDSCore
  */
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.HashMap;
-import jdk.test.lib.process.ProcessTools;
-import jdk.test.lib.Platform;
-import jdk.test.lib.process.OutputAnalyzer;
-import jdk.test.lib.cds.CDSTestUtils;
-import jdk.test.lib.cds.CDSOptions;
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import jdk.test.lib.Asserts;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import jdk.internal.misc.Unsafe;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import jdk.internal.misc.Unsafe;
+
+import jdk.test.lib.Asserts;
+import jdk.test.lib.Platform;
+import jdk.test.lib.cds.CDSOptions;
+import jdk.test.lib.cds.CDSTestUtils;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
+import jdk.test.lib.SA.SATestUtils;
+
 import jtreg.SkippedException;
 
 class CrashApp {
@@ -94,7 +98,7 @@ public class ClhsdbCDSCore {
                List<String> options = new ArrayList<>();
                options.addAll(Arrays.asList(jArgs));
                crashOut =
-                   ProcessTools.executeProcess(getTestJavaCommandlineWithPrefix(
+                   ProcessTools.executeProcess(getTestJvmCommandlineWithPrefix(
                    RUN_SHELL_NO_LIMIT, options.toArray(new String[0])));
             } catch (Throwable t) {
                throw new Error("Can't execute the java cds process.", t);
@@ -102,28 +106,37 @@ public class ClhsdbCDSCore {
 
             System.out.println(crashOut.getOutput());
             String crashOutputString = crashOut.getOutput();
+            SATestUtils.unzipCores(new File("."));
             String coreFileLocation = getCoreFileLocation(crashOutputString);
             if (coreFileLocation == null) {
                 if (Platform.isOSX()) {
                     File coresDir = new File("/cores");
-                    if (!coresDir.isDirectory() || !coresDir.canWrite()) {
-                        throw new Error("cores is not a directory or does not have write permissions");
+                    if (!coresDir.isDirectory()) {
+                        cleanup();
+                        throw new Error(coresDir + " is not a directory");
+                    }
+                    // the /cores directory is usually not writable on macOS 10.15
+                    if (!coresDir.canWrite()) {
+                        cleanup();
+                        throw new SkippedException("Directory \"" + coresDir +
+                            "\" is not writable");
                     }
                 } else if (Platform.isLinux()) {
                     // Check if a crash report tool is installed.
                     File corePatternFile = new File(CORE_PATTERN_FILE_NAME);
-                    Scanner scanner = new Scanner(corePatternFile);
-                    while (scanner.hasNextLine()) {
-                        String line = scanner.nextLine();
-                        line = line.trim();
-                        System.out.println(line);
-                        if (line.startsWith("|")) {
-                            System.out.println(
-                                "\nThis system uses a crash report tool ($cat /proc/sys/kernel/core_pattern).\n" +
-                                "Core files might not be generated. Please reset /proc/sys/kernel/core_pattern\n" +
-                                "to enable core generation. Skipping this test.");
-                            cleanup();
-                            throw new SkippedException("This system uses a crash report tool");
+                    try (Scanner scanner = new Scanner(corePatternFile)) {
+                        while (scanner.hasNextLine()) {
+                            String line = scanner.nextLine();
+                            line = line.trim();
+                            System.out.println(line);
+                            if (line.startsWith("|")) {
+                                System.out.println(
+                                    "\nThis system uses a crash report tool ($cat /proc/sys/kernel/core_pattern).\n" +
+                                    "Core files might not be generated. Please reset /proc/sys/kernel/core_pattern\n" +
+                                    "to enable core generation. Skipping this test.");
+                                cleanup();
+                                throw new SkippedException("This system uses a crash report tool");
+                            }
                         }
                     }
                 }
@@ -150,7 +163,7 @@ public class ClhsdbCDSCore {
                 throw new SkippedException("Could not determine the UseSharedSpaces value");
             }
 
-            if (!useSharedSpacesOutput.contains("true")) {
+            if (useSharedSpacesOutput.contains("UseSharedSpaces = false")) {
                 // CDS archive is not mapped. Skip the rest of the test.
                 cleanup();
                 throw new SkippedException("The CDS archive is not mapped");
@@ -240,9 +253,9 @@ public class ClhsdbCDSCore {
         return null;
     }
 
-    private static String[] getTestJavaCommandlineWithPrefix(String prefix, String... args) {
+    private static String[] getTestJvmCommandlineWithPrefix(String prefix, String... args) {
         try {
-            String cmd = ProcessTools.getCommandLine(ProcessTools.createJavaProcessBuilder(true, args));
+            String cmd = ProcessTools.getCommandLine(ProcessTools.createTestJvm(args));
             return new String[]{"sh", "-c", prefix + cmd};
         } catch (Throwable t) {
             throw new Error("Can't create process builder: " + t, t);

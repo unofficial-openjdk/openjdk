@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,17 +33,16 @@ import org.graalvm.compiler.core.common.spi.ForeignCallLinkage;
 import org.graalvm.compiler.core.common.spi.ForeignCallsProvider;
 import org.graalvm.compiler.core.common.type.Stamp;
 import org.graalvm.compiler.debug.GraalError;
-import org.graalvm.compiler.graph.NodeSourcePosition;
 import org.graalvm.compiler.lir.LIRFrameState;
 import org.graalvm.compiler.lir.LIRInstruction;
 import org.graalvm.compiler.lir.LabelRef;
-import org.graalvm.compiler.lir.SwitchStrategy;
 import org.graalvm.compiler.lir.Variable;
+import org.graalvm.compiler.lir.VirtualStackSlot;
 
 import jdk.vm.ci.code.CodeCacheProvider;
 import jdk.vm.ci.code.Register;
-import jdk.vm.ci.code.RegisterAttributes;
 import jdk.vm.ci.code.RegisterConfig;
+import jdk.vm.ci.code.StackSlot;
 import jdk.vm.ci.code.TargetDescription;
 import jdk.vm.ci.code.ValueKindFactory;
 import jdk.vm.ci.meta.AllocatableValue;
@@ -63,14 +62,22 @@ public interface LIRGeneratorTool extends DiagnosticLIRGeneratorTool, ValueKindF
     interface MoveFactory {
 
         /**
+         * Checks whether the loading of the supplied constant can be deferred until usage.
+         */
+        @SuppressWarnings("unused")
+        default boolean mayEmbedConstantLoad(Constant constant) {
+            return false;
+        }
+
+        /**
          * Checks whether the supplied constant can be used without loading it into a register for
          * most operations, i.e., for commonly used arithmetic, logical, and comparison operations.
          *
-         * @param c The constant to check.
+         * @param constant The constant to check.
          * @return True if the constant can be used directly, false if the constant needs to be in a
          *         register.
          */
-        boolean canInlineConstant(Constant c);
+        boolean canInlineConstant(Constant constant);
 
         /**
          * @param constant The constant that might be moved to a stack slot.
@@ -114,8 +121,6 @@ public interface LIRGeneratorTool extends DiagnosticLIRGeneratorTool, ValueKindF
 
     RegisterConfig getRegisterConfig();
 
-    boolean hasBlockEnd(AbstractBlockBase<?> block);
-
     MoveFactory getMoveFactory();
 
     /**
@@ -126,7 +131,9 @@ public interface LIRGeneratorTool extends DiagnosticLIRGeneratorTool, ValueKindF
      */
     MoveFactory getSpillMoveFactory();
 
-    BlockScope getBlockScope(AbstractBlockBase<?> block);
+    boolean canInlineConstant(Constant constant);
+
+    boolean mayEmbedConstantLoad(Constant constant);
 
     Value emitConstant(LIRKind kind, Constant constant);
 
@@ -174,8 +181,6 @@ public interface LIRGeneratorTool extends DiagnosticLIRGeneratorTool, ValueKindF
 
     Variable emitForeignCall(ForeignCallLinkage linkage, LIRFrameState state, Value... args);
 
-    RegisterAttributes attributes(Register register);
-
     /**
      * Create a new {@link Variable}.
      *
@@ -190,6 +195,10 @@ public interface LIRGeneratorTool extends DiagnosticLIRGeneratorTool, ValueKindF
 
     void emitMove(AllocatableValue dst, Value src);
 
+    Variable emitReadRegister(Register register, ValueKind<?> kind);
+
+    void emitWriteRegister(Register dst, Value src, ValueKind<?> wordStamp);
+
     void emitMoveConstant(AllocatableValue dst, Constant src);
 
     Variable emitAddress(AllocatableValue stackslot);
@@ -197,14 +206,6 @@ public interface LIRGeneratorTool extends DiagnosticLIRGeneratorTool, ValueKindF
     void emitMembar(int barriers);
 
     void emitUnwind(Value operand);
-
-    /**
-     * Called just before register allocation is performed on the LIR owned by this generator.
-     * Overriding implementations of this method must call the overridden method.
-     */
-    void beforeRegisterAllocation();
-
-    void emitIncomingValues(Value[] params);
 
     /**
      * Emits a return instruction. Implementations need to insert a move if the input is not in the
@@ -216,43 +217,13 @@ public interface LIRGeneratorTool extends DiagnosticLIRGeneratorTool, ValueKindF
 
     Variable load(Value value);
 
-    Value loadNonConst(Value value);
-
-    /**
-     * Determines if only oop maps are required for the code generated from the LIR.
-     */
-    boolean needOnlyOopMaps();
-
-    /**
-     * Gets the ABI specific operand used to return a value of a given kind from a method.
-     *
-     * @param javaKind the {@link JavaKind} of value being returned
-     * @param valueKind the backend type of the value being returned
-     * @return the operand representing the ABI defined location used return a value of kind
-     *         {@code kind}
-     */
-    AllocatableValue resultOperandFor(JavaKind javaKind, ValueKind<?> valueKind);
-
     <I extends LIRInstruction> I append(I op);
 
-    void setSourcePosition(NodeSourcePosition position);
-
     void emitJump(LabelRef label);
-
-    void emitCompareBranch(PlatformKind cmpKind, Value left, Value right, Condition cond, boolean unorderedIsTrue, LabelRef trueDestination, LabelRef falseDestination,
-                    double trueDestinationProbability);
-
-    void emitOverflowCheckBranch(LabelRef overflow, LabelRef noOverflow, LIRKind cmpKind, double overflowProbability);
-
-    void emitIntegerTestBranch(Value left, Value right, LabelRef trueDestination, LabelRef falseDestination, double trueSuccessorProbability);
 
     Variable emitConditionalMove(PlatformKind cmpKind, Value leftVal, Value right, Condition cond, boolean unorderedIsTrue, Value trueValue, Value falseValue);
 
     Variable emitIntegerTestMove(Value leftVal, Value right, Value trueValue, Value falseValue);
-
-    void emitStrategySwitch(JavaConstant[] keyConstants, double[] keyProbabilities, LabelRef[] keyTargets, LabelRef defaultTarget, Variable value);
-
-    void emitStrategySwitch(SwitchStrategy strategy, Variable key, LabelRef[] keyTargets, LabelRef defaultTarget);
 
     Variable emitByteSwap(Value operand);
 
@@ -261,10 +232,18 @@ public interface LIRGeneratorTool extends DiagnosticLIRGeneratorTool, ValueKindF
         throw GraalError.unimplemented("String.compareTo substitution is not implemented on this architecture");
     }
 
-    Variable emitArrayEquals(JavaKind kind, Value array1, Value array2, Value length, int constantLength, boolean directPointers);
+    @SuppressWarnings("unused")
+    default Variable emitArrayEquals(JavaKind kind, Value array1, Value array2, Value length, boolean directPointers) {
+        throw GraalError.unimplemented("Array.equals substitution is not implemented on this architecture");
+    }
 
     @SuppressWarnings("unused")
-    default Variable emitArrayIndexOf(JavaKind kind, boolean findTwoConsecutive, Value sourcePointer, Value sourceCount, Value... searchValues) {
+    default Variable emitArrayEquals(JavaKind kind1, JavaKind kind2, Value array1, Value array2, Value length, boolean directPointers) {
+        throw GraalError.unimplemented("Array.equals with different types substitution is not implemented on this architecture");
+    }
+
+    @SuppressWarnings("unused")
+    default Variable emitArrayIndexOf(JavaKind arrayKind, JavaKind valueKind, boolean findTwoConsecutive, Value sourcePointer, Value sourceCount, Value fromIndex, Value... searchValues) {
         throw GraalError.unimplemented("String.indexOf substitution is not implemented on this architecture");
     }
 
@@ -313,4 +292,26 @@ public interface LIRGeneratorTool extends DiagnosticLIRGeneratorTool, ValueKindF
      * after this fence will execute until all previous instructions have retired.
      */
     void emitSpeculationFence();
+
+    default VirtualStackSlot allocateStackSlots(int slots) {
+        return getResult().getFrameMapBuilder().allocateStackSlots(slots);
+    }
+
+    default Value emitReadCallerStackPointer(Stamp wordStamp) {
+        /*
+         * We do not know the frame size yet. So we load the address of the first spill slot
+         * relative to the beginning of the frame, which is equivalent to the stack pointer of the
+         * caller.
+         */
+        return emitAddress(StackSlot.get(getLIRKind(wordStamp), 0, true));
+    }
+
+    default Value emitReadReturnAddress(Stamp wordStamp, int returnAddressSize) {
+        return emitMove(StackSlot.get(getLIRKind(wordStamp), -returnAddressSize, true));
+    }
+
+    @SuppressWarnings("unused")
+    default void emitZeroMemory(Value address, Value length, boolean isAligned) {
+        throw GraalError.unimplemented("Bulk zeroing is not implemented on this architecture");
+    }
 }

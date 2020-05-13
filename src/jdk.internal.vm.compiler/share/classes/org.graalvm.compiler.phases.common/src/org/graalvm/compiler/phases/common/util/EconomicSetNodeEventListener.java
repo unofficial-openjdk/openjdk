@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import org.graalvm.compiler.graph.Graph.NodeEvent;
 import org.graalvm.compiler.graph.Graph.NodeEventListener;
 import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.graph.Node.IndirectCanonicalization;
+import org.graalvm.compiler.nodes.AbstractBeginNode;
 
 /**
  * A simple {@link NodeEventListener} implementation that accumulates event nodes in a
@@ -48,7 +49,7 @@ public class EconomicSetNodeEventListener extends NodeEventListener {
      */
     public EconomicSetNodeEventListener() {
         this.nodes = EconomicSet.create(Equivalence.IDENTITY);
-        this.filter = EnumSet.allOf(NodeEvent.class);
+        this.filter = EnumSet.of(NodeEvent.INPUT_CHANGED, NodeEvent.NODE_ADDED, NodeEvent.ZERO_USAGES);
     }
 
     /**
@@ -71,12 +72,23 @@ public class EconomicSetNodeEventListener extends NodeEventListener {
     @Override
     public void changed(NodeEvent e, Node node) {
         if (filter.contains(e)) {
-            nodes.add(node);
+            add(node);
             if (node instanceof IndirectCanonicalization) {
                 for (Node usage : node.usages()) {
-                    nodes.add(usage);
+                    add(usage);
                 }
             }
+
+            if (node instanceof AbstractBeginNode) {
+                AbstractBeginNode abstractBeginNode = (AbstractBeginNode) node;
+                add(abstractBeginNode.predecessor());
+            }
+        }
+    }
+
+    private void add(Node n) {
+        if (n != null) {
+            nodes.add(n);
         }
     }
 

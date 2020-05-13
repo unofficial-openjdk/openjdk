@@ -20,7 +20,6 @@ java.nio.file
 java.nio.file.attribute
 java.nio.file.spi
 java.security
-java.security.acl
 java.security.cert
 java.security.interfaces
 java.security.spec
@@ -319,7 +318,6 @@ module:jdk.naming.rmi
 module:jdk.net
 jdk.net
 module:jdk.pack
-module:jdk.rmic
 module:jdk.scripting.nashorn
 jdk.nashorn.api.scripting
 jdk.nashorn.api.tree

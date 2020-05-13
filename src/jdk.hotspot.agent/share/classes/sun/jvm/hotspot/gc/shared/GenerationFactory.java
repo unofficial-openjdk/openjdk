@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,10 +27,11 @@ package sun.jvm.hotspot.gc.shared;
 import java.util.*;
 
 import sun.jvm.hotspot.debugger.*;
-import sun.jvm.hotspot.gc.cms.*;
 import sun.jvm.hotspot.gc.serial.*;
 import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.types.*;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
 /** Factory containing a VirtualConstructor suitable for instantiating
     wrapper objects for all types of generations */
@@ -50,9 +51,7 @@ public class GenerationFactory {
     ctor = new VirtualConstructor(db);
 
     ctor.addMapping("DefNewGeneration", DefNewGeneration.class);
-    ctor.addMapping("ParNewGeneration", ParNewGeneration.class);
     ctor.addMapping("TenuredGeneration", TenuredGeneration.class);
-    ctor.addMapping("ConcurrentMarkSweepGeneration", ConcurrentMarkSweepGeneration.class);
   }
 
   public static Generation newObject(Address addr) {

@@ -26,6 +26,7 @@
 #include "gc/parallel/mutableSpace.hpp"
 #include "gc/parallel/parallelScavengeHeap.hpp"
 #include "gc/parallel/psPromotionLAB.hpp"
+#include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
 
 size_t PSPromotionLAB::filler_header_size;
@@ -82,7 +83,7 @@ void PSPromotionLAB::flush() {
   // so they can always fill with an array.
   HeapWord* tlab_end = end() + filler_header_size;
   typeArrayOop filler_oop = (typeArrayOop) top();
-  filler_oop->set_mark_raw(markOopDesc::prototype());
+  filler_oop->set_mark_raw(markWord::prototype());
   filler_oop->set_klass(Universe::intArrayKlassObj());
   const size_t array_length =
     pointer_delta(tlab_end, top()) - typeArrayOopDesc::header_size(T_INT);
@@ -91,7 +92,7 @@ void PSPromotionLAB::flush() {
 
 #ifdef ASSERT
   // Note that we actually DO NOT want to use the aligned header size!
-  HeapWord* elt_words = ((HeapWord*)filler_oop) + typeArrayOopDesc::header_size(T_INT);
+  HeapWord* elt_words = cast_from_oop<HeapWord*>(filler_oop) + typeArrayOopDesc::header_size(T_INT);
   Copy::fill_to_words(elt_words, array_length, 0xDEAABABE);
 #endif
 

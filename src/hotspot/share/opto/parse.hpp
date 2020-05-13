@@ -88,6 +88,10 @@ protected:
                                 ciMethod* caller_method,
                                 JVMState* jvms,
                                 WarmCallInfo* wci_result);
+  bool        is_not_reached(ciMethod* callee_method,
+                             ciMethod* caller_method,
+                             int caller_bci,
+                             ciCallProfile& profile);
   void        print_inlining(ciMethod* callee_method, int caller_bci,
                              ciMethod* caller_method, bool success) const;
 
@@ -102,9 +106,6 @@ public:
 
   static InlineTree* build_inline_tree_root();
   static InlineTree* find_subtree_from_root(InlineTree* root, JVMState* jvms, ciMethod* callee);
-
-  // For temporary (stack-allocated, stateless) ilts:
-  InlineTree(Compile* c, ciMethod* callee_method, JVMState* caller_jvms, float site_invoke_ratio, int max_inline_level);
 
   // See if it is OK to inline.
   // The receiver is the inline tree for the caller.
@@ -476,7 +477,9 @@ class Parse : public GraphKit {
   // Helper function to generate array store
   void array_store(BasicType etype);
   // Helper function to compute array addressing
-  Node* array_addressing(BasicType type, int vals, const Type* *result2=NULL);
+  Node* array_addressing(BasicType type, int vals, const Type*& elemtype);
+
+  void clinit_deopt();
 
   void rtm_deopt();
 
@@ -526,14 +529,12 @@ class Parse : public GraphKit {
 
   // common code for making initial checks and forming addresses
   void do_field_access(bool is_get, bool is_field);
-  bool static_field_ok_in_clinit(ciField *field, ciMethod *method);
 
   // common code for actually performing the load or store
   void do_get_xxx(Node* obj, ciField* field, bool is_field);
   void do_put_xxx(Node* obj, ciField* field, bool is_field);
 
   // implementation of object creation bytecodes
-  void emit_guard_for_new(ciInstanceKlass* klass);
   void do_new();
   void do_newarray(BasicType elemtype);
   void do_anewarray();

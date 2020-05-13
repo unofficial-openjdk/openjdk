@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ import static java.lang.invoke.MethodHandleStatics.*;
  * A symbolic reference obtained by cracking a direct method handle
  * into its consitutent symbolic parts.
  * To crack a direct method handle, call {@link Lookup#revealDirect Lookup.revealDirect}.
- * <h1><a id="directmh"></a>Direct Method Handles</h1>
+ * <h2><a id="directmh"></a>Direct Method Handles</h2>
  * A <em>direct method handle</em> represents a method, constructor, or field without
  * any intervening argument bindings or other transformations.
  * The method, constructor, or field referred to by a direct method handle is called
@@ -43,7 +43,8 @@ import static java.lang.invoke.MethodHandleStatics.*;
  * Direct method handles may be obtained in any of these ways:
  * <ul>
  * <li>By executing an {@code ldc} instruction on a {@code CONSTANT_MethodHandle} constant.
- *     (See the Java Virtual Machine Specification, sections 4.4.8 and 5.4.3.)
+ *     (See the Java Virtual Machine Specification, sections {@jvms
+ *     4.4.8} and {@jvms 5.4.3}.)
  * <li>By calling one of the <a href="MethodHandles.Lookup.html#lookups">Lookup Factory Methods</a>,
  *     such as {@link Lookup#findVirtual Lookup.findVirtual},
  *     to resolve a symbolic reference into a method handle.
@@ -58,7 +59,7 @@ import static java.lang.invoke.MethodHandleStatics.*;
  *     to convert a {@link Field} into a method handle.
  * </ul>
  *
- * <h1>Restrictions on Cracking</h1>
+ * <h2>Restrictions on Cracking</h2>
  * Given a suitable {@code Lookup} object, it is possible to crack any direct method handle
  * to recover a symbolic reference for the underlying method, constructor, or field.
  * Cracking must be done via a {@code Lookup} object equivalent to that which created
@@ -77,7 +78,7 @@ import static java.lang.invoke.MethodHandleStatics.*;
  * handle with symbolic information (or caller binding) from an unexpected scope.
  * Use {@link java.lang.invoke.MethodHandles#reflectAs} to override this limitation.
  *
- * <h1><a id="refkinds"></a>Reference kinds</h1>
+ * <h2><a id="refkinds"></a>Reference kinds</h2>
  * The <a href="MethodHandles.Lookup.html#lookups">Lookup Factory Methods</a>
  * correspond to all major use cases for methods, constructors, and fields.
  * These use cases may be distinguished using small integers as follows:
@@ -127,8 +128,7 @@ import static java.lang.invoke.MethodHandleStatics.*;
  * </table>
  * @since 1.8
  */
-public
-interface MethodHandleInfo {
+public interface MethodHandleInfo {
     /**
      * A direct method handle reference kind,
      * as defined in the <a href="MethodHandleInfo.html#refkinds">table above</a>.
@@ -199,9 +199,9 @@ interface MethodHandleInfo {
      * @param expected a class object representing the desired result type {@code T}
      * @param lookup the lookup object that created this MethodHandleInfo, or one with equivalent access privileges
      * @return a reference to the method, constructor, or field object
-     * @exception ClassCastException if the member is not of the expected type
-     * @exception NullPointerException if either argument is {@code null}
-     * @exception IllegalArgumentException if the underlying member is not accessible to the given lookup object
+     * @throws    ClassCastException if the member is not of the expected type
+     * @throws    NullPointerException if either argument is {@code null}
+     * @throws    IllegalArgumentException if the underlying member is not accessible to the given lookup object
      */
     public <T extends Member> T reflectAs(Class<T> expected, Lookup lookup);
 
@@ -243,7 +243,7 @@ interface MethodHandleInfo {
      * The conventional prefix "REF_" is omitted.
      * @param referenceKind an integer code for a kind of reference used to access a class member
      * @return a mixed-case string such as {@code "getField"}
-     * @exception IllegalArgumentException if the argument is not a valid
+     * @throws    IllegalArgumentException if the argument is not a valid
      *            <a href="MethodHandleInfo.html#refkinds">reference kind number</a>
      */
     public static String referenceKindToString(int referenceKind) {
@@ -278,9 +278,9 @@ interface MethodHandleInfo {
      * @param name the {@linkplain #getName member name} part of the symbolic reference
      * @param type the {@linkplain #getMethodType method type} part of the symbolic reference
      * @return a string of the form {@code "RK C.N:MT"}
-     * @exception IllegalArgumentException if the first argument is not a valid
+     * @throws    IllegalArgumentException if the first argument is not a valid
      *            <a href="MethodHandleInfo.html#refkinds">reference kind number</a>
-     * @exception NullPointerException if any reference argument is {@code null}
+     * @throws    NullPointerException if any reference argument is {@code null}
      */
     public static String toString(int kind, Class<?> defc, String name, MethodType type) {
         Objects.requireNonNull(name); Objects.requireNonNull(type);

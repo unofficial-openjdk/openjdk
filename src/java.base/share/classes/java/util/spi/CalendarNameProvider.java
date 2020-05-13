@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -114,8 +114,8 @@ import java.util.Map;
  *     <td>B.E. (Buddhist Era)</td>
  *   </tr>
  *   <tr>
- *     <th scope="row" rowspan="6" style="font-weight:normal; text-align:left; vertical-align:top">{@code "japanese"}</th>
- *     <th scope="row" rowspan="5" style="font-weight:normal; text-align:left; vertical-align:top">{@link Calendar#ERA}</th>
+ *     <th scope="row" rowspan="7" style="font-weight:normal; text-align:left; vertical-align:top">{@code "japanese"}</th>
+ *     <th scope="row" rowspan="6" style="font-weight:normal; text-align:left; vertical-align:top">{@link Calendar#ERA}</th>
  *     <th scope="row" style="font-weight:normal">0</th>
  *     <td>Seireki (Before Meiji)</td>
  *   </tr>
@@ -133,7 +133,11 @@ import java.util.Map;
  *   </tr>
  *   <tr>
  *     <th scope="row" style="font-weight:normal">4</th>
- *     <td >Heisei</td>
+ *     <td>Heisei</td>
+ *   </tr>
+ *   <tr>
+ *     <th scope="row" style="font-weight:normal">5</th>
+ *     <td>Reiwa</td>
  *   </tr>
  *   <tr>
  *     <th scope="row" style="font-weight:normal; text-align:left; vertical-align:top">{@link Calendar#YEAR}</th>
@@ -186,9 +190,9 @@ public abstract class CalendarNameProvider extends LocaleServiceProvider {
 
     /**
      * Returns the string representation (display name) of the calendar
-     * <code>field value</code> in the given <code>style</code> and
-     * <code>locale</code>.  If no string representation is
-     * applicable, <code>null</code> is returned.
+     * {@code field value} in the given {@code style} and
+     * {@code locale}.  If no string representation is
+     * applicable, {@code null} is returned.
      *
      * <p>{@code field} is a {@code Calendar} field index, such as {@link
      * Calendar#MONTH}. The time zone fields, {@link Calendar#ZONE_OFFSET} and

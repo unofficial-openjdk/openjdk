@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
 
 /**
  * @author Xueming Shen, Rajendra Gutupalli, Jaya Hangal
@@ -63,19 +65,22 @@ class ZipFileStore extends FileStore {
     @Override
     public boolean supportsFileAttributeView(Class<? extends FileAttributeView> type) {
         return (type == BasicFileAttributeView.class ||
-                type == ZipFileAttributeView.class);
+                type == ZipFileAttributeView.class ||
+                ((type == FileOwnerAttributeView.class ||
+                  type == PosixFileAttributeView.class) && zfs.supportPosix));
     }
 
     @Override
     public boolean supportsFileAttributeView(String name) {
-        return name.equals("basic") || name.equals("zip");
+        return "basic".equals(name) || "zip".equals(name) ||
+               (("owner".equals(name) || "posix".equals(name)) && zfs.supportPosix);
     }
 
     @Override
     public <V extends FileStoreAttributeView> V getFileStoreAttributeView(Class<V> type) {
         if (type == null)
             throw new NullPointerException();
-        return (V)null;
+        return null;
     }
 
     @Override
@@ -108,7 +113,7 @@ class ZipFileStore extends FileStore {
         final FileStore fstore;
         final long size;
 
-        public ZipFileStoreAttributes(ZipFileStore fileStore)
+        ZipFileStoreAttributes(ZipFileStore fileStore)
             throws IOException
         {
             Path path = FileSystems.getDefault().getPath(fileStore.name());
@@ -116,17 +121,17 @@ class ZipFileStore extends FileStore {
             this.fstore = Files.getFileStore(path);
         }
 
-        public long totalSpace() {
+        long totalSpace() {
             return size;
         }
 
-        public long usableSpace() throws IOException {
+        long usableSpace() throws IOException {
             if (!fstore.isReadOnly())
                 return fstore.getUsableSpace();
             return 0;
         }
 
-        public long unallocatedSpace()  throws IOException {
+        long unallocatedSpace()  throws IOException {
             if (!fstore.isReadOnly())
                 return fstore.getUnallocatedSpace();
             return 0;

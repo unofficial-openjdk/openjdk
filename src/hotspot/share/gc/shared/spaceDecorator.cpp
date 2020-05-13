@@ -23,8 +23,9 @@
  */
 
 #include "precompiled.hpp"
+#include "gc/parallel/mutableSpace.hpp"
 #include "gc/shared/space.inline.hpp"
-#include "gc/shared/spaceDecorator.hpp"
+#include "gc/shared/spaceDecorator.inline.hpp"
 #include "logging/log.hpp"
 #include "utilities/copy.hpp"
 
@@ -73,7 +74,7 @@ void SpaceMangler::mangle_unused_area() {
 // properly tracking the high water mark for mangling.
 // This can be the case when to-space is being used for
 // scratch space during a mark-sweep-compact.  See
-// contribute_scratch() and PSMarkSweep::allocate_stacks().
+// contribute_scratch().
 void SpaceMangler::mangle_unused_area_complete() {
   assert(ZapUnusedHeapArea, "Mangling should not be in use");
   MemRegion mangle_mr(top(), end());

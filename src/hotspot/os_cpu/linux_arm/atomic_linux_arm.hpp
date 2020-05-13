@@ -26,7 +26,7 @@
 #define OS_CPU_LINUX_ARM_ATOMIC_LINUX_ARM_HPP
 
 #include "runtime/os.hpp"
-#include "vm_version_arm.hpp"
+#include "runtime/vm_version.hpp"
 
 // Implementation of class atomic
 
@@ -54,8 +54,8 @@ inline T Atomic::PlatformLoad<8>::operator()(T const volatile* src) const {
 
 template<>
 template<typename T>
-inline void Atomic::PlatformStore<8>::operator()(T store_value,
-                                                 T volatile* dest) const {
+inline void Atomic::PlatformStore<8>::operator()(T volatile* dest,
+                                                 T store_value) const {
   STATIC_ASSERT(8 == sizeof(T));
   (*os::atomic_store_long_func)(
     PrimitiveConversions::cast<int64_t>(store_value), reinterpret_cast<volatile int64_t*>(dest));
@@ -67,30 +67,33 @@ inline void Atomic::PlatformStore<8>::operator()(T store_value,
 // For ARMv7 we add explicit barriers in the stubs.
 
 template<size_t byte_size>
-struct Atomic::PlatformAdd
-  : Atomic::AddAndFetch<Atomic::PlatformAdd<byte_size> >
-{
-  template<typename I, typename D>
-  D add_and_fetch(I add_value, D volatile* dest, atomic_memory_order order) const;
+struct Atomic::PlatformAdd {
+  template<typename D, typename I>
+  D add_and_fetch(D volatile* dest, I add_value, atomic_memory_order order) const;
+
+  template<typename D, typename I>
+  D fetch_and_add(D volatile* dest, I add_value, atomic_memory_order order) const {
+    return add_and_fetch(dest, add_value, order) - add_value;
+  }
 };
 
 template<>
-template<typename I, typename D>
-inline D Atomic::PlatformAdd<4>::add_and_fetch(I add_value, D volatile* dest,
+template<typename D, typename I>
+inline D Atomic::PlatformAdd<4>::add_and_fetch(D volatile* dest, I add_value,
                                                atomic_memory_order order) const {
   STATIC_ASSERT(4 == sizeof(I));
   STATIC_ASSERT(4 == sizeof(D));
-  return add_using_helper<int32_t>(os::atomic_add_func, add_value, dest);
+  return add_using_helper<int32_t>(os::atomic_add_func, dest, add_value);
 }
 
 
 template<>
 template<typename T>
-inline T Atomic::PlatformXchg<4>::operator()(T exchange_value,
-                                             T volatile* dest,
+inline T Atomic::PlatformXchg<4>::operator()(T volatile* dest,
+                                             T exchange_value,
                                              atomic_memory_order order) const {
   STATIC_ASSERT(4 == sizeof(T));
-  return xchg_using_helper<int32_t>(os::atomic_xchg_func, exchange_value, dest);
+  return xchg_using_helper<int32_t>(os::atomic_xchg_func, dest, exchange_value);
 }
 
 
@@ -119,22 +122,22 @@ inline int64_t reorder_cmpxchg_long_func(int64_t exchange_value,
 
 template<>
 template<typename T>
-inline T Atomic::PlatformCmpxchg<4>::operator()(T exchange_value,
-                                                T volatile* dest,
+inline T Atomic::PlatformCmpxchg<4>::operator()(T volatile* dest,
                                                 T compare_value,
+                                                T exchange_value,
                                                 atomic_memory_order order) const {
   STATIC_ASSERT(4 == sizeof(T));
-  return cmpxchg_using_helper<int32_t>(reorder_cmpxchg_func, exchange_value, dest, compare_value);
+  return cmpxchg_using_helper<int32_t>(reorder_cmpxchg_func, dest, compare_value, exchange_value);
 }
 
 template<>
 template<typename T>
-inline T Atomic::PlatformCmpxchg<8>::operator()(T exchange_value,
-                                                T volatile* dest,
+inline T Atomic::PlatformCmpxchg<8>::operator()(T volatile* dest,
                                                 T compare_value,
+                                                T exchange_value,
                                                 atomic_memory_order order) const {
   STATIC_ASSERT(8 == sizeof(T));
-  return cmpxchg_using_helper<int64_t>(reorder_cmpxchg_long_func, exchange_value, dest, compare_value);
+  return cmpxchg_using_helper<int64_t>(reorder_cmpxchg_long_func, dest, compare_value, exchange_value);
 }
 
 #endif // OS_CPU_LINUX_ARM_ATOMIC_LINUX_ARM_HPP

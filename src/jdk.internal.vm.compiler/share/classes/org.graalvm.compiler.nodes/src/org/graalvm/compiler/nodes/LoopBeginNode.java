@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,9 +50,11 @@ public final class LoopBeginNode extends AbstractMergeNode implements IterableNo
     protected int nextEndIndex;
     protected int unswitches;
     protected int splits;
+    protected int peelings;
     protected int inversionCount;
     protected LoopType loopType;
     protected int unrollFactor;
+    protected boolean osrLoop;
 
     public enum LoopType {
         SIMPLE_LOOP,
@@ -140,7 +142,7 @@ public final class LoopBeginNode extends AbstractMergeNode implements IterableNo
     }
 
     public void setLoopFrequency(double loopFrequency) {
-        assert loopFrequency >= 0;
+        assert loopFrequency >= 1.0;
         this.loopFrequency = loopFrequency;
     }
 
@@ -204,6 +206,14 @@ public final class LoopBeginNode extends AbstractMergeNode implements IterableNo
 
     public void incrementSplits() {
         splits++;
+    }
+
+    public int peelings() {
+        return peelings;
+    }
+
+    public void incrementPeelings() {
+        peelings++;
     }
 
     @Override
@@ -303,11 +313,6 @@ public final class LoopBeginNode extends AbstractMergeNode implements IterableNo
         return begin instanceof LoopExitNode && ((LoopExitNode) begin).loopBegin() == this;
     }
 
-    public LoopExitNode getSingleLoopExit() {
-        assert loopExits().count() == 1;
-        return loopExits().first();
-    }
-
     public LoopEndNode getSingleLoopEnd() {
         assert loopEnds().count() == 1;
         return loopEnds().first();
@@ -317,12 +322,7 @@ public final class LoopBeginNode extends AbstractMergeNode implements IterableNo
     public void removeExits() {
         for (LoopExitNode loopexit : loopExits().snapshot()) {
             try (DebugCloseable position = graph().withNodeSourcePosition(loopexit)) {
-                loopexit.removeProxies();
-                FrameState loopStateAfter = loopexit.stateAfter();
-                graph().replaceFixedWithFixed(loopexit, graph().add(new BeginNode()));
-                if (loopStateAfter != null) {
-                    GraphUtil.tryKillUnused(loopStateAfter);
-                }
+                loopexit.removeExit();
             }
         }
     }
@@ -414,5 +414,13 @@ public final class LoopBeginNode extends AbstractMergeNode implements IterableNo
                 }
             }
         }
+    }
+
+    public void markOsrLoop() {
+        osrLoop = true;
+    }
+
+    public boolean isOsrLoop() {
+        return osrLoop;
     }
 }

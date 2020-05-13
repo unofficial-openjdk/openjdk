@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,8 @@ import sun.jvm.hotspot.oops.*;
 import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.types.*;
 import sun.jvm.hotspot.utilities.*;
+import sun.jvm.hotspot.utilities.Observable;
+import sun.jvm.hotspot.utilities.Observer;
 
 /** Specialization of and implementation of abstract methods of the
     Frame class for the ppc64 family of CPUs. */
@@ -51,14 +53,12 @@ public class PPC64Frame extends Frame {
   private static final int INTERPRETER_FRAME_MDX_OFFSET = INTERPRETER_FRAME_LAST_SP_OFFSET -1;
   private static final int INTERPRETER_FRAME_ESP_OFFSET = INTERPRETER_FRAME_MDX_OFFSET - 1;
   private static final int INTERPRETER_FRAME_BCX_OFFSET = INTERPRETER_FRAME_ESP_OFFSET - 1;
-  private static final int INTERPRETER_FRAME_CACHE_OFFSET =INTERPRETER_FRAME_BCX_OFFSET - 1;
+  private static final int INTERPRETER_FRAME_CACHE_OFFSET = INTERPRETER_FRAME_BCX_OFFSET - 1;
   private static final int INTERPRETER_FRAME_MONITORS_OFFSET = INTERPRETER_FRAME_CACHE_OFFSET - 1;
   private static final int INTERPRETER_FRAME_LOCALS_OFFSET = INTERPRETER_FRAME_MONITORS_OFFSET - 1;
   private static final int INTERPRETER_FRAME_MIRROR_OFFSET = INTERPRETER_FRAME_LOCALS_OFFSET - 1;
   private static final int INTERPRETER_FRAME_METHOD_OFFSET = INTERPRETER_FRAME_MIRROR_OFFSET - 1;
-  private static final int INTERPRETER_FRAME_INITIAL_SP_OFFSET = INTERPRETER_FRAME_BCX_OFFSET - 1; // FIXME: probably wrong, but unused anyway
-  private static final int INTERPRETER_FRAME_MONITOR_BLOCK_TOP_OFFSET = INTERPRETER_FRAME_INITIAL_SP_OFFSET;
-  private static final int INTERPRETER_FRAME_MONITOR_BLOCK_BOTTOM_OFFSET = INTERPRETER_FRAME_INITIAL_SP_OFFSET;
+  private static final int INTERPRETER_FRAME_MONITOR_BLOCK_BOTTOM_OFFSET = INTERPRETER_FRAME_METHOD_OFFSET - 1;
 
   // Entry frames
   private static int ENTRY_FRAME_CALL_WRAPPER_OFFSET;
@@ -444,7 +444,7 @@ public class PPC64Frame extends Frame {
   }
 
   public BasicObjectLock interpreterFrameMonitorEnd() {
-    Address result = addressOfStackSlot(INTERPRETER_FRAME_MONITOR_BLOCK_TOP_OFFSET).getAddressAt(0);
+    Address result = addressOfStackSlot(INTERPRETER_FRAME_MONITORS_OFFSET).getAddressAt(0);
     if (Assert.ASSERTS_ENABLED) {
       // make sure the pointer points inside the frame
       Assert.that(AddressOps.gt(getFP(), result), "result must <  than frame pointer");

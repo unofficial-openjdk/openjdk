@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,13 @@
  * questions.
  */
 
-import jdk.test.lib.process.OutputAnalyzer;
-import jdk.test.lib.process.ProcessTools;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 /**
  * Base class.
@@ -60,11 +61,15 @@ public abstract class Test {
     static final int VALIDITY = 365;
 
     static final String WARNING = "Warning:";
-    static final String WARNING_OR_ERROR = "(Warning|Error):";
+    static final String ERROR = "[Ee]rror:";
+    static final String WARNING_OR_ERROR = "(" + WARNING + "|" + ERROR + ")";
 
     static final String CHAIN_NOT_VALIDATED_VERIFYING_WARNING
             = "This jar contains entries "
             + "whose certificate chain is invalid.";
+
+    static final String CERTIFICATE_SELF_SIGNED
+            = "The signer's certificate is self-signed.";
 
     static final String ALIAS_NOT_IN_STORE_VERIFYING_WARNING
             = "This jar contains signed entries "
@@ -259,7 +264,9 @@ public abstract class Test {
         cmd.add(tool);
         cmd.add("-J-Duser.language=en");
         cmd.add("-J-Duser.country=US");
-        cmd.addAll(Arrays.asList(args));
+        cmd.addAll(Arrays.asList(args).stream().filter(arg -> {
+            return arg != null && !arg.isEmpty();
+        }).collect(Collectors.toList()));
         return ProcessTools.executeCommand(cmd.toArray(new String[cmd.size()]));
     }
 }

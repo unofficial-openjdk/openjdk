@@ -81,12 +81,8 @@ class IdealGraphPrinter : public CHeapObj<mtCompiler> {
   static const char *METHOD_SHORT_NAME_PROPERTY;
   static const char *ASSEMBLY_ELEMENT;
 
-  elapsedTimer _walk_time;
-  elapsedTimer _output_time;
-  elapsedTimer _build_blocks_time;
-
   static int _file_count;
-  networkStream *_stream;
+  networkStream *_network_stream;
   xmlStream *_xml;
   outputStream *_output;
   ciMethod *_current_method;
@@ -97,10 +93,6 @@ class IdealGraphPrinter : public CHeapObj<mtCompiler> {
   bool _traverse_outs;
   Compile *C;
 
-  static void pre_node(Node* node, void *env);
-  static void post_node(Node* node, void *env);
-
-  void print_indent();
   void print_method(ciMethod *method, int bci, InlineTree *tree);
   void print_inline_tree(InlineTree *tree);
   void visit_node(Node *n, bool edges, VectorSet* temp_set);
@@ -116,12 +108,14 @@ class IdealGraphPrinter : public CHeapObj<mtCompiler> {
   void tail(const char *name);
   void head(const char *name);
   void text(const char *s);
-  intptr_t get_node_id(Node *n);
+  void init(const char* file_name, bool use_multiple_files, bool append);
+  void init_file_stream(const char* file_name, bool use_multiple_files, bool append);
+  void init_network_stream();
   IdealGraphPrinter();
   ~IdealGraphPrinter();
 
  public:
-
+  IdealGraphPrinter(Compile* compile, const char* file_name = NULL, bool append = false);
   static void clean_up();
   static IdealGraphPrinter *printer();
 
@@ -130,11 +124,11 @@ class IdealGraphPrinter : public CHeapObj<mtCompiler> {
   void print_inlining();
   void begin_method();
   void end_method();
-  void print_method(const char *name, int level=1, bool clear_nodes = false);
-  void print(const char *name, Node *root, int level=1, bool clear_nodes = false);
-  void print_xml(const char *name);
+  void print_method(const char *name, int level = 0);
+  void print(const char *name, Node *root);
   bool should_print(int level);
   void set_compile(Compile* compile) {C = compile; }
+  void update_compiled_method(ciMethod* current_method);
 };
 
 #endif

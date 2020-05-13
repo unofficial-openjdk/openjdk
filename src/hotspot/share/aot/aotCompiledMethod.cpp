@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,12 +32,12 @@
 #include "compiler/compilerOracle.hpp"
 #include "gc/shared/cardTableBarrierSet.hpp"
 #include "gc/shared/collectedHeap.hpp"
-#include "jvmci/compilerRuntime.hpp"
-#include "jvmci/jvmciRuntime.hpp"
+#include "oops/klass.inline.hpp"
 #include "oops/method.inline.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/java.hpp"
+#include "runtime/orderAccess.hpp"
 #include "runtime/os.hpp"
 #include "runtime/safepointVerifiers.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -161,13 +161,11 @@ void AOTCompiledMethod::do_unloading(bool unloading_occurred) {
 }
 
 bool AOTCompiledMethod::make_not_entrant_helper(int new_state) {
-  // Make sure the method is not flushed in case of a safepoint in code below.
-  methodHandle the_method(method());
   NoSafepointVerifier nsv;
 
   {
     // Enter critical section.  Does not block for safepoint.
-    MutexLockerEx pl(Patching_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker pl(CompiledMethod_lock, Mutex::_no_safepoint_check_flag);
 
     if (*_state_adr == new_state) {
       // another thread already performed this transition so nothing
@@ -190,12 +188,10 @@ bool AOTCompiledMethod::make_not_entrant_helper(int new_state) {
 #endif
 
     // Remove AOTCompiledMethod from method.
-    if (method() != NULL && (method()->code() == this ||
-                             method()->from_compiled_entry() == verified_entry_point())) {
-      HandleMark hm;
-      method()->clear_code(false /* already owns Patching_lock */);
+    if (method() != NULL) {
+      method()->unlink_code(this);
     }
-  } // leave critical region under Patching_lock
+  } // leave critical region under CompiledMethod_lock
 
 
   if (TraceCreateZombies) {
@@ -210,17 +206,13 @@ bool AOTCompiledMethod::make_not_entrant_helper(int new_state) {
 #ifdef TIERED
 bool AOTCompiledMethod::make_entrant() {
   assert(!method()->is_old(), "reviving evolved method!");
-  assert(*_state_adr != not_entrant, "%s", method()->has_aot_code() ? "has_aot_code() not cleared" : "caller didn't check has_aot_code()");
 
-  // Make sure the method is not flushed in case of a safepoint in code below.
-  methodHandle the_method(method());
   NoSafepointVerifier nsv;
-
   {
     // Enter critical section.  Does not block for safepoint.
-    MutexLockerEx pl(Patching_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker pl(CompiledMethod_lock, Mutex::_no_safepoint_check_flag);
 
-    if (*_state_adr == in_use) {
+    if (*_state_adr == in_use || *_state_adr == not_entrant) {
       // another thread already performed this transition so nothing
       // to do, but return false to indicate this.
       return false;
@@ -232,7 +224,7 @@ bool AOTCompiledMethod::make_entrant() {
 
     // Log the transition once
     log_state_change();
-  } // leave critical region under Patching_lock
+  } // leave critical region under CompiledMethod_lock
 
 
   if (TraceCreateZombies) {
@@ -246,7 +238,7 @@ bool AOTCompiledMethod::make_entrant() {
 
 // Iterate over metadata calling this function.   Used by RedefineClasses
 // Copied from nmethod::metadata_do
-void AOTCompiledMethod::metadata_do(void f(Metadata*)) {
+void AOTCompiledMethod::metadata_do(MetadataClosure* f) {
   address low_boundary = verified_entry_point();
   {
     // Visit all immediate references that are embedded in the instruction stream.
@@ -262,7 +254,7 @@ void AOTCompiledMethod::metadata_do(void f(Metadata*)) {
                "metadata must be found in exactly one place");
         if (r->metadata_is_immediate() && r->metadata_value() != NULL) {
           Metadata* md = r->metadata_value();
-          if (md != _method) f(md);
+          if (md != _method) f->do_metadata(md);
         }
       } else if (iter.type() == relocInfo::virtual_call_type) {
         ResourceMark rm;
@@ -270,21 +262,21 @@ void AOTCompiledMethod::metadata_do(void f(Metadata*)) {
         CompiledIC *ic = CompiledIC_at(&iter);
         if (ic->is_icholder_call()) {
           CompiledICHolder* cichk = ic->cached_icholder();
-          f(cichk->holder_metadata());
-          f(cichk->holder_klass());
+          f->do_metadata(cichk->holder_metadata());
+          f->do_metadata(cichk->holder_klass());
         } else {
           // Get Klass* or NULL (if value is -1) from GOT cell of virtual call PLT stub.
           Metadata* ic_oop = ic->cached_metadata();
           if (ic_oop != NULL) {
-            f(ic_oop);
+            f->do_metadata(ic_oop);
           }
         }
       } else if (iter.type() == relocInfo::static_call_type ||
-                 iter.type() == relocInfo::opt_virtual_call_type){
+                 iter.type() == relocInfo::opt_virtual_call_type) {
         // Check Method* in AOT c2i stub for other calls.
         Metadata* meta = (Metadata*)nativeLoadGot_at(nativePltCall_at(iter.addr())->plt_c2i_stub())->data();
         if (meta != NULL) {
-          f(meta);
+          f->do_metadata(meta);
         }
       }
     }
@@ -302,11 +294,11 @@ void AOTCompiledMethod::metadata_do(void f(Metadata*)) {
       continue;
     }
     assert(Metaspace::contains(m), "");
-    f(m);
+    f->do_metadata(m);
   }
 
   // Visit metadata not embedded in the other places.
-  if (_method != NULL) f(_method);
+  if (_method != NULL) f->do_metadata(_method);
 }
 
 void AOTCompiledMethod::print() const {
@@ -321,7 +313,7 @@ void AOTCompiledMethod::print_on(outputStream* st) const {
 void AOTCompiledMethod::print_on(outputStream* st, const char* msg) const {
   if (st != NULL) {
     ttyLocker ttyl;
-    st->print("%7d ", (int) st->time_stamp().milliseconds());
+    st->print("%7d ", (int) tty->time_stamp().milliseconds());
     st->print("%4d ", _aot_id);    // print compilation number
     st->print("    aot[%2d]", _heap->dso_id());
     // Stubs have _method == NULL

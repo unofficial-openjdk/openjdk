@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -156,15 +156,12 @@ JLI_ReportExceptionDescription(JNIEnv * env);
 void PrintMachineDependentOptions();
 
 /*
- * Block current thread and continue execution in new thread
+ * Block current thread and continue execution in new thread.
  */
-int ContinueInNewThread0(int (JNICALL *continuation)(void *),
-                        jlong stack_size, void * args);
+int CallJavaMainInNewThread(jlong stack_size, void* args);
 
 /* sun.java.launcher.* platform properties. */
-void SetJavaLauncherPlatformProps(void);
 void SetJavaCommandLineProp(char* what, int argc, char** argv);
-void SetJavaLauncherProp(void);
 
 /*
  * Functions defined in java.c and used in java_md.c.
@@ -176,10 +173,6 @@ jboolean IsWhiteSpaceOption(const char* name);
 
 // Utility function defined in args.c
 int isTerminalOpt(char *arg);
-
-const char* GetProgramName();
-const char* GetFullVersion();
-jboolean IsJavaArgs();
 jboolean IsJavaw();
 
 int ContinueInNewThread(InvocationFunctions* ifn, jlong threadStackSize,
@@ -224,7 +217,10 @@ jobjectArray CreateApplicationArgs(JNIEnv *env, char **strv, int argc);
 jobjectArray NewPlatformStringArray(JNIEnv *env, char **strv, int strc);
 jclass GetLauncherHelperClass(JNIEnv *env);
 
-int JNICALL JavaMain(void * args); /* entry point                  */
+/*
+ * Entry point.
+ */
+int JavaMain(void* args);
 
 enum LaunchMode {               // cf. sun.launcher.LauncherHelper
     LM_UNKNOWN = 0,

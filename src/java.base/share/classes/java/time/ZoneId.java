@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -111,7 +111,7 @@ import static java.util.Map.entry;
  * Similarly, a comparison of two IDs only examines the ID, whereas
  * a comparison of two rules examines the entire data set.
  *
- * <h3>Time-zone IDs</h3>
+ * <h2>Time-zone IDs</h2>
  * The ID is unique within the system.
  * There are three types of ID.
  * <p>
@@ -147,7 +147,7 @@ import static java.util.Map.entry;
  * The recommended format for region IDs from groups other than TZDB is 'group~region'.
  * Thus if IATA data were defined, Utrecht airport would be 'IATA~UTC'.
  *
- * <h3>Serialization</h3>
+ * <h2>Serialization</h2>
  * This class can be serialized and stores the string zone ID in the external form.
  * The {@code ZoneOffset} subclass uses a dedicated format that only stores the
  * offset from UTC/Greenwich.
@@ -254,6 +254,7 @@ public abstract class ZoneId implements Serializable {
     /**
      * Serialization version.
      */
+    @java.io.Serial
     private static final long serialVersionUID = 8352817235686L;
 
     //-----------------------------------------------------------------------
@@ -338,7 +339,7 @@ public abstract class ZoneId implements Serializable {
      *  The rules of the returned {@code ZoneId} will be equivalent to the
      *  parsed {@code ZoneOffset}.
      * <li>All other IDs are parsed as region-based zone IDs. Region IDs must
-     *  match the regular expression <code>[A-Za-z][A-Za-z0-9~/._+-]+</code>
+     *  match the regular expression {@code [A-Za-z][A-Za-z0-9~/._+-]+}
      *  otherwise a {@code DateTimeException} is thrown. If the zone ID is not
      *  in the configured set of IDs, {@code ZoneRulesException} is thrown.
      *  The detailed format of the region ID depends on the group supplying the data.
@@ -624,6 +625,7 @@ public abstract class ZoneId implements Serializable {
      * @param s the stream to read
      * @throws InvalidObjectException always
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream s) throws InvalidObjectException {
         throw new InvalidObjectException("Deserialization via serialization delegate");
     }
@@ -655,6 +657,7 @@ public abstract class ZoneId implements Serializable {
      * @return the instance of {@code Ser}, not null
      */
     // this is here for serialization Javadoc
+    @java.io.Serial
     private Object writeReplace() {
         return new Ser(Ser.ZONE_REGION_TYPE, this);
     }

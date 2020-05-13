@@ -51,7 +51,6 @@ class ciEnv : StackObj {
 private:
   Arena*           _arena;       // Alias for _ciEnv_arena except in init_shared_objects()
   Arena            _ciEnv_arena;
-  int              _system_dictionary_modification_counter;
   ciObjectFactory* _factory;
   OopRecorder*     _oop_recorder;
   DebugInformationRecorder* _debug_info;
@@ -69,10 +68,12 @@ private:
   int   _name_buffer_len;
 
   // Cache Jvmti state
+  uint64_t _jvmti_redefinition_count;
   bool  _jvmti_can_hotswap_or_post_breakpoint;
   bool  _jvmti_can_access_local_variables;
   bool  _jvmti_can_post_on_exceptions;
   bool  _jvmti_can_pop_frame;
+  bool  _jvmti_can_get_owned_monitor_info; // includes can_get_owned_monitor_stack_depth_info
 
   // Cache DTrace flags
   bool  _dtrace_extended_probes;
@@ -291,9 +292,6 @@ private:
   // Helper routine for determining the validity of a compilation with
   // respect to method dependencies (e.g. concurrent class loading).
   void validate_compile_task_dependencies(ciMethod* target);
-
-  // Call internally when Compile_lock is already held.
-  bool system_dictionary_modification_counter_changed_locked();
 public:
   enum {
     MethodCompilable,
@@ -301,7 +299,7 @@ public:
     MethodCompilable_never
   };
 
-  ciEnv(CompileTask* task, int system_dictionary_modification_counter);
+  ciEnv(CompileTask* task);
   // Used only during initialization of the ci
   ciEnv(Arena* arena);
   ~ciEnv();
@@ -350,6 +348,7 @@ public:
   }
   bool  jvmti_can_hotswap_or_post_breakpoint() const { return _jvmti_can_hotswap_or_post_breakpoint; }
   bool  jvmti_can_post_on_exceptions()         const { return _jvmti_can_post_on_exceptions; }
+  bool  jvmti_can_get_owned_monitor_info()     const { return _jvmti_can_get_owned_monitor_info; }
 
   // Cache DTrace flags
   void  cache_dtrace_flags();
@@ -456,16 +455,13 @@ public:
   CompileLog* log() { return _log; }
   void set_log(CompileLog* log) { _log = log; }
 
-  // Check for changes to the system dictionary during compilation
-  bool system_dictionary_modification_counter_changed();
-
   void record_failure(const char* reason);      // Record failure and report later
   void report_failure(const char* reason);      // Report failure immediately
   void record_method_not_compilable(const char* reason, bool all_tiers = true);
   void record_out_of_memory_failure();
 
   // RedefineClasses support
-  void metadata_do(void f(Metadata*)) { _factory->metadata_do(f); }
+  void metadata_do(MetadataClosure* f) { _factory->metadata_do(f); }
 
   // Dump the compilation replay data for the ciEnv to the stream.
   void dump_replay_data(int compile_id);

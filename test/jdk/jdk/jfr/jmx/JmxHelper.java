@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.sun.tools.attach.VirtualMachine;
 import jdk.jfr.EventType;
 import jdk.jfr.FlightRecorder;
 import jdk.jfr.Recording;
@@ -48,10 +49,19 @@ import jdk.management.jfr.FlightRecorderMXBean;
 import jdk.management.jfr.RecordingInfo;
 import jdk.management.jfr.SettingDescriptorInfo;
 import jdk.test.lib.Asserts;
+import jdk.test.lib.Utils;
 import jdk.test.lib.jfr.CommonHelper;
 import jdk.test.lib.jfr.Events;
 
+import javax.management.JMX;
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+
 public class JmxHelper {
+    private static final String LOCAL_CONNECTION_ADDRESS = "com.sun.management.jmxremote.localConnectorAddress";
 
     public static RecordingInfo getJmxRecording(long recId) {
         for (RecordingInfo r : getFlighteRecorderMXBean().getRecordings()) {
@@ -127,7 +137,7 @@ public class JmxHelper {
     }
 
     static File dump(long streamId, FlightRecorderMXBean bean) throws IOException {
-        File f = File.createTempFile("stream_" + streamId + "_", ".jfr", new File("."));
+        File f = Utils.createTempFile("stream_" + streamId + "_", ".jfr").toFile();
         try (FileOutputStream fos = new FileOutputStream(f); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
             while (true) {
                 byte[] data = bean.readStream(streamId);
@@ -278,4 +288,18 @@ public class JmxHelper {
         return ManagementFactory.getPlatformMXBean(FlightRecorderMXBean.class);
     }
 
+    public static long getPID(){
+        return ManagementFactory.getRuntimeMXBean().getPid();
+    }
+
+    public static FlightRecorderMXBean getFlighteRecorderMXBean(long pid) throws Exception {
+        VirtualMachine targetVM = VirtualMachine.attach("" + pid);
+        String jmxServiceUrl = targetVM.getAgentProperties().getProperty(LOCAL_CONNECTION_ADDRESS);
+        JMXServiceURL jmxURL = new JMXServiceURL(jmxServiceUrl);
+        JMXConnector connector = JMXConnectorFactory.connect(jmxURL);
+        MBeanServerConnection connection = connector.getMBeanServerConnection();
+
+        ObjectName objectName = new ObjectName("jdk.management.jfr:type=FlightRecorder");
+        return JMX.newMXBeanProxy(connection, objectName, FlightRecorderMXBean.class);
+    }
 }

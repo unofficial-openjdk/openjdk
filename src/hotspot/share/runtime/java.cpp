@@ -28,6 +28,7 @@
 #include "classfile/classLoader.hpp"
 #include "classfile/classLoaderDataGraph.hpp"
 #include "classfile/stringTable.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "code/codeCache.hpp"
 #include "compiler/compileBroker.hpp"
@@ -36,13 +37,13 @@
 #include "jfr/jfrEvents.hpp"
 #include "jfr/support/jfrThreadId.hpp"
 #if INCLUDE_JVMCI
-#include "jvmci/jvmciCompiler.hpp"
-#include "jvmci/jvmciRuntime.hpp"
+#include "jvmci/jvmci.hpp"
 #endif
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/dynamicArchive.hpp"
 #include "memory/universe.hpp"
 #include "oops/constantPool.hpp"
 #include "oops/generateOopMap.hpp"
@@ -55,7 +56,6 @@
 #include "prims/jvmtiExport.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/biasedLocking.hpp"
-#include "runtime/compilationPolicy.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/flags/flagSetting.hpp"
 #include "runtime/handles.inline.hpp"
@@ -202,9 +202,6 @@ void print_bytecode_count() {
   }
 }
 
-AllocStats alloc_stats;
-
-
 
 // General statistics printing (profiling ...)
 void print_statistics() {
@@ -302,20 +299,20 @@ void print_statistics() {
   }
 
   if (PrintCodeCache) {
-    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     CodeCache::print();
   }
 
   // CodeHeap State Analytics.
   // Does also call NMethodSweeper::print(tty)
   if (PrintCodeHeapAnalytics) {
-    CompileBroker::print_heapinfo(NULL, "all", "4096"); // details
+    CompileBroker::print_heapinfo(NULL, "all", 4096); // details
   } else if (PrintMethodFlushingStatistics) {
     NMethodSweeper::print(tty);
   }
 
   if (PrintCodeCache2) {
-    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     CodeCache::print_internals();
   }
 
@@ -328,11 +325,6 @@ void print_statistics() {
   }
 
   print_bytecode_count();
-  if (PrintMallocStatistics) {
-    tty->print("allocation stats: ");
-    alloc_stats.print();
-    tty->cr();
-  }
 
   if (PrintSystemDictionaryAtExit) {
     ResourceMark rm;
@@ -370,14 +362,14 @@ void print_statistics() {
   }
 
   if (PrintCodeCache) {
-    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     CodeCache::print();
   }
 
   // CodeHeap State Analytics.
   // Does also call NMethodSweeper::print(tty)
   if (PrintCodeHeapAnalytics) {
-    CompileBroker::print_heapinfo(NULL, "all", "4096"); // details
+    CompileBroker::print_heapinfo(NULL, "all", 4096); // details
   } else if (PrintMethodFlushingStatistics) {
     NMethodSweeper::print(tty);
   }
@@ -419,14 +411,14 @@ void before_exit(JavaThread* thread) {
   // A CAS or OSMutex would work just fine but then we need to manipulate
   // thread state for Safepoint. Here we use Monitor wait() and notify_all()
   // for synchronization.
-  { MutexLocker ml(BeforeExit_lock);
+  { MonitorLocker ml(BeforeExit_lock);
     switch (_before_exit_status) {
     case BEFORE_EXIT_NOT_RUN:
       _before_exit_status = BEFORE_EXIT_RUNNING;
       break;
     case BEFORE_EXIT_RUNNING:
       while (_before_exit_status == BEFORE_EXIT_RUNNING) {
-        BeforeExit_lock->wait();
+        ml.wait();
       }
       assert(_before_exit_status == BEFORE_EXIT_DONE, "invalid state");
       return;
@@ -439,15 +431,7 @@ void before_exit(JavaThread* thread) {
   }
 
 #if INCLUDE_JVMCI
-  // We are not using CATCH here because we want the exit to continue normally.
-  Thread* THREAD = thread;
-  JVMCIRuntime::shutdown(THREAD);
-  if (HAS_PENDING_EXCEPTION) {
-    HandleMark hm(THREAD);
-    Handle exception(THREAD, PENDING_EXCEPTION);
-    CLEAR_PENDING_EXCEPTION;
-    java_lang_Throwable::java_printStackTrace(exception, THREAD);
-  }
+  JVMCI::shutdown();
 #endif
 
   // Hang forever on exit if we're reporting an error.
@@ -506,6 +490,12 @@ void before_exit(JavaThread* thread) {
   // Note: we don't wait until it actually dies.
   os::terminate_signal_thread();
 
+#if INCLUDE_CDS
+  if (DynamicDumpSharedSpaces) {
+    DynamicArchive::dump();
+  }
+#endif
+
   print_statistics();
   Universe::heap()->print_tracing_info();
 
@@ -535,11 +525,31 @@ void vm_exit(int code) {
     vm_direct_exit(code);
   }
 
+  // We'd like to add an entry to the XML log to show that the VM is
+  // terminating, but we can't safely do that here. The logic to make
+  // XML termination logging safe is tied to the termination of the
+  // VMThread, and it doesn't terminate on this exit path. See 8222534.
+
   if (VMThread::vm_thread() != NULL) {
+    if (thread->is_Java_thread()) {
+      // We must be "in_vm" for the code below to work correctly.
+      // Historically there must have been some exit path for which
+      // that was not the case and so we set it explicitly - even
+      // though we no longer know what that path may be.
+      ((JavaThread*)thread)->set_thread_state(_thread_in_vm);
+    }
+
     // Fire off a VM_Exit operation to bring VM to a safepoint and exit
     VM_Exit op(code);
-    if (thread->is_Java_thread())
-      ((JavaThread*)thread)->set_thread_state(_thread_in_vm);
+
+    // 4945125 The vm thread comes to a safepoint during exit.
+    // GC vm_operations can get caught at the safepoint, and the
+    // heap is unparseable if they are caught. Grab the Heap_lock
+    // to prevent this. The GC vm_operations will not be able to
+    // queue until after we release it, but we never do that as we
+    // are terminating the VM process.
+    MutexLocker ml(Heap_lock);
+
     VMThread::execute(&op);
     // should never reach here; but in case something wrong with VM Thread.
     vm_direct_exit(code);
@@ -680,32 +690,18 @@ void vm_shutdown_during_initialization(const char* error, const char* message) {
 JDK_Version JDK_Version::_current;
 const char* JDK_Version::_runtime_name;
 const char* JDK_Version::_runtime_version;
+const char* JDK_Version::_runtime_vendor_version;
+const char* JDK_Version::_runtime_vendor_vm_bug_url;
 
 void JDK_Version::initialize() {
-  jdk_version_info info;
   assert(!_current.is_valid(), "Don't initialize twice");
 
-  void *lib_handle = os::native_java_library();
-  jdk_version_info_fn_t func = CAST_TO_FN_PTR(jdk_version_info_fn_t,
-     os::dll_lookup(lib_handle, "JDK_GetVersionInfo0"));
-
-  assert(func != NULL, "Support for JDK 1.5 or older has been removed after JEP-223");
-
-  (*func)(&info, sizeof(info));
-
-  int major = JDK_VERSION_MAJOR(info.jdk_version);
-  int minor = JDK_VERSION_MINOR(info.jdk_version);
-  int security = JDK_VERSION_SECURITY(info.jdk_version);
-  int build = JDK_VERSION_BUILD(info.jdk_version);
-
-  // Incompatible with pre-4243978 JDK.
-  if (info.pending_list_uses_discovered_field == 0) {
-    vm_exit_during_initialization(
-      "Incompatible JDK is not using Reference.discovered field for pending list");
-  }
-  _current = JDK_Version(major, minor, security, info.patch_version, build,
-                         info.thread_park_blocker == 1,
-                         info.post_vm_init_hook_enabled == 1);
+  int major = VM_Version::vm_major_version();
+  int minor = VM_Version::vm_minor_version();
+  int security = VM_Version::vm_security_version();
+  int build = VM_Version::vm_build_number();
+  int patch = VM_Version::vm_patch_version();
+  _current = JDK_Version(major, minor, security, patch, build);
 }
 
 void JDK_Version_init() {
@@ -728,6 +724,7 @@ int JDK_Version::compare(const JDK_Version& other) const {
   return (e > o) ? 1 : ((e == o) ? 0 : -1);
 }
 
+/* See JEP 223 */
 void JDK_Version::to_string(char* buffer, size_t buflen) const {
   assert(buffer && buflen > 0, "call with useful buffer");
   size_t index = 0;
@@ -739,13 +736,12 @@ void JDK_Version::to_string(char* buffer, size_t buflen) const {
         &buffer[index], buflen - index, "%d.%d", _major, _minor);
     if (rc == -1) return;
     index += rc;
-    if (_security > 0) {
-      rc = jio_snprintf(&buffer[index], buflen - index, ".%d", _security);
+    if (_patch > 0) {
+      rc = jio_snprintf(&buffer[index], buflen - index, ".%d.%d", _security, _patch);
       if (rc == -1) return;
       index += rc;
-    }
-    if (_patch > 0) {
-      rc = jio_snprintf(&buffer[index], buflen - index, ".%d", _patch);
+    } else if (_security > 0) {
+      rc = jio_snprintf(&buffer[index], buflen - index, ".%d", _security);
       if (rc == -1) return;
       index += rc;
     }

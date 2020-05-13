@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,9 @@
  * and getByAddress.
  */
 
+extern int enumAddresses_win_ipaddrtable(JNIEnv *env, netif *netifP, netaddr **netaddrPP, MIB_IPADDRTABLE *tableP);
 extern int enumAddresses_win(JNIEnv *env, netif *netifP, netaddr **netaddrPP);
+extern int lookupIPAddrTable(JNIEnv *env, MIB_IPADDRTABLE **tablePP);
 int getAddrsFromAdapter(IP_ADAPTER_ADDRESSES *ptr, netaddr **netaddrPP);
 
 #ifdef DEBUG
@@ -41,7 +43,7 @@ void printnif (netif *nif) {
 #ifdef _WIN64
         printf ("nif:0x%I64x name:%s\n", (UINT_PTR)nif, nif->name);
 #else
-        printf ("nif:0x%x name:%s\n", nif, nif->name);
+        printf ("nif:0x%x name:%s\n", (UINT_PTR)nif, nif->name);
 #endif
         if (nif->dNameIsUnicode) {
             printf ("dName:%S index:%d ", (unsigned short *)nif->displayName,
@@ -71,8 +73,8 @@ const int MAX_TRIES = 3;
  * for each adapter on the system. Returned in *adapters.
  * Buffer is malloc'd and must be freed (unless error returned)
  */
-static int getAdapters (JNIEnv *env, IP_ADAPTER_ADDRESSES **adapters) {
-    DWORD ret, flags;
+int getAdapters (JNIEnv *env, int flags, IP_ADAPTER_ADDRESSES **adapters) {
+    DWORD ret;
     IP_ADAPTER_ADDRESSES *adapterInfo;
     ULONG len;
     int try;
@@ -85,9 +87,6 @@ static int getAdapters (JNIEnv *env, IP_ADAPTER_ADDRESSES **adapters) {
     }
 
     len = BUFF_SIZE;
-    flags = GAA_FLAG_SKIP_DNS_SERVER;
-    flags |= GAA_FLAG_SKIP_MULTICAST;
-    flags |= GAA_FLAG_INCLUDE_PREFIX;
     ret = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, adapterInfo, &len);
 
     for (try = 0; ret == ERROR_BUFFER_OVERFLOW && try < MAX_TRIES; ++try) {
@@ -238,7 +237,8 @@ static int ipinflen = 2048;
  */
 int getAllInterfacesAndAddresses (JNIEnv *env, netif **netifPP)
 {
-    DWORD ret;
+    DWORD ret, flags;
+    MIB_IPADDRTABLE *tableP;
     IP_ADAPTER_ADDRESSES *ptr, *adapters=NULL;
     ULONG len=ipinflen, count=0;
     netif *nif=NULL, *dup_nif, *last=NULL, *loopif=NULL, *curr;
@@ -271,10 +271,15 @@ int getAllInterfacesAndAddresses (JNIEnv *env, netif **netifPP)
 
     // Retrieve IPv4 addresses with the IP Helper API
     curr = *netifPP;
+    ret = lookupIPAddrTable(env, &tableP);
+    if (ret < 0) {
+      return -1;
+    }
     while (curr != NULL) {
         netaddr *netaddrP;
-        ret = enumAddresses_win(env, curr, &netaddrP);
+        ret = enumAddresses_win_ipaddrtable(env, curr, &netaddrP, tableP);
         if (ret == -1) {
+            free(tableP);
             return -1;
         } else if (ret == -2) {
             if ((*env)->ExceptionCheck(env)) {
@@ -287,8 +292,12 @@ int getAllInterfacesAndAddresses (JNIEnv *env, netif **netifPP)
             curr = curr->next;
         }
     }
+    free(tableP);
 
-    ret = getAdapters (env, &adapters);
+    flags = GAA_FLAG_SKIP_DNS_SERVER;
+    flags |= GAA_FLAG_SKIP_MULTICAST;
+    flags |= GAA_FLAG_INCLUDE_PREFIX;
+    ret = getAdapters (env, flags, &adapters);
     if (ret != ERROR_SUCCESS) {
         goto err;
     }
@@ -316,6 +325,7 @@ int getAllInterfacesAndAddresses (JNIEnv *env, netif **netifPP)
                 goto err;
             }
             loopif->naddrs += c;
+            loopif->ipv6Index = ptr->Ipv6IfIndex;
         } else {
             int index = ptr->IfIndex;
             if (index != 0) {

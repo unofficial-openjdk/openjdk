@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -140,8 +140,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
  * @see     #stop()
  * @since   1.0
  */
-public
-class Thread implements Runnable {
+public class Thread implements Runnable {
     /* Make sure registerNatives is the first thing <clinit> does. */
     private static native void registerNatives();
     static {
@@ -153,6 +152,9 @@ class Thread implements Runnable {
 
     /* Whether or not the thread is a daemon thread. */
     private boolean daemon = false;
+
+    /* Interrupt state of the thread - read/written directly by JVM */
+    private volatile boolean interrupted;
 
     /* Fields reserved for exclusive use by the JVM */
     private boolean stillborn = false;
@@ -192,11 +194,6 @@ class Thread implements Runnable {
      * likes with this number; some VMs will ignore it.
      */
     private final long stackSize;
-
-    /*
-     * JVM-private state that persists after native thread termination.
-     */
-    private long nativeParkEventPointer;
 
     /*
      * Thread ID
@@ -245,7 +242,7 @@ class Thread implements Runnable {
      */
     public static final int MIN_PRIORITY = 1;
 
-   /**
+    /**
      * The default priority that is assigned to a thread.
      */
     public static final int NORM_PRIORITY = 5;
@@ -976,10 +973,14 @@ class Thread implements Runnable {
      *
      * <p> Interrupting a thread that is not alive need not have any effect.
      *
+     * @implNote In the JDK Reference Implementation, interruption of a thread
+     * that is not alive still records that the interrupt request was made and
+     * will report it via {@link #interrupted} and {@link #isInterrupted()}.
+     *
      * @throws  SecurityException
      *          if the current thread cannot modify this thread
      *
-     * @revised 6.0
+     * @revised 6.0, 14
      * @spec JSR-51
      */
     public void interrupt() {
@@ -990,14 +991,15 @@ class Thread implements Runnable {
             synchronized (blockerLock) {
                 Interruptible b = blocker;
                 if (b != null) {
-                    interrupt0();  // set interrupt status
+                    interrupted = true;
+                    interrupt0();  // inform VM of interrupt
                     b.interrupt(this);
                     return;
                 }
             }
         }
-
-        // set interrupt status
+        interrupted = true;
+        // inform VM of interrupt
         interrupt0();
     }
 
@@ -1009,43 +1011,36 @@ class Thread implements Runnable {
      * interrupted again, after the first call had cleared its interrupted
      * status and before the second call had examined it).
      *
-     * <p>A thread interruption ignored because a thread was not alive
-     * at the time of the interrupt will be reflected by this method
-     * returning false.
-     *
      * @return  {@code true} if the current thread has been interrupted;
      *          {@code false} otherwise.
      * @see #isInterrupted()
-     * @revised 6.0
+     * @revised 6.0, 14
      */
     public static boolean interrupted() {
-        return currentThread().isInterrupted(true);
+        Thread t = currentThread();
+        boolean interrupted = t.interrupted;
+        // We may have been interrupted the moment after we read the field,
+        // so only clear the field if we saw that it was set and will return
+        // true; otherwise we could lose an interrupt.
+        if (interrupted) {
+            t.interrupted = false;
+            clearInterruptEvent();
+        }
+        return interrupted;
     }
 
     /**
      * Tests whether this thread has been interrupted.  The <i>interrupted
      * status</i> of the thread is unaffected by this method.
      *
-     * <p>A thread interruption ignored because a thread was not alive
-     * at the time of the interrupt will be reflected by this method
-     * returning false.
-     *
      * @return  {@code true} if this thread has been interrupted;
      *          {@code false} otherwise.
      * @see     #interrupted()
-     * @revised 6.0
+     * @revised 6.0, 14
      */
     public boolean isInterrupted() {
-        return isInterrupted(false);
+        return interrupted;
     }
-
-    /**
-     * Tests if some Thread has been interrupted.  The interrupted state
-     * is reset or not based on the value of ClearInterrupted that is
-     * passed.
-     */
-    @HotSpotIntrinsicCandidate
-    private native boolean isInterrupted(boolean ClearInterrupted);
 
     /**
      * Tests if this thread is alive. A thread is alive if it has
@@ -1080,7 +1075,7 @@ class Thread implements Runnable {
      *   <a href="{@docRoot}/java.base/java/lang/doc-files/threadPrimitiveDeprecation.html">Why
      *   are Thread.stop, Thread.suspend and Thread.resume Deprecated?</a>.
      */
-    @Deprecated(since="1.2")
+    @Deprecated(since="1.2", forRemoval=true)
     public final void suspend() {
         checkAccess();
         suspend0();
@@ -1106,7 +1101,7 @@ class Thread implements Runnable {
      *     <a href="{@docRoot}/java.base/java/lang/doc-files/threadPrimitiveDeprecation.html">Why
      *     are Thread.stop, Thread.suspend and Thread.resume Deprecated?</a>.
      */
-    @Deprecated(since="1.2")
+    @Deprecated(since="1.2", forRemoval=true)
     public final void resume() {
         checkAccess();
         resume0();
@@ -1256,20 +1251,20 @@ class Thread implements Runnable {
     }
 
     /**
-     * Counts the number of stack frames in this thread. The thread must
-     * be suspended.
+     * Throws {@code UnsupportedOperationException}.
      *
-     * @return     the number of stack frames in this thread.
-     * @throws     IllegalThreadStateException  if this thread is not
-     *             suspended.
-     * @deprecated The definition of this call depends on {@link #suspend},
-     *             which is deprecated.  Further, the results of this call
-     *             were never well-defined.
+     * @return     nothing
+     *
+     * @deprecated This method was originally designed to count the number of
+     *             stack frames but the results were never well-defined and it
+     *             depended on thread-suspension.
      *             This method is subject to removal in a future version of Java SE.
      * @see        StackWalker
      */
     @Deprecated(since="1.2", forRemoval=true)
-    public native int countStackFrames();
+    public int countStackFrames() {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Waits at most {@code millis} milliseconds for this thread to
@@ -2085,5 +2080,6 @@ class Thread implements Runnable {
     private native void suspend0();
     private native void resume0();
     private native void interrupt0();
+    private static native void clearInterruptEvent();
     private native void setNativeName(String name);
 }

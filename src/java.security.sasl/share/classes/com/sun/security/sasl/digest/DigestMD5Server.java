@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,9 @@
 
 package com.sun.security.sasl.digest;
 
-import java.security.NoSuchAlgorithmException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.util.StringTokenizer;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,48 +39,50 @@ import java.util.logging.Level;
 import javax.security.sasl.*;
 import javax.security.auth.callback.*;
 
+import static java.nio.charset.StandardCharsets.*;
+
 /**
-  * An implementation of the DIGEST-MD5 server SASL mechanism.
-  * (<a href="http://www.ietf.org/rfc/rfc2831.txt">RFC 2831</a>)
-  * <p>
-  * The DIGEST-MD5 SASL mechanism specifies two modes of authentication.
-  * <ul><li>Initial Authentication
-  * <li>Subsequent Authentication - optional, (currently not supported)
-  * </ul>
-  *
-  * Required callbacks:
-  * - RealmCallback
-  *      used as key by handler to fetch password
-  * - NameCallback
-  *      used as key by handler to fetch password
-  * - PasswordCallback
-  *      handler must enter password for username/realm supplied
-  * - AuthorizeCallback
-  *      handler must verify that authid/authzids are allowed and set
-  *      authorized ID to be the canonicalized authzid (if applicable).
-  *
-  * Environment properties that affect the implementation:
-  * javax.security.sasl.qop:
-  *    specifies list of qops; default is "auth"; typically, caller should set
-  *    this to "auth, auth-int, auth-conf".
-  * javax.security.sasl.strength
-  *    specifies low/medium/high strength of encryption; default is all available
-  *    ciphers [high,medium,low]; high means des3 or rc4 (128); medium des or
-  *    rc4-56; low is rc4-40.
-  * javax.security.sasl.maxbuf
-  *    specifies max receive buf size; default is 65536
-  * javax.security.sasl.sendmaxbuffer
-  *    specifies max send buf size; default is 65536 (min of this and client's max
-  *    recv size)
-  *
-  * com.sun.security.sasl.digest.utf8:
-  *    "true" means to use UTF-8 charset; "false" to use ISO-8859-1 encoding;
-  *    default is "true".
-  * com.sun.security.sasl.digest.realm:
-  *    space-separated list of realms; default is server name (fqdn parameter)
-  *
-  * @author Rosanna Lee
-  */
+ * An implementation of the DIGEST-MD5 server SASL mechanism.
+ * (<a href="http://www.ietf.org/rfc/rfc2831.txt">RFC 2831</a>)
+ * <p>
+ * The DIGEST-MD5 SASL mechanism specifies two modes of authentication.
+ * <ul><li>Initial Authentication
+ * <li>Subsequent Authentication - optional, (currently not supported)
+ * </ul>
+ *
+ * Required callbacks:
+ * - RealmCallback
+ *      used as key by handler to fetch password
+ * - NameCallback
+ *      used as key by handler to fetch password
+ * - PasswordCallback
+ *      handler must enter password for username/realm supplied
+ * - AuthorizeCallback
+ *      handler must verify that authid/authzids are allowed and set
+ *      authorized ID to be the canonicalized authzid (if applicable).
+ *
+ * Environment properties that affect the implementation:
+ * javax.security.sasl.qop:
+ *    specifies list of qops; default is "auth"; typically, caller should set
+ *    this to "auth, auth-int, auth-conf".
+ * javax.security.sasl.strength
+ *    specifies low/medium/high strength of encryption; default is all available
+ *    ciphers [high,medium,low]; high means des3 or rc4 (128); medium des or
+ *    rc4-56; low is rc4-40.
+ * javax.security.sasl.maxbuf
+ *    specifies max receive buf size; default is 65536
+ * javax.security.sasl.sendmaxbuffer
+ *    specifies max send buf size; default is 65536 (min of this and client's max
+ *    recv size)
+ *
+ * com.sun.security.sasl.digest.utf8:
+ *    "true" means to use UTF-8 charset; "false" to use ISO-8859-1 encoding;
+ *    default is "true".
+ * com.sun.security.sasl.digest.realm:
+ *    space-separated list of realms; default is server name (fqdn parameter)
+ *
+ * @author Rosanna Lee
+ */
 
 final class DigestMD5Server extends DigestMD5Base implements SaslServer {
     private static final String MY_CLASS_NAME = DigestMD5Server.class.getName();
@@ -171,7 +172,7 @@ final class DigestMD5Server extends DigestMD5Base implements SaslServer {
             }
         }
 
-        encoding = (useUTF8 ? "UTF8" : "8859_1");
+        encoding = (useUTF8 ? UTF_8 : ISO_8859_1);
 
         // By default, use server name as realm
         if (serverRealms.isEmpty()) {
@@ -195,8 +196,13 @@ final class DigestMD5Server extends DigestMD5Base implements SaslServer {
         switch (step) {
         case 1:
             if (response.length != 0) {
-                throw new SaslException(
-                    "DIGEST-MD5 must not have an initial response");
+                // We do not support "subsequent authentication" (client
+                // initial response). According to
+                // https://tools.ietf.org/html/rfc2831#section-2.2
+                // If the server does not support subsequent authentication,
+                // then it sends a "digest-challenge", and authentication
+                // proceeds as in initial authentication.
+                logger.log(Level.FINE, "Ignoring initial response");
             }
 
             /* Generate first challenge */
@@ -224,9 +230,6 @@ final class DigestMD5Server extends DigestMD5Base implements SaslServer {
 
                 step = 3;
                 return challenge;
-            } catch (UnsupportedEncodingException e) {
-                throw new SaslException(
-                    "DIGEST-MD5: Error encoding challenge", e);
             } catch (IOException e) {
                 throw new SaslException(
                     "DIGEST-MD5: Error generating challenge", e);
@@ -242,11 +245,6 @@ final class DigestMD5Server extends DigestMD5Base implements SaslServer {
                 byte[][] responseVal = parseDirectives(response, DIRECTIVE_KEY,
                     null, REALM);
                 challenge = validateClientResponse(responseVal);
-            } catch (SaslException e) {
-                throw e;
-            } catch (UnsupportedEncodingException e) {
-                throw new SaslException(
-                    "DIGEST-MD5: Error validating client response", e);
             } finally {
                 step = 0;  // Set to invalid state
             }
@@ -293,7 +291,7 @@ final class DigestMD5Server extends DigestMD5Base implements SaslServer {
      *        auth-param        = token "=" ( token | quoted-string )
      */
     private byte[] generateChallenge(List<String> realms, String qopStr,
-        String cipherStr) throws UnsupportedEncodingException, IOException {
+        String cipherStr) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         // Realms (>= 0)
@@ -384,7 +382,7 @@ final class DigestMD5Server extends DigestMD5Base implements SaslServer {
      * @return response-value ('rspauth') for client to validate
      */
     private byte[] validateClientResponse(byte[][] responseVal)
-        throws SaslException, UnsupportedEncodingException {
+        throws SaslException {
 
         /* CHARSET: optional atmost once */
         if (responseVal[CHARSET] != null) {

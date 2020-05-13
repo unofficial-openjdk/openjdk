@@ -130,13 +130,19 @@ public:
   virtual void on_slowpath_allocation_exit(JavaThread* thread, oop new_obj) {}
   virtual void on_thread_create(Thread* thread) {}
   virtual void on_thread_destroy(Thread* thread) {}
-  virtual void on_thread_attach(JavaThread* thread) {}
-  virtual void on_thread_detach(JavaThread* thread) {}
-  virtual void make_parsable(JavaThread* thread) {}
 
-#ifdef CHECK_UNHANDLED_OOPS
-  virtual bool oop_equals_operator_allowed() { return true; }
-#endif
+  // These perform BarrierSet-related initialization/cleanup before the thread
+  // is added to or removed from the corresponding set of threads. The
+  // argument thread is the current thread. These are called either holding
+  // the Threads_lock (for a JavaThread) and so not at a safepoint, or holding
+  // the NonJavaThreadsList_lock (for a NonJavaThread) locked by the
+  // caller. That locking ensures the operation is "atomic" with the list
+  // modification wrto operations that hold the NJTList_lock and either also
+  // hold the Threads_lock or are at a safepoint.
+  virtual void on_thread_attach(Thread* thread) {}
+  virtual void on_thread_detach(Thread* thread) {}
+
+  virtual void make_parsable(JavaThread* thread) {}
 
 public:
   // Print a description of the memory for the barrier set
@@ -205,23 +211,23 @@ public:
     }
 
     template <typename T>
-    static T atomic_cmpxchg_in_heap(T new_value, T* addr, T compare_value) {
-      return Raw::atomic_cmpxchg(new_value, addr, compare_value);
+    static T atomic_cmpxchg_in_heap(T* addr, T compare_value, T new_value) {
+      return Raw::atomic_cmpxchg(addr, compare_value, new_value);
     }
 
     template <typename T>
-    static T atomic_cmpxchg_in_heap_at(T new_value, oop base, ptrdiff_t offset, T compare_value) {
-      return Raw::atomic_cmpxchg_at(new_value, base, offset, compare_value);
+    static T atomic_cmpxchg_in_heap_at(oop base, ptrdiff_t offset, T compare_value, T new_value) {
+      return Raw::atomic_cmpxchg_at(base, offset, compare_value, new_value);
     }
 
     template <typename T>
-    static T atomic_xchg_in_heap(T new_value, T* addr) {
-      return Raw::atomic_xchg(new_value, addr);
+    static T atomic_xchg_in_heap(T* addr, T new_value) {
+      return Raw::atomic_xchg(addr, new_value);
     }
 
     template <typename T>
-    static T atomic_xchg_in_heap_at(T new_value, oop base, ptrdiff_t offset) {
-      return Raw::atomic_xchg_at(new_value, base, offset);
+    static T atomic_xchg_in_heap_at(oop base, ptrdiff_t offset, T new_value) {
+      return Raw::atomic_xchg_at(base, offset, new_value);
     }
 
     template <typename T>
@@ -255,21 +261,21 @@ public:
     }
 
     template <typename T>
-    static oop oop_atomic_cmpxchg_in_heap(oop new_value, T* addr, oop compare_value) {
-      return Raw::oop_atomic_cmpxchg(new_value, addr, compare_value);
+    static oop oop_atomic_cmpxchg_in_heap(T* addr, oop compare_value, oop new_value) {
+      return Raw::oop_atomic_cmpxchg(addr, compare_value, new_value);
     }
 
-    static oop oop_atomic_cmpxchg_in_heap_at(oop new_value, oop base, ptrdiff_t offset, oop compare_value) {
-      return Raw::oop_atomic_cmpxchg_at(new_value, base, offset, compare_value);
+    static oop oop_atomic_cmpxchg_in_heap_at(oop base, ptrdiff_t offset, oop compare_value, oop new_value) {
+      return Raw::oop_atomic_cmpxchg_at(base, offset, compare_value, new_value);
     }
 
     template <typename T>
-    static oop oop_atomic_xchg_in_heap(oop new_value, T* addr) {
-      return Raw::oop_atomic_xchg(new_value, addr);
+    static oop oop_atomic_xchg_in_heap(T* addr, oop new_value) {
+      return Raw::oop_atomic_xchg(addr, new_value);
     }
 
-    static oop oop_atomic_xchg_in_heap_at(oop new_value, oop base, ptrdiff_t offset) {
-      return Raw::oop_atomic_xchg_at(new_value, base, offset);
+    static oop oop_atomic_xchg_in_heap_at(oop base, ptrdiff_t offset, oop new_value) {
+      return Raw::oop_atomic_xchg_at(base, offset, new_value);
     }
 
     template <typename T>
@@ -291,13 +297,13 @@ public:
     }
 
     template <typename T>
-    static oop oop_atomic_cmpxchg_not_in_heap(oop new_value, T* addr, oop compare_value) {
-      return Raw::oop_atomic_cmpxchg(new_value, addr, compare_value);
+    static oop oop_atomic_cmpxchg_not_in_heap(T* addr, oop compare_value, oop new_value) {
+      return Raw::oop_atomic_cmpxchg(addr, compare_value, new_value);
     }
 
     template <typename T>
-    static oop oop_atomic_xchg_not_in_heap(oop new_value, T* addr) {
-      return Raw::oop_atomic_xchg(new_value, addr);
+    static oop oop_atomic_xchg_not_in_heap(T* addr, oop new_value) {
+      return Raw::oop_atomic_xchg(addr, new_value);
     }
 
     // Clone barrier support
@@ -307,10 +313,6 @@ public:
 
     static oop resolve(oop obj) {
       return Raw::resolve(obj);
-    }
-
-    static bool equals(oop o1, oop o2) {
-      return Raw::equals(o1, o2);
     }
   };
 };

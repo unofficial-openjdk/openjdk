@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,16 +30,15 @@
  * @library /test/lib
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
                      -XX:NativeMemoryTracking=detail TestElfDirectRead
  */
 
 // This test intentionally disables caching of Elf sections during symbol lookup
-// with WhiteBox.disableElfSectionCache(). On platforms which do not use file
-// descriptors instead of plain function pointers this slows down the lookup just a
+// with WhiteBox.disableElfSectionCache(). On platforms which do not use function
+// descriptors but use instead plain function pointers this slows down the lookup just a
 // little bit, because all the symbols from an Elf file are still read consecutively
-// after one 'fseek()' call. But on platforms with file descriptors like ppc64
+// after one 'fseek()' call. But on platforms with function descriptors like ppc64
 // big-endian, we get two 'fseek()' calls for each symbol read from the Elf file
 // because reading the file descriptor table is nested inside the loop which reads
 // the symbols. This really trashes the I/O system and considerable slows down the
@@ -54,7 +53,6 @@
  * @library /test/lib
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm/timeout=600 -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
                                  -XX:NativeMemoryTracking=detail TestElfDirectRead
  */

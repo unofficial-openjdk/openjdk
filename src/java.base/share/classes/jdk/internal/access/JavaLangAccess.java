@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,9 @@
 package jdk.internal.access;
 
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
@@ -34,9 +37,9 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -148,6 +151,14 @@ public interface JavaLangAccess {
     Class<?> defineClass(ClassLoader cl, String name, byte[] b, ProtectionDomain pd, String source);
 
     /**
+     * Defines a class with the given name to a class loader with
+     * the given flags and class data.
+     *
+     * @see java.lang.invoke.MethodHandles.Lookup#defineClass
+     */
+    Class<?> defineClass(ClassLoader cl, Class<?> lookup, String name, byte[] b, ProtectionDomain pd, boolean initialize, int flags, Object classData);
+
+    /**
      * Returns a class loaded by the bootstrap class loader.
      */
     Class<?> findBootstrapClassOrNull(ClassLoader cl, String name);
@@ -221,9 +232,9 @@ public interface JavaLangAccess {
     void addOpensToAllUnnamed(Module m, String pkg);
 
     /**
-     * Updates module m to open all packages returned by the given iterator.
+     * Updates module m to open all packages in the given sets.
      */
-    void addOpensToAllUnnamed(Module m, Iterator<String> packages);
+    void addOpensToAllUnnamed(Module m, Set<String> concealedPkgs, Set<String> exportedPkgs);
 
     /**
      * Updates module m to use a service.
@@ -311,4 +322,21 @@ public interface JavaLangAccess {
      * @param cause set t's cause to new value
      */
     void setCause(Throwable t, Throwable cause);
+
+    /**
+     * Get protection domain of the given Class
+     */
+    ProtectionDomain protectionDomain(Class<?> c);
+
+    /**
+     * Get a method handle of string concat helper method
+     */
+    MethodHandle stringConcatHelper(String name, MethodType methodType);
+
+    /*
+     * Get the class data associated with the given class.
+     * @param c the class
+     * @see java.lang.invoke.MethodHandles.Lookup#defineHiddenClass(byte[], boolean, MethodHandles.Lookup.ClassOption...)
+     */
+    Object classData(Class<?> c);
 }

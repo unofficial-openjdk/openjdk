@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,9 +43,11 @@ import javax.tools.JavaFileObject;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.JavacTask;
+import com.sun.source.util.ParameterNameProvider;
 import com.sun.source.util.Plugin;
 import com.sun.source.util.TaskListener;
 import com.sun.tools.doclint.DocLint;
+import com.sun.tools.javac.code.MissingInfoHandler;
 import com.sun.tools.javac.main.JavaCompiler;
 import com.sun.tools.javac.model.JavacElements;
 import com.sun.tools.javac.model.JavacTypes;
@@ -59,6 +61,8 @@ import com.sun.tools.javac.util.DefinedBy;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
+import com.sun.tools.javac.util.ModuleHelper;
+import com.sun.tools.javac.util.Options;
 import com.sun.tools.javac.util.PropagatedException;
 
 /**
@@ -71,6 +75,7 @@ import com.sun.tools.javac.util.PropagatedException;
  */
 public class BasicJavacTask extends JavacTask {
     protected Context context;
+    protected Options options;
     private TaskListener taskListener;
 
     public static JavacTask instance(Context context) {
@@ -82,6 +87,7 @@ public class BasicJavacTask extends JavacTask {
 
     public BasicJavacTask(Context c, boolean register) {
         context = c;
+        options = Options.instance(c);
         if (register)
             context.put(JavacTask.class, this);
     }
@@ -121,6 +127,11 @@ public class BasicJavacTask extends JavacTask {
     public void removeTaskListener(TaskListener taskListener) {
         MultiTaskListener mtl = MultiTaskListener.instance(context);
         mtl.remove(taskListener);
+    }
+
+    @Override
+    public void setParameterNameProvider(ParameterNameProvider handler) {
+        MissingInfoHandler.instance(context).setDelegate(handler);
     }
 
     public Collection<TaskListener> getTaskListeners() {
@@ -191,28 +202,30 @@ public class BasicJavacTask extends JavacTask {
             for (PluginInfo<Plugin> pluginDesc : platformProvider.getPlugins()) {
                 java.util.List<String> options =
                         pluginDesc.getOptions().entrySet().stream()
-                                                          .map(e -> e.getKey() + "=" + e.getValue())
-                                                          .collect(Collectors.toList());
+                                .map(e -> e.getKey() + "=" + e.getValue())
+                                .collect(Collectors.toList());
                 try {
-                    pluginDesc.getPlugin().init(this, options.toArray(new String[options.size()]));
+                    initPlugin(pluginDesc.getPlugin(), options.toArray(new String[options.size()]));
                 } catch (RuntimeException ex) {
                     throw new PropagatedException(ex);
                 }
             }
         }
 
-        if (pluginOpts.isEmpty())
-            return;
-
         Set<List<String>> pluginsToCall = new LinkedHashSet<>(pluginOpts);
         JavacProcessingEnvironment pEnv = JavacProcessingEnvironment.instance(context);
         ServiceLoader<Plugin> sl = pEnv.getServiceLoader(Plugin.class);
+        Set<Plugin> autoStart = new LinkedHashSet<>();
         for (Plugin plugin : sl) {
+            if (plugin.autoStart()) {
+                autoStart.add(plugin);
+            }
             for (List<String> p : pluginsToCall) {
                 if (plugin.getName().equals(p.head)) {
                     pluginsToCall.remove(p);
+                    autoStart.remove(plugin);
                     try {
-                        plugin.init(this, p.tail.toArray(new String[p.tail.size()]));
+                        initPlugin(plugin, p.tail.toArray(new String[p.tail.size()]));
                     } catch (RuntimeException ex) {
                         throw new PropagatedException(ex);
                     }
@@ -220,9 +233,25 @@ public class BasicJavacTask extends JavacTask {
                 }
             }
         }
-        for (List<String> p: pluginsToCall) {
+        for (List<String> p : pluginsToCall) {
             Log.instance(context).error(Errors.PluginNotFound(p.head));
         }
+        for (Plugin plugin : autoStart) {
+            try {
+                initPlugin(plugin, new String[0]);
+            } catch (RuntimeException ex) {
+                throw new PropagatedException(ex);
+            }
+
+        }
+    }
+
+    private void initPlugin(Plugin p, String... args) {
+        Module m = p.getClass().getModule();
+        if (m.isNamed() && options.isSet("accessInternalAPI")) {
+            ModuleHelper.addExports(getClass().getModule(), m);
+        }
+        p.init(this, args);
     }
 
     public void initDocLint(List<String> docLintOpts) {

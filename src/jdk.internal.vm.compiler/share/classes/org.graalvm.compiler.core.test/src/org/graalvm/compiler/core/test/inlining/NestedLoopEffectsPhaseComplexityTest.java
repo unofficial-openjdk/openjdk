@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import org.graalvm.compiler.nodes.Invoke;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
 import org.graalvm.compiler.nodes.java.MethodCallTargetNode;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.BasePhase;
 import org.graalvm.compiler.phases.OptimisticOptimizations;
@@ -43,10 +44,8 @@ import org.graalvm.compiler.phases.common.CanonicalizerPhase;
 import org.graalvm.compiler.phases.common.DeadCodeEliminationPhase;
 import org.graalvm.compiler.phases.common.inlining.InliningUtil;
 import org.graalvm.compiler.phases.tiers.HighTierContext;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 import org.graalvm.compiler.virtual.phases.ea.EarlyReadEliminationPhase;
 import org.graalvm.compiler.virtual.phases.ea.PartialEscapePhase;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -113,8 +112,8 @@ public class NestedLoopEffectsPhaseComplexityTest extends GraalCompilerTest {
             StructuredGraph g1 = prepareGraph(snippet, i);
             StructuredGraph g2 = (StructuredGraph) g1.copy(g1.getDebug());
             ResolvedJavaMethod method = g1.method();
-            long elapsedRE = runAndTimePhase(g1, new EarlyReadEliminationPhase(new CanonicalizerPhase()));
-            long elapsedPEA = runAndTimePhase(g2, new PartialEscapePhase(true, new CanonicalizerPhase(), g1.getOptions()));
+            long elapsedRE = runAndTimePhase(g1, new EarlyReadEliminationPhase(createCanonicalizerPhase()));
+            long elapsedPEA = runAndTimePhase(g2, new PartialEscapePhase(true, createCanonicalizerPhase(), g1.getOptions()));
             if (LOG_PHASE_TIMINGS) {
                 TTY.printf("Needed %dms to run early partial escape analysis on a graph with %d nested loops compiling method %s\n", elapsedPEA, i, method);
             }
@@ -124,7 +123,7 @@ public class NestedLoopEffectsPhaseComplexityTest extends GraalCompilerTest {
         }
     }
 
-    private long runAndTimePhase(StructuredGraph g, BasePhase<? super PhaseContext> phase) {
+    private long runAndTimePhase(StructuredGraph g, BasePhase<? super CoreProviders> phase) {
         HighTierContext context = getDefaultHighTierContext();
         long start = System.currentTimeMillis();
         phase.apply(g, context);
@@ -139,7 +138,7 @@ public class NestedLoopEffectsPhaseComplexityTest extends GraalCompilerTest {
         StructuredGraph callerGraph = parseEager(callerMethod, AllowAssumptions.YES);
         PhaseSuite<HighTierContext> graphBuilderSuite = getDefaultGraphBuilderSuite();
         HighTierContext context = new HighTierContext(getProviders(), graphBuilderSuite, OptimisticOptimizations.ALL);
-        CanonicalizerPhase canonicalizer = new CanonicalizerPhase();
+        CanonicalizerPhase canonicalizer = createCanonicalizerPhase();
         Invoke next = callerGraph.getNodes(MethodCallTargetNode.TYPE).first().invoke();
         StructuredGraph calleeGraph = parseBytecodes(next.callTarget().targetMethod(), context, canonicalizer);
         ResolvedJavaMethod calleeMethod = next.callTarget().targetMethod();

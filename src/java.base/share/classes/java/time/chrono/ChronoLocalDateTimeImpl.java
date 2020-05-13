@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,6 +103,7 @@ final class ChronoLocalDateTimeImpl<D extends ChronoLocalDate>
     /**
      * Serialization version.
      */
+    @java.io.Serial
     private static final long serialVersionUID = 4556003607393004514L;
     /**
      * Hours per day.
@@ -404,11 +405,12 @@ final class ChronoLocalDateTimeImpl<D extends ChronoLocalDate>
      * <pre>
      *  out.writeByte(2);              // identifies a ChronoLocalDateTime
      *  out.writeObject(toLocalDate());
-     *  out.witeObject(toLocalTime());
+     *  out.writeObject(toLocalTime());
      * </pre>
      *
      * @return the instance of {@code Ser}, not null
      */
+   @java.io.Serial
     private Object writeReplace() {
         return new Ser(Ser.CHRONO_LOCAL_DATE_TIME_TYPE, this);
     }
@@ -419,6 +421,7 @@ final class ChronoLocalDateTimeImpl<D extends ChronoLocalDate>
      * @param s the stream to read
      * @throws InvalidObjectException always
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream s) throws InvalidObjectException {
         throw new InvalidObjectException("Deserialization via serialization delegate");
     }

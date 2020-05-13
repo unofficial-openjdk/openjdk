@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,9 +40,6 @@ import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
- * @author Bhavesh Patel (Modified)
  */
 
 public interface ConstantsSummaryWriter {
@@ -52,14 +49,14 @@ public interface ConstantsSummaryWriter {
      *
      * @return header that needs to be added to the documentation
      */
-    public abstract Content getHeader();
+    Content getHeader();
 
     /**
      * Get the header for the constant content list.
      *
      * @return content header that needs to be added to the documentation
      */
-    public abstract Content getContentsHeader();
+    Content getContentsHeader();
 
     /**
      * Adds the given package name link to the constant content list tree.
@@ -69,23 +66,22 @@ public interface ConstantsSummaryWriter {
      *                               been indexed, we want to index utmost once.
      * @param contentListTree        the content tree to which the link will be added
      */
-    public abstract void addLinkToPackageContent(PackageElement pkg,
-            Set<PackageElement> writtenPackageHeaders, Content contentListTree);
+    void addLinkToPackageContent(PackageElement pkg, Set<PackageElement> writtenPackageHeaders,
+                                 Content contentListTree);
 
     /**
      * Add the content list to the documentation tree.
      *
-     * @param contentTree the tree to which the contents list will be added
      * @param contentListTree the content that will be added to the list
      */
-    public abstract void addContentsList(Content contentTree, Content contentListTree);
+    void addContentsList(Content contentListTree);
 
     /**
      * Get the constant summaries for the document.
      *
      * @return constant summaries header to be added to the documentation tree
      */
-    public abstract Content getConstantSummaries();
+    Content getConstantSummaries();
 
     /**
      * Adds the given package name.
@@ -98,14 +94,14 @@ public interface ConstantsSummaryWriter {
      * @param first true if the first package is listed
      *                    be written
      */
-    public abstract void addPackageName(PackageElement pkg, Content summariesTree, boolean first);
+    void addPackageName(PackageElement pkg, Content summariesTree, boolean first);
 
     /**
      * Get the class summary header for the constants summary.
      *
      * @return the header content for the class constants summary
      */
-    public abstract Content getClassConstantHeader();
+    Content getClassConstantHeader();
 
     /**
      * Add the content list to the documentation summaries tree.
@@ -113,33 +109,30 @@ public interface ConstantsSummaryWriter {
      * @param summariesTree the tree to which the class constants list will be added
      * @param classConstantTree the class constant tree that will be added to the list
      */
-    public abstract void addClassConstant(Content summariesTree, Content classConstantTree);
+    void addClassConstant(Content summariesTree, Content classConstantTree);
 
     /**
      * Adds the constant member table to the documentation tree.
      *
      * @param typeElement the class whose constants are being documented.
      * @param fields the constants being documented.
-     * @param classConstantTree the documentation tree to which theconstant member
+     * @param classConstantTree the documentation tree to which the constant member
      *                    table content will be added
      */
-    public abstract void addConstantMembers(TypeElement typeElement, Collection<VariableElement> fields,
-            Content classConstantTree);
+    void addConstantMembers(TypeElement typeElement, Collection<VariableElement> fields,
+                            Content classConstantTree);
 
     /**
      * Add the summaries list to the content tree.
      *
-     * @param contentTree the tree to which the summaries list will be added
      * @param summariesTree the summaries content tree that will be added to the list
      */
-    public abstract void addConstantSummaries(Content contentTree, Content summariesTree);
+    void addConstantSummaries(Content summariesTree);
 
     /**
      * Adds the footer for the summary documentation.
-     *
-     * @param contentTree content tree to which the footer will be added
      */
-    public abstract void addFooter(Content contentTree);
+    void addFooter();
 
     /**
      * Print the constants summary document.
@@ -147,6 +140,5 @@ public interface ConstantsSummaryWriter {
      * @param contentTree content tree which should be printed
      * @throws DocFileIOException if there is a problem while writing the document
      */
-    public abstract void printDocument(Content contentTree) throws DocFileIOException;
-
+    void printDocument(Content contentTree) throws DocFileIOException;
 }

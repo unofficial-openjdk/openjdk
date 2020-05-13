@@ -103,10 +103,15 @@ class ArrayPrefixHelpers {
     static final int MIN_PARTITION = 16;
 
     static final class CumulateTask<T> extends CountedCompleter<Void> {
+        @SuppressWarnings("serial") // Not statically typed as Serializable
         final T[] array;
+        @SuppressWarnings("serial") // Not statically typed as Serializable
         final BinaryOperator<T> function;
         CumulateTask<T> left, right;
-        T in, out;
+        @SuppressWarnings("serial") // Not statically typed as Serializable
+        T in;
+        @SuppressWarnings("serial") // Not statically typed as Serializable
+        T out;
         final int lo, hi, origin, fence, threshold;
 
         /** Root task constructor */
@@ -251,11 +256,13 @@ class ArrayPrefixHelpers {
                 }
             }
         }
+        @java.io.Serial
         private static final long serialVersionUID = 5293554502939613543L;
     }
 
     static final class LongCumulateTask extends CountedCompleter<Void> {
         final long[] array;
+        @SuppressWarnings("serial") // Not statically typed as Serializable
         final LongBinaryOperator function;
         LongCumulateTask left, right;
         long in, out;
@@ -401,11 +408,13 @@ class ArrayPrefixHelpers {
                 }
             }
         }
+        @java.io.Serial
         private static final long serialVersionUID = -5074099945909284273L;
     }
 
     static final class DoubleCumulateTask extends CountedCompleter<Void> {
         final double[] array;
+        @SuppressWarnings("serial") // Not statically typed as Serializable
         final DoubleBinaryOperator function;
         DoubleCumulateTask left, right;
         double in, out;
@@ -551,11 +560,13 @@ class ArrayPrefixHelpers {
                 }
             }
         }
+        @java.io.Serial
         private static final long serialVersionUID = -586947823794232033L;
     }
 
     static final class IntCumulateTask extends CountedCompleter<Void> {
         final int[] array;
+        @SuppressWarnings("serial") // Not statically typed as Serializable
         final IntBinaryOperator function;
         IntCumulateTask left, right;
         int in, out;
@@ -701,6 +712,7 @@ class ArrayPrefixHelpers {
                 }
             }
         }
+        @java.io.Serial
         private static final long serialVersionUID = 3731755594596840961L;
     }
 }

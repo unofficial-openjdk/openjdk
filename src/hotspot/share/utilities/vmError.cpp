@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,12 +31,15 @@
 #include "logging/logConfiguration.hpp"
 #include "jfr/jfrEvents.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
+#include "oops/compressedOops.hpp"
 #include "prims/whitebox.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/init.hpp"
 #include "runtime/os.hpp"
+#include "runtime/safepointMechanism.hpp"
 #include "runtime/thread.inline.hpp"
 #include "runtime/threadSMR.hpp"
 #include "runtime/vmThread.hpp"
@@ -77,18 +80,19 @@ void* VMError::get_segfault_address() {
 // List of environment variables that should be reported in error log file.
 const char *env_list[] = {
   // All platforms
-  "JAVA_HOME", "JRE_HOME", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "CLASSPATH",
-  "JAVA_COMPILER", "PATH", "USERNAME",
+  "JAVA_HOME", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "CLASSPATH",
+  "PATH", "USERNAME",
 
   // Env variables that are defined on Solaris/Linux/BSD
   "LD_LIBRARY_PATH", "LD_PRELOAD", "SHELL", "DISPLAY",
   "HOSTTYPE", "OSTYPE", "ARCH", "MACHTYPE",
+  "LANG", "LC_ALL", "LC_CTYPE", "TZ",
 
   // defined on AIX
   "LIBPATH", "LDR_PRELOAD", "LDR_PRELOAD64",
 
-  // defined on Linux
-  "LD_ASSUME_KERNEL", "_JAVA_SR_SIGNUM",
+  // defined on Linux/AIX/BSD
+  "_JAVA_SR_SIGNUM",
 
   // defined on Darwin
   "DYLD_LIBRARY_PATH", "DYLD_FALLBACK_LIBRARY_PATH",
@@ -126,9 +130,14 @@ static char* next_OnError_command(char* buf, int buflen, const char** ptr) {
 
 static void print_bug_submit_message(outputStream *out, Thread *thread) {
   if (out == NULL) return;
-  out->print_raw_cr("# If you would like to submit a bug report, please visit:");
-  out->print_raw   ("#   ");
-  out->print_raw_cr(Arguments::java_vendor_url_bug());
+  const char *url = Arguments::java_vendor_url_bug();
+  if (url == NULL || *url == '\0')
+    url = JDK_Version::runtime_vendor_vm_bug_url();
+  if (url != NULL && *url != '\0') {
+    out->print_raw_cr("# If you would like to submit a bug report, please visit:");
+    out->print_raw   ("#   ");
+    out->print_raw_cr(url);
+  }
   // If the crash is in native code, encourage user to submit a bug to the
   // provider of that code.
   if (thread && thread->is_Java_thread() &&
@@ -244,7 +253,7 @@ void VMError::print_native_stack(outputStream* st, frame fr, Thread* t, char* bu
       if (t && t->is_Java_thread()) {
         // Catch very first native frame by using stack address.
         // For JavaThread stack_base and stack_size should be set.
-        if (!t->on_local_stack((address)(fr.real_fp() + 1))) {
+        if (!t->is_in_full_stack((address)(fr.real_fp() + 1))) {
           break;
         }
         if (fr.is_java_frame() || fr.is_native_frame() || fr.is_runtime_frame()) {
@@ -291,14 +300,14 @@ static void print_oom_reasons(outputStream* st) {
   st->print_cr("#   Decrease Java thread stack sizes (-Xss)");
   st->print_cr("#   Set larger code cache with -XX:ReservedCodeCacheSize=");
   if (UseCompressedOops) {
-    switch (Universe::narrow_oop_mode()) {
-      case Universe::UnscaledNarrowOop:
+    switch (CompressedOops::mode()) {
+      case CompressedOops::UnscaledNarrowOop:
         st->print_cr("#   JVM is running with Unscaled Compressed Oops mode in which the Java heap is");
         st->print_cr("#     placed in the first 4GB address space. The Java Heap base address is the");
         st->print_cr("#     maximum limit for the native heap growth. Please use -XX:HeapBaseMinAddress");
         st->print_cr("#     to set the Java Heap base and to place the Java Heap above 4GB virtual address.");
         break;
-      case Universe::ZeroBasedNarrowOop:
+      case CompressedOops::ZeroBasedNarrowOop:
         st->print_cr("#   JVM is running with Zero Based Compressed Oops mode in which the Java heap is");
         st->print_cr("#     placed in the first 32GB address space. The Java Heap base address is the");
         st->print_cr("#     maximum limit for the native heap growth. Please use -XX:HeapBaseMinAddress");
@@ -319,15 +328,19 @@ static void report_vm_version(outputStream* st, char* buf, int buflen) {
                                 JDK_Version::runtime_name() : "";
    const char* runtime_version = JDK_Version::runtime_version() != NULL ?
                                    JDK_Version::runtime_version() : "";
+   const char* vendor_version = JDK_Version::runtime_vendor_version() != NULL ?
+                                  JDK_Version::runtime_vendor_version() : "";
    const char* jdk_debug_level = VM_Version::printable_jdk_debug_level() != NULL ?
                                    VM_Version::printable_jdk_debug_level() : "";
 
-   st->print_cr("# JRE version: %s (%s) (%sbuild %s)", runtime_name, buf,
-                 jdk_debug_level, runtime_version);
+   st->print_cr("# JRE version: %s%s%s (%s) (%sbuild %s)", runtime_name,
+                (*vendor_version != '\0') ? " " : "", vendor_version,
+                buf, jdk_debug_level, runtime_version);
 
    // This is the long version with some default settings added
-   st->print_cr("# Java VM: %s (%s%s, %s%s%s%s%s, %s, %s)",
+   st->print_cr("# Java VM: %s%s%s (%s%s, %s%s%s%s%s, %s, %s)",
                  VM_Version::vm_name(),
+                (*vendor_version != '\0') ? " " : "", vendor_version,
                  jdk_debug_level,
                  VM_Version::vm_release(),
                  VM_Version::vm_info_string(),
@@ -388,7 +401,7 @@ jlong VMError::get_current_timestamp() {
 
 void VMError::record_reporting_start_time() {
   const jlong now = get_current_timestamp();
-  Atomic::store(now, &_reporting_start_time);
+  Atomic::store(&_reporting_start_time, now);
 }
 
 jlong VMError::get_reporting_start_time() {
@@ -397,11 +410,15 @@ jlong VMError::get_reporting_start_time() {
 
 void VMError::record_step_start_time() {
   const jlong now = get_current_timestamp();
-  Atomic::store(now, &_step_start_time);
+  Atomic::store(&_step_start_time, now);
 }
 
 jlong VMError::get_step_start_time() {
   return Atomic::load(&_step_start_time);
+}
+
+void VMError::clear_step_start_time() {
+  return Atomic::store(&_step_start_time, (jlong)0);
 }
 
 void VMError::report(outputStream* st, bool _verbose) {
@@ -409,7 +426,7 @@ void VMError::report(outputStream* st, bool _verbose) {
 # define BEGIN if (_current_step == 0) { _current_step = __LINE__;
 # define STEP(s) } if (_current_step < __LINE__) { _current_step = __LINE__; _current_step_info = s; \
   record_step_start_time(); _step_did_timeout = false;
-# define END }
+# define END clear_step_start_time(); }
 
   // don't allocate large buffer on stack
   static char buf[O_BUFLEN];
@@ -449,6 +466,15 @@ void VMError::report(outputStream* st, bool _verbose) {
   // Step to global timeout ratio is 4:1, so in order to be absolutely sure we hit the
   // global timeout, let's execute the timeout step five times.
   // See corresponding test in test/runtime/ErrorHandling/TimeoutInErrorHandlingTest.java
+  STEP("setup for test unresponsive error reporting step")
+    if (_verbose && TestUnresponsiveErrorHandler) {
+      // We record reporting_start_time for this test here because we
+      // care about the time spent executing TIMEOUT_TEST_STEP and not
+      // about the time it took us to get here.
+      tty->print_cr("Recording reporting_start_time for TestUnresponsiveErrorHandler.");
+      record_reporting_start_time();
+    }
+
   #define TIMEOUT_TEST_STEP STEP("test unresponsive error reporting step") \
     if (_verbose && TestUnresponsiveErrorHandler) { os::infinite_sleep(); }
   TIMEOUT_TEST_STEP
@@ -522,6 +548,9 @@ void VMError::report(outputStream* st, bool _verbose) {
        st->print("%s", buf);
        st->print(" (0x%x)", _id);                // signal number
        st->print(" at pc=" PTR_FORMAT, p2i(_pc));
+       if (_siginfo != NULL && os::signal_sent_by_kill(_siginfo)) {
+         st->print(" (sent by kill)");
+       }
      } else {
        if (should_report_bug(_id)) {
          st->print("Internal Error");
@@ -879,7 +908,7 @@ void VMError::report(outputStream* st, bool _verbose) {
   STEP("printing compressed oops mode")
 
      if (_verbose && UseCompressedOops) {
-       Universe::print_compressed_oops_mode(st);
+       CompressedOops::print_mode(st);
        if (UseCompressedClassPointers) {
          Metaspace::print_compressed_class_space(st);
        }
@@ -891,7 +920,7 @@ void VMError::report(outputStream* st, bool _verbose) {
      if (_verbose && Universe::is_fully_initialized()) {
        Universe::heap()->print_on_error(st);
        st->cr();
-       st->print_cr("Polling page: " INTPTR_FORMAT, p2i(os::get_polling_page()));
+       st->print_cr("Polling page: " INTPTR_FORMAT, p2i(SafepointMechanism::get_polling_page()));
        st->cr();
      }
 
@@ -1080,7 +1109,7 @@ void VMError::print_vm_info(outputStream* st) {
   // STEP("printing compressed oops mode")
 
   if (UseCompressedOops) {
-    Universe::print_compressed_oops_mode(st);
+    CompressedOops::print_mode(st);
     if (UseCompressedClassPointers) {
       Metaspace::print_compressed_class_space(st);
     }
@@ -1093,7 +1122,7 @@ void VMError::print_vm_info(outputStream* st) {
     MutexLocker hl(Heap_lock);
     Universe::heap()->print_on_error(st);
     st->cr();
-    st->print_cr("Polling page: " INTPTR_FORMAT, p2i(os::get_polling_page()));
+    st->print_cr("Polling page: " INTPTR_FORMAT, p2i(SafepointMechanism::get_polling_page()));
     st->cr();
   }
 
@@ -1187,14 +1216,19 @@ void VMError::print_vm_info(outputStream* st) {
   st->print_cr("END.");
 }
 
-volatile intptr_t VMError::first_error_tid = -1;
+volatile intptr_t VMError::_first_error_tid = -1;
 
 /** Expand a pattern into a buffer starting at pos and open a file using constructed path */
-static int expand_and_open(const char* pattern, char* buf, size_t buflen, size_t pos) {
+static int expand_and_open(const char* pattern, bool overwrite_existing, char* buf, size_t buflen, size_t pos) {
   int fd = -1;
+  int mode = O_RDWR | O_CREAT;
+  if (overwrite_existing) {
+    mode |= O_TRUNC;
+  } else {
+    mode |= O_EXCL;
+  }
   if (Arguments::copy_expand_pid(pattern, strlen(pattern), &buf[pos], buflen - pos)) {
-    // the O_EXCL flag will cause the open to fail if the file exists
-    fd = open(buf, O_RDWR | O_CREAT | O_EXCL, 0666);
+    fd = open(buf, mode, 0666);
   }
   return fd;
 }
@@ -1204,12 +1238,12 @@ static int expand_and_open(const char* pattern, char* buf, size_t buflen, size_t
  * Name and location depends on pattern, default_pattern params and access
  * permissions.
  */
-static int prepare_log_file(const char* pattern, const char* default_pattern, char* buf, size_t buflen) {
+static int prepare_log_file(const char* pattern, const char* default_pattern, bool overwrite_existing, char* buf, size_t buflen) {
   int fd = -1;
 
   // If possible, use specified pattern to construct log file name
   if (pattern != NULL) {
-    fd = expand_and_open(pattern, buf, buflen, 0);
+    fd = expand_and_open(pattern, overwrite_existing, buf, buflen, 0);
   }
 
   // Either user didn't specify, or the user's location failed,
@@ -1221,7 +1255,7 @@ static int prepare_log_file(const char* pattern, const char* default_pattern, ch
       int fsep_len = jio_snprintf(&buf[pos], buflen-pos, "%s", os::file_separator());
       pos += fsep_len;
       if (fsep_len > 0) {
-        fd = expand_and_open(default_pattern, buf, buflen, pos);
+        fd = expand_and_open(default_pattern, overwrite_existing, buf, buflen, pos);
       }
     }
   }
@@ -1232,7 +1266,7 @@ static int prepare_log_file(const char* pattern, const char* default_pattern, ch
      if (tmpdir != NULL && strlen(tmpdir) > 0) {
        int pos = jio_snprintf(buf, buflen, "%s%s", tmpdir, os::file_separator());
        if (pos > 0) {
-         fd = expand_and_open(default_pattern, buf, buflen, pos);
+         fd = expand_and_open(default_pattern, overwrite_existing, buf, buflen, pos);
        }
      }
    }
@@ -1304,6 +1338,12 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
   // File descriptor to the error log file.
   static int fd_log = -1;
 
+#ifdef CAN_SHOW_REGISTERS_ON_ASSERT
+  // Disarm assertion poison page, since from this point on we do not need this mechanism anymore and it may
+  // cause problems in error handling during native OOM, see JDK-8227275.
+  disarm_assert_poison();
+#endif
+
   // Use local fdStream objects only. Do not use global instances whose initialization
   // relies on dynamic initialization (see JDK-8214975). Do not rely on these instances
   // to carry over into recursions or invocations from other threads.
@@ -1326,8 +1366,8 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
       os::abort(CreateCoredumpOnCrash);
   }
   intptr_t mytid = os::current_thread_id();
-  if (first_error_tid == -1 &&
-      Atomic::cmpxchg(mytid, &first_error_tid, (intptr_t)-1) == -1) {
+  if (_first_error_tid == -1 &&
+      Atomic::cmpxchg(&_first_error_tid, (intptr_t)-1, mytid) == -1) {
 
     // Initialize time stamps to use the same base.
     out.time_stamp().update_to(1);
@@ -1348,7 +1388,14 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
     _error_reported = true;
 
     reporting_started();
-    record_reporting_start_time();
+    if (!TestUnresponsiveErrorHandler) {
+      // Record reporting_start_time unless we're running the
+      // TestUnresponsiveErrorHandler test. For that test we record
+      // reporting_start_time at the beginning of the test.
+      record_reporting_start_time();
+    } else {
+      out.print_raw_cr("Delaying recording reporting_start_time for TestUnresponsiveErrorHandler.");
+    }
 
     if (ShowMessageBoxOnError || PauseAtExit) {
       show_message_box(buffer, sizeof(buffer));
@@ -1380,7 +1427,7 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
 
     // This is not the first error, see if it happened in a different thread
     // or in the same thread during error reporting.
-    if (first_error_tid != mytid) {
+    if (_first_error_tid != mytid) {
       char msgbuf[64];
       jio_snprintf(msgbuf, sizeof(msgbuf),
                    "[thread " INTX_FORMAT " also had an error]",
@@ -1442,9 +1489,13 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
     }
   }
 
-  // print to screen
+  // Part 1: print an abbreviated version (the '#' section) to stdout.
   if (!out_done) {
-    report(&out, false);
+    // Suppress this output if we plan to print Part 2 to stdout too.
+    // No need to have the "#" section twice.
+    if (!(ErrorFileToStdout && out.fd() == 1)) {
+      report(&out, false);
+    }
 
     out_done = true;
 
@@ -1452,21 +1503,28 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
     _current_step_info = "";
   }
 
+  // Part 2: print a full error log file (optionally to stdout or stderr).
   // print to error log file
   if (!log_done) {
     // see if log file is already open
     if (!log.is_open()) {
       // open log file
-      fd_log = prepare_log_file(ErrorFile, "hs_err_pid%p.log", buffer, sizeof(buffer));
-      if (fd_log != -1) {
-        out.print_raw("# An error report file with more information is saved as:\n# ");
-        out.print_raw_cr(buffer);
-
-        log.set_fd(fd_log);
+      if (ErrorFileToStdout) {
+        fd_log = 1;
+      } else if (ErrorFileToStderr) {
+        fd_log = 2;
       } else {
-        out.print_raw_cr("# Can not save log file, dump to screen..");
-        log.set_fd(fd_out);
+        fd_log = prepare_log_file(ErrorFile, "hs_err_pid%p.log", true,
+                 buffer, sizeof(buffer));
+        if (fd_log != -1) {
+          out.print_raw("# An error report file with more information is saved as:\n# ");
+          out.print_raw_cr(buffer);
+        } else {
+          out.print_raw_cr("# Can not save log file, dump to screen..");
+          fd_log = 1;
+        }
       }
+      log.set_fd(fd_log);
     }
 
     report(&log, true);
@@ -1474,7 +1532,7 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
     _current_step = 0;
     _current_step_info = "";
 
-    if (fd_log != -1) {
+    if (fd_log > 3) {
       close(fd_log);
       fd_log = -1;
     }
@@ -1482,12 +1540,18 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
     log.set_fd(-1);
   }
 
+  if (PrintNMTStatistics) {
+    fdStream fds(fd_out);
+    MemTracker::final_report(&fds);
+  }
+
   static bool skip_replay = ReplayCompiles; // Do not overwrite file during replay
   if (DumpReplayDataOnError && _thread && _thread->is_Compiler_thread() && !skip_replay) {
     skip_replay = true;
     ciEnv* env = ciEnv::current();
     if (env != NULL) {
-      int fd = prepare_log_file(ReplayDataFile, "replay_pid%p.log", buffer, sizeof(buffer));
+      const bool overwrite = false; // We do not overwrite an existing replay file.
+      int fd = prepare_log_file(ReplayDataFile, "replay_pid%p.log", overwrite, buffer, sizeof(buffer));
       if (fd != -1) {
         FILE* replay_data_file = os::open(fd, "w");
         if (replay_data_file != NULL) {
@@ -1643,7 +1707,9 @@ bool VMError::check_timeout() {
   // Timestamp is stored in nanos.
   if (reporting_start_time_l > 0) {
     const jlong end = reporting_start_time_l + (jlong)ErrorLogTimeout * TIMESTAMP_TO_SECONDS_FACTOR;
-    if (end <= now) {
+    if (end <= now && !_reporting_did_timeout) {
+      // We hit ErrorLogTimeout and we haven't interrupted the reporting
+      // thread yet.
       _reporting_did_timeout = true;
       interrupt_reporting_thread();
       return true; // global timeout
@@ -1656,7 +1722,9 @@ bool VMError::check_timeout() {
     // hang for some reason, so this simple rule allows for three hanging step and still
     // hopefully leaves time enough for the rest of the steps to finish.
     const jlong end = step_start_time_l + (jlong)ErrorLogTimeout * TIMESTAMP_TO_SECONDS_FACTOR / 4;
-    if (end <= now) {
+    if (end <= now && !_step_did_timeout) {
+      // The step timed out and we haven't interrupted the reporting
+      // thread yet.
       _step_did_timeout = true;
       interrupt_reporting_thread();
       return false; // (Not a global timeout)
@@ -1722,7 +1790,16 @@ void VMError::controlled_crash(int how) {
   const char* const eol = os::line_separator();
   const char* const msg = "this message should be truncated during formatting";
   char * const dataPtr = NULL;  // bad data pointer
-  const void (*funcPtr)(void) = (const void(*)()) 0xF;  // bad function pointer
+  const void (*funcPtr)(void);  // bad function pointer
+
+#if defined(PPC64) && !defined(ABI_ELFv2)
+  struct FunctionDescriptor functionDescriptor;
+
+  functionDescriptor.set_entry((address) 0xF);
+  funcPtr = (const void(*)()) &functionDescriptor;
+#else
+  funcPtr = (const void(*)()) 0xF;
+#endif
 
   // Keep this in sync with test/hotspot/jtreg/runtime/ErrorHandling/ErrorHandler.java
   // which tests cases 1 thru 13.
@@ -1731,11 +1808,14 @@ void VMError::controlled_crash(int how) {
   // Case 16 is tested by test/hotspot/jtreg/runtime/ErrorHandling/ThreadsListHandleInErrorHandlingTest.java.
   // Case 17 is tested by test/hotspot/jtreg/runtime/ErrorHandling/NestedThreadsListHandleInErrorHandlingTest.java.
 
-  // We grab Threads_lock to keep ThreadsSMRSupport::print_info_on()
+  // We try to grab Threads_lock to keep ThreadsSMRSupport::print_info_on()
   // from racing with Threads::add() or Threads::remove() as we
   // generate the hs_err_pid file. This makes our ErrorHandling tests
   // more stable.
-  MutexLockerEx ml(Threads_lock->owned_by_self() ? NULL : Threads_lock, Mutex::_no_safepoint_check_flag);
+  if (!Threads_lock->owned_by_self()) {
+    Threads_lock->try_lock();
+    // The VM is going to die so no need to unlock Thread_lock.
+  }
 
   switch (how) {
     case  1: vmassert(str == NULL, "expected null"); break;
@@ -1782,4 +1862,3 @@ void VMError::controlled_crash(int how) {
   ShouldNotReachHere();
 }
 #endif // !PRODUCT
-

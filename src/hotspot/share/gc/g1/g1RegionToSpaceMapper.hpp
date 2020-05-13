@@ -51,7 +51,9 @@ class G1RegionToSpaceMapper : public CHeapObj<mtGC> {
 
   size_t _region_granularity;
   // Mapping management
-  CHeapBitMap _commit_map;
+  CHeapBitMap _region_commit_map;
+
+  MemoryType _memory_type;
 
   G1RegionToSpaceMapper(ReservedSpace rs, size_t used_size, size_t page_size, size_t region_granularity, size_t commit_factor, MemoryType type);
 
@@ -65,10 +67,6 @@ class G1RegionToSpaceMapper : public CHeapObj<mtGC> {
   void set_mapping_changed_listener(G1MappingChangedListener* listener) { _listener = listener; }
 
   virtual ~G1RegionToSpaceMapper() {}
-
-  bool is_committed(uintptr_t idx) const {
-    return _commit_map.at(idx);
-  }
 
   void commit_and_set_special();
   virtual void commit_regions(uint start_idx, size_t num_regions = 1, WorkGang* pretouch_workers = NULL) = 0;
@@ -101,12 +99,10 @@ class G1RegionToSpaceMapper : public CHeapObj<mtGC> {
 // part of space is mapped to dram and part to nv-dimm
 class G1RegionToHeteroSpaceMapper : public G1RegionToSpaceMapper {
 private:
-  size_t _pages_per_region;
   ReservedSpace _rs;
   G1RegionToSpaceMapper* _dram_mapper;
   uint _num_committed_dram;
   uint _num_committed_nvdimm;
-  uint _start_index_of_nvdimm;
   uint _start_index_of_dram;
   size_t _page_size;
   size_t _commit_factor;

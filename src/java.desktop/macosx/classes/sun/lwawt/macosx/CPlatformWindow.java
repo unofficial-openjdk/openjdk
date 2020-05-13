@@ -62,7 +62,6 @@ import sun.awt.AWTAccessor;
 import sun.awt.AWTAccessor.ComponentAccessor;
 import sun.awt.AWTAccessor.WindowAccessor;
 import sun.java2d.SurfaceData;
-import sun.java2d.opengl.CGLSurfaceData;
 import sun.lwawt.LWLightweightFramePeer;
 import sun.lwawt.LWToolkit;
 import sun.lwawt.LWWindowPeer;
@@ -309,12 +308,11 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
      */
     @Override // PlatformWindow
     public void initialize(Window _target, LWWindowPeer _peer, PlatformWindow _owner) {
-        initializeBase(_target, _peer, _owner, new CPlatformView());
+        initializeBase(_target, _peer, _owner);
 
         final int styleBits = getInitialStyleBits();
 
         responder = createPlatformResponder();
-        contentView = createContentView();
         contentView.initialize(peer, responder);
 
         Rectangle bounds;
@@ -355,24 +353,22 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
                 }
             });
         }
-
-        validateSurface();
     }
 
-    protected void initializeBase(Window target, LWWindowPeer peer, PlatformWindow owner, CPlatformView view) {
+    void initializeBase(Window target, LWWindowPeer peer, PlatformWindow owner) {
         this.peer = peer;
         this.target = target;
         if (owner instanceof CPlatformWindow) {
             this.owner = (CPlatformWindow)owner;
         }
-        this.contentView = view;
+        contentView = createContentView();
     }
 
     protected CPlatformResponder createPlatformResponder() {
         return new CPlatformResponder(peer, false);
     }
 
-    protected CPlatformView createContentView() {
+    CPlatformView createContentView() {
         return new CPlatformView();
     }
 
@@ -1050,13 +1046,6 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     @Override
     public long getLayerPtr() {
         return contentView.getWindowLayerPtr();
-    }
-
-    private void validateSurface() {
-        SurfaceData surfaceData = getSurfaceData();
-        if (surfaceData instanceof CGLSurfaceData) {
-            ((CGLSurfaceData)surfaceData).validate();
-        }
     }
 
     void flushBuffers() {

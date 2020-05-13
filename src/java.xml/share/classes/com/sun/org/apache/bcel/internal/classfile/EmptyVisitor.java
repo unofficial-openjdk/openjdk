@@ -26,7 +26,6 @@ package com.sun.org.apache.bcel.internal.classfile;
  * with the DescendingVisitor class, e.g. By courtesy of David Spencer.
  *
  * @see DescendingVisitor
- * @version $Id: EmptyVisitor.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public class EmptyVisitor implements Visitor
 {
@@ -280,6 +279,14 @@ public class EmptyVisitor implements Visitor
     }
 
     /**
+     * @since 6.4.0
+     */
+    @Override
+    public void visitMethodParameter(final MethodParameter obj)
+    {
+    }
+
+    /**
      * @since 6.0
      */
     @Override
@@ -299,5 +306,71 @@ public class EmptyVisitor implements Visitor
      */
     @Override
     public void visitParameterAnnotationEntry(final ParameterAnnotationEntry parameterAnnotationEntry) {
+    }
+
+    /**
+     * @since 6.1
+     */
+    @Override
+    public void visitConstantPackage(final ConstantPackage constantPackage) {
+    }
+
+    /**
+     * @since 6.1
+     */
+    @Override
+    public void visitConstantModule(final ConstantModule constantModule) {
+    }
+
+    /**
+     * @since 6.3
+     */
+    @Override
+    public void visitConstantDynamic(final ConstantDynamic obj) {
+    }
+
+    /** @since 6.4.0 */
+    @Override
+    public void visitModule(final Module obj) {
+    }
+
+    /** @since 6.4.0 */
+    @Override
+    public void visitModuleRequires(final ModuleRequires obj) {
+    }
+
+    /** @since 6.4.0 */
+    @Override
+    public void visitModuleExports(final ModuleExports obj) {
+    }
+
+    /** @since 6.4.0 */
+    @Override
+    public void visitModuleOpens(final ModuleOpens obj) {
+    }
+
+    /** @since 6.4.0 */
+    @Override
+    public void visitModuleProvides(final ModuleProvides obj) {
+    }
+
+    /** @since 6.4.0 */
+    @Override
+    public void visitModulePackages(final ModulePackages obj) {
+    }
+
+    /** @since 6.4.0 */
+    @Override
+    public void visitModuleMainClass(final ModuleMainClass obj) {
+    }
+
+    /** @since 6.4.0 */
+    @Override
+    public void visitNestHost(final NestHost obj) {
+    }
+
+    /** @since 6.4.0 */
+    @Override
+    public void visitNestMembers(final NestMembers obj) {
     }
 }

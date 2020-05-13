@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,7 +26,7 @@
  * @test TestHeuristicsUnlock
  * @summary Test that Shenandoah heuristics are unlocked properly
  * @key gc
- * @requires vm.gc.Shenandoah
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
@@ -44,14 +45,10 @@ public class TestHeuristicsUnlock {
     }
 
     public static void main(String[] args) throws Exception {
-        testWith("adaptive", Mode.PRODUCT);
-        testWith("static", Mode.PRODUCT);
-        testWith("compact", Mode.PRODUCT);
-
-        testWith("traversal", Mode.EXPERIMENTAL);
-
-        testWith("aggressive", Mode.DIAGNOSTIC);
-        testWith("passive", Mode.DIAGNOSTIC);
+        testWith("-XX:ShenandoahGCHeuristics=adaptive",   Mode.PRODUCT);
+        testWith("-XX:ShenandoahGCHeuristics=static",     Mode.PRODUCT);
+        testWith("-XX:ShenandoahGCHeuristics=compact",    Mode.PRODUCT);
+        testWith("-XX:ShenandoahGCHeuristics=aggressive", Mode.DIAGNOSTIC);
     }
 
     private static void testWith(String h, Mode mode) throws Exception {
@@ -60,7 +57,7 @@ public class TestHeuristicsUnlock {
                     "-XX:-UnlockDiagnosticVMOptions",
                     "-XX:-UnlockExperimentalVMOptions",
                     "-XX:+UseShenandoahGC",
-                    "-XX:ShenandoahGCHeuristics=" + h,
+                    h,
                     "-version"
             );
             OutputAnalyzer output = new OutputAnalyzer(pb.start());
@@ -80,7 +77,7 @@ public class TestHeuristicsUnlock {
                     "-XX:+UnlockDiagnosticVMOptions",
                     "-XX:-UnlockExperimentalVMOptions",
                     "-XX:+UseShenandoahGC",
-                    "-XX:ShenandoahGCHeuristics=" + h,
+                    h,
                     "-version"
             );
             OutputAnalyzer output = new OutputAnalyzer(pb.start());
@@ -100,7 +97,7 @@ public class TestHeuristicsUnlock {
                     "-XX:-UnlockDiagnosticVMOptions",
                     "-XX:+UnlockExperimentalVMOptions",
                     "-XX:+UseShenandoahGC",
-                    "-XX:ShenandoahGCHeuristics=" + h,
+                    h,
                     "-version"
             );
             OutputAnalyzer output = new OutputAnalyzer(pb.start());

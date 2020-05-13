@@ -523,7 +523,7 @@ int nsk_jvmti_redefineClass(jvmtiEnv * jvmti,
 JNIEXPORT jboolean JNICALL
 Java_nsk_share_jvmti_RedefineAgent_redefineAttempted(JNIEnv *jni,  jobject obj) {
 
-    if (redefineAttempted == NSK_TRUE) {
+    if (redefineAttempted) {
         return JNI_TRUE;
     }else {
         return JNI_FALSE;
@@ -534,7 +534,7 @@ Java_nsk_share_jvmti_RedefineAgent_redefineAttempted(JNIEnv *jni,  jobject obj) 
 JNIEXPORT jboolean JNICALL
 Java_nsk_share_jvmti_RedefineAgent_isRedefined(JNIEnv * jni,  jobject obj) {
 
-    if (redefineSucceed == NSK_TRUE) {
+    if (redefineSucceed) {
         return JNI_TRUE;
     }else {
         return JNI_FALSE;
@@ -545,7 +545,7 @@ Java_nsk_share_jvmti_RedefineAgent_isRedefined(JNIEnv * jni,  jobject obj) {
  */
 JNIEXPORT jboolean JNICALL
 Java_nsk_share_jvmti_RedefineAgent_agentStatus(JNIEnv * jni,  jobject obj) {
-    if (agentFailed == NSK_TRUE) {
+    if (agentFailed) {
         return JNI_FALSE;
     } else {
         return JNI_TRUE;
@@ -584,6 +584,10 @@ void nsk_jvmti_agentFailed() {
 int isThreadExpected(jvmtiEnv *jvmti, jthread thread) {
     static const char *vm_jfr_buffer_thread_name = "VM JFR Buffer Thread";
     static const char *jfr_request_timer_thread_name = "JFR request timer";
+    static const char *graal_management_bean_registration_thread_name =
+                                            "HotSpotGraalManagement Bean Registration";
+    static const char *graal_compiler_thread_name_prefix = "JVMCI CompilerThread";
+    static const size_t prefixLength = strlen(graal_compiler_thread_name_prefix);
 
     jvmtiThreadInfo threadinfo;
     NSK_JVMTI_VERIFY(jvmti->GetThreadInfo(thread, &threadinfo));
@@ -592,6 +596,13 @@ int isThreadExpected(jvmtiEnv *jvmti, jthread thread) {
         return 0;
 
     if (strcmp(threadinfo.name, jfr_request_timer_thread_name) == 0)
+        return 0;
+
+    if (strcmp(threadinfo.name, graal_management_bean_registration_thread_name) == 0)
+        return 0;
+
+    if ((strlen(threadinfo.name) > prefixLength) &&
+         strncmp(threadinfo.name, graal_compiler_thread_name_prefix, prefixLength) == 0)
         return 0;
 
     return 1;

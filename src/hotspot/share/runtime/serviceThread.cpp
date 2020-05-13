@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,9 @@
 #include "classfile/stringTable.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
+#include "gc/shared/oopStorage.hpp"
+#include "gc/shared/oopStorageSet.hpp"
+#include "memory/universe.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaCalls.hpp"
@@ -40,8 +43,14 @@
 #include "services/diagnosticFramework.hpp"
 #include "services/gcNotifier.hpp"
 #include "services/lowMemoryDetector.hpp"
+#include "services/threadIdTable.hpp"
 
 ServiceThread* ServiceThread::_instance = NULL;
+JvmtiDeferredEvent* ServiceThread::_jvmti_event = NULL;
+// The service thread has it's own static deferred event queue.
+// Events can be posted before JVMTI vm_start, so it's too early to call JvmtiThreadState::state_for
+// to add this field to the per-JavaThread event queue.  TODO: fix this sometime later
+JvmtiDeferredEventQueue ServiceThread::_jvmti_service_queue;
 
 void ServiceThread::initialize() {
   EXCEPTION_MARK;
@@ -59,7 +68,7 @@ void ServiceThread::initialize() {
                           CHECK);
 
   {
-    MutexLocker mu(Threads_lock);
+    MutexLocker mu(THREAD, Threads_lock);
     ServiceThread* thread =  new ServiceThread(&service_thread_entry);
 
     // At this point it may be possible that no osthread was created for the
@@ -82,39 +91,14 @@ void ServiceThread::initialize() {
   }
 }
 
-static bool needs_oopstorage_cleanup(OopStorage* const* storages,
-                                     bool* needs_cleanup,
-                                     size_t size) {
-  bool any_needs_cleanup = false;
-  for (size_t i = 0; i < size; ++i) {
-    assert(!needs_cleanup[i], "precondition");
-    if (storages[i]->needs_delete_empty_blocks()) {
-      needs_cleanup[i] = true;
-      any_needs_cleanup = true;
-    }
-  }
-  return any_needs_cleanup;
-}
-
-static void cleanup_oopstorages(OopStorage* const* storages,
-                                const bool* needs_cleanup,
-                                size_t size) {
-  for (size_t i = 0; i < size; ++i) {
-    if (needs_cleanup[i]) {
-      storages[i]->delete_empty_blocks();
-    }
+static void cleanup_oopstorages() {
+  OopStorageSet::Iterator it = OopStorageSet::all_iterator();
+  for ( ; !it.is_end(); ++it) {
+    it->delete_empty_blocks();
   }
 }
 
 void ServiceThread::service_thread_entry(JavaThread* jt, TRAPS) {
-  OopStorage* const oopstorages[] = {
-    JNIHandles::global_handles(),
-    JNIHandles::weak_global_handles(),
-    StringTable::weak_storage(),
-    SystemDictionary::vm_weak_oop_storage()
-  };
-  const size_t oopstorage_count = ARRAY_SIZE(oopstorages);
-
   while (true) {
     bool sensors_changed = false;
     bool has_jvmti_events = false;
@@ -123,9 +107,9 @@ void ServiceThread::service_thread_entry(JavaThread* jt, TRAPS) {
     bool stringtable_work = false;
     bool symboltable_work = false;
     bool resolved_method_table_work = false;
+    bool thread_id_table_work = false;
     bool protection_domain_table_work = false;
     bool oopstorage_work = false;
-    bool oopstorages_cleanup[oopstorage_count] = {}; // Zero (false) initialize.
     JvmtiDeferredEvent jvmti_event;
     {
       // Need state transition ThreadBlockInVM so that this thread
@@ -138,30 +122,30 @@ void ServiceThread::service_thread_entry(JavaThread* jt, TRAPS) {
 
       ThreadBlockInVM tbivm(jt);
 
-      MonitorLockerEx ml(Service_lock, Mutex::_no_safepoint_check_flag);
+      MonitorLocker ml(Service_lock, Mutex::_no_safepoint_check_flag);
       // Process all available work on each (outer) iteration, rather than
       // only the first recognized bit of work, to avoid frequently true early
       // tests from potentially starving later work.  Hence the use of
       // arithmetic-or to combine results; we don't want short-circuiting.
-      while (((sensors_changed = LowMemoryDetector::has_pending_requests()) |
-              (has_jvmti_events = JvmtiDeferredEventQueue::has_events()) |
-              (has_gc_notification_event = GCNotifier::has_event()) |
-              (has_dcmd_notification_event = DCmdFactory::has_pending_jmx_notification()) |
+      while (((sensors_changed = (!UseNotificationThread && LowMemoryDetector::has_pending_requests())) |
+              (has_jvmti_events = _jvmti_service_queue.has_events()) |
+              (has_gc_notification_event = (!UseNotificationThread && GCNotifier::has_event())) |
+              (has_dcmd_notification_event = (!UseNotificationThread && DCmdFactory::has_pending_jmx_notification())) |
               (stringtable_work = StringTable::has_work()) |
               (symboltable_work = SymbolTable::has_work()) |
               (resolved_method_table_work = ResolvedMethodTable::has_work()) |
+              (thread_id_table_work = ThreadIdTable::has_work()) |
               (protection_domain_table_work = SystemDictionary::pd_cache_table()->has_work()) |
-              (oopstorage_work = needs_oopstorage_cleanup(oopstorages,
-                                                          oopstorages_cleanup,
-                                                          oopstorage_count)))
-
-             == 0) {
+              (oopstorage_work = OopStorage::has_cleanup_work_and_reset())
+             ) == 0) {
         // Wait until notified that there is some work to do.
-        ml.wait(Mutex::_no_safepoint_check_flag);
+        ml.wait();
       }
 
       if (has_jvmti_events) {
-        jvmti_event = JvmtiDeferredEventQueue::dequeue();
+        // Get the event under the Service_lock
+        jvmti_event = _jvmti_service_queue.dequeue();
+        _jvmti_event = &jvmti_event;
       }
     }
 
@@ -174,23 +158,30 @@ void ServiceThread::service_thread_entry(JavaThread* jt, TRAPS) {
     }
 
     if (has_jvmti_events) {
-      jvmti_event.post();
+      _jvmti_event->post();
+      _jvmti_event = NULL;  // reset
     }
 
-    if (sensors_changed) {
-      LowMemoryDetector::process_sensor_changes(jt);
-    }
+    if (!UseNotificationThread) {
+      if (sensors_changed) {
+        LowMemoryDetector::process_sensor_changes(jt);
+      }
 
-    if(has_gc_notification_event) {
-      GCNotifier::sendNotification(CHECK);
-    }
+      if(has_gc_notification_event) {
+        GCNotifier::sendNotification(CHECK);
+      }
 
-    if(has_dcmd_notification_event) {
-      DCmdFactory::send_notification(CHECK);
+      if(has_dcmd_notification_event) {
+        DCmdFactory::send_notification(CHECK);
+      }
     }
 
     if (resolved_method_table_work) {
-      ResolvedMethodTable::unlink();
+      ResolvedMethodTable::do_concurrent_work(jt);
+    }
+
+    if (thread_id_table_work) {
+      ThreadIdTable::do_concurrent_work(jt);
     }
 
     if (protection_domain_table_work) {
@@ -198,11 +189,43 @@ void ServiceThread::service_thread_entry(JavaThread* jt, TRAPS) {
     }
 
     if (oopstorage_work) {
-      cleanup_oopstorages(oopstorages, oopstorages_cleanup, oopstorage_count);
+      cleanup_oopstorages();
     }
   }
 }
 
-bool ServiceThread::is_service_thread(Thread* thread) {
-  return thread == _instance;
+void ServiceThread::enqueue_deferred_event(JvmtiDeferredEvent* event) {
+  MutexLocker ml(Service_lock, Mutex::_no_safepoint_check_flag);
+  // If you enqueue events before the service thread runs, gc and the sweeper
+  // cannot keep the nmethod alive.  This could be restricted to compiled method
+  // load and unload events, if we wanted to be picky.
+  assert(_instance != NULL, "cannot enqueue events before the service thread runs");
+  _jvmti_service_queue.enqueue(*event);
+  Service_lock->notify_all();
+ }
+
+void ServiceThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
+  JavaThread::oops_do(f, cf);
+  // The ServiceThread "owns" the JVMTI Deferred events, scan them here
+  // to keep them alive until they are processed.
+  if (cf != NULL) {
+    if (_jvmti_event != NULL) {
+      _jvmti_event->oops_do(f, cf);
+    }
+    // Requires a lock, because threads can be adding to this queue.
+    MutexLocker ml(Service_lock, Mutex::_no_safepoint_check_flag);
+    _jvmti_service_queue.oops_do(f, cf);
+  }
+}
+
+void ServiceThread::nmethods_do(CodeBlobClosure* cf) {
+  JavaThread::nmethods_do(cf);
+  if (cf != NULL) {
+    if (_jvmti_event != NULL) {
+      _jvmti_event->nmethods_do(cf);
+    }
+    // Requires a lock, because threads can be adding to this queue.
+    MutexLocker ml(Service_lock, Mutex::_no_safepoint_check_flag);
+    _jvmti_service_queue.nmethods_do(cf);
+  }
 }

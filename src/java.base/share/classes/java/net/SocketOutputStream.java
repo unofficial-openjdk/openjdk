@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,6 @@ class SocketOutputStream extends FileOutputStream {
 
     private AbstractPlainSocketImpl impl = null;
     private byte temp[] = new byte[1];
-    private Socket socket = null;
 
     /**
      * Creates a new SocketOutputStream. Can only be called
@@ -56,7 +55,6 @@ class SocketOutputStream extends FileOutputStream {
     SocketOutputStream(AbstractPlainSocketImpl impl) throws IOException {
         super(impl.getFileDescriptor());
         this.impl = impl;
-        socket = impl.getSocket();
     }
 
     /**
@@ -81,7 +79,7 @@ class SocketOutputStream extends FileOutputStream {
      * @param b the data to be written
      * @param off the start offset in the data
      * @param len the number of bytes that are written
-     * @exception IOException If an I/O error has occurred.
+     * @throws    IOException If an I/O error has occurred.
      */
     private native void socketWrite0(FileDescriptor fd, byte[] b, int off,
                                      int len) throws IOException;
@@ -92,7 +90,7 @@ class SocketOutputStream extends FileOutputStream {
      * @param b the data to be written
      * @param off the start offset in the data
      * @param len the number of bytes that are written
-     * @exception IOException If an I/O error has occurred.
+     * @throws    IOException If an I/O error has occurred.
      */
     private void socketWrite(byte b[], int off, int len) throws IOException {
 
@@ -122,7 +120,7 @@ class SocketOutputStream extends FileOutputStream {
     /**
      * Writes a byte to the socket.
      * @param b the data to be written
-     * @exception IOException If an I/O error has occurred.
+     * @throws    IOException If an I/O error has occurred.
      */
     public void write(int b) throws IOException {
         temp[0] = (byte)b;
@@ -132,7 +130,7 @@ class SocketOutputStream extends FileOutputStream {
     /**
      * Writes the contents of the buffer <i>b</i> to the socket.
      * @param b the data to be written
-     * @exception SocketException If an I/O error has occurred.
+     * @throws    SocketException If an I/O error has occurred.
      */
     public void write(byte b[]) throws IOException {
         socketWrite(b, 0, b.length);
@@ -144,27 +142,16 @@ class SocketOutputStream extends FileOutputStream {
      * @param b the data to be written
      * @param off the start offset in the data
      * @param len the number of bytes that are written
-     * @exception SocketException If an I/O error has occurred.
+     * @throws    SocketException If an I/O error has occurred.
      */
     public void write(byte b[], int off, int len) throws IOException {
         socketWrite(b, off, len);
     }
 
-    /**
-     * Closes the stream.
-     */
-    private boolean closing = false;
     public void close() throws IOException {
-        // Prevent recursion. See BugId 4484411
-        if (closing)
-            return;
-        closing = true;
-        if (socket != null) {
-            if (!socket.isClosed())
-                socket.close();
-        } else
-            impl.close();
-        closing = false;
+        // No longer used. Socket.getOutputStream returns an
+        // OutputStream which calls Socket.close directly
+        assert false;
     }
 
     /**

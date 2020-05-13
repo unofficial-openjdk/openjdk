@@ -27,6 +27,7 @@
 #include "gc/serial/serialHeap.hpp"
 #include "gc/serial/tenuredGeneration.inline.hpp"
 #include "gc/shared/genMemoryPools.hpp"
+#include "memory/universe.hpp"
 #include "services/memoryManager.hpp"
 
 SerialHeap* SerialHeap::heap() {
@@ -36,9 +37,8 @@ SerialHeap* SerialHeap::heap() {
   return static_cast<SerialHeap*>(heap);
 }
 
-SerialHeap::SerialHeap(GenCollectorPolicy* policy) :
-    GenCollectedHeap(policy,
-                     Generation::DefNew,
+SerialHeap::SerialHeap() :
+    GenCollectedHeap(Generation::DefNew,
                      Generation::MarkSweepCompact,
                      "Copy:MSC"),
     _eden_pool(NULL),

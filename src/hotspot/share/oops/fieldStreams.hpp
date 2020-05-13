@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,6 @@ class FieldStreamBase : public StackObj {
   fieldDescriptor     _fd_buf;
 
   FieldInfo* field() const { return FieldInfo::from_field_array(_fields, _index); }
-  InstanceKlass* field_holder() const { return _constants->pool_holder(); }
 
   int init_generic_signature_start_slot() {
     int length = _fields->length();
@@ -79,37 +78,15 @@ class FieldStreamBase : public StackObj {
     return num_fields;
   }
 
-  FieldStreamBase(Array<u2>* fields, const constantPoolHandle& constants, int start, int limit) {
-    _fields = fields;
-    _constants = constants;
-    _index = start;
-    int num_fields = init_generic_signature_start_slot();
-    if (limit < start) {
-      _limit = num_fields;
-    } else {
-      _limit = limit;
-    }
-  }
+  inline FieldStreamBase(Array<u2>* fields, ConstantPool* constants, int start, int limit);
 
-  FieldStreamBase(Array<u2>* fields, const constantPoolHandle& constants) {
-    _fields = fields;
-    _constants = constants;
-    _index = 0;
-    _limit = init_generic_signature_start_slot();
-  }
-
+  inline FieldStreamBase(Array<u2>* fields, ConstantPool* constants);
  public:
-  FieldStreamBase(InstanceKlass* klass) {
-    _fields = klass->fields();
-    _constants = klass->constants();
-    _index = 0;
-    _limit = klass->java_fields_count();
-    init_generic_signature_start_slot();
-    assert(klass == field_holder(), "");
-  }
+  inline FieldStreamBase(InstanceKlass* klass);
 
   // accessors
   int index() const                 { return _index; }
+  InstanceKlass* field_holder() const { return _constants->pool_holder(); }
 
   void next() {
     if (access_flags().field_has_generic_signature()) {
@@ -136,11 +113,11 @@ class FieldStreamBase : public StackObj {
   }
 
   Symbol* name() const {
-    return field()->name(_constants);
+    return field()->name(_constants());
   }
 
   Symbol* signature() const {
-    return field()->signature(_constants);
+    return field()->signature(_constants());
   }
 
   Symbol* generic_signature() const {
@@ -242,7 +219,7 @@ class InternalFieldStream : public FieldStreamBase {
 
 class AllFieldStream : public FieldStreamBase {
  public:
-  AllFieldStream(Array<u2>* fields, const constantPoolHandle& constants): FieldStreamBase(fields, constants) {}
+  AllFieldStream(Array<u2>* fields, ConstantPool* constants): FieldStreamBase(fields, constants) {}
   AllFieldStream(InstanceKlass* k):      FieldStreamBase(k->fields(), k->constants()) {}
 };
 

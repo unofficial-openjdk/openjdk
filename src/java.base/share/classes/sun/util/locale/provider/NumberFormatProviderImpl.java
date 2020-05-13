@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,10 +45,14 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.spi.NumberFormatProvider;
+import java.util.Arrays;
 import java.util.Currency;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import sun.text.resources.PluralRules;
 
 /**
  * Concrete implementation of the  {@link java.text.spi.NumberFormatProvider
@@ -63,11 +67,17 @@ public class NumberFormatProviderImpl extends NumberFormatProvider implements Av
     private static final int NUMBERSTYLE = 0;
     private static final int CURRENCYSTYLE = 1;
     private static final int PERCENTSTYLE = 2;
-    private static final int SCIENTIFICSTYLE = 3;
+    private static final int ACCOUNTINGSTYLE = 3;
     private static final int INTEGERSTYLE = 4;
 
     private final LocaleProviderAdapter.Type type;
     private final Set<String> langtags;
+
+    private static Map<String, String> rulesMap =
+            Arrays.stream(PluralRules.rulesArray).collect(Collectors.toMap(
+                    sa -> sa[0],
+                    sa -> sa[1])
+            );
 
     public NumberFormatProviderImpl(LocaleProviderAdapter.Type type, Set<String> langtags) {
         this.type = type;
@@ -184,6 +194,12 @@ public class NumberFormatProviderImpl extends NumberFormatProvider implements Av
         String[] numberPatterns = adapter.getLocaleResources(override).getNumberPatterns();
         DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(override);
         int entry = (choice == INTEGERSTYLE) ? NUMBERSTYLE : choice;
+        if (choice == CURRENCYSTYLE &&
+            numberPatterns.length > ACCOUNTINGSTYLE &&
+            !numberPatterns[ACCOUNTINGSTYLE].isEmpty() &&
+            "account".equalsIgnoreCase(override.getUnicodeLocaleType("cf"))) {
+            entry = ACCOUNTINGSTYLE;
+        }
         DecimalFormat format = new DecimalFormat(numberPatterns[entry], symbols);
 
         if (choice == INTEGERSTYLE) {
@@ -265,8 +281,12 @@ public class NumberFormatProviderImpl extends NumberFormatProvider implements Av
         DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(override);
         String[] cnPatterns = resource.getCNPatterns(formatStyle);
 
+        // plural rules
+        String pluralRules = rulesMap.getOrDefault(override.toString(),
+                rulesMap.getOrDefault(override.getLanguage(), ""));
+
         CompactNumberFormat format = new CompactNumberFormat(numberPatterns[0],
-                symbols, cnPatterns);
+                symbols, cnPatterns, pluralRules);
         return format;
     }
 

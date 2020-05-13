@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2000, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import java.io.ObjectStreamField;
 
 /**
  * Signals that an unexpected exception has occurred in a static initializer.
- * An <code>ExceptionInInitializerError</code> is thrown to indicate that an
+ * An {@code ExceptionInInitializerError} is thrown to indicate that an
  * exception occurred during evaluation of a static initializer or the
  * initializer for a static variable.
  *
@@ -50,11 +50,12 @@ public class ExceptionInInitializerError extends LinkageError {
     /**
      * Use serialVersionUID from JDK 1.1.X for interoperability
      */
+    @java.io.Serial
     private static final long serialVersionUID = 1521711792217232256L;
 
     /**
-     * Constructs an <code>ExceptionInInitializerError</code> with
-     * <code>null</code> as its detail message string and with no saved
+     * Constructs an {@code ExceptionInInitializerError} with
+     * {@code null} as its detail message string and with no saved
      * throwable object.
      * A detail message is a String that describes this particular exception.
      */
@@ -63,10 +64,10 @@ public class ExceptionInInitializerError extends LinkageError {
     }
 
     /**
-     * Constructs a new <code>ExceptionInInitializerError</code> class by
-     * saving a reference to the <code>Throwable</code> object thrown for
+     * Constructs a new {@code ExceptionInInitializerError} class by
+     * saving a reference to the {@code Throwable} object thrown for
      * later retrieval by the {@link #getException()} method. The detail
-     * message string is set to <code>null</code>.
+     * message string is set to {@code null}.
      *
      * @param thrown The exception thrown
      */
@@ -96,8 +97,8 @@ public class ExceptionInInitializerError extends LinkageError {
      * obtaining this information.
      *
      * @return the saved throwable object of this
-     *         <code>ExceptionInInitializerError</code>, or <code>null</code>
-     *         if this <code>ExceptionInInitializerError</code> has no saved
+     *         {@code ExceptionInInitializerError}, or {@code null}
+     *         if this {@code ExceptionInInitializerError} has no saved
      *         throwable object.
      */
     public Throwable getException() {
@@ -109,6 +110,7 @@ public class ExceptionInInitializerError extends LinkageError {
      *
      * @serialField exception Throwable
      */
+    @java.io.Serial
     private static final ObjectStreamField[] serialPersistentFields = {
         new ObjectStreamField("exception", Throwable.class)
     };
@@ -122,6 +124,7 @@ public class ExceptionInInitializerError extends LinkageError {
      * field in the older implementation and ExceptionInInitializerError::cause
      * was set to null.
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
         ObjectInputStream.GetField fields = s.readFields();
         Throwable exception = (Throwable) fields.get("exception", null);
@@ -134,6 +137,7 @@ public class ExceptionInInitializerError extends LinkageError {
      * To maintain compatibility with older implementation, write a serial
      * "exception" field with the cause as the value.
      */
+    @java.io.Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
         ObjectOutputStream.PutField fields = out.putFields();
         fields.put("exception", super.getCause());

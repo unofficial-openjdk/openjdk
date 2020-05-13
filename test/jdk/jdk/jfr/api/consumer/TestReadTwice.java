@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
 package jdk.jfr.api.consumer;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -36,7 +35,6 @@ import jdk.jfr.consumer.RecordedEvent;
 import jdk.jfr.consumer.RecordingFile;
 import jdk.test.lib.Asserts;
 import jdk.test.lib.Utils;
-
 
 /**
  * @test
@@ -52,34 +50,34 @@ public class TestReadTwice {
     }
 
     public static void main(String[] args) throws Throwable {
-        Recording r = new Recording();
-        r.enable(MyEvent.class).withoutStackTrace();
-        r.start();
+        try (Recording r = new Recording()) {
+            r.enable(MyEvent.class).withoutStackTrace();
+            r.start();
 
-        // Commit a single event to the recording
-        MyEvent event = new MyEvent();
-        event.commit();
+            // Commit a single event to the recording
+            MyEvent event = new MyEvent();
+            event.commit();
 
-        r.stop();
+            r.stop();
 
-        // Dump the recording to a file
-        Path path = Utils.createTempFile("read-twice", ".jfr");
-        System.out.println("Dumping to " + path);
-        r.dump(path);
-        r.close();
+            // Dump the recording to a file
+            Path path = Utils.createTempFile("read-twice", ".jfr");
+            System.out.println("Dumping to " + path);
+            r.dump(path);
 
-        // Read all events from the file in one go
-        List<RecordedEvent> events = RecordingFile.readAllEvents(path);
+            // Read all events from the file in one go
+            List<RecordedEvent> events = RecordingFile.readAllEvents(path);
 
-        // Read again the same events one by one
-        RecordingFile rfile = new RecordingFile(path);
-        List<RecordedEvent> events2 = new LinkedList<>();
-        while (rfile.hasMoreEvents()) {
-            events2.add(rfile.readEvent());
+            // Read again the same events one by one
+            try (RecordingFile rfile = new RecordingFile(path)) {
+                List<RecordedEvent> events2 = new LinkedList<>();
+                while (rfile.hasMoreEvents()) {
+                    events2.add(rfile.readEvent());
+                }
+
+                // Compare sizes
+                Asserts.assertEquals(events.size(), events2.size());
+            }
         }
-
-        // Compare sizes
-        Asserts.assertEquals(events.size(), events2.size());
-        rfile.close();
     }
 }

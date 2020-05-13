@@ -60,8 +60,11 @@ public class VirtualMachineImpl extends HotSpotVirtualMachine {
         int pid;
         try {
             pid = Integer.parseInt(vmid);
+            if (pid < 1) {
+                throw new NumberFormatException();
+            }
         } catch (NumberFormatException x) {
-            throw new AttachNotSupportedException("Invalid process identifier");
+            throw new AttachNotSupportedException("Invalid process identifier: " + vmid);
         }
 
         // Try to resolve to the "inner most" pid namespace
@@ -143,7 +146,7 @@ public class VirtualMachineImpl extends HotSpotVirtualMachine {
      * Execute the given command in the target VM.
      */
     InputStream execute(String cmd, Object ... args) throws AgentLoadException, IOException {
-        assert args.length <= 4;                // includes null
+        assert args.length <= 3;                // includes null
 
         // did we detach?
         synchronized (this) {
@@ -171,7 +174,7 @@ public class VirtualMachineImpl extends HotSpotVirtualMachine {
             writeString(s, PROTOCOL_VERSION);
             writeString(s, cmd);
 
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 3; i++) {
                 if (i < args.length && args[i] != null) {
                     writeString(s, (String)args[i]);
                 } else {
@@ -233,7 +236,7 @@ public class VirtualMachineImpl extends HotSpotVirtualMachine {
      * InputStream for the socket connection to get target VM
      */
     private class SocketInputStream extends InputStream {
-        int s;
+        int s = -1;
 
         public SocketInputStream(int s) {
             this.s = s;
@@ -260,8 +263,12 @@ public class VirtualMachineImpl extends HotSpotVirtualMachine {
             return VirtualMachineImpl.read(s, bs, off, len);
         }
 
-        public void close() throws IOException {
-            VirtualMachineImpl.close(s);
+        public synchronized void close() throws IOException {
+            if (s != -1) {
+                int toClose = s;
+                s = -1;
+                VirtualMachineImpl.close(toClose);
+            }
         }
     }
 

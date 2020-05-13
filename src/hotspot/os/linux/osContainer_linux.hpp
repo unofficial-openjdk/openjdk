@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,11 +31,17 @@
 
 #define OSCONTAINER_ERROR (-2)
 
+// 20ms timeout between re-reads of memory limit and _active_processor_count.
+#define OSCONTAINER_CACHE_TIMEOUT (NANOSECS_PER_SEC/50)
+
 class OSContainer: AllStatic {
 
  private:
   static bool   _is_initialized;
   static bool   _is_containerized;
+  static int    _active_processor_count;
+
+  static jlong read_memory_limit_in_bytes();
 
  public:
   static void init();
@@ -61,7 +67,6 @@ class OSContainer: AllStatic {
 };
 
 inline bool OSContainer::is_containerized() {
-  assert(_is_initialized, "OSContainer not initialized");
   return _is_containerized;
 }
 

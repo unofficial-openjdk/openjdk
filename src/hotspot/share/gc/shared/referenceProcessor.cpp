@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/java.hpp"
@@ -62,9 +63,6 @@ void ReferenceProcessor::init_statics() {
     _default_soft_ref_policy = new LRUMaxHeapPolicy();
   } else {
     _default_soft_ref_policy = new LRUCurrentHeapPolicy();
-  }
-  if (_always_clear_soft_ref_policy == NULL || _default_soft_ref_policy == NULL) {
-    vm_exit_during_initialization("Could not allocate reference policy object");
   }
   guarantee(RefDiscoveryPolicy == ReferenceBasedDiscovery ||
             RefDiscoveryPolicy == ReferentBasedDiscovery,
@@ -118,9 +116,6 @@ ReferenceProcessor::ReferenceProcessor(BoolObjectClosure* is_subject_to_discover
   _discovered_refs     = NEW_C_HEAP_ARRAY(DiscoveredList,
             _max_num_queues * number_of_subclasses_of_ref(), mtGC);
 
-  if (_discovered_refs == NULL) {
-    vm_exit_during_initialization("Could not allocated RefProc Array");
-  }
   _discoveredSoftRefs    = &_discovered_refs[0];
   _discoveredWeakRefs    = &_discoveredSoftRefs[_max_num_queues];
   _discoveredFinalRefs   = &_discoveredWeakRefs[_max_num_queues];
@@ -268,7 +263,7 @@ void DiscoveredListIterator::load_ptrs(DEBUG_ONLY(bool allow_null_referent)) {
 
   _referent_addr = java_lang_ref_Reference::referent_addr_raw(_current_discovered);
   _referent = java_lang_ref_Reference::referent(_current_discovered);
-  assert(Universe::heap()->is_in_reserved_or_null(_referent),
+  assert(Universe::heap()->is_in_or_null(_referent),
          "Wrong oop found in java.lang.Reference object");
   assert(allow_null_referent ?
              oopDesc::is_oop_or_null(_referent)
@@ -284,7 +279,7 @@ void DiscoveredListIterator::remove() {
 
   // First _prev_next ref actually points into DiscoveredList (gross).
   oop new_next;
-  if (oopDesc::equals_raw(_next_discovered, _current_discovered)) {
+  if (_next_discovered == _current_discovered) {
     // At the end of the list, we should make _prev point to itself.
     // If _ref is the first ref, then _prev_next will be in the DiscoveredList,
     // and _prev will be NULL.
@@ -335,7 +330,7 @@ inline void log_enqueued_ref(const DiscoveredListIterator& iter, const char* rea
     log_develop_trace(gc, ref)("Enqueue %s reference (" INTPTR_FORMAT ": %s)",
                                reason, p2i(iter.obj()), iter.obj()->klass()->internal_name());
   }
-  assert(oopDesc::is_oop(iter.obj(), UseConcMarkSweepGC), "Adding a bad reference");
+  assert(oopDesc::is_oop(iter.obj()), "Adding a bad reference");
 }
 
 size_t ReferenceProcessor::process_soft_ref_reconsider_work(DiscoveredList&    refs_list,
@@ -474,7 +469,7 @@ void
 ReferenceProcessor::clear_discovered_references(DiscoveredList& refs_list) {
   oop obj = NULL;
   oop next = refs_list.head();
-  while (!oopDesc::equals_raw(next, obj)) {
+  while (next != obj) {
     obj = next;
     next = java_lang_ref_Reference::discovered(obj);
     java_lang_ref_Reference::set_discovered_raw(obj, NULL);
@@ -746,7 +741,7 @@ void ReferenceProcessor::balance_queues(DiscoveredList ref_lists[])
         ref_lists[to_idx].inc_length(refs_to_move);
 
         // Remove the chain from the from list.
-        if (oopDesc::equals_raw(move_tail, new_head)) {
+        if (move_tail == new_head) {
           // We found the end of the from list.
           ref_lists[from_idx].set_head(NULL);
         } else {
@@ -787,8 +782,13 @@ void ReferenceProcessor::process_soft_ref_reconsider(BoolObjectClosure* is_alive
 
   phase_times->set_processing_is_mt(_processing_is_mt);
 
-  if (num_soft_refs == 0 || _current_soft_ref_policy == NULL) {
-    log_debug(gc, ref)("Skipped phase1 of Reference Processing due to unavailable references");
+  if (num_soft_refs == 0) {
+    log_debug(gc, ref)("Skipped phase 1 of Reference Processing: no references");
+    return;
+  }
+
+  if (_current_soft_ref_policy == NULL) {
+    log_debug(gc, ref)("Skipped phase 1 of Reference Processing: no policy");
     return;
   }
 
@@ -801,7 +801,7 @@ void ReferenceProcessor::process_soft_ref_reconsider(BoolObjectClosure* is_alive
 
   RefProcPhaseTimeTracker tt(RefPhase1, phase_times);
 
-  log_reflist("Phase1 Soft before", _discoveredSoftRefs, _max_num_queues);
+  log_reflist("Phase 1 Soft before", _discoveredSoftRefs, _max_num_queues);
   if (_processing_is_mt) {
     RefProcPhase1Task phase1(*this, phase_times, _current_soft_ref_policy);
     task_executor->execute(phase1, num_queues());
@@ -816,7 +816,7 @@ void ReferenceProcessor::process_soft_ref_reconsider(BoolObjectClosure* is_alive
 
     phase_times->add_ref_cleared(REF_SOFT, removed);
   }
-  log_reflist("Phase1 Soft after", _discoveredSoftRefs, _max_num_queues);
+  log_reflist("Phase 1 Soft after", _discoveredSoftRefs, _max_num_queues);
 }
 
 void ReferenceProcessor::process_soft_weak_final_refs(BoolObjectClosure* is_alive,
@@ -836,7 +836,7 @@ void ReferenceProcessor::process_soft_weak_final_refs(BoolObjectClosure* is_aliv
   phase_times->set_processing_is_mt(_processing_is_mt);
 
   if (num_total_refs == 0) {
-    log_debug(gc, ref)("Skipped phase2 of Reference Processing due to unavailable references");
+    log_debug(gc, ref)("Skipped phase 2 of Reference Processing: no references");
     return;
   }
 
@@ -851,9 +851,9 @@ void ReferenceProcessor::process_soft_weak_final_refs(BoolObjectClosure* is_aliv
 
   RefProcPhaseTimeTracker tt(RefPhase2, phase_times);
 
-  log_reflist("Phase2 Soft before", _discoveredSoftRefs, _max_num_queues);
-  log_reflist("Phase2 Weak before", _discoveredWeakRefs, _max_num_queues);
-  log_reflist("Phase2 Final before", _discoveredFinalRefs, _max_num_queues);
+  log_reflist("Phase 2 Soft before", _discoveredSoftRefs, _max_num_queues);
+  log_reflist("Phase 2 Weak before", _discoveredWeakRefs, _max_num_queues);
+  log_reflist("Phase 2 Final before", _discoveredFinalRefs, _max_num_queues);
   if (_processing_is_mt) {
     RefProcPhase2Task phase2(*this, phase_times);
     task_executor->execute(phase2, num_queues());
@@ -893,7 +893,7 @@ void ReferenceProcessor::process_soft_weak_final_refs(BoolObjectClosure* is_aliv
   }
   verify_total_count_zero(_discoveredSoftRefs, "SoftReference");
   verify_total_count_zero(_discoveredWeakRefs, "WeakReference");
-  log_reflist("Phase2 Final after", _discoveredFinalRefs, _max_num_queues);
+  log_reflist("Phase 2 Final after", _discoveredFinalRefs, _max_num_queues);
 }
 
 void ReferenceProcessor::process_final_keep_alive(OopClosure* keep_alive,
@@ -907,7 +907,7 @@ void ReferenceProcessor::process_final_keep_alive(OopClosure* keep_alive,
   phase_times->set_processing_is_mt(_processing_is_mt);
 
   if (num_final_refs == 0) {
-    log_debug(gc, ref)("Skipped phase3 of Reference Processing due to unavailable references");
+    log_debug(gc, ref)("Skipped phase 3 of Reference Processing: no references");
     return;
   }
 
@@ -947,7 +947,7 @@ void ReferenceProcessor::process_phantom_refs(BoolObjectClosure* is_alive,
   phase_times->set_processing_is_mt(_processing_is_mt);
 
   if (num_phantom_refs == 0) {
-    log_debug(gc, ref)("Skipped phase4 of Reference Processing due to unavailable references");
+    log_debug(gc, ref)("Skipped phase 4 of Reference Processing: no references");
     return;
   }
 
@@ -961,7 +961,7 @@ void ReferenceProcessor::process_phantom_refs(BoolObjectClosure* is_alive,
   // Phase 4: Walk phantom references appropriately.
   RefProcPhaseTimeTracker tt(RefPhase4, phase_times);
 
-  log_reflist("Phase4 Phantom before", _discoveredPhantomRefs, _max_num_queues);
+  log_reflist("Phase 4 Phantom before", _discoveredPhantomRefs, _max_num_queues);
   if (_processing_is_mt) {
     RefProcPhase4Task phase4(*this, phase_times);
     task_executor->execute(phase4, num_queues());
@@ -1033,7 +1033,7 @@ ReferenceProcessor::add_to_discovered_list_mt(DiscoveredList& refs_list,
   // The last ref must have its discovered field pointing to itself.
   oop next_discovered = (current_head != NULL) ? current_head : obj;
 
-  oop retest = HeapAccess<AS_NO_KEEPALIVE>::oop_atomic_cmpxchg(next_discovered, discovered_addr, oop(NULL));
+  oop retest = HeapAccess<AS_NO_KEEPALIVE>::oop_atomic_cmpxchg(discovered_addr, oop(NULL), next_discovered);
 
   if (retest == NULL) {
     // This thread just won the right to enqueue the object.
@@ -1156,7 +1156,7 @@ bool ReferenceProcessor::discover_reference(oop obj, ReferenceType rt) {
       // Check assumption that an object is not potentially
       // discovered twice except by concurrent collectors that potentially
       // trace the same Reference object twice.
-      assert(UseConcMarkSweepGC || UseG1GC || UseShenandoahGC,
+      assert(UseG1GC || UseShenandoahGC,
              "Only possible with a concurrent marking collector");
       return true;
     }

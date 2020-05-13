@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -637,7 +637,7 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
             // two reserved id fields
             writeObjectID(null);
             writeObjectID(null);
-            List fields = getInstanceFields(ik);
+            List<Field> fields = getInstanceFields(ik);
             int instSize = getSizeForFields(fields);
             classDataCache.put(ik, new ClassData(instSize, fields));
             out.writeInt(instSize);
@@ -646,12 +646,12 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
             // output number of cp entries as zero.
             out.writeShort((short) 0);
 
-            List declaredFields = ik.getImmediateFields();
-            List staticFields = new ArrayList();
-            List instanceFields = new ArrayList();
-            Iterator itr = null;
+            List<Field> declaredFields = ik.getImmediateFields();
+            List<Field> staticFields = new ArrayList<>();
+            List<Field> instanceFields = new ArrayList<>();
+            Iterator<Field> itr = null;
             for (itr = declaredFields.iterator(); itr.hasNext();) {
-                Field field = (Field) itr.next();
+                Field field = itr.next();
                 if (field.isStatic()) {
                     staticFields.add(field);
                 } else {
@@ -708,8 +708,8 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
         int frameSerialNum = 0;
         int numThreads = 0;
         Threads threads = VM.getVM().getThreads();
-
-        for (JavaThread thread = threads.first(); thread != null; thread = thread.next()) {
+        for (int i = 0; i < threads.getNumberOfThreads(); i++) {
+            JavaThread thread = threads.getJavaThreadAt(i);
             Oop threadObj = thread.getThreadObj();
             if (threadObj != null && !thread.isExiting() && !thread.isHiddenFromExternalView()) {
 
@@ -938,10 +938,16 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
     }
 
     protected void writeInstance(Instance instance) throws IOException {
+        Klass klass = instance.getKlass();
+        if (klass.getClassLoaderData() == null) {
+            // Ignoring this object since the corresponding Klass is not loaded.
+            // Might be a dormant archive object.
+            return;
+        }
+
         out.writeByte((byte) HPROF_GC_INSTANCE_DUMP);
         writeObjectID(instance);
         out.writeInt(DUMMY_STACK_TRACE_ID);
-        Klass klass = instance.getKlass();
         writeObjectID(klass.getJavaMirror());
 
         ClassData cd = (ClassData) classDataCache.get(klass);
@@ -949,22 +955,22 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
         if (Assert.ASSERTS_ENABLED) {
             Assert.that(cd != null, "can not get class data for " + klass.getName().asString() + klass.getAddress());
         }
-        List fields = cd.fields;
+        List<Field> fields = cd.fields;
         int size = cd.instSize;
         out.writeInt(size);
-        for (Iterator itr = fields.iterator(); itr.hasNext();) {
-            writeField((Field) itr.next(), instance);
+        for (Iterator<Field> itr = fields.iterator(); itr.hasNext();) {
+            writeField(itr.next(), instance);
         }
     }
 
     //-- Internals only below this point
 
-    private void writeFieldDescriptors(List fields, InstanceKlass ik)
+    private void writeFieldDescriptors(List<Field> fields, InstanceKlass ik)
         throws IOException {
         // ik == null for instance fields.
         out.writeShort((short) fields.size());
-        for (Iterator itr = fields.iterator(); itr.hasNext();) {
-            Field field = (Field) itr.next();
+        for (Iterator<Field> itr = fields.iterator(); itr.hasNext();) {
+            Field field = itr.next();
             Symbol name = field.getName();
             writeSymbolID(name);
             char typeCode = (char) field.getSignature().getByteAt(0);
@@ -1063,9 +1069,9 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
         writeSymbol(k.getName());
         if (k instanceof InstanceKlass) {
             InstanceKlass ik = (InstanceKlass) k;
-            List declaredFields = ik.getImmediateFields();
-            for (Iterator itr = declaredFields.iterator(); itr.hasNext();) {
-                Field field = (Field) itr.next();
+            List<Field> declaredFields = ik.getImmediateFields();
+            for (Iterator<Field> itr = declaredFields.iterator(); itr.hasNext();) {
+                Field field = itr.next();
                 writeSymbol(field.getName());
             }
         }
@@ -1092,10 +1098,15 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
     private void writeSymbol(Symbol sym) throws IOException {
         // If name is already written don't write it again.
         if (names.add(sym)) {
-            byte[] buf = sym.asString().getBytes("UTF-8");
-            writeHeader(HPROF_UTF8, buf.length + OBJ_ID_SIZE);
-            writeSymbolID(sym);
-            out.write(buf);
+            if(sym != null) {
+              byte[] buf = sym.asString().getBytes("UTF-8");
+              writeHeader(HPROF_UTF8, buf.length + OBJ_ID_SIZE);
+              writeSymbolID(sym);
+              out.write(buf);
+           } else {
+              writeHeader(HPROF_UTF8, 0 + OBJ_ID_SIZE);
+              writeSymbolID(null);
+           }
         }
     }
 
@@ -1146,7 +1157,8 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
 
     private void writeSymbolID(Symbol sym) throws IOException {
         assert names.contains(sym);
-        writeObjectID(getAddressValue(sym.getAddress()));
+        long address = (sym != null) ? getAddressValue(sym.getAddress()) : getAddressValue(null);
+        writeObjectID(address);
     }
 
     private void writeObjectID(long address) throws IOException {
@@ -1162,13 +1174,13 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
     }
 
     // get all declared as well as inherited (directly/indirectly) fields
-    private static List/*<Field>*/ getInstanceFields(InstanceKlass ik) {
+    private static List<Field> getInstanceFields(InstanceKlass ik) {
         InstanceKlass klass = ik;
-        List res = new ArrayList();
+        List<Field> res = new ArrayList<>();
         while (klass != null) {
-            List curFields = klass.getImmediateFields();
-            for (Iterator itr = curFields.iterator(); itr.hasNext();) {
-                Field f = (Field) itr.next();
+            List<Field> curFields = klass.getImmediateFields();
+            for (Iterator<Field> itr = curFields.iterator(); itr.hasNext();) {
+                Field f = itr.next();
                 if (! f.isStatic()) {
                     res.add(f);
                 }
@@ -1181,10 +1193,10 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
     // get size in bytes (in stream) required for given fields.  Note
     // that this is not the same as object size in heap. The size in
     // heap will include size of padding/alignment bytes as well.
-    private int getSizeForFields(List fields) {
+    private int getSizeForFields(List<Field> fields) {
         int size = 0;
-        for (Iterator itr = fields.iterator(); itr.hasNext();) {
-            Field field = (Field) itr.next();
+        for (Iterator<Field> itr = fields.iterator(); itr.hasNext();) {
+            Field field = itr.next();
             char typeCode = (char) field.getSignature().getByteAt(0);
             switch (typeCode) {
             case JVM_SIGNATURE_BOOLEAN:
@@ -1253,13 +1265,13 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
 
     private static class ClassData {
         int instSize;
-        List fields;
+        List<Field> fields;
 
-        ClassData(int instSize, List fields) {
+        ClassData(int instSize, List<Field> fields) {
             this.instSize = instSize;
             this.fields = fields;
         }
     }
 
-    private Map classDataCache = new HashMap(); // <InstanceKlass, ClassData>
+    private Map<InstanceKlass, ClassData> classDataCache = new HashMap<>();
 }

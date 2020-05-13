@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,53 +35,30 @@ import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.lang.module.Configuration;
 import java.lang.module.FindException;
-import java.lang.module.ModuleReader;
-import java.lang.module.ModuleReference;
-import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
-import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
+import java.lang.module.ModuleReference;
 import java.lang.module.ResolutionException;
 import java.lang.module.ResolvedModule;
 import java.net.URI;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitOption;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
-import java.util.stream.Collectors;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -780,21 +757,17 @@ public class JmodTask {
                         throws IOException
                     {
                         Path relPath = path.relativize(file);
-                        if (relPath.toString().equals(MODULE_INFO)
-                                && !Section.CLASSES.equals(section))
-                            warning("warn.ignore.entry", MODULE_INFO, section);
-
-                        if (!relPath.toString().equals(MODULE_INFO)
-                                && !matches(relPath, excludes)) {
-                            try (InputStream in = Files.newInputStream(file)) {
-                                out.writeEntry(in, section, relPath.toString());
-                            } catch (IOException x) {
-                                if (x.getMessage().contains("duplicate entry")) {
-                                    warning("warn.ignore.duplicate.entry",
-                                            relPath.toString(), section);
-                                    return FileVisitResult.CONTINUE;
+                        String name = relPath.toString();
+                        if (name.equals(MODULE_INFO)) {
+                            if (!Section.CLASSES.equals(section))
+                                warning("warn.ignore.entry", name, section);
+                        } else if (!matches(relPath, excludes)) {
+                            if (out.contains(section, name)) {
+                                warning("warn.ignore.duplicate.entry", name, section);
+                            } else {
+                                try (InputStream in = Files.newInputStream(file)) {
+                                    out.writeEntry(in, section, name);
                                 }
-                                throw x;
                             }
                         }
                         return FileVisitResult.CONTINUE;
@@ -831,7 +804,14 @@ public class JmodTask {
             public boolean test(JarEntry je) {
                 String name = je.getName();
                 // ## no support for excludes. Is it really needed?
-                return !name.endsWith(MODULE_INFO) && !je.isDirectory();
+                if (name.endsWith(MODULE_INFO) || je.isDirectory()) {
+                    return false;
+                }
+                if (out.contains(Section.CLASSES, name)) {
+                    warning("warn.ignore.duplicate.entry", name, Section.CLASSES);
+                    return false;
+                }
+                return true;
             }
         }
     }
@@ -987,6 +967,12 @@ public class JmodTask {
                             recordHashes(in, jos, moduleHashes);
                             jos.closeEntry();
                         } else {
+                            // Setting "compressedSize" to "-1" prevents an error
+                            // in ZipOutputStream.closeEntry() if the newly
+                            // deflated entry will have another size than the
+                            // original compressed entry. See:
+                            // ZipOutputStream.putNextEntry()/closeEntry()
+                            e.setCompressedSize(-1);
                             jos.putNextEntry(e);
                             jos.write(in.readAllBytes());
                             jos.closeEntry();

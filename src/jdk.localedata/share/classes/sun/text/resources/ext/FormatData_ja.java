@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,11 +91,15 @@ public class FormatData_ja extends ParallelListResourceBundle {
             "\u5927\u6b63", // Taisho
             "\u662d\u548c", // Showa
             "\u5e73\u6210", // Heisei
-            "\u5143\u53f7", // NewEra
+            "\u4ee4\u548c", // Reiwa
         };
         final String[] rocEras = {
             "\u6c11\u56fd\u524d",
             "\u6c11\u56fd",
+        };
+        final String[] gregoryEras = {
+            "\u7d00\u5143\u524d",
+            "\u897f\u66a6",
         };
         return new Object[][] {
             { "MonthNames",
@@ -171,12 +175,8 @@ public class FormatData_ja extends ParallelListResourceBundle {
                     "\u5348\u5f8c" // pm marker
                 }
             },
-            { "Eras",
-                new String[] { // era strings for GregorianCalendar
-                    "\u7d00\u5143\u524d",
-                    "\u897f\u66a6"
-                }
-            },
+            { "Eras", gregoryEras },
+            { "short.Eras", gregoryEras },
             { "buddhist.Eras",
                 new String[] { // era strings for Thai Buddhist calendar
                     "\u7d00\u5143\u524d", // Kigenzen

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@ import org.graalvm.compiler.nodes.FrameState;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderContext;
 import org.graalvm.compiler.nodes.memory.AbstractMemoryCheckpoint;
-import org.graalvm.compiler.nodes.memory.MemoryCheckpoint;
+import org.graalvm.compiler.nodes.memory.MultiMemoryKill;
 import org.graalvm.compiler.nodes.spi.LIRLowerable;
 import org.graalvm.compiler.nodes.spi.NodeLIRBuilderTool;
 import jdk.internal.vm.compiler.word.LocationIdentity;
@@ -67,7 +67,7 @@ import jdk.vm.ci.meta.Value;
           size = SIZE_2,
           sizeRationale = "Rough estimation of the call operation itself.")
 // @formatter:on
-public class ForeignCallNode extends AbstractMemoryCheckpoint implements LIRLowerable, DeoptimizingNode.DeoptDuring, MemoryCheckpoint.Multi {
+public class ForeignCallNode extends AbstractMemoryCheckpoint implements LIRLowerable, DeoptimizingNode.DeoptDuring, MultiMemoryKill {
     public static final NodeClass<ForeignCallNode> TYPE = NodeClass.create(ForeignCallNode.class);
 
     @Input protected NodeInputList<ValueNode> arguments;
@@ -79,6 +79,13 @@ public class ForeignCallNode extends AbstractMemoryCheckpoint implements LIRLowe
 
     public static boolean intrinsify(GraphBuilderContext b, ResolvedJavaMethod targetMethod, @InjectedNodeParameter Stamp returnStamp, @InjectedNodeParameter ForeignCallsProvider foreignCalls,
                     ForeignCallDescriptor descriptor, ValueNode... arguments) {
+        if (!foreignCalls.isAvailable(descriptor)) {
+            // When using encoded snippets a graph main contain a reference to a foreign call that's
+            // not actually available in the current configuration. It's assumed that further
+            // simplification of the graph will eliminate this call completely.
+            return false;
+        }
+
         ForeignCallNode node = new ForeignCallNode(foreignCalls, descriptor, arguments);
         node.setStamp(returnStamp);
 
@@ -152,7 +159,7 @@ public class ForeignCallNode extends AbstractMemoryCheckpoint implements LIRLowe
     }
 
     @Override
-    public LocationIdentity[] getLocationIdentities() {
+    public LocationIdentity[] getKilledLocationIdentities() {
         return foreignCalls.getKilledLocations(descriptor);
     }
 
@@ -211,7 +218,7 @@ public class ForeignCallNode extends AbstractMemoryCheckpoint implements LIRLowe
                         (currentStateAfter.stackSize() > 1 && currentStateAfter.stackAt(currentStateAfter.stackSize() - 2) == this)) {
             // The result of this call is on the top of stack, so roll back to the previous bci.
             assert bci != BytecodeFrame.UNKNOWN_BCI : this;
-            newStateDuring = currentStateAfter.duplicateModifiedDuringCall(bci, this.getStackKind());
+            newStateDuring = currentStateAfter.duplicateModified(currentStateAfter.graph(), bci, false, true, this.getStackKind(), null, null);
         } else {
             newStateDuring = currentStateAfter;
         }

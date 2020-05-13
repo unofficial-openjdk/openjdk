@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
@@ -42,6 +43,8 @@ public class StringBuilders {
     private String[] str16p8p7;
     private String[] str3p9p8;
     private String[] str22p40p31;
+    private StringBuilder sbLatin1;
+    private StringBuilder sbUtf16;
 
     @Setup
     public void setup() {
@@ -53,27 +56,25 @@ public class StringBuilders {
         str16p8p7 = new String[]{"1234567890123456", "12345678", "1234567"};
         str3p9p8 = new String[]{"123", "123456789", "12345678"};
         str22p40p31 = new String[]{"1234567890123456789012", "1234567890123456789012345678901234567890", "1234567890123456789012345678901"};
+        sbLatin1 = new StringBuilder("Latin1 string");
+        sbUtf16 = new StringBuilder("UTF-\uFF11\uFF16 string");
     }
 
-    /** StringBuilder wins over StringMaker. */
     @Benchmark
     public String concat3p4p2() throws Exception {
         return new StringBuilder(String.valueOf(str3p4p2[0])).append(str3p4p2[1]).append(str3p4p2[2]).toString();
     }
 
-    /** StringBuilder wins over StringMaker. */
     @Benchmark
     public String concat16p8p7() throws Exception {
         return new StringBuilder(String.valueOf(str16p8p7[0])).append(str16p8p7[1]).append(str16p8p7[2]).toString();
     }
 
-    /** StringMaker wins over StringBuilder since the two last strings causes StringBuilder to do expand. */
     @Benchmark
     public String concat3p9p8() throws Exception {
         return new StringBuilder(String.valueOf(str3p9p8[0])).append(str3p9p8[1]).append(str3p9p8[2]).toString();
     }
 
-    /** StringMaker wins over StringBuilder. */
     @Benchmark
     public String concat22p40p31() throws Exception {
         return new StringBuilder(String.valueOf(str22p40p31[0])).append(str22p40p31[1]).append(str22p40p31[2]).toString();
@@ -255,5 +256,125 @@ public class StringBuilders {
         result.append('p');
         result.append("stringelinglinglinglong");
         return result.toString();
+    }
+
+    @Benchmark
+    public StringBuilder fromLatin1String() {
+        return new StringBuilder("Latin1 string");
+    }
+
+    @Benchmark
+    public StringBuilder fromUtf16String() {
+        return new StringBuilder("UTF-\uFF11\uFF16 string");
+    }
+
+    @Benchmark
+    public StringBuilder fromLatin1StringBuilder() {
+        return new StringBuilder(sbLatin1);
+    }
+
+    @Benchmark
+    public StringBuilder fromUtf16StringBuilder() {
+        return new StringBuilder(sbUtf16);
+    }
+
+    @Benchmark
+    @SuppressWarnings("StringBufferReplaceableByString")
+    public String appendSubstring(Data data) {
+        String str = data.str;
+        int beginIndex = data.beginIndex;
+        int endIndex = data.endIndex;
+
+        String substring = str.substring(beginIndex, endIndex);
+        return new StringBuilder().append('L').append(substring).append(';').toString();
+    }
+
+    @Benchmark
+    public String appendBounds(Data data) {
+        String str = data.str;
+        int beginIndex = data.beginIndex;
+        int endIndex = data.endIndex;
+
+        return new StringBuilder().append('L').append(str, beginIndex, endIndex).append(';').toString();
+    }
+
+    @Benchmark
+    @SuppressWarnings("StringBufferReplaceableByString")
+    public String appendSubstringUtf16(Data data) {
+        String str = data.utf16Str;
+        int beginIndex = data.beginIndex;
+        int endIndex = data.endIndex;
+
+        String substring = str.substring(beginIndex, endIndex);
+
+        return new StringBuilder().append('L').append(substring).append(';').toString();
+    }
+
+    @Benchmark
+    public String appendBoundsUtf16(Data data) {
+        String str = data.utf16Str;
+        int beginIndex = data.beginIndex;
+        int endIndex = data.endIndex;
+
+        return new StringBuilder().append('L').append(str, beginIndex,
+                endIndex).append(';').toString();
+    }
+
+    @Benchmark
+    public String appendBoundsMix(Data data) {
+        CharSequence str = data.next();
+        int beginIndex = data.beginIndex;
+        int endIndex = data.endIndex;
+
+        return new StringBuilder().append('L').append(str, beginIndex,
+                endIndex).append(';').toString();
+    }
+
+    @State(Scope.Thread)
+    public static class Data {
+        int i = 0;
+
+        public CharSequence next() {
+            i++;
+            if (i == 1) {
+                return str;
+            } else if (i == 2) {
+                return utf16Str;
+            } else {
+                i = 0;
+                return cs;
+            }
+        }
+
+        String str;
+        String utf16Str;
+        CharSequence cs;
+
+        @Param({"10", "1000"})
+        private int length;
+
+        private int beginIndex;
+        private int endIndex;
+
+        @Setup
+        public void setup() {
+            generateData();
+            beginIndex = length / 4;
+            endIndex = length / 4 * 3;
+        }
+
+        private void generateData() {
+            char[] chars = "abcdefghijklmnopqrstuvwxyz0123456789".toCharArray();
+
+            StringBuilder sb = new StringBuilder(length);
+            for (int i = 0; i < length; i++) {
+                char c = chars[i % chars.length];
+                sb.append(c);
+            }
+            str = sb.toString();
+            sb.replace(length / 4 * 2, length / 4 * 2 + 1, "\u04FF");
+            utf16Str = sb.toString();
+            cs = new StringBuilder(str);
+        }
     }
 }

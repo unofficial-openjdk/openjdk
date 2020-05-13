@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -116,6 +116,13 @@ class HandlerImpl {
 
 };
 
+class Node::PD {
+public:
+  enum NodeFlags {
+    _last_flag = Node::_last_flag
+  };
+};
+
 %}
 
 source %{
@@ -124,6 +131,16 @@ source %{
 static FloatRegister reg_to_FloatRegister_object(int register_encoding);
 static Register reg_to_register_object(int register_encoding);
 
+void PhaseOutput::pd_perform_mach_node_analysis() {
+}
+
+int MachNode::pd_alignment_required() const {
+  return 1;
+}
+
+int MachNode::compute_padding(int current_offset) const {
+  return 0;
+}
 
 // ****************************************************************************
 
@@ -137,7 +154,7 @@ bool SafePointNode::needs_polling_address_input() {
 
 // emit an interrupt that is caught by the debugger (for debugging compiler)
 void emit_break(CodeBuffer &cbuf) {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   __ breakpoint();
 }
 
@@ -157,7 +174,7 @@ uint MachBreakpointNode::size(PhaseRegAlloc *ra_) const {
 
 
 void emit_nop(CodeBuffer &cbuf) {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   __ nop();
 }
 
@@ -165,7 +182,7 @@ void emit_nop(CodeBuffer &cbuf) {
 void emit_call_reloc(CodeBuffer &cbuf, const MachCallNode *n, MachOper *m, RelocationHolder const& rspec) {
   int ret_addr_offset0 = n->as_MachCall()->ret_addr_offset();
   int call_site_offset = cbuf.insts()->mark_off();
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   __ set_inst_mark(); // needed in emit_to_interp_stub() to locate the call
   address target = (address)m->method();
   assert(n->as_MachCall()->entry_point() == target, "sanity");
@@ -194,7 +211,7 @@ void emit_hi(CodeBuffer &cbuf, int val) {  }
 //=============================================================================
 const RegMask& MachConstantBaseNode::_out_RegMask = PTR_REG_mask();
 
-int Compile::ConstantTable::calculate_table_base_offset() const {
+int ConstantTable::calculate_table_base_offset() const {
   int offset = -(size() / 2);
   // flds, fldd: 8-bit  offset multiplied by 4: +/- 1024
   // ldr, ldrb : 12-bit offset:                 +/- 4096
@@ -211,8 +228,8 @@ void MachConstantBaseNode::postalloc_expand(GrowableArray <Node *> *nodes, Phase
 
 void MachConstantBaseNode::emit(CodeBuffer& cbuf, PhaseRegAlloc* ra_) const {
   Compile* C = ra_->C;
-  Compile::ConstantTable& constant_table = C->constant_table();
-  MacroAssembler _masm(&cbuf);
+  ConstantTable& constant_table = C->output()->constant_table();
+  C2_MacroAssembler _masm(&cbuf);
 
   Register r = as_Register(ra_->get_encode(this));
   CodeSection* consts_section = __ code()->consts();
@@ -245,9 +262,9 @@ void MachPrologNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
     st->print_cr("NOP"); st->print("\t");
   }
 
-  size_t framesize = C->frame_size_in_bytes();
+  size_t framesize = C->output()->frame_size_in_bytes();
   assert((framesize & (StackAlignmentInBytes-1)) == 0, "frame size not aligned");
-  int bangsize = C->bang_size_in_bytes();
+  int bangsize = C->output()->bang_size_in_bytes();
   // Remove two words for return addr and rbp,
   framesize -= 2*wordSize;
   bangsize -= 2*wordSize;
@@ -257,7 +274,7 @@ void MachPrologNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
   // some VM calls (such as call site linkage) can use several kilobytes of
   // stack.  But the stack safety zone should account for that.
   // See bugs 4446381, 4468289, 4497237.
-  if (C->need_stack_bang(bangsize)) {
+  if (C->output()->need_stack_bang(bangsize)) {
     st->print_cr("! stack bang (%d bytes)", bangsize); st->print("\t");
   }
   st->print_cr("PUSH   R_FP|R_LR_LR"); st->print("\t");
@@ -269,15 +286,15 @@ void MachPrologNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
 
 void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   Compile* C = ra_->C;
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
 
   for (int i = 0; i < OptoPrologueNops; i++) {
     __ nop();
   }
 
-  size_t framesize = C->frame_size_in_bytes();
+  size_t framesize = C->output()->frame_size_in_bytes();
   assert((framesize & (StackAlignmentInBytes-1)) == 0, "frame size not aligned");
-  int bangsize = C->bang_size_in_bytes();
+  int bangsize = C->output()->bang_size_in_bytes();
   // Remove two words for return addr and fp,
   framesize -= 2*wordSize;
   bangsize -= 2*wordSize;
@@ -287,7 +304,7 @@ void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   // some VM calls (such as call site linkage) can use several kilobytes of
   // stack.  But the stack safety zone should account for that.
   // See bugs 4446381, 4468289, 4497237.
-  if (C->need_stack_bang(bangsize)) {
+  if (C->output()->need_stack_bang(bangsize)) {
     __ arm_stack_overflow_check(bangsize, Rtemp);
   }
 
@@ -298,13 +315,13 @@ void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
 
   // offset from scratch buffer is not valid
   if (strcmp(cbuf.name(), "Compile::Fill_buffer") == 0) {
-    C->set_frame_complete( __ offset() );
+    C->output()->set_frame_complete( __ offset() );
   }
 
   if (C->has_mach_constant_base_node()) {
     // NOTE: We set the table base offset here because users might be
     // emitted before MachConstantBaseNode.
-    Compile::ConstantTable& constant_table = C->constant_table();
+    ConstantTable& constant_table = C->output()->constant_table();
     constant_table.set_table_base_offset(constant_table.calculate_table_base_offset());
   }
 }
@@ -322,7 +339,7 @@ int MachPrologNode::reloc() const {
 void MachEpilogNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
   Compile* C = ra_->C;
 
-  size_t framesize = C->frame_size_in_bytes();
+  size_t framesize = C->output()->frame_size_in_bytes();
   framesize -= 2*wordSize;
 
   if (framesize != 0) {
@@ -339,10 +356,10 @@ void MachEpilogNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
 #endif
 
 void MachEpilogNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   Compile* C = ra_->C;
 
-  size_t framesize = C->frame_size_in_bytes();
+  size_t framesize = C->output()->frame_size_in_bytes();
   framesize -= 2*wordSize;
   if (framesize != 0) {
     __ add_slow(SP, SP, framesize);
@@ -351,10 +368,7 @@ void MachEpilogNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
 
   // If this does safepoint polling, then do it here
   if (do_polling() && ra_->C->is_method_compilation()) {
-    // mov_slow here is usually one or two instruction
-    __ mov_address(Rtemp, (address)os::get_polling_page());
-    __ relocate(relocInfo::poll_return_type);
-    __ ldr(Rtemp, Address(Rtemp));
+    __ read_polling_page(Rtemp, relocInfo::poll_return_type);
   }
 }
 
@@ -368,13 +382,6 @@ int MachEpilogNode::reloc() const {
 
 const Pipeline * MachEpilogNode::pipeline() const {
   return MachNode::pipeline_class();
-}
-
-int MachEpilogNode::safepoint_offset() const {
-  assert( do_polling(), "no return for this epilog node");
-  //  return MacroAssembler::size_of_sethi(os::get_polling_page());
-  Unimplemented();
-  return 0;
 }
 
 //=============================================================================
@@ -432,7 +439,7 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf,
   // Bailout only for real instruction emit.
   // This requires a single comment change in shared code. ( see output.cpp "Normal" instruction case )
 
-  MacroAssembler _masm(cbuf);
+  C2_MacroAssembler _masm(cbuf);
 
   // --------------------------------------
   // Check for mem-mem move.  Load into unused float registers and fall into
@@ -793,7 +800,7 @@ void MachNopNode::format( PhaseRegAlloc *, outputStream *st ) const {
 #endif
 
 void MachNopNode::emit(CodeBuffer &cbuf, PhaseRegAlloc * ) const {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   for(int i = 0; i < _count; i += 1) {
     __ nop();
   }
@@ -814,7 +821,7 @@ void BoxLockNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
 #endif
 
 void BoxLockNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   int offset = ra_->reg2offset(in_RegMask(0).find_first_elem());
   int reg = ra_->get_encode(this);
   Register dst = reg_to_register_object(reg);
@@ -830,7 +837,7 @@ void BoxLockNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
 uint BoxLockNode::size(PhaseRegAlloc *ra_) const {
   // BoxLockNode is not a MachNode, so we can't just call MachNode::size(ra_)
   assert(ra_ == ra_->C->regalloc(), "sanity");
-  return ra_->C->scratch_emit_size(this);
+  return ra_->C->output()->scratch_emit_size(this);
 }
 
 //=============================================================================
@@ -850,7 +857,7 @@ void MachUEPNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
 #endif
 
 void MachUEPNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   Register iCache  = reg_to_register_object(Matcher::inline_cache_reg_encode());
   assert(iCache == Ricklass, "should be");
   Register receiver = R0;
@@ -869,7 +876,7 @@ uint MachUEPNode::size(PhaseRegAlloc *ra_) const {
 
 // Emit exception handler code.
 int HandlerImpl::emit_exception_handler(CodeBuffer& cbuf) {
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
 
   address base = __ start_a_stub(size_exception_handler());
   if (base == NULL) {
@@ -892,7 +899,7 @@ int HandlerImpl::emit_exception_handler(CodeBuffer& cbuf) {
 int HandlerImpl::emit_deopt_handler(CodeBuffer& cbuf) {
   // Can't use any of the current frame's registers as we may have deopted
   // at a poll and everything can be live.
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
 
   address base = __ start_a_stub(size_deopt_handler());
   if (base == NULL) {
@@ -971,7 +978,7 @@ const bool Matcher::match_rule_supported(int opcode) {
   return true;  // Per default match rules are supported.
 }
 
-const bool Matcher::match_rule_supported_vector(int opcode, int vlen) {
+const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType bt) {
 
   // TODO
   // identify extra cases that we might want to provide match rules for
@@ -1008,10 +1015,6 @@ const uint Matcher::vector_ideal_reg(int size) {
   }
   ShouldNotReachHere();
   return 0;
-}
-
-const uint Matcher::vector_shift_count_ideal_reg(int size) {
-  return vector_ideal_reg(size);
 }
 
 // Limits on vector size (number of elements) loaded into vector.
@@ -1077,10 +1080,37 @@ const bool Matcher::need_masked_shift_count = true;
 
 const bool Matcher::convi2l_type_required = true;
 
+// No support for generic vector operands.
+const bool Matcher::supports_generic_vector_operands  = false;
+
+MachOper* Matcher::pd_specialize_generic_vector_operand(MachOper* original_opnd, uint ideal_reg, bool is_temp) {
+  ShouldNotReachHere(); // generic vector operands not supported
+  return NULL;
+}
+
+bool Matcher::is_generic_reg2reg_move(MachNode* m) {
+  ShouldNotReachHere();  // generic vector operands not supported
+  return false;
+}
+
+bool Matcher::is_generic_vector(MachOper* opnd)  {
+  ShouldNotReachHere();  // generic vector operands not supported
+  return false;
+}
+
+// Should the matcher clone input 'm' of node 'n'?
+bool Matcher::pd_clone_node(Node* n, Node* m, Matcher::MStack& mstack) {
+  if (is_vshift_con_pattern(n, m)) { // ShiftV src (ShiftCntV con)
+    mstack.push(m, Visit);           // m = ShiftCntV
+    return true;
+  }
+  return false;
+}
+
 // Should the Matcher clone shifts on addressing modes, expecting them
 // to be subsumed into complex addressing expressions or compute them
 // into registers?
-bool Matcher::clone_address_expressions(AddPNode* m, Matcher::MStack& mstack, VectorSet& address_visited) {
+bool Matcher::pd_clone_address_expressions(AddPNode* m, Matcher::MStack& mstack, VectorSet& address_visited) {
   return clone_base_plus_offset_address(m, mstack, address_visited);
 }
 
@@ -1125,8 +1155,7 @@ const bool Matcher::misaligned_doubles_ok = false;
 void Matcher::pd_implicit_null_fixup(MachNode *node, uint idx) {
 }
 
-// Advertise here if the CPU requires explicit rounding operations
-// to implement the UseStrictFP mode.
+// Advertise here if the CPU requires explicit rounding operations to implement strictfp mode.
 const bool Matcher::strict_fp_requires_explicit_rounding = false;
 
 // Are floats converted to double when stored to stack during deoptimization?
@@ -1266,7 +1295,7 @@ encode %{
     // preserve mark
     address mark = cbuf.insts()->mark();
     debug_only(int off0 = cbuf.insts_size());
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     int ret_addr_offset = as_MachCall()->ret_addr_offset();
     __ adr(LR, mark + ret_addr_offset);
     __ str(LR, Address(Rthread, JavaThread::last_Java_pc_offset()));
@@ -1280,7 +1309,7 @@ encode %{
     // preserve mark
     address mark = cbuf.insts()->mark();
     debug_only(int off0 = cbuf.insts_size());
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     // FP is preserved across all calls, even compiled calls.
     // Use it to preserve SP in places where the callee might change the SP.
     __ mov(Rmh_SP_save, SP);
@@ -1291,12 +1320,12 @@ encode %{
   %}
 
   enc_class restore_SP %{
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     __ mov(SP, Rmh_SP_save);
   %}
 
   enc_class Java_Dynamic_Call (method meth) %{
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     Register R8_ic_reg = reg_to_register_object(Matcher::inline_cache_reg_encode());
     assert(R8_ic_reg == Ricklass, "should be");
     __ set_inst_mark();
@@ -1324,7 +1353,7 @@ encode %{
         val |= (val << bit_width);
       }
     }
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
 
     if (val == -1) {
       __ mvn($tmp$$Register, 0);
@@ -1341,7 +1370,7 @@ encode %{
     // Replicate float con 2 times and pack into vector (8 bytes) in regD.
     float fval = $src$$constant;
     int val = *((int*)&fval);
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
 
     if (val == -1) {
       __ mvn($tmp$$Register, 0);
@@ -1356,7 +1385,7 @@ encode %{
 
   enc_class enc_String_Compare(R0RegP str1, R1RegP str2, R2RegI cnt1, R3RegI cnt2, iRegI result, iRegI tmp1, iRegI tmp2) %{
     Label Ldone, Lloop;
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
 
     Register   str1_reg = $str1$$Register;
     Register   str2_reg = $str2$$Register;
@@ -1448,7 +1477,7 @@ encode %{
 
   enc_class enc_String_Equals(R0RegP str1, R1RegP str2, R2RegI cnt, iRegI result, iRegI tmp1, iRegI tmp2) %{
     Label Lchar, Lchar_loop, Ldone, Lequal;
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
 
     Register   str1_reg = $str1$$Register;
     Register   str2_reg = $str2$$Register;
@@ -1510,7 +1539,7 @@ encode %{
 
   enc_class enc_Array_Equals(R0RegP ary1, R1RegP ary2, iRegI tmp1, iRegI tmp2, iRegI tmp3, iRegI result) %{
     Label Ldone, Lloop, Lequal;
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
 
     Register   ary1_reg = $ary1$$Register;
     Register   ary2_reg = $ary2$$Register;
@@ -2007,15 +2036,6 @@ operand immP0() %{
   interface(CONST_INTER);
 %}
 
-operand immP_poll() %{
-  predicate(n->get_ptr() != 0 && n->get_ptr() == (intptr_t)os::get_polling_page());
-  match(ConP);
-
-  // formats are generated automatically for constants and base registers
-  format %{ %}
-  interface(CONST_INTER);
-%}
-
 // Pointer Immediate
 operand immN()
 %{
@@ -2204,6 +2224,30 @@ operand R1RegP() %{
   interface(REG_INTER);
 %}
 
+operand R8RegP() %{
+  constraint(ALLOC_IN_RC(R8_regP));
+  match(iRegP);
+
+  format %{ %}
+  interface(REG_INTER);
+%}
+
+operand R9RegP() %{
+  constraint(ALLOC_IN_RC(R9_regP));
+  match(iRegP);
+
+  format %{ %}
+  interface(REG_INTER);
+%}
+
+operand R12RegP() %{
+  constraint(ALLOC_IN_RC(R12_regP));
+  match(iRegP);
+
+  format %{ %}
+  interface(REG_INTER);
+%}
+
 operand R2RegP() %{
   constraint(ALLOC_IN_RC(R2_regP));
   match(iRegP);
@@ -2230,6 +2274,14 @@ operand RthreadRegP() %{
 
 operand IPRegP() %{
   constraint(ALLOC_IN_RC(IP_regP));
+  match(iRegP);
+
+  format %{ %}
+  interface(REG_INTER);
+%}
+
+operand SPRegP() %{
+  constraint(ALLOC_IN_RC(SP_regP));
   match(iRegP);
 
   format %{ %}
@@ -3050,12 +3102,6 @@ pipe_class loadConL( iRegL dst, immL src ) %{
 pipe_class loadConP( iRegP dst, immP src ) %{
     instruction_count(0); multiple_bundles;
     fixed_latency(6);
-%}
-
-// Polling Address
-pipe_class loadConP_poll( iRegP dst, immP_poll src ) %{
-    dst   : E(write);
-    IALU  : R;
 %}
 
 // Long Constant small
@@ -4240,16 +4286,6 @@ instruct loadConP(iRegP dst, immP src) %{
 %}
 
 
-instruct loadConP_poll(iRegP dst, immP_poll src) %{
-  match(Set dst src);
-  ins_cost(DEFAULT_COST);
-  format %{ "MOV_SLOW    $dst,$src\t!ptr" %}
-  ins_encode %{
-      __ mov_slow($dst$$Register, $src$$constant);
-  %}
-  ins_pipe(loadConP_poll);
-%}
-
 instruct loadConL(iRegL dst, immL src) %{
   match(Set dst src);
   ins_cost(DEFAULT_COST * 4);
@@ -4348,7 +4384,8 @@ instruct loadConD(regD dst, immD src, iRegP tmp) %{
 // Prefetch instructions.
 // Must be safe to execute with invalid address (cannot fault).
 
-instruct prefetchAlloc( memoryP mem ) %{
+instruct prefetchAlloc_mp( memoryP mem ) %{
+  predicate(VM_Version::has_multiprocessing_extensions());
   match( PrefetchAllocation mem );
   ins_cost(MEMORY_REF_COST);
   size(4);
@@ -4359,6 +4396,20 @@ instruct prefetchAlloc( memoryP mem ) %{
   %}
   ins_pipe(iload_mem);
 %}
+
+instruct prefetchAlloc_sp( memoryP mem ) %{
+  predicate(!VM_Version::has_multiprocessing_extensions());
+  match( PrefetchAllocation mem );
+  ins_cost(MEMORY_REF_COST);
+  size(4);
+
+  format %{ "PLD $mem\t! Prefetch allocation" %}
+  ins_encode %{
+    __ pld($mem$$Address);
+  %}
+  ins_pipe(iload_mem);
+%}
+
 
 //----------Store Instructions-------------------------------------------------
 // Store Byte
@@ -10549,7 +10600,7 @@ instruct vsl16B_reg(vecX dst, vecX src, vecX shift) %{
 
 instruct vsl8B_immI(vecD dst, vecD src, immI shift) %{
   predicate(n->as_Vector()->length() == 8);
-  match(Set dst (LShiftVB src shift));
+  match(Set dst (LShiftVB src (LShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10565,7 +10616,7 @@ instruct vsl8B_immI(vecD dst, vecD src, immI shift) %{
 
 instruct vsl16B_immI(vecX dst, vecX src, immI shift) %{
   predicate(n->as_Vector()->length() == 16);
-  match(Set dst (LShiftVB src shift));
+  match(Set dst (LShiftVB src (LShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10604,7 +10655,7 @@ instruct vsl8S_reg(vecX dst, vecX src, vecX shift) %{
 
 instruct vsl4S_immI(vecD dst, vecD src, immI shift) %{
   predicate(n->as_Vector()->length() == 4);
-  match(Set dst (LShiftVS src shift));
+  match(Set dst (LShiftVS src (LShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10659,7 +10710,7 @@ instruct vsl4I_reg(vecX dst, vecX src, vecX shift) %{
 
 instruct vsl2I_immI(vecD dst, vecD src, immI shift) %{
   predicate(n->as_Vector()->length() == 2 && VM_Version::has_simd());
-  match(Set dst (LShiftVI src shift));
+  match(Set dst (LShiftVI src (LShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10675,7 +10726,7 @@ instruct vsl2I_immI(vecD dst, vecD src, immI shift) %{
 
 instruct vsl4I_immI(vecX dst, vecX src, immI shift) %{
   predicate(n->as_Vector()->length() == 4 && VM_Version::has_simd());
-  match(Set dst (LShiftVI src shift));
+  match(Set dst (LShiftVI src (LShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10703,7 +10754,7 @@ instruct vsl2L_reg(vecX dst, vecX src, vecX shift) %{
 
 instruct vsl2L_immI(vecX dst, vecX src, immI shift) %{
   predicate(n->as_Vector()->length() == 2);
-  match(Set dst (LShiftVL src shift));
+  match(Set dst (LShiftVL src (LShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10726,7 +10777,7 @@ instruct vsl2L_immI(vecX dst, vecX src, immI shift) %{
 // Chars vector logical right shift
 instruct vsrl4S_immI(vecD dst, vecD src, immI shift) %{
   predicate(n->as_Vector()->length() == 4);
-  match(Set dst (URShiftVS src shift));
+  match(Set dst (URShiftVS src (RShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10742,7 +10793,7 @@ instruct vsrl4S_immI(vecD dst, vecD src, immI shift) %{
 
 instruct vsrl8S_immI(vecX dst, vecX src, immI shift) %{
   predicate(n->as_Vector()->length() == 8);
-  match(Set dst (URShiftVS src shift));
+  match(Set dst (URShiftVS src (RShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10759,7 +10810,7 @@ instruct vsrl8S_immI(vecX dst, vecX src, immI shift) %{
 // Integers vector logical right shift
 instruct vsrl2I_immI(vecD dst, vecD src, immI shift) %{
   predicate(n->as_Vector()->length() == 2 && VM_Version::has_simd());
-  match(Set dst (URShiftVI src shift));
+  match(Set dst (URShiftVI src (RShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10775,7 +10826,7 @@ instruct vsrl2I_immI(vecD dst, vecD src, immI shift) %{
 
 instruct vsrl4I_immI(vecX dst, vecX src, immI shift) %{
   predicate(n->as_Vector()->length() == 4 && VM_Version::has_simd());
-  match(Set dst (URShiftVI src shift));
+  match(Set dst (URShiftVI src (RShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10792,7 +10843,7 @@ instruct vsrl4I_immI(vecX dst, vecX src, immI shift) %{
 // Longs vector logical right shift
 instruct vsrl2L_immI(vecX dst, vecX src, immI shift) %{
   predicate(n->as_Vector()->length() == 2);
-  match(Set dst (URShiftVL src shift));
+  match(Set dst (URShiftVL src (RShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{

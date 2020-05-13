@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
 #include "gc/g1/g1CollectedHeap.inline.hpp"
 #include "gc/g1/g1CollectionSet.hpp"
 #include "gc/g1/g1HeapRegionTraceType.hpp"
+#include "gc/g1/g1NUMA.hpp"
 #include "gc/g1/g1OopClosures.inline.hpp"
 #include "gc/g1/heapRegion.inline.hpp"
 #include "gc/g1/heapRegionBounds.inline.hpp"
@@ -35,7 +36,6 @@
 #include "gc/g1/heapRegionRemSet.hpp"
 #include "gc/g1/heapRegionTracer.hpp"
 #include "gc/shared/genOopClosures.inline.hpp"
-#include "gc/shared/space.inline.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "memory/iterator.inline.hpp"
@@ -43,12 +43,11 @@
 #include "oops/access.inline.hpp"
 #include "oops/compressedOops.inline.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/atomic.hpp"
-#include "runtime/orderAccess.hpp"
-#include "utilities/growableArray.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 int    HeapRegion::LogOfHRGrainBytes = 0;
 int    HeapRegion::LogOfHRGrainWords = 0;
+int    HeapRegion::LogCardsPerRegion = 0;
 size_t HeapRegion::GrainBytes        = 0;
 size_t HeapRegion::GrainWords        = 0;
 size_t HeapRegion::CardsPerRegion    = 0;
@@ -61,29 +60,23 @@ size_t HeapRegion::min_region_size_in_words() {
   return HeapRegionBounds::min_size() >> LogHeapWordSize;
 }
 
-void HeapRegion::setup_heap_region_size(size_t initial_heap_size, size_t max_heap_size) {
+void HeapRegion::setup_heap_region_size(size_t max_heap_size) {
   size_t region_size = G1HeapRegionSize;
-  if (FLAG_IS_DEFAULT(G1HeapRegionSize)) {
-    size_t average_heap_size = (initial_heap_size + max_heap_size) / 2;
-    region_size = MAX2(average_heap_size / HeapRegionBounds::target_number(),
+  // G1HeapRegionSize = 0 means decide ergonomically.
+  if (region_size == 0) {
+    region_size = MAX2(max_heap_size / HeapRegionBounds::target_number(),
                        HeapRegionBounds::min_size());
   }
 
-  int region_size_log = log2_long((jlong) region_size);
-  // Recalculate the region size to make sure it's a power of
-  // 2. This means that region_size is the largest power of 2 that's
-  // <= what we've calculated so far.
-  region_size = ((size_t)1 << region_size_log);
+  // Make sure region size is a power of 2. Rounding up since this
+  // is beneficial in most cases.
+  region_size = round_up_power_of_2(region_size);
 
   // Now make sure that we don't go over or under our limits.
-  if (region_size < HeapRegionBounds::min_size()) {
-    region_size = HeapRegionBounds::min_size();
-  } else if (region_size > HeapRegionBounds::max_size()) {
-    region_size = HeapRegionBounds::max_size();
-  }
+  region_size = clamp(region_size, HeapRegionBounds::min_size(), HeapRegionBounds::max_size());
 
-  // And recalculate the log.
-  region_size_log = log2_long((jlong) region_size);
+  // Calculate the log for the region size.
+  int region_size_log = exact_log2_long((jlong)region_size);
 
   // Now, set up the globals.
   guarantee(LogOfHRGrainBytes == 0, "we should only set it once");
@@ -105,34 +98,47 @@ void HeapRegion::setup_heap_region_size(size_t initial_heap_size, size_t max_hea
   guarantee(CardsPerRegion == 0, "we should only set it once");
   CardsPerRegion = GrainBytes >> G1CardTable::card_shift;
 
+  LogCardsPerRegion = log2_long((jlong) CardsPerRegion);
+
   if (G1HeapRegionSize != GrainBytes) {
-    FLAG_SET_ERGO(size_t, G1HeapRegionSize, GrainBytes);
+    FLAG_SET_ERGO(G1HeapRegionSize, GrainBytes);
   }
 }
 
-void HeapRegion::hr_clear(bool keep_remset, bool clear_space, bool locked) {
+void HeapRegion::handle_evacuation_failure() {
+  uninstall_surv_rate_group();
+  clear_young_index_in_cset();
+  set_evacuation_failed(false);
+  set_old();
+}
+
+void HeapRegion::unlink_from_list() {
+  set_next(NULL);
+  set_prev(NULL);
+  set_containing_set(NULL);
+}
+
+void HeapRegion::hr_clear(bool clear_space) {
   assert(_humongous_start_region == NULL,
          "we should have already filtered out humongous regions");
   assert(!in_collection_set(),
          "Should not clear heap region %u in the collection set", hrm_index());
 
-  set_young_index_in_cset(-1);
+  clear_young_index_in_cset();
+  clear_index_in_opt_cset();
   uninstall_surv_rate_group();
   set_free();
   reset_pre_dummy_top();
 
-  if (!keep_remset) {
-    if (locked) {
-      rem_set()->clear_locked();
-    } else {
-      rem_set()->clear();
-    }
-  }
+  rem_set()->clear_locked();
 
   zero_marked_bytes();
 
   init_top_at_mark_start();
   if (clear_space) clear(SpaceDecorator::Mangle);
+
+  _evacuation_failed = false;
+  _gc_efficiency = 0.0;
 }
 
 void HeapRegion::clear_cardtable() {
@@ -143,14 +149,12 @@ void HeapRegion::clear_cardtable() {
 void HeapRegion::calc_gc_efficiency() {
   // GC efficiency is the ratio of how much space would be
   // reclaimed over how long we predict it would take to reclaim it.
-  G1CollectedHeap* g1h = G1CollectedHeap::heap();
-  G1Policy* g1p = g1h->g1_policy();
+  G1Policy* policy = G1CollectedHeap::heap()->policy();
 
   // Retrieve a prediction of the elapsed time for this region for
   // a mixed gc because the region will only be evacuated during a
   // mixed gc.
-  double region_elapsed_time_ms =
-    g1p->predict_region_elapsed_time_ms(this, false /* for_young_gc */);
+  double region_elapsed_time_ms = policy->predict_region_total_time_ms(this, false /* for_young_gc */);
   _gc_efficiency = (double) reclaimable_bytes() / region_elapsed_time_ms;
 }
 
@@ -230,34 +234,48 @@ void HeapRegion::clear_humongous() {
 HeapRegion::HeapRegion(uint hrm_index,
                        G1BlockOffsetTable* bot,
                        MemRegion mr) :
-    G1ContiguousSpace(bot),
-    _rem_set(NULL),
-    _hrm_index(hrm_index),
-    _type(),
-    _humongous_start_region(NULL),
-    _evacuation_failed(false),
-    _next(NULL), _prev(NULL),
+  _bottom(mr.start()),
+  _end(mr.end()),
+  _top(NULL),
+  _compaction_top(NULL),
+  _bot_part(bot, this),
+  _par_alloc_lock(Mutex::leaf, "HeapRegion par alloc lock", true),
+  _pre_dummy_top(NULL),
+  _rem_set(NULL),
+  _hrm_index(hrm_index),
+  _type(),
+  _humongous_start_region(NULL),
+  _evacuation_failed(false),
+  _index_in_opt_cset(InvalidCSetIndex),
+  _next(NULL), _prev(NULL),
 #ifdef ASSERT
-    _containing_set(NULL),
+  _containing_set(NULL),
 #endif
-    _prev_marked_bytes(0), _next_marked_bytes(0), _gc_efficiency(0.0),
-    _index_in_opt_cset(G1OptionalCSet::InvalidCSetIndex), _young_index_in_cset(-1),
-    _surv_rate_group(NULL), _age_index(-1),
-    _prev_top_at_mark_start(NULL), _next_top_at_mark_start(NULL),
-    _recorded_rs_length(0), _predicted_elapsed_time_ms(0)
+  _prev_top_at_mark_start(NULL), _next_top_at_mark_start(NULL),
+  _prev_marked_bytes(0), _next_marked_bytes(0),
+  _young_index_in_cset(-1),
+  _surv_rate_group(NULL), _age_index(G1SurvRateGroup::InvalidAgeIndex), _gc_efficiency(0.0),
+  _node_index(G1NUMA::UnknownNodeIndex)
 {
-  _rem_set = new HeapRegionRemSet(bot, this);
+  assert(Universe::on_page_boundary(mr.start()) && Universe::on_page_boundary(mr.end()),
+         "invalid space boundaries");
 
-  initialize(mr);
+  _rem_set = new HeapRegionRemSet(bot, this);
+  initialize();
 }
 
-void HeapRegion::initialize(MemRegion mr, bool clear_space, bool mangle_space) {
+void HeapRegion::initialize(bool clear_space, bool mangle_space) {
   assert(_rem_set->is_empty(), "Remembered set must be empty");
 
-  G1ContiguousSpace::initialize(mr, clear_space, mangle_space);
+  if (clear_space) {
+    clear(mangle_space);
+  }
 
-  hr_clear(false /*par*/, false /*clear_space*/);
   set_top(bottom());
+  set_compaction_top(bottom());
+  reset_bot();
+
+  hr_clear(false /*clear_space*/);
 }
 
 void HeapRegion::report_region_type_change(G1HeapRegionTraceType::Type to) {
@@ -334,7 +352,7 @@ class VerifyStrongCodeRootOopClosure: public OopClosure {
       // current region. We only look at those which are.
       if (_hr->is_in(obj)) {
         // Object is in the region. Check that its less than top
-        if (_hr->top() <= (HeapWord*)obj) {
+        if (_hr->top() <= cast_from_oop<HeapWord*>(obj)) {
           // Object is above top
           log_error(gc, verify)("Object " PTR_FORMAT " in region " HR_FORMAT " is above top ",
                                 p2i(obj), HR_FORMAT_PARAMS(_hr));
@@ -440,6 +458,7 @@ void HeapRegion::verify_strong_code_roots(VerifyOption vo, bool* failures) const
 }
 
 void HeapRegion::print() const { print_on(tty); }
+
 void HeapRegion::print_on(outputStream* st) const {
   st->print("|%4u", this->_hrm_index);
   st->print("|" PTR_FORMAT ", " PTR_FORMAT ", " PTR_FORMAT,
@@ -451,8 +470,17 @@ void HeapRegion::print_on(outputStream* st) const {
   } else {
     st->print("|  ");
   }
-  st->print_cr("|TAMS " PTR_FORMAT ", " PTR_FORMAT "| %s ",
+  st->print("|TAMS " PTR_FORMAT ", " PTR_FORMAT "| %s ",
                p2i(prev_top_at_mark_start()), p2i(next_top_at_mark_start()), rem_set()->get_state_str());
+  if (UseNUMA) {
+    G1NUMA* numa = G1NUMA::numa();
+    if (node_index() < numa->num_active_nodes()) {
+      st->print("|%d", numa->numa_id(node_index()));
+    } else {
+      st->print("|-");
+    }
+  }
+  st->print_cr("");
 }
 
 class G1VerificationClosure : public BasicOopIterateClosure {
@@ -514,15 +542,15 @@ public:
     if (!CompressedOops::is_null(heap_oop)) {
       oop obj = CompressedOops::decode_not_null(heap_oop);
       bool failed = false;
-      if (!_g1h->is_in_closed_subset(obj) || _g1h->is_obj_dead_cond(obj, _vo)) {
-        MutexLockerEx x(ParGCRareEvent_lock,
+      if (!_g1h->is_in(obj) || _g1h->is_obj_dead_cond(obj, _vo)) {
+        MutexLocker x(ParGCRareEvent_lock,
           Mutex::_no_safepoint_check_flag);
 
         if (!_failures) {
           log.error("----------");
         }
         ResourceMark rm;
-        if (!_g1h->is_in_closed_subset(obj)) {
+        if (!_g1h->is_in(obj)) {
           HeapRegion* from = _g1h->heap_region_containing((HeapWord*)p);
           log.error("Field " PTR_FORMAT " of live obj " PTR_FORMAT " in region " HR_FORMAT,
                     p2i(p), p2i(_containing_obj), HR_FORMAT_PARAMS(from));
@@ -533,7 +561,7 @@ public:
                     p2i(obj), HR_FORMAT_PARAMS(to), to->rem_set()->get_state_str());
         } else {
           HeapRegion* from = _g1h->heap_region_containing((HeapWord*)p);
-          HeapRegion* to = _g1h->heap_region_containing((HeapWord*)obj);
+          HeapRegion* to = _g1h->heap_region_containing(obj);
           log.error("Field " PTR_FORMAT " of live obj " PTR_FORMAT " in region " HR_FORMAT,
                     p2i(p), p2i(_containing_obj), HR_FORMAT_PARAMS(from));
           LogStream ls(log.error());
@@ -587,7 +615,7 @@ public:
                 cv_field == dirty :
                 cv_obj == dirty || cv_field == dirty));
         if (is_bad) {
-          MutexLockerEx x(ParGCRareEvent_lock,
+          MutexLocker x(ParGCRareEvent_lock,
             Mutex::_no_safepoint_check_flag);
 
           if (!_failures) {
@@ -631,9 +659,6 @@ public:
   // This closure provides its own oop verification code.
   debug_only(virtual bool should_verify_oops() { return false; })
 };
-
-// This really ought to be commoned up into OffsetTableContigSpace somehow.
-// We would need a mechanism to make that code skip dead objects.
 
 void HeapRegion::verify(VerifyOption vo,
                         bool* failures) const {
@@ -707,7 +732,7 @@ void HeapRegion::verify(VerifyOption vo,
 
   if (is_region_humongous) {
     oop obj = oop(this->humongous_start_region()->bottom());
-    if ((HeapWord*)obj > bottom() || (HeapWord*)obj + obj->size() < bottom()) {
+    if (cast_from_oop<HeapWord*>(obj) > bottom() || cast_from_oop<HeapWord*>(obj) + obj->size() < bottom()) {
       log_error(gc, verify)("this humongous region is not part of its' humongous object " PTR_FORMAT, p2i(obj));
       *failures = true;
       return;
@@ -728,7 +753,7 @@ void HeapRegion::verify(VerifyOption vo,
   if (p < the_end) {
     // Look up top
     HeapWord* addr_1 = p;
-    HeapWord* b_start_1 = _bot_part.block_start_const(addr_1);
+    HeapWord* b_start_1 = block_start_const(addr_1);
     if (b_start_1 != p) {
       log_error(gc, verify)("BOT look up for top: " PTR_FORMAT " "
                             " yielded " PTR_FORMAT ", expecting " PTR_FORMAT,
@@ -740,7 +765,7 @@ void HeapRegion::verify(VerifyOption vo,
     // Look up top + 1
     HeapWord* addr_2 = p + 1;
     if (addr_2 < the_end) {
-      HeapWord* b_start_2 = _bot_part.block_start_const(addr_2);
+      HeapWord* b_start_2 = block_start_const(addr_2);
       if (b_start_2 != p) {
         log_error(gc, verify)("BOT look up for top + 1: " PTR_FORMAT " "
                               " yielded " PTR_FORMAT ", expecting " PTR_FORMAT,
@@ -754,7 +779,7 @@ void HeapRegion::verify(VerifyOption vo,
     size_t diff = pointer_delta(the_end, p) / 2;
     HeapWord* addr_3 = p + diff;
     if (addr_3 < the_end) {
-      HeapWord* b_start_3 = _bot_part.block_start_const(addr_3);
+      HeapWord* b_start_3 = block_start_const(addr_3);
       if (b_start_3 != p) {
         log_error(gc, verify)("BOT look up for top + diff: " PTR_FORMAT " "
                               " yielded " PTR_FORMAT ", expecting " PTR_FORMAT,
@@ -766,7 +791,7 @@ void HeapRegion::verify(VerifyOption vo,
 
     // Look up end - 1
     HeapWord* addr_4 = the_end - 1;
-    HeapWord* b_start_4 = _bot_part.block_start_const(addr_4);
+    HeapWord* b_start_4 = block_start_const(addr_4);
     if (b_start_4 != p) {
       log_error(gc, verify)("BOT look up for end - 1: " PTR_FORMAT " "
                             " yielded " PTR_FORMAT ", expecting " PTR_FORMAT,
@@ -824,51 +849,32 @@ void HeapRegion::verify_rem_set() const {
   guarantee(!failures, "HeapRegion RemSet verification failed");
 }
 
-void HeapRegion::prepare_for_compaction(CompactPoint* cp) {
-  // Not used for G1 anymore, but pure virtual in Space.
-  ShouldNotReachHere();
-}
-
-// G1OffsetTableContigSpace code; copied from space.cpp.  Hope this can go
-// away eventually.
-
-void G1ContiguousSpace::clear(bool mangle_space) {
+void HeapRegion::clear(bool mangle_space) {
   set_top(bottom());
-  CompactibleSpace::clear(mangle_space);
+  set_compaction_top(bottom());
+
+  if (ZapUnusedHeapArea && mangle_space) {
+    mangle_unused_area();
+  }
   reset_bot();
 }
-#ifndef PRODUCT
-void G1ContiguousSpace::mangle_unused_area() {
-  mangle_unused_area_complete();
-}
 
-void G1ContiguousSpace::mangle_unused_area_complete() {
+#ifndef PRODUCT
+void HeapRegion::mangle_unused_area() {
   SpaceMangler::mangle_region(MemRegion(top(), end()));
 }
 #endif
 
-void G1ContiguousSpace::print() const {
-  print_short();
-  tty->print_cr(" [" INTPTR_FORMAT ", " INTPTR_FORMAT ", "
-                INTPTR_FORMAT ", " INTPTR_FORMAT ")",
-                p2i(bottom()), p2i(top()), p2i(_bot_part.threshold()), p2i(end()));
-}
-
-HeapWord* G1ContiguousSpace::initialize_threshold() {
+HeapWord* HeapRegion::initialize_threshold() {
   return _bot_part.initialize_threshold();
 }
 
-HeapWord* G1ContiguousSpace::cross_threshold(HeapWord* start,
-                                                    HeapWord* end) {
+HeapWord* HeapRegion::cross_threshold(HeapWord* start, HeapWord* end) {
   _bot_part.alloc_block(start, end);
   return _bot_part.threshold();
 }
 
-void G1ContiguousSpace::safe_object_iterate(ObjectClosure* blk) {
-  object_iterate(blk);
-}
-
-void G1ContiguousSpace::object_iterate(ObjectClosure* blk) {
+void HeapRegion::object_iterate(ObjectClosure* blk) {
   HeapWord* p = bottom();
   while (p < top()) {
     if (block_is_obj(p)) {
@@ -876,19 +882,4 @@ void G1ContiguousSpace::object_iterate(ObjectClosure* blk) {
     }
     p += block_size(p);
   }
-}
-
-G1ContiguousSpace::G1ContiguousSpace(G1BlockOffsetTable* bot) :
-  _top(NULL),
-  _bot_part(bot, this),
-  _par_alloc_lock(Mutex::leaf, "OffsetTableContigSpace par alloc lock", true),
-  _pre_dummy_top(NULL)
-{
-}
-
-void G1ContiguousSpace::initialize(MemRegion mr, bool clear_space, bool mangle_space) {
-  CompactibleSpace::initialize(mr, clear_space, mangle_space);
-  _top = bottom();
-  set_saved_mark_word(NULL);
-  reset_bot();
 }

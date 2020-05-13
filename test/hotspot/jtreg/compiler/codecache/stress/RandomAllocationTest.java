@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,15 +23,14 @@
 
 /*
  * @test RandomAllocationTest
- * @key stress
+ * @key stress randomness
  * @summary stressing code cache by allocating randomly sized "dummy" code blobs
  * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
  *
- * @build sun.hotspot.WhiteBox
+ * @build sun.hotspot.WhiteBox compiler.codecache.stress.Helper compiler.codecache.stress.TestCaseImpl
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI
  *                   -XX:CompileCommand=dontinline,compiler.codecache.stress.Helper$TestCase::method
@@ -49,6 +48,8 @@ package compiler.codecache.stress;
 import sun.hotspot.code.BlobType;
 
 import java.util.ArrayList;
+import java.util.Random;
+import jdk.test.lib.Utils;
 
 public class RandomAllocationTest implements Runnable {
     private static final long CODE_CACHE_SIZE
@@ -56,6 +57,7 @@ public class RandomAllocationTest implements Runnable {
     private static final int MAX_BLOB_SIZE = (int) (CODE_CACHE_SIZE >> 7);
     private static final BlobType[] BLOB_TYPES
             = BlobType.getAvailable().toArray(new BlobType[0]);
+    private final Random rng = Utils.getRandomInstance();
 
     public static void main(String[] args) {
         new CodeCacheStressRunner(new RandomAllocationTest()).runTest();
@@ -64,16 +66,16 @@ public class RandomAllocationTest implements Runnable {
     private final ArrayList<Long> blobs = new ArrayList<>();
     @Override
     public void run() {
-        boolean allocate = blobs.isEmpty() || Helper.RNG.nextBoolean();
+        boolean allocate = blobs.isEmpty() || rng.nextBoolean();
         if (allocate) {
-            int type = Helper.RNG.nextInt(BLOB_TYPES.length);
+            int type = rng.nextInt(BLOB_TYPES.length);
             long addr = Helper.WHITE_BOX.allocateCodeBlob(
-                    Helper.RNG.nextInt(MAX_BLOB_SIZE), BLOB_TYPES[type].id);
+                    rng.nextInt(MAX_BLOB_SIZE), BLOB_TYPES[type].id);
             if (addr != 0) {
                 blobs.add(addr);
             }
         } else {
-            int index = Helper.RNG.nextInt(blobs.size());
+            int index = rng.nextInt(blobs.size());
             Helper.WHITE_BOX.freeCodeBlob(blobs.remove(index));
         }
     }

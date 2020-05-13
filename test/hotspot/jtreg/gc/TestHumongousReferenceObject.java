@@ -26,12 +26,20 @@ package gc;
 import jdk.internal.vm.annotation.Contended;
 
 /*
- * @test
- * @summary Test that verifies that iteration over large, plain Java objects, that potentially cross region boundaries on G1, with references in them works.
- * @requires vm.gc == "null"
+ * @test TestHumongousReferenceObjectParallel
+ * @summary Test that verifies that iteration over large, plain Java objects, that potentially cross region boundaries, with references in them works.
+ * @requires vm.gc.Parallel
  * @bug 8151499 8153734
  * @modules java.base/jdk.internal.vm.annotation
  * @run main/othervm -XX:+EnableContended -XX:-RestrictContended -Xmx128m -XX:+UseParallelGC -XX:ContendedPaddingWidth=8192 gc.TestHumongousReferenceObject
+ */
+
+/*
+ * @test TestHumongousReferenceObjectG1
+ * @summary Test that verifies that iteration over large, plain Java objects, that potentially cross region boundaries on G1, with references in them works.
+ * @requires vm.gc.G1
+ * @bug 8151499 8153734
+ * @modules java.base/jdk.internal.vm.annotation
  * @run main/othervm -XX:+EnableContended -XX:-RestrictContended -Xmx128m -XX:+UseG1GC -XX:G1HeapRegionSize=1M -XX:ContendedPaddingWidth=8192 gc.TestHumongousReferenceObject
  * @run main/othervm -XX:+EnableContended -XX:-RestrictContended -Xmx128m -XX:+UseG1GC -XX:G1HeapRegionSize=2M -XX:ContendedPaddingWidth=8192 gc.TestHumongousReferenceObject
  * @run main/othervm -XX:+EnableContended -XX:-RestrictContended -Xmx128m -XX:+UseG1GC -XX:G1HeapRegionSize=4M -XX:ContendedPaddingWidth=8192 gc.TestHumongousReferenceObject
@@ -41,11 +49,11 @@ import jdk.internal.vm.annotation.Contended;
 /*
  * @test TestHumongousReferenceObjectShenandoah
  * @summary Test that verifies that iteration over large, plain Java objects, that potentially cross region boundaries, with references in them works.
- * @requires vm.gc.Shenandoah
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
  * @bug 8151499 8153734
  * @modules java.base/jdk.internal.vm.annotation
- * @run main/othervm -XX:+EnableContended -XX:-RestrictContended -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahHeapRegionSize=8M -XX:ContendedPaddingWidth=8192 gc.TestHumongousReferenceObject
- * @run main/othervm -XX:+EnableContended -XX:-RestrictContended -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahHeapRegionSize=8M -XX:ContendedPaddingWidth=8192 -XX:+UnlockDiagnosticVMOptions -XX:+ShenandoahVerify gc.TestHumongousReferenceObject
+ * @run main/othervm -XX:+EnableContended -XX:-RestrictContended -Xms128m -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahRegionSize=8M -XX:ContendedPaddingWidth=8192 gc.TestHumongousReferenceObject
+ * @run main/othervm -XX:+EnableContended -XX:-RestrictContended -Xms128m -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahRegionSize=8M -XX:ContendedPaddingWidth=8192 -XX:+UnlockDiagnosticVMOptions -XX:+ShenandoahVerify gc.TestHumongousReferenceObject
  */
 public class TestHumongousReferenceObject {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8153716 8143955 8151754 8150382 8153920 8156910 8131024 8160089 8153897 8167128 8154513 8170015 8170368 8172102 8172103  8165405 8173073 8173848 8174041 8173916 8174028 8174262 8174797 8177079 8180508 8177466 8172154 8192979 8191842 8198573 8198801 8210596 8210959 8215099
+ * @bug 8153716 8143955 8151754 8150382 8153920 8156910 8131024 8160089 8153897 8167128 8154513 8170015 8170368 8172102 8172103  8165405 8173073 8173848 8174041 8173916 8174028 8174262 8174797 8177079 8180508 8177466 8172154 8192979 8191842 8198573 8198801 8210596 8210959 8215099 8199623 8236715 8239536
  * @summary Simple jshell tool tests
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
@@ -267,6 +267,33 @@ public class ToolSimpleTest extends ReplToolTesting {
                 (a) -> assertCommandOutputStartsWith(a, "int g() { return x; }",
                         "|  created method g(), however, it cannot be invoked until variable x is declared"),
                 (a) -> assertCommand(a, "g()", "|  attempted to call method g() which cannot be invoked until variable x is declared")
+        );
+    }
+
+    // 8199623
+    @Test
+    public void testTwoForkedDrop() {
+        test(
+                (a) -> assertCommand(a, "void p() throws Exception { ((String) null).toString(); }",
+                        "|  created method p()"),
+                (a) -> assertCommand(a, "void n() throws Exception { try { p(); } catch (Exception ex) { throw new IOException(\"bar\", ex); }} ",
+                        "|  created method n()"),
+                (a) -> assertCommand(a, "void m() { try { n(); } catch (Exception ex) { throw new RuntimeException(\"foo\", ex); }}",
+                        "|  created method m()"),
+                (a) -> assertCommand(a, "void c() throws Throwable { p(); }",
+                        "|  created method c()"),
+                (a) -> assertCommand(a, "/drop p",
+                        "|  dropped method p()"),
+                (a) -> assertCommand(a, "m()",
+                        "|  attempted to call method n() which cannot be invoked until method p() is declared"),
+                (a) -> assertCommand(a, "/meth n",
+                        "|    void n()\n" +
+                        "|       which cannot be invoked until method p() is declared"),
+                (a) -> assertCommand(a, "/meth m",
+                        "|    void m()"),
+                (a) -> assertCommand(a, "/meth c",
+                        "|    void c()\n" +
+                                "|       which cannot be invoked until method p() is declared")
         );
     }
 
@@ -874,5 +901,31 @@ public class ToolSimpleTest extends ReplToolTesting {
                 a -> assertVariable(a, "int", "error", "4711", "4711"),
                 a -> assertCommandOutputContains(a, "a", "A@")
         );
+    }
+
+    @Test
+    public void testRecords() {
+        test(new String[] {"--enable-preview"},
+                (a) -> assertCommandOutputContains(a, "record R(int i) { public int g() { return j; } }",
+                        "|  created record R, however, it cannot be instantiated or its methods invoked until variable j is declared"),
+                (a) -> assertCommandOutputContains(a, "new R(0)",
+                        "|  attempted to use record R which cannot be instantiated or its methods invoked until variable j is declared")
+        );
+    }
+
+    @Test
+    public void testImportChange() {
+        for (String feedback : new String[] {"verbose", "normal"}) {
+            test(
+                    (a) -> assertCommandOutputContains(a, "/set feedback " + feedback, "|  Feedback mode: " + feedback),
+                    (a) -> assertCommand(a, "import java.util.*", ""),
+                    (a) -> assertCommandOutputContains(a, "var v1 = List.of(1);", "v1 ==> [1]"),
+                    (a) -> assertCommandOutputContains(a, "import java.awt.List;",
+                            "|    update replaced variable v1 which cannot be referenced until this error is corrected:"),
+                    (a) -> assertCommandOutputContains(a, "var b = java.util.List.of(\"bb\")",
+                            "b ==> [bb]"),
+                    (a) -> assertCommandOutputContains(a, "b", "b ==> [bb]")
+            );
+        }
     }
 }

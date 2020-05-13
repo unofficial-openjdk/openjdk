@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URLClassLoader;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.file.Files;
@@ -49,6 +50,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import jdk.test.lib.compiler.CompilerUtils;
+import jdk.test.lib.net.URIBuilder;
 import jdk.test.lib.util.JarUtils;
 
 import com.sun.net.httpserver.HttpContext;
@@ -157,12 +159,18 @@ public class CloseTest extends Common {
 
     static URL getServerURL() throws Exception {
         int port = httpServer.getAddress().getPort();
-        String s = "http://127.0.0.1:" + port + "/";
-        return new URL(s);
+        return URIBuilder.newBuilder()
+            .scheme("http")
+            .loopback()
+            .port(port)
+            .path("/")
+            .toURL();
     }
 
     static void startHttpServer(String docroot) throws Exception {
-        httpServer = HttpServer.create(new InetSocketAddress(0), 10);
+        httpServer = HttpServer.create(
+                new InetSocketAddress(InetAddress.getLoopbackAddress(), 0),
+                10);
         HttpContext ctx = httpServer.createContext(
                 "/", new FileServerHandler(docroot)
         );

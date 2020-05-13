@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ package jdk.javadoc.internal.doclets.toolkit.builders;
 import javax.lang.model.element.ModuleElement;
 
 import jdk.javadoc.internal.doclets.toolkit.Content;
+import jdk.javadoc.internal.doclets.toolkit.DocFilesHandler;
 import jdk.javadoc.internal.doclets.toolkit.DocletException;
 import jdk.javadoc.internal.doclets.toolkit.ModuleSummaryWriter;
 
@@ -39,8 +40,6 @@ import jdk.javadoc.internal.doclets.toolkit.ModuleSummaryWriter;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Bhavesh Patel
  */
 public class ModuleSummaryBuilder extends AbstractBuilder {
 
@@ -53,11 +52,6 @@ public class ModuleSummaryBuilder extends AbstractBuilder {
      * The doclet specific writer that will output the result.
      */
     private final ModuleSummaryWriter moduleWriter;
-
-    /**
-     * The content that will be added to the module summary documentation tree.
-     */
-    private Content contentTree;
 
     /**
      * Construct a new ModuleSummaryBuilder.
@@ -100,97 +94,92 @@ public class ModuleSummaryBuilder extends AbstractBuilder {
             //Doclet does not support this output.
             return;
         }
-        buildModuleDoc(contentTree);
+        buildModuleDoc();
     }
 
     /**
      * Build the module documentation.
      *
-     * @param contentTree the content tree to which the documentation will be added
      * @throws DocletException if there is a problem while building the documentation
      */
-    protected void buildModuleDoc(Content contentTree) throws DocletException {
-        contentTree = moduleWriter.getModuleHeader(mdle.getQualifiedName().toString());
+    protected void buildModuleDoc() throws DocletException {
+        Content contentTree = moduleWriter.getModuleHeader(mdle.getQualifiedName().toString());
 
-        buildContent(contentTree);
+        buildContent();
 
-        moduleWriter.addModuleFooter(contentTree);
+        moduleWriter.addModuleFooter();
         moduleWriter.printDocument(contentTree);
-        // uncomment to support doc-files in modules
-        // DocFilesHandler docFilesHandler = configuration.getWriterFactory().getDocFilesWriter(mdle);
-        // docFilesHandler.copyDocFiles();
+        DocFilesHandler docFilesHandler = configuration.getWriterFactory().getDocFilesHandler(mdle);
+        docFilesHandler.copyDocFiles();
     }
 
     /**
      * Build the content for the module doc.
      *
-     * @param contentTree the content tree to which the module contents
-     *                    will be added
      * @throws DocletException if there is a problem while building the documentation
      */
-    protected void buildContent(Content contentTree) throws DocletException {
+    protected void buildContent() throws DocletException {
         Content moduleContentTree = moduleWriter.getContentHeader();
 
         buildModuleDescription(moduleContentTree);
         buildModuleTags(moduleContentTree);
         buildSummary(moduleContentTree);
 
-        moduleWriter.addModuleContent(contentTree, moduleContentTree);
+        moduleWriter.addModuleContent(moduleContentTree);
     }
 
     /**
-     * Build the module summary.
+     * Builds the list of summary sections for this module.
      *
      * @param moduleContentTree the module content tree to which the summaries will
      *                           be added
      * @throws DocletException if there is a problem while building the documentation
      */
     protected void buildSummary(Content moduleContentTree) throws DocletException {
-        Content summaryContentTree = moduleWriter.getSummaryHeader();
+        Content summariesList = moduleWriter.getSummariesList();
 
-        buildPackagesSummary(summaryContentTree);
-        buildModulesSummary(summaryContentTree);
-        buildServicesSummary(summaryContentTree);
+        buildPackagesSummary(summariesList);
+        buildModulesSummary(summariesList);
+        buildServicesSummary(summariesList);
 
-        moduleContentTree.addContent(moduleWriter.getSummaryTree(summaryContentTree));
+        moduleContentTree.add(moduleWriter.getSummaryTree(summariesList));
     }
 
     /**
-     * Build the modules summary.
+     * Builds the summary of the module dependencies of this module.
      *
-     * @param summaryContentTree the content tree to which the summaries will
-     *                           be added
+     * @param summariesList the list of summaries to which the summary will be added
      */
-    protected void buildModulesSummary(Content summaryContentTree) {
-        moduleWriter.addModulesSummary(summaryContentTree);
+    protected void buildModulesSummary(Content summariesList) {
+        moduleWriter.addModulesSummary(summariesList);
     }
 
     /**
-     * Build the package summary.
+     * Builds the summary of the packages exported or opened by this module.
      *
-     * @param summaryContentTree the content tree to which the summaries will be added
+     * @param summariesList the list of summaries to which the summary will be added
      */
-    protected void buildPackagesSummary(Content summaryContentTree) {
-        moduleWriter.addPackagesSummary(summaryContentTree);
+    protected void buildPackagesSummary(Content summariesList) {
+        moduleWriter.addPackagesSummary(summariesList);
     }
 
     /**
-     * Build the services summary.
+     * Builds the summary of the services used or provided by this module.
      *
-     * @param summaryContentTree the content tree to which the summaries will be added
+     * @param summariesList the list of summaries to which the summary will be added
      */
-    protected void buildServicesSummary(Content summaryContentTree) {
-        moduleWriter.addServicesSummary(summaryContentTree);
+    protected void buildServicesSummary(Content summariesList) {
+        moduleWriter.addServicesSummary(summariesList);
     }
 
     /**
-     * Build the description for the module.
+     * Builds the description for this module.
      *
      * @param moduleContentTree the tree to which the module description will
      *                           be added
      */
     protected void buildModuleDescription(Content moduleContentTree) {
-        if (!configuration.nocomment) {
+        if (!options.noComment()) {
             moduleWriter.addModuleDescription(moduleContentTree);
         }
     }
@@ -201,7 +190,7 @@ public class ModuleSummaryBuilder extends AbstractBuilder {
      * @param moduleContentTree the tree to which the module tags will be added
      */
     protected void buildModuleTags(Content moduleContentTree) {
-        if (!configuration.nocomment) {
+        if (!options.noComment()) {
             moduleWriter.addModuleTags(moduleContentTree);
         }
     }

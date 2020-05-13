@@ -21,7 +21,7 @@
  * under the License.
  */
 /*
- * Portions copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  */
 /*
  * ===========================================================================
@@ -31,12 +31,13 @@
  * ===========================================================================
  */
 /*
- * $Id: DOMReference.java 1803518 2017-07-31 11:02:52Z coheigea $
+ * $Id: DOMReference.java 1854026 2019-02-21 09:30:01Z coheigea $
  */
 package org.jcp.xml.dsig.internal.dom;
 
 import javax.xml.crypto.*;
 import javax.xml.crypto.dsig.*;
+import javax.xml.crypto.dom.DOMCryptoContext;
 import javax.xml.crypto.dom.DOMURIReference;
 
 import java.io.*;
@@ -46,6 +47,7 @@ import java.security.*;
 import java.util.*;
 
 import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -241,8 +243,8 @@ public final class DOMReference extends DOMStructure
 
         // unmarshal DigestValue
         Element dvElem = DOMUtils.getNextSiblingElement(dmElem, "DigestValue", XMLSignature.XMLNS);
-        String content = XMLUtils.getFullTextChildrenFromElement(dvElem);
-        this.digestValue = Base64.getMimeDecoder().decode(content);
+        String content = XMLUtils.getFullTextChildrenFromNode(dvElem);
+        this.digestValue = XMLUtils.decode(content);
 
         // check for extra elements
         if (DOMUtils.getNextSiblingElement(dvElem) != null) {
@@ -252,7 +254,14 @@ public final class DOMReference extends DOMStructure
 
         // unmarshal attributes
         this.uri = DOMUtils.getAttributeValue(refElem, "URI");
-        this.id = DOMUtils.getIdAttributeValue(refElem, "Id");
+
+        Attr attr = refElem.getAttributeNodeNS(null, "Id");
+        if (attr != null) {
+            this.id = attr.getValue();
+            refElem.setIdAttributeNode(attr, true);
+        } else {
+            this.id = null;
+        }
 
         this.type = DOMUtils.getAttributeValue(refElem, "Type");
         this.here = refElem.getAttributeNodeNS(null, "URI");
@@ -263,76 +272,80 @@ public final class DOMReference extends DOMStructure
         this.provider = provider;
     }
 
-    @Override
     public DigestMethod getDigestMethod() {
         return digestMethod;
     }
 
-    @Override
     public String getId() {
         return id;
     }
 
-    @Override
     public String getURI() {
         return uri;
     }
 
-    @Override
     public String getType() {
         return type;
     }
 
-    @Override
     public List<Transform> getTransforms() {
         return Collections.unmodifiableList(allTransforms);
     }
 
-    @Override
     public byte[] getDigestValue() {
         return digestValue == null ? null : digestValue.clone();
     }
 
-    @Override
     public byte[] getCalculatedDigestValue() {
         return calcDigestValue == null ? null
                                         : calcDigestValue.clone();
     }
 
     @Override
-    public void marshal(XmlWriter xwriter, String dsPrefix, XMLCryptoContext context)
+    public void marshal(Node parent, String dsPrefix, DOMCryptoContext context)
         throws MarshalException
     {
         LOG.debug("Marshalling Reference");
-        xwriter.writeStartElement(dsPrefix, "Reference", XMLSignature.XMLNS);
-        XMLStructure refStruct = xwriter.getCurrentNodeAsStructure();
-        refElem = (Element) ((javax.xml.crypto.dom.DOMStructure) refStruct).getNode();
+        Document ownerDoc = DOMUtils.getOwnerDocument(parent);
+
+        refElem = DOMUtils.createElement(ownerDoc, "Reference",
+                                         XMLSignature.XMLNS, dsPrefix);
 
         // set attributes
-        xwriter.writeIdAttribute("", "", "Id", id);
-        here = xwriter.writeAttribute("", "", "URI", uri);
-        xwriter.writeAttribute("", "", "Type", type);
+        DOMUtils.setAttributeID(refElem, "Id", id);
+        DOMUtils.setAttribute(refElem, "URI", uri);
+        DOMUtils.setAttribute(refElem, "Type", type);
 
         // create and append Transforms element
         if (!allTransforms.isEmpty()) {
-            xwriter.writeStartElement(dsPrefix, "Transforms", XMLSignature.XMLNS);
+            Element transformsElem = DOMUtils.createElement(ownerDoc,
+                                                            "Transforms",
+                                                            XMLSignature.XMLNS,
+                                                            dsPrefix);
+            refElem.appendChild(transformsElem);
             for (Transform transform : allTransforms) {
-                xwriter.marshalStructure(transform, dsPrefix, context);
+                ((DOMStructure)transform).marshal(transformsElem,
+                                                  dsPrefix, context);
             }
-            xwriter.writeEndElement(); // "Transforms"
         }
 
         // create and append DigestMethod element
-        DOMDigestMethod.marshal(xwriter, digestMethod, dsPrefix);
+        ((DOMDigestMethod)digestMethod).marshal(refElem, dsPrefix, context);
 
         // create and append DigestValue element
         LOG.debug("Adding digestValueElem");
-        xwriter.writeStartElement(dsPrefix, "DigestValue", XMLSignature.XMLNS);
+        Element digestValueElem = DOMUtils.createElement(ownerDoc,
+                                                         "DigestValue",
+                                                         XMLSignature.XMLNS,
+                                                         dsPrefix);
         if (digestValue != null) {
-            xwriter.writeCharacters(Base64.getMimeEncoder().encodeToString(digestValue));
+            digestValueElem.appendChild
+                (ownerDoc.createTextNode(XMLUtils.encodeToString(digestValue)));
         }
-        xwriter.writeEndElement(); // "DigestValue"
-        xwriter.writeEndElement(); // "Reference"
+        refElem.appendChild(digestValueElem);
+
+        parent.appendChild(refElem);
+        here = refElem.getAttributeNodeNS(null, "URI");
     }
 
     public void digest(XMLSignContext signContext)
@@ -347,7 +360,7 @@ public final class DOMReference extends DOMStructure
         digestValue = transform(data, signContext);
 
         // insert digestValue into DigestValue element
-        String encodedDV = Base64.getMimeEncoder().encodeToString(digestValue);
+        String encodedDV = XMLUtils.encodeToString(digestValue);
         LOG.debug("Reference object uri = {}", uri);
         Element digestElem = DOMUtils.getLastChildElement(refElem);
         if (digestElem == null) {
@@ -361,7 +374,6 @@ public final class DOMReference extends DOMStructure
         LOG.debug("Reference digesting completed");
     }
 
-    @Override
     public boolean validate(XMLValidateContext validateContext)
         throws XMLSignatureException
     {
@@ -375,8 +387,8 @@ public final class DOMReference extends DOMStructure
         calcDigestValue = transform(data, validateContext);
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Expected digest: " + Base64.getMimeEncoder().encodeToString(digestValue));
-            LOG.debug("Actual digest: " + Base64.getMimeEncoder().encodeToString(calcDigestValue));
+            LOG.debug("Expected digest: " + XMLUtils.encodeToString(digestValue));
+            LOG.debug("Actual digest: " + XMLUtils.encodeToString(calcDigestValue));
         }
 
         validationStatus = Arrays.equals(digestValue, calcDigestValue);
@@ -384,12 +396,10 @@ public final class DOMReference extends DOMStructure
         return validationStatus;
     }
 
-    @Override
     public Data getDereferencedData() {
         return derefData;
     }
 
-    @Override
     public InputStream getDigestInputStream() {
         return dis;
     }
@@ -516,8 +526,8 @@ public final class DOMReference extends DOMStructure
                     } else {
                         transformsElem = DOMUtils.getFirstChildElement(refElem);
                     }
-                    XmlWriter xwriter = new XmlWriterToTree(Marshaller.getMarshallers(), transformsElem);
-                    t.marshal(xwriter, dsPrefix, context);
+                    t.marshal(transformsElem, dsPrefix,
+                              (DOMCryptoContext)context);
                     allTransforms.add(t);
                     xi.updateOutputStream(os, true);
                 } else {
@@ -550,7 +560,6 @@ public final class DOMReference extends DOMStructure
         }
     }
 
-    @Override
     public Node getHere() {
         return here;
     }
@@ -614,7 +623,6 @@ public final class DOMReference extends DOMStructure
                 try {
                     final Set<Node> s = xsi.getNodeSet();
                     return new NodeSetData<Node>() {
-                        @Override
                         public Iterator<Node> iterator() { return s.iterator(); }
                     };
                 } catch (Exception e) {

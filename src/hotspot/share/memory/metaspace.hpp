@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,8 @@
 #include "memory/memRegion.hpp"
 #include "memory/metaspaceChunkFreeListSummary.hpp"
 #include "memory/virtualspace.hpp"
+#include "memory/metaspace/metaspaceSizesSnapshot.hpp"
+#include "runtime/globals.hpp"
 #include "utilities/exceptions.hpp"
 
 // Metaspace
@@ -102,8 +104,8 @@ class Metaspace : public AllStatic {
     ZeroMetaspaceType = 0,
     StandardMetaspaceType = ZeroMetaspaceType,
     BootMetaspaceType = StandardMetaspaceType + 1,
-    UnsafeAnonymousMetaspaceType = BootMetaspaceType + 1,
-    ReflectionMetaspaceType = UnsafeAnonymousMetaspaceType + 1,
+    ClassMirrorHolderMetaspaceType = BootMetaspaceType + 1,
+    ReflectionMetaspaceType = ClassMirrorHolderMetaspaceType + 1,
     MetaspaceTypeCount
   };
 
@@ -139,6 +141,8 @@ class Metaspace : public AllStatic {
 
   static const MetaspaceTracer* _tracer;
 
+  static bool _initialized;
+
  public:
   static metaspace::VirtualSpaceList* space_list()       { return _space_list; }
   static metaspace::VirtualSpaceList* class_space_list() { return _class_space_list; }
@@ -168,18 +172,24 @@ class Metaspace : public AllStatic {
     assert(!_frozen, "sanity");
   }
 #ifdef _LP64
-  static void allocate_metaspace_compressed_klass_ptrs(char* requested_addr, address cds_base);
+  static void allocate_metaspace_compressed_klass_ptrs(ReservedSpace metaspace_rs, char* requested_addr, address cds_base);
 #endif
 
  private:
 
 #ifdef _LP64
-  static void set_narrow_klass_base_and_shift(address metaspace_base, address cds_base);
-
-  // Returns true if can use CDS with metaspace allocated as specified address.
-  static bool can_use_cds_with_metaspace_addr(char* metaspace_base, address cds_base);
+  static void set_narrow_klass_base_and_shift(ReservedSpace metaspace_rs, address cds_base);
 
   static void initialize_class_space(ReservedSpace rs);
+#endif
+
+  static ReservedSpace reserve_space(size_t size, size_t alignment,
+                                     char* requested_addr, bool use_requested_addr);
+
+#ifdef PREFERRED_METASPACE_ALIGNMENT
+  static ReservedSpace reserve_preferred_space(size_t size, size_t alignment,
+                                               bool large_pages, char *requested_addr,
+                                               bool use_requested_addr);
 #endif
 
  public:
@@ -224,6 +234,8 @@ class Metaspace : public AllStatic {
     return mdType == ClassType && using_class_space();
   }
 
+  static bool initialized() { return _initialized; }
+
 };
 
 // Manages the metaspace portion belonging to a class loader
@@ -242,7 +254,7 @@ class ClassLoaderMetaspace : public CHeapObj<mtClass> {
 
   // Initialize the first chunk for a Metaspace.  Used for
   // special cases such as the boot class loader, reflection
-  // class loader and anonymous class loader.
+  // class loader and hidden class loader.
   void initialize_first_chunk(Metaspace::MetaspaceType type, Metaspace::MetadataType mdtype);
   metaspace::Metachunk* get_initialization_chunk(Metaspace::MetaspaceType type, Metaspace::MetadataType mdtype);
 
@@ -329,11 +341,6 @@ class MetaspaceUtils : AllStatic {
   // Helper for print_xx_report.
   static void print_vs(outputStream* out, size_t scale);
 
-  // Utils to check if a pointer or range is part of a committed metaspace region
-  // without acquiring any locks.
-  static metaspace::VirtualSpaceNode* find_enclosing_virtual_space(const void* p);
-  static bool is_range_in_committed(const void* from, const void* to);
-
 public:
 
   // Collect used metaspace statistics. This involves walking the CLDG. The resulting
@@ -392,7 +399,7 @@ public:
     rf_show_loaders                 = (1 << 0),
     // Breaks report down by chunk type (small, medium, ...).
     rf_break_down_by_chunktype      = (1 << 1),
-    // Breaks report down by space type (anonymous, reflection, ...).
+    // Breaks report down by space type (hidden, reflection, ...).
     rf_break_down_by_spacetype      = (1 << 2),
     // Print details about the underlying virtual spaces.
     rf_show_vslist                  = (1 << 3),
@@ -415,8 +422,8 @@ public:
   static bool has_chunk_free_list(Metaspace::MetadataType mdtype);
   static MetaspaceChunkFreeListSummary chunk_free_list_summary(Metaspace::MetadataType mdtype);
 
-  // Print change in used metadata.
-  static void print_metaspace_change(size_t prev_metadata_used);
+  // Log change in used metadata.
+  static void print_metaspace_change(const metaspace::MetaspaceSizesSnapshot& pre_meta_values);
   static void print_on(outputStream * out);
 
   // Prints an ASCII representation of the given space.
@@ -438,11 +445,6 @@ class MetaspaceGC : AllStatic {
   // When committed memory of all metaspaces reaches this value,
   // a GC is induced and the value is increased. Size is in bytes.
   static volatile size_t _capacity_until_GC;
-
-  // For a CMS collection, signal that a concurrent collection should
-  // be started.
-  static bool _should_concurrent_collect;
-
   static uint _shrink_factor;
 
   static size_t shrink_factor() { return _shrink_factor; }
@@ -459,11 +461,6 @@ class MetaspaceGC : AllStatic {
                                     size_t* old_cap_until_GC = NULL,
                                     bool* can_retry = NULL);
   static size_t dec_capacity_until_GC(size_t v);
-
-  static bool should_concurrent_collect() { return _should_concurrent_collect; }
-  static void set_should_concurrent_collect(bool v) {
-    _should_concurrent_collect = v;
-  }
 
   // The amount to increase the high-water-mark (_capacity_until_GC)
   static size_t delta_capacity_until_GC(size_t bytes);

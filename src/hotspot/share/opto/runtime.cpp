@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,6 +58,7 @@
 #include "opto/matcher.hpp"
 #include "opto/memnode.hpp"
 #include "opto/mulnode.hpp"
+#include "opto/output.hpp"
 #include "opto/runtime.hpp"
 #include "opto/subnode.hpp"
 #include "runtime/atomic.hpp"
@@ -303,7 +304,7 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_nozero_C(Klass* array_type, int len
     const size_t hs = arrayOopDesc::header_size(elem_type);
     // Align to next 8 bytes to avoid trashing arrays's length.
     const size_t aligned_hs = align_object_offset(hs);
-    HeapWord* obj = (HeapWord*)result;
+    HeapWord* obj = cast_from_oop<HeapWord*>(result);
     if (aligned_hs > hs) {
       Copy::zero_to_words(obj+hs, aligned_hs-hs);
     }
@@ -900,6 +901,33 @@ const TypeFunc* OptoRuntime::cipherBlockChaining_aescrypt_Type() {
   return TypeFunc::make(domain, range);
 }
 
+// for electronicCodeBook calls of aescrypt encrypt/decrypt, three pointers and a length, returning int
+const TypeFunc* OptoRuntime::electronicCodeBook_aescrypt_Type() {
+  // create input type (domain)
+  int num_args = 4;
+  if (Matcher::pass_original_key_for_aes()) {
+     num_args = 5;
+  }
+  int argcnt = num_args;
+  const Type** fields = TypeTuple::fields(argcnt);
+  int argp = TypeFunc::Parms;
+  fields[argp++] = TypePtr::NOTNULL;    // src
+  fields[argp++] = TypePtr::NOTNULL;    // dest
+  fields[argp++] = TypePtr::NOTNULL;    // k array
+  fields[argp++] = TypeInt::INT;        // src len
+  if (Matcher::pass_original_key_for_aes()) {
+     fields[argp++] = TypePtr::NOTNULL;    // original k array
+  }
+  assert(argp == TypeFunc::Parms + argcnt, "correct decoding");
+  const TypeTuple* domain = TypeTuple::make(TypeFunc::Parms + argcnt, fields);
+
+  // returning cipher len (int)
+  fields = TypeTuple::fields(1);
+  fields[TypeFunc::Parms + 0] = TypeInt::INT;
+  const TypeTuple* range = TypeTuple::make(TypeFunc::Parms + 1, fields);
+  return TypeFunc::make(domain, range);
+}
+
 //for counterMode calls of aescrypt encrypt/decrypt, four pointers and a length, returning int
 const TypeFunc* OptoRuntime::counterMode_aescrypt_Type() {
   // create input type (domain)
@@ -1080,6 +1108,25 @@ const TypeFunc* OptoRuntime::montgomerySquare_Type() {
   fields = TypeTuple::fields(1);
   fields[TypeFunc::Parms+0] = TypePtr::NOTNULL;
 
+  const TypeTuple* range = TypeTuple::make(TypeFunc::Parms, fields);
+  return TypeFunc::make(domain, range);
+}
+
+const TypeFunc * OptoRuntime::bigIntegerShift_Type() {
+  int argcnt = 5;
+  const Type** fields = TypeTuple::fields(argcnt);
+  int argp = TypeFunc::Parms;
+  fields[argp++] = TypePtr::NOTNULL;    // newArr
+  fields[argp++] = TypePtr::NOTNULL;    // oldArr
+  fields[argp++] = TypeInt::INT;        // newIdx
+  fields[argp++] = TypeInt::INT;        // shiftCount
+  fields[argp++] = TypeInt::INT;        // numIter
+  assert(argp == TypeFunc::Parms + argcnt, "correct decoding");
+  const TypeTuple* domain = TypeTuple::make(TypeFunc::Parms + argcnt, fields);
+
+  // no result type needed
+  fields = TypeTuple::fields(1);
+  fields[TypeFunc::Parms + 0] = NULL;
   const TypeTuple* range = TypeTuple::make(TypeFunc::Parms, fields);
   return TypeFunc::make(domain, range);
 }
@@ -1412,7 +1459,7 @@ address OptoRuntime::handle_exception_C(JavaThread* thread) {
 // However, there needs to be a safepoint check in the middle!  So compiled
 // safepoints are completely watertight.
 //
-// Thus, it cannot be a leaf since it contains the NoGCVerifier.
+// Thus, it cannot be a leaf since it contains the NoSafepointVerifier.
 //
 // *THIS IS NOT RECOMMENDED PROGRAMMING STYLE*
 //
@@ -1632,7 +1679,7 @@ NamedCounter* OptoRuntime::new_named_counter(JVMState* youngest_jvms, NamedCount
     c->set_next(NULL);
     head = _named_counters;
     c->set_next(head);
-  } while (Atomic::cmpxchg(c, &_named_counters, head) != head);
+  } while (Atomic::cmpxchg(&_named_counters, head, c) != head);
   return c;
 }
 

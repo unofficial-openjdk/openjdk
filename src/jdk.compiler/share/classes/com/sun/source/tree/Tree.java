@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -220,6 +220,21 @@ public interface Tree {
         PARENTHESIZED(ParenthesizedTree.class),
 
         /**
+         * {@preview Associated with pattern matching for instanceof, a preview feature of
+         *           the Java language.
+         *
+         *           This enum constant is associated with <i>pattern matching for instanceof</i>, a preview
+         *           feature of the Java language. Preview features
+         *           may be removed in a future release, or upgraded to permanent
+         *           features of the Java language.}
+         *
+         * Used for instances of {@link BindingPatternTree}.
+         *
+         * @since 14
+         */
+        BINDING_PATTERN(BindingPatternTree.class),
+
+        /**
          * Used for instances of {@link PrimitiveTypeTree}.
          */
         PRIMITIVE_TYPE(PrimitiveTypeTree.class),
@@ -243,14 +258,7 @@ public interface Tree {
          * Used for instances of {@link SwitchExpressionTree}.
          *
          * @since 12
-         *
-         * @deprecated
-         * This enum constant is modeling switch expressions,
-         * which are part of a preview feature and may be removed
-         * if the preview feature is removed.
          */
-        @Deprecated(forRemoval=true, since="12")
-        @SuppressWarnings("removal")
         SWITCH_EXPRESSION(SwitchExpressionTree.class),
 
         /**
@@ -641,6 +649,22 @@ public interface Tree {
         PROVIDES(ProvidesTree.class),
 
         /**
+         * {@preview Associated with records, a preview feature of the Java language.
+         *
+         *           This enum constant is associated with <i>records</i>, a preview
+         *           feature of the Java language. Preview features
+         *           may be removed in a future release, or upgraded to permanent
+         *           features of the Java language.}
+         *
+         * Used for instances of {@link ClassTree} representing records.
+         *
+         * @since 14
+         */
+        @jdk.internal.PreviewFeature(feature=jdk.internal.PreviewFeature.Feature.RECORDS,
+                                     essentialAPI=false)
+        RECORD(ClassTree.class),
+
+        /**
          * Used for instances of {@link RequiresTree} representing
          * requires directives in a module declaration.
          */
@@ -656,7 +680,14 @@ public interface Tree {
          * An implementation-reserved node. This is the not the node
          * you are looking for.
          */
-        OTHER(null);
+        OTHER(null),
+
+        /**
+         * Used for instances of {@link YieldTree}.
+         *
+         * @since 13
+         */
+        YIELD(YieldTree.class);
 
 
         Kind(Class<? extends Tree> intf) {

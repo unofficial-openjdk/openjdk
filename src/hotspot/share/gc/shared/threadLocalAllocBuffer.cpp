@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,7 +69,8 @@ void ThreadLocalAllocBuffer::accumulate_and_reset_statistics(ThreadLocalAllocSta
       // The result can be larger than 1.0 due to direct to old allocations.
       // These allocations should ideally not be counted but since it is not possible
       // to filter them out here we just cap the fraction to be at most 1.0.
-      double alloc_frac = MIN2(1.0, (double) allocated_since_last_gc / used);
+      // Keep alloc_frac as float and not double to avoid the double to float conversion
+      float alloc_frac = MIN2(1.0f, allocated_since_last_gc / (float) used);
       _allocation_fraction.sample(alloc_frac);
     }
 
@@ -132,7 +133,7 @@ void ThreadLocalAllocBuffer::resize() {
                           (Universe::heap()->tlab_capacity(thread()) / HeapWordSize));
   size_t new_size = alloc / _target_refills;
 
-  new_size = MIN2(MAX2(new_size, min_size()), max_size());
+  new_size = clamp(new_size, min_size(), max_size());
 
   size_t aligned_new_size = align_object_size(new_size);
 
@@ -187,7 +188,8 @@ void ThreadLocalAllocBuffer::initialize() {
   set_desired_size(initial_desired_size());
 
   size_t capacity = Universe::heap()->tlab_capacity(thread()) / HeapWordSize;
-  double alloc_frac = desired_size() * target_refills() / (double) capacity;
+  // Keep alloc_frac as float and not double to avoid the double to float conversion
+  float alloc_frac = desired_size() * target_refills() / (float) capacity;
   _allocation_fraction.sample(alloc_frac);
 
   set_refill_waste_limit(initial_refill_waste_limit());
@@ -251,6 +253,10 @@ size_t ThreadLocalAllocBuffer::initial_desired_size() {
                       (nof_threads * target_refills());
     init_sz = align_object_size(init_sz);
   }
+  // We can't use clamp() between min_size() and max_size() here because some
+  // options based on them may still be inconsistent and so it may assert;
+  // inconsistencies between those will be caught by following AfterMemoryInit
+  // constraint checking.
   init_sz = MIN2(MAX2(init_sz, min_size()), max_size());
   return init_sz;
 }
@@ -281,17 +287,21 @@ void ThreadLocalAllocBuffer::print_stats(const char* tag) {
             _fast_refill_waste * HeapWordSize);
 }
 
-void ThreadLocalAllocBuffer::set_sample_end() {
+void ThreadLocalAllocBuffer::set_sample_end(bool reset_byte_accumulation) {
   size_t heap_words_remaining = pointer_delta(_end, _top);
   size_t bytes_until_sample = thread()->heap_sampler().bytes_until_sample();
   size_t words_until_sample = bytes_until_sample / HeapWordSize;
 
+  if (reset_byte_accumulation) {
+    _bytes_since_last_sample_point = 0;
+  }
+
   if (heap_words_remaining > words_until_sample) {
     HeapWord* new_end = _top + words_until_sample;
     set_end(new_end);
-    _bytes_since_last_sample_point = bytes_until_sample;
+    _bytes_since_last_sample_point += bytes_until_sample;
   } else {
-    _bytes_since_last_sample_point = heap_words_remaining * HeapWordSize;
+    _bytes_since_last_sample_point += heap_words_remaining * HeapWordSize;
   }
 }
 

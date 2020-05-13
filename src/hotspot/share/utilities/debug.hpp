@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@
 extern char* g_assert_poison;
 #define TOUCH_ASSERT_POISON (*g_assert_poison) = 'X';
 void initialize_assert_poison();
+void disarm_assert_poison();
 bool handle_assert_poison_fault(const void* ucVoid, const void* faulting_address);
 #else
 #define TOUCH_ASSERT_POISON
@@ -62,6 +63,9 @@ do {                                                                           \
 
 // For backward compatibility.
 #define assert(p, ...) vmassert(p, __VA_ARGS__)
+
+#define precond(p)   assert(p, "precond")
+#define postcond(p)  assert(p, "postcond")
 
 #ifndef ASSERT
 #define vmassert_status(p, status, msg)
@@ -150,15 +154,8 @@ enum VMErrorType {
 
 // error reporting helper functions
 void report_vm_error(const char* file, int line, const char* error_msg);
-#if !defined(__GNUC__) || defined (__clang_major__) || (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)) || __GNUC__ > 4)
-// ATTRIBUTE_PRINTF works with gcc >= 4.8 and any other compiler.
 void report_vm_error(const char* file, int line, const char* error_msg,
                      const char* detail_fmt, ...) ATTRIBUTE_PRINTF(4, 5);
-#else
-// GCC < 4.8 warns because of empty format string.  Warning can not be switched off selectively.
-void report_vm_error(const char* file, int line, const char* error_msg,
-                     const char* detail_fmt, ...);
-#endif
 void report_vm_status_error(const char* file, int line, const char* error_msg,
                             int status, const char* detail);
 void report_fatal(const char* file, int line, const char* detail_fmt, ...) ATTRIBUTE_PRINTF(3, 4);

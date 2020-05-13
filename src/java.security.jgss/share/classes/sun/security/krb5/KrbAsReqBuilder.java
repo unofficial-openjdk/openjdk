@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,6 +68,7 @@ public final class KrbAsReqBuilder {
     // Common data for AS-REQ fields
     private KDCOptions options;
     private PrincipalName cname;
+    private PrincipalName refCname; // May be changed by referrals
     private PrincipalName sname;
     private KerberosTime from;
     private KerberosTime till;
@@ -100,6 +101,7 @@ public final class KrbAsReqBuilder {
     private void init(PrincipalName cname)
             throws KrbException {
         this.cname = cname;
+        this.refCname = cname;
         state = State.INIT;
     }
 
@@ -262,7 +264,9 @@ public final class KrbAsReqBuilder {
      * @throws KrbException
      * @throws IOException
      */
-    private KrbAsReq build(EncryptionKey key) throws KrbException, IOException {
+    private KrbAsReq build(EncryptionKey key, ReferralsState referralsState)
+            throws KrbException, IOException {
+        PAData[] extraPAs = null;
         int[] eTypes;
         if (password != null) {
             eTypes = EType.getDefaults("default_tkt_enctypes");
@@ -272,15 +276,26 @@ public final class KrbAsReqBuilder {
                     ks);
             for (EncryptionKey k: ks) k.destroy();
         }
+        options = (options == null) ? new KDCOptions() : options;
+        if (referralsState.isEnabled()) {
+            if (referralsState.sendCanonicalize()) {
+                options.set(KDCOptions.CANONICALIZE, true);
+            }
+            extraPAs = new PAData[]{ new PAData(Krb5.PA_REQ_ENC_PA_REP,
+                    new byte[]{}) };
+        } else {
+            options.set(KDCOptions.CANONICALIZE, false);
+        }
         return new KrbAsReq(key,
             options,
-            cname,
+            refCname,
             sname,
             from,
             till,
             rtime,
             eTypes,
-            addresses);
+            addresses,
+            extraPAs);
     }
 
     /**
@@ -318,11 +333,15 @@ public final class KrbAsReqBuilder {
      */
     private KrbAsReqBuilder send() throws KrbException, IOException {
         boolean preAuthFailedOnce = false;
-        KdcComm comm = new KdcComm(cname.getRealmAsString());
+        KdcComm comm = null;
         EncryptionKey pakey = null;
+        ReferralsState referralsState = new ReferralsState(this);
         while (true) {
+            if (referralsState.refreshComm()) {
+                comm = new KdcComm(refCname.getRealmAsString());
+            }
             try {
-                req = build(pakey);
+                req = build(pakey, referralsState);
                 rep = new KrbAsRep(comm.send(req.encoding()));
                 return this;
             } catch (KrbException ke) {
@@ -351,9 +370,117 @@ public final class KrbAsReqBuilder {
                     }
                     paList = kerr.getPA();  // Update current paList
                 } else {
+                    if (referralsState.handleError(ke)) {
+                        pakey = null;
+                        preAuthFailedOnce = false;
+                        continue;
+                    }
                     throw ke;
                 }
             }
+        }
+    }
+
+    static final class ReferralsState {
+        private static boolean canonicalizeConfig;
+        private boolean enabled;
+        private boolean sendCanonicalize;
+        private boolean isEnterpriseCname;
+        private int count;
+        private boolean refreshComm;
+        private KrbAsReqBuilder reqBuilder;
+
+        static {
+            initStatic();
+        }
+
+        // Config may be refreshed while running so the setting
+        // value may need to be updated. See Config::refresh.
+        static void initStatic() {
+            canonicalizeConfig = false;
+            try {
+                canonicalizeConfig = Config.getInstance()
+                        .getBooleanObject("libdefaults", "canonicalize") ==
+                        Boolean.TRUE;
+            } catch (KrbException e) {
+                if (Krb5.DEBUG) {
+                    System.out.println("Exception in getting canonicalize," +
+                            " using default value " +
+                            Boolean.valueOf(canonicalizeConfig) + ": " +
+                            e.getMessage());
+                }
+            }
+        }
+
+        ReferralsState(KrbAsReqBuilder reqBuilder) throws KrbException {
+            this.reqBuilder = reqBuilder;
+            sendCanonicalize = canonicalizeConfig;
+            isEnterpriseCname = reqBuilder.refCname.getNameType() ==
+                    PrincipalName.KRB_NT_ENTERPRISE;
+            updateStatus();
+            if (!enabled && isEnterpriseCname) {
+                throw new KrbException("NT-ENTERPRISE principals only" +
+                        " allowed when referrals are enabled.");
+            }
+            refreshComm = true;
+        }
+
+        private void updateStatus() {
+            enabled = !Config.DISABLE_REFERRALS &&
+                    (isEnterpriseCname || sendCanonicalize);
+        }
+
+        boolean handleError(KrbException ke) throws RealmException {
+            if (enabled) {
+                if (ke.returnCode() == Krb5.KRB_ERR_WRONG_REALM) {
+                    Realm referredRealm = ke.getError().getClientRealm();
+                    if (referredRealm != null &&
+                            !referredRealm.toString().isEmpty() &&
+                            count < Config.MAX_REFERRALS) {
+                        // A valid referral was received while referrals
+                        // were enabled. Change the cname realm to the referred
+                        // realm and set refreshComm to send a new request.
+                        reqBuilder.refCname = new PrincipalName(
+                                reqBuilder.refCname.getNameType(),
+                                reqBuilder.refCname.getNameStrings(),
+                                referredRealm);
+                        refreshComm = true;
+                        count++;
+                        return true;
+                    }
+                }
+                if (count < Config.MAX_REFERRALS && sendCanonicalize) {
+                    if (Krb5.DEBUG) {
+                        System.out.println("KrbAsReqBuilder: AS-REQ failed." +
+                                " Retrying with CANONICALIZE false.");
+                    }
+
+                    // Server returned an unexpected error with
+                    // CANONICALIZE true. Retry with false.
+                    sendCanonicalize = false;
+
+                    // Setting CANONICALIZE to false may imply that referrals
+                    // are now disabled (if cname is not of NT-ENTERPRISE type).
+                    updateStatus();
+
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        boolean refreshComm() {
+            boolean retRefreshComm = refreshComm;
+            refreshComm = false;
+            return retRefreshComm;
+        }
+
+        boolean isEnabled() {
+            return enabled;
+        }
+
+        boolean sendCanonicalize() {
+            return sendCanonicalize;
         }
     }
 

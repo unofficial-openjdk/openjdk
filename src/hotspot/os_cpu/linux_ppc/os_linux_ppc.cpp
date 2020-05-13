@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2018 SAP SE. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -130,6 +130,10 @@ intptr_t* os::Linux::ucontext_get_sp(const ucontext_t * uc) {
 
 intptr_t* os::Linux::ucontext_get_fp(const ucontext_t * uc) {
   return NULL;
+}
+
+static unsigned long ucontext_get_trap(const ucontext_t * uc) {
+  return uc->uc_mcontext.regs->trap;
 }
 
 ExtendedPC os::fetch_frame_from_context(const void* ucVoid,
@@ -267,8 +271,9 @@ JVM_handle_linux_signal(int sig,
 
 #ifdef CAN_SHOW_REGISTERS_ON_ASSERT
   if ((sig == SIGSEGV || sig == SIGBUS) && info != NULL && info->si_addr == g_assert_poison) {
-    handle_assert_poison_fault(ucVoid, info->si_addr);
-    return 1;
+    if (handle_assert_poison_fault(ucVoid, info->si_addr)) {
+      return 1;
+    }
   }
 #endif
 
@@ -298,18 +303,30 @@ JVM_handle_linux_signal(int sig,
   address stub = NULL;
   address pc   = NULL;
 
-  //%note os_trap_1
   if (info != NULL && uc != NULL && thread != NULL) {
     pc = (address) os::Linux::ucontext_get_pc(uc);
 
     // Handle ALL stack overflow variations here
     if (sig == SIGSEGV) {
-      // Si_addr may not be valid due to a bug in the linux-ppc64 kernel (see
+      // si_addr may not be valid due to a bug in the linux-ppc64 kernel (see
       // comment below). Use get_stack_bang_address instead of si_addr.
-      address addr = ((NativeInstruction*)pc)->get_stack_bang_address(uc);
+      // If SIGSEGV is caused due to a branch to an invalid address an
+      // "Instruction Storage Interrupt" is generated and 'pc' (NIP) already
+      // contains the invalid address. Otherwise, the SIGSEGV is caused due to
+      // load/store instruction trying to load/store from/to an invalid address
+      // and causing a "Data Storage Interrupt", so we inspect the intruction
+      // in order to extract the faulty data addresss.
+      address addr;
+      if ((ucontext_get_trap(uc) & 0x0F00 /* no IRQ reply bits */) == 0x0400) {
+        // Instruction Storage Interrupt (ISI)
+        addr = pc;
+      } else {
+        // Data Storage Interrupt (DSI), i.e. 0x0300: extract faulty data address
+        addr = ((NativeInstruction*)pc)->get_stack_bang_address(uc);
+      }
 
       // Check if fault address is within thread stack.
-      if (thread->on_local_stack(addr)) {
+      if (thread->is_in_full_stack(addr)) {
         // stack overflow
         if (thread->in_stack_yellow_reserved_zone(addr)) {
           if (thread->thread_state() == _thread_in_Java) {
@@ -393,7 +410,7 @@ JVM_handle_linux_signal(int sig,
         stub = SharedRuntime::get_handle_wrong_method_stub();
       }
 
-      else if (sig == ((SafepointMechanism::uses_thread_local_poll() && USE_POLL_BIT_ONLY) ? SIGTRAP : SIGSEGV) &&
+      else if ((sig == USE_POLL_BIT_ONLY ? SIGTRAP : SIGSEGV) &&
                // A linux-ppc64 kernel before 2.6.6 doesn't set si_addr on some segfaults
                // in 64bit mode (cf. http://www.kernel.org/pub/linux/kernel/v2.6/ChangeLog-2.6.6),
                // especially when we try to read from the safepoint polling page. So the check
@@ -405,7 +422,7 @@ JVM_handle_linux_signal(int sig,
                cb->is_compiled()) {
         if (TraceTraps) {
           tty->print_cr("trap: safepoint_poll at " INTPTR_FORMAT " (%s)", p2i(pc),
-                        (SafepointMechanism::uses_thread_local_poll() && USE_POLL_BIT_ONLY) ? "SIGTRAP" : "SIGSEGV");
+                        USE_POLL_BIT_ONLY ? "SIGTRAP" : "SIGSEGV");
         }
         stub = SharedRuntime::get_poll_stub(pc);
       }
@@ -453,8 +470,12 @@ JVM_handle_linux_signal(int sig,
         // underlying file has been truncated. Do not crash the VM in such a case.
         CodeBlob* cb = CodeCache::find_blob_unsafe(pc);
         CompiledMethod* nm = (cb != NULL) ? cb->as_compiled_method_or_null() : NULL;
-        if (nm != NULL && nm->has_unsafe_access()) {
+        bool is_unsafe_arraycopy = (thread->doing_unsafe_access() && UnsafeCopyMemory::contains_pc(pc));
+        if ((nm != NULL && nm->has_unsafe_access()) || is_unsafe_arraycopy) {
           address next_pc = pc + 4;
+          if (is_unsafe_arraycopy) {
+            next_pc = UnsafeCopyMemory::page_error_continue_pc(pc);
+          }
           next_pc = SharedRuntime::handle_unsafe_access(thread, next_pc);
           os::Linux::ucontext_set_pc(uc, next_pc);
           return true;
@@ -469,12 +490,25 @@ JVM_handle_linux_signal(int sig,
                         // flushing of icache is not necessary.
         stub = pc + 4;  // continue with next instruction.
       }
-      else if (thread->thread_state() == _thread_in_vm &&
+      else if ((thread->thread_state() == _thread_in_vm ||
+                thread->thread_state() == _thread_in_native) &&
                sig == SIGBUS && thread->doing_unsafe_access()) {
         address next_pc = pc + 4;
+        if (UnsafeCopyMemory::contains_pc(pc)) {
+          next_pc = UnsafeCopyMemory::page_error_continue_pc(pc);
+        }
         next_pc = SharedRuntime::handle_unsafe_access(thread, next_pc);
-        os::Linux::ucontext_set_pc(uc, pc + 4);
+        os::Linux::ucontext_set_pc(uc, next_pc);
         return true;
+      }
+    }
+
+    // jni_fast_Get<Primitive>Field can trap at certain pc's if a GC kicks in
+    // and the heap gets shrunk before the field access.
+    if ((sig == SIGSEGV) || (sig == SIGBUS)) {
+      address addr = JNI_FastGetField::find_slowcase_pc(pc);
+      if (addr != (address)-1) {
+        stub = addr;
       }
     }
   }

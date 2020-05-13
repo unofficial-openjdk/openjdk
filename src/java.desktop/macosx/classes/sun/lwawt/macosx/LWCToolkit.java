@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 package sun.lwawt.macosx;
 
 import java.awt.AWTError;
+import java.awt.AWTException;
 import java.awt.CheckboxMenuItem;
 import java.awt.Color;
 import java.awt.Component;
@@ -49,7 +50,6 @@ import java.awt.MenuItem;
 import java.awt.Point;
 import java.awt.PopupMenu;
 import java.awt.RenderingHints;
-import java.awt.Robot;
 import java.awt.SystemTray;
 import java.awt.Taskbar;
 import java.awt.Toolkit;
@@ -102,11 +102,12 @@ import javax.swing.UIManager;
 import com.apple.laf.AquaMenuBarUI;
 import sun.awt.AWTAccessor;
 import sun.awt.AppContext;
-import sun.awt.CGraphicsConfig;
 import sun.awt.CGraphicsDevice;
 import sun.awt.LightweightFrame;
+import sun.awt.PlatformGraphicsInfo;
 import sun.awt.SunToolkit;
 import sun.awt.datatransfer.DataTransferer;
+import sun.awt.dnd.SunDragSourceContextPeer;
 import sun.awt.util.ThreadGroupUtils;
 import sun.java2d.opengl.OGLRenderQueue;
 import sun.lwawt.LWComponentPeer;
@@ -118,7 +119,6 @@ import sun.lwawt.PlatformComponent;
 import sun.lwawt.PlatformDropTarget;
 import sun.lwawt.PlatformWindow;
 import sun.lwawt.SecurityWarningWindow;
-import sun.security.action.GetBooleanAction;
 
 @SuppressWarnings("serial") // JDK implementation class
 final class NamedCursor extends Cursor {
@@ -163,7 +163,9 @@ public final class LWCToolkit extends LWToolkit {
             }
         });
 
-        if (!GraphicsEnvironment.isHeadless() && !isInAquaSession()) {
+        if (!GraphicsEnvironment.isHeadless() &&
+            !PlatformGraphicsInfo.isInAquaSession())
+        {
             throw new AWTError("WindowServer is not available");
         }
 
@@ -187,10 +189,16 @@ public final class LWCToolkit extends LWToolkit {
     private static final boolean inAWT;
 
     public LWCToolkit() {
-        areExtraMouseButtonsEnabled = Boolean.parseBoolean(System.getProperty("sun.awt.enableExtraMouseButtons", "true"));
-        //set system property if not yet assigned
-        System.setProperty("sun.awt.enableExtraMouseButtons", ""+areExtraMouseButtonsEnabled);
-        initAppkit(ThreadGroupUtils.getRootThreadGroup(), GraphicsEnvironment.isHeadless());
+        final String extraButtons = "sun.awt.enableExtraMouseButtons";
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            areExtraMouseButtonsEnabled =
+                 Boolean.parseBoolean(System.getProperty(extraButtons, "true"));
+            //set system property if not yet assigned
+            System.setProperty(extraButtons, ""+areExtraMouseButtonsEnabled);
+            initAppkit(ThreadGroupUtils.getRootThreadGroup(),
+                       GraphicsEnvironment.isHeadless());
+            return null;
+        });
     }
 
     /*
@@ -435,6 +443,7 @@ public final class LWCToolkit extends LWToolkit {
         fontHints.put(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
         desktopProperties.put(SunToolkit.DESKTOPFONTHINTS, fontHints);
         desktopProperties.put("awt.mouse.numButtons", BUTTONS);
+        desktopProperties.put("awt.multiClickInterval", getMultiClickTime());
 
         // These DnD properties must be set, otherwise Swing ends up spewing NPEs
         // all over the place. The values came straight off of MToolkit.
@@ -455,6 +464,13 @@ public final class LWCToolkit extends LWToolkit {
 
     @Override
     protected boolean syncNativeQueue(long timeout) {
+        if (SunDragSourceContextPeer.isDragDropInProgress()
+                || EventQueue.isDispatchThread()) {
+            // The java code started the DnD, but the native drag may still not
+            // start, the last attempt to flush the native events,
+            // also do not block EDT for a long time
+            timeout = 50;
+        }
         return nativeSyncQueue(timeout);
     }
 
@@ -470,7 +486,11 @@ public final class LWCToolkit extends LWToolkit {
 
     @Override
     public Insets getScreenInsets(final GraphicsConfiguration gc) {
-        return ((CGraphicsConfig) gc).getDevice().getScreenInsets();
+        GraphicsDevice gd = gc.getDevice();
+        if (!(gd instanceof CGraphicsDevice)) {
+            return super.getScreenInsets(gc);
+        }
+        return ((CGraphicsDevice)gd).getScreenInsets();
     }
 
     @Override
@@ -483,8 +503,11 @@ public final class LWCToolkit extends LWToolkit {
     }
 
     @Override
-    public RobotPeer createRobot(Robot target, GraphicsDevice screen) {
-        return new CRobot(target, (CGraphicsDevice)screen);
+    public RobotPeer createRobot(GraphicsDevice screen) throws AWTException {
+        if (screen instanceof CGraphicsDevice) {
+            return new CRobot((CGraphicsDevice) screen);
+        }
+        return super.createRobot(screen);
     }
 
     private native boolean isCapsLockOn();
@@ -528,6 +551,11 @@ public final class LWCToolkit extends LWToolkit {
     public int getNumberOfButtons(){
         return BUTTONS;
     }
+
+    /**
+     * Returns the double-click time interval in ms.
+     */
+    private static native int getMultiClickTime();
 
     @Override
     public boolean isTraySupported() {
@@ -788,6 +816,23 @@ public final class LWCToolkit extends LWToolkit {
         return locale;
     }
 
+    public static boolean isLocaleUSInternationalPC(Locale locale) {
+        return (locale != null ?
+            locale.toString().equals("_US_UserDefined_15000") : false);
+    }
+
+    public static boolean isCharModifierKeyInUSInternationalPC(char ch) {
+        // 5 characters: APOSTROPHE, QUOTATION MARK, ACCENT GRAVE, SMALL TILDE,
+        // CIRCUMFLEX ACCENT
+        final char[] modifierKeys = {'\'', '"', '`', '\u02DC', '\u02C6'};
+        for (char modKey : modifierKeys) {
+            if (modKey == ch) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public InputMethodDescriptor getInputMethodAdapterDescriptor() {
         if (sInputMethodDescriptor == null)
@@ -838,20 +883,6 @@ public final class LWCToolkit extends LWToolkit {
         return false;
     }
 
-    private static Boolean sunAwtDisableCALayers = null;
-
-    /**
-     * Returns the value of "sun.awt.disableCALayers" property. Default
-     * value is {@code false}.
-     */
-    public static synchronized boolean getSunAwtDisableCALayers() {
-        if (sunAwtDisableCALayers == null) {
-            sunAwtDisableCALayers = AccessController.doPrivileged(
-                new GetBooleanAction("sun.awt.disableCALayers"));
-        }
-        return sunAwtDisableCALayers;
-    }
-
     /*
      * Returns true if the application (one of its windows) owns keyboard focus.
      */
@@ -863,13 +894,6 @@ public final class LWCToolkit extends LWToolkit {
      * @return true if AWT toolkit is embedded, false otherwise
      */
     public static native boolean isEmbedded();
-
-    /**
-     * Returns true if the WindowServer is available, false otherwise.
-     *
-     * @return true if the WindowServer is available, false otherwise
-     */
-    private static native boolean isInAquaSession();
 
     /*
      * Activates application ignoring other apps.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
  * @test
  * @bug 4636667 7052425 8016549 8196202
  * @summary  Use <H1, <H2>, and <H3> in proper sequence for accessibility
- * @author dkramer
  * @library ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build javadoc.tester.*
@@ -46,7 +45,6 @@ public class AccessH1 extends JavadocTester {
     public void test() {
         javadoc("-d", "out",
                 "-doctitle", "Document Title",
-                "--frames",
                 "-sourcepath", testSrc,
                 "p1", "p2");
         checkExit(Exit.OK);
@@ -58,7 +56,8 @@ public class AccessH1 extends JavadocTester {
                 + "}");
 
         // Test the doc title in the overview page
-        checkOutput("overview-summary.html", true,
-                "<h1 class=\"title\">Document Title</h1>");
+        checkOutput("index.html", true,
+                """
+                    <h1 class="title">Document Title</h1>""");
     }
 }

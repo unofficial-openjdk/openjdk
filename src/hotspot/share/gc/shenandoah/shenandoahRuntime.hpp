@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -32,14 +33,17 @@ class oopDesc;
 
 class ShenandoahRuntime : public AllStatic {
 public:
-  static void write_ref_array_pre_oop_entry(oop* dst, size_t length);
-  static void write_ref_array_pre_narrow_oop_entry(narrowOop* dst, size_t length);
-  static void write_ref_array_post_entry(HeapWord* dst, size_t length);
+  static void arraycopy_barrier_oop_entry(oop* src, oop* dst, size_t length);
+  static void arraycopy_barrier_narrow_oop_entry(narrowOop* src, narrowOop* dst, size_t length);
+
   static void write_ref_field_pre_entry(oopDesc* orig, JavaThread* thread);
 
-  static oopDesc* write_barrier_JRT(oopDesc* src);
+  static oopDesc* load_reference_barrier(oopDesc* src, oop* load_addr);
+  static oopDesc* load_reference_barrier_narrow(oopDesc* src, narrowOop* load_addr);
 
-  static void shenandoah_clone_barrier(oopDesc* obj);
+  static oopDesc* load_reference_barrier_native(oopDesc* src, oop* load_addr);
+
+  static void shenandoah_clone_barrier(oopDesc* src);
 };
 
 #endif // SHARE_GC_SHENANDOAH_SHENANDOAHRUNTIME_HPP

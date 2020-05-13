@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,30 +51,19 @@ CardTable::CardTable(MemRegion whole_heap, bool conc_scan) :
   _byte_map(NULL),
   _byte_map_base(NULL),
   _cur_covered_regions(0),
-  _covered(NULL),
-  _committed(NULL),
+  _covered(MemRegion::create_array(_max_covered_regions, mtGC)),
+  _committed(MemRegion::create_array(_max_covered_regions, mtGC)),
   _guard_region()
 {
   assert((uintptr_t(_whole_heap.start())  & (card_size - 1))  == 0, "heap must start at card boundary");
   assert((uintptr_t(_whole_heap.end()) & (card_size - 1))  == 0, "heap must end at card boundary");
 
   assert(card_size <= 512, "card_size must be less than 512"); // why?
-
-  _covered   = new MemRegion[_max_covered_regions];
-  if (_covered == NULL) {
-    vm_exit_during_initialization("Could not allocate card table covered region set.");
-  }
 }
 
 CardTable::~CardTable() {
-  if (_covered) {
-    delete[] _covered;
-    _covered = NULL;
-  }
-  if (_committed) {
-    delete[] _committed;
-    _committed = NULL;
-  }
+  MemRegion::destroy_array(_covered, _max_covered_regions);
+  MemRegion::destroy_array(_committed, _max_covered_regions);
 }
 
 void CardTable::initialize() {
@@ -87,10 +76,6 @@ void CardTable::initialize() {
   HeapWord* high_bound = _whole_heap.end();
 
   _cur_covered_regions = 0;
-  _committed = new MemRegion[_max_covered_regions];
-  if (_committed == NULL) {
-    vm_exit_during_initialization("Could not allocate card table committed region set.");
-  }
 
   const size_t rs_align = _page_size == (size_t) os::vm_page_size() ? 0 :
     MAX2(_page_size, (size_t) os::vm_allocation_granularity());
@@ -109,12 +94,12 @@ void CardTable::initialize() {
   // then add it to _byte_map_base, i.e.
   //
   //   _byte_map = _byte_map_base + (uintptr_t(low_bound) >> card_shift)
-  _byte_map = (jbyte*) heap_rs.base();
+  _byte_map = (CardValue*) heap_rs.base();
   _byte_map_base = _byte_map - (uintptr_t(low_bound) >> card_shift);
   assert(byte_for(low_bound) == &_byte_map[0], "Checking start of map");
   assert(byte_for(high_bound-1) <= &_byte_map[_last_valid_index], "Checking end of map");
 
-  jbyte* guard_card = &_byte_map[_guard_index];
+  CardValue* guard_card = &_byte_map[_guard_index];
   HeapWord* guard_page = align_down((HeapWord*)guard_card, _page_size);
   _guard_region = MemRegion(guard_page, _page_size);
   os::commit_memory_or_exit((char*)guard_page, _page_size, _page_size,
@@ -145,7 +130,7 @@ int CardTable::find_covering_region_by_base(HeapWord* base) {
   _cur_covered_regions++;
   _covered[res].set_start(base);
   _covered[res].set_word_size(0);
-  jbyte* ct_start = byte_for(base);
+  CardValue* ct_start = byte_for(base);
   HeapWord* ct_start_aligned = align_down((HeapWord*)ct_start, _page_size);
   _committed[res].set_start(ct_start_aligned);
   _committed[res].set_word_size(0);
@@ -268,19 +253,12 @@ void CardTable::resize_covered_region(MemRegion new_region) {
         committed_unique_to_self(ind, MemRegion(new_end_aligned,
                                                 cur_committed.end()));
       if (!uncommit_region.is_empty()) {
-        // It is not safe to uncommit cards if the boundary between
-        // the generations is moving.  A shrink can uncommit cards
-        // owned by generation A but being used by generation B.
-        if (!UseAdaptiveGCBoundary) {
-          if (!os::uncommit_memory((char*)uncommit_region.start(),
-                                   uncommit_region.byte_size())) {
-            assert(false, "Card table contraction failed");
-            // The call failed so don't change the end of the
-            // committed region.  This is better than taking the
-            // VM down.
-            new_end_aligned = _committed[ind].end();
-          }
-        } else {
+        if (!os::uncommit_memory((char*)uncommit_region.start(),
+                                 uncommit_region.byte_size())) {
+          assert(false, "Card table contraction failed");
+          // The call failed so don't change the end of the
+          // committed region.  This is better than taking the
+          // VM down.
           new_end_aligned = _committed[ind].end();
         }
       }
@@ -302,7 +280,7 @@ void CardTable::resize_covered_region(MemRegion new_region) {
 #endif
 
     // The default of 0 is not necessarily clean cards.
-    jbyte* entry;
+    CardValue* entry;
     if (old_region.last() < _whole_heap.start()) {
       entry = byte_for(_whole_heap.start());
     } else {
@@ -312,8 +290,8 @@ void CardTable::resize_covered_region(MemRegion new_region) {
       "The guard card will be overwritten");
     // This line commented out cleans the newly expanded region and
     // not the aligned up expanded region.
-    // jbyte* const end = byte_after(new_region.last());
-    jbyte* const end = (jbyte*) new_end_for_commit;
+    // CardValue* const end = byte_after(new_region.last());
+    CardValue* const end = (CardValue*) new_end_for_commit;
     assert((end >= byte_after(new_region.last())) || collided || guarded,
       "Expect to be beyond new region unless impacting another region");
     // do nothing if we resized downward.
@@ -330,7 +308,7 @@ void CardTable::resize_covered_region(MemRegion new_region) {
     }
 #endif
     if (entry < end) {
-      memset(entry, clean_card, pointer_delta(end, entry, sizeof(jbyte)));
+      memset(entry, clean_card, pointer_delta(end, entry, sizeof(CardValue)));
     }
   }
   // In any case, the covered size changes.
@@ -344,7 +322,7 @@ void CardTable::resize_covered_region(MemRegion new_region) {
   log_trace(gc, barrier)("    byte_for(start): " INTPTR_FORMAT "  byte_for(last): " INTPTR_FORMAT,
                          p2i(byte_for(_covered[ind].start())),  p2i(byte_for(_covered[ind].last())));
   log_trace(gc, barrier)("    addr_for(start): " INTPTR_FORMAT "  addr_for(last): " INTPTR_FORMAT,
-                         p2i(addr_for((jbyte*) _committed[ind].start())),  p2i(addr_for((jbyte*) _committed[ind].last())));
+                         p2i(addr_for((CardValue*) _committed[ind].start())),  p2i(addr_for((CardValue*) _committed[ind].last())));
 
   // Touch the last card of the covered region to show that it
   // is committed (or SEGV).
@@ -357,8 +335,8 @@ void CardTable::resize_covered_region(MemRegion new_region) {
 void CardTable::dirty_MemRegion(MemRegion mr) {
   assert(align_down(mr.start(), HeapWordSize) == mr.start(), "Unaligned start");
   assert(align_up  (mr.end(),   HeapWordSize) == mr.end(),   "Unaligned end"  );
-  jbyte* cur  = byte_for(mr.start());
-  jbyte* last = byte_after(mr.last());
+  CardValue* cur  = byte_for(mr.start());
+  CardValue* last = byte_after(mr.last());
   while (cur < last) {
     *cur = dirty_card;
     cur++;
@@ -368,15 +346,15 @@ void CardTable::dirty_MemRegion(MemRegion mr) {
 void CardTable::clear_MemRegion(MemRegion mr) {
   // Be conservative: only clean cards entirely contained within the
   // region.
-  jbyte* cur;
+  CardValue* cur;
   if (mr.start() == _whole_heap.start()) {
     cur = byte_for(mr.start());
   } else {
     assert(mr.start() > _whole_heap.start(), "mr is not covered.");
     cur = byte_after(mr.start() - 1);
   }
-  jbyte* last = byte_after(mr.last());
-  memset(cur, clean_card, pointer_delta(last, cur, sizeof(jbyte)));
+  CardValue* last = byte_after(mr.last());
+  memset(cur, clean_card, pointer_delta(last, cur, sizeof(CardValue)));
 }
 
 void CardTable::clear(MemRegion mr) {
@@ -387,8 +365,8 @@ void CardTable::clear(MemRegion mr) {
 }
 
 void CardTable::dirty(MemRegion mr) {
-  jbyte* first = byte_for(mr.start());
-  jbyte* last  = byte_after(mr.last());
+  CardValue* first = byte_for(mr.start());
+  CardValue* last  = byte_after(mr.last());
   memset(first, dirty_card, last-first);
 }
 
@@ -398,7 +376,7 @@ void CardTable::dirty_card_iterate(MemRegion mr, MemRegionClosure* cl) {
   for (int i = 0; i < _cur_covered_regions; i++) {
     MemRegion mri = mr.intersection(_covered[i]);
     if (!mri.is_empty()) {
-      jbyte *cur_entry, *next_entry, *limit;
+      CardValue *cur_entry, *next_entry, *limit;
       for (cur_entry = byte_for(mri.start()), limit = byte_for(mri.last());
            cur_entry <= limit;
            cur_entry  = next_entry) {
@@ -424,7 +402,7 @@ MemRegion CardTable::dirty_card_range_after_reset(MemRegion mr,
   for (int i = 0; i < _cur_covered_regions; i++) {
     MemRegion mri = mr.intersection(_covered[i]);
     if (!mri.is_empty()) {
-      jbyte* cur_entry, *next_entry, *limit;
+      CardValue* cur_entry, *next_entry, *limit;
       for (cur_entry = byte_for(mri.start()), limit = byte_for(mri.last());
            cur_entry <= limit;
            cur_entry  = next_entry) {
@@ -474,13 +452,12 @@ void CardTable::verify() {
 }
 
 #ifndef PRODUCT
-void CardTable::verify_region(MemRegion mr,
-                                      jbyte val, bool val_equals) {
-  jbyte* start    = byte_for(mr.start());
-  jbyte* end      = byte_for(mr.last());
+void CardTable::verify_region(MemRegion mr, CardValue val, bool val_equals) {
+  CardValue* start    = byte_for(mr.start());
+  CardValue* end      = byte_for(mr.last());
   bool failures = false;
-  for (jbyte* curr = start; curr <= end; ++curr) {
-    jbyte curr_val = *curr;
+  for (CardValue* curr = start; curr <= end; ++curr) {
+    CardValue curr_val = *curr;
     bool failed = (val_equals) ? (curr_val != val) : (curr_val == val);
     if (failed) {
       if (!failures) {

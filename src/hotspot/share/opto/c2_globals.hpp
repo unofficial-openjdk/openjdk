@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 #ifndef SHARE_OPTO_C2_GLOBALS_HPP
 #define SHARE_OPTO_C2_GLOBALS_HPP
 
-#include "runtime/globals.hpp"
+#include "runtime/globals_shared.hpp"
 #include "utilities/macros.hpp"
 
 #include CPU_HEADER(c2_globals)
@@ -44,8 +44,7 @@
                  experimental, \
                  notproduct, \
                  range, \
-                 constraint, \
-                 writeable) \
+                 constraint) \
                                                                             \
   diagnostic(bool, StressLCM, false,                                        \
           "Randomize instruction scheduling in LCM")                        \
@@ -106,9 +105,6 @@
                                                                             \
   notproduct(bool, PrintOptoInlining, false,                                \
           "Print compiler2 inlining decisions")                             \
-                                                                            \
-  notproduct(bool, VerifyOpto, false,                                       \
-          "Apply more time consuming verification during compilation")      \
                                                                             \
   notproduct(bool, VerifyIdealNodeCount, false,                             \
           "Verify that tracked dead ideal node count is accurate")          \
@@ -189,6 +185,9 @@
                                                                             \
   notproduct(bool, TraceSuperWordLoopUnrollAnalysis, false,                 \
           "Trace what Superword Level Parallelism analysis applies")        \
+                                                                            \
+  diagnostic(bool, UseVectorMacroLogic, true,                               \
+          "Use ternary macro logic instructions")                           \
                                                                             \
   product(intx,  LoopUnrollMin, 4,                                          \
           "Minimum number of unroll loop bodies before checking progress"   \
@@ -513,7 +512,7 @@
           "Sets max value cached by the java.lang.Integer autobox cache")   \
           range(0, max_jint)                                                \
                                                                             \
-  experimental(bool, AggressiveUnboxing, true,                              \
+  diagnostic(bool, AggressiveUnboxing, true,                                \
           "Control optimizations for aggressive boxing elimination")        \
                                                                             \
   develop(bool, TracePostallocExpand, false, "Trace expanding nodes after"  \
@@ -614,12 +613,6 @@
                                                                             \
   develop(bool, ConvertFloat2IntClipping, true,                             \
           "Convert float2int clipping idiom to integer clipping")           \
-                                                                            \
-  develop(bool, Use24BitFPMode, true,                                       \
-          "Set 24-bit FPU mode on a per-compile basis ")                    \
-                                                                            \
-  develop(bool, Use24BitFP, true,                                           \
-          "use FP instructions that produce 24-bit precise results")        \
                                                                             \
   develop(bool, MonomorphicArrayCheck, true,                                \
           "Uncommon-trap array store checks that require full type check")  \
@@ -756,18 +749,9 @@
           range(0, max_juint)                                               \
                                                                             \
   product(bool, UseProfiledLoopPredicate, true,                             \
-          "move predicates out of loops based on profiling data")           \
-
-C2_FLAGS(DECLARE_DEVELOPER_FLAG, \
-         DECLARE_PD_DEVELOPER_FLAG, \
-         DECLARE_PRODUCT_FLAG, \
-         DECLARE_PD_PRODUCT_FLAG, \
-         DECLARE_DIAGNOSTIC_FLAG, \
-         DECLARE_PD_DIAGNOSTIC_FLAG, \
-         DECLARE_EXPERIMENTAL_FLAG, \
-         DECLARE_NOTPRODUCT_FLAG, \
-         IGNORE_RANGE, \
-         IGNORE_CONSTRAINT, \
-         IGNORE_WRITEABLE)
+          "Move predicates out of loops based on profiling data")           \
+                                                                            \
+  diagnostic(bool, ExpandSubTypeCheckAtParseTime, false,                    \
+          "Do not use subtype check macro node")                            \
 
 #endif // SHARE_OPTO_C2_GLOBALS_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,9 +32,12 @@
 #include "logging/log.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/compiledICHolder.hpp"
+#include "oops/klass.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "runtime/safepointMechanism.hpp"
 #include "runtime/vframeArray.hpp"
 #include "utilities/align.hpp"
+#include "utilities/powerOfTwo.hpp"
 #include "vmreg_arm.inline.hpp"
 #ifdef COMPILER1
 #include "c1/c1_Runtime1.hpp"
@@ -131,14 +134,14 @@ OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm,
   __ push(SAVED_BASE_REGS);
   if (HaveVFP) {
     if (VM_Version::has_vfp3_32()) {
-      __ fstmdbd(SP, FloatRegisterSet(D16, 16), writeback);
+      __ fpush(FloatRegisterSet(D16, 16));
     } else {
       if (FloatRegisterImpl::number_of_registers > 32) {
         assert(FloatRegisterImpl::number_of_registers == 64, "nb fp registers should be 64");
         __ sub(SP, SP, 32 * wordSize);
       }
     }
-    __ fstmdbd(SP, FloatRegisterSet(D0, 16), writeback);
+    __ fpush(FloatRegisterSet(D0, 16));
   } else {
     __ sub(SP, SP, fpu_save_size * wordSize);
   }
@@ -172,9 +175,9 @@ OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm,
 
 void RegisterSaver::restore_live_registers(MacroAssembler* masm, bool restore_lr) {
   if (HaveVFP) {
-    __ fldmiad(SP, FloatRegisterSet(D0, 16), writeback);
+    __ fpop(FloatRegisterSet(D0, 16));
     if (VM_Version::has_vfp3_32()) {
-      __ fldmiad(SP, FloatRegisterSet(D16, 16), writeback);
+      __ fpop(FloatRegisterSet(D16, 16));
     } else {
       if (FloatRegisterImpl::number_of_registers > 32) {
         assert(FloatRegisterImpl::number_of_registers == 64, "nb fp registers should be 64");
@@ -219,26 +222,21 @@ static void push_param_registers(MacroAssembler* masm, int fp_regs_in_arguments)
   // R1-R3 arguments need to be saved, but we push 4 registers for 8-byte alignment
   __ push(RegisterSet(R0, R3));
 
-#ifdef __ABI_HARD__
   // preserve arguments
   // Likely not needed as the locking code won't probably modify volatile FP registers,
   // but there is no way to guarantee that
   if (fp_regs_in_arguments) {
     // convert fp_regs_in_arguments to a number of double registers
     int double_regs_num = (fp_regs_in_arguments + 1) >> 1;
-    __ fstmdbd(SP, FloatRegisterSet(D0, double_regs_num), writeback);
+    __ fpush_hardfp(FloatRegisterSet(D0, double_regs_num));
   }
-#endif // __ ABI_HARD__
 }
 
 static void pop_param_registers(MacroAssembler* masm, int fp_regs_in_arguments) {
-#ifdef __ABI_HARD__
   if (fp_regs_in_arguments) {
     int double_regs_num = (fp_regs_in_arguments + 1) >> 1;
-    __ fldmiad(SP, FloatRegisterSet(D0, double_regs_num), writeback);
+    __ fpop_hardfp(FloatRegisterSet(D0, double_regs_num));
   }
-#endif // __ABI_HARD__
-
   __ pop(RegisterSet(R0, R3));
 }
 
@@ -460,11 +458,13 @@ static void patch_callers_callsite(MacroAssembler *masm) {
   // Pushing an even number of registers for stack alignment.
   // Selecting R9, which had to be saved anyway for some platforms.
   __ push(RegisterSet(R0, R3) | R9 | LR);
+  __ fpush_hardfp(FloatRegisterSet(D0, 8));
 
   __ mov(R0, Rmethod);
   __ mov(R1, LR);
   __ call(CAST_FROM_FN_PTR(address, SharedRuntime::fixup_callers_callsite));
 
+  __ fpop_hardfp(FloatRegisterSet(D0, 8));
   __ pop(RegisterSet(R0, R3) | R9 | LR);
 
   __ bind(skip);
@@ -752,7 +752,8 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                                 int compile_id,
                                                 BasicType* in_sig_bt,
                                                 VMRegPair* in_regs,
-                                                BasicType ret_type) {
+                                                BasicType ret_type,
+                                                address critical_entry) {
   if (method->is_method_handle_intrinsic()) {
     vmIntrinsics::ID iid = method->intrinsic_id();
     intptr_t start = (intptr_t)__ pc();
@@ -860,16 +861,16 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
 
     __ ldr(Rtemp, Address(obj_reg, oopDesc::mark_offset_in_bytes()));
 
-    assert(markOopDesc::unlocked_value == 1, "adjust this code");
-    __ tbz(Rtemp, exact_log2(markOopDesc::unlocked_value), slow_case);
+    assert(markWord::unlocked_value == 1, "adjust this code");
+    __ tbz(Rtemp, exact_log2(markWord::unlocked_value), slow_case);
 
     if (UseBiasedLocking) {
-      assert(is_power_of_2(markOopDesc::biased_lock_bit_in_place), "adjust this code");
-      __ tbnz(Rtemp, exact_log2(markOopDesc::biased_lock_bit_in_place), slow_case);
+      assert(is_power_of_2(markWord::biased_lock_bit_in_place), "adjust this code");
+      __ tbnz(Rtemp, exact_log2(markWord::biased_lock_bit_in_place), slow_case);
     }
 
-    __ bics(Rtemp, Rtemp, ~markOopDesc::hash_mask_in_place);
-    __ mov(R0, AsmOperand(Rtemp, lsr, markOopDesc::hash_shift), ne);
+    __ bics(Rtemp, Rtemp, ~markWord::hash_mask_in_place);
+    __ mov(R0, AsmOperand(Rtemp, lsr, markWord::hash_shift), ne);
     __ bx(LR, ne);
 
     __ bind(slow_case);
@@ -1171,7 +1172,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
 
     __ ldr(mark, Address(sync_obj, oopDesc::mark_offset_in_bytes()));
     __ sub(disp_hdr, FP, lock_slot_fp_offset);
-    __ tst(mark, markOopDesc::unlocked_value);
+    __ tst(mark, markWord::unlocked_value);
     __ b(fast_lock, ne);
 
     // Check for recursive lock
@@ -1217,20 +1218,18 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   }
 
   // Do a safepoint check while thread is in transition state
-  InlinedAddress safepoint_state(SafepointSynchronize::address_of_state());
   Label call_safepoint_runtime, return_to_java;
   __ mov(Rtemp, _thread_in_native_trans);
-  __ ldr_literal(R2, safepoint_state);
   __ str_32(Rtemp, Address(Rthread, JavaThread::thread_state_offset()));
 
   // make sure the store is observed before reading the SafepointSynchronize state and further mem refs
   __ membar(MacroAssembler::Membar_mask_bits(MacroAssembler::StoreLoad | MacroAssembler::StoreStore), Rtemp);
 
-  __ ldr_s32(R2, Address(R2));
+  __ safepoint_poll(R2, call_safepoint_runtime);
   __ ldr_u32(R3, Address(Rthread, JavaThread::suspend_flags_offset()));
-  __ cmp(R2, SafepointSynchronize::_not_synchronized);
-  __ cond_cmp(R3, 0, eq);
+  __ cmp(R3, 0);
   __ b(call_safepoint_runtime, ne);
+
   __ bind(return_to_java);
 
   // Perform thread state transition and reguard stack yellow pages if needed
@@ -1300,8 +1299,6 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   __ call(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans));
   pop_result_registers(masm, ret_type);
   __ b(return_to_java);
-
-  __ bind_literal(safepoint_state);
 
   // Reguard stack pages. Save native results around a call to C runtime.
   __ bind(reguard);
@@ -1804,15 +1801,27 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
   oop_maps->add_gc_map(pc_offset, map);
   __ reset_last_Java_frame(Rtemp); // Rtemp free since scratched by far call
 
-  // Check for pending exception
-  __ ldr(Rtemp, Address(Rthread, Thread::pending_exception_offset()));
-  __ cmp(Rtemp, 0);
-
   if (!cause_return) {
+    // If our stashed return pc was modified by the runtime we avoid touching it
+    __ ldr(R3_tmp, Address(Rthread, JavaThread::saved_exception_pc_offset()));
+    __ ldr(R2_tmp, Address(SP, RegisterSaver::LR_offset * wordSize));
+    __ cmp(R2_tmp, R3_tmp);
+    // Adjust return pc forward to step over the safepoint poll instruction
+    __ add(R2_tmp, R2_tmp, 4, eq);
+    __ str(R2_tmp, Address(SP, RegisterSaver::LR_offset * wordSize), eq);
+
+    // Check for pending exception
+    __ ldr(Rtemp, Address(Rthread, Thread::pending_exception_offset()));
+    __ cmp(Rtemp, 0);
+
     RegisterSaver::restore_live_registers(masm, false);
     __ pop(PC, eq);
     __ pop(Rexception_pc);
   } else {
+    // Check for pending exception
+    __ ldr(Rtemp, Address(Rthread, Thread::pending_exception_offset()));
+    __ cmp(Rtemp, 0);
+
     RegisterSaver::restore_live_registers(masm);
     __ bx(LR, eq);
     __ mov(Rexception_pc, LR);

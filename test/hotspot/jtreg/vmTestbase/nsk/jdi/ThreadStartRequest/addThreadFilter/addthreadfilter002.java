@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -145,12 +145,6 @@ public class addthreadfilter002 {
     static int  testExitCode = PASSED;
 
 
-    class JDITestRuntimeException extends RuntimeException {
-        JDITestRuntimeException(String str) {
-            super("JDITestRuntimeException : " + str);
-        }
-    }
-
     //------------------------------------------------------ methods
 
     private int runThis (String argv[], PrintStream out) {
@@ -295,7 +289,7 @@ public class addthreadfilter002 {
         String lineForComm  = "lineForComm";
         BreakpointRequest bpRequest;
 
-        ThreadReference mainThread = threadByName("main");
+        ThreadReference mainThread = debuggee.threadByNameOrThrow("main");
 
         bpRequest = settingBreakpoint(mainThread,
                                       debuggeeClass,
@@ -382,20 +376,6 @@ public class addthreadfilter002 {
         return;
     }
 
-    private ThreadReference threadByName(String name)
-                 throws JDITestRuntimeException {
-
-        List         all = vm.allThreads();
-        ListIterator li  = all.listIterator();
-
-        for (; li.hasNext(); ) {
-            ThreadReference thread = (ThreadReference) li.next();
-            if (thread.name().equals(name))
-                return thread;
-        }
-        throw new JDITestRuntimeException("** Thread IS NOT found ** : " + name);
-    }
-
    /*
     * private BreakpointRequest settingBreakpoint(ThreadReference, ReferenceType,
     *                                             String, String, String)
@@ -479,12 +459,25 @@ public class addthreadfilter002 {
                  throws JDITestRuntimeException {
 
         log2("breakpointForCommunication");
-        getEventSet();
-
-        if (eventIterator.nextEvent() instanceof BreakpointEvent)
-            return;
-
-        throw new JDITestRuntimeException("** event IS NOT a breakpoint **");
+        while (true) {
+            getEventSet();
+            while (eventIterator.hasNext()) {
+                Event event = eventIterator.nextEvent();
+                if (event instanceof BreakpointEvent) {
+                    return;
+                } else if (event instanceof ThreadStartEvent) {
+                    // It might be the case that while the thread start request was enabled
+                    // some threads not related to the test ( e.g. JVMCI threads) were started
+                    // and generated thread start events. We ignore these thread start events
+                    // and keep waiting for a breakpoint event.
+                    ThreadStartEvent tse = (ThreadStartEvent) event;
+                    log2("ThreadStartEvent is received while waiting for a breakpoint" +
+                            " event, thread: : " + tse.thread().name());
+                    continue;
+                }
+                throw new JDITestRuntimeException("** event IS NOT a breakpoint or a thread start **");
+            }
+        }
     }
 
 }

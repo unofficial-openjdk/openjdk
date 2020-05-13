@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,8 +79,10 @@ class Handle {
   oop     operator () () const                   { return obj(); }
   oop     operator -> () const                   { return non_null_obj(); }
 
-  bool operator == (oop o) const                 { return oopDesc::equals(obj(), o); }
-  bool operator == (const Handle& h) const       { return oopDesc::equals(obj(), h.obj()); }
+  bool operator == (oop o) const                 { return obj() == o; }
+  bool operator != (oop o) const                 { return obj() != o; }
+  bool operator == (const Handle& h) const       { return obj() == h.obj(); }
+  bool operator != (const Handle& h) const       { return obj() != h.obj(); }
 
   // Null checks
   bool    is_null() const                        { return _handle == NULL; }
@@ -143,7 +145,6 @@ DEF_HANDLE(typeArray        , is_typeArray_noinline        )
    public:                                       \
     /* Constructors */                           \
     name##Handle () : _value(NULL), _thread(NULL) {}   \
-    name##Handle (type* obj);                    \
     name##Handle (Thread* thread, type* obj);    \
                                                  \
     name##Handle (const name##Handle &h);        \

@@ -33,14 +33,14 @@
 
 // Forward declarations
 class G1BlockOffsetTable;
-class G1ContiguousSpace;
+class HeapRegion;
 
 // This implementation of "G1BlockOffsetTable" divides the covered region
 // into "N"-word subregions (where "N" = 2^"LogN".  An array with an entry
 // for each such subregion indicates how far back one must go to find the
 // start of the chunk that includes the first word of the subregion.
 //
-// Each G1BlockOffsetTablePart is owned by a G1ContiguousSpace.
+// Each G1BlockOffsetTablePart is owned by a HeapRegion.
 
 class G1BlockOffsetTable: public CHeapObj<mtGC> {
   friend class G1BlockOffsetTablePart;
@@ -52,7 +52,7 @@ private:
 
   // Array for keeping offsets for retrieving object start fast given an
   // address.
-  u_char* _offset_array;          // byte array keeping backwards offsets
+  volatile u_char* _offset_array;  // byte array keeping backwards offsets
 
   void check_offset(size_t offset, const char* msg) const {
     assert(offset <= BOTConstants::N_words,
@@ -64,10 +64,7 @@ private:
   // For performance these have to devolve to array accesses in product builds.
   inline u_char offset_array(size_t index) const;
 
-  void set_offset_array_raw(size_t index, u_char offset) {
-    _offset_array[index] = offset;
-  }
-
+  inline void set_offset_array_raw(size_t index, u_char offset);
   inline void set_offset_array(size_t index, u_char offset);
 
   inline void set_offset_array(size_t index, HeapWord* high, HeapWord* low);
@@ -123,8 +120,8 @@ private:
   // This is the global BlockOffsetTable.
   G1BlockOffsetTable* _bot;
 
-  // The space that owns this subregion.
-  G1ContiguousSpace* _space;
+  // The region that owns this subregion.
+  HeapRegion* _hr;
 
   // Sets the entries
   // corresponding to the cards starting at "start" and ending at "end"
@@ -186,7 +183,7 @@ private:
 
 public:
   //  The elements of the array are initialized to zero.
-  G1BlockOffsetTablePart(G1BlockOffsetTable* array, G1ContiguousSpace* gsp);
+  G1BlockOffsetTablePart(G1BlockOffsetTable* array, HeapRegion* hr);
 
   void verify() const;
 

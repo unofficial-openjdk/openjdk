@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@ package gc.nvdimm;
  * @requires test.vm.gc.nvdimm
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
- * @run main gc.nvdimm.TestAllocateOldGenAtError
+ * @run driver gc.nvdimm.TestAllocateOldGenAtError
  */
 
 import java.io.File;
@@ -42,16 +42,9 @@ import java.util.Collections;
 import java.util.UUID;
 
 public class TestAllocateOldGenAtError {
-  private static ArrayList<String> commonOpts;
+  private static String[] commonFlags;
 
   public static void main(String args[]) throws Exception {
-    commonOpts = new ArrayList<>();
-
-    String testVmOptsStr = System.getProperty("test.java.opts");
-    if (!testVmOptsStr.isEmpty()) {
-      String[] testVmOpts = testVmOptsStr.split(" ");
-      Collections.addAll(commonOpts, testVmOpts);
-    }
     String test_dir = System.getProperty("test.dir", ".");
 
     File f = null;
@@ -59,12 +52,13 @@ public class TestAllocateOldGenAtError {
       f = new File(test_dir, UUID.randomUUID().toString());
     } while(f.exists());
 
-    Collections.addAll(commonOpts, new String[] {"-XX:+UnlockExperimentalVMOptions",
-                                                 "-XX:AllocateOldGenAt=" + f.getName(),
-                                                 "-Xlog:gc+heap=info",
-                                                 "-Xmx32m",
-                                                 "-Xms32m",
-                                                 "-version"});
+    commonFlags = new String[] {
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:AllocateOldGenAt=" + f.getName(),
+        "-Xlog:gc+heap=info",
+        "-Xmx32m",
+        "-Xms32m",
+        "-version"};
 
     testG1();
     testParallelOld();
@@ -82,30 +76,20 @@ public class TestAllocateOldGenAtError {
   }
 
   private static void testParallelOld() throws Exception {
-    System.out.println("Testing ParallelOld GC with UseAdaptiveGCBoundary disabled");
-    OutputAnalyzer output = runTest("-XX:+UseParallelOldGC -XX:-UseAdaptiveGCBoundary");
-    output.shouldContain("Error occurred during initialization of VM");
-    output.shouldNotHaveExitValue(0);
+    System.out.println("Testing Parallel GC");
 
-    System.out.println("Testing ParallelOld GC with UseAdaptiveGCBoundary enabled");
-    output = runTest("-XX:+UseParallelOldGC -XX:+UseAdaptiveGCBoundary");
+    OutputAnalyzer output = runTest("-XX:+UseParallelGC");
+
     output.shouldContain("Error occurred during initialization of VM");
     output.shouldNotHaveExitValue(0);
   }
 
   private static OutputAnalyzer runTest(String... extraFlags) throws Exception {
-    ArrayList<String> testOpts = new ArrayList<>();
-    Collections.addAll(testOpts, commonOpts.toArray(new String[commonOpts.size()]));
-    Collections.addAll(testOpts, extraFlags);
+    ArrayList<String> flags = new ArrayList<>();
+    Collections.addAll(flags, commonFlags);
+    Collections.addAll(flags, extraFlags);
 
-    System.out.print("Testing:\n" + JDKToolFinder.getJDKTool("java"));
-    for (int i = 0; i < testOpts.size(); i += 1) {
-      System.out.print(" " + testOpts.get(i));
-    }
-    System.out.println();
-
-    ProcessBuilder pb =
-      ProcessTools.createJavaProcessBuilder(testOpts.toArray(new String[testOpts.size()]));
+    ProcessBuilder pb = ProcessTools.createTestJvm(flags);
     OutputAnalyzer output = new OutputAnalyzer(pb.start());
     return output;
   }

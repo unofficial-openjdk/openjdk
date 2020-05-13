@@ -36,9 +36,7 @@ StringArrayArgument::StringArrayArgument() {
 
 StringArrayArgument::~StringArrayArgument() {
   for (int i=0; i<_array->length(); i++) {
-    if(_array->at(i) != NULL) { // Safety check
-      FREE_C_HEAP_ARRAY(char, _array->at(i));
-    }
+    FREE_C_HEAP_ARRAY(char, _array->at(i));
   }
   delete _array;
 }
@@ -153,7 +151,13 @@ template <> void DCmdArgument<bool>::parse_value(const char* str,
       ResourceMark rm;
 
       char* buf = NEW_RESOURCE_ARRAY(char, len + 1);
+
+PRAGMA_DIAG_PUSH
+PRAGMA_STRINGOP_TRUNCATION_IGNORED
+      // This code can incorrectly cause a "stringop-truncation" warning with gcc
       strncpy(buf, str, len);
+PRAGMA_DIAG_POP
+
       buf[len] = '\0';
       Exceptions::fthrow(THREAD_AND_LOCATION, vmSymbols::java_lang_IllegalArgumentException(),
         "Boolean parsing error in command argument '%s'. Could not parse: %s.\n", _name, buf);
@@ -197,10 +201,8 @@ template <> void DCmdArgument<char*>::init_value(TRAPS) {
 }
 
 template <> void DCmdArgument<char*>::destroy_value() {
-  if (_value != NULL) {
-    FREE_C_HEAP_ARRAY(char, _value);
-    set_value(NULL);
-  }
+  FREE_C_HEAP_ARRAY(char, _value);
+  set_value(NULL);
 }
 
 template <> void DCmdArgument<NanoTimeArgument>::parse_value(const char* str,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,6 +71,9 @@ abstract class ECDSASignature extends SignatureSpi {
 
     // public key, if initialized for verifying
     private ECPublicKey publicKey;
+
+    // signature parameters
+    private ECParameterSpec sigParams = null;
 
     // The format. true for the IEEE P1363 format. false (default) for ASN.1
     private final boolean p1363Format;
@@ -279,10 +282,14 @@ abstract class ECDSASignature extends SignatureSpi {
     @Override
     protected void engineInitVerify(PublicKey publicKey)
     throws InvalidKeyException {
-        this.publicKey = (ECPublicKey) ECKeyFactory.toECKey(publicKey);
+        ECPublicKey key = (ECPublicKey) ECKeyFactory.toECKey(publicKey);
+        if (!isCompatible(this.sigParams, key.getParams())) {
+            throw new InvalidKeyException("Key params does not match signature params");
+        }
 
         // Should check that the supplied key is appropriate for signature
         // algorithm (e.g. P-256 for SHA256withECDSA)
+        this.publicKey = key;
         this.privateKey = null;
         resetDigest();
     }
@@ -298,10 +305,14 @@ abstract class ECDSASignature extends SignatureSpi {
     @Override
     protected void engineInitSign(PrivateKey privateKey, SecureRandom random)
     throws InvalidKeyException {
-        this.privateKey = (ECPrivateKey) ECKeyFactory.toECKey(privateKey);
+        ECPrivateKey key = (ECPrivateKey) ECKeyFactory.toECKey(privateKey);
+        if (!isCompatible(this.sigParams, key.getParams())) {
+            throw new InvalidKeyException("Key params does not match signature params");
+        }
 
         // Should check that the supplied key is appropriate for signature
         // algorithm (e.g. P-256 for SHA256withECDSA)
+        this.privateKey = key;
         this.publicKey = null;
         this.random = random;
         resetDigest();
@@ -354,12 +365,23 @@ abstract class ECDSASignature extends SignatureSpi {
         needsReset = true;
     }
 
+    private static boolean isCompatible(ECParameterSpec sigParams,
+            ECParameterSpec keyParams) {
+        if (sigParams == null) {
+            // no restriction on key param
+            return true;
+        }
+        return ECUtil.equals(sigParams, keyParams);
+    }
+
     private byte[] signDigestImpl(ECDSAOperations ops, int seedBits,
-        byte[] digest, ECPrivateKeyImpl privImpl, SecureRandom random)
+        byte[] digest, ECPrivateKey priv, SecureRandom random)
         throws SignatureException {
 
         byte[] seedBytes = new byte[(seedBits + 7) / 8];
-        byte[] s = privImpl.getArrayS();
+        byte[] s = priv instanceof ECPrivateKeyImpl
+                ? ((ECPrivateKeyImpl)priv).getArrayS()
+                : ECUtil.sArray(priv.getS(), priv.getParams());
 
         // Attempt to create the signature in a loop that uses new random input
         // each time. The chance of failure is very small assuming the
@@ -380,13 +402,9 @@ abstract class ECDSASignature extends SignatureSpi {
     }
 
 
-    private Optional<byte[]> signDigestImpl(ECPrivateKey privateKey,
+    private Optional<byte[]> signDigestAvailable(ECPrivateKey privateKey,
         byte[] digest, SecureRandom random) throws SignatureException {
 
-        if (! (privateKey instanceof ECPrivateKeyImpl)) {
-            return Optional.empty();
-        }
-        ECPrivateKeyImpl privImpl = (ECPrivateKeyImpl) privateKey;
         ECParameterSpec params = privateKey.getParams();
 
         // seed is the key size + 64 bits
@@ -397,7 +415,7 @@ abstract class ECDSASignature extends SignatureSpi {
             return Optional.empty();
         } else {
             byte[] sig = signDigestImpl(opsOpt.get(), seedBits, digest,
-                privImpl, random);
+                privateKey, random);
             return Optional.of(sig);
         }
     }
@@ -410,10 +428,10 @@ abstract class ECDSASignature extends SignatureSpi {
 
         // DER OID
         byte[] encodedParams = ECUtil.encodeECParameterSpec(null, params);
-        int keySize = params.getCurve().getField().getFieldSize();
+        int orderLength = params.getOrder().bitLength();
 
-        // seed is twice the key size (in bytes) plus 1
-        byte[] seed = new byte[(((keySize + 7) >> 3) + 1) * 2];
+        // seed is twice the order length (in bytes) plus 1
+        byte[] seed = new byte[(((orderLength + 7) >> 3) + 1) * 2];
 
         random.nextBytes(seed);
 
@@ -440,11 +458,19 @@ abstract class ECDSASignature extends SignatureSpi {
         }
 
         byte[] digest = getDigestValue();
-        Optional<byte[]> sigOpt = signDigestImpl(privateKey, digest, random);
+        Optional<byte[]> sigOpt = signDigestAvailable(privateKey, digest, random);
         byte[] sig;
         if (sigOpt.isPresent()) {
             sig = sigOpt.get();
         } else {
+            if (SunEC.isNativeDisabled()) {
+                NamedCurve nc = CurveDB.lookup(privateKey.getParams());
+                throw new SignatureException(
+                        new InvalidAlgorithmParameterException(
+                                "Legacy SunEC curve disabled:  " +
+                                        (nc != null ? nc.toString()
+                                                : "unknown")));
+            }
             sig = signDigestNative(privateKey, digest, random);
         }
 
@@ -459,17 +485,6 @@ abstract class ECDSASignature extends SignatureSpi {
     @Override
     protected boolean engineVerify(byte[] signature) throws SignatureException {
 
-        byte[] w;
-        ECParameterSpec params = publicKey.getParams();
-        // DER OID
-        byte[] encodedParams = ECUtil.encodeECParameterSpec(null, params);
-
-        if (publicKey instanceof ECPublicKeyImpl) {
-            w = ((ECPublicKeyImpl) publicKey).getEncodedPublicValue();
-        } else { // instanceof ECPublicKey
-            w = ECUtil.encodePoint(publicKey.getW(), params.getCurve());
-        }
-
         byte[] sig;
         if (p1363Format) {
             sig = signature;
@@ -477,11 +492,60 @@ abstract class ECDSASignature extends SignatureSpi {
             sig = ECUtil.decodeSignature(signature);
         }
 
-        try {
-            return verifySignedDigest(sig, getDigestValue(), w, encodedParams);
-        } catch (GeneralSecurityException e) {
-            throw new SignatureException("Could not verify signature", e);
+        byte[] digest = getDigestValue();
+        Optional<Boolean> verifyOpt
+                = verifySignedDigestAvailable(publicKey, sig, digest);
+
+        if (verifyOpt.isPresent()) {
+            return verifyOpt.get();
+        } else {
+            if (SunEC.isNativeDisabled()) {
+                NamedCurve nc = CurveDB.lookup(publicKey.getParams());
+                throw new SignatureException(
+                        new InvalidAlgorithmParameterException(
+                                "Legacy SunEC curve disabled:  " +
+                                        (nc != null ? nc.toString()
+                                                : "unknown")));
+            }
+
+            byte[] w;
+            ECParameterSpec params = publicKey.getParams();
+            // DER OID
+            byte[] encodedParams = ECUtil.encodeECParameterSpec(null, params);
+
+            if (publicKey instanceof ECPublicKeyImpl) {
+                w = ((ECPublicKeyImpl) publicKey).getEncodedPublicValue();
+            } else { // instanceof ECPublicKey
+                w = ECUtil.encodePoint(publicKey.getW(), params.getCurve());
+            }
+
+            try {
+                return verifySignedDigest(sig, digest, w, encodedParams);
+            } catch (GeneralSecurityException e) {
+                throw new SignatureException("Could not verify signature", e);
+            }
         }
+    }
+
+    private Optional<Boolean> verifySignedDigestAvailable(
+            ECPublicKey publicKey, byte[] sig, byte[] digestValue) {
+
+        ECParameterSpec params = publicKey.getParams();
+
+        Optional<ECDSAOperations> opsOpt =
+                ECDSAOperations.forParameters(params);
+        if (opsOpt.isEmpty()) {
+            return Optional.empty();
+        } else {
+            boolean result = verifySignedDigestImpl(opsOpt.get(), digestValue,
+                    publicKey, sig);
+            return Optional.of(result);
+        }
+    }
+
+    private boolean verifySignedDigestImpl(ECDSAOperations ops,
+            byte[] digest, ECPublicKey pub, byte[] sig) {
+        return ops.verifySignedDigest(digest, sig, pub.getW());
     }
 
     // set parameter, not supported. See JCA doc
@@ -495,9 +559,16 @@ abstract class ECDSASignature extends SignatureSpi {
     @Override
     protected void engineSetParameter(AlgorithmParameterSpec params)
     throws InvalidAlgorithmParameterException {
-        if (params != null) {
+        if (params != null && !(params instanceof ECParameterSpec)) {
             throw new InvalidAlgorithmParameterException("No parameter accepted");
         }
+        ECKey key = (this.privateKey == null? this.publicKey : this.privateKey);
+        if ((key != null) && !isCompatible((ECParameterSpec)params, key.getParams())) {
+            throw new InvalidAlgorithmParameterException
+                ("Signature params does not match key params");
+        }
+
+        sigParams = (ECParameterSpec) params;
     }
 
     // get parameter, not supported. See JCA doc
@@ -510,7 +581,17 @@ abstract class ECDSASignature extends SignatureSpi {
 
     @Override
     protected AlgorithmParameters engineGetParameters() {
-        return null;
+        if (sigParams == null) {
+            return null;
+        }
+        try {
+            AlgorithmParameters ap = AlgorithmParameters.getInstance("EC");
+            ap.init(sigParams);
+            return ap;
+        } catch (Exception e) {
+            // should never happen
+            throw new ProviderException("Error retrieving EC parameters", e);
+        }
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,8 @@ public final class DelegationPermission extends BasicPermission
      * @param principals the name of the subordinate and target principals
      *
      * @throws NullPointerException if {@code principals} is {@code null}.
-     * @throws IllegalArgumentException if {@code principals} is empty.
+     * @throws IllegalArgumentException if {@code principals} is empty,
+     *      or does not contain a pair of principals, or is improperly quoted
      */
     public DelegationPermission(String principals) {
         super(principals);
@@ -94,7 +95,8 @@ public final class DelegationPermission extends BasicPermission
      * @param actions should be null.
      *
      * @throws NullPointerException if {@code principals} is {@code null}.
-     * @throws IllegalArgumentException if {@code principals} is empty.
+     * @throws IllegalArgumentException if {@code principals} is empty,
+     *      or does not contain a pair of principals, or is improperly quoted
      */
     public DelegationPermission(String principals, String actions) {
         super(principals, actions);
@@ -107,24 +109,39 @@ public final class DelegationPermission extends BasicPermission
      */
     private void init(String target) {
 
-        StringTokenizer t = null;
-        if (!target.startsWith("\"")) {
-            throw new IllegalArgumentException
-                ("service principal [" + target +
-                 "] syntax invalid: " +
-                 "improperly quoted");
-        } else {
-            t = new StringTokenizer(target, "\"", false);
-            subordinate = t.nextToken();
-            if (t.countTokens() == 2) {
-                t.nextToken();  // bypass whitespace
-                service = t.nextToken();
-            } else if (t.countTokens() > 0) {
-                throw new IllegalArgumentException
-                    ("service principal [" + t.nextToken() +
-                     "] syntax invalid: " +
-                     "improperly quoted");
+        // 7 tokens in a string:
+        //    "subordinate@R1" "service@R2"
+        //    1<------2----->345<----6--->7
+        StringTokenizer t = new StringTokenizer(target, "\"", true);
+        try {
+            if (!t.nextToken().equals("\"")) { // 1
+                throw new IllegalArgumentException("Illegal input [" + target
+                        + "]: improperly quoted");
             }
+            subordinate = t.nextToken(); // 2
+            if (subordinate.equals("\"")) {
+                throw new IllegalArgumentException("Illegal input [" + target
+                        + "]: bad subordinate name");
+            }
+            t.nextToken(); // 3
+            if (!t.nextToken().trim().isEmpty()) { // 4
+                throw new IllegalArgumentException("Illegal input [" + target
+                        + "]: improperly separated");
+            }
+            t.nextToken(); // 5
+            service = t.nextToken(); // 6
+            if (service.equals("\"")) {
+                throw new IllegalArgumentException("Illegal input [" + target
+                        + "]: bad service name");
+            }
+            t.nextToken(); // 7
+        } catch (NoSuchElementException e) {
+            throw new IllegalArgumentException("Illegal input [" + target
+                    + "]: not enough input");
+        }
+        if (t.hasMoreTokens()) {
+            throw new IllegalArgumentException("Illegal input [" + target
+                    + "]: extra input");
         }
     }
 

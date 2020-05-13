@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,8 +103,9 @@ public class TestLinkOptionWithAutomaticModule extends JavadocTester {
                 "p");
         checkExit(Exit.OK);
         checkOutput("p/MyClass.html", true,
-                "extends <a href=\"http://myWebsite/lib/LibClass.html?is-external=true\" "
-                + "title=\"class or interface in lib\" class=\"externalLink\">LibClass</a>");
+                """
+                    extends <a href="http://myWebsite/lib/LibClass.html" title="class or interface i\
+                    n lib" class="external-link">LibClass</a>""");
     }
 
     @Test
@@ -127,8 +128,9 @@ public class TestLinkOptionWithAutomaticModule extends JavadocTester {
                 "--module", "my.module");
         checkExit(Exit.OK);
         checkOutput("my.module/p/MyClass.html", true,
-                "extends <a href=\"http://myWebsite/lib/LibClass.html?is-external=true\" "
-                + "title=\"class or interface in lib\" class=\"externalLink\">LibClass</a>");
+                """
+                    extends <a href="http://myWebsite/lib/LibClass.html" title="class or interface i\
+                    n lib" class="external-link">LibClass</a>""");
     }
 
     @Test
@@ -151,7 +153,8 @@ public class TestLinkOptionWithAutomaticModule extends JavadocTester {
                 "--module", "my.module");
         checkExit(Exit.OK);
         checkOutput("my.module/p/MyClass.html", true,
-                "extends <a href=\"http://myWebsite/lib/LibClass.html?is-external=true\" "
-                + "title=\"class or interface in lib\" class=\"externalLink\">LibClass</a>");
+                """
+                    extends <a href="http://myWebsite/lib/LibClass.html" title="class or interface i\
+                    n lib" class="external-link">LibClass</a>""");
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,7 @@ import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.JCDiagnostic.Error;
 import com.sun.tools.javac.util.JCDiagnostic.Warning;
 
+import com.sun.tools.javac.code.Kinds.Kind;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
 
@@ -136,7 +137,7 @@ import static com.sun.tools.javac.tree.JCTree.Tag.*;
  *  return statement" iff V is DA before the return statement or V is
  *  DA at the end of any intervening finally block.  Note that we
  *  don't have to worry about the return expression because this
- *  concept is only used for construcrors.
+ *  concept is only used for constructors.
  *
  *  <p>There is no spec in the JLS for when a variable is definitely
  *  assigned at the end of a constructor, which is needed for final
@@ -222,7 +223,7 @@ public class Flow {
         Log.DiagnosticHandler diagHandler = null;
         //we need to disable diagnostics temporarily; the problem is that if
         //a lambda expression contains e.g. an unreachable statement, an error
-        //message will be reported and will cause compilation to skip the flow analyis
+        //message will be reported and will cause compilation to skip the flow analysis
         //step - if we suppress diagnostics, we won't stop at Attr for flow-analysis
         //related errors, which will allow for more errors to be detected
         if (!speculative) {
@@ -241,7 +242,7 @@ public class Flow {
             JCLambda that, TreeMaker make) {
         //we need to disable diagnostics temporarily; the problem is that if
         //a lambda expression contains e.g. an unreachable statement, an error
-        //message will be reported and will cause compilation to skip the flow analyis
+        //message will be reported and will cause compilation to skip the flow analysis
         //step - if we suppress diagnostics, we won't stop at Attr for flow-analysis
         //related errors, which will allow for more errors to be detected
         Log.DiagnosticHandler diagHandler = new Log.DiscardDiagnosticHandler(log);
@@ -250,6 +251,40 @@ public class Flow {
             LambdaFlowAnalyzer flowAnalyzer = new LambdaFlowAnalyzer();
             flowAnalyzer.analyzeTree(env, that, make);
             return flowAnalyzer.inferredThrownTypes;
+        } finally {
+            log.popDiagnosticHandler(diagHandler);
+        }
+    }
+
+    public boolean aliveAfter(Env<AttrContext> env, JCTree that, TreeMaker make) {
+        //we need to disable diagnostics temporarily; the problem is that if
+        //"that" contains e.g. an unreachable statement, an error
+        //message will be reported and will cause compilation to skip the flow analysis
+        //step - if we suppress diagnostics, we won't stop at Attr for flow-analysis
+        //related errors, which will allow for more errors to be detected
+        Log.DiagnosticHandler diagHandler = new Log.DiscardDiagnosticHandler(log);
+        try {
+            SnippetAliveAnalyzer analyzer = new SnippetAliveAnalyzer();
+
+            analyzer.analyzeTree(env, that, make);
+            return analyzer.isAlive();
+        } finally {
+            log.popDiagnosticHandler(diagHandler);
+        }
+    }
+
+    public boolean breaksOutOf(Env<AttrContext> env, JCTree loop, JCTree body, TreeMaker make) {
+        //we need to disable diagnostics temporarily; the problem is that if
+        //"that" contains e.g. an unreachable statement, an error
+        //message will be reported and will cause compilation to skip the flow analysis
+        //step - if we suppress diagnostics, we won't stop at Attr for flow-analysis
+        //related errors, which will allow for more errors to be detected
+        Log.DiagnosticHandler diagHandler = new Log.DiscardDiagnosticHandler(log);
+        try {
+            SnippetBreakAnalyzer analyzer = new SnippetBreakAnalyzer();
+
+            analyzer.analyzeTree(env, body, make);
+            return analyzer.breaksOut();
         } finally {
             log.popDiagnosticHandler(diagHandler);
         }
@@ -313,6 +348,12 @@ public class Flow {
                 @Override
                 JCTree getTarget(JCTree tree) {
                     return ((JCContinue)tree).target;
+                }
+            },
+            YIELD(JCTree.Tag.YIELD) {
+                @Override
+                JCTree getTarget(JCTree tree) {
+                    return ((JCYield)tree).target;
                 }
             };
 
@@ -386,6 +427,11 @@ public class Flow {
             return resolveJump(tree, oldPendingExits, JumpKind.BREAK);
         }
 
+        /** Resolve all yields of this statement. */
+        Liveness resolveYields(JCTree tree, ListBuffer<PendingExit> oldPendingExits) {
+            return resolveJump(tree, oldPendingExits, JumpKind.YIELD);
+        }
+
         @Override
         public void scan(JCTree tree) {
             if (tree != null && (
@@ -400,9 +446,15 @@ public class Flow {
         }
 
         protected void scanSyntheticBreak(TreeMaker make, JCTree swtch) {
-            JCBreak brk = make.at(Position.NOPOS).Break(null);
-            brk.target = swtch;
-            scan(brk);
+            if (swtch.hasTag(SWITCH_EXPRESSION)) {
+                JCYield brk = make.at(Position.NOPOS).Yield(null);
+                brk.target = swtch;
+                scan(brk);
+            } else {
+                JCBreak brk = make.at(Position.NOPOS).Break(null);
+                brk.target = swtch;
+                scan(brk);
+            }
         }
     }
 
@@ -473,6 +525,7 @@ public class Flow {
                     if (!l.head.hasTag(METHODDEF) &&
                         (TreeInfo.flags(l.head) & STATIC) != 0) {
                         scanDef(l.head);
+                        clearPendingExits(false);
                     }
                 }
 
@@ -481,6 +534,7 @@ public class Flow {
                     if (!l.head.hasTag(METHODDEF) &&
                         (TreeInfo.flags(l.head) & STATIC) == 0) {
                         scanDef(l.head);
+                        clearPendingExits(false);
                     }
                 }
 
@@ -508,19 +562,25 @@ public class Flow {
             try {
                 alive = Liveness.ALIVE;
                 scanStat(tree.body);
+                tree.completesNormally = alive != Liveness.DEAD;
 
                 if (alive == Liveness.ALIVE && !tree.sym.type.getReturnType().hasTag(VOID))
                     log.error(TreeInfo.diagEndPos(tree.body), Errors.MissingRetStmt);
 
-                List<PendingExit> exits = pendingExits.toList();
-                pendingExits = new ListBuffer<>();
-                while (exits.nonEmpty()) {
-                    PendingExit exit = exits.head;
-                    exits = exits.tail;
-                    Assert.check(exit.tree.hasTag(RETURN));
-                }
+                clearPendingExits(true);
             } finally {
                 lint = lintPrev;
+            }
+        }
+
+        private void clearPendingExits(boolean inMethod) {
+            List<PendingExit> exits = pendingExits.toList();
+            pendingExits = new ListBuffer<>();
+            while (exits.nonEmpty()) {
+                PendingExit exit = exits.head;
+                exits = exits.tail;
+                Assert.check((inMethod && exit.tree.hasTag(RETURN)) ||
+                                log.hasErrorOn(exit.tree.pos()));
             }
         }
 
@@ -637,9 +697,12 @@ public class Flow {
             pendingExits = new ListBuffer<>();
             scan(tree.selector);
             Set<Object> constants = null;
-            if ((tree.selector.type.tsym.flags() & ENUM) != 0) {
+            TypeSymbol selectorSym = tree.selector.type.tsym;
+            if ((selectorSym.flags() & ENUM) != 0) {
                 constants = new HashSet<>();
-                for (Symbol s : tree.selector.type.tsym.members().getSymbols(s -> (s.flags() & ENUM) != 0)) {
+                Filter<Symbol> enumConstantFilter =
+                        s -> (s.flags() & ENUM) != 0 && s.kind == Kind.VAR;
+                for (Symbol s : selectorSym.members().getSymbols(enumConstantFilter)) {
                     constants.add(s.name);
                 }
             }
@@ -677,7 +740,7 @@ public class Flow {
                 log.error(tree, Errors.NotExhaustive);
             }
             alive = prevAlive;
-            alive = alive.or(resolveBreaks(tree, prevPendingExits));
+            alive = alive.or(resolveYields(tree, prevPendingExits));
         }
 
         public void visitTry(JCTry tree) {
@@ -745,8 +808,12 @@ public class Flow {
         }
 
         public void visitBreak(JCBreak tree) {
-            if (tree.isValueBreak())
-                scan(tree.value);
+            recordExit(new PendingExit(tree));
+        }
+
+        @Override
+        public void visitYield(JCYield tree) {
+            scan(tree.value);
             recordExit(new PendingExit(tree));
         }
 
@@ -874,20 +941,23 @@ public class Flow {
             for (PendingExit exit = pendingExits.next();
                  exit != null;
                  exit = pendingExits.next()) {
-                Assert.check(exit instanceof ThrownPendingExit);
-                ThrownPendingExit thrownExit = (ThrownPendingExit) exit;
-                if (classDef != null &&
-                    classDef.pos == exit.tree.pos) {
-                    log.error(exit.tree.pos(),
-                              Errors.UnreportedExceptionDefaultConstructor(thrownExit.thrown));
-                } else if (exit.tree.hasTag(VARDEF) &&
-                        ((JCVariableDecl)exit.tree).sym.isResourceVariable()) {
-                    log.error(exit.tree.pos(),
-                              Errors.UnreportedExceptionImplicitClose(thrownExit.thrown,
-                                                                      ((JCVariableDecl)exit.tree).sym.name));
+                if (exit instanceof ThrownPendingExit) {
+                    ThrownPendingExit thrownExit = (ThrownPendingExit) exit;
+                    if (classDef != null &&
+                        classDef.pos == exit.tree.pos) {
+                        log.error(exit.tree.pos(),
+                                  Errors.UnreportedExceptionDefaultConstructor(thrownExit.thrown));
+                    } else if (exit.tree.hasTag(VARDEF) &&
+                            ((JCVariableDecl)exit.tree).sym.isResourceVariable()) {
+                        log.error(exit.tree.pos(),
+                                  Errors.UnreportedExceptionImplicitClose(thrownExit.thrown,
+                                                                          ((JCVariableDecl)exit.tree).sym.name));
+                    } else {
+                        log.error(exit.tree.pos(),
+                                  Errors.UnreportedExceptionNeedToCatchOrThrow(thrownExit.thrown));
+                    }
                 } else {
-                    log.error(exit.tree.pos(),
-                              Errors.UnreportedExceptionNeedToCatchOrThrow(thrownExit.thrown));
+                    Assert.check(log.hasErrorOn(exit.tree.pos()));
                 }
             }
         }
@@ -1032,7 +1102,8 @@ public class Flow {
                     PendingExit exit = exits.head;
                     exits = exits.tail;
                     if (!(exit instanceof ThrownPendingExit)) {
-                        Assert.check(exit.tree.hasTag(RETURN));
+                        Assert.check(exit.tree.hasTag(RETURN) ||
+                                         log.hasErrorOn(exit.tree.pos()));
                     } else {
                         // uncaught throws will be reported later
                         pendingExits.append(exit);
@@ -1126,7 +1197,11 @@ public class Flow {
                 scan(c.pats);
                 scan(c.stats);
             }
-            resolveBreaks(tree, prevPendingExits);
+            if (tree.hasTag(SWITCH_EXPRESSION)) {
+                resolveYields(tree, prevPendingExits);
+            } else {
+                resolveBreaks(tree, prevPendingExits);
+            }
         }
 
         public void visitTry(JCTry tree) {
@@ -1194,7 +1269,8 @@ public class Flow {
                         ctypes = ctypes.append(exc);
                         if (types.isSameType(exc, syms.objectType))
                             continue;
-                        checkCaughtType(l.head.pos(), exc, thrownInTry, caughtInTry);
+                        var pos = subClauses.size() > 1 ? ct.pos() : l.head.pos();
+                        checkCaughtType(pos, exc, thrownInTry, caughtInTry);
                         caughtInTry = chk.incl(exc, caughtInTry);
                     }
                 }
@@ -1247,7 +1323,7 @@ public class Flow {
                 log.error(pos, Errors.ExceptNeverThrownInTry(exc));
             } else {
                 List<Type> catchableThrownTypes = chk.intersect(List.of(exc), thrownInTry);
-                // 'catchableThrownTypes' cannnot possibly be empty - if 'exc' was an
+                // 'catchableThrownTypes' cannot possibly be empty - if 'exc' was an
                 // unchecked exception, the result list would not be empty, as the augmented
                 // thrown set includes { RuntimeException, Error }; if 'exc' was a checked
                 // exception, that would have been covered in the branch above
@@ -1267,8 +1343,11 @@ public class Flow {
             }
 
         public void visitBreak(JCBreak tree) {
-            if (tree.isValueBreak())
-                scan(tree.value);
+            recordExit(new PendingExit(tree));
+        }
+
+        public void visitYield(JCYield tree) {
+            scan(tree.value);
             recordExit(new PendingExit(tree));
         }
 
@@ -1357,7 +1436,8 @@ public class Flow {
                     PendingExit exit = exits.head;
                     exits = exits.tail;
                     if (!(exit instanceof ThrownPendingExit)) {
-                        Assert.check(exit.tree.hasTag(RETURN));
+                        Assert.check(exit.tree.hasTag(RETURN) ||
+                                        log.hasErrorOn(exit.tree.pos()));
                     } else {
                         // uncaught throws will be reported later
                         pendingExits.append(exit);
@@ -1432,6 +1512,68 @@ public class Flow {
         @Override
         public void visitClassDef(JCClassDecl tree) {
             //skip
+        }
+    }
+
+    /**
+     * Determine if alive after the given tree.
+     */
+    class SnippetAliveAnalyzer extends AliveAnalyzer {
+        @Override
+        public void visitClassDef(JCClassDecl tree) {
+            //skip
+        }
+        public boolean isAlive() {
+            return super.alive != Liveness.DEAD;
+        }
+    }
+
+    class SnippetBreakAnalyzer extends AliveAnalyzer {
+        private final Set<JCTree> seenTrees = new HashSet<>();
+        private boolean breaksOut;
+
+        public SnippetBreakAnalyzer() {
+        }
+
+        @Override
+        public void visitLabelled(JCTree.JCLabeledStatement tree) {
+            seenTrees.add(tree);
+            super.visitLabelled(tree);
+        }
+
+        @Override
+        public void visitWhileLoop(JCTree.JCWhileLoop tree) {
+            seenTrees.add(tree);
+            super.visitWhileLoop(tree);
+        }
+
+        @Override
+        public void visitForLoop(JCTree.JCForLoop tree) {
+            seenTrees.add(tree);
+            super.visitForLoop(tree);
+        }
+
+        @Override
+        public void visitForeachLoop(JCTree.JCEnhancedForLoop tree) {
+            seenTrees.add(tree);
+            super.visitForeachLoop(tree);
+        }
+
+        @Override
+        public void visitDoLoop(JCTree.JCDoWhileLoop tree) {
+            seenTrees.add(tree);
+            super.visitDoLoop(tree);
+        }
+
+        @Override
+        public void visitBreak(JCBreak tree) {
+            breaksOut |= (super.alive == Liveness.ALIVE &&
+                          !seenTrees.contains(tree.target));
+            super.visitBreak(tree);
+        }
+
+        public boolean breaksOut() {
+            return breaksOut;
         }
     }
 
@@ -1734,7 +1876,7 @@ public class Flow {
             if ((sym.adr >= firstadr || sym.owner.kind != TYP) &&
                 trackable(sym) &&
                 !inits.isMember(sym.adr)) {
-                log.error(pos, errkey);
+                    log.error(pos, errkey);
                 inits.incl(sym.adr);
             }
         }
@@ -1863,6 +2005,7 @@ public class Flow {
                         if (!l.head.hasTag(METHODDEF) &&
                             (TreeInfo.flags(l.head) & STATIC) != 0) {
                             scan(l.head);
+                            clearPendingExits(false);
                         }
                     }
 
@@ -1884,6 +2027,7 @@ public class Flow {
                         if (!l.head.hasTag(METHODDEF) &&
                             (TreeInfo.flags(l.head) & STATIC) == 0) {
                             scan(l.head);
+                            clearPendingExits(false);
                         }
                     }
 
@@ -1954,6 +2098,7 @@ public class Flow {
                     // leave caught unchanged.
                     scan(tree.body);
 
+                    boolean isCompactConstructor = (tree.sym.flags() & Flags.COMPACT_RECORD_CONSTRUCTOR) != 0;
                     if (isInitialConstructor) {
                         boolean isSynthesized = (tree.sym.flags() &
                                                  GENERATEDCONSTR) != 0;
@@ -1963,29 +2108,34 @@ public class Flow {
                             if (var.owner == classDef.sym) {
                                 // choose the diagnostic position based on whether
                                 // the ctor is default(synthesized) or not
-                                if (isSynthesized) {
+                                if (isSynthesized && !isCompactConstructor) {
                                     checkInit(TreeInfo.diagnosticPositionFor(var, vardecl),
-                                        var, Errors.VarNotInitializedInDefaultConstructor(var));
+                                            var, Errors.VarNotInitializedInDefaultConstructor(var));
+                                } else if (isCompactConstructor) {
+                                    boolean isInstanceRecordField = var.enclClass().isRecord() &&
+                                            (var.flags_field & (Flags.PRIVATE | Flags.FINAL | Flags.GENERATED_MEMBER | Flags.RECORD)) != 0 &&
+                                            !var.isStatic() &&
+                                            var.owner.kind == TYP;
+                                    if (isInstanceRecordField) {
+                                        boolean notInitialized = !inits.isMember(var.adr);
+                                        if (notInitialized && uninits.isMember(var.adr) && tree.completesNormally) {
+                                        /*  this way we indicate Lower that it should generate an initialization for this field
+                                         *  in the compact constructor
+                                         */
+                                            var.flags_field |= UNINITIALIZED_FIELD;
+                                        } else {
+                                            checkInit(TreeInfo.diagEndPos(tree.body), var);
+                                        }
+                                    } else {
+                                        checkInit(TreeInfo.diagnosticPositionFor(var, vardecl), var);
+                                    }
                                 } else {
                                     checkInit(TreeInfo.diagEndPos(tree.body), var);
                                 }
                             }
                         }
                     }
-                    List<PendingExit> exits = pendingExits.toList();
-                    pendingExits = new ListBuffer<>();
-                    while (exits.nonEmpty()) {
-                        PendingExit exit = exits.head;
-                        exits = exits.tail;
-                        Assert.check(exit.tree.hasTag(RETURN), exit.tree);
-                        if (isInitialConstructor) {
-                            Assert.check(exit instanceof AssignPendingExit);
-                            inits.assign(((AssignPendingExit) exit).exit_inits);
-                            for (int i = firstadr; i < nextadr; i++) {
-                                checkInit(exit.tree.pos(), vardecls[i].sym);
-                            }
-                        }
-                    }
+                    clearPendingExits(true);
                 } finally {
                     inits.assign(initsPrev);
                     uninits.assign(uninitsPrev);
@@ -1999,6 +2149,24 @@ public class Flow {
             }
         }
 
+        private void clearPendingExits(boolean inMethod) {
+            List<PendingExit> exits = pendingExits.toList();
+            pendingExits = new ListBuffer<>();
+            while (exits.nonEmpty()) {
+                PendingExit exit = exits.head;
+                exits = exits.tail;
+                Assert.check((inMethod && exit.tree.hasTag(RETURN)) ||
+                                 log.hasErrorOn(exit.tree.pos()),
+                             exit.tree);
+                if (inMethod && isInitialConstructor) {
+                    Assert.check(exit instanceof AssignPendingExit);
+                    inits.assign(((AssignPendingExit) exit).exit_inits);
+                    for (int i = firstadr; i < nextadr; i++) {
+                        checkInit(exit.tree.pos(), vardecls[i].sym);
+                    }
+                }
+            }
+        }
         protected void initParam(JCVariableDecl def) {
             inits.incl(def.sym.adr);
             uninits.excl(def.sym.adr);
@@ -2226,9 +2394,17 @@ public class Flow {
                 // Warn about fall-through if lint switch fallthrough enabled.
             }
             if (!hasDefault) {
-                inits.andSet(initsSwitch);
+                if (tree.hasTag(SWITCH_EXPRESSION)) {
+                    markDead();
+                } else {
+                    inits.andSet(initsSwitch);
+                }
             }
-            resolveBreaks(tree, prevPendingExits);
+            if (tree.hasTag(SWITCH_EXPRESSION)) {
+                resolveYields(tree, prevPendingExits);
+            } else {
+                resolveBreaks(tree, prevPendingExits);
+            }
             nextadr = nextadrPrev;
         }
         // where
@@ -2393,35 +2569,37 @@ public class Flow {
 
         @Override
         public void visitBreak(JCBreak tree) {
-            if (tree.isValueBreak()) {
-                if (tree.target.hasTag(SWITCH_EXPRESSION)) {
-                    JCSwitchExpression expr = (JCSwitchExpression) tree.target;
-                    if (expr.type.hasTag(BOOLEAN)) {
-                        scanCond(tree.value);
-                        Bits initsAfterBreakWhenTrue = new Bits(initsWhenTrue);
-                        Bits initsAfterBreakWhenFalse = new Bits(initsWhenFalse);
-                        Bits uninitsAfterBreakWhenTrue = new Bits(uninitsWhenTrue);
-                        Bits uninitsAfterBreakWhenFalse = new Bits(uninitsWhenFalse);
-                        PendingExit exit = new PendingExit(tree) {
-                            @Override
-                            void resolveJump() {
-                                if (!inits.isReset()) {
-                                    split(true);
-                                }
-                                initsWhenTrue.andSet(initsAfterBreakWhenTrue);
-                                initsWhenFalse.andSet(initsAfterBreakWhenFalse);
-                                uninitsWhenTrue.andSet(uninitsAfterBreakWhenTrue);
-                                uninitsWhenFalse.andSet(uninitsAfterBreakWhenFalse);
-                            }
-                        };
-                        merge();
-                        recordExit(exit);
-                        return ;
-                    }
-                }
-                scan(tree.value);
-            }
             recordExit(new AssignPendingExit(tree, inits, uninits));
+        }
+
+        @Override
+        public void visitYield(JCYield tree) {
+            JCSwitchExpression expr = (JCSwitchExpression) tree.target;
+            if (expr != null && expr.type.hasTag(BOOLEAN)) {
+                scanCond(tree.value);
+                Bits initsAfterBreakWhenTrue = new Bits(initsWhenTrue);
+                Bits initsAfterBreakWhenFalse = new Bits(initsWhenFalse);
+                Bits uninitsAfterBreakWhenTrue = new Bits(uninitsWhenTrue);
+                Bits uninitsAfterBreakWhenFalse = new Bits(uninitsWhenFalse);
+                PendingExit exit = new PendingExit(tree) {
+                    @Override
+                    void resolveJump() {
+                        if (!inits.isReset()) {
+                            split(true);
+                        }
+                        initsWhenTrue.andSet(initsAfterBreakWhenTrue);
+                        initsWhenFalse.andSet(initsAfterBreakWhenFalse);
+                        uninitsWhenTrue.andSet(uninitsAfterBreakWhenTrue);
+                        uninitsWhenFalse.andSet(uninitsAfterBreakWhenFalse);
+                    }
+                };
+                merge();
+                recordExit(exit);
+                return ;
+            } else {
+                scanExpr(tree.value);
+                recordExit(new AssignPendingExit(tree, inits, uninits));
+            }
         }
 
         @Override
@@ -2784,9 +2962,8 @@ public class Flow {
         }
 
         @Override
-        public void visitBreak(JCBreak tree) {
-            if (tree.isValueBreak())
-                scan(tree.value);
+        public void visitYield(JCYield tree) {
+            scan(tree.value);
         }
 
         public void visitModuleDef(JCModuleDecl tree) {

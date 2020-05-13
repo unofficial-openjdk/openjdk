@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,7 +84,6 @@ import javax.crypto.SecretKey;
  * <p> Every implementation of the Java platform is required to support
  * the following standard {@code MessageDigest} algorithms:
  * <ul>
- * <li>{@code MD5}</li>
  * <li>{@code SHA-1}</li>
  * <li>{@code SHA-256}</li>
  * </ul>
@@ -399,7 +398,7 @@ public abstract class MessageDigest extends MessageDigestSpi {
      *
      * @return the number of bytes placed into {@code buf}
      *
-     * @exception DigestException if an error occurs.
+     * @throws    DigestException if an error occurs.
      */
     public int digest(byte[] buf, int offset, int len) throws DigestException {
         if (buf == null) {
@@ -536,7 +535,7 @@ public abstract class MessageDigest extends MessageDigestSpi {
      *
      * @return a clone if the implementation is cloneable.
      *
-     * @exception CloneNotSupportedException if this is called on an
+     * @throws    CloneNotSupportedException if this is called on an
      * implementation that does not support {@code Cloneable}.
      */
     public Object clone() throws CloneNotSupportedException {
@@ -580,7 +579,7 @@ public abstract class MessageDigest extends MessageDigestSpi {
          *
          * @return a clone if the delegate is cloneable.
          *
-         * @exception CloneNotSupportedException if this is called on a
+         * @throws    CloneNotSupportedException if this is called on a
          * delegate that does not support {@code Cloneable}.
          */
         public Object clone() throws CloneNotSupportedException {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@
  * As described in the Java Virtual Machine Specification, certain types in this package
  * are given special treatment by the virtual machine:
  * <ul>
- * <li>The classes {@link java.lang.invoke.MethodHandle MethodHandle}
+ * <li>The classes {@link java.lang.invoke.MethodHandle MethodHandle} and
  * {@link java.lang.invoke.VarHandle VarHandle} contain
  * <a href="MethodHandle.html#sigpoly">signature polymorphic methods</a>
  * which can be linked regardless of their type descriptor.
@@ -53,12 +53,12 @@
  * </li>
  * </ul>
  *
- * <h1><a id="jvm_mods"></a>Dynamic resolution of call sites and constants</h1>
+ * <h2><a id="jvm_mods"></a>Dynamic resolution of call sites and constants</h2>
  * The following low-level information summarizes relevant parts of the
  * Java Virtual Machine specification.  For full details, please see the
  * current version of that specification.
  *
- * <h2><a id="indyinsn"></a>Dynamically-computed call sites</h2>
+ * <h3><a id="indyinsn"></a>Dynamically-computed call sites</h3>
  * An {@code invokedynamic} instruction is originally in an unlinked state.
  * In this state, there is no target method for the instruction to invoke.
  * <p>
@@ -74,7 +74,7 @@
  * The constant pool reference also specifies the invocation's name and method type descriptor,
  * just like {@code invokestatic} and the other invoke instructions.
  *
- * <h2><a id="condycon"></a>Dynamically-computed constants</h2>
+ * <h3><a id="condycon"></a>Dynamically-computed constants</h3>
  * The constant pool may contain constants tagged {@code CONSTANT_Dynamic},
  * equipped with bootstrap methods which perform their resolution.
  * Such a <em>dynamic constant</em> is originally in an unresolved state.
@@ -90,7 +90,7 @@
  * (Roughly speaking, a dynamically-computed constant is to a dynamically-computed call site
  * as a {@code CONSTANT_Fieldref} is to a {@code CONSTANT_Methodref}.)
  *
- * <h2><a id="bsm"></a>Execution of bootstrap methods</h2>
+ * <h3><a id="bsm"></a>Execution of bootstrap methods</h3>
  * Resolving a dynamically-computed call site or constant
  * starts with resolving constants from the constant pool for the
  * following items:
@@ -136,7 +136,7 @@
  * subsequent attempts to execute the {@code invokedynamic} instruction or load the
  * dynamically-computed constant.
  *
- * <h2>Timing of resolution</h2>
+ * <h3>Timing of resolution</h3>
  * An {@code invokedynamic} instruction is linked just before its first execution.
  * A dynamically-computed constant is resolved just before the first time it is used
  * (by pushing it on the stack or linking it as a bootstrap method parameter).
@@ -162,7 +162,6 @@
  * call site or constant, the JVM must choose one bootstrap method result and install it visibly to
  * all threads.  Any other bootstrap method calls are allowed to complete, but their
  * results are ignored.
-
  * <p style="font-size:smaller;">
  * <em>Discussion:</em>
  * These rules do not enable the JVM to share call sites,
@@ -171,7 +170,7 @@
  * just before its first invocation.
  * There is no way to undo the effect of a completed bootstrap method call.
  *
- * <h2>Types of bootstrap methods</h2>
+ * <h3>Types of bootstrap methods</h3>
  * For a dynamically-computed call site, the bootstrap method is invoked with parameter
  * types {@code MethodHandles.Lookup}, {@code String}, {@code MethodType}, and the types
  * of any static arguments; the return type is {@code CallSite}.
@@ -191,7 +190,7 @@
  * invoked with just the parameter types of static arguments, thereby supporting a wider
  * range of methods compatible with the static arguments (such as methods that don't declare
  * or require the lookup, name, and type meta-data parameters).
- * <p> For example, for dynamically-computed call site, a the first argument
+ * <p> For example, for dynamically-computed call site, the first argument
  * could be {@code Object} instead of {@code MethodHandles.Lookup}, and the return type
  * could also be {@code Object} instead of {@code CallSite}.
  * (Note that the types and number of the stacked arguments limit
@@ -216,22 +215,22 @@
  * <tbody>
  * <tr><th scope="row" style="font-weight:normal; vertical-align:top">*</th><td>
  *     <ul style="list-style:none; padding-left: 0; margin:0">
- *     <li><code>CallSite bootstrap(Lookup caller, String name, MethodType type, Object... args)</code>
- *     <li><code>CallSite bootstrap(Object... args)</code>
- *     <li><code>CallSite bootstrap(Object caller, Object... nameAndTypeWithArgs)</code>
+ *     <li>{@code CallSite bootstrap(Lookup caller, String name, MethodType type, Object... args)}
+ *     <li>{@code CallSite bootstrap(Object... args)}
+ *     <li>{@code CallSite bootstrap(Object caller, Object... nameAndTypeWithArgs)}
  *     </ul></td></tr>
  * <tr><th scope="row" style="font-weight:normal; vertical-align:top">0</th><td>
  *     <ul style="list-style:none; padding-left: 0; margin:0">
- *     <li><code>CallSite bootstrap(Lookup caller, String name, MethodType type)</code>
- *     <li><code>CallSite bootstrap(Lookup caller, Object... nameAndType)</code>
+ *     <li>{@code CallSite bootstrap(Lookup caller, String name, MethodType type)}
+ *     <li>{@code CallSite bootstrap(Lookup caller, Object... nameAndType)}
  *     </ul></td></tr>
  * <tr><th scope="row" style="font-weight:normal; vertical-align:top">1</th><td>
- *     <code>CallSite bootstrap(Lookup caller, String name, MethodType type, Object arg)</code></td></tr>
+ *     {@code CallSite bootstrap(Lookup caller, String name, MethodType type, Object arg)}</td></tr>
  * <tr><th scope="row" style="font-weight:normal; vertical-align:top">2</th><td>
  *     <ul style="list-style:none; padding-left: 0; margin:0">
- *     <li><code>CallSite bootstrap(Lookup caller, String name, MethodType type, Object... args)</code>
- *     <li><code>CallSite bootstrap(Lookup caller, String name, MethodType type, String... args)</code>
- *     <li><code>CallSite bootstrap(Lookup caller, String name, MethodType type, String x, int y)</code>
+ *     <li>{@code CallSite bootstrap(Lookup caller, String name, MethodType type, Object... args)}
+ *     <li>{@code CallSite bootstrap(Lookup caller, String name, MethodType type, String... args)}
+ *     <li>{@code CallSite bootstrap(Lookup caller, String name, MethodType type, String x, int y)}
  *     </ul></td></tr>
  * </tbody>
  * </table>

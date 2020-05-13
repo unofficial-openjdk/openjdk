@@ -26,30 +26,44 @@
 #include "classfile/stringTable.hpp"
 #include "gc/shared/oopStorage.inline.hpp"
 #include "gc/shared/oopStorageParState.inline.hpp"
+#include "gc/shared/oopStorageSet.hpp"
 #include "gc/shared/weakProcessor.inline.hpp"
 #include "gc/shared/weakProcessorPhases.hpp"
 #include "gc/shared/weakProcessorPhaseTimes.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/iterator.hpp"
+#include "prims/resolvedMethodTable.hpp"
 #include "runtime/globals.hpp"
 #include "utilities/macros.hpp"
 
+template <typename Container>
+class OopsDoAndReportCounts {
+public:
+  void operator()(BoolObjectClosure* is_alive, OopClosure* keep_alive, OopStorage* storage) {
+    Container::reset_dead_counter();
+
+    CountingSkippedIsAliveClosure<BoolObjectClosure, OopClosure> cl(is_alive, keep_alive);
+    storage->oops_do(&cl);
+
+    Container::inc_dead_counter(cl.num_dead() + cl.num_skipped());
+    Container::finish_dead_counter();
+  }
+};
+
 void WeakProcessor::weak_oops_do(BoolObjectClosure* is_alive, OopClosure* keep_alive) {
-  FOR_EACH_WEAK_PROCESSOR_PHASE(phase) {
-    if (WeakProcessorPhases::is_serial(phase)) {
-      WeakProcessorPhases::processor(phase)(is_alive, keep_alive);
+  WeakProcessorPhases::Iterator pit = WeakProcessorPhases::serial_iterator();
+  for ( ; !pit.is_end(); ++pit) {
+    WeakProcessorPhases::processor(*pit)(is_alive, keep_alive);
+  }
+
+  OopStorageSet::Iterator it = OopStorageSet::weak_iterator();
+  for ( ; !it.is_end(); ++it) {
+    if (OopStorageSet::string_table_weak() == *it) {
+      OopsDoAndReportCounts<StringTable>()(is_alive, keep_alive, *it);
+    } else if (OopStorageSet::resolved_method_table_weak() == *it) {
+      OopsDoAndReportCounts<ResolvedMethodTable>()(is_alive, keep_alive, *it);
     } else {
-      if (WeakProcessorPhases::is_stringtable(phase)) {
-        StringTable::reset_dead_counter();
-
-        CountingSkippedIsAliveClosure<BoolObjectClosure, OopClosure> cl(is_alive, keep_alive);
-        WeakProcessorPhases::oop_storage(phase)->oops_do(&cl);
-
-        StringTable::inc_dead_counter(cl.num_dead() + cl.num_skipped());
-        StringTable::finish_dead_counter();
-      } else {
-        WeakProcessorPhases::oop_storage(phase)->weak_oops_do(is_alive, keep_alive);
-      }
+      it->weak_oops_do(is_alive, keep_alive);
     }
   }
 }
@@ -75,8 +89,9 @@ uint WeakProcessor::ergo_workers(uint max_workers) {
   // and development oriented, so not allocating any threads
   // specifically for them is okay.
   size_t ref_count = 0;
-  FOR_EACH_WEAK_PROCESSOR_OOP_STORAGE_PHASE(phase) {
-    ref_count += WeakProcessorPhases::oop_storage(phase)->allocation_count();
+  OopStorageSet::Iterator it = OopStorageSet::weak_iterator();
+  for ( ; !it.is_end(); ++it) {
+    ref_count += it->allocation_count();
   }
 
   // +1 to (approx) round up the ref per thread division.
@@ -95,15 +110,18 @@ void WeakProcessor::Task::initialize() {
     _phase_times->set_active_workers(_nworkers);
   }
 
-  uint storage_count = WeakProcessorPhases::oop_storage_phase_count;
+  uint storage_count = WeakProcessorPhases::oopstorage_phase_count;
   _storage_states = NEW_C_HEAP_ARRAY(StorageState, storage_count, mtGC);
 
-  StorageState* states = _storage_states;
-  FOR_EACH_WEAK_PROCESSOR_OOP_STORAGE_PHASE(phase) {
-    OopStorage* storage = WeakProcessorPhases::oop_storage(phase);
-    new (states++) StorageState(storage, _nworkers);
+  StorageState* cur_state = _storage_states;
+  OopStorageSet::Iterator it = OopStorageSet::weak_iterator();
+  for ( ; !it.is_end(); ++it, ++cur_state) {
+    assert(pointer_delta(cur_state, _storage_states, sizeof(StorageState)) < storage_count, "invariant");
+    new (cur_state) StorageState(*it, _nworkers);
   }
+  assert(pointer_delta(cur_state, _storage_states, sizeof(StorageState)) == storage_count, "invariant");
   StringTable::reset_dead_counter();
+  ResolvedMethodTable::reset_dead_counter();
 }
 
 WeakProcessor::Task::Task(uint nworkers) :
@@ -127,13 +145,14 @@ WeakProcessor::Task::Task(WeakProcessorPhaseTimes* phase_times, uint nworkers) :
 WeakProcessor::Task::~Task() {
   if (_storage_states != NULL) {
     StorageState* states = _storage_states;
-    FOR_EACH_WEAK_PROCESSOR_OOP_STORAGE_PHASE(phase) {
+    for (uint i = 0; i < WeakProcessorPhases::oopstorage_phase_count; ++i) {
       states->StorageState::~StorageState();
       ++states;
     }
     FREE_C_HEAP_ARRAY(StorageState, _storage_states);
   }
   StringTable::finish_dead_counter();
+  ResolvedMethodTable::finish_dead_counter();
 }
 
 void WeakProcessor::GangTask::work(uint worker_id) {

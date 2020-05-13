@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,8 @@ JVM_LDFLAGS += \
     $(EXTRA_LDFLAGS) \
     #
 
+JVM_ASFLAGS += $(EXTRA_ASFLAGS)
+
 JVM_LIBS += \
     $(JVM_LIBS_FEATURES) \
     #
@@ -55,7 +57,7 @@ JVM_LIBS += \
 JVM_EXCLUDE_FILES += args.cc
 JVM_EXCLUDES += adlc
 
-# Needed by vm_version.cpp
+# Needed by abstract_vm_version.cpp
 ifeq ($(call isTargetCpu, x86_64), true)
   OPENJDK_TARGET_CPU_VM_VERSION := amd64
 else ifeq ($(call isTargetCpu, sparcv9), true)
@@ -73,17 +75,21 @@ CFLAGS_VM_VERSION := \
     -DCPU='"$(OPENJDK_TARGET_CPU_VM_VERSION)"' \
     #
 
+ifneq ($(HOTSPOT_BUILD_TIME), )
+  CFLAGS_VM_VERSION += -DHOTSPOT_BUILD_TIME='"$(HOTSPOT_BUILD_TIME)"'
+endif
+
 ################################################################################
 # Disabled warnings
 
-DISABLED_WARNINGS_gcc := extra parentheses comment unknown-pragmas address \
+DISABLED_WARNINGS_gcc := parentheses comment unknown-pragmas address \
     delete-non-virtual-dtor char-subscripts array-bounds int-in-bool-context \
     ignored-qualifiers  missing-field-initializers implicit-fallthrough \
     empty-body strict-overflow sequence-point maybe-uninitialized \
-    misleading-indentation
+    misleading-indentation cast-function-type
 
 ifeq ($(call check-jvm-feature, zero), true)
-  DISABLED_WARNINGS_gcc += return-type switch
+  DISABLED_WARNINGS_gcc += return-type switch clobbered
 endif
 
 DISABLED_WARNINGS_clang := tautological-compare \
@@ -95,8 +101,7 @@ DISABLED_WARNINGS_solstudio := labelnotused hidef w_novirtualdescr inlafteruse \
     unknownpragma doubunder w_enumnotused w_toomanyenumnotused \
     wvarhidenmem wunreachable wnoretvalue notemsource
 
-DISABLED_WARNINGS_xlc := 1540-0216 1540-0198 1540-1090 1540-1639 1540-1088 \
-    1500-010
+DISABLED_WARNINGS_xlc := tautological-compare shift-negative-value
 
 DISABLED_WARNINGS_microsoft :=
 
@@ -166,6 +171,9 @@ JVM_OPTIMIZATION ?= HIGHEST_JVM
 # default.
 JVM_STRIPFLAGS ?= $(STRIPFLAGS)
 
+# This source set is reused so save in cache.
+$(call FillFindCache, $(JVM_SRC_DIRS))
+
 ################################################################################
 # Now set up the actual compilation of the main hotspot native library
 
@@ -179,7 +187,7 @@ $(eval $(call SetupNativeCompilation, BUILD_LIBJVM, \
     EXCLUDE_PATTERNS := $(JVM_EXCLUDE_PATTERNS), \
     EXTRA_OBJECT_FILES := $(DTRACE_EXTRA_OBJECT_FILES), \
     CFLAGS := $(JVM_CFLAGS), \
-    vm_version.cpp_CXXFLAGS := $(CFLAGS_VM_VERSION), \
+    abstract_vm_version.cpp_CXXFLAGS := $(CFLAGS_VM_VERSION), \
     arguments.cpp_CXXFLAGS := $(CFLAGS_VM_VERSION), \
     DISABLED_WARNINGS_gcc := $(DISABLED_WARNINGS_gcc), \
     DISABLED_WARNINGS_clang := $(DISABLED_WARNINGS_clang), \
@@ -201,11 +209,11 @@ $(eval $(call SetupNativeCompilation, BUILD_LIBJVM, \
     PRECOMPILED_HEADER_EXCLUDE := $(JVM_PRECOMPILED_HEADER_EXCLUDE), \
 ))
 
-# Always recompile vm_version.cpp if libjvm needs to be relinked. This ensures
+# Always recompile abstract_vm_version.cpp if libjvm needs to be relinked. This ensures
 # that the internal vm version is updated as it relies on __DATE__ and __TIME__
 # macros.
-VM_VERSION_OBJ := $(JVM_OUTPUTDIR)/objs/vm_version$(OBJ_SUFFIX)
-$(VM_VERSION_OBJ): $(filter-out $(VM_VERSION_OBJ) $(JVM_MAPFILE), \
+ABSTRACT_VM_VERSION_OBJ := $(JVM_OUTPUTDIR)/objs/abstract_vm_version$(OBJ_SUFFIX)
+$(ABSTRACT_VM_VERSION_OBJ): $(filter-out $(ABSTRACT_VM_VERSION_OBJ) $(JVM_MAPFILE), \
     $(BUILD_LIBJVM_TARGET_DEPS))
 
 ifneq ($(GENERATE_COMPILE_COMMANDS_ONLY), true)
@@ -256,6 +264,15 @@ TARGETS += $(BUILD_LIBJVM)
 #
 # Search the output for the operator(s) of interest, to see where they are
 # referenced.
+#
+# When a reference to the global 'operator delete' is reported, it might be
+# due to a "deleting destructor".  In this case, objdump may show the
+# reference to be associated with but not actually in a destructor.  A
+# deleting destructor is automatically generated for a class whose destructor
+# is virtual.  A deleting destructor requires an accessible 'operator delete'
+# for the associated class.  If the class doesn't provide a more specific
+# declaration (either directly or by inheriting from a class that provides
+# one) then the global definition will be used, triggering this check.
 
 ifneq ($(GENERATE_COMPILE_COMMANDS_ONLY), true)
   ifneq ($(filter $(TOOLCHAIN_TYPE), gcc clang solstudio), )

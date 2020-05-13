@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@
 #include "opto/macro.hpp"
 #include "opto/runtime.hpp"
 #include "utilities/align.hpp"
-
+#include "utilities/powerOfTwo.hpp"
 
 void PhaseMacroExpand::insert_mem_bar(Node** ctrl, Node** mem, int opcode, Node* precedent) {
   MemBarNode* mb = MemBarNode::make(C, opcode, Compile::AliasIdxBot, precedent);
@@ -505,7 +505,7 @@ Node* PhaseMacroExpand::generate_arraycopy(ArrayCopyNode *ac, AllocateArrayNode*
 
     // We don't need a subtype check for validated copies and Object[].clone()
     bool skip_subtype_check = ac->is_arraycopy_validated() || ac->is_copyof_validated() ||
-                              ac->is_copyofrange_validated() || ac->is_cloneoop();
+                              ac->is_copyofrange_validated() || ac->is_clone_oop_array();
     if (!skip_subtype_check) {
       // Get the klass* for both src and dest
       Node* src_klass  = ac->in(ArrayCopyNode::SrcKlass);
@@ -524,7 +524,7 @@ Node* PhaseMacroExpand::generate_arraycopy(ArrayCopyNode *ac, AllocateArrayNode*
       // Test S[] against D[], not S against D, because (probably)
       // the secondary supertype cache is less busy for S[] than S.
       // This usually only matters when D is an interface.
-      Node* not_subtype_ctrl = Phase::gen_subtype_check(src_klass, dest_klass, ctrl, mem, &_igvn);
+      Node* not_subtype_ctrl = Phase::gen_subtype_check(src_klass, dest_klass, ctrl, mem, _igvn);
       // Plug failing path into checked_oop_disjoint_arraycopy
       if (not_subtype_ctrl != top()) {
         Node* local_ctrl = not_subtype_ctrl;
@@ -1093,24 +1093,10 @@ void PhaseMacroExpand::expand_arraycopy_node(ArrayCopyNode *ac) {
   MergeMemNode* merge_mem = NULL;
 
   if (ac->is_clonebasic()) {
-    assert (src_offset == NULL && dest_offset == NULL, "for clone offsets should be null");
-    Node* mem = ac->in(TypeFunc::Memory);
-    const char* copyfunc_name = "arraycopy";
-    address     copyfunc_addr =
-      basictype2arraycopy(T_LONG, NULL, NULL,
-                          true, copyfunc_name, true);
-
-    const TypePtr* raw_adr_type = TypeRawPtr::BOTTOM;
-    const TypeFunc* call_type = OptoRuntime::fast_arraycopy_Type();
-
-    Node* call = make_leaf_call(ctrl, mem, call_type, copyfunc_addr, copyfunc_name, raw_adr_type, src, dest, length XTOP);
-    transform_later(call);
-
     BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
-    bs->clone_barrier_at_expansion(ac, call, _igvn);
-
+    bs->clone_at_expansion(this, ac);
     return;
-  } else if (ac->is_copyof() || ac->is_copyofrange() || ac->is_cloneoop()) {
+  } else if (ac->is_copyof() || ac->is_copyofrange() || ac->is_clone_oop_array()) {
     Node* mem = ac->in(TypeFunc::Memory);
     merge_mem = MergeMemNode::make(mem);
     transform_later(merge_mem);
@@ -1163,8 +1149,8 @@ void PhaseMacroExpand::expand_arraycopy_node(ArrayCopyNode *ac) {
   if (top_src != NULL && top_src->klass() != NULL) {
     src_elem = top_src->klass()->as_array_klass()->element_type()->basic_type();
   }
-  if (src_elem  == T_ARRAY)  src_elem  = T_OBJECT;
-  if (dest_elem == T_ARRAY)  dest_elem = T_OBJECT;
+  if (is_reference_type(src_elem))  src_elem  = T_OBJECT;
+  if (is_reference_type(dest_elem)) dest_elem = T_OBJECT;
 
   if (ac->is_arraycopy_validated() &&
       dest_elem != T_CONFLICT &&

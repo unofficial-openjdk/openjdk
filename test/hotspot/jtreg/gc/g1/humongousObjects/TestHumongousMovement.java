@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 /**
  * @test TestHumongousMovement
+ * @key randomness
  * @summary Checks that Humongous objects are not moved during GC
  * @requires vm.gc.G1
  * @library /test/lib /
@@ -44,7 +45,6 @@ import java.util.stream.Collectors;
  * @modules java.management
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *      sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
  *                   -XX:G1HeapRegionSize=1M -Xms200m -Xmx200m -XX:InitiatingHeapOccupancyPercent=100
  *                   -Xlog:gc=info:file=TestHumongousMovement.log

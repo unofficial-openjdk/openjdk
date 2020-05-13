@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/classLoaderDataGraph.hpp"
 #include "gc/z/zBarrier.inline.hpp"
 #include "gc/z/zMark.inline.hpp"
 #include "gc/z/zMarkCache.inline.hpp"
@@ -33,7 +34,7 @@
 #include "gc/z/zRootsIterator.hpp"
 #include "gc/z/zStat.hpp"
 #include "gc/z/zTask.hpp"
-#include "gc/z/zThread.hpp"
+#include "gc/z/zThread.inline.hpp"
 #include "gc/z/zThreadLocalAllocBuffer.hpp"
 #include "gc/z/zUtils.inline.hpp"
 #include "gc/z/zWorkers.inline.hpp"
@@ -43,11 +44,12 @@
 #include "oops/oop.inline.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/handshake.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/prefetch.inline.hpp"
+#include "runtime/safepointMechanism.hpp"
 #include "runtime/thread.hpp"
 #include "utilities/align.hpp"
 #include "utilities/globalDefinitions.hpp"
+#include "utilities/powerOfTwo.hpp"
 #include "utilities/ticks.hpp"
 
 static const ZStatSubPhase ZSubPhaseConcurrentMark("Concurrent Mark");
@@ -56,9 +58,9 @@ static const ZStatSubPhase ZSubPhaseConcurrentMarkIdle("Concurrent Mark Idle");
 static const ZStatSubPhase ZSubPhaseConcurrentMarkTryTerminate("Concurrent Mark Try Terminate");
 static const ZStatSubPhase ZSubPhaseMarkTryComplete("Pause Mark Try Complete");
 
-ZMark::ZMark(ZWorkers* workers, ZPageTable* pagetable) :
+ZMark::ZMark(ZWorkers* workers, ZPageTable* page_table) :
     _workers(workers),
-    _pagetable(pagetable),
+    _page_table(page_table),
     _allocator(),
     _stripes(),
     _terminate(),
@@ -79,7 +81,7 @@ size_t ZMark::calculate_nstripes(uint nworkers) const {
   // Calculate the number of stripes from the number of workers we use,
   // where the number of stripes must be a power of two and we want to
   // have at least one worker per stripe.
-  const size_t nstripes = ZUtils::round_down_power_of_2(nworkers);
+  const size_t nstripes = round_down_power_of_2(nworkers);
   return MIN2(nstripes, ZMarkStripesMax);
 }
 
@@ -132,8 +134,15 @@ public:
     // Update thread local address bad mask
     ZThreadLocalData::set_address_bad_mask(thread, ZAddressBadMask);
 
+    // Mark invisible root
+    ZThreadLocalData::do_invisible_root(thread, ZBarrier::mark_barrier_on_invisible_root_oop_field);
+
     // Retire TLAB
     ZThreadLocalAllocBuffer::retire(thread);
+  }
+
+  virtual bool should_disarm_nmethods() const {
+    return true;
   }
 
   virtual void do_oop(oop* p) {
@@ -155,7 +164,7 @@ public:
   ZMarkRootsTask(ZMark* mark) :
       ZTask("ZMarkRootsTask"),
       _mark(mark),
-      _roots() {}
+      _roots(false /* visit_jvmti_weak_export */) {}
 
   virtual void work() {
     _roots.oops_do(&_cl);
@@ -200,7 +209,7 @@ void ZMark::finish_work() {
 }
 
 bool ZMark::is_array(uintptr_t addr) const {
-  return ZOop::to_oop(addr)->is_objArray();
+  return ZOop::from_address(addr)->is_objArray();
 }
 
 void ZMark::push_partial_array(uintptr_t addr, size_t size, bool finalizable) {
@@ -307,7 +316,7 @@ void ZMark::follow_object(oop obj, bool finalizable) {
 }
 
 bool ZMark::try_mark_object(ZMarkCache* cache, uintptr_t addr, bool finalizable) {
-  ZPage* const page = _pagetable->get(addr);
+  ZPage* const page = _page_table->get(addr);
   if (page->is_allocating()) {
     // Newly allocated objects are implicitly marked
     return false;
@@ -338,7 +347,7 @@ void ZMark::mark_and_follow(ZMarkCache* cache, ZMarkStackEntry entry) {
     return;
   }
 
-  // Decode object address
+  // Decode object address and follow flag
   const uintptr_t addr = entry.object_address();
 
   if (!try_mark_object(cache, addr, finalizable)) {
@@ -347,9 +356,15 @@ void ZMark::mark_and_follow(ZMarkCache* cache, ZMarkStackEntry entry) {
   }
 
   if (is_array(addr)) {
-    follow_array_object(objArrayOop(ZOop::to_oop(addr)), finalizable);
+    // Decode follow flag
+    const bool follow = entry.follow();
+
+    // The follow flag is currently only relevant for object arrays
+    if (follow) {
+      follow_array_object(objArrayOop(ZOop::from_address(addr)), finalizable);
+    }
   } else {
-    follow_object(ZOop::to_oop(addr), finalizable);
+    follow_object(ZOop::from_address(addr), finalizable);
   }
 }
 
@@ -404,13 +419,14 @@ void ZMark::idle() const {
   os::naked_short_sleep(1);
 }
 
-class ZMarkFlushAndFreeStacksClosure : public ThreadClosure {
+class ZMarkFlushAndFreeStacksClosure : public HandshakeClosure {
 private:
   ZMark* const _mark;
   bool         _flushed;
 
 public:
   ZMarkFlushAndFreeStacksClosure(ZMark* mark) :
+      HandshakeClosure("ZMarkFlushAndFreeStacks"),
       _mark(mark),
       _flushed(false) {}
 
@@ -438,11 +454,6 @@ bool ZMark::flush(bool at_safepoint) {
 }
 
 bool ZMark::try_flush(volatile size_t* nflush) {
-  // Only flush if handshakes are enabled
-  if (!ThreadLocalHandshakes) {
-    return false;
-  }
-
   Atomic::inc(nflush);
 
   ZStatTimer timer(ZSubPhaseConcurrentMarkTryFlush);
@@ -477,7 +488,7 @@ bool ZMark::try_terminate() {
       // Flush before termination
       if (!try_flush(&_work_nterminateflush)) {
         // No more work available, skip further flush attempts
-        Atomic::store(false, &_work_terminateflush);
+        Atomic::store(&_work_terminateflush, false);
       }
 
       // Don't terminate, regardless of whether we successfully
@@ -632,14 +643,22 @@ public:
 
 class ZMarkConcurrentRootsTask : public ZTask {
 private:
-  ZConcurrentRootsIterator            _roots;
+  SuspendibleThreadSetJoiner          _sts_joiner;
+  ZConcurrentRootsIteratorClaimStrong _roots;
   ZMarkConcurrentRootsIteratorClosure _cl;
 
 public:
   ZMarkConcurrentRootsTask(ZMark* mark) :
       ZTask("ZMarkConcurrentRootsTask"),
-      _roots(true /* marking */),
-      _cl() {}
+      _sts_joiner(),
+      _roots(),
+      _cl() {
+    ClassLoaderDataGraph_lock->lock();
+  }
+
+  ~ZMarkConcurrentRootsTask() {
+    ClassLoaderDataGraph_lock->unlock();
+  }
 
   virtual void work() {
     _roots.oops_do(&_cl);

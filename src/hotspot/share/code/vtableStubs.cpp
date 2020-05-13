@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@
 #include "runtime/mutexLocker.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/align.hpp"
+#include "utilities/powerOfTwo.hpp"
 #ifdef COMPILER2
 #include "opto/matcher.hpp"
 #endif
@@ -80,10 +81,11 @@ void* VtableStub::operator new(size_t size, int code_size) throw() {
 
 
 void VtableStub::print_on(outputStream* st) const {
-  st->print("vtable stub (index = %d, receiver_location = " INTX_FORMAT ", code = [" INTPTR_FORMAT ", " INTPTR_FORMAT "[)",
+  st->print("vtable stub (index = %d, receiver_location = " INTX_FORMAT ", code = [" INTPTR_FORMAT ", " INTPTR_FORMAT "])",
              index(), p2i(receiver_location()), p2i(code_begin()), p2i(code_end()));
 }
 
+void VtableStub::print() const { print_on(tty); }
 
 // -----------------------------------------------------------------------------------------
 // Implementation of VtableStubs
@@ -125,9 +127,9 @@ int VtableStubs::_itab_stub_size = 0;
 void VtableStubs::initialize() {
   VtableStub::_receiver_location = SharedRuntime::name_for_receiver();
   {
-    MutexLockerEx ml(VtableStubs_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker ml(VtableStubs_lock, Mutex::_no_safepoint_check_flag);
     assert(_number_of_vtable_stubs == 0, "potential performance bug: VtableStubs initialized more than once");
-    assert(is_power_of_2(N), "N must be a power of 2");
+    assert(is_power_of_2(int(N)), "N must be a power of 2");
     for (int i = 0; i < N; i++) {
       _table[i] = NULL;
     }
@@ -211,8 +213,8 @@ address VtableStubs::find_stub(bool is_vtable_stub, int vtable_index) {
 
   VtableStub* s;
   {
-    MutexLockerEx ml(VtableStubs_lock, Mutex::_no_safepoint_check_flag);
-    s = ShareVtableStubs ? lookup(is_vtable_stub, vtable_index) : NULL;
+    MutexLocker ml(VtableStubs_lock, Mutex::_no_safepoint_check_flag);
+    s = lookup(is_vtable_stub, vtable_index);
     if (s == NULL) {
       if (is_vtable_stub) {
         s = create_vtable_stub(vtable_index);
@@ -233,7 +235,8 @@ address VtableStubs::find_stub(bool is_vtable_stub, int vtable_index) {
       }
       // Notify JVMTI about this stub. The event will be recorded by the enclosing
       // JvmtiDynamicCodeEventCollector and posted when this thread has released
-      // all locks.
+      // all locks. Only post this event if a new state is not required. Creating a new state would
+      // cause a safepoint and the caller of this code has a NoSafepointVerifier.
       if (JvmtiExport::should_post_dynamic_code_generated()) {
         JvmtiExport::post_dynamic_code_generated_while_holding_locks(is_vtable_stub? "vtable stub": "itable stub",
                                                                      s->code_begin(), s->code_end());
@@ -271,7 +274,7 @@ void VtableStubs::enter(bool is_vtable_stub, int vtable_index, VtableStub* s) {
 }
 
 VtableStub* VtableStubs::entry_point(address pc) {
-  MutexLockerEx ml(VtableStubs_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker ml(VtableStubs_lock, Mutex::_no_safepoint_check_flag);
   VtableStub* stub = (VtableStub*)(pc - VtableStub::entry_offset());
   uint hash = VtableStubs::hash(stub->is_vtable_stub(), stub->index());
   VtableStub* s;

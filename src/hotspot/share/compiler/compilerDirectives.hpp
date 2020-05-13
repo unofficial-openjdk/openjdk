@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,13 +61,13 @@
     cflags(PrintIntrinsics,         bool, PrintIntrinsics, PrintIntrinsics) \
 NOT_PRODUCT(cflags(TraceOptoPipelining, bool, TraceOptoPipelining, TraceOptoPipelining)) \
 NOT_PRODUCT(cflags(TraceOptoOutput,     bool, TraceOptoOutput, TraceOptoOutput)) \
+NOT_PRODUCT(cflags(PrintIdeal,          bool, PrintIdeal, PrintIdeal)) \
+NOT_PRODUCT(cflags(IGVPrintLevel,       intx, PrintIdealGraphLevel, IGVPrintLevel)) \
     cflags(TraceSpilling,           bool, TraceSpilling, TraceSpilling) \
     cflags(Vectorize,               bool, false, Vectorize) \
     cflags(VectorizeDebug,          uintx, 0, VectorizeDebug) \
     cflags(CloneMapDebug,           bool, false, CloneMapDebug) \
-    cflags(IGVPrintLevel,           intx, PrintIdealGraphLevel, IGVPrintLevel) \
-    cflags(MaxNodeLimit,            intx, MaxNodeLimit, MaxNodeLimit) \
-ZGC_ONLY(cflags(ZOptimizeLoadBarriers, bool, ZOptimizeLoadBarriers, ZOptimizeLoadBarriers))
+    cflags(MaxNodeLimit,            intx, MaxNodeLimit, MaxNodeLimit)
 #else
   #define compilerdirectives_c2_flags(cflags)
 #endif
@@ -103,6 +103,7 @@ private:
 public:
   DirectiveSet(CompilerDirectives* directive);
   ~DirectiveSet();
+  void init_disableintrinsic();
   CompilerDirectives* directive();
   bool parse_and_add_inline(char* str, const char*& error_msg);
   void append_inline(InlineMatcher* m);

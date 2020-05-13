@@ -28,10 +28,10 @@
  * ===========================================================================
  */
 /*
- * Portions copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * $Id: XMLDSigRI.java 1804972 2017-08-14 09:59:23Z coheigea $
+ * $Id: XMLDSigRI.java 1833618 2018-06-15 17:36:20Z mullan $
  */
 package org.jcp.xml.dsig.internal.dom;
 
@@ -123,7 +123,7 @@ public final class XMLDSigRI extends Provider {
                     } else if (algo.equals(Transform.XSLT)) {
                         return new DOMXSLTTransform();
                     }
-                 }
+                }
             } catch (Exception ex) {
                 throw new NoSuchAlgorithmException("Error constructing " +
                     type + " for " + algo + " using XMLDSig", ex);
@@ -134,7 +134,8 @@ public final class XMLDSigRI extends Provider {
     }
 
     public XMLDSigRI() {
-        /* We are the XMLDSig provider */
+        // This is the JDK XMLDSig provider, synced from
+        // Apache Santuario XML Security for Java, version 2.1.4
         super("XMLDSig", VER, INFO);
 
         final Provider p = this;

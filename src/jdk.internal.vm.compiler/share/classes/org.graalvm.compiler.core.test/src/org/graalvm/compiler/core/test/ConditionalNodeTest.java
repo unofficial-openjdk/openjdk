@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 package org.graalvm.compiler.core.test;
 
+import org.graalvm.compiler.nodes.CallTargetNode.InvokeKind;
 import org.junit.Test;
 
 public class ConditionalNodeTest extends GraalCompilerTest {
@@ -105,5 +106,24 @@ public class ConditionalNodeTest extends GraalCompilerTest {
         }
         sink0 = 1;
         return Math.min(-1, value);
+    }
+
+    @Test
+    public void test4() {
+        test("conditionalTest4", this, 0);
+        test("conditionalTest4", this, 1);
+    }
+
+    int a;
+    InvokeKind b;
+
+    public static int conditionalTest4(ConditionalNodeTest node, int a) {
+        if (a == 1) {
+            node.b = InvokeKind.Virtual;
+        } else {
+            node.b = InvokeKind.Special;
+        }
+        node.a = a;
+        return a;
     }
 }

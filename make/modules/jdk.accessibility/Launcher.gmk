@@ -1,0 +1,113 @@
+#
+# Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+include LauncherCommon.gmk
+
+################################################################################
+# jabswitch
+
+ifeq ($(call isTargetOs, windows), true)
+
+  JABSWITCH_SRC := $(TOPDIR)/src/jdk.accessibility/windows/native/jabswitch
+  ACCESSBRIDGE_SRC := $(TOPDIR)/src/jdk.accessibility/windows/native/common
+
+  $(eval $(call SetupJdkExecutable, BUILD_JABSWITCH, \
+      NAME := jabswitch, \
+      SRC := $(JABSWITCH_SRC), \
+      INCLUDE_FILES := jabswitch.cpp, \
+      CFLAGS := $(filter-out -Zc:wchar_t-, $(CFLAGS_JDKEXE)) -Zc:wchar_t \
+          -analyze- -Od -Gd -D_WINDOWS \
+          -D_UNICODE -DUNICODE -RTC1 -EHsc, \
+      DISABLED_WARNINGS_microsoft := 4267 4996, \
+      LDFLAGS := $(LDFLAGS_JDKEXE), \
+      LIBS := advapi32.lib version.lib user32.lib, \
+      VERSIONINFO_RESOURCE := $(ACCESSBRIDGE_SRC)/AccessBridgeStatusWindow.rc, \
+      MANIFEST := $(JABSWITCH_SRC)/jabswitch.manifest, \
+      MANIFEST_VERSION := $(VERSION_NUMBER_FOUR_POSITIONS), \
+  ))
+
+  TARGETS += $(BUILD_JABSWITCH)
+
+################################################################################
+# jaccessinspector
+
+  TOPDIR := $(TOPDIR)/src/jdk.accessibility/windows/native
+  TOOLS_CFLAGS := $(addprefix -I, \
+      $(TOPDIR)/include/bridge \
+      $(TOPDIR)/common \
+      $(TOPDIR)/toolscommon)
+
+  define SetupInspector
+  # Parameter 1 File name suffix
+  # Parameter 2 ACCESSBRIDGE_ARCH_ -D suffix
+
+    $$(eval $$(call SetupJdkExecutable, BUILD_JACCESSINSPECTOR$1, \
+      NAME := jaccessinspector$1, \
+      SRC := $(TOPDIR)/jaccessinspector $(TOPDIR)/common \
+          $(TOPDIR)/toolscommon $(TOPDIR)/bridge, \
+      CFLAGS := $$(CFLAGS_JDKEXE) $(TOOLS_CFLAGS) -DACCESSBRIDGE_ARCH_$2 -EHsc, \
+      LDFLAGS := $$(LDFLAGS_JDKEXE) -stack:655360, \
+      LIBS := advapi32.lib user32.lib, \
+      VERSIONINFO_RESOURCE := $(TOPDIR)/jaccessinspector/jaccessinspectorWindow.rc, \
+    ))
+
+    TARGETS += $$(BUILD_JACCESSINSPECTOR$1)
+
+  endef
+
+################################################################################
+# jaccesswalker
+
+  define SetupWalker
+  # Parameter 1 File name suffix
+  # Parameter 2 ACCESSBRIDGE_ARCH_ -D suffix
+
+    $$(eval $$(call SetupJdkExecutable, BUILD_JACCESSWALKER$1, \
+      NAME := jaccesswalker$1, \
+      SRC := $(TOPDIR)/jaccesswalker $(TOPDIR)/common \
+          $(TOPDIR)/toolscommon $(TOPDIR)/bridge, \
+      CFLAGS := $$(CFLAGS_JDKEXE) $(TOOLS_CFLAGS) -DACCESSBRIDGE_ARCH_$2 -EHsc, \
+      LDFLAGS := $$(LDFLAGS_JDKEXE) -stack:655360, \
+      LIBS := advapi32.lib comctl32.lib gdi32.lib user32.lib, \
+      VERSIONINFO_RESOURCE := $(TOPDIR)/jaccesswalker/jaccesswalkerWindow.rc, \
+   ))
+
+    TARGETS += $$(BUILD_JACCESSWALKER$1)
+
+  endef
+
+  ifeq ($(call isTargetCpuBits, 32), true)
+    $(eval $(call SetupInspector,-32,32))
+    $(eval $(call SetupWalker,-32,32))
+    $(eval $(call SetupInspector,,LEGACY))
+    $(eval $(call SetupWalker,,LEGACY))
+  else
+    $(eval $(call SetupInspector,,64))
+    $(eval $(call SetupWalker,,64))
+  endif
+
+endif
+
+################################################################################

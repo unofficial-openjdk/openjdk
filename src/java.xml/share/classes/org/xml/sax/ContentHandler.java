@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,24 +23,11 @@
  * questions.
  */
 
-// ContentHandler.java - handle main document content.
-// http://www.saxproject.org
-// Written by David Megginson
-// NO WARRANTY!  This class is in the public domain.
-// $Id: ContentHandler.java,v 1.2 2004/11/03 22:44:51 jsuttor Exp $
-
 package org.xml.sax;
 
 
 /**
  * Receive notification of the logical content of a document.
- *
- * <blockquote>
- * <em>This module, both source code and documentation, is in the
- * Public Domain, and comes with <strong>NO WARRANTY</strong>.</em>
- * See <a href='http://www.saxproject.org'>http://www.saxproject.org</a>
- * for further information.
- * </blockquote>
  *
  * <p>This is the main interface that most SAX applications
  * implement: if the application needs to be informed of basic parsing
@@ -126,23 +113,42 @@ public interface ContentHandler
     public void startDocument ()
         throws SAXException;
 
+    /**
+     * Receives notification of the XML declaration.
+     *
+     * @implSpec
+     * The default implementation in the SAX API is to do nothing.
+     *
+     * @param version the version string as in the input document, null if not
+     * specified
+     * @param encoding the encoding string as in the input document, null if not
+     * specified
+     * @param standalone the standalone string as in the input document, null if
+     * not specified
+     *
+     * @throws SAXException if the application wants to report an error or
+     * interrupt the parsing process
+     *
+     * @since 14
+     */
+    default void declaration(String version, String encoding, String standalone)
+        throws SAXException
+    {
+        //no op
+    }
 
     /**
      * Receive notification of the end of a document.
      *
-     * <p><strong>There is an apparent contradiction between the
-     * documentation for this method and the documentation for {@link
-     * org.xml.sax.ErrorHandler#fatalError}.  Until this ambiguity is
-     * resolved in a future major release, clients should make no
-     * assumptions about whether endDocument() will or will not be
-     * invoked when the parser has reported a fatalError() or thrown
-     * an exception.</strong></p>
+     * <p>
+     * This method is invoked by the parser to signal it has reached the end of
+     * the document after successfully completing the parsing process.
+     * After the event, the parser will return the control to the application.
      *
-     * <p>The SAX parser will invoke this method only once, and it will
-     * be the last method invoked during the parse.  The parser shall
-     * not invoke this method until it has either abandoned parsing
-     * (because of an unrecoverable error) or reached the end of
-     * input.</p>
+     * @apiNote In case of a fatal error, the parser may choose to stop the
+     * parsing process with a {@link SAXException}, in which case, this method
+     * will never be called. Refer to
+     * {@link ErrorHandler#fatalError(org.xml.sax.SAXParseException)}.
      *
      * @throws org.xml.sax.SAXException any SAX exception, possibly
      *            wrapping another exception

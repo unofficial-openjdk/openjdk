@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2015, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2015, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -26,7 +27,7 @@
 #include "gc/shared/generationCounters.hpp"
 #include "gc/shared/hSpaceCounters.hpp"
 #include "gc/shenandoah/shenandoahMonitoringSupport.hpp"
-#include "gc/shenandoah/shenandoahHeap.hpp"
+#include "gc/shenandoah/shenandoahHeap.inline.hpp"
 #include "gc/shenandoah/shenandoahHeapRegionCounters.hpp"
 #include "memory/metaspaceCounters.hpp"
 #include "services/memoryService.hpp"
@@ -46,12 +47,12 @@ private:
   ShenandoahHeap* _heap;
 public:
   ShenandoahGenerationCounters(ShenandoahHeap* heap) :
-          GenerationCounters("Heap", 1, 1, heap->initial_capacity(), heap->max_capacity(), heap->committed()),
+          GenerationCounters("Heap", 1, 1, heap->initial_capacity(), heap->max_capacity(), heap->capacity()),
           _heap(heap)
   {};
 
   virtual void update_all() {
-    _current_size->set_value(_heap->committed());
+    _current_size->set_value(_heap->capacity());
   }
 };
 
@@ -94,7 +95,7 @@ void ShenandoahMonitoringSupport::update_counters() {
   if (UsePerfData) {
     ShenandoahHeap* heap = ShenandoahHeap::heap();
     size_t used = heap->used();
-    size_t capacity = heap->capacity();
+    size_t capacity = heap->max_capacity();
     _heap_counters->update_all();
     _space_counters->update_all(capacity, used);
     _heap_region_counters->update();

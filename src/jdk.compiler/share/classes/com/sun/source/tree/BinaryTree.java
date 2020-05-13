@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,14 @@ package com.sun.source.tree;
  *   <em>leftOperand</em> <em>operator</em> <em>rightOperand</em>
  * </pre>
  *
- * @jls sections 15.17 to 15.24
+ * @jls 15.17 Multiplicative Operators
+ * @jls 15.18 Additive Operators
+ * @jls 15.19 Shift Operators
+ * @jls 15.20 Relational Operators
+ * @jls 15.21 Equality Operators
+ * @jls 15.22 Bitwise and Logical Operators
+ * @jls 15.23 Conditional-And Operator {@code &&}
+ * @jls 15.24 Conditional-Or Operator {@code ||}
  *
  * @author Peter von der Ah&eacute;
  * @author Jonathan Gibbons

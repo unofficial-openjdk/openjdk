@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -25,9 +26,9 @@
  * @test TestAllocSmallObj
  * @summary Test allocation of small object to result OOM, but not to crash JVM
  * @key gc
- * @requires vm.gc.Shenandoah
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
  * @library /test/lib
- * @run main TestAllocSmallObj
+ * @run driver TestAllocSmallObj
  */
 
 import jdk.test.lib.process.OutputAnalyzer;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@
 package gc.survivorAlignment;
 
 /**
- * @test
+ * @test gc.survivorAlignment.TestPromotionFromEdenToTenured
  * @bug 8031323
  * @summary Verify that objects promoted from eden space to tenured space during
  *          full GC are not aligned to SurvivorAlignmentInBytes value.
@@ -35,7 +35,6 @@ package gc.survivorAlignment;
  *          java.management
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=64m -XX:MaxNewSize=64m
  *                   -XX:OldSize=32m -XX:MaxHeapSize=96m -XX:SurvivorRatio=1

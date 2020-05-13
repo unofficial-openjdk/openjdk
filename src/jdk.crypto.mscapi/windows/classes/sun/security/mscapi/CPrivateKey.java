@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,12 +37,18 @@ class CPrivateKey extends CKey implements PrivateKey {
 
     private static final long serialVersionUID = 8113152807912338063L;
 
-    private CPrivateKey(String alg, long hCryptProv, long hCryptKey, int keyLength) {
-        super(alg, hCryptProv, hCryptKey, keyLength);
+    private CPrivateKey(String alg, NativeHandles handles, int keyLength) {
+        super(alg, handles, keyLength);
     }
 
-    public static CPrivateKey of(String alg, long hCryptProv, long hCryptKey, int keyLength) {
-        return new CPrivateKey(alg, hCryptProv, hCryptKey, keyLength);
+    // Called by native code inside security.cpp
+    static CPrivateKey of(
+            String alg, long hCryptProv, long hCryptKey, int keyLength) {
+        return of(alg, new NativeHandles(hCryptProv, hCryptKey), keyLength);
+    }
+
+    public static CPrivateKey of(String alg, NativeHandles handles, int keyLength) {
+        return new CPrivateKey(alg, handles, keyLength);
     }
 
     // this key does not support encoding
@@ -56,9 +62,13 @@ class CPrivateKey extends CKey implements PrivateKey {
     }
 
     public String toString() {
-        return algorithm + "PrivateKey [size=" + keyLength + " bits, type=" +
-            getKeyType(handles.hCryptKey) + ", container=" +
-            getContainerName(handles.hCryptProv) + "]";
+        if (handles.hCryptKey != 0) {
+            return algorithm + "PrivateKey [size=" + keyLength + " bits, type=" +
+                    getKeyType(handles.hCryptKey) + ", container=" +
+                    getContainerName(handles.hCryptProv) + "]";
+        } else {
+            return algorithm + "PrivateKey [size=" + keyLength + " bits, type=CNG]";
+        }
     }
 
     // This class is not serializable

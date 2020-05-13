@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,10 +84,10 @@ public class CalendarNameProviderImpl extends CalendarNameProvider implements Av
                         Era[] jeras = CalendarSystem.forName("japanese").getEras();
                         if (value <= jeras.length) {
                             // Localized era name could not be retrieved from this provider.
-                            // This can occur either for NewEra or SupEra.
+                            // This can occur either for Reiwa or SupEra.
                             //
                             // If it's CLDR provider, try COMPAT first, which is guaranteed to have
-                            // the name for NewEra.
+                            // the name for Reiwa.
                             if (type == LocaleProviderAdapter.Type.CLDR) {
                                 lr = LocaleProviderAdapter.forJRE().getLocaleResources(locale);
                                 key = getResourceKeyFor(LocaleProviderAdapter.Type.JRE,
@@ -257,11 +257,13 @@ public class CalendarNameProviderImpl extends CalendarNameProvider implements Av
         return langtags;
     }
 
+    // Check if each string is unique, except null or empty strings,
+    // as these strings are used for keys in the name-to-value map.
     private boolean hasDuplicates(String[] strings) {
         int len = strings.length;
         for (int i = 0; i < len - 1; i++) {
             String a = strings[i];
-            if (a != null) {
+            if (a != null && !a.isEmpty()) {
                 for (int j = i + 1; j < len; j++) {
                     if (a.equals(strings[j]))  {
                         return true;

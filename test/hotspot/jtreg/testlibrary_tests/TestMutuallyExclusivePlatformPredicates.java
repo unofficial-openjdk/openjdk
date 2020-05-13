@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,11 +48,12 @@ public class TestMutuallyExclusivePlatformPredicates {
         ARCH("isAArch64", "isARM", "isPPC", "isS390x", "isSparc", "isX64", "isX86"),
         BITNESS("is32bit", "is64bit"),
         OS("isAix", "isLinux", "isOSX", "isSolaris", "isWindows"),
-        VM_TYPE("isClient", "isServer", "isGraal", "isMinimal", "isZero", "isEmbedded"),
+        VM_TYPE("isClient", "isServer", "isMinimal", "isZero", "isEmbedded"),
         MODE("isInt", "isMixed", "isComp"),
         IGNORED("isEmulatedClient", "isDebugBuild", "isFastDebugBuild",
-                "isSlowDebugBuild", "hasSA", "shouldSAAttach", "isTieredSupported",
-                "areCustomLoadersSupportedForCDS", "isDefaultCDSArchiveSupported");
+                "isSlowDebugBuild", "hasSA", "isRoot", "isTieredSupported",
+                "areCustomLoadersSupportedForCDS", "isDefaultCDSArchiveSupported",
+                "isSignedOSX");
 
         public final List<String> methodNames;
 

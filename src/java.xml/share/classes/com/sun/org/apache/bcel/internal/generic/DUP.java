@@ -25,7 +25,6 @@ package com.sun.org.apache.bcel.internal.generic;
  * DUP - Duplicate top operand stack word
  * <PRE>Stack: ..., word -&gt; ..., word, word</PRE>
  *
- * @version $Id: DUP.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public class DUP extends StackInstruction implements PushInstruction {
 

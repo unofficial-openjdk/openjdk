@@ -146,12 +146,36 @@ public class UnicodeReader {
         putChar(ch, scan);
     }
 
+    protected void nextChar(boolean skip) {
+        if (!skip) {
+            sbuf = ArrayUtils.ensureCapacity(sbuf, sp);
+            sbuf[sp++] = ch;
+        }
+
+        scanChar();
+    }
+
     Name name() {
         return names.fromChars(sbuf, 0, sp);
     }
 
     String chars() {
         return new String(sbuf, 0, sp);
+    }
+
+    /** Add 'count' copies of the character 'ch' to the string buffer.
+     */
+    protected void repeat(char ch, int count) {
+        for ( ; 0 < count; count--) {
+            putChar(ch, false);
+        }
+    }
+
+    /** Reset the scan buffer pointer to 'pos'.
+     */
+    protected void reset(int pos) {
+        bp = pos - 1;
+        scanChar();
     }
 
     /** Convert unicode escape; bp points to initial '\' character

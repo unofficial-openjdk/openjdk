@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ import java.io.ObjectStreamException;
  * and <a href="http://www.ietf.org/rfc/rfc2365.txt"><i>RFC&nbsp;2365:
  * Administratively Scoped IP Multicast</i></a>
  *
- * <h3> <a id="format">Textual representation of IP addresses</a> </h3>
+ * <h2> <a id="format">Textual representation of IP addresses</a> </h2>
  *
  * Textual representation of IPv4 address used as input to methods
  * takes one of the following forms:
@@ -51,7 +51,7 @@ import java.io.ObjectStreamException;
  * <p> When four parts are specified, each is interpreted as a byte of
  * data and assigned, from left to right, to the four bytes of an IPv4
  * address.
-
+ *
  * <p> When a three part address is specified, the last part is
  * interpreted as a 16-bit quantity and placed in the right most two
  * bytes of the network address. This makes the three part address
@@ -70,7 +70,7 @@ import java.io.ObjectStreamException;
  * <p> For methods that return a textual representation as output
  * value, the first form, i.e. a dotted-quad string, is used.
  *
- * <h4> The Scope of a Multicast Address </h4>
+ * <h3> The Scope of a Multicast Address </h3>
  *
  * Historically the IPv4 TTL field in the IP header has doubled as a
  * multicast scope field: a TTL of 0 means node-local, 1 means
@@ -89,6 +89,7 @@ class Inet4Address extends InetAddress {
     /** use serialVersionUID from InetAddress, but Inet4Address instance
      *  is always replaced by an InetAddress instance before being
      *  serialized */
+    @java.io.Serial
     private static final long serialVersionUID = 3286316764910316507L;
 
     /*
@@ -134,6 +135,7 @@ class Inet4Address extends InetAddress {
      * @throws ObjectStreamException if a new object replacing this
      * object could not be created
      */
+    @java.io.Serial
     private Object writeReplace() throws ObjectStreamException {
         // will replace the to be serialized 'this' object
         InetAddress inet = new InetAddress();
@@ -306,6 +308,13 @@ class Inet4Address extends InetAddress {
         addr[2] = (byte) ((address >>> 8) & 0xFF);
         addr[3] = (byte) (address & 0xFF);
         return addr;
+    }
+
+    /**
+     * Returns the 32-bit IPv4 address.
+     */
+    int addressValue() {
+        return holder().getAddress();
     }
 
     /**

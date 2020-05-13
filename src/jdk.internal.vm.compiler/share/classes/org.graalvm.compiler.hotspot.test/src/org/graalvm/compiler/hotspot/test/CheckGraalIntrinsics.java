@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,13 +41,14 @@ import jdk.internal.vm.compiler.collections.MapCursor;
 import org.graalvm.compiler.api.test.Graal;
 import org.graalvm.compiler.hotspot.GraalHotSpotVMConfig;
 import org.graalvm.compiler.hotspot.HotSpotGraalRuntimeProvider;
+import org.graalvm.compiler.hotspot.meta.HotSpotGraphBuilderPlugins;
 import org.graalvm.compiler.hotspot.meta.HotSpotProviders;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderConfiguration.Plugins;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugin;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins.Binding;
 import org.graalvm.compiler.runtime.RuntimeProvider;
-import org.graalvm.compiler.serviceprovider.GraalServices;
+import org.graalvm.compiler.serviceprovider.JavaVersionUtil;
 import org.graalvm.compiler.test.GraalTest;
 import org.junit.Test;
 
@@ -60,6 +61,7 @@ import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.meta.MetaUtil;
 import jdk.vm.ci.meta.MethodHandleAccessProvider.IntrinsicMethod;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
+import jdk.vm.ci.sparc.SPARC;
 
 /**
  * Checks the intrinsics implemented by Graal against the set of intrinsics declared by HotSpot. The
@@ -156,11 +158,15 @@ public class CheckGraalIntrinsics extends GraalTest {
     private static Collection<String> add(Collection<String> c, String... elements) {
         String[] sorted = elements.clone();
         Arrays.sort(sorted);
-        for (int i = 0; i < elements.length; i++) {
-            if (!elements[i].equals(sorted[i])) {
-                // Let's keep the list sorted for easier visual inspection
-                fail("Element %d is out of order, \"%s\"", i, elements[i]);
+        if (!Arrays.equals(elements, sorted)) {
+            int width = 2 + Arrays.asList(elements).stream().map(String::length).reduce(0, Integer::max);
+            Formatter fmt = new Formatter();
+            fmt.format("%-" + width + "s | sorted%n", "original");
+            fmt.format("%s%n", new String(new char[width * 2 + 2]).replace('\0', '='));
+            for (int i = 0; i < elements.length; i++) {
+                fmt.format("%-" + width + "s | %s%n", elements[i], sorted[i]);
             }
+            fail("Elements not sorted alphabetically:%n%s", fmt);
         }
         c.addAll(Arrays.asList(elements));
         return c;
@@ -257,7 +263,8 @@ public class CheckGraalIntrinsics extends GraalTest {
                         "java/lang/reflect/Array.newArray(Ljava/lang/Class;I)Ljava/lang/Object;",
                         // HotSpot MacroAssembler-based intrinsic
                         "sun/nio/cs/ISO_8859_1$Encoder.encodeISOArray([CI[BII)I",
-                        // Stub based intrinsics but implementation seems complex in C2
+                        // We have implemented implCompressMultiBlock0 on JDK9+. Does it worth
+                        // backporting as corresponding HotSpot stubs are only generated on SPARC?
                         "sun/security/provider/DigestBase.implCompressMultiBlock([BII)I");
 
         // See JDK-8207146.
@@ -271,18 +278,8 @@ public class CheckGraalIntrinsics extends GraalTest {
                             "jdk/jfr/internal/JVM.getClassId(Ljava/lang/Class;)J");
 
             add(toBeInvestigated,
-                            // Some logic and a stub call
-                            "com/sun/crypto/provider/CounterMode.implCrypt([BII[BI)I",
-                            // Stub and very little logic
-                            "com/sun/crypto/provider/GHASH.processBlocks([BII[J[J)V",
-                            // HotSpot MacroAssembler-based intrinsic
-                            "java/lang/Math.fma(DDD)D",
-                            // HotSpot MacroAssembler-based intrinsic
-                            "java/lang/Math.fma(FFF)F",
                             // Just check if the argument is a compile time constant
                             "java/lang/invoke/MethodHandleImpl.isCompileConstant(Ljava/lang/Object;)Z",
-                            // Some logic and a runtime call
-                            "java/util/ArraysSupport.vectorizedMismatch(Ljava/lang/Object;JLjava/lang/Object;JII)I",
                             // Only used as a marker for vectorization?
                             "java/util/stream/Streams$RangeIntSpliterator.forEachRemaining(Ljava/util/function/IntConsumer;)V",
                             // Only implemented on non-AMD64 platforms (some logic and runtime call)
@@ -295,9 +292,7 @@ public class CheckGraalIntrinsics extends GraalTest {
                             // Control flow, deopts, and a cast
                             "jdk/internal/util/Preconditions.checkIndex(IILjava/util/function/BiFunction;)I",
                             // HotSpot MacroAssembler-based intrinsic
-                            "sun/nio/cs/ISO_8859_1$Encoder.implEncodeISOArray([CI[BII)I",
-                            // Runtime call and some complex compiler logic
-                            "sun/security/provider/DigestBase.implCompressMultiBlock0([BII)I");
+                            "sun/nio/cs/ISO_8859_1$Encoder.implEncodeISOArray([CI[BII)I");
 
             /*
              * Per default, all these operations are mapped to some generic method for which we
@@ -344,50 +339,86 @@ public class CheckGraalIntrinsics extends GraalTest {
             // Compact string support - HotSpot MacroAssembler-based intrinsic or complex C2 logic.
             add(toBeInvestigated,
                             "java/lang/StringCoding.hasNegatives([BII)Z",
-                            "java/lang/StringCoding.implEncodeISOArray([BI[BII)I",
+                            "java/lang/StringCoding.implEncodeISOArray([BI[BII)I");
+            add(ignore,
+                            // handled through an intrinsic for String.equals itself
+                            "java/lang/StringLatin1.equals([B[B)Z",
+
+                            // handled by an intrinsic for StringLatin1.indexOf([BI[BII)I
                             "java/lang/StringLatin1.indexOf([B[B)I",
-                            "java/lang/StringUTF16.getChar([BI)C",
-                            "java/lang/StringUTF16.getChars([BII[CI)V",
+
+                            // handled through an intrinsic for String.equals itself
+                            "java/lang/StringUTF16.equals([B[B)Z",
+
+                            // handled by an intrinsic for StringUTF16.indexOfUnsafe
                             "java/lang/StringUTF16.indexOf([BI[BII)I",
                             "java/lang/StringUTF16.indexOf([B[B)I",
+
+                            // handled by an intrinsic for StringUTF16.indexOfCharUnsafe
                             "java/lang/StringUTF16.indexOfChar([BIII)I",
+
+                            // handled by an intrinsic for StringUTF16.indexOfLatin1Unsafe
                             "java/lang/StringUTF16.indexOfLatin1([BI[BII)I",
-                            "java/lang/StringUTF16.indexOfLatin1([B[B)I",
-                            "java/lang/StringUTF16.putChar([BII)V",
-                            "java/lang/StringUTF16.toBytes([CII)[B");
-            // These are handled through an intrinsic for String.equals itself
-            add(ignore,
-                            "java/lang/StringLatin1.equals([B[B)Z",
-                            "java/lang/StringUTF16.equals([B[B)Z");
+                            "java/lang/StringUTF16.indexOfLatin1([B[B)I");
+
+            if (!config.useAESCTRIntrinsics) {
+                add(ignore,
+                                "com/sun/crypto/provider/CounterMode.implCrypt([BII[BI)I");
+            }
+            if (!config.useGHASHIntrinsics()) {
+                add(ignore,
+                                "com/sun/crypto/provider/GHASH.processBlocks([BII[J[J)V");
+            }
+            if (!config.useFMAIntrinsics) {
+                add(ignore,
+                                "java/lang/Math.fma(DDD)D",
+                                "java/lang/Math.fma(FFF)F");
+            } else if (arch instanceof SPARC) {
+                add(toBeInvestigated,
+                                "java/lang/Math.fma(DDD)D",
+                                "java/lang/Math.fma(FFF)F");
+            }
         }
 
         if (isJDK10OrHigher()) {
             add(toBeInvestigated,
-                            "java/lang/Math.multiplyHigh(JJ)J",
-                            "jdk/internal/util/ArraysSupport.vectorizedMismatch(Ljava/lang/Object;JLjava/lang/Object;JII)I");
+                            "java/lang/Math.multiplyHigh(JJ)J");
         }
 
         if (isJDK11OrHigher()) {
             // Relevant for Java flight recorder
             add(toBeInvestigated,
-                            "java/util/Base64$Encoder.encodeBlock([BII[BIZ)V",
-                            "jdk/jfr/internal/JVM.getEventWriter()Ljava/lang/Object;");
-        }
-
-        if (isJDK12OrHigher()) {
-            add(toBeInvestigated,
                             "java/lang/CharacterDataLatin1.isDigit(I)Z",
                             "java/lang/CharacterDataLatin1.isLowerCase(I)Z",
                             "java/lang/CharacterDataLatin1.isUpperCase(I)Z",
-                            "java/lang/CharacterDataLatin1.isWhitespace(I)Z");
+                            "java/lang/CharacterDataLatin1.isWhitespace(I)Z",
+                            "jdk/jfr/internal/JVM.getEventWriter()Ljava/lang/Object;");
+            if (!config.useBase64Intrinsics()) {
+                add(ignore,
+                                "java/util/Base64$Encoder.encodeBlock([BII[BIZ)V");
+            }
         }
 
         if (isJDK13OrHigher()) {
             add(toBeInvestigated,
+                            "java/lang/Math.abs(I)I",
+                            "java/lang/Math.abs(J)J",
                             "java/lang/Math.max(DD)D",
                             "java/lang/Math.max(FF)F",
                             "java/lang/Math.min(DD)D",
                             "java/lang/Math.min(FF)F");
+            add(toBeInvestigated,
+                            "jdk/internal/misc/Unsafe.writeback0(J)V",
+                            "jdk/internal/misc/Unsafe.writebackPostSync0()V",
+                            "jdk/internal/misc/Unsafe.writebackPreSync0()V");
+        }
+
+        if (isJDK14OrHigher()) {
+            add(toBeInvestigated,
+                            "com/sun/crypto/provider/ElectronicCodeBook.implECBDecrypt([BII[BI)I",
+                            "com/sun/crypto/provider/ElectronicCodeBook.implECBEncrypt([BII[BI)I",
+                            "java/math/BigInteger.shiftLeftImplWorker([I[IIII)V",
+                            "java/math/BigInteger.shiftRightImplWorker([I[IIII)V");
         }
 
         if (!config.inlineNotify()) {
@@ -400,11 +431,18 @@ public class CheckGraalIntrinsics extends GraalTest {
         if (!(arch instanceof AMD64)) {
             // Can we implement these on non-AMD64 platforms? C2 seems to.
             add(toBeInvestigated,
+                            "com/sun/crypto/provider/CounterMode.implCrypt([BII[BI)I",
                             "java/lang/String.compareTo(Ljava/lang/String;)I",
+                            "java/lang/StringLatin1.indexOf([B[B)I",
                             "java/lang/StringLatin1.inflate([BI[BII)V",
                             "java/lang/StringLatin1.inflate([BI[CII)V",
                             "java/lang/StringUTF16.compress([BI[BII)I",
                             "java/lang/StringUTF16.compress([CI[BII)I",
+                            "java/lang/StringUTF16.indexOf([BI[BII)I",
+                            "java/lang/StringUTF16.indexOf([B[B)I",
+                            "java/lang/StringUTF16.indexOfChar([BIII)I",
+                            "java/lang/StringUTF16.indexOfLatin1([BI[BII)I",
+                            "java/lang/StringUTF16.indexOfLatin1([B[B)I",
                             "jdk/internal/misc/Unsafe.compareAndExchangeByte(Ljava/lang/Object;JBB)B",
                             "jdk/internal/misc/Unsafe.compareAndExchangeShort(Ljava/lang/Object;JSS)S",
                             "jdk/internal/misc/Unsafe.compareAndSetByte(Ljava/lang/Object;JBB)Z",
@@ -434,6 +472,7 @@ public class CheckGraalIntrinsics extends GraalTest {
                 }
                 add(toBeInvestigated,
                                 "java/lang/Thread.onSpinWait()V",
+                                "java/util/ArraysSupport.vectorizedMismatch(Ljava/lang/Object;JLjava/lang/Object;JII)I",
                                 "jdk/internal/misc/Unsafe.getCharUnaligned(Ljava/lang/Object;J)C",
                                 "jdk/internal/misc/Unsafe.getIntUnaligned(Ljava/lang/Object;J)I",
                                 "jdk/internal/misc/Unsafe.getLongUnaligned(Ljava/lang/Object;J)J",
@@ -442,6 +481,10 @@ public class CheckGraalIntrinsics extends GraalTest {
                                 "jdk/internal/misc/Unsafe.putIntUnaligned(Ljava/lang/Object;JI)V",
                                 "jdk/internal/misc/Unsafe.putLongUnaligned(Ljava/lang/Object;JJ)V",
                                 "jdk/internal/misc/Unsafe.putShortUnaligned(Ljava/lang/Object;JS)V");
+            }
+            if (isJDK10OrHigher()) {
+                add(toBeInvestigated,
+                                "jdk/internal/util/ArraysSupport.vectorizedMismatch(Ljava/lang/Object;JLjava/lang/Object;JII)I");
             }
         }
 
@@ -472,21 +515,18 @@ public class CheckGraalIntrinsics extends GraalTest {
                             "java/util/zip/CRC32C.updateDirectByteBuffer(IJII)I");
         }
 
+        String cbcEncryptName = HotSpotGraphBuilderPlugins.lookupIntrinsicName(config, "com/sun/crypto/provider/CipherBlockChaining", "implEncrypt", "encrypt");
+        String cbcDecryptName = HotSpotGraphBuilderPlugins.lookupIntrinsicName(config, "com/sun/crypto/provider/CipherBlockChaining", "implDecrypt", "decrypt");
+        String aesEncryptName = HotSpotGraphBuilderPlugins.lookupIntrinsicName(config, "com/sun/crypto/provider/AESCrypt", "implEncryptBlock", "encryptBlock");
+        String aesDecryptName = HotSpotGraphBuilderPlugins.lookupIntrinsicName(config, "com/sun/crypto/provider/AESCrypt", "implDecryptBlock", "decryptBlock");
+
         // AES intrinsics
         if (!config.useAESIntrinsics) {
-            if (isJDK9OrHigher()) {
-                add(ignore,
-                                "com/sun/crypto/provider/AESCrypt.implDecryptBlock([BI[BI)V",
-                                "com/sun/crypto/provider/AESCrypt.implEncryptBlock([BI[BI)V",
-                                "com/sun/crypto/provider/CipherBlockChaining.implDecrypt([BII[BI)I",
-                                "com/sun/crypto/provider/CipherBlockChaining.implEncrypt([BII[BI)I");
-            } else {
-                add(ignore,
-                                "com/sun/crypto/provider/AESCrypt.decryptBlock([BI[BI)V",
-                                "com/sun/crypto/provider/AESCrypt.encryptBlock([BI[BI)V",
-                                "com/sun/crypto/provider/CipherBlockChaining.decrypt([BII[BI)I",
-                                "com/sun/crypto/provider/CipherBlockChaining.encrypt([BII[BI)I");
-            }
+            add(ignore,
+                            "com/sun/crypto/provider/AESCrypt." + aesDecryptName + "([BI[BI)V",
+                            "com/sun/crypto/provider/AESCrypt." + aesEncryptName + "([BI[BI)V",
+                            "com/sun/crypto/provider/CipherBlockChaining." + cbcDecryptName + "([BII[BI)I",
+                            "com/sun/crypto/provider/CipherBlockChaining." + cbcEncryptName + "([BII[BI)I");
         }
 
         // BigInteger intrinsics
@@ -509,49 +549,46 @@ public class CheckGraalIntrinsics extends GraalTest {
         if (!config.useSquareToLenIntrinsic()) {
             add(ignore, "java/math/BigInteger.implSquareToLen([II[II)[I");
         }
-
+        // DigestBase intrinsics
+        if (HotSpotGraphBuilderPlugins.isIntrinsicName(config, "sun/security/provider/DigestBase", "implCompressMultiBlock0") &&
+                        !(config.useSHA1Intrinsics() || config.useSHA256Intrinsics() || config.useSHA512Intrinsics())) {
+            add(ignore, "sun/security/provider/DigestBase.implCompressMultiBlock0([BII)I");
+        }
         // SHA intrinsics
+        String shaCompressName = HotSpotGraphBuilderPlugins.lookupIntrinsicName(config, "sun/security/provider/SHA", "implCompress0", "implCompress");
         if (!config.useSHA1Intrinsics()) {
-            if (isJDK9OrHigher()) {
-                add(ignore, "sun/security/provider/SHA.implCompress0([BI)V");
-            } else {
-                add(ignore, "sun/security/provider/SHA.implCompress([BI)V");
-            }
+            add(ignore, "sun/security/provider/SHA." + shaCompressName + "([BI)V");
         }
         if (!config.useSHA256Intrinsics()) {
-            if (isJDK9OrHigher()) {
-                add(ignore, "sun/security/provider/SHA2.implCompress0([BI)V");
-            } else {
-                add(ignore, "sun/security/provider/SHA2.implCompress([BI)V");
-            }
+            add(ignore, "sun/security/provider/SHA2." + shaCompressName + "([BI)V");
         }
         if (!config.useSHA512Intrinsics()) {
-            if (isJDK9OrHigher()) {
-                add(ignore, "sun/security/provider/SHA5.implCompress0([BI)V");
-            } else {
-                add(ignore, "sun/security/provider/SHA5.implCompress([BI)V");
-            }
+            add(ignore, "sun/security/provider/SHA5." + shaCompressName + "([BI)V");
         }
     }
 
     private static boolean isJDK9OrHigher() {
-        return GraalServices.JAVA_SPECIFICATION_VERSION >= 9;
+        return JavaVersionUtil.JAVA_SPEC >= 9;
     }
 
     private static boolean isJDK10OrHigher() {
-        return GraalServices.JAVA_SPECIFICATION_VERSION >= 10;
+        return JavaVersionUtil.JAVA_SPEC >= 10;
     }
 
     private static boolean isJDK11OrHigher() {
-        return GraalServices.JAVA_SPECIFICATION_VERSION >= 11;
+        return JavaVersionUtil.JAVA_SPEC >= 11;
     }
 
     private static boolean isJDK12OrHigher() {
-        return GraalServices.JAVA_SPECIFICATION_VERSION >= 12;
+        return JavaVersionUtil.JAVA_SPEC >= 12;
     }
 
     private static boolean isJDK13OrHigher() {
-        return GraalServices.JAVA_SPECIFICATION_VERSION >= 13;
+        return JavaVersionUtil.JAVA_SPEC >= 13;
+    }
+
+    private static boolean isJDK14OrHigher() {
+        return JavaVersionUtil.JAVA_SPEC >= 14;
     }
 
     public interface Refiner {

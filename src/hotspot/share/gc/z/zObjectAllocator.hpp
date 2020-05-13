@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,13 +31,18 @@
 
 class ZObjectAllocator {
 private:
-  const uint         _nworkers;
+  const bool         _use_per_cpu_shared_small_pages;
   ZPerCPU<size_t>    _used;
+  ZPerCPU<size_t>    _undone;
   ZContended<ZPage*> _shared_medium_page;
   ZPerCPU<ZPage*>    _shared_small_page;
   ZPerWorker<ZPage*> _worker_small_page;
 
+  ZPage** shared_small_page_addr();
+  ZPage* const* shared_small_page_addr() const;
+
   ZPage* alloc_page(uint8_t type, size_t size, ZAllocationFlags flags);
+  void undo_alloc_page(ZPage* page);
 
   // Allocate an object in a shared page. Allocate and
   // atomically install a new page if necessary.
@@ -62,7 +67,7 @@ private:
   bool undo_alloc_object(ZPage* page, uintptr_t addr, size_t size);
 
 public:
-  ZObjectAllocator(uint nworkers);
+  ZObjectAllocator();
 
   uintptr_t alloc_object(size_t size);
 

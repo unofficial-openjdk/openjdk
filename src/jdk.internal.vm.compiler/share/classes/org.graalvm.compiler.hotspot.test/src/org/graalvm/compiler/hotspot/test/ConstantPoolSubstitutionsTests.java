@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,6 @@
 
 package org.graalvm.compiler.hotspot.test;
 
-import static org.graalvm.compiler.test.JLModule.uncheckedAddExports;
-
 import java.lang.reflect.Method;
 
 import org.graalvm.compiler.core.test.GraalCompilerTest;
@@ -35,7 +33,8 @@ import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.nodes.Invoke;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
-import org.graalvm.compiler.test.JLModule;
+import org.graalvm.compiler.serviceprovider.JavaVersionUtil;
+import org.graalvm.compiler.api.test.ModuleSupport;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.objectweb.asm.ClassWriter;
@@ -74,9 +73,27 @@ public class ConstantPoolSubstitutionsTests extends GraalCompilerTest {
         return graph;
     }
 
+    private static String getMiscPackage() {
+        if (JavaVersionUtil.JAVA_SPEC <= 8) {
+            return "sun.misc";
+        }
+        try {
+            String miscPackage = "jdk.internal.access";
+            Class.forName(miscPackage + ".SharedSecrets");
+            return miscPackage;
+        } catch (ClassNotFoundException e) {
+            try {
+                String miscPackage = "jdk.internal.misc";
+                Class.forName(miscPackage + ".SharedSecrets");
+                return miscPackage;
+            } catch (ClassNotFoundException ex) {
+            }
+            throw new AssertionError(e);
+        }
+    }
+
     private static Object getConstantPoolForObject() {
-        String miscPackage = Java8OrEarlier ? "sun.misc"
-                        : (Java11OrEarlier ? "jdk.internal.misc" : "jdk.internal.access");
+        String miscPackage = getMiscPackage();
         try {
             Class<?> sharedSecretsClass = Class.forName(miscPackage + ".SharedSecrets");
             Class<?> javaLangAccessClass = Class.forName(miscPackage + ".JavaLangAccess");
@@ -108,19 +125,11 @@ public class ConstantPoolSubstitutionsTests extends GraalCompilerTest {
     }
 
     /**
-     * This test uses some API hidden by the JDK9 module system.
+     * This test uses some non-public API.
      */
     private static void addExports(Class<?> c) {
-        if (!Java8OrEarlier) {
-            Object javaBaseModule = JLModule.fromClass(String.class);
-            Object cModule = JLModule.fromClass(c);
-            uncheckedAddExports(javaBaseModule, "jdk.internal.reflect", cModule);
-            if (Java11OrEarlier) {
-                uncheckedAddExports(javaBaseModule, "jdk.internal.misc", cModule);
-            } else {
-                uncheckedAddExports(javaBaseModule, "jdk.internal.access", cModule);
-            }
-        }
+        ModuleSupport.exportPackageTo(String.class, getMiscPackage(), c);
+        ModuleSupport.exportPackageTo(String.class, "jdk.internal.reflect", c);
     }
 
     @Test
@@ -222,7 +231,7 @@ public class ConstantPoolSubstitutionsTests extends GraalCompilerTest {
             cw.visit(52, ACC_SUPER, PACKAGE_NAME_INTERNAL + "/ConstantPoolTest", null, "java/lang/Object", null);
             cw.visitInnerClass(PACKAGE_NAME_INTERNAL + "/ConstantPoolTest", PACKAGE_NAME_INTERNAL + "/ConstantPoolSubstitutionsTests", "ConstantPoolTest",
                             ACC_STATIC);
-            String constantPool = Java8OrEarlier ? "sun/reflect/ConstantPool" : "jdk/internal/reflect/ConstantPool";
+            String constantPool = JavaVersionUtil.JAVA_SPEC <= 8 ? "sun/reflect/ConstantPool" : "jdk/internal/reflect/ConstantPool";
 
             mv = cw.visitMethod(0, "<init>", "()V", null, null);
             mv.visitCode();

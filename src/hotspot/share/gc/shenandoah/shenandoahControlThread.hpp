@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2013, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -27,6 +28,7 @@
 #include "gc/shared/gcCause.hpp"
 #include "gc/shared/concurrentGCThread.hpp"
 #include "gc/shenandoah/shenandoahHeap.hpp"
+#include "gc/shenandoah/shenandoahPadding.hpp"
 #include "gc/shenandoah/shenandoahSharedVariables.hpp"
 #include "runtime/task.hpp"
 #include "utilities/ostream.hpp"
@@ -56,10 +58,9 @@ class ShenandoahControlThread: public ConcurrentGCThread {
 private:
   typedef enum {
     none,
-    concurrent_traversal,
     concurrent_normal,
     stw_degenerated,
-    stw_full,
+    stw_full
   } GCMode;
 
   // While we could have a single lock for these, it may risk unblocking
@@ -84,20 +85,25 @@ private:
   GCCause::Cause       _requested_gc_cause;
   ShenandoahHeap::ShenandoahDegenPoint _degen_point;
 
-  DEFINE_PAD_MINUS_SIZE(0, DEFAULT_CACHE_LINE_SIZE, sizeof(volatile size_t));
+  shenandoah_padding(0);
   volatile size_t _allocs_seen;
-  DEFINE_PAD_MINUS_SIZE(1, DEFAULT_CACHE_LINE_SIZE, 0);
+  shenandoah_padding(1);
+  volatile size_t _gc_id;
+  shenandoah_padding(2);
 
   bool check_cancellation_or_degen(ShenandoahHeap::ShenandoahDegenPoint point);
   void service_concurrent_normal_cycle(GCCause::Cause cause);
   void service_stw_full_cycle(GCCause::Cause cause);
   void service_stw_degenerated_cycle(GCCause::Cause cause, ShenandoahHeap::ShenandoahDegenPoint point);
-  void service_concurrent_traversal_cycle(GCCause::Cause cause);
   void service_uncommit(double shrink_before);
 
   bool try_set_alloc_failure_gc();
   void notify_alloc_failure_waiters();
   bool is_alloc_failure_gc();
+
+  void reset_gc_id();
+  void update_gc_id();
+  size_t get_gc_id();
 
   void notify_gc_waiters();
 
@@ -113,7 +119,7 @@ public:
 
   // Handle allocation failure from normal allocation.
   // Blocks until memory is available.
-  void handle_alloc_failure(size_t words);
+  void handle_alloc_failure(ShenandoahAllocRequest& req);
 
   // Handle allocation failure from evacuation path.
   // Optionally blocks while collector is handling the failure.

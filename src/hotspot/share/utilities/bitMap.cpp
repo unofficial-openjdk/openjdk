@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 #include "utilities/bitMap.inline.hpp"
 #include "utilities/copy.hpp"
 #include "utilities/debug.hpp"
+#include "utilities/population_count.hpp"
 
 STATIC_ASSERT(sizeof(BitMap::bm_word_t) == BytesPerWord); // "Implementation assumption."
 
@@ -111,42 +112,42 @@ void BitMap::free(const Allocator& allocator, bm_word_t* map, idx_t  size_in_bit
 }
 
 template <class Allocator>
-void BitMap::resize(const Allocator& allocator, idx_t new_size_in_bits) {
-  bm_word_t* new_map = reallocate(allocator, map(), size(), new_size_in_bits);
+void BitMap::resize(const Allocator& allocator, idx_t new_size_in_bits, bool clear) {
+  bm_word_t* new_map = reallocate(allocator, map(), size(), new_size_in_bits, clear);
 
   update(new_map, new_size_in_bits);
 }
 
 template <class Allocator>
-void BitMap::initialize(const Allocator& allocator, idx_t size_in_bits) {
+void BitMap::initialize(const Allocator& allocator, idx_t size_in_bits, bool clear) {
   assert(map() == NULL, "precondition");
   assert(size() == 0,   "precondition");
 
-  resize(allocator, size_in_bits);
+  resize(allocator, size_in_bits, clear);
 }
 
 template <class Allocator>
-void BitMap::reinitialize(const Allocator& allocator, idx_t new_size_in_bits) {
-  // Remove previous bits.
-  resize(allocator, 0);
+void BitMap::reinitialize(const Allocator& allocator, idx_t new_size_in_bits, bool clear) {
+  // Remove previous bits - no need to clear
+  resize(allocator, 0, false /* clear */);
 
-  initialize(allocator, new_size_in_bits);
+  initialize(allocator, new_size_in_bits, clear);
 }
 
-ResourceBitMap::ResourceBitMap(idx_t size_in_bits)
-    : BitMap(allocate(ResourceBitMapAllocator(), size_in_bits), size_in_bits) {
+ResourceBitMap::ResourceBitMap(idx_t size_in_bits, bool clear)
+    : BitMap(allocate(ResourceBitMapAllocator(), size_in_bits, clear), size_in_bits) {
 }
 
 void ResourceBitMap::resize(idx_t new_size_in_bits) {
-  BitMap::resize(ResourceBitMapAllocator(), new_size_in_bits);
+  BitMap::resize(ResourceBitMapAllocator(), new_size_in_bits, true /* clear */);
 }
 
 void ResourceBitMap::initialize(idx_t size_in_bits) {
-  BitMap::initialize(ResourceBitMapAllocator(), size_in_bits);
+  BitMap::initialize(ResourceBitMapAllocator(), size_in_bits, true /* clear */);
 }
 
 void ResourceBitMap::reinitialize(idx_t size_in_bits) {
-  BitMap::reinitialize(ResourceBitMapAllocator(), size_in_bits);
+  BitMap::reinitialize(ResourceBitMapAllocator(), size_in_bits, true /* clear */);
 }
 
 ArenaBitMap::ArenaBitMap(Arena* arena, idx_t size_in_bits)
@@ -161,27 +162,40 @@ CHeapBitMap::~CHeapBitMap() {
   free(CHeapBitMapAllocator(_flags), map(), size());
 }
 
-void CHeapBitMap::resize(idx_t new_size_in_bits) {
-  BitMap::resize(CHeapBitMapAllocator(_flags), new_size_in_bits);
+void CHeapBitMap::resize(idx_t new_size_in_bits, bool clear) {
+  BitMap::resize(CHeapBitMapAllocator(_flags), new_size_in_bits, clear);
 }
 
-void CHeapBitMap::initialize(idx_t size_in_bits) {
-  BitMap::initialize(CHeapBitMapAllocator(_flags), size_in_bits);
+void CHeapBitMap::initialize(idx_t size_in_bits, bool clear) {
+  BitMap::initialize(CHeapBitMapAllocator(_flags), size_in_bits, clear);
 }
 
-void CHeapBitMap::reinitialize(idx_t size_in_bits) {
-  BitMap::reinitialize(CHeapBitMapAllocator(_flags), size_in_bits);
+void CHeapBitMap::reinitialize(idx_t size_in_bits, bool clear) {
+  BitMap::reinitialize(CHeapBitMapAllocator(_flags), size_in_bits, clear);
 }
 
 #ifdef ASSERT
-void BitMap::verify_index(idx_t index) const {
-  assert(index < _size, "BitMap index out of bounds");
+void BitMap::verify_size(idx_t size_in_bits) {
+  assert(size_in_bits <= max_size_in_bits(),
+         "out of bounds: " SIZE_FORMAT, size_in_bits);
 }
 
-void BitMap::verify_range(idx_t beg_index, idx_t end_index) const {
-  assert(beg_index <= end_index, "BitMap range error");
-  // Note that [0,0) and [size,size) are both valid ranges.
-  if (end_index != _size) verify_index(end_index);
+void BitMap::verify_index(idx_t bit) const {
+  assert(bit < _size,
+         "BitMap index out of bounds: " SIZE_FORMAT " >= " SIZE_FORMAT,
+         bit, _size);
+}
+
+void BitMap::verify_limit(idx_t bit) const {
+  assert(bit <= _size,
+         "BitMap limit out of bounds: " SIZE_FORMAT " > " SIZE_FORMAT,
+         bit, _size);
+}
+
+void BitMap::verify_range(idx_t beg, idx_t end) const {
+  assert(beg <= end,
+         "BitMap range error: " SIZE_FORMAT " > " SIZE_FORMAT, beg, end);
+  verify_limit(end);
 }
 #endif // #ifdef ASSERT
 
@@ -217,7 +231,7 @@ void BitMap::par_put_range_within_word(idx_t beg, idx_t end, bool value) {
     bm_word_t  mr = inverted_bit_mask_for_range(beg, end);
     bm_word_t  nw = value ? (w | ~mr) : (w & mr);
     while (true) {
-      bm_word_t res = Atomic::cmpxchg(nw, pw, w);
+      bm_word_t res = Atomic::cmpxchg(pw, w, nw);
       if (res == w) break;
       w  = res;
       nw = value ? (w | ~mr) : (w & mr);
@@ -228,8 +242,8 @@ void BitMap::par_put_range_within_word(idx_t beg, idx_t end, bool value) {
 void BitMap::set_range(idx_t beg, idx_t end) {
   verify_range(beg, end);
 
-  idx_t beg_full_word = word_index_round_up(beg);
-  idx_t end_full_word = word_index(end);
+  idx_t beg_full_word = to_words_align_up(beg);
+  idx_t end_full_word = to_words_align_down(end);
 
   if (beg_full_word < end_full_word) {
     // The range includes at least one full word.
@@ -247,8 +261,8 @@ void BitMap::set_range(idx_t beg, idx_t end) {
 void BitMap::clear_range(idx_t beg, idx_t end) {
   verify_range(beg, end);
 
-  idx_t beg_full_word = word_index_round_up(beg);
-  idx_t end_full_word = word_index(end);
+  idx_t beg_full_word = to_words_align_up(beg);
+  idx_t end_full_word = to_words_align_down(end);
 
   if (beg_full_word < end_full_word) {
     // The range includes at least one full word.
@@ -265,17 +279,19 @@ void BitMap::clear_range(idx_t beg, idx_t end) {
 
 bool BitMap::is_small_range_of_words(idx_t beg_full_word, idx_t end_full_word) {
   // There is little point to call large version on small ranges.
-  // Need to check carefully, keeping potential idx_t underflow in mind.
+  // Need to check carefully, keeping potential idx_t over/underflow in mind,
+  // because beg_full_word > end_full_word can occur when beg and end are in
+  // the same word.
   // The threshold should be at least one word.
   STATIC_ASSERT(small_range_words >= 1);
-  return (beg_full_word + small_range_words >= end_full_word);
+  return beg_full_word + small_range_words >= end_full_word;
 }
 
 void BitMap::set_large_range(idx_t beg, idx_t end) {
   verify_range(beg, end);
 
-  idx_t beg_full_word = word_index_round_up(beg);
-  idx_t end_full_word = word_index(end);
+  idx_t beg_full_word = to_words_align_up(beg);
+  idx_t end_full_word = to_words_align_down(end);
 
   if (is_small_range_of_words(beg_full_word, end_full_word)) {
     set_range(beg, end);
@@ -291,8 +307,8 @@ void BitMap::set_large_range(idx_t beg, idx_t end) {
 void BitMap::clear_large_range(idx_t beg, idx_t end) {
   verify_range(beg, end);
 
-  idx_t beg_full_word = word_index_round_up(beg);
-  idx_t end_full_word = word_index(end);
+  idx_t beg_full_word = to_words_align_up(beg);
+  idx_t end_full_word = to_words_align_down(end);
 
   if (is_small_range_of_words(beg_full_word, end_full_word)) {
     clear_range(beg, end);
@@ -343,8 +359,8 @@ void BitMap::at_put_range(idx_t start_offset, idx_t end_offset, bool value) {
 void BitMap::par_at_put_range(idx_t beg, idx_t end, bool value) {
   verify_range(beg, end);
 
-  idx_t beg_full_word = word_index_round_up(beg);
-  idx_t end_full_word = word_index(end);
+  idx_t beg_full_word = to_words_align_up(beg);
+  idx_t end_full_word = to_words_align_down(end);
 
   if (beg_full_word < end_full_word) {
     // The range includes at least one full word.
@@ -375,8 +391,8 @@ void BitMap::at_put_large_range(idx_t beg, idx_t end, bool value) {
 void BitMap::par_at_put_large_range(idx_t beg, idx_t end, bool value) {
   verify_range(beg, end);
 
-  idx_t beg_full_word = word_index_round_up(beg);
-  idx_t end_full_word = word_index(end);
+  idx_t beg_full_word = to_words_align_up(beg);
+  idx_t end_full_word = to_words_align_down(end);
 
   if (is_small_range_of_words(beg_full_word, end_full_word)) {
     par_at_put_range(beg, end, value);
@@ -420,7 +436,7 @@ bool BitMap::contains(const BitMap& other) const {
   assert(size() == other.size(), "must have same size");
   const bm_word_t* dest_map = map();
   const bm_word_t* other_map = other.map();
-  idx_t limit = word_index(size());
+  idx_t limit = to_words_align_down(size());
   for (idx_t index = 0; index < limit; ++index) {
     // false if other bitmap has bits set which are clear in this bitmap.
     if ((~dest_map[index] & other_map[index]) != 0) return false;
@@ -435,7 +451,7 @@ bool BitMap::intersects(const BitMap& other) const {
   assert(size() == other.size(), "must have same size");
   const bm_word_t* dest_map = map();
   const bm_word_t* other_map = other.map();
-  idx_t limit = word_index(size());
+  idx_t limit = to_words_align_down(size());
   for (idx_t index = 0; index < limit; ++index) {
     if ((dest_map[index] & other_map[index]) != 0) return true;
   }
@@ -448,7 +464,7 @@ void BitMap::set_union(const BitMap& other) {
   assert(size() == other.size(), "must have same size");
   bm_word_t* dest_map = map();
   const bm_word_t* other_map = other.map();
-  idx_t limit = word_index(size());
+  idx_t limit = to_words_align_down(size());
   for (idx_t index = 0; index < limit; ++index) {
     dest_map[index] |= other_map[index];
   }
@@ -463,7 +479,7 @@ void BitMap::set_difference(const BitMap& other) {
   assert(size() == other.size(), "must have same size");
   bm_word_t* dest_map = map();
   const bm_word_t* other_map = other.map();
-  idx_t limit = word_index(size());
+  idx_t limit = to_words_align_down(size());
   for (idx_t index = 0; index < limit; ++index) {
     dest_map[index] &= ~other_map[index];
   }
@@ -478,7 +494,7 @@ void BitMap::set_intersection(const BitMap& other) {
   assert(size() == other.size(), "must have same size");
   bm_word_t* dest_map = map();
   const bm_word_t* other_map = other.map();
-  idx_t limit = word_index(size());
+  idx_t limit = to_words_align_down(size());
   for (idx_t index = 0; index < limit; ++index) {
     dest_map[index] &= other_map[index];
   }
@@ -494,7 +510,7 @@ bool BitMap::set_union_with_result(const BitMap& other) {
   bool changed = false;
   bm_word_t* dest_map = map();
   const bm_word_t* other_map = other.map();
-  idx_t limit = word_index(size());
+  idx_t limit = to_words_align_down(size());
   for (idx_t index = 0; index < limit; ++index) {
     bm_word_t orig = dest_map[index];
     bm_word_t temp = orig | other_map[index];
@@ -516,7 +532,7 @@ bool BitMap::set_difference_with_result(const BitMap& other) {
   bool changed = false;
   bm_word_t* dest_map = map();
   const bm_word_t* other_map = other.map();
-  idx_t limit = word_index(size());
+  idx_t limit = to_words_align_down(size());
   for (idx_t index = 0; index < limit; ++index) {
     bm_word_t orig = dest_map[index];
     bm_word_t temp = orig & ~other_map[index];
@@ -538,7 +554,7 @@ bool BitMap::set_intersection_with_result(const BitMap& other) {
   bool changed = false;
   bm_word_t* dest_map = map();
   const bm_word_t* other_map = other.map();
-  idx_t limit = word_index(size());
+  idx_t limit = to_words_align_down(size());
   for (idx_t index = 0; index < limit; ++index) {
     bm_word_t orig = dest_map[index];
     bm_word_t temp = orig & other_map[index];
@@ -559,7 +575,7 @@ void BitMap::set_from(const BitMap& other) {
   assert(size() == other.size(), "must have same size");
   bm_word_t* dest_map = map();
   const bm_word_t* other_map = other.map();
-  idx_t copy_words = word_index(size());
+  idx_t copy_words = to_words_align_down(size());
   Copy::disjoint_words((HeapWord*)other_map, (HeapWord*)dest_map, copy_words);
   idx_t rest = bit_in_word(size());
   if (rest > 0) {
@@ -573,7 +589,7 @@ bool BitMap::is_same(const BitMap& other) const {
   assert(size() == other.size(), "must have same size");
   const bm_word_t* dest_map = map();
   const bm_word_t* other_map = other.map();
-  idx_t limit = word_index(size());
+  idx_t limit = to_words_align_down(size());
   for (idx_t index = 0; index < limit; ++index) {
     if (dest_map[index] != other_map[index]) return false;
   }
@@ -583,7 +599,7 @@ bool BitMap::is_same(const BitMap& other) const {
 
 bool BitMap::is_full() const {
   const bm_word_t* words = map();
-  idx_t limit = word_index(size());
+  idx_t limit = to_words_align_down(size());
   for (idx_t index = 0; index < limit; ++index) {
     if (~words[index] != 0) return false;
   }
@@ -593,7 +609,7 @@ bool BitMap::is_full() const {
 
 bool BitMap::is_empty() const {
   const bm_word_t* words = map();
-  idx_t limit = word_index(size());
+  idx_t limit = to_words_align_down(size());
   for (idx_t index = 0; index < limit; ++index) {
     if (words[index] != 0) return false;
   }
@@ -612,8 +628,8 @@ void BitMap::clear_large() {
 bool BitMap::iterate(BitMapClosure* blk, idx_t leftOffset, idx_t rightOffset) {
   verify_range(leftOffset, rightOffset);
 
-  idx_t startIndex = word_index(leftOffset);
-  idx_t endIndex   = MIN2(word_index(rightOffset) + 1, size_in_words());
+  idx_t startIndex = to_words_align_down(leftOffset);
+  idx_t endIndex   = to_words_align_up(rightOffset);
   for (idx_t index = startIndex, offset = leftOffset;
        offset < rightOffset && index < endIndex;
        offset = (++index) << LogBitsPerWord) {
@@ -631,52 +647,56 @@ bool BitMap::iterate(BitMapClosure* blk, idx_t leftOffset, idx_t rightOffset) {
   return true;
 }
 
-const BitMap::idx_t* BitMap::_pop_count_table = NULL;
-
-void BitMap::init_pop_count_table() {
-  if (_pop_count_table == NULL) {
-    BitMap::idx_t *table = NEW_C_HEAP_ARRAY(idx_t, 256, mtInternal);
-    for (uint i = 0; i < 256; i++) {
-      table[i] = num_set_bits(i);
-    }
-
-    if (!Atomic::replace_if_null(table, &_pop_count_table)) {
-      guarantee(_pop_count_table != NULL, "invariant");
-      FREE_C_HEAP_ARRAY(idx_t, table);
-    }
+BitMap::idx_t BitMap::count_one_bits_in_range_of_words(idx_t beg_full_word, idx_t end_full_word) const {
+  idx_t sum = 0;
+  for (idx_t i = beg_full_word; i < end_full_word; i++) {
+    bm_word_t w = map()[i];
+    sum += population_count(w);
   }
+  return sum;
 }
 
-BitMap::idx_t BitMap::num_set_bits(bm_word_t w) {
-  idx_t bits = 0;
-
-  while (w != 0) {
-    while ((w & 1) == 0) {
-      w >>= 1;
-    }
-    bits++;
-    w >>= 1;
+BitMap::idx_t BitMap::count_one_bits_within_word(idx_t beg, idx_t end) const {
+  if (beg != end) {
+    assert(end > beg, "must be");
+    bm_word_t mask = ~inverted_bit_mask_for_range(beg, end);
+    bm_word_t w = *word_addr(beg);
+    w &= mask;
+    return population_count(w);
   }
-  return bits;
-}
-
-BitMap::idx_t BitMap::num_set_bits_from_table(unsigned char c) {
-  assert(_pop_count_table != NULL, "precondition");
-  return _pop_count_table[c];
+  return 0;
 }
 
 BitMap::idx_t BitMap::count_one_bits() const {
-  init_pop_count_table(); // If necessary.
+  return count_one_bits_in_range_of_words(0, size_in_words());
+}
+
+// Returns the number of bits set within  [beg, end).
+BitMap::idx_t BitMap::count_one_bits(idx_t beg, idx_t end) const {
+
+  verify_range(beg, end);
+
+  idx_t beg_full_word = to_words_align_up(beg);
+  idx_t end_full_word = to_words_align_down(end);
+
   idx_t sum = 0;
-  typedef unsigned char uchar;
-  for (idx_t i = 0; i < size_in_words(); i++) {
-    bm_word_t w = map()[i];
-    for (size_t j = 0; j < sizeof(bm_word_t); j++) {
-      sum += num_set_bits_from_table(uchar(w & 255));
-      w >>= 8;
-    }
+
+  if (beg_full_word < end_full_word) {
+    // The range includes at least one full word.
+    sum += count_one_bits_within_word(beg, bit_index(beg_full_word));
+    sum += count_one_bits_in_range_of_words(beg_full_word, end_full_word);
+    sum += count_one_bits_within_word(bit_index(end_full_word), end);
+  } else {
+    // The range spans at most 2 partial words.
+    idx_t boundary = MIN2(bit_index(beg_full_word), end);
+    sum += count_one_bits_within_word(beg, boundary);
+    sum += count_one_bits_within_word(boundary, end);
   }
+
+  assert(sum <= (beg - end), "must be");
+
   return sum;
+
 }
 
 void BitMap::print_on_error(outputStream* st, const char* prefix) const {

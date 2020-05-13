@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,8 +34,10 @@ import java.lang.reflect.Method;
  * @since   1.5
  */
 class AnnotationTypeMismatchExceptionProxy extends ExceptionProxy {
+    @java.io.Serial
     private static final long serialVersionUID = 7844069490309503934L;
-    private Method member;
+    @SuppressWarnings("serial") // Not statically typed as Serializable
+    private Method member; // Would be more robust to null-out in a writeObject method.
     private final String foundType;
 
     /**

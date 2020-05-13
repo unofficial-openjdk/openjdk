@@ -28,8 +28,8 @@
 #include "gc/g1/g1Policy.hpp"
 #include "gc/g1/heterogeneousHeapRegionManager.hpp"
 
-G1HeterogeneousHeapPolicy::G1HeterogeneousHeapPolicy(G1CollectorPolicy* policy, STWGCTimer* gc_timer) :
-  G1Policy(policy, gc_timer), _manager(NULL) {}
+G1HeterogeneousHeapPolicy::G1HeterogeneousHeapPolicy(STWGCTimer* gc_timer) :
+  G1Policy(gc_timer), _manager(NULL) {}
 
 // We call the super class init(), after which we provision young_list_target_length() regions in dram.
 void G1HeterogeneousHeapPolicy::init(G1CollectedHeap* g1h, G1CollectionSet* collection_set) {
@@ -39,8 +39,8 @@ void G1HeterogeneousHeapPolicy::init(G1CollectedHeap* g1h, G1CollectionSet* coll
 }
 
 // After a collection pause, young list target length is updated. So we need to make sure we have enough regions in dram for young gen.
-void G1HeterogeneousHeapPolicy::record_collection_pause_end(double pause_time_ms, size_t cards_scanned, size_t heap_used_bytes_before_gc) {
-  G1Policy::record_collection_pause_end(pause_time_ms, cards_scanned, heap_used_bytes_before_gc);
+void G1HeterogeneousHeapPolicy::record_collection_pause_end(double pause_time_ms) {
+  G1Policy::record_collection_pause_end(pause_time_ms);
   _manager->adjust_dram_regions((uint)young_list_target_length(), G1CollectedHeap::heap()->workers());
 }
 

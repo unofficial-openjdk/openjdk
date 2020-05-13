@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,11 +31,12 @@ import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.graph.spi.CanonicalizerTool;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.java.MethodCallTargetNode;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.phases.VerifyPhase;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 
 import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
+import jdk.vm.ci.meta.ResolvedJavaMethod.Parameter;
 import jdk.vm.ci.meta.ResolvedJavaType;
 
 /**
@@ -44,7 +45,7 @@ import jdk.vm.ci.meta.ResolvedJavaType;
  * general but since there are several canonical methods with varying signatures this covers more
  * cases.
  */
-public class VerifyGetOptionsUsage extends VerifyPhase<PhaseContext> {
+public class VerifyGetOptionsUsage extends VerifyPhase<CoreProviders> {
     static Method lookupMethod(Class<?> klass, String name) {
         for (Method m : klass.getDeclaredMethods()) {
             if (m.getName().equals(name)) {
@@ -55,15 +56,19 @@ public class VerifyGetOptionsUsage extends VerifyPhase<PhaseContext> {
     }
 
     @Override
-    protected boolean verify(StructuredGraph graph, PhaseContext context) {
+    protected void verify(StructuredGraph graph, CoreProviders context) {
         MetaAccessProvider metaAccess = context.getMetaAccess();
         ResolvedJavaType canonicalizerToolClass = metaAccess.lookupJavaType(CanonicalizerTool.class);
         boolean hasTool = false;
+        ResolvedJavaMethod method = graph.method();
         try {
-            for (ResolvedJavaMethod.Parameter parameter : graph.method().getParameters()) {
-                if (parameter.getType().getName().equals(canonicalizerToolClass.getName())) {
-                    hasTool = true;
-                    break;
+            Parameter[] parameters = method.getParameters();
+            if (parameters != null) {
+                for (ResolvedJavaMethod.Parameter parameter : parameters) {
+                    if (parameter.getType().getName().equals(canonicalizerToolClass.getName())) {
+                        hasTool = true;
+                        break;
+                    }
                 }
             }
         } catch (MalformedParametersException e) {
@@ -76,13 +81,11 @@ public class VerifyGetOptionsUsage extends VerifyPhase<PhaseContext> {
                 if (callee.equals(getOptionsMethod)) {
                     if (hasTool) {
                         throw new VerificationError("Must use CanonicalizerTool.getOptions() instead of Node.getOptions() in method '%s' of class '%s'.",
-                                        graph.method().getName(), graph.method().getDeclaringClass().getName());
+                                        method.getName(), method.getDeclaringClass().getName());
                     }
                 }
             }
         }
-
-        return true;
     }
 
 }

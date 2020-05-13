@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -565,8 +565,13 @@ public class Arguments {
         boolean lintOptions = options.isUnset(Option.XLINT_CUSTOM, "-" + LintCategory.OPTIONS.option);
         if (lintOptions && source.compareTo(Source.DEFAULT) < 0 && !options.isSet(Option.RELEASE)) {
             if (fm instanceof BaseFileManager) {
-                if (((BaseFileManager) fm).isDefaultBootClassPath())
-                    log.warning(LintCategory.OPTIONS, Warnings.SourceNoBootclasspath(source.name));
+                if (source.compareTo(Source.JDK8) <= 0) {
+                    if (((BaseFileManager) fm).isDefaultBootClassPath())
+                        log.warning(LintCategory.OPTIONS, Warnings.SourceNoBootclasspath(source.name));
+                } else {
+                    if (((BaseFileManager) fm).isDefaultSystemModulesPath())
+                        log.warning(LintCategory.OPTIONS, Warnings.SourceNoSystemModulesPath(source.name));
+                }
             }
         }
 
@@ -852,9 +857,6 @@ public class Arguments {
             doclintOpts.add(DocLint.XHTML_VERSION_PREFIX + format);
         }
 
-        // standard doclet normally generates H1, H2,
-        // so for now, allow user comments to assume that
-        doclintOpts.add(DocLint.XIMPLICIT_HEADERS + "2");
         return List.from(doclintOpts.toArray(new String[doclintOpts.size()]));
     }
 

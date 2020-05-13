@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,11 @@
 package org.graalvm.compiler.phases.common;
 
 import jdk.internal.vm.compiler.collections.EconomicMap;
+import jdk.internal.vm.compiler.collections.Equivalence;
 import jdk.internal.vm.compiler.collections.MapCursor;
 import org.graalvm.compiler.core.common.GraalOptions;
 import org.graalvm.compiler.core.common.cfg.BlockMap;
+import org.graalvm.compiler.core.common.spi.ConstantFieldProvider;
 import org.graalvm.compiler.core.common.type.FloatStamp;
 import org.graalvm.compiler.core.common.type.Stamp;
 import org.graalvm.compiler.core.common.type.StampFactory;
@@ -37,6 +39,7 @@ import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.graph.NodeMap;
 import org.graalvm.compiler.graph.NodeStack;
 import org.graalvm.compiler.graph.Position;
+import org.graalvm.compiler.graph.spi.CanonicalizerTool;
 import org.graalvm.compiler.nodeinfo.InputType;
 import org.graalvm.compiler.nodes.AbstractBeginNode;
 import org.graalvm.compiler.nodes.AbstractMergeNode;
@@ -67,16 +70,19 @@ import org.graalvm.compiler.nodes.memory.FloatingAccessNode;
 import org.graalvm.compiler.nodes.memory.FloatingReadNode;
 import org.graalvm.compiler.nodes.memory.MemoryAccess;
 import org.graalvm.compiler.nodes.memory.MemoryPhiNode;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.nodes.util.GraphUtil;
+import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.BasePhase;
 import org.graalvm.compiler.phases.Phase;
 import org.graalvm.compiler.phases.graph.ScheduledNodeIterator;
 import org.graalvm.compiler.phases.schedule.SchedulePhase;
 import org.graalvm.compiler.phases.schedule.SchedulePhase.SchedulingStrategy;
 import org.graalvm.compiler.phases.tiers.LowTierContext;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 
+import jdk.vm.ci.meta.Assumptions;
 import jdk.vm.ci.meta.Constant;
+import jdk.vm.ci.meta.ConstantReflectionProvider;
 import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.meta.TriState;
 
@@ -136,7 +142,7 @@ public class FixReadsPhase extends BasePhase<LowTierContext> {
 
     }
 
-    protected static class RawConditionalEliminationVisitor implements RecursiveVisitor<Integer> {
+    public static class RawConditionalEliminationVisitor implements RecursiveVisitor<Integer> {
 
         protected final NodeMap<StampElement> stampMap;
         protected final NodeStack undoOperations;
@@ -147,14 +153,64 @@ public class FixReadsPhase extends BasePhase<LowTierContext> {
         private final BlockMap<Integer> blockActionStart;
         private final EconomicMap<MergeNode, EconomicMap<ValueNode, Stamp>> endMaps;
         private final DebugContext debug;
+        private final RawCanonicalizerTool rawCanonicalizerTool = new RawCanonicalizerTool();
 
-        protected RawConditionalEliminationVisitor(StructuredGraph graph, ScheduleResult schedule, MetaAccessProvider metaAccess, boolean replaceInputsWithConstants) {
+        private class RawCanonicalizerTool implements NodeView, CanonicalizerTool {
+
+            @Override
+            public Assumptions getAssumptions() {
+                return graph.getAssumptions();
+            }
+
+            @Override
+            public MetaAccessProvider getMetaAccess() {
+                return metaAccess;
+            }
+
+            @Override
+            public ConstantReflectionProvider getConstantReflection() {
+                return null;
+            }
+
+            @Override
+            public ConstantFieldProvider getConstantFieldProvider() {
+                return null;
+            }
+
+            @Override
+            public boolean canonicalizeReads() {
+                return false;
+            }
+
+            @Override
+            public boolean allUsagesAvailable() {
+                return true;
+            }
+
+            @Override
+            public Integer smallestCompareWidth() {
+                return null;
+            }
+
+            @Override
+            public OptionValues getOptions() {
+                return graph.getOptions();
+            }
+
+            @Override
+            public Stamp stamp(ValueNode node) {
+                return getBestStamp(node);
+            }
+
+        }
+
+        public RawConditionalEliminationVisitor(StructuredGraph graph, ScheduleResult schedule, MetaAccessProvider metaAccess, boolean replaceInputsWithConstants) {
             this.graph = graph;
             this.debug = graph.getDebug();
             this.schedule = schedule;
             this.metaAccess = metaAccess;
             blockActionStart = new BlockMap<>(schedule.getCFG());
-            endMaps = EconomicMap.create();
+            endMaps = EconomicMap.create(Equivalence.IDENTITY);
             stampMap = graph.createNodeMap();
             undoOperations = new NodeStack();
             replaceConstantInputs = replaceInputsWithConstants && GraalOptions.ReplaceInputsWithConstantsBasedOnStamps.getValue(graph.getOptions());
@@ -255,7 +311,7 @@ public class FixReadsPhase extends BasePhase<LowTierContext> {
 
                 if (currentEndMap == null || !currentEndMap.isEmpty()) {
 
-                    EconomicMap<ValueNode, Stamp> endMap = EconomicMap.create();
+                    EconomicMap<ValueNode, Stamp> endMap = EconomicMap.create(Equivalence.IDENTITY);
 
                     // Process phis
                     for (ValuePhiNode phi : merge.valuePhis()) {
@@ -326,8 +382,22 @@ public class FixReadsPhase extends BasePhase<LowTierContext> {
         }
 
         protected void processUnary(UnaryNode node) {
-            Stamp newStamp = node.foldStamp(getBestStamp(node.getValue()));
+            ValueNode value = node.getValue();
+            Stamp bestStamp = getBestStamp(value);
+            Stamp newStamp = node.foldStamp(bestStamp);
             if (!checkReplaceWithConstant(newStamp, node)) {
+                if (!bestStamp.equals(value.stamp(NodeView.DEFAULT))) {
+                    ValueNode newNode = node.canonical(rawCanonicalizerTool);
+                    if (newNode != node) {
+                        // Canonicalization successfully triggered.
+                        if (newNode != null && !newNode.isAlive()) {
+                            newNode = graph.addWithoutUniqueWithInputs(newNode);
+                        }
+                        node.replaceAndDelete(newNode);
+                        GraphUtil.tryKillUnused(value);
+                        return;
+                    }
+                }
                 registerNewValueStamp(node, newStamp);
             }
         }
@@ -346,10 +416,31 @@ public class FixReadsPhase extends BasePhase<LowTierContext> {
         }
 
         protected void processBinary(BinaryNode node) {
-            Stamp xStamp = getBestStamp(node.getX());
-            Stamp yStamp = getBestStamp(node.getY());
+
+            ValueNode x = node.getX();
+            ValueNode y = node.getY();
+
+            Stamp xStamp = getBestStamp(x);
+            Stamp yStamp = getBestStamp(y);
             Stamp newStamp = node.foldStamp(xStamp, yStamp);
             if (!checkReplaceWithConstant(newStamp, node)) {
+
+                if (!xStamp.equals(x.stamp(NodeView.DEFAULT)) || !yStamp.equals(y.stamp(NodeView.DEFAULT))) {
+                    // At least one of the inputs has an improved stamp => attempt to canonicalize
+                    // based on that improvement.
+                    ValueNode newNode = node.canonical(rawCanonicalizerTool);
+                    if (newNode != node) {
+                        // Canonicalization successfully triggered.
+                        if (newNode != null && !newNode.isAlive()) {
+                            newNode = graph.addWithoutUniqueWithInputs(newNode);
+                        }
+                        node.replaceAndDelete(newNode);
+                        GraphUtil.tryKillUnused(x);
+                        GraphUtil.tryKillUnused(y);
+                        return;
+                    }
+                }
+
                 registerNewValueStamp(node, newStamp);
             }
         }
@@ -469,6 +560,10 @@ public class FixReadsPhase extends BasePhase<LowTierContext> {
 
         protected Stamp getBestStamp(ValueNode value) {
             ValueNode originalNode = value;
+            if (!value.isAlive()) {
+                return value.stamp(NodeView.DEFAULT);
+            }
+
             StampElement currentStamp = stampMap.getAndGrow(originalNode);
             if (currentStamp == null) {
                 return value.stamp(NodeView.DEFAULT);
@@ -544,7 +639,7 @@ public class FixReadsPhase extends BasePhase<LowTierContext> {
         }
     }
 
-    protected ControlFlowGraph.RecursiveVisitor<?> createVisitor(StructuredGraph graph, ScheduleResult schedule, PhaseContext context) {
+    protected ControlFlowGraph.RecursiveVisitor<?> createVisitor(StructuredGraph graph, ScheduleResult schedule, CoreProviders context) {
         return new RawConditionalEliminationVisitor(graph, schedule, context.getMetaAccess(), replaceInputsWithConstants);
     }
 

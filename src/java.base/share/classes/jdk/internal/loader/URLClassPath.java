@@ -103,10 +103,13 @@ public class URLClassPath {
         DISABLE_ACC_CHECKING = p != null ? p.equals("true") || p.isEmpty() : false;
 
         // This property will be removed in a later release
-        p = props.getProperty("jdk.net.URLClassPath.disableClassPathURLCheck", "true");
-
+        p = props.getProperty("jdk.net.URLClassPath.disableClassPathURLCheck");
         DISABLE_CP_URL_CHECK = p != null ? p.equals("true") || p.isEmpty() : false;
-        DEBUG_CP_URL_CHECK = "debug".equals(p);
+
+        // Print a message for each Class-Path entry that is ignored (assuming
+        // the check is not disabled).
+        p = props.getProperty("jdk.net.URLClassPath.showIgnoredClassPathEntries");
+        DEBUG_CP_URL_CHECK = p != null ? p.equals("true") || p.isEmpty() : false;
     }
 
     /* The original search path of URLs. */
@@ -696,7 +699,7 @@ public class URLClassPath {
     /*
      * Nested class used to represent a Loader of resources from a JAR URL.
      */
-    static class JarLoader extends Loader {
+    private static class JarLoader extends Loader {
         private JarFile jar;
         private final URL csu;
         private JarIndex index;
@@ -711,9 +714,9 @@ public class URLClassPath {
          * Creates a new JarLoader for the specified URL referring to
          * a JAR file.
          */
-        JarLoader(URL url, URLStreamHandler jarHandler,
-                  HashMap<String, Loader> loaderMap,
-                  AccessControlContext acc)
+        private JarLoader(URL url, URLStreamHandler jarHandler,
+                          HashMap<String, Loader> loaderMap,
+                          AccessControlContext acc)
             throws IOException
         {
             super(new URL("jar", "", -1, url + "!/", jarHandler));
@@ -1122,27 +1125,21 @@ public class URLClassPath {
 
         /**
          * Attempt to return a file URL by resolving input against a base file
-         * URL. The input is an absolute or relative file URL that encodes a
-         * file path.
-         *
-         * @apiNote Nonsensical input such as a Windows file path with a drive
-         * letter cannot be disambiguated from an absolute URL so will be rejected
-         * (by returning null) by this method.
-         *
+         * URL.
          * @return the resolved URL or null if the input is an absolute URL with
          *         a scheme other than file (ignoring case)
          * @throws MalformedURLException
          */
         static URL tryResolveFile(URL base, String input) throws MalformedURLException {
-            int index = input.indexOf(':');
-            boolean isFile;
-            if (index >= 0) {
-                String scheme = input.substring(0, index);
-                isFile = "file".equalsIgnoreCase(scheme);
-            } else {
-                isFile = true;
+            URL retVal = new URL(base, input);
+            if (input.indexOf(':') >= 0 &&
+                    !"file".equalsIgnoreCase(retVal.getProtocol())) {
+                // 'input' contains a ':', which might be a scheme, or might be
+                // a Windows drive letter.  If the protocol for the resolved URL
+                // isn't "file:", it should be ignored.
+                return null;
             }
-            return (isFile) ? new URL(base, input) : null;
+            return retVal;
         }
 
         /**
@@ -1190,11 +1187,11 @@ public class URLClassPath {
         /* Canonicalized File */
         private File dir;
 
-        FileLoader(URL url) throws IOException {
+        /*
+         * Creates a new FileLoader for the specified URL with a file protocol.
+         */
+        private FileLoader(URL url) throws IOException {
             super(url);
-            if (!"file".equals(url.getProtocol())) {
-                throw new IllegalArgumentException("url");
-            }
             String path = url.getFile().replace('/', File.separatorChar);
             path = ParseUtil.decode(path);
             dir = (new File(path)).getCanonicalFile();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  */
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -42,7 +42,7 @@ import org.w3c.dom.Node;
  * @xerces.internal
  *
  * @since  PR-DOM-Level-1-19980818.
- * @LastModified: Oct 2017
+ * @LastModified: May 2019
  */
 public class DeferredDocumentImpl
     extends DocumentImpl

@@ -21,22 +21,24 @@
  * questions.
  */
 
-#include "gc/z/zLock.hpp"
-#include "oops/oopsHierarchy.hpp"
-#include "utilities/globalDefinitions.hpp"
-
 #ifndef SHARE_GC_Z_ZNMETHODDATA_HPP
 #define SHARE_GC_Z_ZNMETHODDATA_HPP
+
+#include "gc/z/zAttachedArray.hpp"
+#include "gc/z/zLock.hpp"
+#include "memory/allocation.hpp"
+#include "oops/oopsHierarchy.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 class nmethod;
 template <typename T> class GrowableArray;
 
 class ZNMethodDataOops {
 private:
-  const size_t _nimmediates;
-  bool         _has_non_immediates;
+  typedef ZAttachedArray<ZNMethodDataOops, oop*> AttachedArray;
 
-  static size_t header_size();
+  const AttachedArray _immediates;
+  const bool          _has_non_immediates;
 
   ZNMethodDataOops(const GrowableArray<oop*>& immediates, bool has_non_immediates);
 
@@ -51,16 +53,14 @@ public:
   bool has_non_immediates() const;
 };
 
-class ZNMethodData {
+class ZNMethodData : public CHeapObj<mtGC> {
 private:
   ZReentrantLock             _lock;
   ZNMethodDataOops* volatile _oops;
 
-  ZNMethodData(nmethod* nm);
-
 public:
-  static ZNMethodData* create(nmethod* nm);
-  static void destroy(ZNMethodData* data);
+  ZNMethodData();
+  ~ZNMethodData();
 
   ZReentrantLock* lock();
 

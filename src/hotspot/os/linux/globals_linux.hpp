@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,8 +36,7 @@
                          diagnostic_pd, \
                          notproduct, \
                          range, \
-                         constraint, \
-                         writeable) \
+                         constraint) \
                                                                         \
   product(bool, UseOprofile, false,                                     \
         "enable support for Oprofile profiler")                         \
@@ -64,8 +63,12 @@
                                                                         \
   product(bool, PreferContainerQuotaForCPUCount, true,                  \
           "Calculate the container CPU availability based on the value" \
-          " of quotas (if set), when true. Otherwise, use the CPU"    \
+          " of quotas (if set), when true. Otherwise, use the CPU"      \
           " shares value, provided it is less than quota.")             \
+                                                                        \
+  product(bool, AdjustStackSizeForTLS, false,                           \
+          "Increase the thread stack size to include space for glibc "  \
+          "static thread-local storage (TLS) if true")                  \
                                                                         \
   diagnostic(bool, DumpPrivateMappingsInCore, true,                     \
           "If true, sets bit 2 of /proc/PID/coredump_filter, thus "     \

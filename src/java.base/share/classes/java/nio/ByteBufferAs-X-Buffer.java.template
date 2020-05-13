@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,9 @@
 
 package java.nio;
 
+import java.util.Objects;
+import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.Unsafe;
-
 
 class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
     extends {#if[ro]?ByteBufferAs}$Type$Buffer{#if[ro]?$BO$}
@@ -40,11 +41,11 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
 
 #end[rw]
 
-    ByteBufferAs$Type$Buffer$RW$$BO$(ByteBuffer bb) {   // package-private
+    ByteBufferAs$Type$Buffer$RW$$BO$(ByteBuffer bb, MemorySegmentProxy segment) {   // package-private
 #if[rw]
         super(-1, 0,
               bb.remaining() >> $LG_BYTES_PER_VALUE$,
-              bb.remaining() >> $LG_BYTES_PER_VALUE$);
+              bb.remaining() >> $LG_BYTES_PER_VALUE$, segment);
         this.bb = bb;
         // enforce limit == capacity
         int cap = this.capacity();
@@ -53,21 +54,21 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
         assert (pos <= cap);
         address = bb.address;
 #else[rw]
-        super(bb);
+        super(bb, segment);
 #end[rw]
     }
 
     ByteBufferAs$Type$Buffer$RW$$BO$(ByteBuffer bb,
                                      int mark, int pos, int lim, int cap,
-                                     long addr)
+                                     long addr, MemorySegmentProxy segment)
     {
 #if[rw]
-        super(mark, pos, lim, cap);
+        super(mark, pos, lim, cap, segment);
         this.bb = bb;
         address = addr;
         assert address >= bb.address;
 #else[rw]
-        super(bb, mark, pos, lim, cap, addr);
+        super(bb, mark, pos, lim, cap, addr, segment);
 #end[rw]
     }
 
@@ -79,10 +80,20 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
     public $Type$Buffer slice() {
         int pos = this.position();
         int lim = this.limit();
-        assert (pos <= lim);
         int rem = (pos <= lim ? lim - pos : 0);
         long addr = byteOffset(pos);
-        return new ByteBufferAs$Type$Buffer$RW$$BO$(bb, -1, 0, rem, rem, addr);
+        return new ByteBufferAs$Type$Buffer$RW$$BO$(bb, -1, 0, rem, rem, addr, segment);
+    }
+
+    @Override
+    public $Type$Buffer slice(int index, int length) {
+        Objects.checkFromIndexSize(index, length, limit());
+        return new ByteBufferAs$Type$Buffer$RW$$BO$(bb,
+                                                    -1,
+                                                    0,
+                                                    length,
+                                                    length,
+                                                    byteOffset(index), segment);
     }
 
     public $Type$Buffer duplicate() {
@@ -91,7 +102,7 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
                                                     this.position(),
                                                     this.limit(),
                                                     this.capacity(),
-                                                    address);
+                                                    address, segment);
     }
 
     public $Type$Buffer asReadOnlyBuffer() {
@@ -101,7 +112,7 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
                                                  this.position(),
                                                  this.limit(),
                                                  this.capacity(),
-                                                 address);
+                                                 address, segment);
 #else[rw]
         return duplicate();
 #end[rw]
@@ -119,12 +130,14 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
     }
 
     public $type$ get() {
+        checkSegment();
         $memtype$ x = UNSAFE.get$Memtype$Unaligned(bb.hb, byteOffset(nextGetIndex()),
             {#if[boB]?true:false});
         return $fromBits$(x);
     }
 
     public $type$ get(int i) {
+        checkSegment();
         $memtype$ x = UNSAFE.get$Memtype$Unaligned(bb.hb, byteOffset(checkIndex(i)),
             {#if[boB]?true:false});
         return $fromBits$(x);
@@ -142,6 +155,7 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
 
     public $Type$Buffer put($type$ x) {
 #if[rw]
+        checkSegment();
         $memtype$ y = $toBits$(x);
         UNSAFE.put$Memtype$Unaligned(bb.hb, byteOffset(nextPutIndex()), y,
             {#if[boB]?true:false});
@@ -153,6 +167,7 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
 
     public $Type$Buffer put(int i, $type$ x) {
 #if[rw]
+        checkSegment();
         $memtype$ y = $toBits$(x);
         UNSAFE.put$Memtype$Unaligned(bb.hb, byteOffset(checkIndex(i)), y,
             {#if[boB]?true:false});
@@ -195,8 +210,7 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
 #if[char]
 
     public String toString(int start, int end) {
-        if ((end > limit()) || (start > end))
-            throw new IndexOutOfBoundsException();
+        Objects.checkFromToIndex(start, end, limit());
         try {
             int len = end - start;
             char[] ca = new char[len];
@@ -221,14 +235,13 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
         pos = (pos <= lim ? pos : lim);
         int len = lim - pos;
 
-        if ((start < 0) || (end > len) || (start > end))
-            throw new IndexOutOfBoundsException();
+        Objects.checkFromToIndex(start, end, len);
         return new ByteBufferAsCharBuffer$RW$$BO$(bb,
                                                   -1,
                                                   pos + start,
                                                   pos + end,
                                                   capacity(),
-                                                  address);
+                                                  address, segment);
     }
 
 #end[char]

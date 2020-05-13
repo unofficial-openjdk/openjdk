@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@
 #include "oops/constantPool.hpp"
 #include "oops/cpCache.inline.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/fieldType.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/safepoint.hpp"
 #include "runtime/signature.hpp"
@@ -147,12 +146,11 @@ Symbol* Bytecode_member_ref::signature() const {
 
 BasicType Bytecode_member_ref::result_type() const {
   ResultTypeFinder rts(signature());
-  rts.iterate();
   return rts.type();
 }
 
 
-methodHandle Bytecode_invoke::static_target(TRAPS) {
+Method* Bytecode_invoke::static_target(TRAPS) {
   constantPoolHandle constants(THREAD, this->constants());
 
   Bytecodes::Code bc = invoke_code();
@@ -161,8 +159,10 @@ methodHandle Bytecode_invoke::static_target(TRAPS) {
 
 Handle Bytecode_invoke::appendix(TRAPS) {
   ConstantPoolCacheEntry* cpce = cpcache_entry();
-  if (cpce->has_appendix())
-    return Handle(THREAD, cpce->appendix_if_resolved(constants()));
+  if (cpce->has_appendix()) {
+    constantPoolHandle cp(THREAD, constants());
+    return Handle(THREAD, cpce->appendix_if_resolved(cp));
+  }
   return Handle();  // usual case
 }
 

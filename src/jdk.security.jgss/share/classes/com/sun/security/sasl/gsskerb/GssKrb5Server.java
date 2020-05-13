@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,8 @@ import java.io.*;
 import java.util.Map;
 import java.util.logging.Level;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 // JAAS
 import javax.security.auth.callback.*;
 
@@ -37,31 +39,31 @@ import javax.security.auth.callback.*;
 import org.ietf.jgss.*;
 
 /**
-  * Implements the GSSAPI SASL server mechanism for Kerberos V5.
-  * (<A HREF="http://www.ietf.org/rfc/rfc2222.txt">RFC 2222</A>,
-  * <a HREF="http://www.ietf.org/internet-drafts/draft-ietf-cat-sasl-gssapi-00.txt">draft-ietf-cat-sasl-gssapi-00.txt</a>).
-  *
-  * Expects thread's Subject to contain server's Kerberos credentials
-  * - If not, underlying KRB5 mech will attempt to acquire Kerberos creds
-  *   by logging into Kerberos (via default TextCallbackHandler).
-  * - These creds will be used for exchange with client.
-  *
-  * Required callbacks:
-  * - AuthorizeCallback
-  *      handler must verify that authid/authzids are allowed and set
-  *      authorized ID to be the canonicalized authzid (if applicable).
-  *
-  * Environment properties that affect behavior of implementation:
-  *
-  * javax.security.sasl.qop
-  * - quality of protection; list of auth, auth-int, auth-conf; default is "auth"
-  * javax.security.sasl.maxbuf
-  * - max receive buffer size; default is 65536
-  * javax.security.sasl.sendmaxbuffer
-  * - max send buffer size; default is 65536; (min with client max recv size)
-  *
-  * @author Rosanna Lee
-  */
+ * Implements the GSSAPI SASL server mechanism for Kerberos V5.
+ * (<A HREF="http://www.ietf.org/rfc/rfc2222.txt">RFC 2222</A>,
+ * <a HREF="http://www.ietf.org/internet-drafts/draft-ietf-cat-sasl-gssapi-00.txt">draft-ietf-cat-sasl-gssapi-00.txt</a>).
+ *
+ * Expects thread's Subject to contain server's Kerberos credentials
+ * - If not, underlying KRB5 mech will attempt to acquire Kerberos creds
+ *   by logging into Kerberos (via default TextCallbackHandler).
+ * - These creds will be used for exchange with client.
+ *
+ * Required callbacks:
+ * - AuthorizeCallback
+ *      handler must verify that authid/authzids are allowed and set
+ *      authorized ID to be the canonicalized authzid (if applicable).
+ *
+ * Environment properties that affect behavior of implementation:
+ *
+ * javax.security.sasl.qop
+ * - quality of protection; list of auth, auth-int, auth-conf; default is "auth"
+ * javax.security.sasl.maxbuf
+ * - max receive buffer size; default is 65536
+ * javax.security.sasl.sendmaxbuffer
+ * - max send buffer size; default is 65536; (min with client max recv size)
+ *
+ * @author Rosanna Lee
+ */
 final class GssKrb5Server extends GssKrb5Base implements SaslServer {
     private static final String MY_CLASS_NAME = GssKrb5Server.class.getName();
 
@@ -250,8 +252,10 @@ final class GssKrb5Server extends GssKrb5Base implements SaslServer {
         try {
             // Expecting 4 octets from client selected protection
             // and client's receive buffer size
+            MessageProp msgProp = new MessageProp(false);
             byte[] gssOutToken = secCtx.unwrap(responseData, 0,
-                responseData.length, new MessageProp(0, false));
+                responseData.length, msgProp);
+            checkMessageProp("Handshake failure: ", msgProp);
 
             if (logger.isLoggable(Level.FINER)) {
                 traceOutput(MY_CLASS_NAME, "doHandshake2",
@@ -300,12 +304,8 @@ final class GssKrb5Server extends GssKrb5Base implements SaslServer {
 
             // Get authorization identity, if any
             if (gssOutToken.length > 4) {
-                try {
-                    authzid = new String(gssOutToken, 4,
-                        gssOutToken.length - 4, "UTF-8");
-                } catch (UnsupportedEncodingException uee) {
-                    throw new SaslException ("Cannot decode authzid", uee);
-                }
+                authzid = new String(gssOutToken, 4,
+                        gssOutToken.length - 4, UTF_8);
             } else {
                 authzid = peer;
             }

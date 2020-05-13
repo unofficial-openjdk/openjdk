@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,15 +33,16 @@
 #include "ci/ciKlass.hpp"
 #include "ci/ciMemberName.hpp"
 #include "ci/ciUtilities.inline.hpp"
+#include "compiler/compilationPolicy.hpp"
 #include "compiler/compileBroker.hpp"
+#include "compiler/compilerEvent.hpp"
 #include "interpreter/bytecode.hpp"
-#include "jfr/jfrEvents.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
-#include "runtime/compilationPolicy.hpp"
 #include "runtime/vm_version.hpp"
 #include "utilities/bitMap.inline.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 class BlockListBuilder {
  private:
@@ -607,9 +608,15 @@ class MemoryBuffer: public CompilationResourceObj {
       return load;
     }
 
-    if (RoundFPResults && UseSSE < 2 && load->type()->is_float_kind()) {
-      // can't skip load since value might get rounded as a side effect
-      return load;
+    if (strict_fp_requires_explicit_rounding && load->type()->is_float_kind()) {
+#ifdef IA32
+      if (UseSSE < 2) {
+        // can't skip load since value might get rounded as a side effect
+        return load;
+      }
+#else
+      Unimplemented();
+#endif // IA32
     }
 
     ciField* field = load->field();
@@ -1467,11 +1474,12 @@ void GraphBuilder::method_return(Value x, bool ignore_return) {
     call_register_finalizer();
   }
 
+  // The conditions for a memory barrier are described in Parse::do_exits().
   bool need_mem_bar = false;
   if (method()->name() == ciSymbol::object_initializer_name() &&
-      (scope()->wrote_final() || (AlwaysSafeConstructors && scope()->wrote_fields())
-                              || (support_IRIW_for_not_multiple_copy_atomic_cpu && scope()->wrote_volatile())
-     )){
+       (scope()->wrote_final() ||
+         (AlwaysSafeConstructors && scope()->wrote_fields()) ||
+         (support_IRIW_for_not_multiple_copy_atomic_cpu && scope()->wrote_volatile()))) {
     need_mem_bar = true;
   }
 
@@ -1706,7 +1714,7 @@ void GraphBuilder::access_field(Bytecodes::Code code) {
             // For CallSite objects add a dependency for invalidation of the optimization.
             if (field->is_call_site_target()) {
               ciCallSite* call_site = const_oop->as_call_site();
-              if (!call_site->is_constant_call_site()) {
+              if (!call_site->is_fully_initialized_constant_call_site()) {
                 ciMethodHandle* target = field_value.as_object()->as_method_handle();
                 dependency_recorder()->assert_call_site_target_value(call_site, target);
               }
@@ -1724,6 +1732,23 @@ void GraphBuilder::access_field(Bytecodes::Code code) {
         Value replacement = !needs_patching ? _memory->load(load) : load;
         if (replacement != load) {
           assert(replacement->is_linked() || !replacement->can_be_linked(), "should already by linked");
+          // Writing an (integer) value to a boolean, byte, char or short field includes an implicit narrowing
+          // conversion. Emit an explicit conversion here to get the correct field value after the write.
+          BasicType bt = field->type()->basic_type();
+          switch (bt) {
+          case T_BOOLEAN:
+          case T_BYTE:
+            replacement = append(new Convert(Bytecodes::_i2b, replacement, as_ValueType(bt)));
+            break;
+          case T_CHAR:
+            replacement = append(new Convert(Bytecodes::_i2c, replacement, as_ValueType(bt)));
+            break;
+          case T_SHORT:
+            replacement = append(new Convert(Bytecodes::_i2s, replacement, as_ValueType(bt)));
+            break;
+          default:
+            break;
+          }
           push(type, replacement);
         } else {
           push(type, append(load));
@@ -1957,12 +1982,11 @@ void GraphBuilder::invoke(Bytecodes::Code code) {
       // number of implementors for decl_interface is 0 or 1. If
       // it's 0 then no class implements decl_interface and there's
       // no point in inlining.
-      ciInstanceKlass* singleton = NULL;
       ciInstanceKlass* declared_interface = callee_holder;
-      if (declared_interface->nof_implementors() == 1 &&
-          (!target->is_default_method() || target->is_overpass()) /* CHA doesn't support default methods yet. */) {
-        singleton = declared_interface->implementor();
-        assert(singleton != NULL && singleton != declared_interface, "");
+      ciInstanceKlass* singleton = declared_interface->unique_implementor();
+      if (singleton != NULL &&
+          (!target->is_default_method() || target->is_overpass()) /* CHA doesn't support default methods yet. */ ) {
+        assert(singleton != declared_interface, "not a unique implementor");
         cha_monomorphic_target = target->find_monomorphic_target(calling_klass, declared_interface, singleton);
         if (cha_monomorphic_target != NULL) {
           if (cha_monomorphic_target->holder() != compilation()->env()->Object_klass()) {
@@ -1988,8 +2012,9 @@ void GraphBuilder::invoke(Bytecodes::Code code) {
   }
 
   if (cha_monomorphic_target != NULL) {
+    assert(!target->can_be_statically_bound() || target == cha_monomorphic_target, "");
     assert(!cha_monomorphic_target->is_abstract(), "");
-    if (!target->is_final_method() && !target->is_private()) {
+    if (!cha_monomorphic_target->can_be_statically_bound(actual_recv)) {
       // If we inlined because CHA revealed only a single target method,
       // then we are dependent on that target method not getting overridden
       // by dynamic class loading.  Be sure to test the "static" receiver
@@ -2254,17 +2279,23 @@ void GraphBuilder::throw_op(int bci) {
 
 
 Value GraphBuilder::round_fp(Value fp_value) {
-  // no rounding needed if SSE2 is used
-  if (RoundFPResults && UseSSE < 2) {
-    // Must currently insert rounding node for doubleword values that
-    // are results of expressions (i.e., not loads from memory or
-    // constants)
-    if (fp_value->type()->tag() == doubleTag &&
-        fp_value->as_Constant() == NULL &&
-        fp_value->as_Local() == NULL &&       // method parameters need no rounding
-        fp_value->as_RoundFP() == NULL) {
-      return append(new RoundFP(fp_value));
+  if (strict_fp_requires_explicit_rounding) {
+#ifdef IA32
+    // no rounding needed if SSE2 is used
+    if (UseSSE < 2) {
+      // Must currently insert rounding node for doubleword values that
+      // are results of expressions (i.e., not loads from memory or
+      // constants)
+      if (fp_value->type()->tag() == doubleTag &&
+          fp_value->as_Constant() == NULL &&
+          fp_value->as_Local() == NULL &&       // method parameters need no rounding
+          fp_value->as_RoundFP() == NULL) {
+        return append(new RoundFP(fp_value));
+      }
     }
+#else
+    Unimplemented();
+#endif // IA32
   }
   return fp_value;
 }
@@ -2589,7 +2620,7 @@ void PhiSimplifier::block_do(BlockBegin* b) {
 
 #ifdef ASSERT
   for_each_phi_fun(b, phi,
-                   assert(phi->operand_count() != 1 || phi->subst() != phi, "missed trivial simplification");
+                   assert(phi->operand_count() != 1 || phi->subst() != phi || phi->is_illegal(), "missed trivial simplification");
   );
 
   ValueStack* state = b->state()->caller_state();
@@ -3167,7 +3198,7 @@ ValueStack* GraphBuilder::state_at_entry() {
     ciType* type = sig->type_at(i);
     BasicType basic_type = type->basic_type();
     // don't allow T_ARRAY to propagate into locals types
-    if (basic_type == T_ARRAY) basic_type = T_OBJECT;
+    if (is_reference_type(basic_type)) basic_type = T_OBJECT;
     ValueType* vt = as_ValueType(basic_type);
     state->store_local(idx, new Local(type, vt, idx, false));
     idx += type->size();
@@ -3748,15 +3779,38 @@ bool GraphBuilder::try_inline_full(ciMethod* callee, bool holder_known, bool ign
   // Proper inlining of methods with jsrs requires a little more work.
   if (callee->has_jsrs()                 ) INLINE_BAILOUT("jsrs not handled properly by inliner yet");
 
-  // When SSE2 is used on intel, then no special handling is needed
-  // for strictfp because the enum-constant is fixed at compile time,
-  // the check for UseSSE2 is needed here
-  if (strict_fp_requires_explicit_rounding && UseSSE < 2 && method()->is_strict() != callee->is_strict()) {
-    INLINE_BAILOUT("caller and callee have different strict fp requirements");
+  if (strict_fp_requires_explicit_rounding &&
+      method()->is_strict() != callee->is_strict()) {
+#ifdef IA32
+    // If explicit rounding is required, do not inline strict code into non-strict code (or the reverse).
+    // When SSE2 is present, no special handling is needed.
+    if (UseSSE < 2) {
+      INLINE_BAILOUT("caller and callee have different strict fp requirements");
+    }
+#else
+    Unimplemented();
+#endif // IA32
   }
 
   if (is_profiling() && !callee->ensure_method_data()) {
     INLINE_BAILOUT("mdo allocation failed");
+  }
+
+  const bool is_invokedynamic = (bc == Bytecodes::_invokedynamic);
+  const bool has_receiver = (bc != Bytecodes::_invokestatic && !is_invokedynamic);
+
+  const int args_base = state()->stack_size() - callee->arg_size();
+  assert(args_base >= 0, "stack underflow during inlining");
+
+  Value recv = NULL;
+  if (has_receiver) {
+    assert(!callee->is_static(), "callee must not be static");
+    assert(callee->arg_size() > 0, "must have at least a receiver");
+
+    recv = state()->stack_at(args_base);
+    if (recv->is_null_obj()) {
+      INLINE_BAILOUT("receiver is always null");
+    }
   }
 
   // now perform tests that are based on flag settings
@@ -3792,7 +3846,7 @@ bool GraphBuilder::try_inline_full(ciMethod* callee, bool holder_known, bool ign
       INLINE_BAILOUT("total inlining greater than DesiredMethodLimit");
     }
     // printing
-    print_inlining(callee);
+    print_inlining(callee, "inline", /*success*/ true);
   }
 
   // NOTE: Bailouts from this point on, which occur at the
@@ -3801,21 +3855,11 @@ bool GraphBuilder::try_inline_full(ciMethod* callee, bool holder_known, bool ign
 
   BlockBegin* orig_block = block();
 
-  const bool is_invokedynamic = bc == Bytecodes::_invokedynamic;
-  const bool has_receiver = (bc != Bytecodes::_invokestatic && !is_invokedynamic);
-
-  const int args_base = state()->stack_size() - callee->arg_size();
-  assert(args_base >= 0, "stack underflow during inlining");
-
   // Insert null check if necessary
-  Value recv = NULL;
   if (has_receiver) {
     // note: null check must happen even if first instruction of callee does
     //       an implicit null check since the callee is in a different scope
     //       and we must make sure exception handling does the right thing
-    assert(!callee->is_static(), "callee must not be static");
-    assert(callee->arg_size() > 0, "must have at least a receiver");
-    recv = state()->stack_at(args_base);
     null_check(recv);
   }
 
@@ -4287,48 +4331,19 @@ void GraphBuilder::append_char_access(ciMethod* callee, bool is_store) {
   }
 }
 
-static void post_inlining_event(EventCompilerInlining* event,
-                                int compile_id,
-                                const char* msg,
-                                bool success,
-                                int bci,
-                                ciMethod* caller,
-                                ciMethod* callee) {
-  assert(caller != NULL, "invariant");
-  assert(callee != NULL, "invariant");
-  assert(event != NULL, "invariant");
-  assert(event->should_commit(), "invariant");
-  JfrStructCalleeMethod callee_struct;
-  callee_struct.set_type(callee->holder()->name()->as_utf8());
-  callee_struct.set_name(callee->name()->as_utf8());
-  callee_struct.set_descriptor(callee->signature()->as_symbol()->as_utf8());
-  event->set_compileId(compile_id);
-  event->set_message(msg);
-  event->set_succeeded(success);
-  event->set_bci(bci);
-  event->set_caller(caller->get_Method());
-  event->set_callee(callee_struct);
-  event->commit();
-}
-
 void GraphBuilder::print_inlining(ciMethod* callee, const char* msg, bool success) {
   CompileLog* log = compilation()->log();
   if (log != NULL) {
+    assert(msg != NULL, "inlining msg should not be null!");
     if (success) {
-      if (msg != NULL)
-        log->inline_success(msg);
-      else
-        log->inline_success("receiver is statically known");
+      log->inline_success(msg);
     } else {
-      if (msg != NULL)
-        log->inline_fail(msg);
-      else
-        log->inline_fail("reason unknown");
+      log->inline_fail(msg);
     }
   }
   EventCompilerInlining event;
   if (event.should_commit()) {
-    post_inlining_event(&event, compilation()->env()->task()->compile_id(), msg, success, bci(), method(), callee);
+    CompilerEvent::InlineEvent::post(event, compilation()->env()->task()->compile_id(), method()->get_Method(), callee, success, msg, bci());
   }
 
   CompileTask::print_inlining_ul(callee, scope()->level(), bci(), msg);

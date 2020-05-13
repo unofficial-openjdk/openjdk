@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -805,9 +805,8 @@ public class JavaCompiler {
      */
     public void readSourceFile(JCCompilationUnit tree, ClassSymbol c) throws CompletionFailure {
         if (completionFailureName == c.fullname) {
-            JCDiagnostic msg =
-                    diagFactory.fragment(Fragments.UserSelectedCompletionFailure);
-            throw new CompletionFailure(c, msg, dcfh);
+            throw new CompletionFailure(
+                c, () -> diagFactory.fragment(Fragments.UserSelectedCompletionFailure), dcfh);
         }
         JavaFileObject filename = c.classfile;
         JavaFileObject prev = log.useSource(filename);
@@ -835,7 +834,7 @@ public class JavaCompiler {
         // have enough modules available to access java.lang, and
         // so risk getting FatalError("no.java.lang") from MemberEnter.
         if (!modules.enter(List.of(tree), c)) {
-            throw new CompletionFailure(c, diags.fragment(Fragments.CantResolveModules), dcfh);
+            throw new CompletionFailure(c, () -> diags.fragment(Fragments.CantResolveModules), dcfh);
         }
 
         enter.complete(List.of(tree), c);
@@ -935,8 +934,8 @@ public class JavaCompiler {
             // These method calls must be chained to avoid memory leaks
             processAnnotations(
                 enterTrees(
-                        stopIfError(CompileState.PARSE,
-                                initModules(stopIfError(CompileState.PARSE, parseFiles(sourceFileObjects))))
+                        stopIfError(CompileState.ENTER,
+                                initModules(stopIfError(CompileState.ENTER, parseFiles(sourceFileObjects))))
                 ),
                 classnames
             );
@@ -947,34 +946,36 @@ public class JavaCompiler {
                 todo.retainFiles(inputFiles);
             }
 
-            switch (compilePolicy) {
-            case ATTR_ONLY:
-                attribute(todo);
-                break;
+            if (!CompileState.ATTR.isAfter(shouldStopPolicyIfNoError)) {
+                switch (compilePolicy) {
+                case ATTR_ONLY:
+                    attribute(todo);
+                    break;
 
-            case CHECK_ONLY:
-                flow(attribute(todo));
-                break;
+                case CHECK_ONLY:
+                    flow(attribute(todo));
+                    break;
 
-            case SIMPLE:
-                generate(desugar(flow(attribute(todo))));
-                break;
+                case SIMPLE:
+                    generate(desugar(flow(attribute(todo))));
+                    break;
 
-            case BY_FILE: {
-                    Queue<Queue<Env<AttrContext>>> q = todo.groupByFile();
-                    while (!q.isEmpty() && !shouldStop(CompileState.ATTR)) {
-                        generate(desugar(flow(attribute(q.remove()))));
+                case BY_FILE: {
+                        Queue<Queue<Env<AttrContext>>> q = todo.groupByFile();
+                        while (!q.isEmpty() && !shouldStop(CompileState.ATTR)) {
+                            generate(desugar(flow(attribute(q.remove()))));
+                        }
                     }
+                    break;
+
+                case BY_TODO:
+                    while (!todo.isEmpty())
+                        generate(desugar(flow(attribute(todo.remove()))));
+                    break;
+
+                default:
+                    Assert.error("unknown compile policy");
                 }
-                break;
-
-            case BY_TODO:
-                while (!todo.isEmpty())
-                    generate(desugar(flow(attribute(todo.remove()))));
-                break;
-
-            default:
-                Assert.error("unknown compile policy");
             }
         } catch (Abort ex) {
             if (devVerbose)
@@ -990,6 +991,8 @@ public class JavaCompiler {
             if (!log.hasDiagnosticListener()) {
                 printCount("error", errorCount());
                 printCount("warn", warningCount());
+                printSuppressedCount(errorCount(), log.nsuppressederrors, "count.error.recompile");
+                printSuppressedCount(warningCount(), log.nsuppressedwarns, "count.warn.recompile");
             }
             if (!taskListener.isEmpty()) {
                 taskListener.finished(new TaskEvent(TaskEvent.Kind.COMPILATION));
@@ -1178,7 +1181,7 @@ public class JavaCompiler {
             // Unless all the errors are resolve errors, the errors were parse errors
             // or other errors during enter which cannot be fixed by running
             // any annotation processors.
-            if (unrecoverableError()) {
+            if (processAnnotations) {
                 deferredDiagnosticHandler.reportDeferredDiagnostics();
                 log.popDiagnosticHandler(deferredDiagnosticHandler);
                 return ;
@@ -1489,7 +1492,7 @@ public class JavaCompiler {
                             } finally {
                                 /*
                                  * ignore any updates to hasLambdas made during
-                                 * the nested scan, this ensures an initalized
+                                 * the nested scan, this ensures an initialized
                                  * LambdaToMethod is available only to those
                                  * classes that contain lambdas
                                  */
@@ -1556,6 +1559,12 @@ public class JavaCompiler {
 
             env.tree = transTypes.translateTopLevelClass(env.tree, localMake);
             compileStates.put(env, CompileState.TRANSTYPES);
+
+            if (shouldStop(CompileState.TRANSPATTERNS))
+                return;
+
+            env.tree = TransPatterns.instance(context).translateTopLevelClass(env, env.tree, localMake);
+            compileStates.put(env, CompileState.TRANSPATTERNS);
 
             if (Feature.LAMBDA.allowedInSource(source) && scanner.hasLambdas) {
                 if (shouldStop(CompileState.UNLAMBDA))
@@ -1841,6 +1850,15 @@ public class JavaCompiler {
             else
                 key = "count." + kind + ".plural";
             log.printLines(WriterKind.ERROR, key, String.valueOf(count));
+            log.flush(Log.WriterKind.ERROR);
+        }
+    }
+
+    private void printSuppressedCount(int shown, int suppressed, String diagKey) {
+        if (suppressed > 0) {
+            int total = shown + suppressed;
+            log.printLines(WriterKind.ERROR, diagKey,
+                    String.valueOf(shown), String.valueOf(total));
             log.flush(Log.WriterKind.ERROR);
         }
     }

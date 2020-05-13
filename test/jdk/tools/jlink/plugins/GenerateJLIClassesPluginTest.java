@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,14 +21,13 @@
  * questions.
  */
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import jdk.tools.jlink.internal.plugins.GenerateJLIClassesPlugin;
 
 import tests.Helper;
 import tests.JImageGenerator;
@@ -61,45 +60,51 @@ public class GenerateJLIClassesPluginTest {
 
         helper.generateDefaultModules();
 
-
-        // Test that generate-jli is enabled by default
-        Result result = JImageGenerator.getJLinkTask()
-                .modulePath(helper.defaultModulePath())
-                .output(helper.createNewImageDir("generate-jli"))
-                .addMods("java.base")
-                .call();
-
-        Path image = result.assertSuccess();
-
-        JImageValidator.validate(
-            image.resolve("lib").resolve("modules"),
-                    classFilesForSpecies(GenerateJLIClassesPlugin.defaultSpecies()),
-                    List.of());
-
         // Check that --generate-jli-classes=@file works as intended
         Path baseFile = Files.createTempFile("base", "trace");
         String species = "LLLLLLLLLLLLLLLLLLL";
         String fileString = "[SPECIES_RESOLVE] java.lang.invoke.BoundMethodHandle$Species_" + species + " (salvaged)\n";
         Files.write(baseFile, fileString.getBytes(Charset.defaultCharset()));
-        result = JImageGenerator.getJLinkTask()
+        Result result = JImageGenerator.getJLinkTask()
                 .modulePath(helper.defaultModulePath())
                 .output(helper.createNewImageDir("generate-jli-file"))
                 .option("--generate-jli-classes=@" + baseFile.toString())
                 .addMods("java.base")
                 .call();
 
-        image = result.assertSuccess();
+        Path image = result.assertSuccess();
 
-        JImageValidator.validate(
-            image.resolve("lib").resolve("modules"),
-                    classFilesForSpecies(List.of(species)), // species should be in the image
-                    classFilesForSpecies(List.of(species.substring(1)))); // but not it's immediate parent
+        JImageValidator.validate(image.resolve("lib").resolve("modules"),
+                classFilesForSpecies(List.of(species)), // species should be in the image
+                classFilesForSpecies(List.of(species.substring(1)))); // but not it's immediate parent
+
+        // Check that --generate-jli-classes=@file fails as intended on shapes that can't be generated
+        ensureInvalidSignaturesFail(
+                "[LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeVirtual L_L (success)\n",
+                "[LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeInterface L_L (success)\n",
+                "[LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic I_L (success)\n"
+        );
+    }
+
+    private static void ensureInvalidSignaturesFail(String ... args) throws IOException {
+        for (String fileString : args) {
+            Path failFile = Files.createTempFile("fail", "trace");
+            fileString = "[LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeVirtual L_L (success)\n";
+            Files.write(failFile, fileString.getBytes(Charset.defaultCharset()));
+            Result result = JImageGenerator.getJLinkTask()
+                    .modulePath(helper.defaultModulePath())
+                    .output(helper.createNewImageDir("generate-jli-file"))
+                    .option("--generate-jli-classes=@" + failFile.toString())
+                    .addMods("java.base")
+                    .call();
+
+            result.assertFailure();
+        }
     }
 
     private static List<String> classFilesForSpecies(Collection<String> species) {
         return species.stream()
-                .map(s -> "/java.base/java/lang/invoke/BoundMethodHandle$Species_"
-                        + GenerateJLIClassesPlugin.expandSignature(s) + ".class")
+                .map(s -> "/java.base/java/lang/invoke/BoundMethodHandle$Species_" + s + ".class")
                 .collect(Collectors.toList());
     }
 }

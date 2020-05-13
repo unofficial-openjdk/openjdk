@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 4341304 4485668 4966728 8032066 8071982 8192933
+ * @bug 4341304 4485668 4966728 8032066 8071982 8192933 8215307
  * @summary Test that methods readResolve and writeReplace show
  * up in serialized-form.html the same way that readObject and writeObject do.
  * If the doclet includes readResolve and writeReplace in the serialized-form
@@ -31,7 +31,6 @@
  * test passes.  This also tests that throws tag information is correctly shown
  * in the serialized form page.
  * Make sure see tags work in serialized form.
- * @author jamieh
  * @library ../../lib/
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build javadoc.tester.*
@@ -64,11 +63,15 @@ public class TestSerializedForm extends JavadocTester {
                 "protected&nbsp;java.lang.Object&nbsp;readResolve()",
                 "protected&nbsp;java.lang.Object&nbsp;writeReplace()",
                 "protected&nbsp;java.lang.Object&nbsp;readObjectNoData()",
-                "<h3>Serialization Overview</h3>\n<ul class=\"blockList\">\n"
-                + "<li class=\"blockListLast\">\n<div class=\"block\">"
-                + "<span class=\"deprecatedLabel\">Deprecated.</span>&nbsp;</div>\n"
-                + "<dl>\n<dt><span class=\"seeLabel\">See Also:</span></dt>\n"
-                + "<dd><code>TestSerializedForm</code></dd>\n</dl>",
+                """
+                    <h3>Serialization Overview</h3>
+                    <ul class="block-list">
+                    <li class="block-list">
+                    <div class="block"><span class="deprecated-label">Deprecated.</span>&nbsp;</div>
+                    <dl>
+                    <dt><span class="seeLabel">See Also:</span></dt>
+                    <dd><code>TestSerializedForm</code></dd>
+                    </dl>""",
                 "<h3>Class pkg1.NestedInnerClass.InnerClass.ProNestedInnerClass "
                 + "extends java.lang.Object implements Serializable</h3>",
                 "<h3>Class pkg1.PrivateIncludeInnerClass.PriInnerClass extends "
@@ -77,28 +80,34 @@ public class TestSerializedForm extends JavadocTester {
                 + "java.lang.Object implements Serializable</h3>");
 
         checkOutput("serialized-form.html", false,
-                "<h3>Class <a href=\"pkg1/NestedInnerClass.InnerClass.ProNestedInnerClass.html\" "
-                + "title=\"class in pkg1\">pkg1.NestedInnerClass.InnerClass.ProNestedInnerClass</a> "
-                + "extends java.lang.Object implements Serializable</h3>",
-                "<h3>Class <a href=\"pkg1/PrivateInnerClass.PriInnerClass.html\" title=\"class in pkg1\">"
-                + "pkg1.PrivateInnerClass.PriInnerClass</a> extends java.lang.Object implements Serializable</h3>",
-                "<h3>Class <a href=\"pkg1/ProtectedInnerClass.ProInnerClass.html\" title=\"class in pkg1\">"
-                + "pkg1.ProtectedInnerClass.ProInnerClass</a> extends java.lang.Object implements Serializable</h3>",
+                """
+                    <h3>Class <a href="pkg1/NestedInnerClass.InnerClass.ProNestedInnerClass.html" ti\
+                    tle="class in pkg1">pkg1.NestedInnerClass.InnerClass.ProNestedInnerClass</a> ext\
+                    ends java.lang.Object implements Serializable</h3>""",
+                """
+                    <h3>Class <a href="pkg1/PrivateInnerClass.PriInnerClass.html" title="class in pk\
+                    g1">pkg1.PrivateInnerClass.PriInnerClass</a> extends java.lang.Object implements\
+                     Serializable</h3>""",
+                """
+                    <h3>Class <a href="pkg1/ProtectedInnerClass.ProInnerClass.html" title="class in \
+                    pkg1">pkg1.ProtectedInnerClass.ProInnerClass</a> extends java.lang.Object implem\
+                    ents Serializable</h3>""",
                 "<h3>Class pkg1.PublicExcludeInnerClass.PubInnerClass extends java.lang.Object implements "
                 + "Serializable</h3>");
 
         checkOutput("serialized-form.html", true,
-                "<h3>Serialized Fields</h3>\n" +
-                "<ul class=\"blockList\">\n" +
-                "<li class=\"blockList\">\n" +
-                "<h4>longs</h4>\n" +
-                "<pre>Long[] longs</pre>\n" +
-                "<div class=\"block\">the longs</div>\n" +
-                "</li>\n" +
-                "<li class=\"blockListLast\">\n" +
-                "<h4>name</h4>\n" +
-                "<pre>java.lang.String name</pre>\n" +
-                "<div class=\"block\">a test</div>");
+                """
+                    <h3>Serialized Fields</h3>
+                    <ul class="block-list">
+                    <li class="block-list">
+                    <h4>longs</h4>
+                    <pre>Long[] longs</pre>
+                    <div class="block">the longs</div>
+                    </li>
+                    <li class="block-list">
+                    <h4>name</h4>
+                    <pre>java.lang.String name</pre>
+                    <div class="block">a test</div>""");
     }
 
     @Test
@@ -109,14 +118,21 @@ public class TestSerializedForm extends JavadocTester {
                 testSrc("SerializedForm.java"), testSrc("ExternalizedForm.java"), "pkg1");
         checkExit(Exit.OK);
 
+        showHeadings("serialized-form.html");
+
         checkOutput("serialized-form.html", true,
-                "<h3>Class <a href=\"pkg1/NestedInnerClass.InnerClass.ProNestedInnerClass.html\" "
-                + "title=\"class in pkg1\">pkg1.NestedInnerClass.InnerClass.ProNestedInnerClass</a> "
-                + "extends java.lang.Object implements Serializable</h3>",
-                "<h3>Class <a href=\"pkg1/PrivateIncludeInnerClass.PriInnerClass.html\" title=\"class in pkg1\">"
-                + "pkg1.PrivateIncludeInnerClass.PriInnerClass</a> extends java.lang.Object implements Serializable</h3>",
-                "<h3>Class <a href=\"pkg1/ProtectedInnerClass.ProInnerClass.html\" title=\"class in pkg1\">"
-                + "pkg1.ProtectedInnerClass.ProInnerClass</a> extends java.lang.Object implements Serializable</h3>");
+                """
+                    <h3>Class <a href="pkg1/NestedInnerClass.InnerClass.ProNestedInnerClass.html" ti\
+                    tle="class in pkg1">pkg1.NestedInnerClass.InnerClass.ProNestedInnerClass</a> ext\
+                    ends java.lang.Object implements Serializable</h3>""",
+                """
+                    <h3>Class <a href="pkg1/PrivateIncludeInnerClass.PriInnerClass.html" title="clas\
+                    s in pkg1">pkg1.PrivateIncludeInnerClass.PriInnerClass</a> extends java.lang.Obj\
+                    ect implements Serializable</h3>""",
+                """
+                    <h3>Class <a href="pkg1/ProtectedInnerClass.ProInnerClass.html" title="class in \
+                    pkg1">pkg1.ProtectedInnerClass.ProInnerClass</a> extends java.lang.Object implem\
+                    ents Serializable</h3>""");
 
         checkOutput("serialized-form.html", false,
                 "<h3>Class pkg1.NestedInnerClass.InnerClass.ProNestedInnerClass "
@@ -125,22 +141,24 @@ public class TestSerializedForm extends JavadocTester {
                 + "java.lang.Object implements Serializable</h3>",
                 "<h3>Class pkg1.ProtectedInnerClass.ProInnerClass extends "
                 + "java.lang.Object implements Serializable</h3>",
-                "<h3>Class <a href=\"pkg1/PublicExcludeInnerClass.PubInnerClass.html\" "
-                + "title=\"class in pkg1\">pkg1.PublicExcludeInnerClass.PubInnerClass</a> "
-                + "extends java.lang.Object implements Serializable</h3>");
+                """
+                    <h3>Class <a href="pkg1/PublicExcludeInnerClass.PubInnerClass.html" title="class\
+                     in pkg1">pkg1.PublicExcludeInnerClass.PubInnerClass</a> extends java.lang.Objec\
+                    t implements Serializable</h3>""");
 
         checkOutput("serialized-form.html", true,
-                "<h3>Serialized Fields</h3>\n" +
-                "<ul class=\"blockList\">\n" +
-                "<li class=\"blockList\">\n" +
-                "<h4>longs</h4>\n" +
-                "<pre>Long[] longs</pre>\n" +
-                "<div class=\"block\">the longs</div>\n" +
-                "</li>\n" +
-                "<li class=\"blockListLast\">\n" +
-                "<h4>name</h4>\n" +
-                "<pre>java.lang.String name</pre>\n" +
-                "<div class=\"block\">a test</div>");
+                """
+                    <h4>Serialized Fields</h4>
+                    <ul class="block-list">
+                    <li class="block-list">
+                    <h5>longs</h5>
+                    <pre>Long[] longs</pre>
+                    <div class="block">the longs</div>
+                    </li>
+                    <li class="block-list">
+                    <h5>name</h5>
+                    <pre>java.lang.String name</pre>
+                    <div class="block">a test</div>""");
     }
 
     @Test
@@ -154,9 +172,11 @@ public class TestSerializedForm extends JavadocTester {
         checkOrder("serialized-form.html",
                 "int[] a1",
                 "int[][] a2",
-                "<a href=\"pkg2/Fields.html\" title=\"class in pkg2\">Fields</a>[][] doubleArray",
-                "<a href=\"pkg2/Fields.html\" title=\"class in pkg2\">Fields</a>[] singleArray",
-                "java.lang.Class&lt;<a href=\"pkg2/Fields.html\" "
-                + "title=\"type parameter in Fields\">E</a>&gt; someClass");
+                """
+                    <a href="pkg2/Fields.html" title="class in pkg2">Fields</a>[][] doubleArray""",
+                """
+                    <a href="pkg2/Fields.html" title="class in pkg2">Fields</a>[] singleArray""",
+                """
+                    java.lang.Class&lt;<a href="pkg2/Fields.html" title="type parameter in Fields">E</a>&gt; someClass""");
     }
 }

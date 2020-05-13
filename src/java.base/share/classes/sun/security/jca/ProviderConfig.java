@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -159,7 +159,6 @@ final class ProviderConfig {
     /**
      * Get the provider object. Loads the provider if it is not already loaded.
      */
-    // com.sun.net.ssl.internal.ssl.Provider has been deprecated since JDK 9
     @SuppressWarnings("deprecation")
     synchronized Provider getProvider() {
         // volatile variable load
@@ -178,8 +177,8 @@ final class ProviderConfig {
             p = new sun.security.rsa.SunRsaSign();
         } else if (provName.equals("SunJCE") || provName.equals("com.sun.crypto.provider.SunJCE")) {
             p = new com.sun.crypto.provider.SunJCE();
-        } else if (provName.equals("SunJSSE") || provName.equals("com.sun.net.ssl.internal.ssl.Provider")) {
-            p = new com.sun.net.ssl.internal.ssl.Provider();
+        } else if (provName.equals("SunJSSE")) {
+            p = new sun.security.ssl.SunJSSE();
         } else if (provName.equals("Apple") || provName.equals("apple.security.AppleProvider")) {
             // need to use reflection since this class only exists on MacOsx
             p = AccessController.doPrivileged(new PrivilegedAction<Provider>() {
@@ -322,7 +321,7 @@ final class ProviderConfig {
         /**
          * Loads the provider with the specified class name.
          *
-         * @param name the name of the provider
+         * @param pn the name of the provider
          * @return the Provider, or null if it cannot be found or loaded
          * @throws ProviderException all other exceptions are ignored
          */

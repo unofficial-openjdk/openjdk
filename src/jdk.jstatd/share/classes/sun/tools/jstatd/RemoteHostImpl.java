@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,8 +50,15 @@ public class RemoteHostImpl implements RemoteHost, HostListener {
 
     private MonitoredHost monitoredHost;
     private Set<Integer> activeVms;
+    private static RemoteVm rvm;
+    private final int rmiPort;
 
     public RemoteHostImpl() throws MonitorException {
+        this(0);
+    }
+
+    public RemoteHostImpl(int rmiPort) throws MonitorException {
+        this.rmiPort = rmiPort;
         try {
             monitoredHost = MonitoredHost.getMonitoredHost("localhost");
         } catch (URISyntaxException e) { }
@@ -76,8 +83,8 @@ public class RemoteHostImpl implements RemoteHost, HostListener {
         try {
             VmIdentifier vmid = new VmIdentifier(vmidStr);
             MonitoredVm mvm = monitoredHost.getMonitoredVm(vmid);
-            RemoteVmImpl rvm = new RemoteVmImpl((BufferedMonitoredVm)mvm);
-            stub = (RemoteVm) UnicastRemoteObject.exportObject(rvm, 0);
+            rvm = new RemoteVmImpl((BufferedMonitoredVm)mvm);
+            stub = (RemoteVm) UnicastRemoteObject.exportObject(rvm, rmiPort);
         }
         catch (URISyntaxException e) {
             throw new RuntimeException("Malformed VmIdentifier URI: "

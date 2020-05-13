@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,7 +55,7 @@ import jdk.test.lib.Utils;
  * @key jfr
  * @requires vm.hasJFR
  * @library /test/lib
- * @run main/othervm jdk.jfr.api.consumer.TestRecordingFile
+ * @run main/othervm -Xlog:jfr*=info jdk.jfr.api.consumer.TestRecordingFile
  */
 public class TestRecordingFile {
 
@@ -74,24 +74,23 @@ public class TestRecordingFile {
     private final static long METADATA_OFFSET = 24;
 
     public static void main(String[] args) throws Throwable {
+        Path valid = Utils.createTempFile("three-event-recording", ".jfr");
 
         // create some recording data
-        Recording r = new Recording();
-        r.enable(TestEvent1.class).withoutStackTrace();
-        r.enable(TestEvent2.class).withoutStackTrace();
-        r.enable(TestEvent3.class).withoutStackTrace();
-        r.start();
-        TestEvent1 t1 = new TestEvent1();
-        t1.commit();
-        TestEvent2 t2 = new TestEvent2();
-        t2.commit();
-        TestEvent3 t3 = new TestEvent3();
-        t3.commit();
-        r.stop();
-        Path valid = Utils.createTempFile("three-event-recording", ".jfr");
-        r.dump(valid);
-        r.close();
-
+        try (Recording r = new Recording()) {
+            r.enable(TestEvent1.class).withoutStackTrace();
+            r.enable(TestEvent2.class).withoutStackTrace();
+            r.enable(TestEvent3.class).withoutStackTrace();
+            r.start();
+            TestEvent1 t1 = new TestEvent1();
+            t1.commit();
+            TestEvent2 t2 = new TestEvent2();
+            t2.commit();
+            TestEvent3 t3 = new TestEvent3();
+            t3.commit();
+            r.stop();
+            r.dump(valid);
+        }
         Path brokenWithZeros = createBrokenWIthZeros(valid);
         Path brokenMetadata = createBrokenMetadata(valid);
         // prepare event sets
@@ -210,12 +209,12 @@ public class TestRecordingFile {
            assertHasEventType(types, "Event2");
            assertMissingEventType(types, "Event3");
        }
-       try (RecordingFile f = new RecordingFile(twoEventTypes)) {
+       try (RecordingFile f = new RecordingFile(threeEventTypes)) {
            List<EventType> types = f.readEventTypes();
            assertUniqueEventTypes(types);
            assertHasEventType(types, "Event1");
            assertHasEventType(types, "Event2");
-           assertMissingEventType(types, "Event3");
+           assertHasEventType(types, "Event3");
        }
 
     }

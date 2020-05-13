@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
 #import <Cocoa/Cocoa.h>
 #import <objc/objc-auto.h>
 
+#include <Security/AuthSession.h>
 #import <JavaNativeFoundation/JavaNativeFoundation.h>
 #import "NSApplicationAWT.h"
 
@@ -184,13 +185,36 @@ jboolean SplashGetScaledImageName(const char* jar, const char* file,
     return JNI_FALSE;
 }
 
-void
+static int isInAquaSession() {
+    // environment variable to bypass the aqua session check
+    char *ev = getenv("AWT_FORCE_HEADFUL");
+    if (ev && (strncasecmp(ev, "true", 4) == 0)) {
+        // if "true" then tell the caller we're in
+        // an Aqua session without actually checking
+        return 1;
+    }
+    // Is the WindowServer available?
+    SecuritySessionId session_id;
+    SessionAttributeBits session_info;
+    OSStatus status = SessionGetInfo(callerSecuritySession, &session_id, &session_info);
+    if (status == noErr) {
+        if (session_info & sessionHasGraphicAccess) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int
 SplashInitPlatform(Splash * splash) {
+    if (!isInAquaSession()) {
+        return 0;
+    }
     pthread_mutex_init(&splash->lock, NULL);
 
     splash->maskRequired = 0;
 
-    
+
     //TODO: the following is too much of a hack but should work in 90% cases.
     //      besides we don't use device-dependent drawing, so probably
     //      that's very fine indeed
@@ -206,6 +230,7 @@ SplashInitPlatform(Splash * splash) {
             [NSApplicationAWT runAWTLoopWithApp:[NSApplicationAWT sharedApplication]];
         }];
     }
+    return 1;
 }
 
 void
@@ -257,9 +282,11 @@ void
 SplashRedrawWindow(Splash * splash) {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
-    SplashUpdateScreenData(splash);
-
     [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
+        // drop the reference to the old view and image
+        [splash->window setContentView: nil];
+        SplashUpdateScreenData(splash);
+
         // NSDeviceRGBColorSpace vs. NSCalibratedRGBColorSpace ?
         NSBitmapImageRep * rep = [[NSBitmapImageRep alloc]
             initWithBitmapDataPlanes: (unsigned char**)&splash->screenData
@@ -286,7 +313,7 @@ SplashRedrawWindow(Splash * splash) {
             size.height /= scaleFactor;
             [image setSize: size];
         }
-        
+
         NSImageView * view = [[NSImageView alloc] init];
 
         [view setImage: image];

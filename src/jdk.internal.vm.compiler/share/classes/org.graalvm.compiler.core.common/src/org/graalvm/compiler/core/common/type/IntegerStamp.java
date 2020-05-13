@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -167,8 +167,15 @@ public final class IntegerStamp extends PrimitiveStamp {
     @Override
     public Stamp constant(Constant c, MetaAccessProvider meta) {
         if (c instanceof PrimitiveConstant) {
-            long value = ((PrimitiveConstant) c).asLong();
-            return StampFactory.forInteger(getBits(), value, value);
+            PrimitiveConstant primitiveConstant = (PrimitiveConstant) c;
+            long value = primitiveConstant.asLong();
+            if (primitiveConstant.getJavaKind() == JavaKind.Boolean && value == 1) {
+                // Need to special case booleans as integer stamps are always signed values.
+                value = -1;
+            }
+            Stamp returnedStamp = StampFactory.forInteger(getBits(), value, value);
+            assert returnedStamp.hasValues();
+            return returnedStamp;
         }
         return this;
     }
@@ -643,7 +650,7 @@ public final class IntegerStamp extends PrimitiveStamp {
                             IntegerStamp b = (IntegerStamp) stamp2;
 
                             int bits = a.getBits();
-                            assert bits == b.getBits();
+                            assert bits == b.getBits() : String.format("stamp1.bits=%d, stamp2.bits=%d", bits, b.getBits());
 
                             if (a.lowerBound == a.upperBound && b.lowerBound == b.upperBound) {
                                 long value = CodeUtil.convert(a.lowerBound() + b.lowerBound(), a.getBits(), false);
@@ -1298,6 +1305,15 @@ public final class IntegerStamp extends PrimitiveStamp {
                             }
                         }
 
+                        private boolean testNoSignChangeAfterShifting(int bits, long value, int shiftAmount) {
+                            long removedBits = -1L << (bits - shiftAmount - 1);
+                            if (value < 0) {
+                                return (value & removedBits) == removedBits;
+                            } else {
+                                return (value & removedBits) == 0;
+                            }
+                        }
+
                         @Override
                         public Stamp foldStamp(Stamp stamp, IntegerStamp shift) {
                             IntegerStamp value = (IntegerStamp) stamp;
@@ -1318,13 +1334,15 @@ public final class IntegerStamp extends PrimitiveStamp {
                                     return value;
                                 }
                                 // the mask of bits that will be lost or shifted into the sign bit
-                                long removedBits = -1L << (bits - shiftAmount - 1);
-                                if ((value.lowerBound() & removedBits) == 0 && (value.upperBound() & removedBits) == 0) {
+                                if (testNoSignChangeAfterShifting(bits, value.lowerBound(), shiftAmount) && testNoSignChangeAfterShifting(bits, value.upperBound(), shiftAmount)) {
                                     /*
                                      * use a better stamp if neither lower nor upper bound can lose
                                      * bits
                                      */
-                                    return new IntegerStamp(bits, value.lowerBound() << shiftAmount, value.upperBound() << shiftAmount, value.downMask() << shiftAmount, value.upMask() << shiftAmount);
+                                    IntegerStamp result = new IntegerStamp(bits, value.lowerBound() << shiftAmount, value.upperBound() << shiftAmount,
+                                                    (value.downMask() << shiftAmount) & CodeUtil.mask(bits),
+                                                    (value.upMask() << shiftAmount) & CodeUtil.mask(bits));
+                                    return result;
                                 }
                             }
                             if ((shift.lowerBound() >>> shiftBits) == (shift.upperBound() >>> shiftBits)) {
@@ -1493,7 +1511,8 @@ public final class IntegerStamp extends PrimitiveStamp {
                                 return StampFactory.forInteger(resultBits).empty();
                             }
                             IntegerStamp stamp = (IntegerStamp) input;
-                            assert inputBits == stamp.getBits();
+                            assert inputBits == stamp.getBits() : "Input bits" + inputBits + " stamp bits " +
+                                            stamp.getBits() + " result bits " + resultBits;
                             assert inputBits <= resultBits;
 
                             if (inputBits == resultBits) {
@@ -1594,7 +1613,10 @@ public final class IntegerStamp extends PrimitiveStamp {
                             long newUpMask = stamp.upMask() & defaultMask;
                             long newLowerBound = CodeUtil.signExtend((lowerBound | newDownMask) & newUpMask, resultBits);
                             long newUpperBound = CodeUtil.signExtend((upperBound | newDownMask) & newUpMask, resultBits);
-                            return new IntegerStamp(resultBits, newLowerBound, newUpperBound, newDownMask, newUpMask);
+
+                            IntegerStamp result = new IntegerStamp(resultBits, newLowerBound, newUpperBound, newDownMask, newUpMask);
+                            assert result.hasValues();
+                            return result;
                         }
                     },
 

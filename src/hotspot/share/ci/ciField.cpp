@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@
 #include "classfile/systemDictionary.hpp"
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "interpreter/linkResolver.hpp"
-#include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/fieldDescriptor.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -87,11 +86,11 @@ ciField::ciField(ciInstanceKlass* klass, int index) :
   Symbol* signature = cpool->symbol_at(sig_index);
   _signature = ciEnv::current(THREAD)->get_symbol(signature);
 
-  BasicType field_type = FieldType::basic_type(signature);
+  BasicType field_type = Signature::basic_type(signature);
 
   // If the field is a pointer type, get the klass of the
   // field.
-  if (field_type == T_OBJECT || field_type == T_ARRAY) {
+  if (is_reference_type(field_type)) {
     bool ignore;
     // This is not really a class reference; the index always refers to the
     // field's type signature, as a symbol.  Linkage checks do not apply.
@@ -200,7 +199,7 @@ ciField::ciField(fieldDescriptor *fd) :
 
   // If the field is a pointer type, get the klass of the
   // field.
-  if (field_type == T_OBJECT || field_type == T_ARRAY) {
+  if (is_reference_type(field_type)) {
     _type = NULL;  // must call compute_type on first access
   } else {
     _type = ciType::make(field_type);
@@ -220,11 +219,14 @@ static bool trust_final_non_static_fields(ciInstanceKlass* holder) {
     // Never trust strangely unstable finals:  System.out, etc.
     return false;
   // Even if general trusting is disabled, trust system-built closures in these packages.
-  if (holder->is_in_package("java/lang/invoke") || holder->is_in_package("sun/invoke"))
+  if (holder->is_in_package("java/lang/invoke") || holder->is_in_package("sun/invoke") ||
+      holder->is_in_package("jdk/internal/foreign") || holder->is_in_package("jdk/incubator/foreign") ||
+      holder->is_in_package("java/lang"))
     return true;
-  // Trust VM unsafe anonymous classes. They are private API (jdk.internal.misc.Unsafe)
-  // and can't be serialized, so there is no hacking of finals going on with them.
-  if (holder->is_unsafe_anonymous())
+  // Trust hidden classes and VM unsafe anonymous classes. They are created via
+  // Lookup.defineHiddenClass or the private jdk.internal.misc.Unsafe API and
+  // can't be serialized, so there is no hacking of finals going on with them.
+  if (holder->is_hidden() || holder->is_unsafe_anonymous())
     return true;
   // Trust final fields in all boxed classes
   if (holder->is_box_klass())
@@ -392,7 +394,7 @@ bool ciField::will_link(ciMethod* accessing_method,
 
   LinkInfo link_info(_holder->get_instanceKlass(),
                      _name->get_symbol(), _signature->get_symbol(),
-                     accessing_method->get_Method());
+                     methodHandle(THREAD, accessing_method->get_Method()));
   fieldDescriptor result;
   LinkResolver::resolve_field(result, link_info, bc, false, KILL_COMPILE_ON_FATAL_(false));
 

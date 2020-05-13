@@ -25,7 +25,6 @@
  * @test
  * @bug      4637604 4775148 8183037 8182765 8196202
  * @summary  Test the tables for summary attribute
- * @author   dkramer
  * @library ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  * @build    javadoc.tester.*
@@ -48,7 +47,6 @@ public class AccessSummary extends JavadocTester {
     @Test
     public void testAccessSummary() {
         javadoc("-d", "out",
-                "--frames",
                 "-sourcepath", testSrc,
                 "p1", "p2");
         checkExit(Exit.OK);
@@ -56,15 +54,18 @@ public class AccessSummary extends JavadocTester {
     }
 
     void checkSummary(boolean found) {
-        checkOutput("overview-summary.html", found,
-                 "summary=\"Package Summary table, listing packages, and an explanation\"");
+        checkOutput("index.html", found,
+                 """
+                     summary="Package Summary table, listing packages, and an explanation\"""");
 
         // Test that the summary attribute appears or not
         checkOutput("p1/C1.html", found,
-                 "summary=\"Constructor Summary table, listing constructors, and an explanation\"");
+                 """
+                     summary="Constructor Summary table, listing constructors, and an explanation\"""");
 
         // Test that the summary attribute appears or not
         checkOutput("constant-values.html", found,
-                 "summary=\"Constant Field Values table, listing constant fields, and values\"");
+                 """
+                     summary="Constant Field Values table, listing constant fields, and values\"""");
     }
 }

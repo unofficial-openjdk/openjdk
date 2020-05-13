@@ -31,7 +31,6 @@ import com.sun.org.apache.bcel.internal.util.ByteSequence;
  *
  * <PRE>Stack: ... -&gt; ...</PRE>
  *
- * @version $Id: RET.java 1747278 2016-06-07 17:28:43Z britter $
  */
 public class RET extends Instruction implements IndexedInstruction, TypedInstruction {
 
@@ -40,8 +39,8 @@ public class RET extends Instruction implements IndexedInstruction, TypedInstruc
 
 
     /**
-     * Empty constructor needed for the Class.newInstance() statement in
-     * Instruction.readInstruction(). Not to be used otherwise.
+     * Empty constructor needed for Instruction.readInstruction.
+     * Not to be used otherwise.
      */
     RET() {
     }

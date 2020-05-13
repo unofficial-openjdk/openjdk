@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,7 +76,7 @@ public interface Enumeration<E> {
      * object has at least one more element to provide.
      *
      * @return     the next element of this enumeration.
-     * @exception  NoSuchElementException  if no more elements exist.
+     * @throws     NoSuchElementException  if no more elements exist.
      */
     E nextElement();
 
@@ -88,7 +88,7 @@ public interface Enumeration<E> {
      * @apiNote
      * This method is intended to help adapt code that produces
      * {@code Enumeration} instances to code that consumes {@code Iterator}
-     * instances. For example, the {@link java.util.jar.JarFile#entries
+     * instances. For example, the {@link java.util.jar.JarFile#entries()
      * JarFile.entries()} method returns an {@code Enumeration<JarEntry>}.
      * This can be turned into an {@code Iterator}, and then the
      * {@code forEachRemaining()} method can be used:
@@ -98,7 +98,7 @@ public interface Enumeration<E> {
      *     jarFile.entries().asIterator().forEachRemaining(entry -> { ... });
      * }</pre>
      *
-     * (Note that there is also a {@link java.util.jar.JarFile#stream
+     * (Note that there is also a {@link java.util.jar.JarFile#stream()
      * JarFile.stream()} method that returns a {@code Stream} of entries,
      * which may be more convenient in some cases.)
      *

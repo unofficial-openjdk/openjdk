@@ -64,7 +64,14 @@ class PSVirtualSpace : public CHeapObj<mtGC> {
   // Eventually all instances should be created with the above 1- or 2-arg
   // constructors.  Then the 1st constructor below should become protected and
   // the 2nd ctor and initialize() removed.
-  PSVirtualSpace(size_t alignment): _alignment(alignment) { }
+  PSVirtualSpace(size_t alignment):
+    _alignment(alignment),
+    _reserved_low_addr(NULL),
+    _reserved_high_addr(NULL),
+    _committed_low_addr(NULL),
+    _committed_high_addr(NULL),
+    _special(false) {
+  }
   PSVirtualSpace();
   bool initialize(ReservedSpace rs, size_t commit_size);
 
@@ -123,25 +130,6 @@ class PSVirtualSpace : public CHeapObj<mtGC> {
   // Reserved area
   char* low_boundary()  const { return reserved_low_addr(); }
   char* high_boundary() const { return reserved_high_addr(); }
-};
-
-// A virtual space that grows from high addresses to low addresses.
-class PSVirtualSpaceHighToLow : public PSVirtualSpace {
-  friend class VMStructs;
- public:
-  PSVirtualSpaceHighToLow(ReservedSpace rs, size_t alignment);
-  PSVirtualSpaceHighToLow(ReservedSpace rs);
-
-  virtual bool   expand_by(size_t bytes);
-  virtual bool   shrink_by(size_t bytes);
-  virtual size_t expand_into(PSVirtualSpace* space, size_t bytes);
-
-  virtual void print_space_boundaries_on(outputStream* st) const;
-
-#ifndef PRODUCT
-  // Debugging
-  virtual bool grows_up() const   { return false; }
-#endif
 };
 
 //

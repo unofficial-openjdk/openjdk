@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,34 +25,44 @@
 #ifndef SHARE_GC_G1_G1DIRTYCARDQUEUE_HPP
 #define SHARE_GC_G1_G1DIRTYCARDQUEUE_HPP
 
+#include "gc/g1/g1BufferNodeList.hpp"
+#include "gc/g1/g1FreeIdSet.hpp"
+#include "gc/g1/g1ConcurrentRefineStats.hpp"
 #include "gc/shared/ptrQueue.hpp"
 #include "memory/allocation.hpp"
+#include "memory/padded.hpp"
 
+class G1ConcurrentRefineThread;
 class G1DirtyCardQueueSet;
-class G1FreeIdSet;
-class JavaThread;
-class Monitor;
-
-// A closure class for processing card table entries.  Note that we don't
-// require these closure objects to be stack-allocated.
-class G1CardTableEntryClosure: public CHeapObj<mtGC> {
-public:
-  // Process the card whose card table entry is "card_ptr".  If returns
-  // "false", terminate the iteration early.
-  virtual bool do_card_ptr(jbyte* card_ptr, uint worker_i) = 0;
-};
+class G1RedirtyCardsQueueSet;
+class Thread;
 
 // A ptrQueue whose elements are "oops", pointers to object heads.
 class G1DirtyCardQueue: public PtrQueue {
+  G1ConcurrentRefineStats* _refinement_stats;
+
+protected:
+  virtual void handle_completed_buffer();
+
 public:
-  G1DirtyCardQueue(G1DirtyCardQueueSet* qset, bool permanent = false);
+  G1DirtyCardQueue(G1DirtyCardQueueSet* qset);
 
   // Flush before destroying; queue may be used to capture pending work while
   // doing something else, with auto-flush on completion.
   ~G1DirtyCardQueue();
 
   // Process queue entries and release resources.
-  void flush() { flush_impl(); }
+  void flush();
+
+  inline G1DirtyCardQueueSet* dirty_card_qset() const;
+
+  G1ConcurrentRefineStats* refinement_stats() const {
+    return _refinement_stats;
+  }
+
+  // To be called by the barrier set's on_thread_detach, to notify this
+  // object of the corresponding state change of its owning thread.
+  void on_thread_detach();
 
   // Compiler support.
   static ByteSize byte_offset_of_index() {
@@ -67,101 +77,284 @@ public:
 
 };
 
-
-
 class G1DirtyCardQueueSet: public PtrQueueSet {
-  G1DirtyCardQueue _shared_dirty_card_queue;
+  // Head and tail of a list of BufferNodes, linked through their next()
+  // fields.  Similar to G1BufferNodeList, but without the _entry_count.
+  struct HeadTail {
+    BufferNode* _head;
+    BufferNode* _tail;
+    HeadTail() : _head(NULL), _tail(NULL) {}
+    HeadTail(BufferNode* head, BufferNode* tail) : _head(head), _tail(tail) {}
+  };
 
-  // Apply the closure to the elements of "node" from it's index to
-  // buffer_size.  If all closure applications return true, then
-  // returns true.  Stops processing after the first closure
-  // application that returns false, and returns false from this
-  // function.  If "consume" is true, the node's index is updated to
-  // exclude the processed elements, e.g. up to the element for which
-  // the closure returned false.
-  bool apply_closure_to_buffer(G1CardTableEntryClosure* cl,
-                               BufferNode* node,
-                               bool consume,
-                               uint worker_i = 0);
+  // A lock-free FIFO of BufferNodes, linked through their next() fields.
+  // This class has a restriction that pop() may return NULL when there are
+  // buffers in the queue if there is a concurrent push/append operation.
+  class Queue {
+    BufferNode* volatile _head;
+    DEFINE_PAD_MINUS_SIZE(1, DEFAULT_CACHE_LINE_SIZE, sizeof(BufferNode*));
+    BufferNode* volatile _tail;
+    DEFINE_PAD_MINUS_SIZE(2, DEFAULT_CACHE_LINE_SIZE, sizeof(BufferNode*));
 
-  // If there are more than stop_at completed buffers, pop one, apply
-  // the specified closure to its active elements, and return true.
-  // Otherwise return false.
+    NONCOPYABLE(Queue);
+
+  public:
+    Queue() : _head(NULL), _tail(NULL) {}
+    DEBUG_ONLY(~Queue();)
+
+    // Return the first buffer in the queue.
+    // Thread-safe, but the result may change immediately.
+    BufferNode* top() const;
+
+    // Thread-safe add the buffer to the end of the queue.
+    void push(BufferNode& node) { append(node, node); }
+
+    // Thread-safe add the buffers from first to last to the end of the queue.
+    void append(BufferNode& first, BufferNode& last);
+
+    // Thread-safe attempt to remove and return the first buffer in the queue.
+    // Returns NULL if the queue is empty, or if a concurrent push/append
+    // interferes.  Uses GlobalCounter critical sections to address the ABA
+    // problem; this works with the buffer allocator's use of GlobalCounter
+    // synchronization.
+    BufferNode* pop();
+
+    // Take all the buffers from the queue, leaving the queue empty.
+    // Not thread-safe.
+    HeadTail take_all();
+  };
+
+  // Concurrent refinement may stop processing in the middle of a buffer if
+  // there is a pending safepoint, to avoid long delays to safepoint.  A
+  // partially processed buffer needs to be recorded for processing by the
+  // safepoint if it's a GC safepoint; otherwise it needs to be recorded for
+  // further concurrent refinement work after the safepoint.  But if the
+  // buffer was obtained from the completed buffer queue then it can't simply
+  // be added back to the queue, as that would introduce a new source of ABA
+  // for the queue.
   //
-  // A completely processed buffer is freed.  However, if a closure
-  // invocation returns false, processing is stopped and the partially
-  // processed buffer (with its index updated to exclude the processed
-  // elements, e.g. up to the element for which the closure returned
-  // false) is returned to the completed buffer set.
+  // The PausedBuffer object is used to record such buffers for the upcoming
+  // safepoint, and provides access to the buffers recorded for previous
+  // safepoints.  Before obtaining a buffer from the completed buffers queue,
+  // we first transfer any buffers from previous safepoints to the queue.
+  // This is ABA-safe because threads cannot be in the midst of a queue pop
+  // across a safepoint.
   //
-  // If during_pause is true, stop_at must be zero, and the closure
-  // must never return false.
-  bool apply_closure_to_completed_buffer(G1CardTableEntryClosure* cl,
-                                         uint worker_i,
-                                         size_t stop_at,
-                                         bool during_pause);
+  // The paused buffers are conceptually an extension of the completed buffers
+  // queue, and operations which need to deal with all of the queued buffers
+  // (such as concatenate_logs) also need to deal with any paused buffers.  In
+  // general, if a safepoint performs a GC then the paused buffers will be
+  // processed as part of it, and there won't be any paused buffers after a
+  // GC safepoint.
+  class PausedBuffers {
+    class PausedList : public CHeapObj<mtGC> {
+      BufferNode* volatile _head;
+      BufferNode* _tail;
+      size_t _safepoint_id;
 
-  bool mut_process_buffer(BufferNode* node);
+      NONCOPYABLE(PausedList);
 
-  G1FreeIdSet* _free_ids;
+    public:
+      PausedList();
+      DEBUG_ONLY(~PausedList();)
 
-  // The number of completed buffers processed by mutator and rs thread,
-  // respectively.
-  jint _processed_buffers_mut;
-  jint _processed_buffers_rs_thread;
+      // Return true if this list was created to hold buffers for the
+      // next safepoint.
+      // precondition: not at safepoint.
+      bool is_next() const;
 
-  // Current buffer node used for parallel iteration.
-  BufferNode* volatile _cur_par_buffer_node;
+      // Thread-safe add the buffer to the list.
+      // precondition: not at safepoint.
+      // precondition: is_next().
+      void add(BufferNode* node);
 
-  void concatenate_log(G1DirtyCardQueue& dcq);
+      // Take all the buffers from the list.  Not thread-safe.
+      HeadTail take();
+    };
+
+    // The most recently created list, which might be for either the next or
+    // a previous safepoint, or might be NULL if the next list hasn't been
+    // created yet.  We only need one list because of the requirement that
+    // threads calling add() must first ensure there are no paused buffers
+    // from a previous safepoint.  There might be many list instances existing
+    // at the same time though; there can be many threads competing to create
+    // and install the next list, and meanwhile there can be a thread dealing
+    // with the previous list.
+    PausedList* volatile _plist;
+    DEFINE_PAD_MINUS_SIZE(1, DEFAULT_CACHE_LINE_SIZE, sizeof(PausedList*));
+
+    NONCOPYABLE(PausedBuffers);
+
+  public:
+    PausedBuffers();
+    DEBUG_ONLY(~PausedBuffers();)
+
+    // Thread-safe add the buffer to paused list for next safepoint.
+    // precondition: not at safepoint.
+    // precondition: does not have paused buffers from a previous safepoint.
+    void add(BufferNode* node);
+
+    // Thread-safe take all paused buffers for previous safepoints.
+    // precondition: not at safepoint.
+    HeadTail take_previous();
+
+    // Take all the paused buffers.
+    // precondition: at safepoint.
+    HeadTail take_all();
+  };
+
+  // The primary refinement thread, for activation when the processing
+  // threshold is reached.  NULL if there aren't any refinement threads.
+  G1ConcurrentRefineThread* _primary_refinement_thread;
+  DEFINE_PAD_MINUS_SIZE(1, DEFAULT_CACHE_LINE_SIZE, sizeof(G1ConcurrentRefineThread*));
+  // Upper bound on the number of cards in the completed and paused buffers.
+  volatile size_t _num_cards;
+  DEFINE_PAD_MINUS_SIZE(2, DEFAULT_CACHE_LINE_SIZE, sizeof(size_t));
+  // Buffers ready for refinement.
+  Queue _completed;           // Has inner padding, including trailer.
+  // Buffers for which refinement is temporarily paused.
+  PausedBuffers _paused;      // Has inner padding, including trailer.
+
+  G1FreeIdSet _free_ids;
+
+  // Activation threshold for the primary refinement thread.
+  size_t _process_cards_threshold;
+
+  // If the queue contains more cards than configured here, the
+  // mutator must start doing some of the concurrent refinement work.
+  size_t _max_cards;
+  volatile size_t _padded_max_cards;
+  static const size_t MaxCardsUnlimited = SIZE_MAX;
+
+  G1ConcurrentRefineStats _detached_refinement_stats;
+
+  // Verify _num_cards == sum of cards in the completed queue.
+  void verify_num_cards() const NOT_DEBUG_RETURN;
+
+  // Thread-safe add a buffer to paused list for next safepoint.
+  // precondition: not at safepoint.
+  void record_paused_buffer(BufferNode* node);
+  void enqueue_paused_buffers_aux(const HeadTail& paused);
+  // Thread-safe transfer paused buffers for previous safepoints to the queue.
+  // precondition: not at safepoint.
+  void enqueue_previous_paused_buffers();
+  // Transfer all paused buffers to the queue.
+  // precondition: at safepoint.
+  void enqueue_all_paused_buffers();
+
+  void abandon_completed_buffers();
+
+  // Refine the cards in "node" from its index to buffer_size.
+  // Stops processing if SuspendibleThreadSet::should_yield() is true.
+  // Returns true if the entire buffer was processed, false if there
+  // is a pending yield request.  The node's index is updated to exclude
+  // the processed elements, e.g. up to the element before processing
+  // stopped, or one past the last element if the entire buffer was
+  // processed. Updates stats.
+  bool refine_buffer(BufferNode* node,
+                     uint worker_id,
+                     G1ConcurrentRefineStats* stats);
+
+  // Deal with buffer after a call to refine_buffer.  If fully processed,
+  // deallocate the buffer.  Otherwise, record it as paused.
+  void handle_refined_buffer(BufferNode* node, bool fully_processed);
+
+  // Remove and return a completed buffer from the list, or return NULL
+  // if none available.
+  BufferNode* get_completed_buffer();
 
 public:
-  G1DirtyCardQueueSet(bool notify_when_complete = true);
+  G1DirtyCardQueueSet(BufferNode::Allocator* allocator);
   ~G1DirtyCardQueueSet();
 
-  void initialize(Monitor* cbl_mon,
-                  BufferNode::Allocator* allocator,
-                  Mutex* lock,
-                  bool init_free_ids = false);
+  void set_primary_refinement_thread(G1ConcurrentRefineThread* thread) {
+    _primary_refinement_thread = thread;
+  }
 
   // The number of parallel ids that can be claimed to allow collector or
   // mutator threads to do card-processing work.
   static uint num_par_ids();
 
-  static void handle_zero_index_for_thread(JavaThread* t);
+  static void handle_zero_index_for_thread(Thread* t);
 
-  // Apply G1RefineCardConcurrentlyClosure to completed buffers until there are stop_at
-  // completed buffers remaining.
-  bool refine_completed_buffer_concurrently(uint worker_i, size_t stop_at);
+  virtual void enqueue_completed_buffer(BufferNode* node);
 
-  // Apply the given closure to all completed buffers. The given closure's do_card_ptr
-  // must never return false. Must only be called during GC.
-  bool apply_closure_during_gc(G1CardTableEntryClosure* cl, uint worker_i);
+  // Upper bound on the number of cards currently in in this queue set.
+  // Read without synchronization.  The value may be high because there
+  // is a concurrent modification of the set of buffers.
+  size_t num_cards() const { return _num_cards; }
 
-  void reset_for_par_iteration() { _cur_par_buffer_node = completed_buffers_head(); }
-  // Applies the current closure to all completed buffers, non-consumptively.
-  // Can be used in parallel, all callers using the iteration state initialized
-  // by reset_for_par_iteration.
-  void par_apply_closure_to_all_completed_buffers(G1CardTableEntryClosure* cl);
-
-  G1DirtyCardQueue* shared_dirty_card_queue() {
-    return &_shared_dirty_card_queue;
+  // Get/Set the number of cards that triggers log processing.
+  // Log processing should be done when the number of cards exceeds the
+  // threshold.
+  void set_process_cards_threshold(size_t sz) {
+    _process_cards_threshold = sz;
   }
+  size_t process_cards_threshold() const {
+    return _process_cards_threshold;
+  }
+  static const size_t ProcessCardsThresholdNever = SIZE_MAX;
 
-  // If a full collection is happening, reset partial logs, and ignore
+  // Notify the consumer if the number of buffers crossed the threshold
+  void notify_if_necessary();
+
+  void merge_bufferlists(G1RedirtyCardsQueueSet* src);
+
+  G1BufferNodeList take_all_completed_buffers();
+
+  // Helper for G1DirtyCardQueue::handle_completed_buffer().
+  // Enqueue the buffer, and optionally perform refinement by the mutator.
+  // Mutator refinement is only done by Java threads, and only if there
+  // are more than max_cards (possibly padded) cards in the completed
+  // buffers.  Updates stats.
+  //
+  // Mutator refinement, if performed, stops processing a buffer if
+  // SuspendibleThreadSet::should_yield(), recording the incompletely
+  // processed buffer for later processing of the remainder.
+  void handle_completed_buffer(BufferNode* node, G1ConcurrentRefineStats* stats);
+
+  // If there are more than stop_at cards in the completed buffers, pop
+  // a buffer, refine its contents, and return true.  Otherwise return
+  // false.  Updates stats.
+  //
+  // Stops processing a buffer if SuspendibleThreadSet::should_yield(),
+  // recording the incompletely processed buffer for later processing of
+  // the remainder.
+  bool refine_completed_buffer_concurrently(uint worker_id,
+                                            size_t stop_at,
+                                            G1ConcurrentRefineStats* stats);
+
+  // If a full collection is happening, reset partial logs, and release
   // completed ones: the full collection will make them all irrelevant.
   void abandon_logs();
 
   // If any threads have partial logs, add them to the global list of logs.
   void concatenate_logs();
 
-  jint processed_buffers_mut() {
-    return _processed_buffers_mut;
-  }
-  jint processed_buffers_rs_thread() {
-    return _processed_buffers_rs_thread;
-  }
+  // Return the total of mutator refinement stats for all threads.
+  // Also resets the stats for the threads.
+  // precondition: at safepoint.
+  G1ConcurrentRefineStats get_and_reset_refinement_stats();
 
+  // Accumulate refinement stats from threads that are detaching.
+  void record_detached_refinement_stats(G1ConcurrentRefineStats* stats);
+
+  // Threshold for mutator threads to also do refinement when there
+  // are concurrent refinement threads.
+  size_t max_cards() const;
+
+  // Set threshold for mutator threads to also do refinement.
+  void set_max_cards(size_t value);
+
+  // Artificially increase mutator refinement threshold.
+  void set_max_cards_padding(size_t padding);
+
+  // Discard artificial increase of mutator refinement threshold.
+  void discard_max_cards_padding();
 };
+
+inline G1DirtyCardQueueSet* G1DirtyCardQueue::dirty_card_qset() const {
+  return static_cast<G1DirtyCardQueueSet*>(qset());
+}
 
 #endif // SHARE_GC_G1_G1DIRTYCARDQUEUE_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,10 +39,6 @@ import java.awt.Toolkit;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.peer.ComponentPeer;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.security.AccessController;
 import java.util.Locale;
 import java.util.TreeMap;
@@ -65,8 +61,8 @@ import sun.security.action.GetPropertyAction;
 public abstract class SunGraphicsEnvironment extends GraphicsEnvironment
     implements DisplayChangedListener {
 
-    public static boolean isOpenSolaris;
-    private static Font defaultFont;
+    /** Establish the default font to be used by SG2D. */
+    private final Font defaultFont = new Font(Font.DIALOG, Font.PLAIN, 12);
 
     private static final boolean uiScaleEnabled;
     private static final double debugScale;
@@ -75,54 +71,6 @@ public abstract class SunGraphicsEnvironment extends GraphicsEnvironment
         uiScaleEnabled = "true".equals(AccessController.doPrivileged(
                 new GetPropertyAction("sun.java2d.uiScale.enabled", "true")));
         debugScale = uiScaleEnabled ? getScaleFactor("sun.java2d.uiScale") : -1;
-    }
-
-    public SunGraphicsEnvironment() {
-        java.security.AccessController.doPrivileged(
-                                    new java.security.PrivilegedAction<Object>() {
-            public Object run() {
-                String osName = System.getProperty("os.name");
-                if ("SunOS".equals(osName)) {
-                    String version = System.getProperty("os.version", "0.0");
-                    try {
-                        float ver = Float.parseFloat(version);
-                        if (ver > 5.10f) {
-                            File f = new File("/etc/release");
-                            FileInputStream fis = new FileInputStream(f);
-                            InputStreamReader isr
-                                = new InputStreamReader(fis, "ISO-8859-1");
-                            BufferedReader br = new BufferedReader(isr);
-                            String line = br.readLine();
-                            if (line.indexOf("OpenSolaris") >= 0) {
-                                isOpenSolaris = true;
-                            } else {
-                                /* We are using isOpenSolaris as meaning
-                                 * we know the Solaris commercial fonts aren't
-                                 * present. "Solaris Next" (03/10) did not
-                                 * include these even though its was not
-                                 * OpenSolaris. Need to revisit how this is
-                                 * handled but for now as in 6ux, we'll use
-                                 * the test for a standard font resource as
-                                 * being an indicator as to whether we need
-                                 * to treat this as OpenSolaris from a font
-                                 * config perspective.
-                                 */
-                                String courierNew =
-                                    "/usr/openwin/lib/X11/fonts/TrueType/CourierNew.ttf";
-                                File courierFile = new File(courierNew);
-                                isOpenSolaris = !courierFile.exists();
-                            }
-                            fis.close();
-                        }
-                    } catch (Exception e) {
-                    }
-                }
-                /* Establish the default font to be used by SG2D etc */
-                defaultFont = new Font(Font.DIALOG, Font.PLAIN, 12);
-
-                return null;
-            }
-        });
     }
 
     protected GraphicsDevice[] screens;
@@ -416,7 +364,38 @@ public abstract class SunGraphicsEnvironment extends GraphicsEnvironment
         AffineTransform tx = gc.getDefaultTransform();
         x = Region.clipRound(x * tx.getScaleX());
         y = Region.clipRound(y * tx.getScaleY());
-
         return new Point((int) x, (int) y);
+    }
+
+    /**
+     * Converts bounds from the user's space to the device space using
+     * appropriate device transformation.
+     *
+     * @param  bounds the rectangle in the user space
+     * @return the rectangle which uses device space(pixels)
+     */
+    public static Rectangle convertToDeviceSpace(Rectangle bounds) {
+        GraphicsConfiguration gc = getLocalGraphicsEnvironment()
+                .getDefaultScreenDevice().getDefaultConfiguration();
+        gc = getGraphicsConfigurationAtPoint(gc, bounds.x, bounds.y);
+        return convertToDeviceSpace(gc, bounds);
+    }
+
+    /**
+     * Converts bounds from the user's space to the device space using
+     * appropriate device transformation of the passed graphics configuration.
+     *
+     * @param  bounds the rectangle in the user space
+     * @return the rectangle which uses device space(pixels)
+     */
+    public static Rectangle convertToDeviceSpace(GraphicsConfiguration gc,
+                                                 Rectangle bounds) {
+        AffineTransform tx = gc.getDefaultTransform();
+        return new Rectangle(
+                Region.clipRound(bounds.x * tx.getScaleX()),
+                Region.clipRound(bounds.y * tx.getScaleY()),
+                Region.clipRound(bounds.width * tx.getScaleX()),
+                Region.clipRound(bounds.height * tx.getScaleY())
+        );
     }
 }

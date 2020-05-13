@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,14 @@
  *
  */
 #include "precompiled.hpp"
-#include "jfr/leakprofiler/chains/bitset.hpp"
+#include "jfr/leakprofiler/chains/bitset.inline.hpp"
 #include "jfr/leakprofiler/chains/bfsClosure.hpp"
 #include "jfr/leakprofiler/chains/dfsClosure.hpp"
 #include "jfr/leakprofiler/chains/edge.hpp"
 #include "jfr/leakprofiler/chains/edgeStore.hpp"
 #include "jfr/leakprofiler/chains/edgeQueue.hpp"
 #include "jfr/leakprofiler/utilities/granularTimer.hpp"
-#include "jfr/leakprofiler/utilities/unifiedOop.hpp"
+#include "jfr/leakprofiler/utilities/unifiedOopRef.inline.hpp"
 #include "logging/log.hpp"
 #include "memory/iterator.inline.hpp"
 #include "memory/resourceArea.hpp"
@@ -99,7 +99,6 @@ void BFSClosure::log_dfs_fallback() const {
 }
 
 void BFSClosure::process() {
-
   process_root_set();
   process_queue();
 }
@@ -112,12 +111,12 @@ void BFSClosure::process_root_set() {
   }
 }
 
-void BFSClosure::process(const oop* reference, const oop pointee) {
+void BFSClosure::process(UnifiedOopRef reference, const oop pointee) {
   closure_impl(reference, pointee);
 }
-void BFSClosure::closure_impl(const oop* reference, const oop pointee) {
-  assert(reference != NULL, "invariant");
-  assert(UnifiedOop::dereference(reference) == pointee, "invariant");
+void BFSClosure::closure_impl(UnifiedOopRef reference, const oop pointee) {
+  assert(!reference.is_null(), "invariant");
+  assert(reference.dereference() == pointee, "invariant");
 
   if (GranularTimer::is_finished()) {
      return;
@@ -132,13 +131,12 @@ void BFSClosure::closure_impl(const oop* reference, const oop pointee) {
   if (!_mark_bits->is_marked(pointee)) {
     _mark_bits->mark_obj(pointee);
     // is the pointee a sample object?
-    if (NULL == pointee->mark()) {
+    if (pointee->mark().is_marked()) {
       add_chain(reference, pointee);
     }
 
     // if we are processinig initial root set, don't add to queue
     if (_current_parent != NULL) {
-      assert(_current_parent->distance_to_root() == _current_frontier_level, "invariant");
       _edge_queue->add(_current_parent, reference);
     }
 
@@ -148,23 +146,11 @@ void BFSClosure::closure_impl(const oop* reference, const oop pointee) {
   }
 }
 
-void BFSClosure::add_chain(const oop* reference, const oop pointee) {
+void BFSClosure::add_chain(UnifiedOopRef reference, const oop pointee) {
   assert(pointee != NULL, "invariant");
-  assert(NULL == pointee->mark(), "invariant");
-
-  const size_t length = _current_parent == NULL ? 1 : _current_parent->distance_to_root() + 2;
-  ResourceMark rm;
-  Edge* const chain = NEW_RESOURCE_ARRAY(Edge, length);
-  size_t idx = 0;
-  chain[idx++] = Edge(NULL, reference);
-  // aggregate from breadth-first search
-  const Edge* current = _current_parent;
-  while (current != NULL) {
-    chain[idx++] = Edge(NULL, current->reference());
-    current = current->parent();
-  }
-  assert(length == idx, "invariant");
-  _edge_store->add_chain(chain, length);
+  assert(pointee->mark().is_marked(), "invariant");
+  Edge leak_edge(_current_parent, reference);
+  _edge_store->put_chain(&leak_edge, _current_parent == NULL ? 1 : _current_frontier_level + 2);
 }
 
 void BFSClosure::dfs_fallback() {
@@ -227,17 +213,24 @@ void BFSClosure::iterate(const Edge* parent) {
 void BFSClosure::do_oop(oop* ref) {
   assert(ref != NULL, "invariant");
   assert(is_aligned(ref, HeapWordSize), "invariant");
-  const oop pointee = *ref;
+  const oop pointee = HeapAccess<AS_NO_KEEPALIVE>::oop_load(ref);
   if (pointee != NULL) {
-    closure_impl(ref, pointee);
+    closure_impl(UnifiedOopRef::encode_in_heap(ref), pointee);
   }
 }
 
 void BFSClosure::do_oop(narrowOop* ref) {
   assert(ref != NULL, "invariant");
   assert(is_aligned(ref, sizeof(narrowOop)), "invariant");
-  const oop pointee = RawAccess<>::oop_load(ref);
+  const oop pointee = HeapAccess<AS_NO_KEEPALIVE>::oop_load(ref);
   if (pointee != NULL) {
-    closure_impl(UnifiedOop::encode(ref), pointee);
+    closure_impl(UnifiedOopRef::encode_in_heap(ref), pointee);
+  }
+}
+
+void BFSClosure::do_root(UnifiedOopRef ref) {
+  assert(!ref.is_null(), "invariant");
+  if (!_edge_queue->is_full()) {
+    _edge_queue->add(NULL, ref);
   }
 }

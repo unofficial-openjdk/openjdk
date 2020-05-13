@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,11 +53,11 @@ import sun.util.calendar.JulianCalendar;
 import sun.util.calendar.ZoneInfo;
 
 /**
- * <code>GregorianCalendar</code> is a concrete subclass of
- * <code>Calendar</code> and provides the standard calendar system
+ * {@code GregorianCalendar} is a concrete subclass of
+ * {@code Calendar} and provides the standard calendar system
  * used by most of the world.
  *
- * <p> <code>GregorianCalendar</code> is a hybrid calendar that
+ * <p> {@code GregorianCalendar} is a hybrid calendar that
  * supports both the Julian and Gregorian calendar systems with the
  * support of a single discontinuity, which corresponds by default to
  * the Gregorian date when the Gregorian calendar was instituted
@@ -68,19 +68,19 @@ import sun.util.calendar.ZoneInfo;
  * <p>
  * Historically, in those countries which adopted the Gregorian calendar first,
  * October 4, 1582 (Julian) was thus followed by October 15, 1582 (Gregorian). This calendar models
- * this correctly.  Before the Gregorian cutover, <code>GregorianCalendar</code>
+ * this correctly.  Before the Gregorian cutover, {@code GregorianCalendar}
  * implements the Julian calendar.  The only difference between the Gregorian
  * and the Julian calendar is the leap year rule. The Julian calendar specifies
  * leap years every four years, whereas the Gregorian calendar omits century
  * years which are not divisible by 400.
  *
  * <p>
- * <code>GregorianCalendar</code> implements <em>proleptic</em> Gregorian and
+ * {@code GregorianCalendar} implements <em>proleptic</em> Gregorian and
  * Julian calendars. That is, dates are computed by extrapolating the current
  * rules indefinitely far backward and forward in time. As a result,
- * <code>GregorianCalendar</code> may be used for all years to generate
+ * {@code GregorianCalendar} may be used for all years to generate
  * meaningful and consistent results. However, dates obtained using
- * <code>GregorianCalendar</code> are historically accurate only from March 1, 4
+ * {@code GregorianCalendar} are historically accurate only from March 1, 4
  * AD onward, when modern Julian calendar rules were adopted.  Before this date,
  * leap year rules were applied irregularly, and before 45 BC the Julian
  * calendar did not even exist.
@@ -91,7 +91,7 @@ import sun.util.calendar.ZoneInfo;
  * adjustment may be made if desired for dates that are prior to the Gregorian
  * changeover and which fall between January 1 and March 24.
  *
- * <h3><a id="week_and_year">Week Of Year and Week Year</a></h3>
+ * <h2><a id="week_and_year">Week Of Year and Week Year</a></h2>
  *
  * <p>Values calculated for the {@link Calendar#WEEK_OF_YEAR
  * WEEK_OF_YEAR} field range from 1 to 53. The first week of a
@@ -133,30 +133,30 @@ import sun.util.calendar.ZoneInfo;
  * ends on January 10, 1998; the first three days of 1998 then are
  * part of week 53 of 1997 and their week year is 1997.
  *
- * <h4>Week Of Month</h4>
+ * <h3>Week Of Month</h3>
  *
- * <p>Values calculated for the <code>WEEK_OF_MONTH</code> field range from 0
+ * <p>Values calculated for the {@code WEEK_OF_MONTH} field range from 0
  * to 6.  Week 1 of a month (the days with <code>WEEK_OF_MONTH =
  * 1</code>) is the earliest set of at least
- * <code>getMinimalDaysInFirstWeek()</code> contiguous days in that month,
- * ending on the day before <code>getFirstDayOfWeek()</code>.  Unlike
+ * {@code getMinimalDaysInFirstWeek()} contiguous days in that month,
+ * ending on the day before {@code getFirstDayOfWeek()}.  Unlike
  * week 1 of a year, week 1 of a month may be shorter than 7 days, need
- * not start on <code>getFirstDayOfWeek()</code>, and will not include days of
+ * not start on {@code getFirstDayOfWeek()}, and will not include days of
  * the previous month.  Days of a month before week 1 have a
- * <code>WEEK_OF_MONTH</code> of 0.
+ * {@code WEEK_OF_MONTH} of 0.
  *
- * <p>For example, if <code>getFirstDayOfWeek()</code> is <code>SUNDAY</code>
- * and <code>getMinimalDaysInFirstWeek()</code> is 4, then the first week of
+ * <p>For example, if {@code getFirstDayOfWeek()} is {@code SUNDAY}
+ * and {@code getMinimalDaysInFirstWeek()} is 4, then the first week of
  * January 1998 is Sunday, January 4 through Saturday, January 10.  These days
- * have a <code>WEEK_OF_MONTH</code> of 1.  Thursday, January 1 through
- * Saturday, January 3 have a <code>WEEK_OF_MONTH</code> of 0.  If
- * <code>getMinimalDaysInFirstWeek()</code> is changed to 3, then January 1
- * through January 3 have a <code>WEEK_OF_MONTH</code> of 1.
+ * have a {@code WEEK_OF_MONTH} of 1.  Thursday, January 1 through
+ * Saturday, January 3 have a {@code WEEK_OF_MONTH} of 0.  If
+ * {@code getMinimalDaysInFirstWeek()} is changed to 3, then January 1
+ * through January 3 have a {@code WEEK_OF_MONTH} of 1.
  *
- * <h4>Default Fields Values</h4>
+ * <h3>Default Fields Values</h3>
  *
- * <p>The <code>clear</code> method sets calendar field(s)
- * undefined. <code>GregorianCalendar</code> uses the following
+ * <p>The {@code clear} method sets calendar field(s)
+ * undefined. {@code GregorianCalendar} uses the following
  * default value for each calendar field if its value is undefined.
  *
  * <table class="striped" style="text-align: left; width: 66%;">
@@ -167,81 +167,81 @@ import sun.util.calendar.ZoneInfo;
  *          Field
  *       </th>
  *       <th scope="col">
-            Default Value
+ *          Default Value
  *       </th>
  *     </tr>
  *   </thead>
  *   <tbody>
  *     <tr>
  *       <th scope="row">
- *              <code>ERA</code>
+ *              {@code ERA}
  *       </th>
  *       <td>
- *              <code>AD</code>
+ *              {@code AD}
  *       </td>
  *     </tr>
  *     <tr>
  *       <th scope="row">
- *              <code>YEAR</code>
+ *              {@code YEAR}
  *       </th>
  *       <td>
- *              <code>1970</code>
+ *              {@code 1970}
  *       </td>
  *     </tr>
  *     <tr>
  *       <th scope="row">
- *              <code>MONTH</code>
+ *              {@code MONTH}
  *       </th>
  *       <td>
- *              <code>JANUARY</code>
+ *              {@code JANUARY}
  *       </td>
  *     </tr>
  *     <tr>
  *       <th scope="row">
- *              <code>DAY_OF_MONTH</code>
+ *              {@code DAY_OF_MONTH}
  *       </th>
  *       <td>
- *              <code>1</code>
+ *              {@code 1}
  *       </td>
  *     </tr>
  *     <tr>
  *       <th scope="row">
- *              <code>DAY_OF_WEEK</code>
+ *              {@code DAY_OF_WEEK}
  *       </th>
  *       <td>
- *              <code>the first day of week</code>
+ *              {@code the first day of week}
  *       </td>
  *     </tr>
  *     <tr>
  *       <th scope="row">
- *              <code>WEEK_OF_MONTH</code>
+ *              {@code WEEK_OF_MONTH}
  *       </th>
  *       <td>
- *              <code>0</code>
+ *              {@code 0}
  *       </td>
  *     </tr>
  *     <tr>
  *       <th scope="row">
- *              <code>DAY_OF_WEEK_IN_MONTH</code>
+ *              {@code DAY_OF_WEEK_IN_MONTH}
  *       </th>
  *       <td>
- *              <code>1</code>
+ *              {@code 1}
  *       </td>
  *     </tr>
  *     <tr>
  *       <th scope="row">
- *              <code>AM_PM</code>
+ *              {@code AM_PM}
  *       </th>
  *       <td>
- *              <code>AM</code>
+ *              {@code AM}
  *       </td>
  *     </tr>
  *     <tr>
  *       <th scope="row">
- *              <code>HOUR, HOUR_OF_DAY, MINUTE, SECOND, MILLISECOND</code>
+ *              {@code HOUR, HOUR_OF_DAY, MINUTE, SECOND, MILLISECOND}
  *       </th>
  *       <td>
- *              <code>0</code>
+ *              {@code 0}
  *       </td>
  *     </tr>
  *   </tbody>
@@ -296,7 +296,6 @@ import sun.util.calendar.ZoneInfo;
  *                    + (calendar.get(Calendar.ZONE_OFFSET)/(60*60*1000)));
  * System.out.println("DST_OFFSET: "
  *                    + (calendar.get(Calendar.DST_OFFSET)/(60*60*1000)));
-
  * System.out.println("Current Time, with hour reset to 3");
  * calendar.clear(Calendar.HOUR_OF_DAY); // so doesn't override
  * calendar.set(Calendar.HOUR, 3);
@@ -360,9 +359,9 @@ public class GregorianCalendar extends Calendar {
 //////////////////
 
     /**
-     * Value of the <code>ERA</code> field indicating
+     * Value of the {@code ERA} field indicating
      * the period before the common era (before Christ), also known as BCE.
-     * The sequence of years at the transition from <code>BC</code> to <code>AD</code> is
+     * The sequence of years at the transition from {@code BC} to {@code AD} is
      * ..., 2 BC, 1 BC, 1 AD, 2 AD,...
      *
      * @see #ERA
@@ -378,9 +377,9 @@ public class GregorianCalendar extends Calendar {
     static final int BCE = 0;
 
     /**
-     * Value of the <code>ERA</code> field indicating
+     * Value of the {@code ERA} field indicating
      * the common era (Anno Domini), also known as CE.
-     * The sequence of years at the transition from <code>BC</code> to <code>AD</code> is
+     * The sequence of years at the transition from {@code BC} to {@code AD} is
      * ..., 2 BC, 1 BC, 1 AD, 2 AD,...
      *
      * @see #ERA
@@ -497,6 +496,7 @@ public class GregorianCalendar extends Calendar {
 
     // Proclaim serialization compatibility with JDK 1.1
     @SuppressWarnings("FieldNameHidesFieldInSuperclass")
+    @java.io.Serial
     static final long serialVersionUID = -8125100834729963327L;
 
     // Reference to the sun.util.calendar.Gregorian instance (singleton).
@@ -584,7 +584,7 @@ public class GregorianCalendar extends Calendar {
 ///////////////
 
     /**
-     * Constructs a default <code>GregorianCalendar</code> using the current time
+     * Constructs a default {@code GregorianCalendar} using the current time
      * in the default time zone with the default
      * {@link Locale.Category#FORMAT FORMAT} locale.
      */
@@ -594,7 +594,7 @@ public class GregorianCalendar extends Calendar {
     }
 
     /**
-     * Constructs a <code>GregorianCalendar</code> based on the current time
+     * Constructs a {@code GregorianCalendar} based on the current time
      * in the given time zone with the default
      * {@link Locale.Category#FORMAT FORMAT} locale.
      *
@@ -605,7 +605,7 @@ public class GregorianCalendar extends Calendar {
     }
 
     /**
-     * Constructs a <code>GregorianCalendar</code> based on the current time
+     * Constructs a {@code GregorianCalendar} based on the current time
      * in the default time zone with the given locale.
      *
      * @param aLocale the given locale.
@@ -616,7 +616,7 @@ public class GregorianCalendar extends Calendar {
     }
 
     /**
-     * Constructs a <code>GregorianCalendar</code> based on the current time
+     * Constructs a {@code GregorianCalendar} based on the current time
      * in the given time zone with the given locale.
      *
      * @param zone the given time zone.
@@ -629,29 +629,29 @@ public class GregorianCalendar extends Calendar {
     }
 
     /**
-     * Constructs a <code>GregorianCalendar</code> with the given date set
+     * Constructs a {@code GregorianCalendar} with the given date set
      * in the default time zone with the default locale.
      *
-     * @param year the value used to set the <code>YEAR</code> calendar field in the calendar.
-     * @param month the value used to set the <code>MONTH</code> calendar field in the calendar.
+     * @param year the value used to set the {@code YEAR} calendar field in the calendar.
+     * @param month the value used to set the {@code MONTH} calendar field in the calendar.
      * Month value is 0-based. e.g., 0 for January.
-     * @param dayOfMonth the value used to set the <code>DAY_OF_MONTH</code> calendar field in the calendar.
+     * @param dayOfMonth the value used to set the {@code DAY_OF_MONTH} calendar field in the calendar.
      */
     public GregorianCalendar(int year, int month, int dayOfMonth) {
         this(year, month, dayOfMonth, 0, 0, 0, 0);
     }
 
     /**
-     * Constructs a <code>GregorianCalendar</code> with the given date
+     * Constructs a {@code GregorianCalendar} with the given date
      * and time set for the default time zone with the default locale.
      *
-     * @param year the value used to set the <code>YEAR</code> calendar field in the calendar.
-     * @param month the value used to set the <code>MONTH</code> calendar field in the calendar.
+     * @param year the value used to set the {@code YEAR} calendar field in the calendar.
+     * @param month the value used to set the {@code MONTH} calendar field in the calendar.
      * Month value is 0-based. e.g., 0 for January.
-     * @param dayOfMonth the value used to set the <code>DAY_OF_MONTH</code> calendar field in the calendar.
-     * @param hourOfDay the value used to set the <code>HOUR_OF_DAY</code> calendar field
+     * @param dayOfMonth the value used to set the {@code DAY_OF_MONTH} calendar field in the calendar.
+     * @param hourOfDay the value used to set the {@code HOUR_OF_DAY} calendar field
      * in the calendar.
-     * @param minute the value used to set the <code>MINUTE</code> calendar field
+     * @param minute the value used to set the {@code MINUTE} calendar field
      * in the calendar.
      */
     public GregorianCalendar(int year, int month, int dayOfMonth, int hourOfDay,
@@ -663,15 +663,15 @@ public class GregorianCalendar extends Calendar {
      * Constructs a GregorianCalendar with the given date
      * and time set for the default time zone with the default locale.
      *
-     * @param year the value used to set the <code>YEAR</code> calendar field in the calendar.
-     * @param month the value used to set the <code>MONTH</code> calendar field in the calendar.
+     * @param year the value used to set the {@code YEAR} calendar field in the calendar.
+     * @param month the value used to set the {@code MONTH} calendar field in the calendar.
      * Month value is 0-based. e.g., 0 for January.
-     * @param dayOfMonth the value used to set the <code>DAY_OF_MONTH</code> calendar field in the calendar.
-     * @param hourOfDay the value used to set the <code>HOUR_OF_DAY</code> calendar field
+     * @param dayOfMonth the value used to set the {@code DAY_OF_MONTH} calendar field in the calendar.
+     * @param hourOfDay the value used to set the {@code HOUR_OF_DAY} calendar field
      * in the calendar.
-     * @param minute the value used to set the <code>MINUTE</code> calendar field
+     * @param minute the value used to set the {@code MINUTE} calendar field
      * in the calendar.
-     * @param second the value used to set the <code>SECOND</code> calendar field
+     * @param second the value used to set the {@code SECOND} calendar field
      * in the calendar.
      */
     public GregorianCalendar(int year, int month, int dayOfMonth, int hourOfDay,
@@ -680,20 +680,20 @@ public class GregorianCalendar extends Calendar {
     }
 
     /**
-     * Constructs a <code>GregorianCalendar</code> with the given date
+     * Constructs a {@code GregorianCalendar} with the given date
      * and time set for the default time zone with the default locale.
      *
-     * @param year the value used to set the <code>YEAR</code> calendar field in the calendar.
-     * @param month the value used to set the <code>MONTH</code> calendar field in the calendar.
+     * @param year the value used to set the {@code YEAR} calendar field in the calendar.
+     * @param month the value used to set the {@code MONTH} calendar field in the calendar.
      * Month value is 0-based. e.g., 0 for January.
-     * @param dayOfMonth the value used to set the <code>DAY_OF_MONTH</code> calendar field in the calendar.
-     * @param hourOfDay the value used to set the <code>HOUR_OF_DAY</code> calendar field
+     * @param dayOfMonth the value used to set the {@code DAY_OF_MONTH} calendar field in the calendar.
+     * @param hourOfDay the value used to set the {@code HOUR_OF_DAY} calendar field
      * in the calendar.
-     * @param minute the value used to set the <code>MINUTE</code> calendar field
+     * @param minute the value used to set the {@code MINUTE} calendar field
      * in the calendar.
-     * @param second the value used to set the <code>SECOND</code> calendar field
+     * @param second the value used to set the {@code SECOND} calendar field
      * in the calendar.
-     * @param millis the value used to set the <code>MILLISECOND</code> calendar field
+     * @param millis the value used to set the {@code MILLISECOND} calendar field
      */
     GregorianCalendar(int year, int month, int dayOfMonth,
                       int hourOfDay, int minute, int second, int millis) {
@@ -731,7 +731,7 @@ public class GregorianCalendar extends Calendar {
      * Constructs an empty GregorianCalendar.
      *
      * @param zone    the given time zone
-     * @param aLocale the given locale
+     * @param locale  the given locale
      * @param flag    the flag requesting an empty instance
      */
     GregorianCalendar(TimeZone zone, Locale locale, boolean flag) {
@@ -744,13 +744,13 @@ public class GregorianCalendar extends Calendar {
 /////////////////
 
     /**
-     * Sets the <code>GregorianCalendar</code> change date. This is the point when the switch
+     * Sets the {@code GregorianCalendar} change date. This is the point when the switch
      * from Julian dates to Gregorian dates occurred. Default is October 15,
      * 1582 (Gregorian). Previous to this, dates will be in the Julian calendar.
      * <p>
      * To obtain a pure Julian calendar, set the change date to
-     * <code>Date(Long.MAX_VALUE)</code>.  To obtain a pure Gregorian calendar,
-     * set the change date to <code>Date(Long.MIN_VALUE)</code>.
+     * {@code Date(Long.MAX_VALUE)}.  To obtain a pure Gregorian calendar,
+     * set the change date to {@code Date(Long.MIN_VALUE)}.
      *
      * @param date the given Gregorian cutover date.
      */
@@ -802,20 +802,20 @@ public class GregorianCalendar extends Calendar {
      * October 15, 1582 (Gregorian). Previous to this, dates will be in the Julian
      * calendar.
      *
-     * @return the Gregorian cutover date for this <code>GregorianCalendar</code> object.
+     * @return the Gregorian cutover date for this {@code GregorianCalendar} object.
      */
     public final Date getGregorianChange() {
         return new Date(gregorianCutover);
     }
 
     /**
-     * Determines if the given year is a leap year. Returns <code>true</code> if
+     * Determines if the given year is a leap year. Returns {@code true} if
      * the given year is a leap year. To specify BC year numbers,
-     * <code>1 - year number</code> must be given. For example, year BC 4 is
+     * {@code 1 - year number} must be given. For example, year BC 4 is
      * specified as -3.
      *
      * @param year the given year.
-     * @return <code>true</code> if the given year is a leap year; <code>false</code> otherwise.
+     * @return {@code true} if the given year is a leap year; {@code false} otherwise.
      */
     public boolean isLeapYear(int year) {
         if ((year & 3) != 0) {
@@ -852,17 +852,17 @@ public class GregorianCalendar extends Calendar {
     }
 
     /**
-     * Compares this <code>GregorianCalendar</code> to the specified
-     * <code>Object</code>. The result is <code>true</code> if and
-     * only if the argument is a <code>GregorianCalendar</code> object
+     * Compares this {@code GregorianCalendar} to the specified
+     * {@code Object}. The result is {@code true} if and
+     * only if the argument is a {@code GregorianCalendar} object
      * that represents the same time value (millisecond offset from
      * the <a href="Calendar.html#Epoch">Epoch</a>) under the same
-     * <code>Calendar</code> parameters and Gregorian change date as
+     * {@code Calendar} parameters and Gregorian change date as
      * this object.
      *
      * @param obj the object to compare with.
-     * @return <code>true</code> if this object is equal to <code>obj</code>;
-     * <code>false</code> otherwise.
+     * @return {@code true} if this object is equal to {@code obj};
+     * {@code false} otherwise.
      * @see Calendar#compareTo(Calendar)
      */
     @Override
@@ -873,7 +873,7 @@ public class GregorianCalendar extends Calendar {
     }
 
     /**
-     * Generates the hash code for this <code>GregorianCalendar</code> object.
+     * Generates the hash code for this {@code GregorianCalendar} object.
      */
     @Override
     public int hashCode() {
@@ -884,27 +884,27 @@ public class GregorianCalendar extends Calendar {
      * Adds the specified (signed) amount of time to the given calendar field,
      * based on the calendar's rules.
      *
-     * <p><em>Add rule 1</em>. The value of <code>field</code>
-     * after the call minus the value of <code>field</code> before the
-     * call is <code>amount</code>, modulo any overflow that has occurred in
-     * <code>field</code>. Overflow occurs when a field value exceeds its
+     * <p><em>Add rule 1</em>. The value of {@code field}
+     * after the call minus the value of {@code field} before the
+     * call is {@code amount}, modulo any overflow that has occurred in
+     * {@code field}. Overflow occurs when a field value exceeds its
      * range and, as a result, the next larger field is incremented or
      * decremented and the field value is adjusted back into its range.</p>
      *
      * <p><em>Add rule 2</em>. If a smaller field is expected to be
      * invariant, but it is impossible for it to be equal to its
      * prior value because of changes in its minimum or maximum after
-     * <code>field</code> is changed, then its value is adjusted to be as close
+     * {@code field} is changed, then its value is adjusted to be as close
      * as possible to its expected value. A smaller field represents a
-     * smaller unit of time. <code>HOUR</code> is a smaller field than
-     * <code>DAY_OF_MONTH</code>. No adjustment is made to smaller fields
+     * smaller unit of time. {@code HOUR} is a smaller field than
+     * {@code DAY_OF_MONTH}. No adjustment is made to smaller fields
      * that are not expected to be invariant. The calendar system
      * determines what fields are expected to be invariant.</p>
      *
      * @param field the calendar field.
      * @param amount the amount of date or time to be added to the field.
-     * @exception IllegalArgumentException if <code>field</code> is
-     * <code>ZONE_OFFSET</code>, <code>DST_OFFSET</code>, or unknown,
+     * @throws    IllegalArgumentException if {@code field} is
+     * {@code ZONE_OFFSET}, {@code DST_OFFSET}, or unknown,
      * or if any calendar fields have out-of-range values in
      * non-lenient mode.
      */
@@ -1093,15 +1093,15 @@ public class GregorianCalendar extends Calendar {
      * Adds or subtracts (up/down) a single unit of time on the given time
      * field without changing larger fields.
      * <p>
-     * <em>Example</em>: Consider a <code>GregorianCalendar</code>
+     * <em>Example</em>: Consider a {@code GregorianCalendar}
      * originally set to December 31, 1999. Calling {@link #roll(int,boolean) roll(Calendar.MONTH, true)}
-     * sets the calendar to January 31, 1999.  The <code>YEAR</code> field is unchanged
-     * because it is a larger field than <code>MONTH</code>.</p>
+     * sets the calendar to January 31, 1999.  The {@code YEAR} field is unchanged
+     * because it is a larger field than {@code MONTH}.</p>
      *
      * @param up indicates if the value of the specified calendar field is to be
-     * rolled up or rolled down. Use <code>true</code> if rolling up, <code>false</code> otherwise.
-     * @exception IllegalArgumentException if <code>field</code> is
-     * <code>ZONE_OFFSET</code>, <code>DST_OFFSET</code>, or unknown,
+     * rolled up or rolled down. Use {@code true} if rolling up, {@code false} otherwise.
+     * @throws    IllegalArgumentException if {@code field} is
+     * {@code ZONE_OFFSET}, {@code DST_OFFSET}, or unknown,
      * or if any calendar fields have out-of-range values in
      * non-lenient mode.
      * @see #add(int,int)
@@ -1120,35 +1120,35 @@ public class GregorianCalendar extends Calendar {
      * <p>This method calls {@link #complete()} before adding the
      * amount so that all the calendar fields are normalized. If there
      * is any calendar field having an out-of-range value in non-lenient mode, then an
-     * <code>IllegalArgumentException</code> is thrown.
+     * {@code IllegalArgumentException} is thrown.
      *
      * <p>
-     * <em>Example</em>: Consider a <code>GregorianCalendar</code>
+     * <em>Example</em>: Consider a {@code GregorianCalendar}
      * originally set to August 31, 1999. Calling <code>roll(Calendar.MONTH,
      * 8)</code> sets the calendar to April 30, <strong>1999</strong>. Using a
-     * <code>GregorianCalendar</code>, the <code>DAY_OF_MONTH</code> field cannot
-     * be 31 in the month April. <code>DAY_OF_MONTH</code> is set to the closest possible
-     * value, 30. The <code>YEAR</code> field maintains the value of 1999 because it
-     * is a larger field than <code>MONTH</code>.
+     * {@code GregorianCalendar}, the {@code DAY_OF_MONTH} field cannot
+     * be 31 in the month April. {@code DAY_OF_MONTH} is set to the closest possible
+     * value, 30. The {@code YEAR} field maintains the value of 1999 because it
+     * is a larger field than {@code MONTH}.
      * <p>
-     * <em>Example</em>: Consider a <code>GregorianCalendar</code>
+     * <em>Example</em>: Consider a {@code GregorianCalendar}
      * originally set to Sunday June 6, 1999. Calling
-     * <code>roll(Calendar.WEEK_OF_MONTH, -1)</code> sets the calendar to
+     * {@code roll(Calendar.WEEK_OF_MONTH, -1)} sets the calendar to
      * Tuesday June 1, 1999, whereas calling
-     * <code>add(Calendar.WEEK_OF_MONTH, -1)</code> sets the calendar to
+     * {@code add(Calendar.WEEK_OF_MONTH, -1)} sets the calendar to
      * Sunday May 30, 1999. This is because the roll rule imposes an
-     * additional constraint: The <code>MONTH</code> must not change when the
-     * <code>WEEK_OF_MONTH</code> is rolled. Taken together with add rule 1,
+     * additional constraint: The {@code MONTH} must not change when the
+     * {@code WEEK_OF_MONTH} is rolled. Taken together with add rule 1,
      * the resultant date must be between Tuesday June 1 and Saturday June
-     * 5. According to add rule 2, the <code>DAY_OF_WEEK</code>, an invariant
-     * when changing the <code>WEEK_OF_MONTH</code>, is set to Tuesday, the
+     * 5. According to add rule 2, the {@code DAY_OF_WEEK}, an invariant
+     * when changing the {@code WEEK_OF_MONTH}, is set to Tuesday, the
      * closest possible value to Sunday (where Sunday is the first day of the
      * week).</p>
      *
      * @param field the calendar field.
-     * @param amount the signed amount to add to <code>field</code>.
-     * @exception IllegalArgumentException if <code>field</code> is
-     * <code>ZONE_OFFSET</code>, <code>DST_OFFSET</code>, or unknown,
+     * @param amount the signed amount to add to {@code field}.
+     * @throws    IllegalArgumentException if {@code field} is
+     * {@code ZONE_OFFSET}, {@code DST_OFFSET}, or unknown,
      * or if any calendar fields have out-of-range values in
      * non-lenient mode.
      * @see #roll(int,boolean)
@@ -1511,7 +1511,7 @@ public class GregorianCalendar extends Calendar {
 
     /**
      * Returns the minimum value for the given calendar field of this
-     * <code>GregorianCalendar</code> instance. The minimum value is
+     * {@code GregorianCalendar} instance. The minimum value is
      * defined as the smallest value returned by the {@link
      * Calendar#get(int) get} method for any possible time value,
      * taking into consideration the current values of the
@@ -1535,7 +1535,7 @@ public class GregorianCalendar extends Calendar {
 
     /**
      * Returns the maximum value for the given calendar field of this
-     * <code>GregorianCalendar</code> instance. The maximum value is
+     * {@code GregorianCalendar} instance. The maximum value is
      * defined as the largest value returned by the {@link
      * Calendar#get(int) get} method for any possible time value,
      * taking into consideration the current values of the
@@ -1584,7 +1584,7 @@ public class GregorianCalendar extends Calendar {
 
     /**
      * Returns the highest minimum value for the given calendar field
-     * of this <code>GregorianCalendar</code> instance. The highest
+     * of this {@code GregorianCalendar} instance. The highest
      * minimum value is defined as the largest value returned by
      * {@link #getActualMinimum(int)} for any possible time value,
      * taking into consideration the current values of the
@@ -1614,7 +1614,7 @@ public class GregorianCalendar extends Calendar {
 
     /**
      * Returns the lowest maximum value for the given calendar field
-     * of this <code>GregorianCalendar</code> instance. The lowest
+     * of this {@code GregorianCalendar} instance. The lowest
      * maximum value is defined as the smallest value returned by
      * {@link #getActualMaximum(int)} for any possible time value,
      * taking into consideration the current values of the
@@ -1664,16 +1664,16 @@ public class GregorianCalendar extends Calendar {
      * {@link Calendar#getTimeZone() getTimeZone} methods.
      *
      * <p>For example, if the Gregorian change date is January 10,
-     * 1970 and the date of this <code>GregorianCalendar</code> is
+     * 1970 and the date of this {@code GregorianCalendar} is
      * January 20, 1970, the actual minimum value of the
-     * <code>DAY_OF_MONTH</code> field is 10 because the previous date
+     * {@code DAY_OF_MONTH} field is 10 because the previous date
      * of January 10, 1970 is December 27, 1996 (in the Julian
      * calendar). Therefore, December 28, 1969 to January 9, 1970
      * don't exist.
      *
      * @param field the calendar field
      * @return the minimum of the given field for the time value of
-     * this <code>GregorianCalendar</code>
+     * this {@code GregorianCalendar}
      * @see #getMinimum(int)
      * @see #getMaximum(int)
      * @see #getGreatestMinimum(int)
@@ -1704,7 +1704,7 @@ public class GregorianCalendar extends Calendar {
      * {@link #getGregorianChange() getGregorianChange} and
      * {@link Calendar#getTimeZone() getTimeZone} methods.
      * For example, if the date of this instance is February 1, 2004,
-     * the actual maximum value of the <code>DAY_OF_MONTH</code> field
+     * the actual maximum value of the {@code DAY_OF_MONTH} field
      * is 29 because 2004 is a leap year, and if the date of this
      * instance is February 1, 2005, it's 28.
      *
@@ -1717,7 +1717,7 @@ public class GregorianCalendar extends Calendar {
      *
      * @param field the calendar field
      * @return the maximum of the given field for the time value of
-     * this <code>GregorianCalendar</code>
+     * this {@code GregorianCalendar}
      * @see #getMinimum(int)
      * @see #getMaximum(int)
      * @see #getGreatestMinimum(int)
@@ -2182,7 +2182,7 @@ public class GregorianCalendar extends Calendar {
      *                    for the {@link #DAY_OF_WEEK DAY_OF_WEEK} field:
      *                    {@link Calendar#SUNDAY SUNDAY}, ...,
      *                    {@link Calendar#SATURDAY SATURDAY}.
-     * @exception IllegalArgumentException
+     * @throws    IllegalArgumentException
      *            if any of the given date specifiers is invalid,
      *            or if any of the calendar fields are inconsistent
      *            with the given date specifiers in non-lenient mode
@@ -2286,7 +2286,7 @@ public class GregorianCalendar extends Calendar {
      * href="Calendar.html#Epoch">Epoch</a>) to calendar field values.
      * The time is <em>not</em>
      * recomputed first; to recompute the time, then the fields, call the
-     * <code>complete</code> method.
+     * {@code complete} method.
      *
      * @see Calendar#complete
      */
@@ -2625,7 +2625,7 @@ public class GregorianCalendar extends Calendar {
      * Converts calendar field values to the time value (millisecond
      * offset from the <a href="Calendar.html#Epoch">Epoch</a>).
      *
-     * @exception IllegalArgumentException if any calendar fields are invalid.
+     * @throws    IllegalArgumentException if any calendar fields are invalid.
      */
     @Override
     protected void computeTime() {
@@ -3229,6 +3229,7 @@ public class GregorianCalendar extends Calendar {
     /**
      * Updates internal state.
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream stream)
             throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
@@ -3277,8 +3278,8 @@ public class GregorianCalendar extends Calendar {
      * @param zdt  the zoned date-time object to convert
      * @return  the gregorian calendar representing the same point on the
      *  time-line as the zoned date-time provided
-     * @exception NullPointerException if {@code zdt} is null
-     * @exception IllegalArgumentException if the zoned date-time is too
+     * @throws    NullPointerException if {@code zdt} is null
+     * @throws    IllegalArgumentException if the zoned date-time is too
      * large to represent as a {@code GregorianCalendar}
      * @since 1.8
      */

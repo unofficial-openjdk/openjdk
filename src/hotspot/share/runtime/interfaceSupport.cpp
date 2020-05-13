@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,12 +27,12 @@
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "logging/log.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/init.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/os.inline.hpp"
 #include "runtime/thread.inline.hpp"
 #include "runtime/safepointVerifiers.hpp"
@@ -54,12 +54,6 @@ VMEntryWrapper::~VMEntryWrapper() {
   if (WalkStackALot) {
     InterfaceSupport::walk_stack();
   }
-#ifdef COMPILER2
-  // This option is not used by Compiler 1
-  if (StressDerivedPointers) {
-    InterfaceSupport::stress_derived_pointers();
-  }
-#endif
   if (DeoptimizeALot || DeoptimizeRandom) {
     InterfaceSupport::deoptimizeAll();
   }
@@ -72,7 +66,14 @@ VMEntryWrapper::~VMEntryWrapper() {
   }
 }
 
-long InterfaceSupport::_number_of_calls       = 0;
+VMNativeEntryWrapper::VMNativeEntryWrapper() {
+  if (GCALotAtAllSafepoints) InterfaceSupport::check_gc_alot();
+}
+
+VMNativeEntryWrapper::~VMNativeEntryWrapper() {
+  if (GCALotAtAllSafepoints) InterfaceSupport::check_gc_alot();
+}
+
 long InterfaceSupport::_scavenge_alot_counter = 1;
 long InterfaceSupport::_fullgc_alot_counter   = 1;
 long InterfaceSupport::_fullgc_alot_invocation = 0;
@@ -84,8 +85,8 @@ RuntimeHistogramElement::RuntimeHistogramElement(const char* elementName) {
   _name = elementName;
   uintx count = 0;
 
-  while (Atomic::cmpxchg(1, &RuntimeHistogram_lock, 0) != 0) {
-    while (OrderAccess::load_acquire(&RuntimeHistogram_lock) != 0) {
+  while (Atomic::cmpxchg(&RuntimeHistogram_lock, 0, 1) != 0) {
+    while (Atomic::load_acquire(&RuntimeHistogram_lock) != 0) {
       count +=1;
       if ( (WarnOnStalledSpinLock > 0)
         && (count % WarnOnStalledSpinLock == 0)) {
@@ -225,31 +226,6 @@ void InterfaceSupport::deoptimizeAll() {
 }
 
 
-void InterfaceSupport::stress_derived_pointers() {
-#ifdef COMPILER2
-  JavaThread *thread = JavaThread::current();
-  if (!is_init_completed()) return;
-  ResourceMark rm(thread);
-  bool found = false;
-  for (StackFrameStream sfs(thread); !sfs.is_done() && !found; sfs.next()) {
-    CodeBlob* cb = sfs.current()->cb();
-    if (cb != NULL && cb->oop_maps() ) {
-      // Find oopmap for current method
-      const ImmutableOopMap* map = cb->oop_map_for_return_address(sfs.current()->pc());
-      assert(map != NULL, "no oopmap found for pc");
-      found = map->has_derived_pointer();
-    }
-  }
-  if (found) {
-    // $$$ Not sure what to do here.
-    /*
-    Scavenge::invoke(0);
-    */
-  }
-#endif
-}
-
-
 void InterfaceSupport::verify_stack() {
   JavaThread* thread = JavaThread::current();
   ResourceMark rm(thread);
@@ -291,40 +267,3 @@ void InterfaceSupport_init() {
   }
 #endif
 }
-
-#ifdef ASSERT
-// JRT_LEAF rules:
-// A JRT_LEAF method may not interfere with safepointing by
-//   1) acquiring or blocking on a Mutex or JavaLock - checked
-//   2) allocating heap memory - checked
-//   3) executing a VM operation - checked
-//   4) executing a system call (including malloc) that could block or grab a lock
-//   5) invoking GC
-//   6) reaching a safepoint
-//   7) running too long
-// Nor may any method it calls.
-JRTLeafVerifier::JRTLeafVerifier()
-  : NoSafepointVerifier(true, JRTLeafVerifier::should_verify_GC())
-{
-}
-
-JRTLeafVerifier::~JRTLeafVerifier()
-{
-}
-
-bool JRTLeafVerifier::should_verify_GC() {
-  switch (JavaThread::current()->thread_state()) {
-  case _thread_in_Java:
-    // is in a leaf routine, there must be no safepoint.
-    return true;
-  case _thread_in_native:
-    // A native thread is not subject to safepoints.
-    // Even while it is in a leaf routine, GC is ok
-    return false;
-  default:
-    // Leaf routines cannot be called from other contexts.
-    ShouldNotReachHere();
-    return false;
-  }
-}
-#endif // ASSERT

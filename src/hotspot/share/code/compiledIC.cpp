@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@
 #include "memory/metadataFactory.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/method.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/symbol.hpp"
@@ -51,8 +52,7 @@
 CompiledICLocker::CompiledICLocker(CompiledMethod* method)
   : _method(method),
     _behaviour(CompiledICProtectionBehaviour::current()),
-    _locked(_behaviour->lock(_method)),
-    _nsv(true, !SafepointSynchronize::is_at_safepoint()) {
+    _locked(_behaviour->lock(_method)) {
 }
 
 CompiledICLocker::~CompiledICLocker() {
@@ -287,7 +287,7 @@ bool CompiledIC::set_to_megamorphic(CallInfo* call_info, Bytecodes::Code bytecod
 
   if (TraceICs) {
     ResourceMark rm;
-    assert(!call_info->selected_method().is_null(), "Unexpected null selected method");
+    assert(call_info->selected_method() != NULL, "Unexpected null selected method");
     tty->print_cr ("IC@" INTPTR_FORMAT ": to megamorphic %s entry: " INTPTR_FORMAT,
                    p2i(instruction_address()), call_info->selected_method()->print_value_string(), p2i(entry));
   }
@@ -741,4 +741,22 @@ void CompiledDirectStaticCall::print() {
   tty->cr();
 }
 
+void CompiledDirectStaticCall::verify_mt_safe(const methodHandle& callee, address entry,
+                                              NativeMovConstReg* method_holder,
+                                              NativeJump*        jump) {
+  // A generated lambda form might be deleted from the Lambdaform
+  // cache in MethodTypeForm.  If a jit compiled lambdaform method
+  // becomes not entrant and the cache access returns null, the new
+  // resolve will lead to a new generated LambdaForm.
+  Method* old_method = reinterpret_cast<Method*>(method_holder->data());
+  assert(old_method == NULL || old_method == callee() ||
+         callee->is_compiled_lambda_form() ||
+         !old_method->method_holder()->is_loader_alive() ||
+         old_method->is_old(),  // may be race patching deoptimized nmethod due to redefinition.
+         "a) MT-unsafe modification of inline cache");
+
+  address destination = jump->jump_destination();
+  assert(destination == (address)-1 || destination == entry,
+         "b) MT-unsafe modification of inline cache");
+}
 #endif // !PRODUCT

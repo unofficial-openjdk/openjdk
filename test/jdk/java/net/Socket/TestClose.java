@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 /*
  * @test
  * @bug 4408755
+ * @library /test/lib
  * @summary This tests whether it's possible to get some informations
  *          out of a closed socket. This is for backward compatibility
  *          purposes.
@@ -31,18 +32,23 @@
  */
 
 import java.net.*;
+import jdk.test.lib.net.IPSupport;
 
 public class TestClose {
 
     public static void main(String[] args) throws Exception {
+        IPSupport.throwSkippedExceptionIfNonOperational();
+
         ServerSocket ss;
         Socket s;
         InetAddress ad1, ad2;
         int port1, port2, serverport;
 
-        ss = new ServerSocket(0);
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        ss = new ServerSocket();
+        ss.bind(new InetSocketAddress(loopback, 0));
         serverport = ss.getLocalPort();
-        s = new Socket("localhost", serverport);
+        s = new Socket(loopback, serverport);
         s.close();
         ss.close();
         ad1 = ss.getInetAddress();

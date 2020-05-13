@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,10 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import sun.hotspot.WhiteBox;
+import jdk.test.lib.Utils;
 
 /*
  * @test TestMultiThreadStressRSet.java
- * @key stress
+ * @key stress randomness
  * @requires vm.gc.G1
  * @requires os.maxMemory > 2G
  * @requires vm.opt.MaxGCPauseMillis == "null"
@@ -42,7 +43,6 @@ import sun.hotspot.WhiteBox;
  * @library /test/lib
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *   -XX:+UseG1GC -XX:G1SummarizeRSetStatsPeriod=1 -Xlog:gc
  *   -Xmx500m -XX:G1HeapRegionSize=1m -XX:MaxGCPauseMillis=1000 gc.stress.TestMultiThreadStressRSet 10 4
@@ -57,7 +57,6 @@ import sun.hotspot.WhiteBox;
  */
 public class TestMultiThreadStressRSet {
 
-    private static final Random RND = new Random(2015 * 2016);
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     private static final int REF_SIZE = WB.getHeapOopSize();
     private static final int REGION_SIZE = WB.g1RegionSize();
@@ -214,8 +213,8 @@ public class TestMultiThreadStressRSet {
      *
      * @return a random element from the current window within the storage.
      */
-    private Object getRandomObject() {
-        int index = (windowStart + RND.nextInt(windowSize)) % N;
+    private Object getRandomObject(Random rnd) {
+        int index = (windowStart + rnd.nextInt(windowSize)) % N;
         return STORAGE.get(index);
     }
 
@@ -233,7 +232,7 @@ public class TestMultiThreadStressRSet {
      * Thread to create a number of references from BUFFER to STORAGE.
      */
     private static class Worker extends Thread {
-
+        final Random rnd;
         final TestMultiThreadStressRSet boss;
         final int refs; // number of refs to OldGen
 
@@ -244,6 +243,7 @@ public class TestMultiThreadStressRSet {
         Worker(TestMultiThreadStressRSet boss, int refsToOldGen) {
             this.boss = boss;
             this.refs = refsToOldGen;
+            this.rnd = new Random(Utils.getRandomInstance().nextLong());
         }
 
         @Override
@@ -253,7 +253,7 @@ public class TestMultiThreadStressRSet {
                     Object[] objs = boss.getFromBuffer();
                     int step = objs.length / refs;
                     for (int i = 0; i < refs; i += step) {
-                        objs[i] = boss.getRandomObject();
+                        objs[i] = boss.getRandomObject(rnd);
                     }
                     boss.counter++;
                 }

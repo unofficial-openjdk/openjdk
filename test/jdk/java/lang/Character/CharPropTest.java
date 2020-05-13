@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,17 +23,16 @@
 
 /*
  * @test
- * @bug 8202771
+ * @bug 8202771 8221431 8229831
  * @summary Check j.l.Character.isDigit/isLetter/isLetterOrDigit/isSpaceChar
  * /isWhitespace/isTitleCase/isISOControl/isIdentifierIgnorable
  * /isJavaIdentifierStart/isJavaIdentifierPart/isUnicodeIdentifierStart
  * /isUnicodeIdentifierPart
+ * @library /lib/testlibrary/java/lang
  * @run main CharPropTest
  */
 
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 public class CharPropTest {
@@ -42,9 +41,7 @@ public class CharPropTest {
     private static boolean isRange = false;
 
     public static void main(String[] args) throws Exception {
-        Path path = Paths.get(System.getProperty("test.src", "."),
-                "UnicodeData.txt");
-        try (Stream<String> lines = Files.lines(path)) {
+        try (Stream<String> lines = Files.lines(UCDFiles.UNICODE_DATA)) {
             lines.map(String::trim)
                  .filter(line -> line.length() != 0 && line.charAt(0) != '#')
                  .forEach(line -> handleOneLine(line));
@@ -185,7 +182,7 @@ public class CharPropTest {
 
     private static void isUnicodeIdentifierStartTest(int codePoint, String category) {
         boolean actual = Character.isUnicodeIdentifierStart(codePoint);
-        boolean expected = isUnicodeIdentifierStart(category);
+        boolean expected = isUnicodeIdentifierStart(codePoint, category);
         if (actual != expected) {
             printDiff(codePoint, "isUnicodeIdentifierStart", actual, expected);
         }
@@ -269,14 +266,33 @@ public class CharPropTest {
                || isIdentifierIgnorable(codePoint, category);
     }
 
-    private static boolean isUnicodeIdentifierStart(String category) {
-        return isLetter(category) || category.equals("Nl");
+    private static boolean isUnicodeIdentifierStart(int codePoint, String category) {
+        return isLetter(category) || category.equals("Nl")
+               || isOtherIDStart(codePoint);
     }
 
     private static boolean isUnicodeIdentifierPart(int codePoint, String category) {
         return isLetter(category) || category.equals("Pc") || category.equals("Nd")
                || category.equals("Nl") || category.equals("Mc") || category.equals("Mn")
-               || isIdentifierIgnorable(codePoint, category);
+               || isIdentifierIgnorable(codePoint, category)
+               || isOtherIDStart(codePoint)
+               || isOtherIDContinue(codePoint);
+    }
+
+    private static boolean isOtherIDStart(int codePoint) {
+        return codePoint == 0x1885 ||
+               codePoint == 0x1886 ||
+               codePoint == 0x2118 ||
+               codePoint == 0x212E ||
+               codePoint == 0x309B ||
+               codePoint == 0x309C;
+    }
+
+    private static boolean isOtherIDContinue(int codePoint) {
+        return codePoint == 0x00B7 ||
+               codePoint == 0x0387 ||
+              (codePoint >= 0x1369 && codePoint <= 0x1371) ||
+               codePoint == 0x19DA;
     }
 
     private static void printDiff(int codePoint, String method, boolean actual, boolean expected) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,13 +32,12 @@
 #include "interpreter/interpreter.hpp"
 #include "interpreter/linkResolver.hpp"
 #include "memory/resourceArea.hpp"
-#include "memory/universe.hpp"
 #include "oops/method.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/stubRoutines.hpp"
-#include "runtime/thread.hpp"
+#include "runtime/thread.inline.hpp"
 
 DEF_STUB_INTERFACE(ICStub);
 
@@ -166,10 +165,9 @@ void InlineCacheBuffer::refill_ic_stubs() {
   if (HAS_PENDING_EXCEPTION) {
     oop exception = PENDING_EXCEPTION;
     CLEAR_PENDING_EXCEPTION;
-    Thread::send_async_exception(JavaThread::current()->threadObj(), exception);
+    JavaThread::current()->set_pending_async_exception(exception);
   }
 }
-
 
 void InlineCacheBuffer::update_inline_caches() {
   if (buffer()->number_of_stubs() > 0) {
@@ -258,7 +256,7 @@ void InlineCacheBuffer::release_pending_icholders() {
 // not safe to free them until them since they might be visible to
 // another thread.
 void InlineCacheBuffer::queue_for_release(CompiledICHolder* icholder) {
-  MutexLockerEx mex(InlineCacheBuffer_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker mex(InlineCacheBuffer_lock, Mutex::_no_safepoint_check_flag);
   icholder->set_next(_pending_released);
   _pending_released = icholder;
   _pending_count++;

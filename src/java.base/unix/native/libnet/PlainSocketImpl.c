@@ -43,11 +43,8 @@ jfieldID psi_portID;
 jfieldID psi_localportID;
 jfieldID psi_timeoutID;
 jfieldID psi_trafficClassID;
-jfieldID psi_serverSocketID;
 jfieldID psi_fdLockID;
 jfieldID psi_closePendingID;
-
-extern void setDefaultScopeID(JNIEnv *env, struct sockaddr *him);
 
 /*
  * file descriptor used for dup2
@@ -128,9 +125,6 @@ Java_java_net_PlainSocketImpl_initProto(JNIEnv *env, jclass cls) {
     CHECK_NULL(psi_timeoutID);
     psi_trafficClassID = (*env)->GetFieldID(env, cls, "trafficClass", "I");
     CHECK_NULL(psi_trafficClassID);
-    psi_serverSocketID = (*env)->GetFieldID(env, cls, "serverSocket",
-                        "Ljava/net/ServerSocket;");
-    CHECK_NULL(psi_serverSocketID);
     psi_fdLockID = (*env)->GetFieldID(env, cls, "fdLock",
                                       "Ljava/lang/Object;");
     CHECK_NULL(psi_fdLockID);
@@ -156,10 +150,10 @@ static jclass socketExceptionCls;
 /*
  * Class:     java_net_PlainSocketImpl
  * Method:    socketCreate
- * Signature: (Z)V */
+ * Signature: (ZZ)V */
 JNIEXPORT void JNICALL
 Java_java_net_PlainSocketImpl_socketCreate(JNIEnv *env, jobject this,
-                                           jboolean stream) {
+                                           jboolean stream, jboolean isServer) {
     jobject fdObj, ssObj;
     int fd;
     int type = (stream ? SOCK_STREAM : SOCK_DGRAM);
@@ -187,8 +181,10 @@ Java_java_net_PlainSocketImpl_socketCreate(JNIEnv *env, jobject this,
         return;
     }
 
-    /* Disable IPV6_V6ONLY to ensure dual-socket support */
-    if (domain == AF_INET6) {
+    /*
+     * If IPv4 is available, disable IPV6_V6ONLY to ensure dual-socket support.
+     */
+    if (domain == AF_INET6 && ipv4_available()) {
         int arg = 0;
         if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&arg,
                        sizeof(int)) < 0) {
@@ -202,8 +198,7 @@ Java_java_net_PlainSocketImpl_socketCreate(JNIEnv *env, jobject this,
      * If this is a server socket then enable SO_REUSEADDR
      * automatically and set to non blocking.
      */
-    ssObj = (*env)->GetObjectField(env, this, psi_serverSocketID);
-    if (ssObj != NULL) {
+    if (isServer) {
         int arg = 1;
         SET_NONBLOCKING(fd);
         if (NET_SetSockOpt(fd, SOL_SOCKET, SO_REUSEADDR, (char*)&arg,
@@ -264,7 +259,6 @@ Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject this,
                                   JNI_TRUE) != 0) {
         return;
     }
-    setDefaultScopeID(env, &sa.sa);
 
     if (trafficClass != 0 && ipv6_available()) {
         NET_SetTrafficClass(&sa, trafficClass);
@@ -512,7 +506,6 @@ Java_java_net_PlainSocketImpl_socketBind(JNIEnv *env, jobject this,
                                   &len, JNI_TRUE) != 0) {
         return;
     }
-    setDefaultScopeID(env, &sa.sa);
 
     if (NET_Bind(fd, &sa, len) < 0) {
         if (errno == EADDRINUSE || errno == EADDRNOTAVAIL ||

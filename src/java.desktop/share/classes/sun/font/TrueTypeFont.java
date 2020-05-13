@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,16 +39,17 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import sun.java2d.Disposer;
 import sun.java2d.DisposerRecord;
+import sun.security.action.GetPropertyAction;
 
 /**
  * TrueTypeFont is not called SFntFont because it is not expected
@@ -179,6 +180,15 @@ public class TrueTypeFont extends FileFont {
     private Locale nameLocale;
     private String localeFamilyName;
     private String localeFullName;
+
+    /*
+     * Used on Windows to validate the font selected by GDI for (sub-pixel
+     * antialiased) rendering. For 'standalone' fonts it's equal to the font
+     * file size, for collection (TTC, OTC) members it's the number of bytes in
+     * the collection file from the start of this font's offset table till the
+     * end of the file.
+     */
+    int fontDataSize;
 
     public TrueTypeFont(String platname, Object nativeNames, int fIndex,
                  boolean javaRasterizer)
@@ -312,15 +322,10 @@ public class TrueTypeFont extends FileFont {
                 FontUtilities.getLogger().info("open TTF: " + platName);
             }
             try {
-                RandomAccessFile raf = (RandomAccessFile)
-                java.security.AccessController.doPrivileged(
-                    new java.security.PrivilegedAction<Object>() {
-                        public Object run() {
-                            try {
-                                return new RandomAccessFile(platName, "r");
-                            } catch (FileNotFoundException ffne) {
-                            }
-                            return null;
+                RandomAccessFile raf = AccessController.doPrivileged(
+                    new PrivilegedExceptionAction<RandomAccessFile>() {
+                        public RandomAccessFile run() throws FileNotFoundException {
+                            return new RandomAccessFile(platName, "r");
                     }
                 });
                 disposerRecord.channel = raf.getChannel();
@@ -331,9 +336,13 @@ public class TrueTypeFont extends FileFont {
                         ((SunFontManager) fm).addToPool(this);
                     }
                 }
-            } catch (NullPointerException e) {
+            } catch (PrivilegedActionException e) {
                 close();
-                throw new FontFormatException(e.toString());
+                Throwable reason = e.getCause();
+                if (reason == null) {
+                    reason = e;
+                }
+                throw new FontFormatException(reason.toString());
             } catch (ClosedChannelException e) {
                 /* NIO I/O is interruptible, recurse to retry operation.
                  * The call to channel.size() above can throw this exception.
@@ -537,11 +546,13 @@ public class TrueTypeFont extends FileFont {
                 fontIndex = fIndex;
                 buffer = readBlock(TTCHEADERSIZE+4*fIndex, 4);
                 headerOffset = buffer.getInt();
+                fontDataSize = Math.max(0, fileSize - headerOffset);
                 break;
 
             case v1ttTag:
             case trueTag:
             case ottoTag:
+                fontDataSize = fileSize;
                 break;
 
             default:
@@ -735,8 +746,7 @@ public class TrueTypeFont extends FileFont {
 
         if (FontUtilities.isWindows) {
             defaultCodePage =
-                java.security.AccessController.doPrivileged(
-                   new sun.security.action.GetPropertyAction("file.encoding"));
+                AccessController.doPrivileged(new GetPropertyAction("file.encoding"));
         } else {
             if (languages.length != codePages.length) {
                 throw new InternalError("wrong code pages array length");
@@ -801,15 +811,15 @@ public class TrueTypeFont extends FileFont {
         }
 
         int range1 = buffer.getInt(78); /* ulCodePageRange1 */
-        int range2 = buffer.getInt(82); /* ulCodePageRange2 */
+        // int range2 = buffer.getInt(82); /* ulCodePageRange2 */
 
         /* This test is too stringent for Arial on Solaris (and perhaps
          * other fonts). Arial has at least one reserved bit set for an
          * unknown reason.
          */
-//         if (((range1 & reserved_bits1) | (range2 & reserved_bits2)) != 0) {
-//             return false;
-//         }
+        // if (((range1 & reserved_bits1) | (range2 & reserved_bits2)) != 0) {
+        //     return false;
+        // }
 
         for (int em=0; em<encoding_mapping.length; em++) {
             if (encoding_mapping[em].equals(encoding)) {
@@ -893,15 +903,6 @@ public class TrueTypeFont extends FileFont {
             } else {
                 return buffer;
             }
-        }
-    }
-
-    @Override
-    protected long getLayoutTableCache() {
-        try {
-          return getScaler().getLayoutTableCache();
-        } catch(FontScalerException fe) {
-            return 0L;
         }
     }
 
@@ -1378,7 +1379,7 @@ public class TrueTypeFont extends FileFont {
             return;
         }
 
-        Map<String, Short> map = new HashMap<String, Short>(200);
+        Map<String, Short> map = new HashMap<>(200);
 
         // the following statements are derived from the langIDMap
         // in src/windows/native/java/lang/java_props_md.c using the following
@@ -1616,7 +1617,6 @@ public class TrueTypeFont extends FileFont {
      * needed.
      */
     protected void initAllNames(int requestedID, HashSet<String> names) {
-
         byte[] name = new byte[256];
         ByteBuffer buffer = getTableBuffer(nameTag);
 
@@ -1638,7 +1638,7 @@ public class TrueTypeFont extends FileFont {
                     continue; // skip over this record.
                 }
                 short encodingID = sbuffer.get();
-                short langID     = sbuffer.get();
+                /* short langID = */ sbuffer.get();
                 short nameID     = sbuffer.get();
                 int   nameLen    = ((int) sbuffer.get()) & 0xffff;
                 int   namePtr    = (((int) sbuffer.get()) & 0xffff) + stringPtr;

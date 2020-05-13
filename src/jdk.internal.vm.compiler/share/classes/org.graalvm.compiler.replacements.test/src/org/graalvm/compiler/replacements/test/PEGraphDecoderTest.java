@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ package org.graalvm.compiler.replacements.test;
 
 import static org.graalvm.compiler.nodes.graphbuilderconf.InlineInvokePlugin.InlineInfo.createStandardInlineInfo;
 
+import jdk.internal.vm.compiler.collections.EconomicMap;
 import org.graalvm.compiler.core.common.type.StampFactory;
 import org.graalvm.compiler.core.test.GraalCompilerTest;
 import org.graalvm.compiler.debug.DebugContext;
@@ -39,13 +40,12 @@ import org.graalvm.compiler.nodes.graphbuilderconf.InlineInvokePlugin;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugin;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins.Registration;
-import org.graalvm.compiler.nodes.memory.HeapAccess.BarrierType;
+import org.graalvm.compiler.nodes.memory.OnHeapMemoryAccess.BarrierType;
 import org.graalvm.compiler.nodes.memory.ReadNode;
 import org.graalvm.compiler.nodes.memory.address.AddressNode;
 import org.graalvm.compiler.nodes.memory.address.OffsetAddressNode;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.phases.OptimisticOptimizations;
-import org.graalvm.compiler.phases.common.CanonicalizerPhase;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 import org.graalvm.compiler.replacements.CachingPEGraphDecoder;
 import jdk.internal.vm.compiler.word.LocationIdentity;
 import org.junit.Test;
@@ -138,14 +138,14 @@ public class PEGraphDecoderTest extends GraalCompilerTest {
             registerPlugins(graphBuilderConfig.getPlugins().getInvocationPlugins());
             targetGraph = new StructuredGraph.Builder(getInitialOptions(), debug, AllowAssumptions.YES).method(testMethod).build();
             CachingPEGraphDecoder decoder = new CachingPEGraphDecoder(getTarget().arch, targetGraph, getProviders(), graphBuilderConfig, OptimisticOptimizations.NONE, AllowAssumptions.YES,
-                            null, null, new InlineInvokePlugin[]{new InlineAll()}, null, null, null, null);
+                            null, null, new InlineInvokePlugin[]{new InlineAll()}, null, null, null, null, null, null, EconomicMap.create());
 
             decoder.decode(testMethod, false, false);
             debug.dump(DebugContext.BASIC_LEVEL, targetGraph, "Target Graph");
             targetGraph.verify();
 
-            PhaseContext context = new PhaseContext(getProviders());
-            new CanonicalizerPhase().apply(targetGraph, context);
+            CoreProviders context = getProviders();
+            createCanonicalizerPhase().apply(targetGraph, context);
             targetGraph.verify();
 
         } catch (Throwable ex) {
